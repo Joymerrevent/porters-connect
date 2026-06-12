@@ -8,6 +8,9 @@
     "MD036": false
   },
   "globs": ["**/*.md"],
+  // Respect .gitignore so generated/working files (e.g. tmp/) are not linted.
+  // Keeps markdownlint aligned with Prettier, which already honors .gitignore.
+  "gitignore": true,
   "ignores": [
     "node_modules",
     "dist",
