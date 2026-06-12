@@ -23,3 +23,25 @@
 | ContentType | —    | —          | —        | —        | Contentのデータの種類を表します。 / 通常Mime Typeと同じ内容を示します。詳細はAttachment - Mime Type Listを参照してください。 |
 | FileName    | —    | —          | —        | —        | Attachmentのファイル名です。                                                                                                 |
 | Content     | —    | —          | —        | —        | Base64 Encodeされたファイルです。                                                                                            |
+
+## 対応 MIME タイプ
+
+出典: <https://hrbcapi.porters.jp/hc/ja/articles/215428097-Attachment-Mime-Type-List>（updated_at 2022-06-13）
+
+| 拡張子 | mimetype                                                                  |
+| ------ | ------------------------------------------------------------------------- |
+| txt    | text/plain                                                                |
+| pdf    | application/pdf                                                           |
+| xls    | application/vnd.ms-excel                                                  |
+| doc    | application/msword                                                        |
+| ppt    | application/vnd.ms-powerpoint                                             |
+| xlsx   | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet         |
+| docx   | application/vnd.openxmlformats-officedocument.wordprocessingml.document   |
+| pptx   | application/vnd.openxmlformats-officedocument.presentationml.presentation |
+| html   | text/html                                                                 |
+| htm    | text/html                                                                 |
+| gif    | image/gif                                                                 |
+| jpg    | image/jpeg                                                                |
+| jpeg   | image/jpeg                                                                |
+| png    | image/png                                                                 |
+| bmp    | image/bmp                                                                 |
