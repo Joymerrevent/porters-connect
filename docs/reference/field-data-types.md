@@ -4,7 +4,7 @@
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List>
 
-各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。型設計（ADR 0005）の土台。
+各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。型設計（→ 型設計の ADR）の土台。
 
 ## Field Type 一覧
 
@@ -54,7 +54,7 @@
 
 ## 設計メモ
 
-- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。JST 運用は境界で +9h 補正（ADR 0008）。
-- **参照・User・Link は Write 時 ID のみ**。読み取りは入れ子展開。型表現を Read/Write で分けるか検討（ADR 0005）。
-- **Link は version 2 必須**。既定で `X-P-ConnectAPI-Version: 2` を送る方針（ADR 0002）。
+- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。JST 運用は境界で +9h 補正（→ 日時の ADR）。
+- **参照・User・Link は Write 時 ID のみ**。読み取りは入れ子展開。型表現を Read/Write で分けるか検討（→ 型設計の ADR）。
+- **Link は version 2 必須**。既定で `X-P-ConnectAPI-Version: 2` を送る方針（→ HTTP トランスポートの ADR）。
 - `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → 入力型から除外できる。
