@@ -15,15 +15,16 @@
 
 ## 構成
 
-| ファイル                                   | 内容                                                                       |
-| ------------------------------------------ | -------------------------------------------------------------------------- |
-| [authentication.md](authentication.md)     | OAuth（code / code_direct / remove）・Token・ヘッダ・スコープ・認証エラー  |
-| [resource-api.md](resource-api.md)         | エンドポイント・Read パラメータ・XML 形式・データ型・Result Code・各種制限 |
-| [resources.md](resources.md)               | 全リソースの一覧・R/W 可否・必要スコープ・Field Alias の注意点             |
-| [resources/](resources/README.md)          | リソース別の項目（フィールド）リファレンス（全 17、出典記事から抽出）      |
-| [field-data-types.md](field-data-types.md) | Field Type / Data Type の型システム・値書式・System/参照/User 型の規則     |
-| [write-format.md](write-format.md)         | Write の XML 形式・新規/更新・データ型別書式・Phase 更新の作法             |
-| [gotchas.md](gotchas.md)                   | レート/課金/並列/実行環境/Alias/ログイン特定/開発環境・直近の仕様変更      |
+| ファイル                                   | 内容                                                                            |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| [authentication.md](authentication.md)     | OAuth（code / code_direct / remove）・Token・ヘッダ・スコープ・認証エラー       |
+| [resource-api.md](resource-api.md)         | エンドポイント・Read パラメータ・XML 形式・データ型・Result Code・各種制限      |
+| [resources.md](resources.md)               | 全リソースの一覧・R/W 可否・必要スコープ・Field Alias の注意点                  |
+| [resources/](resources/README.md)          | リソース別の項目（フィールド）リファレンス（全 17、出典記事から抽出）           |
+| [field-data-types.md](field-data-types.md) | Field Type / Data Type の型システム・値書式・System/参照/User 型の規則          |
+| [write-format.md](write-format.md)         | Write の XML 形式・新規/更新・データ型別書式・Phase 更新の作法                  |
+| [gotchas.md](gotchas.md)                   | レート/課金/並列/実行環境/Alias/ログイン特定/開発環境・直近の仕様変更           |
+| [glossary.md](glossary.md)                 | 用語（App ID/Secret/Redirect URL・Partition/Resource/Field/Option）と画面名対応 |
 
 ## 重要な前提・落とし穴（設計に効くもの）
 
