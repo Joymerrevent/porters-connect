@@ -1,26 +1,47 @@
-# NNNN. タイトル（決めたことを一文で）
+# NNNN. 決めたことを一文で（タイトル）
 
-- ステータス: Proposed
-- 日付: YYYY-MM-DD
-- 関連: （関連する ADR / Issue / SPEC の節）
+- Status: proposed
+- Date: YYYY-MM-DD
+- Deciders: <決めた人>
 
-## コンテキスト
+## Context and Problem Statement
 
-何を、なぜ今決める必要があるのか。前提・制約（PORTERS API の仕様、CLAUDE.md の規約など）。
+何を、なぜ今決める必要があるのか。背景・前提・制約（PORTERS API 仕様、`CLAUDE.md` の規約など）を踏まえ、
+解くべき問いを 2〜3 文、または疑問形で書く。
 
-## 決定
+## Decision Drivers
 
-採用する案を断定形で書く。「〜する」。
+- <重視する基準 / 制約 / 品質要求（例: 型安全・依存の少なさ・フェイルセーフ）>
+- <...>
 
-## 理由
+## Considered Options
 
-なぜその案を選んだか。他案より優れている点。
+- 案A: <一言>
+- 案B: <一言>
+- 案C: <一言>
 
-## 検討した他の案
+## Decision Outcome
 
-- **案 A**: 概要 / 採らなかった理由
-- **案 B**: 概要 / 採らなかった理由
+採用: **案A**。理由: <Decision Drivers に照らした根拠を簡潔に>。
 
-## 結果（トレードオフ）
+### Consequences
 
-この決定で得られるもの・失うもの・将来の見直し条件。
+- Good: <得るもの>
+- Bad: <失うもの / 抱える負債>
+- Neutral: <副作用・新たな前提>
+
+## Pros and Cons of the Options
+
+### 案A
+
+- Good: <...>
+- Bad: <...>
+
+### 案B
+
+- Good: <...>
+- Bad: <...>
+
+## More Information
+
+<関連 ADR / Issue / SPEC の節 / フォローアップ。後で superseded されたらここにリンクする。>

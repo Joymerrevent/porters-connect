@@ -7,19 +7,21 @@
 
 「なぜその設計にしたか」を 1 判断 1 ファイルで残す軽量な記録です。
 コードを読んでも分からない「選ばなかった選択肢」と「その理由」を未来の自分／貢献者に伝えます。
+形式は [MADR（Markdown Any Decision Records）](https://adr.github.io/madr/) のフル版に準拠します。
 
 ## 運用ルール
 
 - 1 判断 = 1 ファイル。ファイル名は `NNNN-kebab-title.md`（連番 + 内容）。
-- ステータスは次のいずれか：`Proposed`（議論中）/ `Accepted`（確定）/ `Rejected`（不採用）/ `Superseded by NNNN`（後続で置換）。
-- 一度 `Accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR で上書き（`Superseded`）する。
-- 雛形は [`0000-template.md`](0000-template.md) をコピーして使う。
+- ステータスは次のいずれか：`proposed`（議論中）/ `accepted`（確定）/ `rejected`（不採用）/ `deprecated`（廃止）/ `superseded by NNNN`（後続で置換）。
+- 一度 `accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR を起こして旧 ADR を `superseded by NNNN` にする。
+- 雛形は [`0000-template.md`](0000-template.md)（MADR フル）をコピーして使う。
+- セクション構成：Context and Problem Statement → Decision Drivers → Considered Options → Decision Outcome（+ Consequences）→ Pros and Cons of the Options → More Information。
 
 ## 一覧
 
 | #                                             | タイトル                 | ステータス |
 | --------------------------------------------- | ------------------------ | ---------- |
-| [0001](0001-record-architecture-decisions.md) | ADR で設計判断を記録する | Accepted   |
+| [0001](0001-record-architecture-decisions.md) | ADR で設計判断を記録する | accepted   |
 
 ## 論点バックログ（今フェーズで詰める）
 
