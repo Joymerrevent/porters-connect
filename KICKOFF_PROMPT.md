@@ -7,7 +7,7 @@ Claude Code に最初に投げるプロンプトです。
 
 ## 初手プロンプト（コピペ用）
 
-```
+```text
 このリポジトリで @joymerrevent/porters-connect を実装します。
 まず SPEC_v1.md と CLAUDE.md を読んでから着手してください。
 

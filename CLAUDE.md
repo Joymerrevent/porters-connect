@@ -79,7 +79,8 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume*
 ## ディレクトリ構成
 
 `SPEC_v1.md` 5.1 を参照。要点のみ：
-```
+
+```text
 src/
   index.ts        # public export
   client.ts       # PortersClient
