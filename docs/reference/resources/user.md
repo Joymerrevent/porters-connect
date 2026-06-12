@@ -1,11 +1,12 @@
 # User — フィールド／項目リファレンス
 
 - endpoint: `/v1/user`
-- scope: `user_r`
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/360001264748-User-Field-List-Timezone-List>（updated_at 2025-02-14、取得 2026-06-12）
+- Read scope: `user_r`
+- Write scope: （Write API なし・読み取り専用）
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/360001264748-User-Field-List-Timezone-List>（updated_at 2025-02-14）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
-> マスタ系（読み取り専用）。下表は記事の出力値テーブル（envelope を含む）。
+> マスタ系（読み取り専用）。下表は Read 記事の出力項目から抽出。
 
 ## 項目一覧
 

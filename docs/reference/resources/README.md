@@ -6,26 +6,26 @@
 
 ## データ系
 
-- [Candidate](candidate.md) — `/v1/candidate`（candidate_r / candidate_w）
-- [Job](job.md) — `/v1/job`（job_r / job_w）
-- [Client](client.md) — `/v1/client`（client_r / client_w）
-- [Recruiter](recruiter.md) — `/v1/recruiter`（recruiter_r / recruiter_w）
-- [Contact](contact.md) — `/v1/contact`（contact_r / contact_w）
-- [Resume](resume.md) — `/v1/resume`（resume_r / resume_w）
-- [Process](process.md) — `/v1/process`（process_r / process_w）
-- [Activity](activity.md) — `/v1/activity`（activity_r / activity_w）
-- [Contract](contract.md) — `/v1/contract`（contract_r / contract_w）
-- [Sales](sales.md) — `/v1/sales`（sales_r / sales_w）
-- [Opportunity](opportunity.md) — `/v1/opportunity`（opportunity_r / opportunity_w）
-- [Phase](phase.md) — `/v1/phase`（phase_r / phase_w）
+- [Candidate](candidate.md) — `/v1/candidate`
+- [Job](job.md) — `/v1/job`
+- [Client](client.md) — `/v1/client`
+- [Recruiter](recruiter.md) — `/v1/recruiter`
+- [Contact](contact.md) — `/v1/contact`
+- [Resume](resume.md) — `/v1/resume`
+- [Process](process.md) — `/v1/process`
+- [Activity](activity.md) — `/v1/activity`
+- [Contract](contract.md) — `/v1/contract`
+- [Sales](sales.md) — `/v1/sales`
+- [Opportunity](opportunity.md) — `/v1/opportunity`
+- [Phase](phase.md) — `/v1/phase`
 
 ## マスタ系（読み取り専用）
 
-- [Partition](partition.md) — `/v1/partition`（partition_r）
-- [User](user.md) — `/v1/user`（user_r）
-- [Field](field.md) — `/v1/field`（field_r）
-- [Option](option.md) — `/v1/option`（option_r）
+- [Partition](partition.md) — `/v1/partition`
+- [User](user.md) — `/v1/user`
+- [Field](field.md) — `/v1/field`
+- [Option](option.md) — `/v1/option`
 
 ## 添付
 
-- [Attachment](attachment.md) — `/v1/attachment`（attachment_r / attachment_w）
+- [Attachment](attachment.md) — `/v1/attachment`

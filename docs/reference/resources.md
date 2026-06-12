@@ -40,6 +40,10 @@
 
 ## 補足
 
+- 上表の **スコープ列は自リソースの R/W のみ**。**Read は参照する上位リソースの `_r` も必要**で、
+  ほぼ常に `user_r` / `option_r` を含む（例: Process Read =
+  `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
+  各リソースの正確な Read / Write スコープは [resources/](resources/README.md) の各ページを参照。
 - **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[resource-api.md](resource-api.md) 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。

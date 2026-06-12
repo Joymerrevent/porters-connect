@@ -1,9 +1,10 @@
 # Contact — フィールド／項目リファレンス
 
 - endpoint: `/v1/contact`
-- scope: `contact_r / contact_w`
-- alias 接頭辞: `Contact.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/20868341330969-Contact-Field-List>（updated_at 2024-02-08、取得 2026-06-12）
+- Read scope: `contact_r, client_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `contact_w`
+- alias 接頭辞: `Contact.`
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/20868341330969-Contact-Field-List>（updated_at 2024-02-08）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 

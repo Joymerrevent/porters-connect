@@ -1,9 +1,10 @@
 # Opportunity — フィールド／項目リファレンス
 
 - endpoint: `/v1/opportunity`
-- scope: `opportunity_r / opportunity_w`
-- alias 接頭辞: `Opportunity.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/21029666049945-Opportunity-Field-List>（updated_at 2023-08-10、取得 2026-06-12）
+- Read scope: `opportunity_r, recruiter_r, client_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `opportunity_w`
+- alias 接頭辞: `Opportunity.`
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/21029666049945-Opportunity-Field-List>（updated_at 2023-08-10）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 

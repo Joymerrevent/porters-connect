@@ -1,9 +1,10 @@
 # Phase — フィールド／項目リファレンス
 
 - endpoint: `/v1/phase`
-- scope: `phase_r / phase_w`
-- alias 接頭辞: `Phase.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List>（updated_at 2024-10-01、取得 2026-06-12）
+- Read scope: `phase_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `phase_w`
+- alias 接頭辞: 接頭辞なし（`Id` / `Resource` などの短縮名）
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List>（updated_at 2024-10-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > 固定項目のみ（カスタム項目なし）。

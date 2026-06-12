@@ -1,9 +1,10 @@
 # Activity — フィールド／項目リファレンス
 
 - endpoint: `/v1/activity`
-- scope: `activity_r / activity_w`
-- alias 接頭辞: `Activity.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008016707-Activity-Field-List>（updated_at 2019-02-01、取得 2026-06-12）
+- Read scope: `activity_r, client_r, recruiter_r, job_r, candidate_r, resume_r, process_r, sales_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `activity_w`
+- alias 接頭辞: `Activity.`
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115008016707-Activity-Field-List>（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 

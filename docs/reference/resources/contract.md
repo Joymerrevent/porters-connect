@@ -1,9 +1,10 @@
 # Contract — フィールド／項目リファレンス
 
 - endpoint: `/v1/contract`
-- scope: `contract_r / contract_w`
-- alias 接頭辞: `Contract.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008171748-Contract-Field-List>（updated_at 2019-02-01、取得 2026-06-12）
+- Read scope: `contract_r, client_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `contract_w`
+- alias 接頭辞: `Contract.`
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115008171748-Contract-Field-List>（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 

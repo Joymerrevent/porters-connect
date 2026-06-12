@@ -1,9 +1,10 @@
 # Attachment — フィールド／項目リファレンス
 
 - endpoint: `/v1/attachment`
-- scope: `attachment_r / attachment_w`
-- alias 接頭辞: `Attachment.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115012161328-Attachment-Read>（updated_at 2019-02-01、取得 2026-06-12）
+- Read scope: `attachment_r, process_r, resume_r, candidate_r, job_r, recruiter_r, client_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `attachment_w`
+- alias 接頭辞: 接頭辞なし（`Id` / `Resource` などの短縮名）
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115012161328-Attachment-Read>（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 

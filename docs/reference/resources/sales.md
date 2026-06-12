@@ -1,9 +1,10 @@
 # Sales — フィールド／項目リファレンス
 
 - endpoint: `/v1/sales`
-- scope: `sales_r / sales_w`
-- alias 接頭辞: `Sales.`（Candidate は `Person.`、Phase / Attachment は接頭辞なしの短縮名）
-- 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008016667-Sales-Field-List>（updated_at 2022-07-15、取得 2026-06-12）
+- Read scope: `sales_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
+- Write scope: `sales_w`
+- alias 接頭辞: `Sales.`
+- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115008016667-Sales-Field-List>（updated_at 2022-07-15）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 
