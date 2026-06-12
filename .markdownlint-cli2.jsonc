@@ -1,0 +1,19 @@
+{
+  // markdownlint-cli2 設定。整形は Prettier に任せ、ここは構造/内容を lint する。
+  "config": {
+    "default": true,
+    // 行長は Prettier(proseWrap: preserve)と日本語テキストに合わないため無効化
+    "MD013": false,
+    // 太字ラベルを見出し代わりに使う文書を許容（厳しくするなら true に戻す）
+    "MD036": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".claude",
+    "CHANGELOG.md"
+  ]
+}
