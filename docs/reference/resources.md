@@ -44,6 +44,7 @@
   Read は可能（[resource-api.md](resource-api.md) 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
 - Phase の更新には専用の作法がある（[Phase の更新について](https://hrbcapi.porters.jp/hc/ja/articles/115008171688)）。
-- 各リソースの **Field List（項目定義）は本書には転記しない**（大きく・著作物のため）。上表のリンクから一次情報を参照する。
+- 各リソースの **標準項目（`P_*`）の一覧は [resources/](resources/README.md) に per-resource でまとめている**
+  （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List](https://hrbcapi.porters.jp/hc/ja/articles/115008017407)）も併用する。
 - MVP 実装順（CLAUDE.md）: OAuth → Candidate → Job → Client → Process → Resume。

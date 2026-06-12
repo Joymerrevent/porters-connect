@@ -20,6 +20,7 @@
 | [authentication.md](authentication.md) | OAuth（code / code_direct / remove）・Token・ヘッダ・スコープ・認証エラー  |
 | [resource-api.md](resource-api.md)     | エンドポイント・Read パラメータ・XML 形式・データ型・Result Code・各種制限 |
 | [resources.md](resources.md)           | 全リソースの一覧・R/W 可否・必要スコープ・Field Alias の注意点             |
+| [resources/](resources/README.md)      | リソース別の項目（フィールド）リファレンス（全 17、出典記事から抽出）      |
 
 ## 重要な前提・落とし穴（設計に効くもの）
 
