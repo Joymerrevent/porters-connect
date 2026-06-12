@@ -1,0 +1,17 @@
+# GitHub Actions のバージョン更新を自動 PR 化する（dependabot レシピが配布）。
+# 新バージョンの検知 → PR 作成 → CI 検証を GitHub 側で完結させ、
+# ランナー環境の強制移行（例: Node.js 20 廃止）にも先回りで気づけるようにする。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす
+    groups:
+      actions:
+        patterns:
+          - "*"
+    # コミットメッセージを conventional commits（ci プレフィックス）に揃える
+    commit-message:
+      prefix: "ci"
