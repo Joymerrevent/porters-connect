@@ -30,26 +30,32 @@ PORTERS のエラーは**2 系統**で番号が重複し意味が違う（[resou
 
 ## Considered Options（型の形）
 
-- **案A: 単一 `PortersError` ＋ `category` 判別フィールド**（推奨）
-- **案B: クラス階層**（`PortersAuthError` 等サブクラス・`instanceof`）
-- **案C: プレーンな判別 union を throw**（Error を継承しない）
+- **案A: 単一 `PortersError` ＋ `category` ＋ `source` フィールド**（当初案）
+- **案B: category 別のサブクラス階層**（10 個・`instanceof`）
+- **案C: source 別の薄い階層**（基底 ＋ `PortersAuthError` / `PortersResourceError` / `PortersNetworkError`）＋ `category` フィールド（推奨・チーム提案）
+- **案D: プレーンな判別 union を throw**（Error を継承しない）
 
 ## Decision Outcome
 
-**提案: 案A（単一 `PortersError` ＋ `category`）**。
+**提案: 案C（source 別の薄い階層 ＋ `category`）**。系統＝クラス（`code` の意味が曖昧にならない・`instanceof` で大別）、`category` は系統横断の対処分岐軸。
 
 ```ts
+// 基底：すべての PORTERS 由来エラー（まとめて catch 可能）
 class PortersError extends Error {
-  category: ErrorCategory; // 判別子
-  source: "auth" | "resource" | "http"; // どの系統か（番号衝突の曖昧さ解消）
+  category: ErrorCategory; // 系統横断の分類（下記）
   code: number | null; // PORTERS の生コード（network は null）
   retryable: boolean; // 再試行してよいか（構築時に算出）
   hint?: string; // 対処ヒント（既定英語）
   httpStatus?: number;
   context?: { resource?: string; operation?: string; partition?: number };
   raw?: { code: number; message: string }; // PORTERS の <Error>/<Code> 原文
-  cause?: unknown; // 元の例外（network 等）
+  cause?: unknown;
 }
+
+// 系統別サブクラス（instanceof で大別。code はその系統のコード空間）
+class PortersAuthError extends PortersError {} // OAuth / Token
+class PortersResourceError extends PortersError {} // Resource API
+class PortersNetworkError extends PortersError {} // 接続/タイムアウト/レート切断
 
 type ErrorCategory =
   | "auth" // 認証情報/トークン/コード（再認証や設定見直しが必要）
@@ -64,7 +70,7 @@ type ErrorCategory =
   | "unknown"; // 未知（フェイルセーフ）
 ```
 
-**コード→category→retryable のマッピング（[Result Code 表][rapi] / [認証エラー][auth] に接地・代表例）**:
+**コード→category→retryable のマッピング（source = 対応サブクラス。[Result Code 表][rapi] / [認証エラー][auth] に接地・代表例）**:
 
 | source   | code                                            | category   | retryable                  |
 | -------- | ----------------------------------------------- | ---------- | -------------------------- |
@@ -95,9 +101,10 @@ type ErrorCategory =
 
 ## サブ決定（要議論）
 
-- **SD-A 型の形**: 単一クラス + `category`（**推奨**）／ サブクラス階層。→ 単一は import 一つで `switch(category)`、薄い。
-- **SD-B category の粒度**: 上記 10 個（**推奨**）／ より少なく（例 `notFound`/`conflict`/`server` を `validation`/`unknown` に寄せる）。
-- **SD-C retryable の持ち方**: フィールドで保持（**推奨**・構築時算出）／ 外部関数で都度判定。
+- **SD-A 型の形 → source 別の薄い階層**（基底 ＋ Auth/Resource/Network）。系統＝`instanceof`、横断＝`category`。
+- **SD-B `category` を残すか**: 残す（**推奨**・permission/validation/transient は系統横断で対処分岐に有用）／ 階層のみ（`code` を詳細に）。
+- **SD-C category の粒度**: 10 個（**推奨**）／ より少なく（`notFound`/`conflict`/`server` を寄せる）。
+- **SD-D retryable の持ち方**: フィールド（**推奨**・構築時算出）／ 外部関数。
 
 ### Consequences
 
@@ -107,17 +114,22 @@ type ErrorCategory =
 
 ## Pros and Cons of the Options
 
-### 案A: 単一クラス + category
+### 案C: source 別の薄い階層（推奨）
 
-- Good: import 一つ・`switch(category)` で分岐・薄い。`code`/`source` で詳細も取れる。
-- Bad: `instanceof PortersRateLimitError` のような細分 catch はできない（`category` で代替）。
+- Good: `instanceof PortersAuthError / PortersResourceError / PortersNetworkError` で大別。`code` が系統内で一意（曖昧さ無し）。基底 `PortersError` で一括 catch も可。クラスは 4 つだけ＝薄い。`category` で横断分岐も。
+- Bad: 公開クラスが 4 つ。系統（クラス）と `category`（フィールド）の二軸を保つ。
 
-### 案B: クラス階層
+### 案A: 単一クラス + source フィールド
 
-- Good: `instanceof` で型別 catch。
-- Bad: 公開クラスが増える・薄さに反する・category と二重管理になりがち。
+- Good: クラス 1 つ。
+- Bad: `code` の意味が `source` 次第で曖昧。`instanceof` で系統を大別できない。
 
-### 案C: Error を継承しない union を throw
+### 案B: category 別のサブクラス階層
+
+- Good: category ごとに `instanceof`。
+- Bad: 公開クラスが 10＝重い・薄さに反する。系統情報が薄れる。
+
+### 案D: Error を継承しない union
 
 - Good: 構造が純粋。
 - Bad: JS 慣習（`instanceof Error`・stack）に反し DX/相互運用が悪い。
