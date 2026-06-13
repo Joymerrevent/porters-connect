@@ -15,6 +15,8 @@
 - **番号は ADR を起票する時に採番**する（その時点の最大番号 + 1）。**連番のみ・欠番や振り直し・再利用はしない**。
   バックログには番号を振らない（差し込みのたびに番号と参照を直す事故を防ぐため）。
 - **未起票の ADR を参照するときは番号でなくトピック名で指す**（例: 「→ 型設計の ADR」）。起票後にリンクへ更新してよい。
+- **ADR は自己完結させない**。フローは **起票（`proposed`）→ チームで議論 → 決定を反映（`accepted`）**。
+  個人や AI が単独で `accepted` にしない。**決定事項の反映（`CLAUDE.md` / `SPEC` などの更新）は `accepted` 後**に行う。
 - ステータスは次のいずれか：`proposed`（議論中）/ `accepted`（確定）/ `rejected`（不採用）/ `deprecated`（廃止）/ `superseded by NNNN`（後続で置換）。
 - 一度 `accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR を起こして旧 ADR を `superseded by NNNN` にする。
 - 雛形は [`0000-template.md`](0000-template.md)（MADR フル）をコピーして使う。
@@ -26,6 +28,7 @@
 | ---------------------------------------------- | ---------------------------------------------- | ---------- |
 | [0001](0001-record-architecture-decisions.md)  | ADR で設計判断を記録する                       | accepted   |
 | [0002](0002-ground-design-in-live-api-docs.md) | v1 設計を実 PORTERS API ドキュメントに接地する | accepted   |
+| [0003](0003-add-attachment-to-mvp.md)          | MVP の対象リソースに Attachment を加える       | proposed   |
 
 ## 論点バックログ（今フェーズで詰める・未起票）
 
