@@ -46,7 +46,8 @@ src/
 
 - **UT は co-located**：`src/xml/parser.ts` ↔ `src/xml/parser.test.ts`（vitest 既定の `**/*.test.ts`）。
   ビルド（tsup）は `src/index.ts` の依存グラフからバンドルするため `*.test.ts` は **dist/型に含まれない**。`package.json` は `dist` のみ publish。
-- **共有モック XML フィクスチャ**は `test/fixtures/`（データ専用）に集約（[ADR-0002][a2]：契約が無い間は出典 XML 例を fixture 化）。※集約 vs 各所 `__fixtures__/` は要確認。
+- **モック XML フィクスチャ**：再利用する**全パターンの見本帳は集約** `test/fixtures/`（データ型別・リソース別 Read/Write・エラー系。[ADR-0002][a2]：契約が無い間は出典 XML を fixture 化し使い回す）。
+  **テスト固有のカスタム（空結果・壊れ XML・特定値などのエッジケース）はテスト内に inline**（大きく/再利用しだしたら `test/fixtures/` へ昇格）。各所 `__fixtures__/` は作らない。
 
 ## 3. 公開 API の全体像（[ADR-0005][a5]）
 
