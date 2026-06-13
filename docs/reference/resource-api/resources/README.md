@@ -30,8 +30,8 @@
 
 - [Attachment][attachment] — `/v1/attachment`
 
-[resource-api]: ../resource-api.md
-[resources]: ../resources.md
+[resource-api]: ../README.md
+[resources]: ../resources-list.md
 [candidate]: candidate.md
 [job]: job.md
 [client]: client.md

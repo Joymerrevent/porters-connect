@@ -158,5 +158,5 @@ type ErrorCategory =
 - 関連: [[0005-public-api-shape]]。
 
 [0005]: 0005-public-api-shape.md
-[rapi]: ../reference/resource-api.md
-[auth]: ../reference/authentication.md
+[rapi]: ../reference/resource-api/README.md
+[auth]: ../reference/authentication/README.md

@@ -2,6 +2,7 @@
 
 設計を実 API に接地するための**事実ベースのメモ**です。公式ドキュメントの逐語コピーではなく、
 本ライブラリ設計に必要な要点を自分たちの言葉で再構成したものです（非公式・著作権配慮）。
+**ここだけで仕様が分かる**ことを目標に、API の 2 本柱（Authentication API / Resource API）＋横断、で構成します。
 
 ## 出典と取得方法
 
@@ -9,22 +10,27 @@
 - 取得経路: Zendesk の公開コンテンツ API（Cloudflare の JS チャレンジを経由しない）。
   - 一覧: `https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100`
   - 各記事に `html_url`（人間用）, `updated_at`, `body`（HTML）が含まれる。
-- 取得日: **2026-06-12**。各セクションに参照記事の URL と、その記事の `updated_at` を併記する。
+- 取得日: **2026-06-12**。各ファイルに参照記事の URL と `updated_at` を併記する。
 - 注意: ブラウザ直アクセス（`hrbcapi.porters.jp`）は Cloudflare の "Just a moment..." チャレンジで
   ボット拒否される。コンテンツ API 経由なら取得できる。
 
 ## 構成
 
-| ファイル                                   | 内容                                                                            |
-| ------------------------------------------ | ------------------------------------------------------------------------------- |
-| [authentication.md][authentication-md]     | OAuth（code / code_direct / remove）・Token・ヘッダ・スコープ・認証エラー       |
-| [resource-api.md][resource-api-md]         | エンドポイント・Read パラメータ・XML 形式・データ型・Result Code・各種制限      |
-| [resources.md][resources-md]               | 全リソースの一覧・R/W 可否・必要スコープ・Field Alias の注意点                  |
-| [resources/][resources]                    | リソース別の項目（フィールド）リファレンス（全 17、出典記事から抽出）           |
-| [field-data-types.md][field-data-types-md] | Field Type / Data Type の型システム・値書式・System/参照/User 型の規則          |
-| [write-format.md][write-format-md]         | Write の XML 形式・新規/更新・データ型別書式・Phase 更新の作法                  |
-| [gotchas.md][gotchas-md]                   | レート/課金/並列/実行環境/Alias/ログイン特定/開発環境・直近の仕様変更           |
-| [glossary.md][glossary-md]                 | 用語（App ID/Secret/Redirect URL・Partition/Resource/Field/Option）と画面名対応 |
+### Authentication API（[authentication/][auth]）
+
+接続認証。[OAuth][auth-oauth] ／ [Token][auth-token] ／ [HTTP ヘッダ][auth-headers] ／ [認証エラー][auth-errors]。
+
+### Resource API（[resource-api/][rapi]）
+
+- [概要][rapi]: エンドポイント・Read パラメータ・XML 形式・Result Code・各種制限。
+- [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
+- [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
+- [resources-list][rapi-list]: 全リソースの一覧・R/W・必要スコープ・Alias の注意点。
+- [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 17）。
+
+### 横断
+
+[glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）。
 
 ## 重要な前提・落とし穴（設計に効くもの）
 
@@ -39,21 +45,26 @@
 
 ## 再取得の手順
 
-`tmp/porters-docs/`（git 管理外）に取得スクリプトを置いている。最新へ更新する場合:
+`tmp/porters-docs/`（git 管理外）に取得・生成スクリプトを置いている。最新へ更新する場合:
 
 ```bash
-# 一覧・セクション・カテゴリを取得し、本文を tmp/porters-docs/txt/ にテキスト化
+# 記事を取得 → 本文をテキスト化 → リソース別ファイルを生成
 curl -sS -A "Mozilla/5.0" \
   "https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100" \
   -o tmp/porters-docs/articles-ja.json
 node tmp/porters-docs/extract.mjs
+node tmp/porters-docs/gen-resources.mjs
 ```
 
-[authentication-md]: authentication.md
-[resource-api-md]: resource-api.md
-[resources-md]: resources.md
-[resources]: resources/README.md
-[field-data-types-md]: field-data-types.md
-[write-format-md]: write-format.md
-[gotchas-md]: gotchas.md
-[glossary-md]: glossary.md
+[auth]: authentication/README.md
+[auth-oauth]: authentication/oauth.md
+[auth-token]: authentication/token.md
+[auth-headers]: authentication/headers.md
+[auth-errors]: authentication/errors.md
+[rapi]: resource-api/README.md
+[rapi-fdt]: resource-api/field-data-types.md
+[rapi-wf]: resource-api/write-format.md
+[rapi-list]: resource-api/resources-list.md
+[rapi-resources]: resource-api/resources/README.md
+[glossary]: glossary.md
+[gotchas]: gotchas.md

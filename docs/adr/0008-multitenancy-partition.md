@@ -100,7 +100,7 @@ PORTERS の構造（[authentication][auth] / [gotchas][gotchas]）:
 - 関連: [[0005-public-api-shape]], [[0007-oauth-public-surface]]。
 
 [prd]: ../design/requirements.md
-[auth]: ../reference/authentication.md
+[auth]: ../reference/authentication/README.md
 [gotchas]: ../reference/gotchas.md
 [glossary]: ../reference/glossary.md
 [0005]: 0005-public-api-shape.md

@@ -99,6 +99,6 @@
 [attachment-write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161308
 [mime-type]: https://hrbcapi.porters.jp/hc/ja/articles/215428097
 [resources]: resources/README.md
-[resource-api-md]: resource-api.md
+[resource-api-md]: README.md
 [phase]: https://hrbcapi.porters.jp/hc/ja/articles/115008171688
 [field-type-and-data-type-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407

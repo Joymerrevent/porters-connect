@@ -67,5 +67,5 @@ Attachment を MVP に含めるべきか？
   [write-format.md][write-format-md]（Image/Base64）。
 - 関連: [[0002-ground-design-in-live-api-docs]], `SPEC_v1.md` 5.3, `CLAUDE.md`。
 
-[resources-attachment-md]: ../reference/resources/attachment.md
-[write-format-md]: ../reference/write-format.md
+[resources-attachment-md]: ../reference/resource-api/resources/attachment.md
+[write-format-md]: ../reference/resource-api/write-format.md

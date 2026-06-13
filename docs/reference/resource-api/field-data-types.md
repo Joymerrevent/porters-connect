@@ -60,4 +60,4 @@
 - `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → 入力型から除外できる。
 
 [write-format-md]: write-format.md
-[resource-api-md]: resource-api.md
+[resource-api-md]: README.md
