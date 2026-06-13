@@ -1,11 +1,11 @@
 # 7. OAuth 認証の公開面（資格情報・code/code_direct・トークン管理・tokenStore）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-13
-- Deciders: （チーム議論中。提案: jun.shiromoto / Claude）
+- Deciders: jun.shiromoto (Joymerrevent)
 
-> `proposed`。基本設計の最後。トークンの**キャッシュ/更新の内部機構**は詳細設計、
-> 本 ADR は**利用者から見える認証の形**（資格情報の渡し方・初回権限付与・トークン管理の露出・tokenStore・失効）を決める。
+> 案4 ＋ SD 全採用で `accepted`（2026-06-13）。`connect()` は任意（`ensureAuthenticated()`）。
+> トークンの**キャッシュ/更新の内部機構**は詳細設計、**マルチテナント/パーティション選択は別 ADR**。
 
 ## Context and Problem Statement
 
@@ -36,7 +36,7 @@ PORTERS の OAuth は独自仕様（[authentication][auth]）:
 
 ## Decision Outcome
 
-**提案: 案4（注入可能な認証ストラテジ）**。**1:1 で API に忠実なコア**を土台に、アクセストークンの供給を
+**採用: 案4（注入可能な認証ストラテジ）**。**1:1 で API に忠実なコア**を土台に、アクセストークンの供給を
 **ストラテジ（`TokenProvider`）として差し替え可能**にする。**既定は透過（`code_direct`＋キャッシュ＋自動更新＝案1）**、
 **自前管理したい利用者は独自ストラテジ＝案3**。フォーク無しで両立し、案2（明示）も既定ストラテジ上で表現できる。
 
@@ -118,13 +118,14 @@ interface TokenStore {
 
 - `porters.auth.ensureAuthenticated()`（事前にトークンを用意）/ `porters.auth.getToken()`（デバッグ用）。
 
-## サブ決定（要議論）
+## サブ決定（確定）
 
-- **SD-1 認証の形 → 注入可能ストラテジ**（`TokenProvider`）。**既定=透過(案1)／自前=案3**。明示 `connect()` も既定ストラテジ上で表現可。
-- **SD-2 `TokenStore`**: 非同期 IF（**推奨**・redis/DB/ファイルに対応。インメモリは即 resolve）／ 同期 IF。
-- **SD-3 初回 code グラント**: URL 生成＋code 交換ヘルパーを提供（**推奨**）／ ドキュメントのみ。
-- **SD-4 secret の保持**: client 構築時に受け取り内部保持（ログ非出力）（**推奨**）。
-- **SD-5 v1 のスコープ**: 1:1 コア＋seam＋**既定透過ストラテジまで v1 同梱**（**推奨**・DX）／ 1:1＋seam だけ v1・透過は fast-follow。
+- **SD-1 認証の形 → 注入可能ストラテジ**（`TokenProvider`）。既定=透過(案1)／自前=案3。
+- **SD-2 `TokenStore` → 非同期 IF**（redis/DB/ファイルに対応。インメモリは即 resolve）。
+- **SD-3 初回 code グラント → URL 生成＋code 交換ヘルパーを提供**。
+- **SD-4 secret → client 構築時に内部保持・ログ非出力**。
+- **SD-5 v1 のスコープ → 1:1 コア＋seam＋既定透過ストラテジまで v1 同梱**（DX 優先）。
+- **SD-6 明示 `connect()` → mandatory にしない**。任意の `ensureAuthenticated()`（起動時 fail-fast / ウォームアップ）を提供。
 
 ### Consequences
 
