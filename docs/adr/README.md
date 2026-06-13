@@ -37,7 +37,7 @@
 | [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー） | 基本設計 | accepted   |
 | [0006][0006] | エラーモデル（PortersError・category・リトライ可否）       | 基本設計 | accepted   |
 | [0007][0007] | OAuth 認証の公開面（code/code_direct・トークン管理）       | 基本設計 | accepted   |
-| [0008][0008] | マルチテナント運用とパーティション選択                     | 基本設計 | proposed   |
+| [0008][0008] | マルチテナント運用とパーティション選択                     | 基本設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -60,7 +60,7 @@
 
 ### 決定済み（ADR / PRD）
 
-- 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開面: [ADR-0007][0007]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
+- 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開面: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md

@@ -1,11 +1,11 @@
 # 8. マルチテナント運用とパーティション選択
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-13
-- Deciders: （チーム議論中。提案: jun.shiromoto / Claude）
+- Deciders: jun.shiromoto (Joymerrevent)
 
-> `proposed`。本ライブラリ（L1）が**複数 PORTERS 契約企業（partition）を跨いで使われる**場合の公開面を決める。
-> end-user ↔ partition のマッピングは**利用側（SaaS）の責務**で L1 には持たせない、を明確化する。
+> 案2 ＋ 案3 で `accepted`（2026-06-13）。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
+> end-user ↔ partition のマッピングは**利用側（SaaS）の責務**で L1 には持たせない。
 
 ## Context and Problem Statement
 
@@ -36,12 +36,15 @@ PORTERS の構造（[authentication][auth] / [gotchas][gotchas]）:
 
 ## Decision Outcome
 
-**提案: 案2 ＋ 案3 を提供（案1 を土台に）**。
+**採用: 案2 ＋ 案3 を提供（案1 を土台に）**。
 
 - **L1 が提供するプリミティブ**:
   - `partition` を**呼び出し毎に指定**でき、**client 既定値**も持てる（[ADR-0005][0005]）。
   - **テナント単位スコープ** `const t = porters.partition(123)` → `t.candidate.search(...)`（partition を束ねる）。
   - **テナントごとに client / `TokenProvider`** を分けても良い（認証も分離したい場合）。
+  - **認証は両対応**: (a) 共有トークン＋`partition` ルーティング、(b) partition 別トークン。
+    `TokenProvider` は partition 文脈を受け取れる（例 `getAccessToken({ partition })`）ようにし、
+    既定ストラテジはトークンキャッシュを適切にキー付け（App 単位 or partition 単位）する。
   - **オンボーディング補助**: `auth.authorizationUrl()` / `exchangeAuthorizationCode()`（[ADR-0007][0007]）＋
     `partition`/`user` の Read（`request_type=0`）で**ログイン中の partition を発見**。
 - **L1 が持たないもの（利用側＝SaaS の責務）**:
@@ -60,11 +63,12 @@ PORTERS の構造（[authentication][auth] / [gotchas][gotchas]）:
   → porters.partition(その partition).candidate.search(...) を呼ぶ
 ```
 
-## オープン質問（要検証・PoC/契約/ポーターズ確認）
+## 確定事項 / オープン質問
 
-- **1 つの App トークンで複数 partition を叩けるのか**（`partition` パラメータでルーティング）／
-  **顧客ごとに別 App 登録が要るのか**。これにより認証の持ち方が変わる
-  （共有 1 トークン＋partition 切替 vs テナント別 `TokenProvider`）。**設計は両対応にしておく**。
+- **確定（経験上）**: App 登録は**顧客ごとではなく App 単位**（1 App で複数 partition の顧客に対応）。
+- **要検証（PoC / ポーターズ確認）**: **1 つの App トークンで複数 partition を叩けるか**（`partition` でルーティング）。
+  記憶になく不明。→ **設計は両対応**（上記 (a) 共有トークン＋partition 切替 / (b) partition 別トークン）にしておくため、
+  検証結果がどちらでも対応できる（＝この未確定は設計をブロックしない）。
 
 ### Consequences
 
