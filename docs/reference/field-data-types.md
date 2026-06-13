@@ -8,29 +8,29 @@
 
 ## Field Type 一覧
 
-| Value | Field Type          | Data Type          | 値の書式・備考                                                             |
-| ----- | ------------------- | ------------------ | -------------------------------------------------------------------------- |
-| 1     | SinglelineText      | SinglelineText     | 一行文字列                                                                 |
-| 2     | MultilineText       | MultilineText      | 改行を含む複数行文字列                                                     |
-| 3     | Number              | Number             | 数値。小数は最大 2 桁（Read）。Write 時、小数第 3 位以下は切り捨て         |
-| 4     | Date                | Date               | `yyyy/mm/dd` のみ                                                          |
-| 5     | Option[Checkbox]    | Option             | 複数選択可。末端 Alias のみ指定                                            |
-| 6     | Option[Radiobutton] | Option             | 単一選択                                                                   |
-| 7     | Option[Dropdown]    | Option             | 単一選択                                                                   |
-| 8     | Age                 | Age                | `yyyy/mm/dd`（値は Date と同じ。画面で年齢を自動算出）                     |
-| 9     | URL                 | URL                | 文字列                                                                     |
-| 10    | Mail                | Mail               | 文字列                                                                     |
-| 11    | System              | System[Id]         | レコード ID（数値）。下記 System Field 参照                                |
-| —     | System              | System[DateTime]   | `yyyy/mm/dd HH:MM:SS`・**UTC**。**Write 不可**（登録日/更新日）            |
-| —     | System              | System[Reference]  | 上位 Resource 参照。Read は入れ子取得、Write は親の `{Resource}.P_Id` のみ |
-| —     | System              | System[Department] | User API 専用                                                              |
-| 12    | DateTime            | DateTime           | `yyyy/mm/dd HH:MM:SS`・**UTC**                                             |
-| 14    | Currency            | Number             | 通貨（Data Type は Number）                                                |
-| 15    | Telephone           | Telephone          | 文字列。keyword 検索時はハイフン除去（数字のみ）                           |
-| 16    | Reference           | —                  | 参照表示専用。項目自体は値を持たない                                       |
-| 17    | User                | User               | ユーザー選択。Read は入れ子、**Write は `User.P_Id` のみ**                 |
-| 18    | Image               | Image              | Base64。詳細は [write-format.md][ref1] / [resource-api.md][ref2]           |
-| 20    | Link                | Link               | Contact ID / User / Department。**`X-P-ConnectAPI-Version: 2` 以降が必須** |
+| Value | Field Type          | Data Type          | 値の書式・備考                                                                         |
+| ----- | ------------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| 1     | SinglelineText      | SinglelineText     | 一行文字列                                                                             |
+| 2     | MultilineText       | MultilineText      | 改行を含む複数行文字列                                                                 |
+| 3     | Number              | Number             | 数値。小数は最大 2 桁（Read）。Write 時、小数第 3 位以下は切り捨て                     |
+| 4     | Date                | Date               | `yyyy/mm/dd` のみ                                                                      |
+| 5     | Option[Checkbox]    | Option             | 複数選択可。末端 Alias のみ指定                                                        |
+| 6     | Option[Radiobutton] | Option             | 単一選択                                                                               |
+| 7     | Option[Dropdown]    | Option             | 単一選択                                                                               |
+| 8     | Age                 | Age                | `yyyy/mm/dd`（値は Date と同じ。画面で年齢を自動算出）                                 |
+| 9     | URL                 | URL                | 文字列                                                                                 |
+| 10    | Mail                | Mail               | 文字列                                                                                 |
+| 11    | System              | System[Id]         | レコード ID（数値）。下記 System Field 参照                                            |
+| —     | System              | System[DateTime]   | `yyyy/mm/dd HH:MM:SS`・**UTC**。**Write 不可**（登録日/更新日）                        |
+| —     | System              | System[Reference]  | 上位 Resource 参照。Read は入れ子取得、Write は親の `{Resource}.P_Id` のみ             |
+| —     | System              | System[Department] | User API 専用                                                                          |
+| 12    | DateTime            | DateTime           | `yyyy/mm/dd HH:MM:SS`・**UTC**                                                         |
+| 14    | Currency            | Number             | 通貨（Data Type は Number）                                                            |
+| 15    | Telephone           | Telephone          | 文字列。keyword 検索時はハイフン除去（数字のみ）                                       |
+| 16    | Reference           | —                  | 参照表示専用。項目自体は値を持たない                                                   |
+| 17    | User                | User               | ユーザー選択。Read は入れ子、**Write は `User.P_Id` のみ**                             |
+| 18    | Image               | Image              | Base64。詳細は [write-format.md][write-format-md] / [resource-api.md][resource-api-md] |
+| 20    | Link                | Link               | Contact ID / User / Department。**`X-P-ConnectAPI-Version: 2` 以降が必須**             |
 
 ## System / User / Reference 系 Field（System Field List）
 
@@ -59,5 +59,5 @@
 - **Link は version 2 必須**。既定で `X-P-ConnectAPI-Version: 2` を送る方針（→ HTTP トランスポートの ADR）。
 - `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → 入力型から除外できる。
 
-[ref1]: write-format.md
-[ref2]: resource-api.md
+[write-format-md]: write-format.md
+[resource-api-md]: resource-api.md
