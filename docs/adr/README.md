@@ -40,7 +40,7 @@
 - **型設計（XML → 型）** — 手書き型 + テスト担保 / スキーマ駆動、カスタム項目の扱い
 - **公開 API の形** — `PortersClient` のオプション・リソースアクセサの返り値型
 - **ページング・検索条件の抽象化**
-- **日時の UTC ↔ JST 取り扱い**
+- **日時の表現** — ISO 8601・UTC 正規化（業務タイムゾーン変換はしない＝利用側の責務）
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [0000-template-md]: 0000-template.md
