@@ -36,6 +36,7 @@
 | [0004][0004] | リソース／フィールドの型モデル（P\_ ＋ U\_/A\_）           | 基本設計 | accepted   |
 | [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー） | 基本設計 | accepted   |
 | [0006][0006] | エラーモデル（PortersError・category・リトライ可否）       | 基本設計 | accepted   |
+| [0007][0007] | OAuth 認証の公開面（code/code_direct・トークン管理）       | 基本設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -47,8 +48,7 @@
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
-- **OAuth 認証の公開面** — 資格情報/スコープの渡し方・`code` / `code_direct` 前提（トークンキャッシュ内部は詳細設計）
-- **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）
+- **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開面は ADR-0005 で確定済み・詳細は実装時）
 
 ### 【詳細設計】（実装フェーズで決める）
 
@@ -70,3 +70,4 @@
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md
+[0007]: 0007-oauth-public-surface.md
