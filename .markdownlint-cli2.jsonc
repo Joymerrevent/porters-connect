@@ -5,7 +5,17 @@
     // 行長は Prettier(proseWrap: preserve)と日本語テキストに合わないため無効化
     "MD013": false,
     // 太字ラベルを見出し代わりに使う文書を許容（厳しくするなら true に戻す）
-    "MD036": false
+    "MD036": false,
+    // リンクは参照スタイル（[text][label] ＋末尾に [label]: URL）に統一。
+    // inline [text](url) は禁止。裸 URL は autolink <url> でよい。
+    "MD054": {
+      "autolink": true,
+      "inline": false,
+      "full": true,
+      "collapsed": true,
+      "shortcut": true,
+      "url_inline": false
+    }
   },
   "globs": ["**/*.md"],
   // Respect .gitignore so generated/working files (e.g. tmp/) are not linted.
