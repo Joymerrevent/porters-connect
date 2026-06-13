@@ -1,11 +1,10 @@
 # 3. MVP の対象リソースに Attachment を加える
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-13
-- Deciders: （チーム議論中。提案: jun.shiromoto）
+- Deciders: jun.shiromoto (Joymerrevent)
 
-> このフェーズの `proposed` 段階です。チーム議論で `accepted` になってから
-> `CLAUDE.md` / `SPEC_v1.md` の MVP 記述へ反映します（まだ反映しない）。
+> 案A で `accepted`（2026-06-13）。`CLAUDE.md` / `SPEC_v1.md` の MVP 記述へ反映済み。
 
 ## Context and Problem Statement
 
@@ -29,7 +28,7 @@ Attachment を MVP に含めるべきか？
 
 ## Decision Outcome
 
-**提案: 案A**（Attachment を MVP に追加）。
+**採用: 案A**（Attachment を MVP に追加）。
 
 - 添付＝**レジュメ/履歴書などのファイル**で、人材システムでの実需が高い。
 - Attachment Read の必要スコープが **`candidate_r, resume_r, job_r, process_r, recruiter_r, client_r`** と
@@ -37,7 +36,7 @@ Attachment を MVP に含めるべきか？
 - 優先度は Sales / Contract / Opportunity より高いと判断。
 - MVP 順序案: OAuth → Candidate → Job → Client → Process → Resume → **Attachment**（または Resume の直後）。
 
-> ※ `accepted` 後の反映先: `CLAUDE.md`「リソース」「MVP 優先順」、`SPEC_v1.md` 5.3。
+> ※ 反映先: `CLAUDE.md`「MVP 優先順」、`SPEC_v1.md` 5.3（反映済み）。
 
 ### Consequences
 

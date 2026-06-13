@@ -161,8 +161,10 @@ const job = await porters.job.get(jobId);
 4. **Client**（R/W）
 5. **Process**（R/W）
 6. **Resume**（R）
+7. **Attachment**（R/W）
 
 - 残りリソース（Activity / Contract / Sales 等）は v0.2 以降で段階追加。
+- ※ Attachment の MVP 追加は ADR-0003 で決定（2026-06-13）。
 
 ### 5.4 横断機能
 

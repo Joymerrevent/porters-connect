@@ -28,7 +28,7 @@
 | ---------------------------------------------- | ---------------------------------------------- | ---------- |
 | [0001](0001-record-architecture-decisions.md)  | ADR で設計判断を記録する                       | accepted   |
 | [0002](0002-ground-design-in-live-api-docs.md) | v1 設計を実 PORTERS API ドキュメントに接地する | accepted   |
-| [0003](0003-add-attachment-to-mvp.md)          | MVP の対象リソースに Attachment を加える       | proposed   |
+| [0003](0003-add-attachment-to-mvp.md)          | MVP の対象リソースに Attachment を加える       | accepted   |
 
 ## 論点バックログ（今フェーズで詰める・未起票）
 
