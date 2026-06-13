@@ -35,6 +35,7 @@
 | [0003][0003] | MVP の対象リソースに Attachment を加える                   | 要件定義 | accepted   |
 | [0004][0004] | リソース／フィールドの型モデル（P\_ ＋ U\_/A\_）           | 基本設計 | accepted   |
 | [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー） | 基本設計 | accepted   |
+| [0006][0006] | エラーモデル（PortersError・category・リトライ可否）       | 基本設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -46,7 +47,6 @@
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
-- **エラーモデル** — 公開する判別可能 union（category ＋ PORTERS コード ＋ 対処ヒント）
 - **OAuth 認証の公開面** — 資格情報/スコープの渡し方・`code` / `code_direct` 前提（トークンキャッシュ内部は詳細設計）
 - **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）
 
@@ -69,3 +69,4 @@
 [0003]: 0003-add-attachment-to-mvp.md
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
+[0006]: 0006-error-model.md
