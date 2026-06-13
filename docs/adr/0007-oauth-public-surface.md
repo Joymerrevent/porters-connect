@@ -29,15 +29,26 @@ PORTERS の OAuth は独自仕様（[authentication][auth]）:
 
 ## Considered Options（トークン管理の露出）
 
-- **案1: 透過的**（初回呼び出しで lazy 自動取得＋失効時 自動更新）＋任意の明示 API（推奨）
+- **案1: 透過的**（初回呼び出しで lazy 自動取得＋失効時 自動更新）＋任意の明示 API
 - **案2: 明示的**に `connect()/authenticate()` を呼ばせてから使う
 - **案3: 利用者がトークンを全部管理**（ライブラリは付与だけ）
+- **案4: 注入可能な認証ストラテジ**（1:1 コア＋トークン供給を差し替え。**既定=透過(案1)／自前=案3**）（推奨・チーム提案）
 
 ## Decision Outcome
 
-**提案: 案1（透過 ＋ 補助 API）**。
+**提案: 案4（注入可能な認証ストラテジ）**。**1:1 で API に忠実なコア**を土台に、アクセストークンの供給を
+**ストラテジ（`TokenProvider`）として差し替え可能**にする。**既定は透過（`code_direct`＋キャッシュ＋自動更新＝案1）**、
+**自前管理したい利用者は独自ストラテジ＝案3**。フォーク無しで両立し、案2（明示）も既定ストラテジ上で表現できる。
 
-### 通常運用（code_direct・自動）
+### 認証ストラテジの seam
+
+```ts
+interface TokenProvider {
+  getAccessToken(): Promise<string>; // 有効な Access Token を供給（失効時は自前で更新）
+}
+```
+
+### 通常運用（既定ストラテジ＝透過・code_direct）
 
 ```ts
 const porters = new PortersClient({
@@ -45,12 +56,24 @@ const porters = new PortersClient({
   appId,
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
-  tokenStore: redisTokenStore, // 任意・既定インメモリ
+  tokenStore: redisTokenStore, // 任意・既定インメモリ（既定ストラテジが使う）
 });
 
 // 通常はこれだけ。初回呼び出しで code_direct → token を自動取得し、以後 Refresh も自動。
 await porters.candidate.search({ ... });
 ```
+
+### 自前でトークン管理（案3・1:1 コアを直接）
+
+```ts
+const porters = new PortersClient({
+  host,
+  auth: { getAccessToken: async () => myAccessToken }, // 独自ストラテジ＝フルコントロール
+});
+```
+
+**層と実装順**: ①1:1 忠実コア＋ストラテジ seam を先に（テスト容易・モック可・契約不要）→ ②既定の透過ストラテジ（案1）を上に。
+案1 は“理想”だが、北極星「簡単→デファクト」のため**既定ストラテジとして v1 同梱**を狙う（自前=案3 は常に逃げ道）。
 
 ### 初回の権限付与（人間が一度だけ・ブラウザ `code`）
 
@@ -97,10 +120,11 @@ interface TokenStore {
 
 ## サブ決定（要議論）
 
-- **SD-1 トークン管理**: 透過（lazy 自動取得＋自動更新）（**推奨**）／ 明示 `connect()`。
+- **SD-1 認証の形 → 注入可能ストラテジ**（`TokenProvider`）。**既定=透過(案1)／自前=案3**。明示 `connect()` も既定ストラテジ上で表現可。
 - **SD-2 `TokenStore`**: 非同期 IF（**推奨**・redis/DB/ファイルに対応。インメモリは即 resolve）／ 同期 IF。
 - **SD-3 初回 code グラント**: URL 生成＋code 交換ヘルパーを提供（**推奨**）／ ドキュメントのみ。
 - **SD-4 secret の保持**: client 構築時に受け取り内部保持（ログ非出力）（**推奨**）。
+- **SD-5 v1 のスコープ**: 1:1 コア＋seam＋**既定透過ストラテジまで v1 同梱**（**推奨**・DX）／ 1:1＋seam だけ v1・透過は fast-follow。
 
 ### Consequences
 
