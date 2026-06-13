@@ -4,7 +4,7 @@
 - Read scope: `opportunity_r, recruiter_r, client_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
 - Write scope: `opportunity_w`
 - alias 接頭辞: `Opportunity.`
-- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/21029666049945-Opportunity-Field-List>（updated_at 2023-08-10）／ scope は Read・Write 記事より。取得 2026-06-12
+- 出典: [フィールド定義 記事][src]（updated_at 2023-08-10）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 
@@ -29,3 +29,5 @@
 | Opportunity.P_PhaseDate        | フェーズ日付     | DateTime          | ー       | ー       | 注意事項はWrite API - Phaseの更新についてを参照してください。                                                                                                                 |
 | Opportunity.P_PhaseMemo        | フェーズメモ     | MultilineText     | ー       | ー       | 注意事項はWrite API - Phaseの更新についてを参照してください。                                                                                                                 |
 | Opportunity.P_Position         | ポジション       | SinglelineText    | ー       | ー       | —                                                                                                                                                                             |
+
+[src]: https://hrbcapi.porters.jp/hc/ja/articles/21029666049945-Opportunity-Field-List

@@ -42,7 +42,7 @@ Attachment を MVP に含めるべきか？
 
 - Good: 実需の高いファイル連携を MVP で提供でき、普及目標に資する。
 - Bad: MVP の実装範囲が 1 リソース増える（Base64・2MB 制限・Mime 検証）。
-- Neutral: Attachment は項目が `Person.`/`Job.` のような接頭辞でなく短縮名（Id/Resource/…）で特殊（[resources/attachment.md](../reference/resources/attachment.md)）。
+- Neutral: Attachment は項目が `Person.`/`Job.` のような接頭辞でなく短縮名（Id/Resource/…）で特殊（[resources/attachment.md][ref1]）。
 
 ## Pros and Cons of the Options
 
@@ -63,6 +63,9 @@ Attachment を MVP に含めるべきか？
 
 ## More Information
 
-- 接地: [resources/attachment.md](../reference/resources/attachment.md)（項目・対応 MIME）、
-  [write-format.md](../reference/write-format.md)（Image/Base64）。
+- 接地: [resources/attachment.md][ref1]（項目・対応 MIME）、
+  [write-format.md][ref2]（Image/Base64）。
 - 関連: [[0002-ground-design-in-live-api-docs]], `SPEC_v1.md` 5.3, `CLAUDE.md`。
+
+[ref1]: ../reference/resources/attachment.md
+[ref2]: ../reference/write-format.md

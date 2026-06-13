@@ -3,7 +3,7 @@
 - endpoint: `/v1/user`
 - Read scope: `user_r`
 - Write scope: （Write API なし・読み取り専用）
-- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/360001264748-User-Field-List-Timezone-List>（updated_at 2025-02-14）／ scope は Read・Write 記事より。取得 2026-06-12
+- 出典: [フィールド定義 記事][src]（updated_at 2025-02-14）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > マスタ系（読み取り専用）。下表は Read 記事の出力項目から抽出。
@@ -29,3 +29,5 @@
 | User.P_RegisteredBy     | データ登録者       | User               | —        | —        | Resource APIでのRead時に、参照取得することはできません。                                                                                               |
 | User.P_UpdateDate       | データ更新日       | System[DateTime]   | —        | —        | Resource APIでのRead時に、参照取得することはできません。                                                                                               |
 | User.P_UpdatedBy        | データ更新者       | User               | —        | —        | Resource APIでのRead時に、参照取得することはできません。                                                                                               |
+
+[src]: https://hrbcapi.porters.jp/hc/ja/articles/360001264748-User-Field-List-Timezone-List

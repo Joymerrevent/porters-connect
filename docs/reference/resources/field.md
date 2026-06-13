@@ -3,7 +3,7 @@
 - endpoint: `/v1/field`
 - Read scope: `field_r`
 - Write scope: （Write API なし・読み取り専用）
-- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115012160308-Field-Read>（updated_at 2025-03-27）／ scope は Read・Write 記事より。取得 2026-06-12
+- 出典: [フィールド定義 記事][src]（updated_at 2025-03-27）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > マスタ系（読み取り専用）。下表は Read 記事の出力項目から抽出。
@@ -22,3 +22,5 @@
 | Field.P_DecimalFraction | —    | —          | —        | —        | Number Typeの場合に、少数以下の桁数を表します。                                                                                                    |
 | Field.P_ReferTo         | —    | —          | —        | —        | Option Typeの場合、その項目に関連づけられている選択肢のAliasを表します。 / Reference Typeの場合、参照している上位Resourceの項目のAliasを表します。 |
 | Field.P_ResourceType    | —    | —          | —        | —        | Resourceの値です。詳細は、Resource Listを参照してください。                                                                                        |
+
+[src]: https://hrbcapi.porters.jp/hc/ja/articles/115012160308-Field-Read

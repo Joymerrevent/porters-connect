@@ -7,7 +7,7 @@
 
 「なぜその設計にしたか」を 1 判断 1 ファイルで残す軽量な記録です。
 コードを読んでも分からない「選ばなかった選択肢」と「その理由」を未来の自分／貢献者に伝えます。
-形式は [MADR（Markdown Any Decision Records）](https://adr.github.io/madr/) のフル版に準拠します。
+形式は [MADR（Markdown Any Decision Records）][ref1] のフル版に準拠します。
 
 ## 運用ルール
 
@@ -19,16 +19,16 @@
   個人や AI が単独で `accepted` にしない。**決定事項の反映（`CLAUDE.md` / `SPEC` などの更新）は `accepted` 後**に行う。
 - ステータスは次のいずれか：`proposed`（議論中）/ `accepted`（確定）/ `rejected`（不採用）/ `deprecated`（廃止）/ `superseded by NNNN`（後続で置換）。
 - 一度 `accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR を起こして旧 ADR を `superseded by NNNN` にする。
-- 雛形は [`0000-template.md`](0000-template.md)（MADR フル）をコピーして使う。
+- 雛形は [`0000-template.md`][ref2]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options → Decision Outcome（+ Consequences）→ Pros and Cons of the Options → More Information。
 
 ## 一覧
 
-| #                                              | タイトル                                       | ステータス |
-| ---------------------------------------------- | ---------------------------------------------- | ---------- |
-| [0001](0001-record-architecture-decisions.md)  | ADR で設計判断を記録する                       | accepted   |
-| [0002](0002-ground-design-in-live-api-docs.md) | v1 設計を実 PORTERS API ドキュメントに接地する | accepted   |
-| [0003](0003-add-attachment-to-mvp.md)          | MVP の対象リソースに Attachment を加える       | accepted   |
+| #            | タイトル                                       | ステータス |
+| ------------ | ---------------------------------------------- | ---------- |
+| [0001][ref3] | ADR で設計判断を記録する                       | accepted   |
+| [0002][ref4] | v1 設計を実 PORTERS API ドキュメントに接地する | accepted   |
+| [0003][ref5] | MVP の対象リソースに Attachment を加える       | accepted   |
 
 ## 論点バックログ（今フェーズで詰める・未起票）
 
@@ -41,3 +41,9 @@
 - **公開 API の形** — `PortersClient` のオプション・リソースアクセサの返り値型
 - **ページング・検索条件の抽象化**
 - **日時の UTC ↔ JST 取り扱い**
+
+[ref1]: https://adr.github.io/madr/
+[ref2]: 0000-template.md
+[ref3]: 0001-record-architecture-decisions.md
+[ref4]: 0002-ground-design-in-live-api-docs.md
+[ref5]: 0003-add-attachment-to-mvp.md

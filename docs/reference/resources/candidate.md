@@ -4,7 +4,7 @@
 - Read scope: `candidate_r, user_r, option_r`（＋ 参照する上位リソースの `_r`）
 - Write scope: `candidate_w`
 - alias 接頭辞: `Person.`
-- 出典: フィールド <https://hrbcapi.porters.jp/hc/ja/articles/115008016747-Candidate-Field-List>（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
+- 出典: [フィールド定義 記事][src]（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 
@@ -42,3 +42,5 @@
 | Person.U\_[Name]          | ー                 | ー               | ー       | ー       | ユーザーが作成した項目です。 / [Name]には、ユーザーが指定した名称またはシステムによって付与された名称が指定されます。                                                                                                                                                |
 | Person.A\_[Name]          | ー                 | ー               | ー       | ー       | アプリが作成した項目です。 / [Name]には通常アプリによって付与された名称が指定されます。                                                                                                                                                                              |
 | Person.P_Deleted          | ー                 | ー               | ー       | ー       | レコードの削除状態を表します。 / 0：削除されていないレコード / 1：削除済みのレコード / / ※本fieldは、2018/04/10より利用可能です。 / ※Read時のfield Parameterとしてのみ指定可能です。ConditionやOrderに指定することはできません。 / また、Write時の指定はできません。 |
+
+[src]: https://hrbcapi.porters.jp/hc/ja/articles/115008016747-Candidate-Field-List
