@@ -56,6 +56,7 @@ class PortersError extends Error {
 class PortersAuthError extends PortersError {} // OAuth / Token
 class PortersResourceError extends PortersError {} // Resource API
 class PortersNetworkError extends PortersError {} // 接続/タイムアウト/レート切断
+class PortersConfigError extends PortersError {} // 設定/使い方の誤り（PORTERS 由来でない・同期 throw）
 
 type ErrorCategory =
   | "auth" // 認証情報/トークン/コード（再認証や設定見直しが必要）
@@ -67,6 +68,7 @@ type ErrorCategory =
   | "transient" // 一時障害・トランザクション（再試行可）
   | "network" // 接続/タイムアウト
   | "server" // PORTERS 内部エラー
+  | "config" // 設定/使い方の誤り（defineFields・client オプション。同期 throw）
   | "unknown"; // 未知（フェイルセーフ）
 ```
 
@@ -90,6 +92,7 @@ type ErrorCategory =
 | auth     | 108                                             | server     | ❌                         |
 | http     | —（切断/タイムアウト）                          | network    | ✅（バックオフ）           |
 | http     | レート超過                                      | rateLimit  | ✅（待機後）               |
+| config   | —（defineFields/オプション不正）                | config     | ❌（同期 throw）           |
 | 任意     | 上記以外                                        | unknown    | ❌                         |
 
 **トークン期限切れの自動回復**: resource `401`/`402`・auth `400`（Access Token 期限切れ）は
@@ -99,12 +102,18 @@ type ErrorCategory =
 **フェイルセーフ**: 未知コード/パース不能は必ず `PortersError`（`category: "unknown"`・`retryable: false`）で返し、
 生エラーや握り潰しをしない。`hint` と `context` で自己解決を促す。
 
+**設定エラー（同期 throw・検証境界）**: `defineFields()` / `new PortersClient()` の不正な設定（alias 書式・重複・
+未対応型・オプション不正）は、**PORTERS 呼び出し前に `PortersConfigError`（`category: "config"`）を同期 throw**
+（フェイルセーフ＝原因の近くで最速に落とす）。検証を通った `myFields` は branded で安全＝client は再検証しない。
+ただし「項目がテナントに実在するか」は定義時に確認せず（契約不要のため）、実行時にフェイルセーフ検証する。
+
 ## サブ決定（要議論）
 
 - **SD-A 型の形 → source 別の薄い階層**（基底 ＋ Auth/Resource/Network）。系統＝`instanceof`、横断＝`category`。
 - **SD-B `category` を残すか**: 残す（**推奨**・permission/validation/transient は系統横断で対処分岐に有用）／ 階層のみ（`code` を詳細に）。
 - **SD-C category の粒度**: 10 個（**推奨**）／ より少なく（`notFound`/`conflict`/`server` を寄せる）。
 - **SD-D retryable の持ち方**: フィールド（**推奨**・構築時算出）／ 外部関数。
+- **SD-E 設定/使い方エラーの型**: `PortersConfigError`（基底の兄弟・`category: "config"`・同期 throw）（**推奨**）／ 標準 `TypeError`。
 
 ### Consequences
 

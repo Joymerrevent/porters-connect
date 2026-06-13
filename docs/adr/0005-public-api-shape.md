@@ -84,6 +84,10 @@ const myFields = defineFields({
 // → porters.candidate.get(id) の結果に U_score: number | null 等が型付きで生える
 ```
 
+`defineFields()` は**検証の境界**：不正な宣言（alias 書式・重複・未対応型）は同期で
+`PortersConfigError` を throw する（→ エラーモデルの ADR）。通過後の `myFields` は branded で安全＝
+`PortersClient` は再検証しない。ただし「項目がテナントに実在するか」は実行時にフェイルセーフ検証する。
+
 ### ページング
 
 ```ts
