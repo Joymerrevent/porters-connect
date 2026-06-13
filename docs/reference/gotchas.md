@@ -26,10 +26,13 @@
 
 - **Alias は環境・テナント依存**。本番と開発用テスト環境で項目・選択肢の Alias がズレると連携が壊れる
   （マスタコピーで一致させる運用）。→ ライブラリは **Alias をハードコードせず**、
-  Partition / Field / Option Read で発見する手段を提供する（→ 型設計の ADR）。
+  Partition / Field / Option Read で発見する手段を提供する（→ 型設計の ADR-0004）。
 - **keyword（フリーワード）検索は Option 型項目を対象にできない**（FAQ）。Option は `condition` で指定する。
 - **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。未知 Alias に強い設計（寛容なパース・明確なエラー）。
 - **削除 API は無い**（データ・添付とも。提供予定なし）。`delete()` を生やさない。削除済みは `itemstate` で Read 可。
+- **フィールド型は原典記事の値をそのまま転記**しているため、PORTERS 側の不揃いも残る。例: 携帯メール
+  `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と割れている（原典どおり）。
+  型生成時は原典差異に注意し、正典は `resource-api/field-data-types.md` の分類に寄せる（→ 型設計の ADR-0004）。
 
 ## ログイン中の企業 / ユーザーの特定
 

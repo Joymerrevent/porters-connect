@@ -36,7 +36,7 @@
 | Sales       | `/v1/sales`       | 11    | `sales_r` / `sales_w`             | `Sales`       | [Read][sales-read] ／ [Write][sales-write] ／ [Field][sales-field]                   |
 | Opportunity | `/v1/opportunity` | 25    | `opportunity_r` / `opportunity_w` | `Opportunity` | [Read][opportunity-read] ／ [Write][opportunity-write] ／ [Field][opportunity-field] |
 | Phase       | `/v1/phase`       | —     | `phase_r` / `phase_w`             | `Phase`       | [Read][phase-read] ／ [Write][phase-write] ／ [Field][phase-field]                   |
-| Attachment  | `/v1/attachment`  | —     | `attachment_r` / `attachment_w`   | （要確認）    | [Read][attachment-read] ／ [Write][attachment-write] ／ [Mime Type][mime-type]       |
+| Attachment  | `/v1/attachment`  | —     | `attachment_r` / `attachment_w`   | 接頭辞なし    | [Read][attachment-read] ／ [Write][attachment-write] ／ [Mime Type][mime-type]       |
 
 ## 補足
 
@@ -45,13 +45,13 @@
   `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
 - **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
-  Read は可能（[resource-api.md][resource-api-md] 参照）。
+  Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
 - Phase の更新には専用の作法がある（[Phase の更新について][phase]）。
 - 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] に per-resource でまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。
-- MVP 実装順（CLAUDE.md）: OAuth → Candidate → Job → Client → Process → Resume。
+- MVP 実装順（CLAUDE.md / ADR-0003）: OAuth → Candidate → Job → Client → Process → Resume → Attachment。
 
 [partition-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012006227
 [user-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012160288

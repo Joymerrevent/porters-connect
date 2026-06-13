@@ -2,7 +2,7 @@
 
 各リソースの標準項目（`P_*`）を出典記事から抽出した一覧です。カスタム項目（`U_`/`A_`）は
 テナント毎に異なるため [Field Read API][resource-api] で取得します。横断仕様は
-[resource-api.md][resource-api]、リソース全体像は [resources.md][resources] を参照。
+[Resource API 概要][resource-api]、リソース全体像は [リソース一覧][resources] を参照。
 
 ## データ系
 

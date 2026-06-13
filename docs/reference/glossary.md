@@ -39,6 +39,6 @@
 | Contract  | 契約                      | 契約                         |
 | Sales     | 成約（売上）              | 個別契約                     |
 
-> Candidate の項目接頭辞が `Person.` なのは「個人連絡先＝人」を表すため。英語型名の検討時にこの対応表を参照する（→ 公開 API の ADR）。
+> Candidate の項目接頭辞が `Person.` なのは「個人連絡先＝人」を表すため。英語型名の検討時にこの対応表を参照する（→ 公開 API の ADR-0005）。
 
 [gotchas-md]: gotchas.md

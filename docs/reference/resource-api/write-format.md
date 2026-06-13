@@ -7,7 +7,7 @@
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008171688>
 
 Write は `POST https://{host}/v1/{resource}`、`Content-Type: application/xml; charset=UTF-8`、
-ヘッダに Access Token。詳細は [authentication.md][authentication-md] / [resource-api.md][resource-api-md]。
+ヘッダに Access Token。詳細は [認証 API][authentication-md] / [Resource API 概要][resource-api-md]。
 
 ## 標準フォーマット
 

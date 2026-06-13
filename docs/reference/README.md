@@ -22,7 +22,8 @@
 
 ### Resource API（[resource-api/][rapi]）
 
-- [概要][rapi]: エンドポイント・Read パラメータ・XML 形式・Result Code・各種制限。
+- [概要][rapi]: エンドポイント・Read パラメータ・XML 形式・各種制限。
+- [result-codes][rapi-rc]: リソース系 Result Code 一覧・リトライ方針（認証エラーとは別系統）。
 - [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
 - [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
 - [resources-list][rapi-list]: 全リソースの一覧・R/W・必要スコープ・Alias の注意点。
@@ -36,10 +37,11 @@
 
 - レスポンスは **XML のみ**（`charset=UTF-8`）。利用者には型付きオブジェクトのみ返す。
 - **既定ホストは `api-hrbc-jp.porterscloud.com`**（共有サーバ）。個別サーバ契約時のみ別ホスト → `PORTERS_HOST` で受ける。
+  - ※ これは理解のための**参考値**。コード・設定に**ハードコードしない**（CLAUDE.md「ホスト名は非公開」）。実値は常に `PORTERS_HOST` 経由。
 - 認証コードの有効期限は **30 秒**。Access Token **約30分**、Refresh Token **約2時間**。
 - **削除 API は無い**が、`itemstate=deleted|all` で**削除済みデータの読み取りは可能**（90日以内の制約あり）。
-- **エラーコードが 2 系統**ある（認証系 `<Authentication><Error>` と リソース系 `<Resource><Code>`）。番号が重複しても意味が違う。
-- 1 リクエスト最大 **200 レコード**、1 分あたり Read **2000** / Write **500**、リクエスト長 **約15000文字**（将来 16KB 予定）。
+- **エラーコードが 2 系統**ある（認証系 `<Authentication><Error>` → [auth-errors] ／ リソース系 `<Resource><Code>` → [rapi-rc]）。番号が重複しても意味が違う。
+- 1 リクエスト最大 **200 レコード**、1 分あたり Read **2000** / Write **500**、リクエスト長 **約15000文字**（将来 16KB を検討中・未確定）。
   - ※ `SPEC_v1.md` の「32KB」は旧情報。最新は約15000文字。
 - **Field Alias の接頭辞はリソース名と一致しないことがある**（例: Candidate の項目は `Person.P_*`）。
 
@@ -62,6 +64,7 @@ node tmp/porters-docs/gen-resources.mjs
 [auth-headers]: authentication-api/headers.md
 [auth-errors]: authentication-api/errors.md
 [rapi]: resource-api/README.md
+[rapi-rc]: resource-api/result-codes.md
 [rapi-fdt]: resource-api/field-data-types.md
 [rapi-wf]: resource-api/write-format.md
 [rapi-list]: resource-api/resources-list.md

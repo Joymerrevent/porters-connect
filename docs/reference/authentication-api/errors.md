@@ -1,10 +1,10 @@
 # 認証エラーコード（リソースの Result Code とは別系統）
 
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008172688-Authentication-and-Authorization-Error>（updated_at 2021-06-03、取得 2026-06-12）。
-全体像は [認証 README](README.md)。
+全体像は [認証 README][readme]。
 
 OAuth / Token のエラーは root 要素 `<Authentication>` の `<Error>` に出る。
-redirect の場合は `?error=コード`。**Resource API の Result Code（[resource-api](../resource-api/README.md)）とは番号体系が異なる**ので混同しない。
+redirect の場合は `?error=コード`。**Resource API の Result Code（[result-codes][result-codes]）とは番号体系が異なる**ので混同しない。
 
 ```xml
 <Authentication>
@@ -40,3 +40,6 @@ redirect の場合は `?error=コード`。**Resource API の Result Code（[res
 | 402  | アクセス許可が無い                        |
 
 エラーモデル（ライブラリの `PortersError`）への対応は ADR-0006 を参照。
+
+[readme]: README.md
+[result-codes]: ../resource-api/result-codes.md
