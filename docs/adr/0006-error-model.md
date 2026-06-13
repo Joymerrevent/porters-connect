@@ -1,11 +1,11 @@
 # 6. エラーモデル（PortersError・category・リトライ可否）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-13
-- Deciders: （チーム議論中。提案: jun.shiromoto / Claude）
+- Deciders: jun.shiromoto (Joymerrevent)
 
-> `proposed`。[ADR-0005][0005] の「throw 型付きエラー」を具体化する。リトライの**機構**は詳細設計、
-> 本 ADR は**公開するエラーの型と分類・リトライ可否の方針**を決める。
+> 案C ＋ SD 全採用で `accepted`（2026-06-13）。リトライの**機構**は詳細設計、OAuth 自動回復は OAuth ADR で詰める。
+> 本 ADR は**公開するエラーの型と分類・リトライ可否の方針**を確定。
 
 ## Context and Problem Statement
 
@@ -37,7 +37,7 @@ PORTERS のエラーは**2 系統**で番号が重複し意味が違う（[resou
 
 ## Decision Outcome
 
-**提案: 案C（source 別の薄い階層 ＋ `category`）**。系統＝クラス（`code` の意味が曖昧にならない・`instanceof` で大別）、`category` は系統横断の対処分岐軸。
+**採用: 案C（source 別の薄い階層 ＋ `category`）**。系統＝クラス（`code` の意味が曖昧にならない・`instanceof` で大別）、`category` は系統横断の対処分岐軸。
 
 ```ts
 // 基底：すべての PORTERS 由来エラー（まとめて catch 可能）
@@ -107,7 +107,15 @@ type ErrorCategory =
 （フェイルセーフ＝原因の近くで最速に落とす）。検証を通った `myFields` は branded で安全＝client は再検証しない。
 ただし「項目がテナントに実在するか」は定義時に確認せず（契約不要のため）、実行時にフェイルセーフ検証する。
 
-## サブ決定（要議論）
+**宣言した項目がテナントに実在しない場合**（config エラーではなく**実行時・PORTERS 由来**として扱う）:
+
+- 実際に Read/Write で**使った時**に PORTERS が code `100`（無効パラメータ/項目削除）を返す → `PortersResourceError`
+  （`category: "validation"`）で surface し、`hint` に「この partition に存在しない/削除された可能性。Field Read で確認」を付ける（握り潰さない）。
+- **リクエストしていない**宣言項目は単に `undefined`（正常。SD-3 簡易型のトレードオフ）。
+- **宣言型と実データの食い違い**も `validation` で surface（フィールド名付き・silent な誤変換はしない）。
+- 起動前に検出したい場合は Field Read と突き合わせる**任意の事前検証**（opt-in・ライブ接続要・将来の dev ツール）。既定では行わない。
+
+## サブ決定（確定・いずれも推奨案を採用）
 
 - **SD-A 型の形 → source 別の薄い階層**（基底 ＋ Auth/Resource/Network）。系統＝`instanceof`、横断＝`category`。
 - **SD-B `category` を残すか**: 残す（**推奨**・permission/validation/transient は系統横断で対処分岐に有用）／ 階層のみ（`code` を詳細に）。

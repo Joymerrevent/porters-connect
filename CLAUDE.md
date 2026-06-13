@@ -62,7 +62,7 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 - `any` を撒かない。リソース・スコープ・レスポンスは型で表現する。
 - フィールド型モデル：**標準 `P_` は同梱の静的型／テナント毎 `U_`・`A_` は利用者が宣言＋実行時検証**（ハイブリッド。`docs/adr/0004-field-type-model.md`）。
 - public API は `src/index.ts` から明示的に export。内部実装は外に漏らさない。
-- エラーは判別可能な型に整理（認証失敗 / レート超過 / 400 / ネットワーク等）。
+- エラーは判別可能な型に整理：基底 `PortersError` ＋ 系統別サブクラス（Auth / Resource / Network / Config）＋ `category`（`docs/adr/0006-error-model.md`）。
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
 - テストを伴わない新リソース追加はしない。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
