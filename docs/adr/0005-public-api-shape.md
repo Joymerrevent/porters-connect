@@ -1,11 +1,11 @@
 # 5. 公開 API の形（PortersClient・アクセサ・宣言 DSL・返り値/エラー）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-13
-- Deciders: （チーム議論中。提案: jun.shiromoto / Claude）
+- Deciders: jun.shiromoto (Joymerrevent)
 
-> `proposed`。基本設計の本丸。accepted 後に SPEC/README へ反映。エラーの**型詳細**は別 ADR（エラーモデル）、
-> XML の値エンコードは別 ADR（XML パース/シリアライズ）で詰める。本 ADR は**外から見える形**を決める。
+> 案1 ＋ SD 全採用で `accepted`（2026-06-13）。エラーの**型詳細**は別 ADR（エラーモデル）、
+> XML の値エンコードは別 ADR（XML パース/シリアライズ）で詰める。本 ADR は**外から見える形**を確定。
 
 ## Context and Problem Statement
 
@@ -31,7 +31,7 @@
 
 ## Decision Outcome
 
-**提案: 案1（名前空間アクセサ）** ＋ 以下の形。
+**採用: 案1（名前空間アクセサ）** ＋ 以下の形。
 
 ### クライアント構築
 
@@ -112,11 +112,11 @@ try {
 メソッド群を**純粋に呼べる**形にし、状態は `PortersClient` に閉じる。第2層 MCP は
 `porters.candidate.search` 等を tool ハンドラから**そのまま呼ぶだけ**にできる（ロジック重複なし）。
 
-## 要議論のサブ決定（accept 前に確定したい）
+## サブ決定（確定）
 
-- **SD-1 返り値契約**: throw 型付きエラー（**推奨**・idiomatic で低摩擦、リッチな型でフェイルセーフ担保）／ `Result` 型（明示的だが ceremony 増）／ 両対応。
-- **SD-2 宣言 DSL の風味**: A 型マップ `{ U_score: "number" }`（最小）／ **B ビルダー `f.number()`（推奨・検証と推論が強い）**。いずれも依存ゼロ。
-- **SD-3 field 選択と返り値型**: 簡易（**推奨**・全既知項目を持つ型、選択は実行時）／ 選択に応じて返り値型を絞る（高 DX だが型が複雑 → P1/将来）。
+- **SD-1 返り値契約 → throw 型付きエラー**（idiomatic・低摩擦、リッチな型でフェイルセーフ担保）。`Result` 型は採らない。
+- **SD-2 宣言 DSL → ビルダー `f.number()`**（依存ゼロ・検証と推論が一体）。型マップ案は不採用。
+- **SD-3 field 選択と返り値型 → 簡易**（全既知項目を持つ型・選択は実行時）。選択で型を絞る案は将来（P1）。
 
 ### Consequences
 

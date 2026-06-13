@@ -34,7 +34,7 @@
 | [0002][0002] | v1 設計を実 PORTERS API ドキュメントに接地する             | プロセス | accepted   |
 | [0003][0003] | MVP の対象リソースに Attachment を加える                   | 要件定義 | accepted   |
 | [0004][0004] | リソース／フィールドの型モデル（P\_ ＋ U\_/A\_）           | 基本設計 | accepted   |
-| [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー） | 基本設計 | proposed   |
+| [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー） | 基本設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -59,7 +59,7 @@
 
 ### 決定済み（ADR / PRD）
 
-- 型モデル: [ADR-0004][0004]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
+- 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md
