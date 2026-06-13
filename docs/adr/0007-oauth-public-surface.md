@@ -156,7 +156,7 @@ interface TokenStore {
 - 後続（詳細設計）: トークンのキャッシュ/Refresh 機構（single-flight・TTL）、リトライ。
 - 関連: [[0005-public-api-shape]], [[0006-error-model]]。
 
-[auth]: ../reference/authentication/README.md
+[auth]: ../reference/authentication-api/README.md
 [prd]: ../design/requirements.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md

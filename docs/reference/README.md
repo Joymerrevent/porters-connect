@@ -16,7 +16,7 @@
 
 ## 構成
 
-### Authentication API（[authentication/][auth]）
+### Authentication API（[authentication-api/][auth]）
 
 接続認証。[OAuth][auth-oauth] ／ [Token][auth-token] ／ [HTTP ヘッダ][auth-headers] ／ [認証エラー][auth-errors]。
 
@@ -56,11 +56,11 @@ node tmp/porters-docs/extract.mjs
 node tmp/porters-docs/gen-resources.mjs
 ```
 
-[auth]: authentication/README.md
-[auth-oauth]: authentication/oauth.md
-[auth-token]: authentication/token.md
-[auth-headers]: authentication/headers.md
-[auth-errors]: authentication/errors.md
+[auth]: authentication-api/README.md
+[auth-oauth]: authentication-api/oauth.md
+[auth-token]: authentication-api/token.md
+[auth-headers]: authentication-api/headers.md
+[auth-errors]: authentication-api/errors.md
 [rapi]: resource-api/README.md
 [rapi-fdt]: resource-api/field-data-types.md
 [rapi-wf]: resource-api/write-format.md

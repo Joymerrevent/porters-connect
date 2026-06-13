@@ -159,4 +159,4 @@ type ErrorCategory =
 
 [0005]: 0005-public-api-shape.md
 [rapi]: ../reference/resource-api/README.md
-[auth]: ../reference/authentication/README.md
+[auth]: ../reference/authentication-api/README.md
