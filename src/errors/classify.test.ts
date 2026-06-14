@@ -4,7 +4,7 @@ import {
   PortersAuthError,
   PortersNetworkError,
   PortersResourceError,
-} from "./index";
+} from "./porters-error";
 import {
   authCategory,
   authError,

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersAuthError, PortersError, PortersResourceError } from "./index";
+import {
+  PortersAuthError,
+  PortersError,
+  PortersResourceError,
+} from "./porters-error";
 
 describe("PortersError", () => {
   it("subclasses are catchable as PortersError and carry classification", () => {
