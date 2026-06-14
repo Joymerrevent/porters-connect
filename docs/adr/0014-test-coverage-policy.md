@@ -1,11 +1,12 @@
 # 14. テストカバレッジ方針（計測・閾値・CI 強制）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-14
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > PoC（OAuth + Candidate Read）マージ後、UT は 44 件あるが**カバレッジ計測も閾値も未設定**。
-> 「壊れたら安全側に倒す」フェイルセーフを担保するため、計測と回帰ゲートを決める。`proposed`（議論後に確定）。
+> 「壊れたら安全側に倒す」フェイルセーフを担保するため、計測と回帰ゲートを決める。`accepted`（2026-06-14）：
+> 全ロジック網羅＋v8＋`vitest.config.ts`＋CI 強制で確定。
 
 ## Context and Problem Statement
 
@@ -65,6 +66,10 @@
 - 前提/依存: [ADR-0002][0002]（mock+fixture で測れる）、[ADR-0013][0013]（テスト方針・規約）、[requirements][prd]（公認品質）。
 - 反映（accepted 後）: `@vitest/coverage-v8` 追加・`vitest.config.ts`・`package.json`（`test:coverage`）・
   `ci.yml`（Test を coverage 実行に）・不足テスト穴埋め。必要なら CLAUDE.md に一行。
+- 業界動向: 多くは 70–85% を enforce／**100% は小さく純粋なライブラリで一般的**（本ライブラリは該当）。
+  行カバレッジは「実行」を測り「正しさ」は測らないため（Fowler の警鐘＝coverage theater）、**fixture 駆動＋
+  意味のある assertion** で担保し、将来 **mutation testing（Stryker）** で補強しうる。大規模では
+  diff/patch coverage＋ratchet が主流だが、本ライブラリの性質では全ロジック網羅が適切。
 - 関連: [[0002-ground-design-in-live-api-docs]], [[0013-coding-conventions-class-vs-function]]。
 
 [prd]: ../design/requirements.md
