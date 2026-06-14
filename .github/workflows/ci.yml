@@ -32,5 +32,12 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-      # NOTE: typecheck / test / build steps are intentionally omitted until the
-      # scaffold (tsup / vitest / tsc) lands. Restore them once those scripts exist.
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
