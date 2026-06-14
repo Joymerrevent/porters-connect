@@ -3,8 +3,8 @@
 
 import { XMLParser } from "fast-xml-parser";
 
-import { resourceError } from "../errors/classify";
-import { PortersResourceError } from "../errors/index";
+import { authError, resourceError } from "../errors/classify";
+import { PortersAuthError, PortersResourceError } from "../errors/index";
 import { asArray, asRecord, asString } from "./raw";
 
 const parser = new XMLParser({
@@ -54,5 +54,48 @@ export const parseResourcePage = (xml: string): ResourcePage => {
     count: Number(asString(body["@_Count"]) ?? "0"),
     start: Number(asString(body["@_Start"]) ?? "0"),
     items: asArray(body.Item).map((it) => asRecord(it) ?? {}),
+  };
+};
+
+/** Parsed `<Authentication>` response (OAuth `code_direct` / Token). */
+export type AuthResponse = {
+  code?: string;
+  accessToken?: string;
+  accessTokenExpiresIn?: number;
+  refreshToken?: string;
+  refreshTokenExpiresIn?: number;
+};
+
+/**
+ * Parse an `<Authentication>` response. Reads `<Error>` first and, if non-zero,
+ * throws the mapped PortersAuthError (ADR-0006).
+ */
+export const parseAuthentication = (xml: string): AuthResponse => {
+  const root = asRecord(parser.parse(xml) as unknown);
+  const body = root ? asRecord(root.Authentication) : undefined;
+  if (!body) {
+    throw new PortersAuthError("unparseable authentication response", {
+      category: "unknown",
+    });
+  }
+
+  const error = Number(asString(body.Error) ?? "0");
+  if (error !== 0) {
+    throw authError(
+      error,
+      asString(body.Message) ?? `authentication error ${error}`,
+    );
+  }
+
+  const num = (v: unknown): number | undefined => {
+    const s = asString(v);
+    return s === undefined ? undefined : Number(s);
+  };
+  return {
+    code: asString(body.Code),
+    accessToken: asString(body.AccessToken),
+    accessTokenExpiresIn: num(body.AccessTokenExpiresIn),
+    refreshToken: asString(body.RefreshToken),
+    refreshTokenExpiresIn: num(body.RefreshTokenExpiresIn),
   };
 };
