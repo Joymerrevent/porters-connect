@@ -104,7 +104,7 @@ try {
   await porters.candidate.search({ ... });
 } catch (e) {
   if (e instanceof PortersError) {
-    e.category; // "auth" | "permission" | "rateLimit" | "validation" | "network" | "transient" | "unknown"
+    e.category; // "auth" | "permission" | "validation" | "rateLimit" | … 全 11 種は ADR-0006
     e.code; // PORTERS の生コード（例 401/403/100…）
     e.hint; // 対処ヒント（既定英語）
   }

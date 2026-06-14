@@ -119,7 +119,7 @@ type ErrorCategory =
 
 - **SD-A 型の形 → source 別の薄い階層**（基底 ＋ Auth/Resource/Network）。系統＝`instanceof`、横断＝`category`。
 - **SD-B `category` を残すか**: 残す（**推奨**・permission/validation/transient は系統横断で対処分岐に有用）／ 階層のみ（`code` を詳細に）。
-- **SD-C category の粒度**: 10 個（**推奨**）／ より少なく（`notFound`/`conflict`/`server` を寄せる）。
+- **SD-C category の粒度**: 11 個（**推奨**）／ より少なく（`notFound`/`conflict`/`server` を寄せる）。
 - **SD-D retryable の持ち方**: フィールド（**推奨**・構築時算出）／ 外部関数。
 - **SD-E 設定/使い方エラーの型**: `PortersConfigError`（基底の兄弟・`category: "config"`・同期 throw）（**推奨**）／ 標準 `TypeError`。
 
