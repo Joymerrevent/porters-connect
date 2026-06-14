@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PortersAuthError } from "../errors/index";
 import type { Transport, TransportRequest } from "../http/index";
 import { createDefaultTokenProvider } from "./token-provider";
 
@@ -95,5 +96,60 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     t = 1000 + 1_800_000 - 30_000; // within the 60s margin
     expect(await auth.getAccessToken()).toBe("ACCESS2");
     expect(calls.filter((c) => c.url.includes("/v1/token"))).toHaveLength(2);
+  });
+
+  it("throws PortersAuthError when code_direct returns no code", async () => {
+    const transport: Transport = {
+      send: () =>
+        Promise.resolve({
+          status: 200,
+          body: "<Authentication><Error>0</Error></Authentication>",
+        }),
+    };
+    const auth = createDefaultTokenProvider(opts(transport, () => 1000));
+    await expect(auth.getAccessToken()).rejects.toBeInstanceOf(
+      PortersAuthError,
+    );
+  });
+
+  it("throws PortersAuthError when the token response lacks tokens", async () => {
+    const transport: Transport = {
+      send: (req) =>
+        Promise.resolve({
+          status: 200,
+          body: req.url.includes("/v1/oauth")
+            ? CODE_DIRECT_XML
+            : "<Authentication><Error>0</Error></Authentication>",
+        }),
+    };
+    const auth = createDefaultTokenProvider(opts(transport, () => 1000));
+    await expect(auth.getAccessToken()).rejects.toBeInstanceOf(
+      PortersAuthError,
+    );
+  });
+
+  it("uses the default clock when `now` is not provided", async () => {
+    const { transport } = makeTransport();
+    const auth = createDefaultTokenProvider({
+      host: "example.test",
+      appId: "app",
+      appSecret: "secret",
+      transport,
+    });
+    expect(await auth.getAccessToken()).toBe("ACCESS1");
+  });
+
+  it("treats a missing ExpiresIn as 0", async () => {
+    const transport: Transport = {
+      send: (req) =>
+        Promise.resolve({
+          status: 200,
+          body: req.url.includes("/v1/oauth")
+            ? CODE_DIRECT_XML
+            : "<Authentication><AccessToken>A</AccessToken><RefreshToken>R</RefreshToken><Error>0</Error></Authentication>",
+        }),
+    };
+    const auth = createDefaultTokenProvider(opts(transport, () => 1000));
+    expect(await auth.getAccessToken()).toBe("A");
   });
 });

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createThrottle } from "./throttle";
 
@@ -19,5 +19,31 @@ describe("createThrottle (token-bucket, ADR-0010)", () => {
     t = 1000;
     await throttle.take(false); // resolves from refilled tokens, no real wait
     expect(t).toBe(1000);
+  });
+
+  it("blocks when depleted, then resolves after the bucket refills", async () => {
+    vi.useFakeTimers();
+    let t = 0;
+    // readPerMin 60 * safety 1.0 = capacity 60 -> 1 token/sec.
+    const throttle = createThrottle({
+      readPerMin: 60,
+      safety: 1,
+      now: () => t,
+    });
+    for (let i = 0; i < 60; i++) await throttle.take(false); // deplete
+    const pending = throttle.take(false); // tokens < 1 -> awaits sleep
+    t = 2000; // advance the virtual clock so the refill yields tokens
+    await vi.advanceTimersByTimeAsync(2000);
+    await pending;
+    vi.useRealTimers();
+  });
+
+  it("uses the write bucket for writes", async () => {
+    const throttle = createThrottle({
+      writePerMin: 60,
+      safety: 1,
+      now: () => 0,
+    });
+    await throttle.take(true); // exercises the write branch
   });
 });

@@ -40,6 +40,17 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect((err as PortersResourceError).code).toBe(403);
     expect((err as PortersResourceError).category).toBe("permission");
   });
+
+  it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseResourcePage("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).category).toBe("unknown");
+  });
 });
 
 describe("parseAuthentication (ADR-0011)", () => {
@@ -71,5 +82,16 @@ describe("parseAuthentication (ADR-0011)", () => {
     }
     expect(err).toBeInstanceOf(PortersAuthError);
     expect((err as PortersAuthError).code).toBe(401);
+  });
+
+  it("surfaces unparseable XML as PortersAuthError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseAuthentication("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).category).toBe("unknown");
   });
 });

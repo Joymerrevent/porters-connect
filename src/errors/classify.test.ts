@@ -50,4 +50,13 @@ describe("error classification (ADR-0006)", () => {
     expect(authError(401, "x")).toBeInstanceOf(PortersAuthError);
     expect(networkError("x")).toBeInstanceOf(PortersNetworkError);
   });
+
+  it("covers remaining classify branches", () => {
+    expect(authCategory(999)).toBe("unknown");
+    expect(authError(100, "x").hint).toBeUndefined(); // non-auth -> no hint
+    expect(resourceCategory(7)).toBe("notFound"); // the `7` branch
+    expect(resourceCategory(401)).toBe("auth"); // resource 401/402 -> auth
+    expect(resourceError(9, "x").hint).toBeUndefined(); // resourceHint default
+    expect(resourceError(404, "x").hint).toBeTypeOf("string"); // 404 hint
+  });
 });

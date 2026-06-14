@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PortersNetworkError } from "../errors/index";
 import { createFetchTransport } from "./fetch-transport";
@@ -24,5 +24,20 @@ describe("createFetchTransport (ADR-0009)", () => {
     await expect(
       transport.send({ method: "GET", url: "u", headers: {} }),
     ).rejects.toBeInstanceOf(PortersNetworkError);
+  });
+
+  it("uses global fetch when no fetchImpl is given", async () => {
+    const spy = vi.fn(() =>
+      Promise.resolve(new Response("ok", { status: 200 })),
+    );
+    vi.stubGlobal("fetch", spy);
+    const res = await createFetchTransport().send({
+      method: "GET",
+      url: "u",
+      headers: {},
+    });
+    expect(res.body).toBe("ok");
+    expect(spy).toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });

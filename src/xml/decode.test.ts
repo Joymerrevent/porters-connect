@@ -48,4 +48,24 @@ describe("decodeField (ADR-0011)", () => {
   it("a field not present in the item -> null", () => {
     expect(decodeField("Text", second["Person.P_Country"])).toBeNull();
   });
+
+  it("decodes Number and Date; empty -> null", () => {
+    expect(decodeField("Number", "3.14")).toBe(3.14);
+    expect(decodeField("Number", "")).toBeNull();
+    expect(decodeField("Date", "2026/01/02")).toBe("2026-01-02");
+  });
+
+  it("Option without an OptionRoot -> null", () => {
+    expect(decodeField("Option", { x: 1 })).toBeNull();
+    expect(decodeField("Option", "scalar")).toBeNull();
+  });
+
+  it("User: prefix-less keys resolve; missing User -> null", () => {
+    const u = decodeField("User", {
+      User: { P_Id: "9", P_Name: "n" },
+    }) as UserRef;
+    expect(u.P_Id).toBe(9);
+    expect(u.P_Name).toBe("n");
+    expect(decodeField("User", { nope: 1 })).toBeNull();
+  });
 });
