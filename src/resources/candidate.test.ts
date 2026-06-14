@@ -62,4 +62,12 @@ describe("createCandidateResource", () => {
     });
     expect(page.items[0]?.U_obj).toBeNull();
   });
+
+  it("omits empty condition / field objects from the URL", async () => {
+    const sent: TransportRequest[] = [];
+    await resource(sent).search({ condition: {}, field: [] });
+    const url = sent[0]?.url ?? "";
+    expect(url).not.toContain("condition=");
+    expect(url).not.toContain("field=");
+  });
 });

@@ -68,4 +68,15 @@ describe("decodeField (ADR-0011)", () => {
     expect(u.P_Name).toBe("n");
     expect(decodeField("User", { nope: 1 })).toBeNull();
   });
+
+  it("decodes defensively: non-string -> null; missing nested -> null", () => {
+    expect(decodeField("Id", { a: 1 })).toBeNull();
+    expect(decodeField("Number", { a: 1 })).toBeNull();
+    expect(decodeField("DateTime", { a: 1 })).toBeNull();
+    expect(decodeField("Date", { a: 1 })).toBeNull();
+    expect(decodeField("Text", { a: 1 })).toBeNull();
+    const owner = decodeField("User", { User: { P_Name: "n" } }) as UserRef;
+    expect(owner.P_Id).toBeNull();
+    expect(decodeField("Option", { OptionRoot: {} })).toBeNull();
+  });
 });
