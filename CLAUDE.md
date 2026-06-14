@@ -66,7 +66,7 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 - エラーは判別可能な型に整理：基底 `PortersError` ＋ 系統別サブクラス（Auth / Resource / Network / Config）＋ `category`（`docs/adr/0006-error-model.md`）。
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
 - **スタイル規約（`docs/adr/0013-coding-conventions-class-vs-function.md`）**：クラスは `Error` 派生と `PortersClient` のみ／状態を持つ内部協調子は **factory 関数**で契約型を返す／**関数は全 arrow（const）**／**型定義は全 `type`（`interface` 不使用）**。eslint で強制（`func-style:expression`・`no-use-before-define`・`consistent-type-definitions:type`）。
-- **ファイル構成**：`index.ts` は**バレル（再 export のみ）**。クラス/関数/型の宣言は named ファイルに置く。ファイル名は **kebab-case**（大文字小文字を区別しない FS での import 事故を避ける）。
+- **ファイル構成**：各モジュールの `index.ts` は**バレル（`export *` / `export type *` の再 export のみ）**＝モジュール内の公開可否は**実ファイルの `export` 有無**で制御。クラス/関数/型の宣言は named ファイルに置く。**ただしパッケージ公開面 `src/index.ts` は明示 export でキュレーション**（cross-module で見えるが npm 非公開にしたい記号があるため）。ファイル名は **kebab-case**（大文字小文字を区別しない FS での import 事故を避ける）。
 - テストを伴わない新リソース追加はしない。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
   （保守者が読めること＝フェイルセーフ優先。海外コントリビュータは契約ゲートで実質入れない）。実行時 i18n はしない。

@@ -1,3 +1,3 @@
-// Barrel: re-exports the http module. Implementation lives in named files.
+// Barrel: re-exports the http module.
 
-export type { Transport, TransportRequest, TransportResponse } from "./types";
+export type * from "./types";
