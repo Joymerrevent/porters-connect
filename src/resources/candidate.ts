@@ -67,27 +67,35 @@ const decodeCandidate = (item: Record<string, unknown>): Candidate => {
   return out;
 };
 
+const buildCandidateUrl = (
+  host: string,
+  partition: number,
+  q: CandidateSearchQuery,
+): string => {
+  const p = new URLSearchParams();
+  p.set("partition", String(partition));
+  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
+  if (q.condition) {
+    const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
+    if (conds.length > 0) p.set("condition", conds.join(","));
+  }
+  if (q.count !== undefined) p.set("count", String(q.count));
+  if (q.start !== undefined) p.set("start", String(q.start));
+  return `https://${host}/v1/candidate?${p.toString()}`;
+};
+
 export const createCandidateResource = (deps: {
   requester: Requester;
   host: string;
   partition: number;
 }): CandidateResource => {
-  const buildUrl = (q: CandidateSearchQuery): string => {
-    const p = new URLSearchParams();
-    p.set("partition", String(deps.partition));
-    if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
-    if (q.condition) {
-      const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
-      if (conds.length > 0) p.set("condition", conds.join(","));
-    }
-    if (q.count !== undefined) p.set("count", String(q.count));
-    if (q.start !== undefined) p.set("start", String(q.start));
-    return `https://${deps.host}/v1/candidate?${p.toString()}`;
-  };
-
   const search = (query: CandidateSearchQuery = {}): Promise<CandidatePage> =>
     deps.requester.request(
-      { method: "GET", url: buildUrl(query), headers: {} },
+      {
+        method: "GET",
+        url: buildCandidateUrl(deps.host, deps.partition, query),
+        headers: {},
+      },
       (body) => {
         const page = parseResourcePage(body);
         return {
