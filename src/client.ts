@@ -1,5 +1,14 @@
+import { createDefaultTokenProvider } from "./auth";
 import type { TokenProvider, TokenStore } from "./auth";
+import {
+  createFetchTransport,
+  createRequester,
+  createThrottle,
+  expoBackoff,
+} from "./http";
 import type { Transport } from "./http";
+import { createCandidateResource } from "./resources";
+import type { CandidateResource } from "./resources";
 import type { PartitionId, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. */
@@ -23,18 +32,41 @@ export type PortersClientOptions = {
 };
 
 /**
- * Entry point of the library. Holds configuration and (incrementally) exposes
- * namespaced resource accessors such as `candidate`, `job`, … (ADR-0005).
+ * Entry point of the library. Wires the default transport / auth / throttle /
+ * requester and exposes namespaced resource accessors such as `candidate`
+ * (ADR-0005).
  */
 export class PortersClient {
-  readonly #options: PortersClientOptions;
+  readonly candidate: CandidateResource;
+  readonly #host: string;
 
   constructor(options: PortersClientOptions) {
-    this.#options = options;
+    const transport = options.transport ?? createFetchTransport();
+    const auth =
+      options.auth ??
+      createDefaultTokenProvider({
+        host: options.host,
+        appId: options.appId ?? "",
+        appSecret: options.appSecret ?? "",
+        transport,
+        tokenStore: options.tokenStore,
+      });
+    const requester = createRequester({
+      transport,
+      auth,
+      throttle: createThrottle(),
+      backoff: expoBackoff(),
+    });
+    this.#host = options.host;
+    this.candidate = createCandidateResource({
+      requester,
+      host: options.host,
+      partition: options.partition ?? 0,
+    });
   }
 
   /** The configured API host. */
   get host(): string {
-    return this.#options.host;
+    return this.#host;
   }
 }
