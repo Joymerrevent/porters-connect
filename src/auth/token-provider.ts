@@ -6,7 +6,7 @@ import { PortersAuthError } from "../errors/index";
 import type { Transport } from "../http/index";
 import { parseAuthentication } from "../xml/parser";
 import { createMemoryTokenStore } from "./memory-store";
-import type { StoredTokens, TokenProvider, TokenStore } from "./index";
+import type { StoredTokens, TokenProvider, TokenStore } from "./types";
 
 export type DefaultTokenProviderOptions = {
   host: string;

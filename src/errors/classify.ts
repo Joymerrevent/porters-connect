@@ -8,7 +8,7 @@ import {
   PortersResourceError,
   type ErrorCategory,
   type PortersErrorContext,
-} from "./index";
+} from "./porters-error";
 
 const RESOURCE_VALIDATION = new Set([8, 124, 126, 127, 133, 146, 500]);
 

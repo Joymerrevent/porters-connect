@@ -1,5 +1,3 @@
-/** OAuth scope string: `<resource>_r` (read) or `<resource>_w` (write). */
-export type Scope = `${string}_r` | `${string}_w`;
+// Barrel: re-exports the shared types module.
 
-/** A PORTERS partition (Company DB) id. */
-export type PartitionId = number;
+export type { PartitionId, Scope } from "./common";

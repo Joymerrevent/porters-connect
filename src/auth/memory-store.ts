@@ -1,4 +1,4 @@
-import type { StoredTokens, TokenStore } from "./index";
+import type { StoredTokens, TokenStore } from "./types";
 
 /** Default in-process token store (single instance; lost on restart). */
 export const createMemoryTokenStore = (): TokenStore => {
