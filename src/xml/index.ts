@@ -1,4 +1,5 @@
-// XML parse/serialize boundary: keeps XML from leaking to the public surface.
-// Per-Field-Type value encoding (Read/Write asymmetry) lands in the XML ADR
-// (detailed design). Placeholder until then.
-export {};
+// Barrel: re-exports the internal XML layer (parse + type-driven decode).
+// Not part of the npm surface; consumed by the resource accessors.
+
+export * from "./parser";
+export * from "./decode";

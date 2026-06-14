@@ -16,6 +16,19 @@ export type {
   PortersErrorOptions,
 } from "./errors";
 
-export type { StoredTokens, TokenProvider, TokenStore } from "./auth";
+export type {
+  GetAccessTokenOptions,
+  StoredTokens,
+  TokenProvider,
+  TokenStore,
+} from "./auth";
 export type { Transport, TransportRequest, TransportResponse } from "./http";
 export type { PartitionId, Scope } from "./types";
+
+export type {
+  Candidate,
+  CandidatePage,
+  CandidateResource,
+  CandidateSearchQuery,
+} from "./resources";
+export type { FieldValue, UserRef } from "./xml";

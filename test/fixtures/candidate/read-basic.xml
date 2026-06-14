@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Candidate Total="2" Count="2" Start="0">
+  <Code>0</Code>
+  <Item>
+    <Person.P_Id>10001</Person.P_Id>
+    <Person.P_Name>山田 太郎</Person.P_Name>
+    <Person.P_Mail>taro@example.com</Person.P_Mail>
+    <Person.P_UpdateDate>2026/01/02 03:04:05</Person.P_UpdateDate>
+    <Person.P_Owner>
+      <User>
+        <User.P_Id>5</User.P_Id>
+        <User.P_Type>0</User.P_Type>
+        <User.P_Name>採用 花子</User.P_Name>
+        <User.P_Mail>hanako@example.com</User.P_Mail>
+      </User>
+    </Person.P_Owner>
+    <Person.P_Phase>
+      <OptionRoot>
+        <P_PersonPhase_Applied>
+          <Option.P_Id>3</Option.P_Id>
+          <Option.P_Name>応募</Option.P_Name>
+        </P_PersonPhase_Applied>
+      </OptionRoot>
+    </Person.P_Phase>
+  </Item>
+  <Item>
+    <Person.P_Id>10002</Person.P_Id>
+    <Person.P_Name>佐藤 次郎</Person.P_Name>
+    <Person.P_Mail />
+    <Person.P_UpdateDate>2026/02/03 10:20:30</Person.P_UpdateDate>
+  </Item>
+</Candidate>
