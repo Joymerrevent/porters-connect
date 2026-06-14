@@ -1,11 +1,12 @@
 # 9. HTTP トランスポート（既定 fetch・注入可能 seam の裏側）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-14
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0005][0005] で「transport は注入可能・既定は fetch ベース」と外形を確定済み。本 ADR は
-> **既定実装を何で作るか**（fetch / ky / …）の詳細設計。`proposed`（判断は議論後）。
+> **既定実装を何で作るか**（fetch / ky / …）の詳細設計。案1（fetch）で `accepted`（2026-06-14）。
+> 切替の影響は `src/http` の `Transport` インターフェース 1 点に閉じる（下記 Consequences）。
 
 ## Context and Problem Statement
 
@@ -44,7 +45,15 @@ PORTERS 固有の制約（[gotchas][gotchas] / [resource-api][rapi] / [headers][
 ### Consequences
 
 - Good: 依存ゼロ・Node 標準・モック容易。公開面に HTTP 実装が漏れない。
-- Bad: タイムアウト/中断/リトライは自前（`AbortController`・[ADR-0010][0010]）。
+- Good: **切替の影響は `src/http`（`Transport` インターフェース）1 点に閉じる**。既定 fetch 実装は
+  別ファイル（例 `http/fetch-transport.ts`）に置き、resources/auth/xml と[リトライ/スロットル][0010]は
+  **`Transport` の上位**に積む＝実装非依存。`fetch → ky → undici` の差し替えは「新実装＋既定配線の 1 箇所」だけ。
+  `Transport` は素の HTTP（`body: string`）に保ち、XML 直列化・認証ヘッダ付与は上位に置く。
+- Good: **企業プロキシ等は `Transport` 注入で吸収**。Node のグローバル fetch は `HTTP(S)_PROXY` を自動では
+  読まないが、利用者が undici `ProxyAgent` ベースの transport を差し込める（seam の存在理由の一つ）。
+- Bad: タイムアウト/中断/リトライは自前（`AbortController` / `AbortSignal.timeout()`・[ADR-0010][0010]）。
+- Neutral: グローバル `fetch` は Node 18 で `ExperimentalWarning`（本リポジトリの実行は Node 22＝警告なし・安定）。
+  `engines: >=18` のため Node 18 利用者には警告が出るが機能は正常。
 - Neutral: ストリーミングや HTTP/2 が要るなら将来 undici 直も seam の裏で差し替え可能。
 
 ## Pros and Cons of the Options
