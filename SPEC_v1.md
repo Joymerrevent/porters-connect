@@ -1,5 +1,12 @@
 # @joymerrevent/porters-connect — SPEC v1
 
+> ⚠️ **DEPRECATED / 素案（superseded・将来削除予定）**
+> 本書は初期調査ベースの素案で、推測（例: リクエスト上限 32KB）を含み、最新の決定とズレがあります。
+> **設計の正は `docs/`**: 要件 `docs/design/requirements.md` ／ 基本設計 `docs/design/basic-design.md` ／
+> 決定 `docs/adr/` ／ API 事実 `docs/reference/`。本書は**歴史的経緯としてのみ**残置しています。
+
+---
+
 > PORTERS Connect API（旧 HRBC）向け、非公式 TypeScript ラッパー & MCP サーバー。
 > Joymerrevent（ジョイメリベント）管理リポジトリ。
 
@@ -65,7 +72,7 @@
 
 ## 3. 設計原則（Joymerrevent の哲学に沿う）
 
-> 「動くものではなく、動き続けるものを作る」
+> 「壊れたときに安全側へ倒れるものを作る」（フェイルセーフ思想）
 
 1. **薄く・堅く**：第1層は「fetch + XMLパース + 型 + UTC補正 + OAuth」の薄いコアに徹する。ビジネスロジックを混ぜない。
 2. **XML を内部に隠蔽**：利用者には型付き JS オブジェクトのみを返す。XML は外に漏らさない。
@@ -161,8 +168,10 @@ const job = await porters.job.get(jobId);
 4. **Client**（R/W）
 5. **Process**（R/W）
 6. **Resume**（R）
+7. **Attachment**（R/W）
 
 - 残りリソース（Activity / Contract / Sales 等）は v0.2 以降で段階追加。
+- ※ Attachment の MVP 追加は ADR-0003 で決定（2026-06-13）。
 
 ### 5.4 横断機能
 
