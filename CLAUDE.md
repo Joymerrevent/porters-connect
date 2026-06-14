@@ -1,7 +1,8 @@
 # CLAUDE.md — @joymerrevent/porters-connect
 
 このファイルは Claude Code がこのリポジトリで作業する際に常時参照する規約です。
-詳細な背景・仕様は `SPEC_v1.md` を参照してください。
+設計の正は `docs/`（要件・基本設計: `docs/design/` ／ 決定: `docs/adr/` ／ API 事実: `docs/reference/`）を参照してください。
+`SPEC_v1.md` は初期の素案（superseded・将来削除予定）で、歴史的経緯としてのみ残置しています。
 
 ---
 
@@ -82,7 +83,8 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 
 ## ディレクトリ構成
 
-`SPEC_v1.md` 5.1 を参照。要点のみ：
+モジュール構成（ディレクトリ＝責務境界）とテスト配置は `docs/design/basic-design.md` §2 が正。
+ファイル単位の分割は詳細設計／実装で確定する。下記は要点のみ（雛形・非確定）：
 
 ```text
 src/

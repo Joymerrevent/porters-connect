@@ -1,5 +1,12 @@
 # @joymerrevent/porters-connect — SPEC v1
 
+> ⚠️ **DEPRECATED / 素案（superseded・将来削除予定）**
+> 本書は初期調査ベースの素案で、推測（例: リクエスト上限 32KB）を含み、最新の決定とズレがあります。
+> **設計の正は `docs/`**: 要件 `docs/design/requirements.md` ／ 基本設計 `docs/design/basic-design.md` ／
+> 決定 `docs/adr/` ／ API 事実 `docs/reference/`。本書は**歴史的経緯としてのみ**残置しています。
+
+---
+
 > PORTERS Connect API（旧 HRBC）向け、非公式 TypeScript ラッパー & MCP サーバー。
 > Joymerrevent（ジョイメリベント）管理リポジトリ。
 
