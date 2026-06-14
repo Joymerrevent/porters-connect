@@ -1,4 +1,7 @@
-// XML parse/serialize boundary: keeps XML from leaking to the public surface.
-// Per-Field-Type value encoding (Read/Write asymmetry) lands in the XML ADR
-// (detailed design). Placeholder until then.
-export {};
+// Internal XML layer barrel (parse + type-driven decode). Not part of the
+// public surface; consumed by the resource accessors.
+
+export { parseResourcePage } from "./parser";
+export type { RawItem, ResourcePage } from "./parser";
+export { decodeField } from "./decode";
+export type { FieldType, FieldValue, UserRef } from "./decode";
