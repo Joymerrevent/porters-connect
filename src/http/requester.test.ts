@@ -123,4 +123,48 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     ).rejects.toBeInstanceOf(PortersNetworkError);
     expect(n).toBe(1); // sent once, not retried
   });
+
+  it("gives up after maxRetries on persistent transient errors", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: String(n++) }),
+    };
+    const parse = (): string => {
+      throw new PortersResourceError("temp", {
+        category: "transient",
+        code: 9,
+        retryable: true,
+      });
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+      maxRetries: 2,
+    });
+
+    await expect(r.request(base, parse)).rejects.toBeInstanceOf(
+      PortersResourceError,
+    );
+    expect(n).toBe(3); // initial + 2 retries
+  });
+
+  it("rethrows a non-PortersError thrown by parse", async () => {
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: "x" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    await expect(
+      r.request(base, () => {
+        throw new TypeError("boom");
+      }),
+    ).rejects.toBeInstanceOf(TypeError);
+  });
 });

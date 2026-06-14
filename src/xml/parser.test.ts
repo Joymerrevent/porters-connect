@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { PortersResourceError } from "../errors/index";
-import { parseResourcePage } from "./parser";
+import { PortersAuthError, PortersResourceError } from "../errors/index";
+import { parseAuthentication, parseResourcePage } from "./parser";
 
 const fixture = (path: string): string =>
   readFileSync(
@@ -39,5 +39,37 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(err).toBeInstanceOf(PortersResourceError);
     expect((err as PortersResourceError).code).toBe(403);
     expect((err as PortersResourceError).category).toBe("permission");
+  });
+});
+
+describe("parseAuthentication (ADR-0011)", () => {
+  it("parses token fields from a Token response", () => {
+    const a = parseAuthentication(
+      `<Authentication><AccessToken>A</AccessToken><AccessTokenExpiresIn>1800000</AccessTokenExpiresIn><RefreshToken>R</RefreshToken><RefreshTokenExpiresIn>7200000</RefreshTokenExpiresIn><Error>0</Error></Authentication>`,
+    );
+    expect(a.accessToken).toBe("A");
+    expect(a.refreshToken).toBe("R");
+    expect(a.accessTokenExpiresIn).toBe(1800000);
+  });
+
+  it("returns the code from a code_direct response", () => {
+    expect(
+      parseAuthentication(
+        "<Authentication><Code>C</Code><Error>0</Error></Authentication>",
+      ).code,
+    ).toBe("C");
+  });
+
+  it("routes <Error>!=0 to a PortersAuthError", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>401</Error></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).code).toBe(401);
   });
 });
