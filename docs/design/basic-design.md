@@ -2,7 +2,7 @@
 
 - ステータス: draft
 - 日付: 2026-06-13
-- 位置づけ: [要件定義（PRD）][prd] の要件を、確定済み ADR（[0004][a4]–[0008][a8]）の決定で具体化した**全体像**。
+- 位置づけ: [要件定義（PRD）][prd] の要件を、確定済み ADR（[0002][a2]・[0003][a3]・[0004][a4]–[0008][a8]）の決定で具体化した**全体像**。
   各決定の**根拠は ADR**、**API の事実**は [docs/reference][ref]、**SPEC_v1 は素案（superseded）**。本書は合成（重複させず ADR にリンク）。
 
 ## 1. アーキテクチャ全体像
@@ -14,12 +14,12 @@
         │
    ┌────▼─────────────────── 第1層 @joymerrevent/porters-connect（本書） ──────────────┐
    │ PortersClient（エントリ）                                                          │
-   │   ├─ resources/    リソース別アクセサ（candidate.search/get/create/update …）      │
-   │   ├─ fields/       defineFields DSL（標準 P_ 静的型 ＋ カスタム U_/A_ 宣言＋検証）  │
    │   ├─ auth/         TokenProvider（既定=透過 code_direct / 自前）・tokenStore        │
    │   ├─ http/         transport（注入可・既定 fetch）・headers・throttle/retry         │
    │   ├─ xml/          XML パース/シリアライズ（外に XML を漏らさない）                 │
    │   ├─ errors/       PortersError 階層（Auth/Resource/Network/Config）＋ category     │
+   │   ├─ fields/       defineFields DSL（標準 P_ 静的型 ＋ カスタム U_/A_ 宣言＋検証）  │
+   │   ├─ resources/    リソース別アクセサ（candidate.search/get/create/update …）      │
    │   └─ util/         datetime（PORTERS 形式 ⇄ ISO8601）ほか                           │
    └───────────────────────────────────────────────────────────────────────────────────┘
         │ HTTPS（XML）
@@ -53,7 +53,7 @@ src/
 
 ```ts
 const porters = new PortersClient({
-  host, // 既定 api-hrbc-jp.porterscloud.com（実値は PORTERS_HOST 経由・ハードコード禁止）
+  host, // 必須（PORTERS_HOST 経由・ハードコード禁止）。代表値 api-hrbc-jp.porterscloud.com は参考
   appId,
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
@@ -67,6 +67,8 @@ const page = await porters.candidate.search({
   field,
   condition,
   order,
+  keywords, // フリーワード（Option 型項目は対象外）
+  itemstate, // 状態フィルタ。delete API は無く、削除済みは itemstate で Read
   count,
   start,
 });
@@ -113,11 +115,13 @@ accessor 呼び出し
 - **認証ストラテジ seam**：既定＝透過（`code_direct`＋キャッシュ＋Refresh）／自前 `TokenProvider`。`connect()` は不要（任意 `ensureAuthenticated()`）。
 - **初回権限付与**（ブラウザ `code`・人間）は前提手順。補助 `authorizationUrl()` / `exchangeAuthorizationCode()` / `revoke()`。
 - **マルチテナント**：`partition` は per-call ／ `porters.partition(id)` スコープ ／ テナント別 client。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
-- **end-user ↔ partition のマッピングは利用側（SaaS）の責務**。L1 は持たない。
+- **オンボーディング補助（L1 が提供）**：`authorizationUrl()` で初回権限付与に誘導し、`Partition Read` / `User Read`（`request_type=0`）でログイン中 partition を**発見**できる。
+- **end-user ↔ partition のマッピングは利用側（SaaS）の責務**。発見した partition の保存・ルーティングは SaaS。L1 は持たない。
 
 ## 8. 横断方針
 
 - **良き API 市民／フェイルセーフ**：自前スロットリング（1 分 Read2000/Write500）、retryable のみ指数バックオフ、リクエスト ~15000 字ガード。
+  - ※ 数値は理解のための目安。**正典は [docs/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
 - **秘匿情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
@@ -127,19 +131,21 @@ accessor 呼び出し
 
 - HTTP トランスポート（標準 `fetch` か `ky` か）。
 - XML パース/シリアライズの内部（データ型別エンコード・Read/Write 非対称）。
+- Attachment のファイル本体（Base64/バイナリ）のエンコードと送受信形式（[ADR-0003][a3]）。
 - リトライ/スロットリングの機構（single-flight・バックオフ・TTL）。
 - トークンキャッシュの内部（single-flight・partition キー付け）。
 
 ## 関連
 
 - 要件: [requirements.md][prd]
-- 決定: [ADR 一覧][adr]（[0004][a4] 型モデル / [0005][a5] 公開API / [0006][a6] エラー / [0007][a7] OAuth / [0008][a8] マルチテナント）
+- 決定: [ADR 一覧][adr]（[0003][a3] Attachment MVP / [0004][a4] 型モデル / [0005][a5] 公開API / [0006][a6] エラー / [0007][a7] OAuth / [0008][a8] マルチテナント）
 - API 事実: [docs/reference][ref]
 
 [prd]: requirements.md
 [adr]: ../adr/README.md
 [ref]: ../reference/README.md
 [a2]: ../adr/0002-ground-design-in-live-api-docs.md
+[a3]: ../adr/0003-add-attachment-to-mvp.md
 [a4]: ../adr/0004-field-type-model.md
 [a5]: ../adr/0005-public-api-shape.md
 [a6]: ../adr/0006-error-model.md
