@@ -43,6 +43,7 @@
 | [0011][0011] | XML パース／シリアライズ内部                               | 詳細設計 | accepted   |
 | [0012][0012] | トークンのキャッシュ／更新機構（既定ストラテジ内部）       | 詳細設計 | accepted   |
 | [0013][0013] | コーディング規約（クラス/関数・関数スタイル・型定義）      | プロセス | accepted   |
+| [0014][0014] | テストカバレッジ方針（計測・閾値・CI 強制）                | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -82,3 +83,4 @@
 [0011]: 0011-xml-parse-serialize.md
 [0012]: 0012-token-cache-refresh.md
 [0013]: 0013-coding-conventions-class-vs-function.md
+[0014]: 0014-test-coverage-policy.md
