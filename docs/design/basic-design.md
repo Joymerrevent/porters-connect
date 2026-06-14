@@ -127,18 +127,26 @@ accessor 呼び出し
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
 - **言語**：公開サーフェスは英語、内部コメントは日本語可（CLAUDE.md）。
 
-## 9. 詳細設計に委ねる事項（実装フェーズで決定）
+## 9. 詳細設計（ADR で確定 ／ 実装・MVP へ）
 
-- HTTP トランスポート（標準 `fetch` か `ky` か）。
-- XML パース/シリアライズの内部（データ型別エンコード・Read/Write 非対称）。
-- Attachment のファイル本体（Base64/バイナリ）のエンコードと送受信形式（[ADR-0003][a3]）。
-- リトライ/スロットリングの機構（single-flight・バックオフ・TTL）。
-- トークンキャッシュの内部（single-flight・partition キー付け）。
+**確定（実装はこれらに従う）**：
+
+- HTTP トランスポート＝既定 `fetch`（[ADR-0009][a9]）。切替影響は `Transport` seam 1 点。
+- XML パース/シリアライズの内部＝型駆動デコーダ・パーサは素の文字列・Read/Write 非対称（[ADR-0011][a11]）。
+- リトライ/スロットリングの機構＝token-bucket＋指数バックオフ・**冪等性ガード**（[ADR-0010][a10]）。
+- トークンのキャッシュ/更新＝ハイブリッド（遅延オンデマンド＋事後）＋ in-process single-flight（[ADR-0012][a12]）。
+
+**実装フェーズ／MVP で詰める**：
+
+- Attachment のファイル本体（Base64/バイナリ）のエンコードと送受信形式（[ADR-0003][a3]／[ADR-0011][a11] 後続）。
+- 全 Write エンコードの型別網羅・Image/Link/Reference・Option 複数（[ADR-0011][a11] 後続）。
+- 多インスタンスの refresh 協調・partition 単位キャッシュキー（[ADR-0012][a12]／[ADR-0008][a8] 検証後）。
 
 ## 関連
 
 - 要件: [requirements.md][prd]
-- 決定: [ADR 一覧][adr]（[0003][a3] Attachment MVP / [0004][a4] 型モデル / [0005][a5] 公開API / [0006][a6] エラー / [0007][a7] OAuth / [0008][a8] マルチテナント）
+- 決定（基本設計）: [ADR 一覧][adr]（[0003][a3] Attachment MVP / [0004][a4] 型モデル / [0005][a5] 公開API / [0006][a6] エラー / [0007][a7] OAuth / [0008][a8] マルチテナント）
+- 決定（詳細設計）: [0009][a9] HTTP / [0010][a10] リトライ・スロットル / [0011][a11] XML / [0012][a12] トークン更新
 - API 事実: [docs/reference][ref]
 
 [prd]: requirements.md
@@ -151,3 +159,7 @@ accessor 呼び出し
 [a6]: ../adr/0006-error-model.md
 [a7]: ../adr/0007-oauth-public-surface.md
 [a8]: ../adr/0008-multitenancy-partition.md
+[a9]: ../adr/0009-http-transport.md
+[a10]: ../adr/0010-retry-throttle.md
+[a11]: ../adr/0011-xml-parse-serialize.md
+[a12]: ../adr/0012-token-cache-refresh.md
