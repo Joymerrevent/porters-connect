@@ -20,19 +20,19 @@ const parser = new XMLParser({
 /** One `<Item>`: a map of field alias -> raw node (string or nested object). */
 export type RawItem = Record<string, unknown>;
 
-export interface ResourcePage {
+export type ResourcePage = {
   total: number;
   count: number;
   start: number;
   items: RawItem[];
-}
+};
 
 /**
  * Parse a Resource Read response. Reads `<Code>` first and, if non-zero, throws
  * the mapped PortersError (ADR-0006) — HTTP 200 + `<Code>≠0` is an error, not
  * data.
  */
-export function parseResourcePage(xml: string): ResourcePage {
+export const parseResourcePage = (xml: string): ResourcePage => {
   const root = asRecord(parser.parse(xml) as unknown);
   const rootKey = root ? Object.keys(root)[0] : undefined;
   const body = root && rootKey ? asRecord(root[rootKey]) : undefined;
@@ -55,4 +55,4 @@ export function parseResourcePage(xml: string): ResourcePage {
     start: Number(asString(body["@_Start"]) ?? "0"),
     items: asArray(body.Item).map((it) => asRecord(it) ?? {}),
   };
-}
+};

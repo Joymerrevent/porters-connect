@@ -3,7 +3,7 @@ import type { Transport } from "./http";
 import type { PartitionId, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. */
-export interface PortersClientOptions {
+export type PortersClientOptions = {
   /**
    * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
    * (A representative value lives in docs/reference.)
@@ -20,7 +20,7 @@ export interface PortersClientOptions {
   tokenStore?: TokenStore;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
-}
+};
 
 /**
  * Entry point of the library. Holds configuration and (incrementally) exposes

@@ -16,14 +16,14 @@ export type ErrorCategory =
   | "unknown";
 
 /** Where the failing call was aimed (for self-service debugging). */
-export interface PortersErrorContext {
+export type PortersErrorContext = {
   resource?: string;
   operation?: string;
   partition?: number;
-}
+};
 
 /** Construction options for {@link PortersError}. */
-export interface PortersErrorOptions {
+export type PortersErrorOptions = {
   category: ErrorCategory;
   /** PORTERS raw code; `null` for network/transport failures. */
   code?: number | null;
@@ -33,7 +33,7 @@ export interface PortersErrorOptions {
   httpStatus?: number;
   context?: PortersErrorContext;
   cause?: unknown;
-}
+};
 
 /** Base class for every PORTERS-originated error (catch-all). */
 export class PortersError extends Error {

@@ -65,6 +65,7 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 - public API は `src/index.ts` から明示的に export。内部実装は外に漏らさない。
 - エラーは判別可能な型に整理：基底 `PortersError` ＋ 系統別サブクラス（Auth / Resource / Network / Config）＋ `category`（`docs/adr/0006-error-model.md`）。
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
+- **スタイル規約（`docs/adr/0013-coding-conventions-class-vs-function.md`）**：クラスは `Error` 派生と `PortersClient` のみ／状態を持つ内部協調子は **factory 関数**で契約型を返す／**関数は全 arrow（const）**／**型定義は全 `type`（`interface` 不使用）**。eslint で強制（`func-style:expression`・`no-use-before-define`・`consistent-type-definitions:type`）。
 - テストを伴わない新リソース追加はしない。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
   （保守者が読めること＝フェイルセーフ優先。海外コントリビュータは契約ゲートで実質入れない）。実行時 i18n はしない。

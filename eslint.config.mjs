@@ -25,6 +25,13 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // ADR-0013: 関数は全 arrow（const）に統一（function 宣言を禁止）
+      "func-style": ["error", "expression"],
+      // ADR-0013: arrow は巻き上げ無し → 定義前参照を禁止して定義順を強制
+      "no-use-before-define": "off",
+      "@typescript-eslint/no-use-before-define": "error",
+      // ADR-0013: 型定義は全 type（interface 不使用）
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
     },
   },
 

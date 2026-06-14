@@ -2,20 +2,20 @@
 // a mock transport lets the library run without a contract.
 
 /** A single HTTP request issued to the PORTERS API. */
-export interface TransportRequest {
+export type TransportRequest = {
   method: "GET" | "POST";
   url: string;
   headers: Record<string, string>;
   body?: string;
-}
+};
 
 /** The raw HTTP response. Body stays as text; XML parsing happens in `xml/`. */
-export interface TransportResponse {
+export type TransportResponse = {
   status: number;
   body: string;
-}
+};
 
 /** Sends a request and resolves the raw response. */
-export interface Transport {
+export type Transport = {
   send(request: TransportRequest): Promise<TransportResponse>;
-}
+};

@@ -6,12 +6,11 @@ import { describe, expect, it } from "vitest";
 import { decodeField, type UserRef } from "./decode";
 import { parseResourcePage } from "./parser";
 
-function fixture(path: string): string {
-  return readFileSync(
+const fixture = (path: string): string =>
+  readFileSync(
     fileURLToPath(new URL(`../../test/fixtures/${path}`, import.meta.url)),
     "utf8",
   );
-}
 
 describe("decodeField (ADR-0011)", () => {
   const page = parseResourcePage(fixture("candidate/read-basic.xml"));

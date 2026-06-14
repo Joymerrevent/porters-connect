@@ -6,12 +6,11 @@ import { describe, expect, it } from "vitest";
 import { PortersResourceError } from "../errors/index";
 import { parseResourcePage } from "./parser";
 
-function fixture(path: string): string {
-  return readFileSync(
+const fixture = (path: string): string =>
+  readFileSync(
     fileURLToPath(new URL(`../../test/fixtures/${path}`, import.meta.url)),
     "utf8",
   );
-}
 
 describe("parseResourcePage (ADR-0011)", () => {
   it("reads Total/Count/Start and Items as raw strings", () => {
