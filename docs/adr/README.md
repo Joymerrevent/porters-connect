@@ -42,6 +42,7 @@
 | [0010][0010] | リトライ／スロットリングの機構                             | 詳細設計 | accepted   |
 | [0011][0011] | XML パース／シリアライズ内部                               | 詳細設計 | accepted   |
 | [0012][0012] | トークンのキャッシュ／更新機構（既定ストラテジ内部）       | 詳細設計 | accepted   |
+| [0013][0013] | コーディング規約（クラス／関数の使い分け・関数スタイル）   | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -80,3 +81,4 @@
 [0010]: 0010-retry-throttle.md
 [0011]: 0011-xml-parse-serialize.md
 [0012]: 0012-token-cache-refresh.md
+[0013]: 0013-coding-conventions-class-vs-function.md
