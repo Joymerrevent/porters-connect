@@ -37,11 +37,13 @@
     "typecheck": "tsc --noEmit",
     "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node18",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.3",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
     "markdownlint-cli2": "^0.22.1",

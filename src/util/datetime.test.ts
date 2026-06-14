@@ -33,4 +33,13 @@ describe("datetime (PORTERS <-> ISO, UTC)", () => {
     expect(() => portersDateTimeToIso("2026/13/02 03:04:05")).toThrow();
     expect(() => portersDateToIso("not a date")).toThrow();
   });
+
+  it("throws on invalid ISO input", () => {
+    expect(() => isoToPortersDateTime("not-a-date")).toThrow();
+    expect(() => isoToPortersDate("garbage")).toThrow();
+  });
+
+  it("isoToPortersDate takes the date part of a datetime", () => {
+    expect(isoToPortersDate("2026-01-02T10:00:00Z")).toBe("2026/01/02");
+  });
 });

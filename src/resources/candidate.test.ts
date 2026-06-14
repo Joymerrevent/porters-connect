@@ -53,4 +53,13 @@ describe("createCandidateResource", () => {
       "Person.P_Id:eq=7",
     );
   });
+
+  it("decodes a nested (non-string) unknown alias as null", async () => {
+    const body = `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><Person.U_obj><x>1</x></Person.U_obj></Item></Candidate>`;
+    const sent: TransportRequest[] = [];
+    const page = await resource(sent, body).search({
+      condition: { "Person.P_Name:part": "y" },
+    });
+    expect(page.items[0]?.U_obj).toBeNull();
+  });
 });

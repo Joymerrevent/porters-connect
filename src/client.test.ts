@@ -51,4 +51,9 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     const c = await mockClient().candidate.get(10001);
     expect(c?.P_Id).toBe(10001);
   });
+
+  it("wires defaults (no transport/auth injected) and exposes host", () => {
+    const c = new PortersClient({ host: "default.test" });
+    expect(c.host).toBe("default.test");
+  });
 });
