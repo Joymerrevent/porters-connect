@@ -11,7 +11,8 @@ export type FieldType =
   | "Date"
   | "Text"
   | "User"
-  | "Option";
+  | "Option"
+  | "Reference";
 
 /** A referenced User (Read is nested; Write is `User.P_Id` only). */
 export type UserRef = {
@@ -54,6 +55,18 @@ const decodeOption = (raw: unknown): string | null => {
   return keys.length > 0 ? keys[0] : null;
 };
 
+// System[Reference] Read mirrors User: <Field><Resource>...</Resource></Field>, but the
+// inner tag varies (Client/Recruiter/...). Write is ID-only, so we decode the referenced
+// record's id — enough to round-trip. Richer reference reading is future work (SD-3).
+const decodeReference = (raw: unknown): number | null => {
+  const outer = asRecord(raw);
+  const inner = outer ? asRecord(Object.values(outer)[0]) : undefined;
+  if (!inner) return null;
+  const idEntry = Object.entries(inner).find(([k]) => k.endsWith("P_Id"));
+  const id = idEntry ? asString(idEntry[1]) : undefined;
+  return id === undefined ? null : Number(id);
+};
+
 /** Decode one field's raw node by its Field Type. */
 export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
   // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
@@ -83,5 +96,7 @@ export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
       return decodeUser(raw);
     case "Option":
       return decodeOption(raw);
+    case "Reference":
+      return decodeReference(raw);
   }
 };

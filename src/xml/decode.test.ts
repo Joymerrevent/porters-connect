@@ -80,4 +80,21 @@ describe("decodeField (ADR-0011)", () => {
     expect(owner.P_Id).toBeNull();
     expect(decodeField("Option", { OptionRoot: {} })).toBeNull();
   });
+
+  it("decodes a System[Reference] to the referenced record id", () => {
+    // <Job.P_Client><Client><Client.P_Id>100</Client.P_Id>...</Client></Job.P_Client>
+    expect(
+      decodeField("Reference", {
+        Client: { "Client.P_Id": "100", "Client.P_Name": "Acme" },
+      }),
+    ).toBe(100);
+  });
+
+  it("Reference: missing id / non-record nested / non-record raw -> null", () => {
+    expect(
+      decodeField("Reference", { Client: { "Client.P_Name": "Acme" } }),
+    ).toBeNull(); // no P_Id
+    expect(decodeField("Reference", { Client: "oops" })).toBeNull(); // nested not a record
+    expect(decodeField("Reference", "scalar")).toBeNull(); // raw not a record
+  });
 });
