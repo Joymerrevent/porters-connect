@@ -1,10 +1,11 @@
 # 16. 内部 FieldType の粒度（PORTERS の Field Type か Data Type か）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-15
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> 議論用に起票（proposed）。決定の反映（コード／カタログ／`CLAUDE.md`）は accepted 後に行う。
+> 議論の結果 **案B（Data Type 整合）で accepted**（2026-06-15）。コードへの反映（FieldType 拡張・
+> 各カタログの型ラベル更新・テスト）は本 ADR を受けて別 PR で行う。
 > [ADR-0004][0004]（型モデル）・[ADR-0011][0011]（XML エンコード/デコード）を内部実装レベルで補足する。
 
 ## Context and Problem Statement
@@ -37,7 +38,7 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
 
 ## Decision Outcome
 
-**提案（議論待ち）: 案B（PORTERS Data Type に整合）**。理由:
+**採用: 案B（PORTERS Data Type に整合）**。理由:
 
 - Data Type は **PORTERS 自身が定義する「値の形」**であり、独自の粒度を発明せず忠実。
 - `Age` は Data Type として独立 → #19 の対応と整合（案C なら Age を Date に戻すことになり矛盾）。
