@@ -12,12 +12,14 @@ import {
   createClientResource,
   createJobResource,
   createProcessResource,
+  createResumeResource,
 } from "./resources";
 import type {
   CandidateResource,
   ClientResource,
   JobResource,
   ProcessResource,
+  ResumeResource,
 } from "./resources";
 import type { PartitionId, Scope } from "./types";
 
@@ -51,6 +53,7 @@ export class PortersClient {
   readonly job: JobResource;
   readonly client: ClientResource;
   readonly process: ProcessResource;
+  readonly resume: ResumeResource;
   readonly #host: string;
 
   constructor(options: PortersClientOptions) {
@@ -80,6 +83,7 @@ export class PortersClient {
     this.job = createJobResource(deps);
     this.client = createClientResource(deps);
     this.process = createProcessResource(deps);
+    this.resume = createResumeResource(deps);
   }
 
   /** The configured API host. */
