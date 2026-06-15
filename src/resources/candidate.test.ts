@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { Requester } from "../http/requester";
+import { PortersResourceError } from "../errors";
+import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { UserRef } from "../xml/decode";
 import { createCandidateResource } from "./candidate";
@@ -126,5 +127,96 @@ describe("createCandidateResource", () => {
     expect((c?.P_UpdatedBy as UserRef | null)?.P_Name).toBe("upd");
     // empty Text -> null (raw passthrough would yield "")
     for (const key of EMPTY_TEXT_FIELDS) expect(c?.[key]).toBeNull();
+  });
+});
+
+const WRITE_OK = (id = 10001) =>
+  `<?xml version="1.0"?><Candidate><Item><Id>${id}</Id><Code>0</Code></Item></Candidate>`;
+
+type WriteCall = { req: TransportRequest; spec?: RequestSpec };
+
+const writeStub = (body: string, calls: WriteCall[]): Requester => ({
+  request: (req, parse, spec) => {
+    calls.push({ req, spec });
+    return Promise.resolve(parse(body));
+  },
+});
+
+const writeResource = (calls: WriteCall[], body = WRITE_OK()) =>
+  createCandidateResource({
+    requester: writeStub(body, calls),
+    host: "h.test",
+    partition: 12,
+  });
+
+describe("createCandidateResource — Write", () => {
+  it("create POSTs to the partitioned URL with a non-idempotent spec", async () => {
+    const calls: WriteCall[] = [];
+    const id = await writeResource(calls).create({
+      P_Owner: 5,
+      P_Name: "鈴木 一郎",
+    });
+    expect(id).toBe(10001); // resolves to the assigned id
+    const { req, spec } = calls[0];
+    expect(req.method).toBe("POST");
+    expect(req.url).toBe("https://h.test/v1/candidate?partition=12");
+    expect(spec).toEqual({ write: true, idempotent: false });
+  });
+
+  it("create serializes the input and forces Person.P_Id=-1", async () => {
+    const calls: WriteCall[] = [];
+    // a caller-supplied P_Id must not override the -1 marker (value is forced,
+    // regardless of where the key sits in the input)
+    await writeResource(calls).create({ P_Id: 999, P_Name: "x" });
+    expect(calls[0].req.body).toBe(
+      "<Candidate><Item>" +
+        "<Person.P_Id>-1</Person.P_Id>" +
+        "<Person.P_Name>x</Person.P_Name>" +
+        "</Item></Candidate>",
+    );
+  });
+
+  it("update forces the target id and is idempotent", async () => {
+    const calls: WriteCall[] = [];
+    const id = await writeResource(calls, WRITE_OK(7)).update(7, {
+      P_Name: "new",
+    });
+    expect(id).toBe(7);
+    expect(calls[0].req.body).toContain("<Person.P_Id>7</Person.P_Id>");
+    expect(calls[0].spec).toEqual({ write: true, idempotent: true });
+  });
+
+  it("maps a non-zero per-Item Code to a PortersResourceError", async () => {
+    const calls: WriteCall[] = [];
+    const body = `<Candidate><Item><Id>0</Id><Code>403</Code></Item></Candidate>`;
+    let err: unknown;
+    try {
+      await writeResource(calls, body).create({ P_Name: "x" });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).code).toBe(403);
+    expect((err as PortersResourceError).category).toBe("permission");
+    expect((err as PortersResourceError).message).toBe(
+      "candidate write returned code 403",
+    );
+    expect((err as PortersResourceError).context?.resource).toBe("Candidate");
+  });
+
+  it("throws when the Write response carries no result Item", async () => {
+    const calls: WriteCall[] = [];
+    const body = `<Candidate><Other>x</Other></Candidate>`;
+    let err: unknown;
+    try {
+      await writeResource(calls, body).create({ P_Name: "x" });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).message).toBe(
+      "write returned no result item",
+    );
   });
 });
