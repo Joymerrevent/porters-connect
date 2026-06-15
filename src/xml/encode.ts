@@ -40,10 +40,11 @@ export const encodeField = (
       return scalar(isoToPortersDateTime(String(value)));
     case "Date":
       return scalar(isoToPortersDate(String(value)));
-    // Id / Number / User (ID-only) / Text all serialize as a plain scalar.
+    // Id / Number / User & Reference (ID-only) / Text all serialize as a scalar.
     case "Id":
     case "Number":
     case "User":
+    case "Reference":
     case "Text":
       return scalar(value);
   }

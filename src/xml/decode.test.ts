@@ -80,4 +80,33 @@ describe("decodeField (ADR-0011)", () => {
     expect(owner.P_Id).toBeNull();
     expect(decodeField("Option", { OptionRoot: {} })).toBeNull();
   });
+
+  it("decodes a System[Reference] to the referenced record's own id", () => {
+    // <Job.P_Client><Client><Client.P_Id>100</Client.P_Id>...</Client></Job.P_Client>
+    expect(
+      decodeField("Reference", {
+        Client: { "Client.P_Id": "100", "Client.P_Name": "Acme" },
+      }),
+    ).toBe(100);
+  });
+
+  it("Reference: accepts a prefix-less P_Id and skips non-record siblings", () => {
+    // prefix-less id (the `?? inner.P_Id` fallback)
+    expect(decodeField("Reference", { Recruiter: { P_Id: "55" } })).toBe(55);
+    // an attribute / scalar sibling before the resource node is skipped, not picked
+    expect(
+      decodeField("Reference", {
+        "@_attr": "x",
+        Client: { "Client.P_Id": "7" },
+      }),
+    ).toBe(7);
+  });
+
+  it("Reference: missing id / non-record nested / non-record raw -> null", () => {
+    expect(
+      decodeField("Reference", { Client: { "Client.P_Name": "Acme" } }),
+    ).toBeNull(); // no P_Id
+    expect(decodeField("Reference", { Client: "oops" })).toBeNull(); // nested not a record
+    expect(decodeField("Reference", "scalar")).toBeNull(); // raw not a record
+  });
 });

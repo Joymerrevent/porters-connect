@@ -32,4 +32,11 @@ export type {
   CandidateResource,
   CandidateSearchQuery,
 } from "./resources";
+export type {
+  Job,
+  JobInput,
+  JobPage,
+  JobResource,
+  JobSearchQuery,
+} from "./resources";
 export type { FieldValue, UserRef } from "./xml";

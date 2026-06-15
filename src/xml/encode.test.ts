@@ -18,10 +18,11 @@ describe("encodeField (ADR-0011, Write)", () => {
     expect(encodeField("Text", "山田 太郎")).toBe("山田 太郎");
   });
 
-  it("serializes Id / Number / User (ID-only) as a plain scalar", () => {
+  it("serializes Id / Number / User / Reference (ID-only) as a plain scalar", () => {
     expect(encodeField("Id", -1)).toBe("-1");
     expect(encodeField("Number", 42)).toBe("42");
     expect(encodeField("User", 5)).toBe("5"); // Write is the ID, not a nested ref
+    expect(encodeField("Reference", 100)).toBe("100"); // System[Reference] -> id only
   });
 
   it("converts DateTime / Date from ISO to PORTERS (UTC)", () => {

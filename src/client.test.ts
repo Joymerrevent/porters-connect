@@ -110,3 +110,26 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(token?.body).toContain("secret=&");
   });
 });
+
+describe("PortersClient + job (E2E, mock transport)", () => {
+  it("exposes a job accessor; decodes a System[Reference] to an id", async () => {
+    const jobXml =
+      `<Job Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Job.P_Id>55</Job.P_Id>` +
+      `<Job.P_Client><Client><Client.P_Id>500</Client.P_Id></Client></Job.P_Client>` +
+      `</Item></Job>`;
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: jobXml }),
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      partition: 999,
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.job.search();
+    expect(page.items[0]?.P_Id).toBe(55); // Id -> number
+    expect(page.items[0]?.P_Client).toBe(500); // System[Reference] -> id, via the client
+  });
+});
