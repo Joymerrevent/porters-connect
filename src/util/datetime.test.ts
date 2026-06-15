@@ -29,14 +29,34 @@ describe("datetime (PORTERS <-> ISO, UTC)", () => {
   });
 
   it("throws on malformed input (fail-safe, no silent coercion)", () => {
-    expect(() => portersDateTimeToIso("2026-01-02 03:04:05")).toThrow();
-    expect(() => portersDateTimeToIso("2026/13/02 03:04:05")).toThrow();
-    expect(() => portersDateToIso("not a date")).toThrow();
+    // assert the message so a blanked message / removed guard (-> TypeError) is caught
+    expect(() => portersDateTimeToIso("2026-01-02 03:04:05")).toThrow(
+      /invalid PORTERS DateTime/,
+    );
+    // regex matches but the calendar date is impossible (Date.parse -> NaN branch)
+    expect(() => portersDateTimeToIso("2026/13/02 03:04:05")).toThrow(
+      /invalid PORTERS DateTime/,
+    );
+    expect(() => portersDateToIso("not a date")).toThrow(
+      /invalid PORTERS Date/,
+    );
   });
 
   it("throws on invalid ISO input", () => {
-    expect(() => isoToPortersDateTime("not-a-date")).toThrow();
-    expect(() => isoToPortersDate("garbage")).toThrow();
+    expect(() => isoToPortersDateTime("not-a-date")).toThrow(
+      /invalid ISO datetime/,
+    );
+    expect(() => isoToPortersDate("garbage")).toThrow(/invalid ISO date/);
+  });
+
+  it("anchors the patterns: rejects leading/trailing garbage", () => {
+    // ^ anchor
+    expect(() => portersDateTimeToIso("x2026/01/02 03:04:05")).toThrow();
+    expect(() => portersDateToIso("x2026/01/02")).toThrow();
+    expect(() => isoToPortersDate("x2026-01-02")).toThrow();
+    // $ anchor (ISO_DATE_RE intentionally has none — it takes the date prefix)
+    expect(() => portersDateTimeToIso("2026/01/02 03:04:05x")).toThrow();
+    expect(() => portersDateToIso("2026/01/02x")).toThrow();
   });
 
   it("isoToPortersDate takes the date part of a datetime", () => {
