@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { TokenProvider } from "../auth/types";
-import { PortersNetworkError, PortersResourceError } from "../errors/index";
+import {
+  PortersConfigError,
+  PortersNetworkError,
+  PortersResourceError,
+} from "../errors/index";
 import { createRequester } from "./requester";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
@@ -392,6 +396,67 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
       }),
     ).rejects.toBe(weird);
     expect(n).toBe(1); // not a PortersError -> never retried
+  });
+
+  it("rejects an oversized body before reaching the transport", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    let err: unknown;
+    try {
+      await r.request(
+        { method: "POST", url: "u", headers: {}, body: "x".repeat(15001) },
+        (b) => b,
+        { write: true },
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).category).toBe("config");
+    expect((err as PortersConfigError).message).toContain("15001");
+    expect((err as PortersConfigError).message).toContain("15000");
+    expect((err as PortersConfigError).hint).toContain("smaller batches");
+    expect(n).toBe(0); // never sent — guarded before transport
+  });
+
+  it("allows a body exactly at the limit through to the transport", async () => {
+    const sent: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        sent.push(req);
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    const body = "x".repeat(15000); // == limit is allowed; only > limit is blocked
+    expect(
+      await r.request(
+        { method: "POST", url: "u", headers: {}, body },
+        (b) => b,
+        {
+          write: true,
+        },
+      ),
+    ).toBe("ok");
+    expect(sent).toHaveLength(1);
   });
 
   it("waits backoff(attempt-1) between transient retries", async () => {
