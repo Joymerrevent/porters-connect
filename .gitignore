@@ -8,6 +8,10 @@ dist/
 # Test / coverage
 coverage/
 
+# Mutation testing (Stryker)
+.stryker-tmp/
+reports/
+
 # Environment & secrets (never commit App ID / Secret / host / tokens)
 .env
 .env.*

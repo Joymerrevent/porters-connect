@@ -1,0 +1,16 @@
+{
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "reporters": ["progress", "clear-text", "html"],
+  "mutate": [
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
+    "!src/**/index.ts",
+    "!src/**/types.ts",
+    "!src/types/**",
+    "!src/fields/**"
+  ],
+  "thresholds": { "high": 90, "low": 80, "break": 70 },
+  "ignorePatterns": ["dist", "coverage", ".stryker-tmp", "reports"]
+}
