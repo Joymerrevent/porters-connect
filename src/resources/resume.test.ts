@@ -30,7 +30,7 @@ const NUMBER_FIELDS = [
   "P_DesiredHourlyRate",
   "P_HourlyRate",
 ];
-const DATE_FIELDS = ["P_DateOfBirth"]; // Age Field Type — wire value is yyyy/mm/dd
+const AGE_FIELDS = ["P_DateOfBirth"]; // Age Field Type — wire value is yyyy/mm/dd
 const TEXT_FIELDS = [
   "P_PhaseMemo",
   "P_Name",
@@ -59,7 +59,7 @@ const ALL =
   NUMBER_FIELDS.map(
     (f, i) => `<Resume.${f}>${1000 * (i + 1)}</Resume.${f}>`,
   ).join("") +
-  DATE_FIELDS.map((f) => `<Resume.${f}>1990/01/02</Resume.${f}>`).join("") +
+  AGE_FIELDS.map((f) => `<Resume.${f}>1990/01/02</Resume.${f}>`).join("") +
   TEXT_FIELDS.map((f) => `<Resume.${f}/>`).join("") +
   `</Item></Resume>`;
 
@@ -97,7 +97,7 @@ describe("createResumeResource — decode catalog", () => {
     ); // DateTime -> ISO (...Z)
     OPTION_FIELDS.forEach((f) => expect(r[f]).toBe(`Opt_${f}`)); // Option -> end alias
     NUMBER_FIELDS.forEach((f, i) => expect(r[f]).toBe(1000 * (i + 1))); // Number / Currency
-    DATE_FIELDS.forEach((f) => expect(r[f]).toBe("1990-01-02")); // Age -> yyyy-mm-dd (Date wire)
+    AGE_FIELDS.forEach((f) => expect(r[f]).toBe("1990-01-02")); // Age -> yyyy-mm-dd (Date wire)
     TEXT_FIELDS.forEach((f) => expect(r[f]).toBeNull()); // empty Text -> null (not "")
   });
 });

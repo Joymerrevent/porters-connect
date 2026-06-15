@@ -2,8 +2,8 @@
 // (create / update) over the generic resource factory. A Resume belongs to a Candidate;
 // P_Candidate is System[Reference] (Write = the Person id).
 //
-// P_DateOfBirth is the Age Field Type, whose wire value is `yyyy/mm/dd` — identical to
-// Date — so it is catalogued as "Date" (the screen derives the age; that is UI-only).
+// P_DateOfBirth is the Age Field Type — catalogued as "Age". Its wire value is the
+// birthdate (`yyyy/mm/dd`, same as Date); PORTERS derives the displayed age in its UI.
 // Display-only Reference fields (P_Mail, P_*Reference — they mirror a Person value and are
 // not writable) are intentionally left out of the catalog: scalar mirrors read through as
 // raw strings. Multi-select Option read returns the first alias only. Image-typed custom
@@ -42,7 +42,7 @@ const FIELDS = new Map<string, FieldType>([
   ["P_ExperiencedIndustry", "Option"],
   ["P_ChangeJobsCount", "Number"],
   ["P_Gender", "Option"],
-  ["P_DateOfBirth", "Date"],
+  ["P_DateOfBirth", "Age"],
   ["P_ExpectEmploymentType", "Option"],
   ["P_ExpectArea", "Option"],
   ["P_ExpectJobCategory", "Option"],
