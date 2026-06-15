@@ -1,11 +1,13 @@
 # 15. ミューテーションテスト（Stryker）でテスト品質を測る
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-15
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0014][0014] のカバレッジは「実行されたか」を測るが「正しく検証したか」は測れない
-> （assertion 無しでも緑＝coverage theater）。テストの**質**を測る手段を決める。`proposed`（議論後に確定）。
+> （assertion 無しでも緑＝coverage theater）。テストの**質**を測る手段を決める。`accepted`（2026-06-15）：
+> Stryker を導入し、カバレッジ同様に**継続運用・CI で回帰を止める**（score `break` 閾値）。
+> PR は差分（incremental）で高速に・nightly でフル。baseline を作り survived を潰して閾値を設定・ratchet。
 
 ## Context and Problem Statement
 
@@ -30,19 +32,21 @@
 
 ## Decision Outcome
 
-**提案（推奨）: Stryker を導入。ただし毎 PR 強制にはせず、まず定期/オンデマンドで mutation score を可視化**。
+**採用: Stryker を導入し、テスト品質を継続運用で担保（CI で score 回帰を止める）**。一度きりの計測でなく、
+カバレッジ（[ADR-0014][0014]）と同じく「壊れたら CI が落ちる」運用にする。
 
-- ツール: **StrykerJS**（`@stryker-mutator/core` ＋ vitest runner）。
+- ツール: **StrykerJS**（`@stryker-mutator/core` ＋ `@stryker-mutator/vitest-runner`）。
 - 対象: src のロジック（[ADR-0014][0014] と同様にバレル/型/プレースホルダ/テストを除外）。
-- 運用: **初期はレポートのみ**（オンデマンド `pnpm mutation` ＋必要なら nightly CI）。survived mutant を見て
-  テストを補強。**score 閾値の CI 強制は段階導入**（数値が安定してから別途）。
-- フェイルセーフ: survived は「テストの穴」として扱い、`/* Stryker disable */` の濫用はしない。
+- **CI 強制**: mutation score の `break` 閾値を設け、下回ったら CI を落とす（回帰防止）。
+- **実行戦略**: **PR は差分のみ（incremental / `--since`）で高速**に、**nightly（schedule）でフル run** して全体 score を追跡。
+- **baseline → ratchet**: 導入時にフル run → survived mutant をテストで潰す → `break` 閾値を実測付近に置き徐々に引き上げる。
+- フェイルセーフ: survived は「テストの穴」。`// Stryker disable` は真の同値変異のみに限定（濫用しない）。
 
 ### Consequences
 
-- Good: 空テスト/弱い assertion を炙り出せる＝テスト品質を継続的に上げられる。カバレッジの限界を補完。
-- Bad: **遅い**（mutant 数だけ test suite を回す）。同値変異（無害な mutant）の survive を手で仕分ける手間。
-- Neutral: 毎 PR 強制・score 閾値・CI ゲートは別 ADR/後続で（まずは可視化から）。
+- Good: 空テスト/弱い assertion を CI で継続的に弾ける＝テスト品質を維持。カバレッジの限界を補完。
+- Bad: **遅い**（mutant 数だけ test suite を回す）→ PR は incremental・full は nightly で緩和。同値変異の仕分けコスト。
+- Neutral: `break` 閾値・incremental の基準（`develop`）は実装で確定。score を上げる継続作業が発生（coverage と同性質）。
 
 ## Pros and Cons of the Options
 
