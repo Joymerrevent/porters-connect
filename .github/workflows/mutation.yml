@@ -1,0 +1,58 @@
+name: Mutation
+
+# ミューテーションテスト（ADR-0015）の CI 強制。
+# PR / push は incremental（変更分だけ再評価＝高速）、nightly はフル run でドリフト検知。
+# break 閾値（stryker.config.json）を下回ると job が落ちる＝テスト品質の回帰を止める。
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 18 * * *" # 毎日 03:00 JST 相当のフル run（既定ブランチ上で実行される）
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同一 ref で進行中の run は新しい push で打ち切る（ランナー節約・フィードバック高速化）
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    name: stryker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # incremental 結果（reports/stryker-incremental.json）を run 間で共有して PR を高速化。
+      # key は run ごとに一意・restore-keys の前方一致で直近の結果を復元する（Stryker 推奨パターン）。
+      - name: Restore Stryker incremental cache
+        uses: actions/cache@v4
+        with:
+          path: reports/stryker-incremental.json
+          key: stryker-incremental-${{ github.run_id }}
+          restore-keys: |
+            stryker-incremental-
+
+      # PR / push: incremental。未変更 mutant は再利用しつつ break 閾値は「全体スコア」に効く。
+      - name: Mutation (incremental)
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: pnpm exec stryker run --incremental
+
+      # nightly / 手動: incremental 基準を作り直すフル run（蓄積したキャッシュのドリフトを是正）。
+      - name: Mutation (full, refresh baseline)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: pnpm exec stryker run --incremental --force
