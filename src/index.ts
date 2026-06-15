@@ -39,4 +39,11 @@ export type {
   JobResource,
   JobSearchQuery,
 } from "./resources";
+export type {
+  Client,
+  ClientInput,
+  ClientPage,
+  ClientResource,
+  ClientSearchQuery,
+} from "./resources";
 export type { FieldValue, UserRef } from "./xml";
