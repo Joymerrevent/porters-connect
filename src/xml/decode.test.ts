@@ -21,9 +21,26 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("Id", first["Person.P_Id"])).toBe(10001);
   });
 
-  it("keeps Text as string (no numeric coercion) and empty -> null", () => {
-    expect(decodeField("Text", first["Person.P_Name"])).toBe("山田 太郎");
-    expect(decodeField("Text", second["Person.P_Mail"])).toBeNull();
+  it("keeps string Data Types as strings (no numeric coercion); empty -> null", () => {
+    expect(decodeField("SinglelineText", first["Person.P_Name"])).toBe(
+      "山田 太郎",
+    );
+    expect(decodeField("Mail", second["Person.P_Mail"])).toBeNull();
+  });
+
+  it("decodes every string Data Type as a string (empty / non-string -> null)", () => {
+    const stringTypes = [
+      "SinglelineText",
+      "MultilineText",
+      "Mail",
+      "Telephone",
+      "URL",
+    ] as const;
+    for (const t of stringTypes) {
+      expect(decodeField(t, "hello")).toBe("hello"); // passthrough
+      expect(decodeField(t, "")).toBeNull(); // empty -> null (guard)
+      expect(decodeField(t, { a: 1 })).toBeNull(); // non-string -> null
+    }
   });
 
   it("decodes DateTime to ISO (...Z)", () => {
@@ -47,7 +64,9 @@ describe("decodeField (ADR-0011)", () => {
   });
 
   it("a field not present in the item -> null", () => {
-    expect(decodeField("Text", second["Person.P_Country"])).toBeNull();
+    expect(
+      decodeField("SinglelineText", second["Person.P_Country"]),
+    ).toBeNull();
   });
 
   it("decodes Number and Date; empty -> null", () => {
@@ -80,7 +99,6 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("Number", { a: 1 })).toBeNull();
     expect(decodeField("DateTime", { a: 1 })).toBeNull();
     expect(decodeField("Date", { a: 1 })).toBeNull();
-    expect(decodeField("Text", { a: 1 })).toBeNull();
     const owner = decodeField("User", { User: { P_Name: "n" } }) as UserRef;
     expect(owner.P_Id).toBeNull();
     expect(decodeField("Option", { OptionRoot: {} })).toBeNull();

@@ -4,13 +4,20 @@
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
 import { asRecord, asString } from "./raw";
 
+// Granularity = PORTERS Data Type (ADR-0016). Currency collapses to Number and the
+// three Option subtypes to Option (PORTERS' own Data Type does the same); the string
+// Data Types stay distinct (room for future validation / normalisation).
 export type FieldType =
   | "Id"
   | "Number"
   | "DateTime"
   | "Date"
   | "Age"
-  | "Text"
+  | "SinglelineText"
+  | "MultilineText"
+  | "Mail"
+  | "Telephone"
+  | "URL"
   | "User"
   | "Option"
   | "Reference";
@@ -91,7 +98,13 @@ export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
       const s = asString(raw);
       return s === undefined ? null : Number(s);
     }
-    case "Text":
+    // String Data Types share one decode (a plain string); they stay distinct
+    // labels for fidelity / future per-type validation (ADR-0016).
+    case "SinglelineText":
+    case "MultilineText":
+    case "Mail":
+    case "Telephone":
+    case "URL":
       return asString(raw) ?? null;
     case "DateTime": {
       const s = asString(raw);
