@@ -51,6 +51,21 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(err).toBeInstanceOf(PortersResourceError);
     expect((err as PortersResourceError).category).toBe("unknown");
   });
+
+  it("defaults missing attributes and Code to 0", () => {
+    const page = parseResourcePage(
+      "<Candidate><Item><Person.P_Id>1</Person.P_Id></Item></Candidate>",
+    );
+    expect(page.total).toBe(0); // @_Total missing -> "0"
+    expect(page.items).toHaveLength(1);
+  });
+
+  it("normalizes a non-record Item to an empty object", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>txt</Item></Candidate>`,
+    );
+    expect(page.items).toEqual([{}]);
+  });
 });
 
 describe("parseAuthentication (ADR-0011)", () => {
@@ -93,5 +108,24 @@ describe("parseAuthentication (ADR-0011)", () => {
     }
     expect(err).toBeInstanceOf(PortersAuthError);
     expect((err as PortersAuthError).category).toBe("unknown");
+  });
+
+  it("auth error without a Message uses a default message", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>500</Error></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+  });
+
+  it("treats a missing <Error> as success", () => {
+    const a = parseAuthentication(
+      "<Authentication><Code>C</Code></Authentication>",
+    );
+    expect(a.code).toBe("C");
   });
 });

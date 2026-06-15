@@ -15,10 +15,12 @@ export default defineConfig({
         "src/fields/**",
         "**/*.test.ts",
       ],
-      // ADR-0014: all logic exercised -> statements/functions/lines = 100%.
-      // branches < 100% は防御的な `?? 既定` / `=== undefined` 等で、無理に通すと
-      // coverage theater になるため実測直下（90%）を下限に（回帰防止・ADR-0014 記録）。
+      // ADR-0014: all logic exercised. perFile=true で「各ファイル」に閾値を適用
+      // （aggregate で弱いファイルが隠れるのを防ぐ）。statements/functions/lines=100%。
+      // branches は防御的な `?? 既定` / `=== undefined` を意味あるテストで埋めつつ、
+      // 真に到達不能な分岐のみ限定 ignore。各ファイル 90% を下限に。
       thresholds: {
+        perFile: true,
         statements: 100,
         functions: 100,
         lines: 100,
