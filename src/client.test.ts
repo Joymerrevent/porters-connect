@@ -133,3 +133,31 @@ describe("PortersClient + job (E2E, mock transport)", () => {
     expect(page.items[0]?.P_Client).toBe(500); // System[Reference] -> id, via the client
   });
 });
+
+describe("PortersClient + client resource (E2E, mock transport)", () => {
+  it("exposes a client accessor; get(id) hits /v1/client", async () => {
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({
+          status: 200,
+          body: `<Client Total="1" Count="1" Start="0"><Code>0</Code><Item><Client.P_Id>33</Client.P_Id></Item></Client>`,
+        });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      partition: 999,
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const one = await client.client.get(33);
+    expect(one?.P_Id).toBe(33); // Id -> number, via the wired Client accessor
+    expect(calls[0]?.url).toContain("/v1/client?");
+    expect(decodeURIComponent(calls[0]?.url ?? "")).toContain(
+      "Client.P_Id:eq=33",
+    );
+  });
+});

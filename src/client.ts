@@ -7,8 +7,16 @@ import {
   expoBackoff,
 } from "./http";
 import type { Transport } from "./http";
-import { createCandidateResource, createJobResource } from "./resources";
-import type { CandidateResource, JobResource } from "./resources";
+import {
+  createCandidateResource,
+  createClientResource,
+  createJobResource,
+} from "./resources";
+import type {
+  CandidateResource,
+  ClientResource,
+  JobResource,
+} from "./resources";
 import type { PartitionId, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. */
@@ -39,6 +47,7 @@ export type PortersClientOptions = {
 export class PortersClient {
   readonly candidate: CandidateResource;
   readonly job: JobResource;
+  readonly client: ClientResource;
   readonly #host: string;
 
   constructor(options: PortersClientOptions) {
@@ -66,6 +75,7 @@ export class PortersClient {
     };
     this.candidate = createCandidateResource(deps);
     this.job = createJobResource(deps);
+    this.client = createClientResource(deps);
   }
 
   /** The configured API host. */
