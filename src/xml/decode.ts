@@ -9,6 +9,7 @@ export type FieldType =
   | "Number"
   | "DateTime"
   | "Date"
+  | "Age"
   | "Text"
   | "User"
   | "Option"
@@ -96,7 +97,10 @@ export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
       const s = asString(raw);
       return s === undefined ? null : portersDateTimeToIso(s);
     }
-    case "Date": {
+    // Age shares Date's wire format (`yyyy/mm/dd`); PORTERS transmits the birthdate
+    // and derives the age in its UI, so the faithful value is the date itself.
+    case "Date":
+    case "Age": {
       const s = asString(raw);
       return s === undefined ? null : portersDateToIso(s);
     }

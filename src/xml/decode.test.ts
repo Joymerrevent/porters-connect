@@ -56,6 +56,11 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("Date", "2026/01/02")).toBe("2026-01-02");
   });
 
+  it("decodes Age as a date (birthdate; the age is a UI-derived value)", () => {
+    expect(decodeField("Age", "1990/01/02")).toBe("1990-01-02");
+    expect(decodeField("Age", "")).toBeNull();
+  });
+
   it("Option without an OptionRoot -> null", () => {
     expect(decodeField("Option", { x: 1 })).toBeNull();
     expect(decodeField("Option", "scalar")).toBeNull();

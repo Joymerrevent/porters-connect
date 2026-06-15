@@ -38,7 +38,9 @@ export const encodeField = (
         .join("");
     case "DateTime":
       return scalar(isoToPortersDateTime(String(value)));
+    // Age shares Date's wire format (`yyyy/mm/dd`): we write the birthdate.
     case "Date":
+    case "Age":
       return scalar(isoToPortersDate(String(value)));
     // Id / Number / User & Reference (ID-only) / Text all serialize as a scalar.
     case "Id":
