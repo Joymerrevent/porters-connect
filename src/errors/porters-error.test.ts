@@ -29,4 +29,17 @@ describe("PortersError", () => {
     expect(err.code).toBeNull();
     expect(err.retryable).toBe(false);
   });
+
+  it("attaches `cause` only when one is supplied", () => {
+    const root = new Error("root");
+    const withCause = new PortersResourceError("wrapped", {
+      category: "network",
+      cause: root,
+    });
+    expect(withCause.cause).toBe(root);
+
+    // when no cause is given, the property must be absent (not `{ cause: undefined }`)
+    const without = new PortersAuthError("x", { category: "auth" });
+    expect("cause" in without).toBe(false);
+  });
 });
