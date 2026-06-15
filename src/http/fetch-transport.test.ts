@@ -16,28 +16,45 @@ describe("createFetchTransport (ADR-0009)", () => {
     expect(res.body).toBe("<xml/>");
   });
 
-  it("wraps network failures in PortersNetworkError (retryable)", async () => {
-    const fetchImpl = (() =>
-      Promise.reject(new Error("ECONNRESET"))) as unknown as typeof fetch;
+  it("wraps network failures in PortersNetworkError (network, retryable)", async () => {
+    const cause = new Error("ECONNRESET");
+    const fetchImpl = (() => Promise.reject(cause)) as unknown as typeof fetch;
     const transport = createFetchTransport({ fetchImpl });
 
-    await expect(
-      transport.send({ method: "GET", url: "u", headers: {} }),
-    ).rejects.toBeInstanceOf(PortersNetworkError);
+    let err: unknown;
+    try {
+      await transport.send({ method: "GET", url: "u", headers: {} });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersNetworkError);
+    const e = err as PortersNetworkError;
+    expect(e.category).toBe("network");
+    expect(e.retryable).toBe(true);
+    expect(e.message).toBe("transport request failed");
+    expect(e.cause).toBe(cause);
   });
 
-  it("uses global fetch when no fetchImpl is given", async () => {
+  it("uses global fetch with the request's method / headers / body", async () => {
     const spy = vi.fn(() =>
       Promise.resolve(new Response("ok", { status: 200 })),
     );
     vi.stubGlobal("fetch", spy);
     const res = await createFetchTransport().send({
-      method: "GET",
-      url: "u",
-      headers: {},
+      method: "POST",
+      url: "https://h/u",
+      headers: { "X-A": "1" },
+      body: "B",
     });
     expect(res.body).toBe("ok");
-    expect(spy).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledWith(
+      "https://h/u",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "X-A": "1" },
+        body: "B",
+      }),
+    );
     vi.unstubAllGlobals();
   });
 });
