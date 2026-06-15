@@ -27,6 +27,7 @@ export type { PartitionId, Scope } from "./types";
 
 export type {
   Candidate,
+  CandidateInput,
   CandidatePage,
   CandidateResource,
   CandidateSearchQuery,

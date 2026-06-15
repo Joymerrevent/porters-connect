@@ -3,12 +3,20 @@
 // idempotency guard keeps non-idempotent writes (create) from double-applying.
 
 import type { TokenProvider } from "../auth/types";
-import { PortersError, PortersNetworkError } from "../errors/index";
+import {
+  PortersConfigError,
+  PortersError,
+  PortersNetworkError,
+} from "../errors/index";
 import type { Backoff } from "./retry";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
 
 const API_VERSION = "2";
+
+// docs/reference: keep a whole request under ~15000 chars (a larger payload 400s).
+// A future 16KB cap is planned but undetermined — follow the canonical value.
+const MAX_REQUEST_LENGTH = 15000;
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -58,6 +66,18 @@ export const createRequester = (o: RequesterOptions): Requester => {
     parse: (body: string) => T,
     spec: RequestSpec = {},
   ): Promise<T> => {
+    // Eager size guard: block an oversized body before throttle / auth / transport.
+    // A clear config error beats an opaque server 400, and we don't burn a throttle
+    // token or a token refresh on a request that cannot succeed (fail-safe).
+    if (req.body !== undefined && req.body.length > MAX_REQUEST_LENGTH) {
+      throw new PortersConfigError(
+        `request body is ${req.body.length} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
+        {
+          category: "config",
+          hint: "Split the write into smaller batches (PORTERS caps a request at ~15000 chars / 200 records).",
+        },
+      );
+    }
     const write = spec.write ?? false;
     const idempotent = spec.idempotent ?? !write;
     let authRetried = false;

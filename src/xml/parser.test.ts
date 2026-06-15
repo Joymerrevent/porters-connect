@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { PortersAuthError, PortersResourceError } from "../errors/index";
-import { parseAuthentication, parseResourcePage } from "./parser";
+import {
+  parseAuthentication,
+  parseResourcePage,
+  parseWriteResult,
+} from "./parser";
 
 const fixture = (path: string): string =>
   readFileSync(
@@ -90,6 +94,44 @@ describe("parseResourcePage (ADR-0011)", () => {
       `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>txt</Item></Candidate>`,
     );
     expect(page.items).toEqual([{}]);
+  });
+});
+
+describe("parseWriteResult (ADR-0011)", () => {
+  it("reads per-Item Id and Code from a Write response", () => {
+    const results = parseWriteResult(fixture("candidate/write-result.xml"));
+    expect(results).toEqual([{ id: 10001, code: 0 }]);
+  });
+
+  it("preserves per-Item results and order for a bulk write", () => {
+    const results = parseWriteResult(
+      `<Candidate><Item><Id>10001</Id><Code>0</Code></Item>` +
+        `<Item><Id>0</Id><Code>301</Code></Item></Candidate>`,
+    );
+    // a non-zero Code is returned, not thrown — the accessor applies the policy
+    expect(results).toEqual([
+      { id: 10001, code: 0 },
+      { id: 0, code: 301 },
+    ]);
+  });
+
+  it("defaults a missing Id / Code (and a non-record Item) to 0", () => {
+    const results = parseWriteResult(`<Candidate><Item/></Candidate>`);
+    expect(results).toEqual([{ id: 0, code: 0 }]);
+  });
+
+  it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseWriteResult("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).message).toBe(
+      "unparseable write response",
+    );
   });
 });
 
