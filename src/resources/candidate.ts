@@ -50,8 +50,12 @@ export type CandidateResource = {
   get(id: number): Promise<Candidate | undefined>;
 };
 
+// `includes(".")` -> `includes("")` is an equivalent mutant: for a dotless key,
+// slice(indexOf(".") + 1) is slice(0), which equals the key — same as the else.
+// Stryker disable StringLiteral
 const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
+// Stryker restore StringLiteral
 
 const decodeCandidate = (item: Record<string, unknown>): Candidate => {
   const out: Candidate = {};
