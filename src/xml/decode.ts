@@ -56,12 +56,18 @@ const decodeOption = (raw: unknown): string | null => {
 
 /** Decode one field's raw node by its Field Type. */
 export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
+  // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
+  // `=== undefined` / `=== null` are defense-in-depth — every switch branch below
+  // also maps them to null, so dropping either is an equivalent mutant.
+  // Stryker disable next-line ConditionalExpression: see above (undefined/null are redundant with the switch)
   if (raw === "" || raw === undefined || raw === null) return null;
   switch (type) {
     case "Id":
     case "Number": {
+      // raw is neither "" nor non-string here (guarded above), so `s` is a
+      // non-empty string or undefined — `s === ""` would be dead.
       const s = asString(raw);
-      return s === undefined || s === "" ? null : Number(s);
+      return s === undefined ? null : Number(s);
     }
     case "Text":
       return asString(raw) ?? null;

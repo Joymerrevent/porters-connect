@@ -35,6 +35,7 @@ describe("decodeField (ADR-0011)", () => {
   it("decodes User to a nested object", () => {
     const owner = decodeField("User", first["Person.P_Owner"]) as UserRef;
     expect(owner.P_Id).toBe(5);
+    expect(owner.P_Type).toBe("0"); // prefixed User.P_Type resolves, not && null
     expect(owner.P_Name).toBe("採用 花子");
     expect(owner.P_Mail).toBe("hanako@example.com");
   });
