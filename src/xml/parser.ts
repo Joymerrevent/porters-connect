@@ -73,6 +73,37 @@ export const parseResourcePage = (xml: string): ResourcePage => {
   };
 };
 
+/** One written record's outcome: the assigned/updated `Id` and its Result `Code`. */
+export type WriteResultItem = {
+  id: number;
+  code: number;
+};
+
+/**
+ * Parse a Resource Write response. Unlike Read there is no root `<Code>` nor
+ * Total/Count/Start: each `<Item>` carries its own `<Id>` (assigned on create /
+ * echoed on update) and `<Code>` (per-item Result Code). Applying the per-item
+ * code policy (throw on `!= 0`) is the accessor's job, since a bulk write mixes
+ * successes and failures — see write-format.md.
+ */
+export const parseWriteResult = (xml: string): WriteResultItem[] => {
+  const root = asRecord(parser.parse(xml) as unknown);
+  const rootKey = root ? Object.keys(root)[0] : undefined;
+  // Same equivalence as parseResourcePage: both guards converge on the throw.
+  // Stryker disable next-line ConditionalExpression,LogicalOperator: equivalent — both branches converge on the unparseable throw
+  const body = root && rootKey ? asRecord(root[rootKey]) : undefined;
+  if (!body) {
+    throw new PortersResourceError("unparseable write response", {
+      category: "unknown",
+    });
+  }
+
+  return asArray(body.Item).map((it) => {
+    const item = asRecord(it) ?? {};
+    return { id: toInt(item.Id), code: toInt(item.Code) };
+  });
+};
+
 /** Parsed `<Authentication>` response (OAuth `code_direct` / Token). */
 export type AuthResponse = {
   code?: string;
