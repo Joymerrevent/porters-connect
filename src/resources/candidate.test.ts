@@ -220,3 +220,65 @@ describe("createCandidateResource — Write", () => {
     );
   });
 });
+
+// A page response with the given Total and Item P_Ids (Start is irrelevant to
+// searchAll, which advances by the items it actually receives).
+const page = (total: number, ids: number[]): string =>
+  `<Candidate Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+  ids.map((id) => `<Item><Person.P_Id>${id}</Person.P_Id></Item>`).join("") +
+  `</Candidate>`;
+
+// Returns a different body per call (FIFO), so a multi-page walk is observable.
+const pagingStub = (
+  bodies: string[],
+  captured: TransportRequest[],
+): Requester => ({
+  request: (req, parse) => {
+    captured.push(req);
+    return Promise.resolve(parse(bodies.shift() ?? ""));
+  },
+});
+
+const pagingResource = (bodies: string[], sent: TransportRequest[]) =>
+  createCandidateResource({
+    requester: pagingStub(bodies, sent),
+    host: "h.test",
+    partition: 12,
+  });
+
+const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
+  const out: T[] = [];
+  for await (const x of it) out.push(x);
+  return out;
+};
+
+describe("createCandidateResource — searchAll", () => {
+  it("pages through all results (200/page) until total is reached", async () => {
+    const sent: TransportRequest[] = [];
+    const res = pagingResource([page(3, [1, 2]), page(3, [3])], sent);
+    const items = await collect(
+      res.searchAll({ condition: { "Person.P_Name:part": "x" } }),
+    );
+    expect(items.map((c) => c.P_Id)).toEqual([1, 2, 3]);
+    expect(sent).toHaveLength(2);
+    expect(sent[0].url).toContain("count=200");
+    expect(sent[0].url).toContain("start=0");
+    expect(sent[1].url).toContain("start=2"); // advanced by items received, not 200
+  });
+
+  it("makes a single request when the first page reaches total", async () => {
+    const sent: TransportRequest[] = [];
+    const res = pagingResource([page(2, [1, 2]), page(2, [])], sent);
+    const items = await collect(res.searchAll());
+    expect(items.map((c) => c.P_Id)).toEqual([1, 2]);
+    expect(sent).toHaveLength(1); // 2 >= total(2) -> done after one page
+  });
+
+  it("stops on an empty page even if total claims more (no infinite loop)", async () => {
+    const sent: TransportRequest[] = [];
+    const res = pagingResource([page(5, []), page(5, [])], sent);
+    const items = await collect(res.searchAll());
+    expect(items).toEqual([]);
+    expect(sent).toHaveLength(1); // empty page halts the walk defensively
+  });
+});

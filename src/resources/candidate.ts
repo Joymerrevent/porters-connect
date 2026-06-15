@@ -58,12 +58,19 @@ export type CandidateInput = WriteItem;
 
 export type CandidateResource = {
   search(query?: CandidateSearchQuery): Promise<CandidatePage>;
+  /** Auto-paginating search: yields every matching Candidate (200 per page). */
+  searchAll(
+    query?: Omit<CandidateSearchQuery, "count" | "start">,
+  ): AsyncIterable<Candidate>;
   get(id: number): Promise<Candidate | undefined>;
   /** Create one Candidate; resolves to the newly assigned id. */
   create(input: CandidateInput): Promise<number>;
   /** Update one Candidate by id; resolves to that id. */
   update(id: number, input: CandidateInput): Promise<number>;
 };
+
+// Read max page size (docs/reference: count 1–200). searchAll pages by this.
+const PAGE_SIZE = 200;
 
 // `includes(".")` -> `includes("")` is an equivalent mutant: for a dotless key,
 // slice(indexOf(".") + 1) is slice(0), which equals the key — same as the else.
@@ -150,6 +157,21 @@ export const createCandidateResource = (deps: {
       },
     );
 
+  // A generator can't be an arrow; a function expression still satisfies
+  // func-style:expression. Advance by the items actually returned and stop at
+  // `total` — or on an empty page (defensive against a stuck offset / infinite loop).
+  const searchAll = async function* (
+    query: Omit<CandidateSearchQuery, "count" | "start"> = {},
+  ): AsyncGenerator<Candidate> {
+    let start = 0;
+    for (;;) {
+      const page = await search({ ...query, count: PAGE_SIZE, start });
+      for (const item of page.items) yield item;
+      start += page.items.length;
+      if (page.items.length === 0 || start >= page.total) return;
+    }
+  };
+
   const get = async (id: number): Promise<Candidate | undefined> => {
     const page = await search({
       condition: { "Person.P_Id:eq": String(id) },
@@ -184,5 +206,5 @@ export const createCandidateResource = (deps: {
   const update = (id: number, input: CandidateInput): Promise<number> =>
     write({ ...input, P_Id: id }, true);
 
-  return { search, get, create, update };
+  return { search, searchAll, get, create, update };
 };
