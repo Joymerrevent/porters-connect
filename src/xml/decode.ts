@@ -58,13 +58,21 @@ const decodeOption = (raw: unknown): string | null => {
 // System[Reference] Read mirrors User: <Field><Resource>...</Resource></Field>, but the
 // inner tag varies (Client/Recruiter/...). Write is ID-only, so we decode the referenced
 // record's id — enough to round-trip. Richer reference reading is future work (SD-3).
+// NB: this "Reference" is System[Reference] (a nested record). It is NOT the display-only
+// Field-Type-16 "Reference" (a scalar mirror of a related value), which is left uncatalogued.
 const decodeReference = (raw: unknown): number | null => {
   const outer = asRecord(raw);
-  const inner = outer ? asRecord(Object.values(outer)[0]) : undefined;
-  if (!inner) return null;
-  const idEntry = Object.entries(inner).find(([k]) => k.endsWith("P_Id"));
-  const id = idEntry ? asString(idEntry[1]) : undefined;
-  return id === undefined ? null : Number(id);
+  if (!outer) return null;
+  // The nested resource is the first record-valued child (skip attributes / siblings,
+  // which decodeUser avoids via a fixed key — here the tag varies). Read that record's
+  // own `{Tag}.P_Id` (prefix-less also accepted), not just any key ending in P_Id.
+  for (const [tag, value] of Object.entries(outer)) {
+    const inner = asRecord(value);
+    if (!inner) continue;
+    const id = asString(inner[`${tag}.P_Id`]) ?? asString(inner.P_Id);
+    return id === undefined ? null : Number(id);
+  }
+  return null;
 };
 
 /** Decode one field's raw node by its Field Type. */
