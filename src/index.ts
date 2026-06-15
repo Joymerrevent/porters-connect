@@ -46,4 +46,11 @@ export type {
   ClientResource,
   ClientSearchQuery,
 } from "./resources";
+export type {
+  Process,
+  ProcessInput,
+  ProcessPage,
+  ProcessResource,
+  ProcessSearchQuery,
+} from "./resources";
 export type { FieldValue, UserRef } from "./xml";

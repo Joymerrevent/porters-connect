@@ -161,3 +161,26 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
     );
   });
 });
+
+describe("PortersClient + process (E2E, mock transport)", () => {
+  it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
+    const processXml =
+      `<Process Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Process.P_Id>77</Process.P_Id>` +
+      `<Process.P_Job><Job><Job.P_Id>900</Job.P_Id></Job></Process.P_Job>` +
+      `</Item></Process>`;
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: processXml }),
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      partition: 999,
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.process.search();
+    expect(page.items[0]?.P_Id).toBe(77); // Id -> number
+    expect(page.items[0]?.P_Job).toBe(900); // System[Reference] -> id, via the client
+  });
+});
