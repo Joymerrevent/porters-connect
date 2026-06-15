@@ -68,9 +68,18 @@
 ## More Information
 
 - 前提/依存: [ADR-0014][0014]（カバレッジは床）、[ADR-0013][0013]（テスト方針）、[ADR-0002][0002]（mock+fixture）。
-- 後続: score 閾値の CI 強制（数値安定後）。
+- 実績（2026-06-15 更新）: 導入時 baseline 約 74%（[PR #12][pr12]）から **全 survived を撃破し
+  mutation score 100%（生存 0）** を達成（[PR #13][pr13]）。ratchet で `break` 閾値を **70 → 95** に
+  引き上げ（実体は `stryker.config.json` の `thresholds = high/low/break = 100/95/95`）。同値変異
+  （equivalent mutant）のみ `// Stryker disable` ＋理由で限定明示＝`parser.ts` / `decode.ts` /
+  `candidate.ts` の 3 箇所。`parser.ts` は `Number(asString(x) ?? "0")` を `toInt` ヘルパへ集約して
+  等価変異そのものを除去（`Number("") === 0` のため `?? "0"` が等価化していた）。
+- 後続: ✅ score 閾値の CI 強制は実装・運用済み（上記）。以降はフル 100% 維持を前提に、緩めば
+  CI が落ちる。新たな等価変異が出たときのみ `// Stryker disable` を追加する。
 - 関連: [[0014-test-coverage-policy]], [[0013-coding-conventions-class-vs-function]]。
 
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0013]: 0013-coding-conventions-class-vs-function.md
 [0014]: 0014-test-coverage-policy.md
+[pr12]: https://github.com/Joymerrevent/porters-connect/pull/12
+[pr13]: https://github.com/Joymerrevent/porters-connect/pull/13
