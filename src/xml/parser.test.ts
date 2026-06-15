@@ -29,6 +29,24 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(page.items).toEqual([]);
   });
 
+  it("reads non-zero Total/Count/Start from their own attributes", () => {
+    // read-basic has Start="0", which can't distinguish the @_Start lookup from
+    // the missing-attribute default — use non-zero values for all three.
+    const page = parseResourcePage(
+      `<Candidate Total="9" Count="3" Start="6"><Code>0</Code></Candidate>`,
+    );
+    expect(page.total).toBe(9);
+    expect(page.count).toBe(3);
+    expect(page.start).toBe(6);
+  });
+
+  it("trims surrounding whitespace from raw values", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><A>  hi  </A></Item></Candidate>`,
+    );
+    expect(page.items[0].A).toBe("hi");
+  });
+
   it("routes <Code>!=0 to a mapped PortersError (200+Code is an error)", () => {
     let err: unknown;
     try {
@@ -39,6 +57,10 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(err).toBeInstanceOf(PortersResourceError);
     expect((err as PortersResourceError).code).toBe(403);
     expect((err as PortersResourceError).category).toBe("permission");
+    expect((err as PortersResourceError).message).toBe(
+      "resource returned code 403",
+    );
+    expect((err as PortersResourceError).context?.resource).toBe("Candidate");
   });
 
   it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
@@ -50,6 +72,9 @@ describe("parseResourcePage (ADR-0011)", () => {
     }
     expect(err).toBeInstanceOf(PortersResourceError);
     expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).message).toBe(
+      "unparseable resource response",
+    );
   });
 
   it("defaults missing attributes and Code to 0", () => {
@@ -79,11 +104,12 @@ describe("parseAuthentication (ADR-0011)", () => {
   });
 
   it("returns the code from a code_direct response", () => {
-    expect(
-      parseAuthentication(
-        "<Authentication><Code>C</Code><Error>0</Error></Authentication>",
-      ).code,
-    ).toBe("C");
+    const a = parseAuthentication(
+      "<Authentication><Code>C</Code><Error>0</Error></Authentication>",
+    );
+    expect(a.code).toBe("C");
+    // a missing ExpiresIn stays undefined, not NaN
+    expect(a.accessTokenExpiresIn).toBeUndefined();
   });
 
   it("routes <Error>!=0 to a PortersAuthError", () => {
@@ -99,6 +125,18 @@ describe("parseAuthentication (ADR-0011)", () => {
     expect((err as PortersAuthError).code).toBe(401);
   });
 
+  it("prefers the response <Message> over the default", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>401</Error><Message>bad creds</Message></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect((err as PortersAuthError).message).toBe("bad creds");
+  });
+
   it("surfaces unparseable XML as PortersAuthError(unknown)", () => {
     let err: unknown;
     try {
@@ -108,6 +146,9 @@ describe("parseAuthentication (ADR-0011)", () => {
     }
     expect(err).toBeInstanceOf(PortersAuthError);
     expect((err as PortersAuthError).category).toBe("unknown");
+    expect((err as PortersAuthError).message).toBe(
+      "unparseable authentication response",
+    );
   });
 
   it("auth error without a Message uses a default message", () => {
@@ -120,6 +161,7 @@ describe("parseAuthentication (ADR-0011)", () => {
       err = e;
     }
     expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).message).toBe("authentication error 500");
   });
 
   it("treats a missing <Error> as success", () => {

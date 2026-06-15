@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { PortersClient } from "./client";
-import type { Transport } from "./http/types";
+import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/decode";
 
 const candidateXml = readFileSync(
@@ -55,5 +55,58 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
   it("wires defaults (no transport/auth injected) and exposes host", () => {
     const c = new PortersClient({ host: "default.test" });
     expect(c.host).toBe("default.test");
+  });
+
+  // Drives the *default* auth provider (no `auth` injected) through a mock
+  // transport, so the options threaded into createDefaultTokenProvider /
+  // createCandidateResource are observable in the outgoing requests.
+  const recordingTransport = (): {
+    transport: Transport;
+    calls: TransportRequest[];
+  } => {
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        const body = req.url.includes("/v1/oauth")
+          ? "<Authentication><Code>C</Code><Error>0</Error></Authentication>"
+          : req.url.includes("/v1/token")
+            ? "<Authentication><AccessToken>A</AccessToken><AccessTokenExpiresIn>1800000</AccessTokenExpiresIn><RefreshToken>R</RefreshToken><RefreshTokenExpiresIn>7200000</RefreshTokenExpiresIn><Error>0</Error></Authentication>"
+            : `<Candidate Total="0" Count="0" Start="0"><Code>0</Code></Candidate>`;
+        return Promise.resolve({ status: 200, body });
+      },
+    };
+    return { transport, calls };
+  };
+
+  it("threads host / appId / appSecret / partition into the wired requests", async () => {
+    const { transport, calls } = recordingTransport();
+    const client = new PortersClient({
+      host: "wired.test",
+      appId: "AID",
+      appSecret: "SEC",
+      partition: 7,
+      transport,
+    });
+    await client.candidate.search();
+
+    const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
+    const token = calls.find((c) => c.url.includes("/v1/token"));
+    const candidate = calls.find((c) => c.url.includes("/v1/candidate"));
+    expect(oauth?.url).toContain("https://wired.test/v1/oauth");
+    expect(oauth?.url).toContain("app_id=AID");
+    expect(token?.body).toContain("secret=SEC");
+    expect(candidate?.url).toContain("partition=7");
+  });
+
+  it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {
+    const { transport, calls } = recordingTransport();
+    const client = new PortersClient({ host: "h.test", transport });
+    await client.candidate.search();
+
+    const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
+    const token = calls.find((c) => c.url.includes("/v1/token"));
+    expect(oauth?.url).toContain("app_id=&response_type=code_direct");
+    expect(token?.body).toContain("secret=&");
   });
 });

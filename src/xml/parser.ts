@@ -14,8 +14,21 @@ const parser = new XMLParser({
   parseTagValue: false,
   parseAttributeValue: false,
   trimValues: true,
+  // asArray() already normalizes a single/missing/repeated <Item> into an array,
+  // so isArray is belt-and-suspenders: these mutants are equivalent (no test can
+  // observe the difference once asArray() runs).
+  // Stryker disable next-line ArrowFunction,ConditionalExpression,StringLiteral: equivalent — asArray() normalizes regardless
   isArray: (name) => name === "Item",
 });
+
+// fast-xml-parser yields raw strings; coerce an attribute/code node to an int,
+// treating a missing node as 0. The explicit `undefined` check keeps the
+// fallback observable — `Number("") === 0`, so a `?? "0"` default would be an
+// equivalent mutant.
+const toInt = (v: unknown): number => {
+  const s = asString(v);
+  return s === undefined ? 0 : Number(s);
+};
 
 /** One `<Item>`: a map of field alias -> raw node (string or nested object). */
 export type RawItem = Record<string, unknown>;
@@ -35,6 +48,9 @@ export type ResourcePage = {
 export const parseResourcePage = (xml: string): ResourcePage => {
   const root = asRecord(parser.parse(xml) as unknown);
   const rootKey = root ? Object.keys(root)[0] : undefined;
+  // `root` is always a record here and `root[rootKey]` is undefined exactly when
+  // rootKey is, so dropping/forcing either guard collapses to the same throw.
+  // Stryker disable next-line ConditionalExpression,LogicalOperator: equivalent — both branches converge on the unparseable throw
   const body = root && rootKey ? asRecord(root[rootKey]) : undefined;
   if (!body) {
     throw new PortersResourceError("unparseable resource response", {
@@ -42,7 +58,7 @@ export const parseResourcePage = (xml: string): ResourcePage => {
     });
   }
 
-  const code = Number(asString(body.Code) ?? "0");
+  const code = toInt(body.Code);
   if (code !== 0) {
     throw resourceError(code, `resource returned code ${code}`, {
       resource: rootKey,
@@ -50,9 +66,9 @@ export const parseResourcePage = (xml: string): ResourcePage => {
   }
 
   return {
-    total: Number(asString(body["@_Total"]) ?? "0"),
-    count: Number(asString(body["@_Count"]) ?? "0"),
-    start: Number(asString(body["@_Start"]) ?? "0"),
+    total: toInt(body["@_Total"]),
+    count: toInt(body["@_Count"]),
+    start: toInt(body["@_Start"]),
     items: asArray(body.Item).map((it) => asRecord(it) ?? {}),
   };
 };
@@ -79,7 +95,7 @@ export const parseAuthentication = (xml: string): AuthResponse => {
     });
   }
 
-  const error = Number(asString(body.Error) ?? "0");
+  const error = toInt(body.Error);
   if (error !== 0) {
     throw authError(
       error,

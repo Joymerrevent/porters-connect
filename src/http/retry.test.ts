@@ -19,4 +19,18 @@ describe("expoBackoff (ADR-0010)", () => {
     const b = expoBackoff(1000, 2000);
     for (let i = 0; i < 100; i++) expect(b(20)).toBeLessThan(2000);
   });
+
+  it("jitter is non-degenerate and the ceiling grows with the attempt", () => {
+    const b = expoBackoff(100, 100_000); // maxMs high enough not to clamp early
+    const sample = (attempt: number): number[] =>
+      Array.from({ length: 200 }, () => b(attempt));
+    const a0 = sample(0); // ceiling 100
+    const a4 = sample(4); // ceiling 1600
+
+    // not everything floors to 0 (catches `random / ceil`)
+    expect(a4.some((v) => v > 0)).toBe(true);
+    // attempt 4's ceiling exceeds attempt 0's (catches `baseMs / 2 ** attempt`)
+    expect(Math.max(...a0)).toBeLessThan(100);
+    expect(Math.max(...a4)).toBeGreaterThan(100);
+  });
 });
