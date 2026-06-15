@@ -184,3 +184,26 @@ describe("PortersClient + process (E2E, mock transport)", () => {
     expect(page.items[0]?.P_Job).toBe(900); // System[Reference] -> id, via the client
   });
 });
+
+describe("PortersClient + resume (E2E, mock transport)", () => {
+  it("exposes a resume accessor; decodes Age (P_DateOfBirth) as a date", async () => {
+    const resumeXml =
+      `<Resume Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Resume.P_Id>88</Resume.P_Id>` +
+      `<Resume.P_DateOfBirth>1990/01/02</Resume.P_DateOfBirth>` +
+      `</Item></Resume>`;
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: resumeXml }),
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      partition: 999,
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.resume.search();
+    expect(page.items[0]?.P_Id).toBe(88); // Id -> number
+    expect(page.items[0]?.P_DateOfBirth).toBe("1990-01-02"); // Age -> date, via the client
+  });
+});

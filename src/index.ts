@@ -53,4 +53,11 @@ export type {
   ProcessResource,
   ProcessSearchQuery,
 } from "./resources";
+export type {
+  Resume,
+  ResumeInput,
+  ResumePage,
+  ResumeResource,
+  ResumeSearchQuery,
+} from "./resources";
 export type { FieldValue, UserRef } from "./xml";

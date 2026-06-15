@@ -30,6 +30,7 @@ describe("encodeField (ADR-0011, Write)", () => {
       "2020/01/02 03:04:05",
     );
     expect(encodeField("Date", "2020-01-02")).toBe("2020/01/02");
+    expect(encodeField("Age", "1990-01-02")).toBe("1990/01/02"); // Age shares Date's wire format
   });
 
   it("writes Option as empty child element(s) — single and multi-select", () => {
