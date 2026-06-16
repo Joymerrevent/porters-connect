@@ -128,6 +128,9 @@ export const createAttachmentResource = (deps: {
       },
     );
 
+  // VERIFY(live): Attachment has no alias prefix; the `Id:eq` condition and requesting all
+  // fields (incl. Content) are taken from the field list, not a live contract.
+  // See docs/live-verification.md (LV-3, LV-4).
   const get = async (id: number): Promise<Attachment | undefined> => {
     const page = await search({
       field: ALL_FIELDS,

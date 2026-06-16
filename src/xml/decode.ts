@@ -55,11 +55,17 @@ const decodeUser = (raw: unknown): UserRef | null => {
   };
 };
 
-// Read: <OptionRoot><{末端Alias}>...</{末端Alias}>...</OptionRoot>。PORTERS は単一/複数とも
-// alias の集合で表すので、選択された全末端 alias を配列で返す（未選択は null。ADR-0017）。
+// Read: the selected leaf aliases (e.g. `<Option.P_Tokyo/>`) sit under `<OptionRoot>`.
+// PORTERS represents single/multi alike as a set, so return every selected alias verbatim
+// — incl. the `Option.` prefix (ADR-0017). None / empty -> null.
+// VERIFY(live): the `Option.` prefix and the `OptionRoot` wrapper come from the Read API
+// doc, not a live contract; we tolerate a missing wrapper. See docs/live-verification.md (LV-1, LV-2).
 const decodeOption = (raw: unknown): string[] | null => {
   const outer = asRecord(raw);
-  const root = outer ? asRecord(outer.OptionRoot) : undefined;
+  if (!outer) return null;
+  // Aliases live under `<OptionRoot>` when present; the doc's sample omits it, so fall
+  // back to the field's own children.
+  const root = "OptionRoot" in outer ? asRecord(outer.OptionRoot) : outer;
   if (!root) return null;
   const keys = Object.keys(root);
   return keys.length > 0 ? keys : null;
