@@ -41,7 +41,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(first?.P_Name).toBe("山田 太郎"); // Text -> string
     expect(first?.P_UpdateDate).toBe("2026-01-02T03:04:05Z"); // DateTime -> ISO
     expect((first?.P_Owner as UserRef | null)?.P_Name).toBe("採用 花子"); // User -> nested
-    expect(first?.P_Phase).toBe("P_PersonPhase_Applied"); // Option -> end alias
+    expect(first?.P_Phase).toEqual(["P_PersonPhase_Applied"]); // Option -> array (ADR-0017)
 
     // empty value -> null
     expect(page.items[1]?.P_Mail).toBeNull();

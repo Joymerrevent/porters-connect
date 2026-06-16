@@ -95,7 +95,7 @@ describe("createResumeResource — decode catalog", () => {
     DATETIME_FIELDS.forEach((f, i) =>
       expect(r[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(r[f]).toBe(`Opt_${f}`)); // Option -> end alias
+    OPTION_FIELDS.forEach((f) => expect(r[f]).toEqual([`Opt_${f}`])); // Option -> array
     NUMBER_FIELDS.forEach((f, i) => expect(r[f]).toBe(1000 * (i + 1))); // Number / Currency
     AGE_FIELDS.forEach((f) => expect(r[f]).toBe("1990-01-02")); // Age -> yyyy-mm-dd (Date wire)
     TEXT_FIELDS.forEach((f) => expect(r[f]).toBeNull()); // empty Text -> null (not "")

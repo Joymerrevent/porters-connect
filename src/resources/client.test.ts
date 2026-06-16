@@ -71,7 +71,7 @@ describe("createClientResource — decode catalog", () => {
     DATETIME_FIELDS.forEach((f, i) =>
       expect(c[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(c[f]).toBe(`Opt_${f}`)); // Option -> end alias
+    OPTION_FIELDS.forEach((f) => expect(c[f]).toEqual([`Opt_${f}`])); // Option -> array
     TEXT_FIELDS.forEach((f) => expect(c[f]).toBeNull()); // empty Text -> null (not "")
   });
 });

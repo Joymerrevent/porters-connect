@@ -57,10 +57,17 @@ describe("decodeField (ADR-0011)", () => {
     expect(owner.P_Mail).toBe("hanako@example.com");
   });
 
-  it("decodes a single Option to its end alias", () => {
-    expect(decodeField("Option", first["Person.P_Phase"])).toBe(
+  it("decodes Option to an array of selected end aliases (single + multi)", () => {
+    // single selection -> a 1-element array (ADR-0017: PORTERS has no scalar form)
+    expect(decodeField("Option", first["Person.P_Phase"])).toEqual([
       "P_PersonPhase_Applied",
-    );
+    ]);
+    // multi-select (Checkbox) -> every selected alias, in order
+    expect(
+      decodeField("Option", {
+        OptionRoot: { "Option.P_Tokyo": "", "Option.P_Osaka": "" },
+      }),
+    ).toEqual(["Option.P_Tokyo", "Option.P_Osaka"]);
   });
 
   it("a field not present in the item -> null", () => {

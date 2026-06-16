@@ -93,7 +93,7 @@ describe("createJobResource — decode catalog", () => {
     DATETIME_FIELDS.forEach((f, i) =>
       expect(job[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(job[f]).toBe(`Opt_${f}`)); // Option -> end alias
+    OPTION_FIELDS.forEach((f) => expect(job[f]).toEqual([`Opt_${f}`])); // Option -> array
     NUMBER_FIELDS.forEach((f, i) => expect(job[f]).toBe(1000 * (i + 1))); // Number
     TEXT_FIELDS.forEach((f) => expect(job[f]).toBeNull()); // empty Text -> null (not "")
   });
