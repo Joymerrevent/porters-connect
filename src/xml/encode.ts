@@ -7,9 +7,14 @@ import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { FieldType } from "./decode";
 
 /**
- * A value to write. Scalars cover Text / Number / Id and the ID-only User /
- * Reference; a string (or array) is an Option alias. `null` / `undefined` omits
- * the field (leaves it unchanged) — send `""` to clear a Text field.
+ * A value to write. Scalars cover the string Data Types / Number / Id and the
+ * ID-only User / Reference. An **Option** value is an array of selected aliases
+ * (`string[]`) — symmetric with the Option read shape (ADR-0017); a lone string
+ * is tolerated as a 1-element selection (fail-safe). `null` / `undefined` omits the
+ * field (leaves it unchanged) — send `""` to clear a string field.
+ *
+ * Per-field static typing (Option fields as `string[]`, etc.) is future work — the
+ * precise static Write type (SD-3).
  */
 export type WriteValue = string | number | string[] | null | undefined;
 
@@ -31,7 +36,9 @@ export const encodeField = (
   value: string | number | string[],
 ): string => {
   switch (type) {
-    // Option: a single alias or several (multi-select) as empty child elements.
+    // Option: the selected aliases as empty child elements. Canonical input is an
+    // array (ADR-0017, symmetric with read); a lone string is wrapped as a 1-element
+    // selection (fail-safe).
     case "Option":
       return (Array.isArray(value) ? value : [value])
         .map((alias) => `<${alias}/>`)

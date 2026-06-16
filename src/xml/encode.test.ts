@@ -42,11 +42,13 @@ describe("encodeField (ADR-0011, Write)", () => {
     expect(encodeField("Age", "1990-01-02")).toBe("1990/01/02"); // Age shares Date's wire format
   });
 
-  it("writes Option as empty child element(s) — single and multi-select", () => {
-    expect(encodeField("Option", "Option.P_Tokyo")).toBe("<Option.P_Tokyo/>");
+  it("writes Option from an array of aliases (canonical); a lone string is tolerated", () => {
+    // canonical input: an array of selected aliases (ADR-0017, symmetric with read)
     expect(encodeField("Option", ["Option.P_Tokyo", "Option.P_Kanagawa"])).toBe(
       "<Option.P_Tokyo/><Option.P_Kanagawa/>",
     );
+    // fail-safe: a lone string is wrapped as a 1-element selection
+    expect(encodeField("Option", "Option.P_Tokyo")).toBe("<Option.P_Tokyo/>");
   });
 });
 
@@ -89,6 +91,20 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     });
     expect(xml).toContain(
       "<Person.P_PhaseDate>2020/01/02 03:04:05</Person.P_PhaseDate>",
+    );
+  });
+
+  it("writes an Option field from an array of selected aliases", () => {
+    const xml = buildWriteXml({
+      resource: "Candidate",
+      prefix: "Person",
+      fields: FIELDS,
+      items: [
+        { P_Phase: ["P_PersonPhase_Applied", "P_PersonPhase_Screening"] },
+      ],
+    });
+    expect(xml).toContain(
+      "<Person.P_Phase><P_PersonPhase_Applied/><P_PersonPhase_Screening/></Person.P_Phase>",
     );
   });
 
