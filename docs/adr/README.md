@@ -46,6 +46,7 @@
 | [0014][0014] | テストカバレッジ方針（計測・閾値・CI 強制）                | プロセス | accepted   |
 | [0015][0015] | ミューテーションテスト（Stryker）でテスト品質を測る        | プロセス | accepted   |
 | [0016][0016] | 内部 FieldType の粒度（Field Type か Data Type か）        | 詳細設計 | accepted   |
+| [0017][0017] | Option の読み取り値の表現（複数選択対応）                  | 詳細設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -64,8 +65,8 @@
 - すべて起票済み（PoC 前に順次 accept。ステータスは上記一覧）：
   HTTP トランスポート → [0009][0009]／リトライ・スロットリング → [0010][0010]／
   XML パース・シリアライズ内部 → [0011][0011]／トークンのキャッシュ・更新（ストア含む）→ [0012][0012]。
-- 内部 FieldType の粒度 → [0016][0016]（accepted・案B＝Data Type 整合。コード反映は別 PR）。
-- **複数選択 Option（Checkbox）の read 修正** — 現状 `decodeOption` が先頭 alias のみ返す＝データ欠落。全 alias 返却へ（ADR-0016 とは独立の実害修正）。
+- 内部 FieldType の粒度 → [0016][0016]（accepted・案B＝Data Type 整合。実装は #21 で反映済み）。
+- Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（議論中）。
 
 ### 決定済み（ADR / PRD）
 
@@ -90,3 +91,4 @@
 [0014]: 0014-test-coverage-policy.md
 [0015]: 0015-mutation-testing.md
 [0016]: 0016-field-type-granularity.md
+[0017]: 0017-option-read-shape.md
