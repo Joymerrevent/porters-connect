@@ -72,6 +72,17 @@ for await (const c of porters.candidate.searchAll({
 
 > 認証情報やホスト名は**コミットしない**でください。`.env.example` を参考に `.env` で渡します。
 
+## 契約なしで試す（オフライン評価）
+
+PORTERS 契約が無くても、注入可能な Transport にモック XML を返させれば**全機能をオフラインで**動かせます。
+リポジトリにそのまま動くサンプルを同梱しています（[`examples/offline-sandbox.ts`][sandbox]）。
+
+```sh
+pnpm sandbox
+```
+
+実利用では `transport` を渡さず、`host` / `appId` / `appSecret` を設定するだけです。
+
 ## 認証
 
 `appId` / `appSecret` を渡すと、ライブラリが**透過的に** `code_direct` でトークンを取得・キャッシュし、
@@ -249,6 +260,7 @@ try {
 [node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
 [joymerrevent]: https://joymerrevent.com/
 [auth-flow]: ./docs/reference/authentication-api/README.md
+[sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [design]: ./docs/design/basic-design.md
 [ref]: ./docs/reference/README.md
