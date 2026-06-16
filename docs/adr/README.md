@@ -47,6 +47,7 @@
 | [0015][0015] | ミューテーションテスト（Stryker）でテスト品質を測る        | プロセス | accepted   |
 | [0016][0016] | 内部 FieldType の粒度（Field Type か Data Type か）        | 詳細設計 | accepted   |
 | [0017][0017] | Option の読み取り値の表現（複数選択対応）                  | 詳細設計 | accepted   |
+| [0018][0018] | Attachment リソースとファイル本体（Base64）の扱い          | 詳細設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -67,6 +68,7 @@
   XML パース・シリアライズ内部 → [0011][0011]／トークンのキャッシュ・更新（ストア含む）→ [0012][0012]。
 - 内部 FieldType の粒度 → [0016][0016]（accepted・案B＝Data Type 整合。実装は #21 で反映済み）。
 - Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。コード反映は別 PR）。
+- Attachment リソースとファイル本体（Base64）→ [0018][0018]（議論中）。
 
 ### 決定済み（ADR / PRD）
 
@@ -92,3 +94,4 @@
 [0015]: 0015-mutation-testing.md
 [0016]: 0016-field-type-granularity.md
 [0017]: 0017-option-read-shape.md
+[0018]: 0018-attachment-design.md
