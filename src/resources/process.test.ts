@@ -75,7 +75,7 @@ describe("createProcessResource — decode catalog", () => {
     DATETIME_FIELDS.forEach((f, i) =>
       expect(p[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(p[f]).toBe(`Opt_${f}`)); // Option -> end alias
+    OPTION_FIELDS.forEach((f) => expect(p[f]).toEqual([`Opt_${f}`])); // Option -> array
     NUMBER_FIELDS.forEach((f) => expect(p[f]).toBe(3000000)); // Currency -> number
     DATE_FIELDS.forEach((f) => expect(p[f]).toBe("2025-06-07")); // Date -> yyyy-mm-dd
     TEXT_FIELDS.forEach((f) => expect(p[f]).toBeNull()); // empty Text -> null (not "")

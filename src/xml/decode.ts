@@ -30,7 +30,8 @@ export type UserRef = {
   P_Mail: string | null;
 };
 
-export type FieldValue = string | number | UserRef | null;
+// `string[]` is the Option read value (a set of selected aliases — ADR-0017).
+export type FieldValue = string | number | string[] | UserRef | null;
 
 // alias タグは接頭辞付き想定（例 `User.P_Id`）だが、接頭辞無しにも両対応（ADR-0011）。
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパーを decodeField より前に定義する。
@@ -54,13 +55,14 @@ const decodeUser = (raw: unknown): UserRef | null => {
   };
 };
 
-// Read: <OptionRoot><{末端Alias}>...</{末端Alias}></OptionRoot>。単一選択は末端 alias を返す。
-const decodeOption = (raw: unknown): string | null => {
+// Read: <OptionRoot><{末端Alias}>...</{末端Alias}>...</OptionRoot>。PORTERS は単一/複数とも
+// alias の集合で表すので、選択された全末端 alias を配列で返す（未選択は null。ADR-0017）。
+const decodeOption = (raw: unknown): string[] | null => {
   const outer = asRecord(raw);
   const root = outer ? asRecord(outer.OptionRoot) : undefined;
   if (!root) return null;
   const keys = Object.keys(root);
-  return keys.length > 0 ? keys[0] : null;
+  return keys.length > 0 ? keys : null;
 };
 
 // System[Reference] Read mirrors User: <Field><Resource>...</Resource></Field>, but the
