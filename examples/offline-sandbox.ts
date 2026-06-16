@@ -48,7 +48,7 @@ const mockTransport: Transport = {
           `<Person.P_Mail>taro@example.com</Person.P_Mail>` +
           `<Person.P_RegistrationDate>2026/01/02 03:04:05</Person.P_RegistrationDate>` +
           `<Person.P_Owner><User><User.P_Id>5</User.P_Id><User.P_Name>採用 花子</User.P_Name></User></Person.P_Owner>` +
-          `<Person.P_Phase><OptionRoot><P_PersonPhase_Applied/></OptionRoot></Person.P_Phase>` +
+          `<Person.P_Phase><OptionRoot><Option.P_PersonPhase_Applied/></OptionRoot></Person.P_Phase>` +
           `</Item>` +
           `<Item><Person.P_Id>10002</Person.P_Id><Person.P_Name>鈴木 一郎</Person.P_Name></Item>` +
           `</Candidate>`,
