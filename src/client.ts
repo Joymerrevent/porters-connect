@@ -8,6 +8,7 @@ import {
 } from "./http";
 import type { Transport } from "./http";
 import {
+  createAttachmentResource,
   createCandidateResource,
   createClientResource,
   createJobResource,
@@ -15,6 +16,7 @@ import {
   createResumeResource,
 } from "./resources";
 import type {
+  AttachmentResource,
   CandidateResource,
   ClientResource,
   JobResource,
@@ -54,6 +56,7 @@ export class PortersClient {
   readonly client: ClientResource;
   readonly process: ProcessResource;
   readonly resume: ResumeResource;
+  readonly attachment: AttachmentResource;
   readonly #host: string;
 
   constructor(options: PortersClientOptions) {
@@ -84,6 +87,7 @@ export class PortersClient {
     this.client = createClientResource(deps);
     this.process = createProcessResource(deps);
     this.resume = createResumeResource(deps);
+    this.attachment = createAttachmentResource(deps);
   }
 
   /** The configured API host. */

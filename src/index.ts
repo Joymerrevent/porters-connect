@@ -60,4 +60,15 @@ export type {
   ResumeResource,
   ResumeSearchQuery,
 } from "./resources";
+export type {
+  Attachment,
+  AttachmentCreate,
+  AttachmentPage,
+  AttachmentResource,
+  AttachmentSearchQuery,
+  AttachmentUpdate,
+} from "./resources";
 export type { FieldValue, UserRef } from "./xml";
+
+// Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).
+export { base64ToBytes, bytesToBase64 } from "./util/base64";
