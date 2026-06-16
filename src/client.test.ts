@@ -207,3 +207,25 @@ describe("PortersClient + resume (E2E, mock transport)", () => {
     expect(page.items[0]?.P_DateOfBirth).toBe("1990-01-02"); // Age -> date, via the client
   });
 });
+
+describe("PortersClient + attachment (E2E, mock transport)", () => {
+  it("exposes an attachment accessor; decodes the fixed fields", async () => {
+    const attachmentXml =
+      `<Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Id>11111</Id><ResourceId>10001</ResourceId><FileName>cv.pdf</FileName>` +
+      `</Item></Attachment>`;
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: attachmentXml }),
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      partition: 999,
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.attachment.search();
+    expect(page.items[0]?.id).toBe(11111); // Id -> number, via the wired accessor
+    expect(page.items[0]?.fileName).toBe("cv.pdf");
+  });
+});

@@ -48,6 +48,8 @@ export type RequestSpec = {
   write?: boolean;
   /** false for non-idempotent ops (create); not auto-retried on network uncertainty. */
   idempotent?: boolean;
+  /** Skip the ~15000-char size guard (file uploads have their own limit; ADR-0018). */
+  unboundedBody?: boolean;
 };
 
 export type Requester = {
@@ -68,8 +70,13 @@ export const createRequester = (o: RequesterOptions): Requester => {
   ): Promise<T> => {
     // Eager size guard: block an oversized body before throttle / auth / transport.
     // A clear config error beats an opaque server 400, and we don't burn a throttle
-    // token or a token refresh on a request that cannot succeed (fail-safe).
-    if (req.body !== undefined && req.body.length > MAX_REQUEST_LENGTH) {
+    // token or a token refresh on a request that cannot succeed (fail-safe). File
+    // uploads opt out via `unboundedBody` (they enforce their own limit — ADR-0018).
+    if (
+      !spec.unboundedBody &&
+      req.body !== undefined &&
+      req.body.length > MAX_REQUEST_LENGTH
+    ) {
       throw new PortersConfigError(
         `request body is ${req.body.length} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
         {
