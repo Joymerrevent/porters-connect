@@ -14,7 +14,7 @@ const FIELDS = new Map<string, FieldType>([
   ["P_Owner", "User"],
   ["P_When", "DateTime"],
   ["P_Phase", "Option"],
-  ["P_Name", "Text"],
+  ["P_Name", "SinglelineText"],
 ]);
 
 const CONFIG: ResourceConfig = {

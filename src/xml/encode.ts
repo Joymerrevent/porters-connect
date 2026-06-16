@@ -42,12 +42,17 @@ export const encodeField = (
     case "Date":
     case "Age":
       return scalar(isoToPortersDate(String(value)));
-    // Id / Number / User & Reference (ID-only) / Text all serialize as a scalar.
+    // Id / Number / User & Reference (ID-only) / string Data Types all serialize
+    // as a scalar (the string types stay distinct labels per ADR-0016).
     case "Id":
     case "Number":
     case "User":
     case "Reference":
-    case "Text":
+    case "SinglelineText":
+    case "MultilineText":
+    case "Mail":
+    case "Telephone":
+    case "URL":
       return scalar(value);
   }
 };

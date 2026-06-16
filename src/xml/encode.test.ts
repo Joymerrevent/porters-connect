@@ -6,16 +6,25 @@ import { buildWriteXml, encodeField } from "./encode";
 const FIELDS = new Map<string, FieldType>([
   ["P_Id", "Id"],
   ["P_Owner", "User"],
-  ["P_Name", "Text"],
-  ["P_Reading", "Text"],
+  ["P_Name", "SinglelineText"],
+  ["P_Reading", "SinglelineText"],
   ["P_PhaseDate", "DateTime"],
   ["P_Phase", "Option"],
 ]);
 
 describe("encodeField (ADR-0011, Write)", () => {
-  it("keeps Text as-is but escapes & < >", () => {
-    expect(encodeField("Text", "a&b<c>d")).toBe("a&amp;b&lt;c&gt;d");
-    expect(encodeField("Text", "山田 太郎")).toBe("山田 太郎");
+  it("keeps string Data Types as-is but escapes & < >", () => {
+    const stringTypes = [
+      "SinglelineText",
+      "MultilineText",
+      "Mail",
+      "Telephone",
+      "URL",
+    ] as const;
+    for (const t of stringTypes) {
+      expect(encodeField(t, "a&b<c>d")).toBe("a&amp;b&lt;c&gt;d");
+    }
+    expect(encodeField("MultilineText", "山田 太郎")).toBe("山田 太郎");
   });
 
   it("serializes Id / Number / User / Reference (ID-only) as a plain scalar", () => {

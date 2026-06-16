@@ -35,7 +35,7 @@ const FIELDS = new Map<string, FieldType>([
   ["P_UpdatedBy", "User"],
   ["P_Phase", "Option"],
   ["P_PhaseDate", "DateTime"],
-  ["P_PhaseMemo", "Text"],
+  ["P_PhaseMemo", "MultilineText"],
   ["P_Close", "Option"],
   ["P_CloseReason", "Option"],
   ["P_ExpectedSalesAmount", "Number"],
