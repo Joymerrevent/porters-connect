@@ -144,7 +144,7 @@ const c = await porters.candidate.get(10001);
 c?.P_Id; // number
 c?.P_Name; // string | null
 c?.P_RegistrationDate; // "2026-01-02T03:04:05Z" | null
-c?.P_Phase; // string[] | null（例 ["P_PersonPhase_Applied"]）
+c?.P_Phase; // string[] | null（例 ["Option.P_PersonPhase_Applied"]）
 c?.P_Owner; // { P_Id, P_Name, ... } | null
 ```
 

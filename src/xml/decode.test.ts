@@ -58,9 +58,10 @@ describe("decodeField (ADR-0011)", () => {
   });
 
   it("decodes Option to an array of selected end aliases (single + multi)", () => {
-    // single selection -> a 1-element array (ADR-0017: PORTERS has no scalar form)
+    // single selection -> a 1-element array (ADR-0017: PORTERS has no scalar form).
+    // The leaf alias keeps its `Option.` prefix verbatim (no transformation).
     expect(decodeField("Option", first["Person.P_Phase"])).toEqual([
-      "P_PersonPhase_Applied",
+      "Option.P_PersonPhase_Applied",
     ]);
     // multi-select (Checkbox) -> every selected alias, in order
     expect(
@@ -68,6 +69,15 @@ describe("decodeField (ADR-0011)", () => {
         OptionRoot: { "Option.P_Tokyo": "", "Option.P_Osaka": "" },
       }),
     ).toEqual(["Option.P_Tokyo", "Option.P_Osaka"]);
+  });
+
+  it("Option tolerates a missing OptionRoot wrapper (aliases under the field)", () => {
+    // the Read API doc's sample omits OptionRoot — treat the field's children as aliases
+    expect(
+      decodeField("Option", {
+        "Option.P_Tokyo": { "Option.P_Id": "87" },
+      }),
+    ).toEqual(["Option.P_Tokyo"]);
   });
 
   it("a field not present in the item -> null", () => {
@@ -87,9 +97,9 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("Age", "")).toBeNull();
   });
 
-  it("Option without an OptionRoot -> null", () => {
-    expect(decodeField("Option", { x: 1 })).toBeNull();
-    expect(decodeField("Option", "scalar")).toBeNull();
+  it("Option -> null for a non-record value or an empty OptionRoot", () => {
+    expect(decodeField("Option", "scalar")).toBeNull(); // non-record
+    expect(decodeField("Option", { OptionRoot: "" })).toBeNull(); // wrapper present but empty
   });
 
   it("User: prefix-less keys resolve; missing User -> null", () => {

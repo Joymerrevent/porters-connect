@@ -16,10 +16,10 @@
     </Person.P_Owner>
     <Person.P_Phase>
       <OptionRoot>
-        <P_PersonPhase_Applied>
+        <Option.P_PersonPhase_Applied>
           <Option.P_Id>3</Option.P_Id>
           <Option.P_Name>応募</Option.P_Name>
-        </P_PersonPhase_Applied>
+        </Option.P_PersonPhase_Applied>
       </OptionRoot>
     </Person.P_Phase>
   </Item>
