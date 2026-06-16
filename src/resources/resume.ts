@@ -21,12 +21,12 @@ import {
 } from "./resource";
 
 const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
-  ["P_Candidate", "Reference"],
-  ["P_RegistrationDate", "DateTime"],
+  ["P_Candidate", "System[Reference]"],
+  ["P_RegistrationDate", "System[DateTime]"],
   ["P_RegisteredBy", "User"],
-  ["P_UpdateDate", "DateTime"],
+  ["P_UpdateDate", "System[DateTime]"],
   ["P_UpdatedBy", "User"],
   ["P_Phase", "Option"],
   ["P_PhaseDate", "DateTime"],

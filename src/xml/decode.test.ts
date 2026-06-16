@@ -18,7 +18,7 @@ describe("decodeField (ADR-0011)", () => {
   const second = page.items[1];
 
   it("decodes Id to a number", () => {
-    expect(decodeField("Id", first["Person.P_Id"])).toBe(10001);
+    expect(decodeField("System[Id]", first["Person.P_Id"])).toBe(10001);
   });
 
   it("keeps string Data Types as strings (no numeric coercion); empty -> null", () => {
@@ -43,8 +43,12 @@ describe("decodeField (ADR-0011)", () => {
     }
   });
 
-  it("decodes DateTime to ISO (...Z)", () => {
+  it("decodes DateTime to ISO (...Z); System[DateTime] shares the wire format", () => {
     expect(decodeField("DateTime", first["Person.P_UpdateDate"])).toBe(
+      "2026-01-02T03:04:05Z",
+    );
+    // the system timestamp Data Type decodes identically (only Write differs)
+    expect(decodeField("System[DateTime]", first["Person.P_UpdateDate"])).toBe(
       "2026-01-02T03:04:05Z",
     );
   });
@@ -112,7 +116,7 @@ describe("decodeField (ADR-0011)", () => {
   });
 
   it("decodes defensively: non-string -> null; missing nested -> null", () => {
-    expect(decodeField("Id", { a: 1 })).toBeNull();
+    expect(decodeField("System[Id]", { a: 1 })).toBeNull();
     expect(decodeField("Number", { a: 1 })).toBeNull();
     expect(decodeField("DateTime", { a: 1 })).toBeNull();
     expect(decodeField("Date", { a: 1 })).toBeNull();
@@ -124,7 +128,7 @@ describe("decodeField (ADR-0011)", () => {
   it("decodes a System[Reference] to the referenced record's own id", () => {
     // <Job.P_Client><Client><Client.P_Id>100</Client.P_Id>...</Client></Job.P_Client>
     expect(
-      decodeField("Reference", {
+      decodeField("System[Reference]", {
         Client: { "Client.P_Id": "100", "Client.P_Name": "Acme" },
       }),
     ).toBe(100);
@@ -132,10 +136,12 @@ describe("decodeField (ADR-0011)", () => {
 
   it("Reference: accepts a prefix-less P_Id and skips non-record siblings", () => {
     // prefix-less id (the `?? inner.P_Id` fallback)
-    expect(decodeField("Reference", { Recruiter: { P_Id: "55" } })).toBe(55);
+    expect(
+      decodeField("System[Reference]", { Recruiter: { P_Id: "55" } }),
+    ).toBe(55);
     // an attribute / scalar sibling before the resource node is skipped, not picked
     expect(
-      decodeField("Reference", {
+      decodeField("System[Reference]", {
         "@_attr": "x",
         Client: { "Client.P_Id": "7" },
       }),
@@ -144,9 +150,9 @@ describe("decodeField (ADR-0011)", () => {
 
   it("Reference: missing id / non-record nested / non-record raw -> null", () => {
     expect(
-      decodeField("Reference", { Client: { "Client.P_Name": "Acme" } }),
+      decodeField("System[Reference]", { Client: { "Client.P_Name": "Acme" } }),
     ).toBeNull(); // no P_Id
-    expect(decodeField("Reference", { Client: "oops" })).toBeNull(); // nested not a record
-    expect(decodeField("Reference", "scalar")).toBeNull(); // raw not a record
+    expect(decodeField("System[Reference]", { Client: "oops" })).toBeNull(); // nested not a record
+    expect(decodeField("System[Reference]", "scalar")).toBeNull(); // raw not a record
   });
 });

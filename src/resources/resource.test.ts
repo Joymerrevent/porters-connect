@@ -10,7 +10,7 @@ import { createResource, type ResourceConfig } from "./resource";
 // live in candidate/job tests). One field per Field Type is enough — per-type
 // decoding is covered by decode.test.ts; here we test the wiring.
 const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
   ["P_When", "DateTime"],
   ["P_Phase", "Option"],
