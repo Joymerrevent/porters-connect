@@ -69,6 +69,61 @@ const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
 // Stryker restore StringLiteral
 
+/**
+ * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a
+ * resource error (mapped, not swallowed); a missing result Item is unparseable. Shared by
+ * the generic factory and the bespoke Attachment accessor. `path` names the error code
+ * message, `name` the error context resource.
+ */
+export const firstWriteResultId = (
+  body: string,
+  path: string,
+  name: string,
+): number => {
+  const first = parseWriteResult(body)[0];
+  if (first === undefined) {
+    throw new PortersResourceError("write returned no result item", {
+      category: "unknown",
+    });
+  }
+  if (first.code !== 0) {
+    throw resourceError(
+      first.code,
+      `${path} write returned code ${first.code}`,
+      {
+        resource: name,
+      },
+    );
+  }
+  return first.id;
+};
+
+/** Build a Read URL: `https://{host}/v1/{path}?partition=…&field=…&condition=…&count=…&start=…`. */
+export const buildReadUrl = (
+  host: string,
+  partition: number,
+  path: string,
+  q: SearchQuery,
+): string => {
+  const p = new URLSearchParams();
+  p.set("partition", String(partition));
+  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
+  if (q.condition) {
+    const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
+    if (conds.length > 0) p.set("condition", conds.join(","));
+  }
+  if (q.count !== undefined) p.set("count", String(q.count));
+  if (q.start !== undefined) p.set("start", String(q.start));
+  return `https://${host}/v1/${path}?${p.toString()}`;
+};
+
+/** Build a Write URL: `https://{host}/v1/{path}?partition=…`. */
+export const buildWriteUrl = (
+  host: string,
+  partition: number,
+  path: string,
+): string => `https://${host}/v1/${path}?partition=${partition}`;
+
 export const createResource = (
   config: ResourceConfig,
   deps: { requester: Requester; host: string; partition: number },
@@ -87,40 +142,14 @@ export const createResource = (
     return out;
   };
 
-  const readUrl = (q: SearchQuery): string => {
-    const p = new URLSearchParams();
-    p.set("partition", String(deps.partition));
-    if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
-    if (q.condition) {
-      const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
-      if (conds.length > 0) p.set("condition", conds.join(","));
-    }
-    if (q.count !== undefined) p.set("count", String(q.count));
-    if (q.start !== undefined) p.set("start", String(q.start));
-    return `https://${deps.host}/v1/${config.path}?${p.toString()}`;
-  };
+  const readUrl = (q: SearchQuery): string =>
+    buildReadUrl(deps.host, deps.partition, config.path, q);
 
   const writeUrl = (): string =>
-    `https://${deps.host}/v1/${config.path}?partition=${deps.partition}`;
+    buildWriteUrl(deps.host, deps.partition, config.path);
 
-  // A single-Item Write -> the assigned/updated id. A non-zero per-item Code is a
-  // resource error (mapped, not swallowed); a missing result Item is unparseable.
-  const firstWriteId = (body: string): number => {
-    const first = parseWriteResult(body)[0];
-    if (first === undefined) {
-      throw new PortersResourceError("write returned no result item", {
-        category: "unknown",
-      });
-    }
-    if (first.code !== 0) {
-      throw resourceError(
-        first.code,
-        `${config.path} write returned code ${first.code}`,
-        { resource: config.name },
-      );
-    }
-    return first.id;
-  };
+  const firstWriteId = (body: string): number =>
+    firstWriteResultId(body, config.path, config.name);
 
   const search = (query: SearchQuery = {}): Promise<ResourcePage> =>
     deps.requester.request(
