@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { FieldType } from "./decode";
+import type { DataType } from "./decode";
 import { buildWriteXml, encodeField } from "./encode";
 
-const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+const FIELDS = new Map<string, DataType>([
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
   ["P_Name", "SinglelineText"],
   ["P_Reading", "SinglelineText"],
@@ -27,15 +27,19 @@ describe("encodeField (ADR-0011, Write)", () => {
     expect(encodeField("MultilineText", "山田 太郎")).toBe("山田 太郎");
   });
 
-  it("serializes Id / Number / User / Reference (ID-only) as a plain scalar", () => {
-    expect(encodeField("Id", -1)).toBe("-1");
+  it("serializes System[Id] / Number / User / System[Reference] (ID-only) as a plain scalar", () => {
+    expect(encodeField("System[Id]", -1)).toBe("-1");
     expect(encodeField("Number", 42)).toBe("42");
     expect(encodeField("User", 5)).toBe("5"); // Write is the ID, not a nested ref
-    expect(encodeField("Reference", 100)).toBe("100"); // System[Reference] -> id only
+    expect(encodeField("System[Reference]", 100)).toBe("100"); // System[Reference] -> id only
   });
 
   it("converts DateTime / Date from ISO to PORTERS (UTC)", () => {
     expect(encodeField("DateTime", "2020-01-02T03:04:05Z")).toBe(
+      "2020/01/02 03:04:05",
+    );
+    // System[DateTime] serializes identically (Write is rejected at the input type, not here)
+    expect(encodeField("System[DateTime]", "2020-01-02T03:04:05Z")).toBe(
       "2020/01/02 03:04:05",
     );
     expect(encodeField("Date", "2020-01-02")).toBe("2020/01/02");
@@ -82,7 +86,7 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     expect(xml).not.toContain("P_Owner"); // undefined -> omitted
   });
 
-  it("uses the catalog Field Type (DateTime converts, not raw passthrough)", () => {
+  it("uses the catalog Data Type (DateTime converts, not raw passthrough)", () => {
     const xml = buildWriteXml({
       resource: "Candidate",
       prefix: "Person",

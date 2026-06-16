@@ -6,7 +6,7 @@ import type { UserRef } from "../xml/decode";
 import { createProcessResource } from "./process";
 
 // The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
-// Process-specific catalog (each field decodes by its Field Type) and config
+// Process-specific catalog (each field decodes by its Data Type) and config
 // (root name `Process`, path `process`, alias prefix `Process`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];
 const REF_FIELDS = [
@@ -63,7 +63,7 @@ const resource = (calls: Call[], body: string) =>
   });
 
 describe("createProcessResource — decode catalog", () => {
-  it("decodes every catalogued field by its Field Type", async () => {
+  it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const p = (await resource(calls, ALL).search()).items[0];
 

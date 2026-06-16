@@ -1,10 +1,10 @@
-// Field-Type-driven value encoding for Write (ADR-0011). Read and Write
-// representations are asymmetric: User/Reference write the ID only, Option writes
+// Data-Type-driven value encoding for Write (ADR-0011). Read and Write
+// representations are asymmetric: User/System[Reference] write the ID only, Option writes
 // `<Field><OptionAlias/></Field>`, and DateTime/Date go ISO -> PORTERS. This is the
 // mirror of decode.ts; it builds the request body so XML stays out of resources/.
 
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
-import type { FieldType } from "./decode";
+import type { DataType } from "./decode";
 
 /**
  * A value to write. Scalars cover the string Data Types / Number / Id and the
@@ -32,7 +32,7 @@ const scalar = (v: string | number | string[]): string => escapeXml(String(v));
 
 /** Encode one field's value into the inner XML of its element. */
 export const encodeField = (
-  type: FieldType,
+  type: DataType,
   value: string | number | string[],
 ): string => {
   switch (type) {
@@ -43,18 +43,21 @@ export const encodeField = (
       return (Array.isArray(value) ? value : [value])
         .map((alias) => `<${alias}/>`)
         .join("");
+    // System[DateTime] (registration/update) is Write-restricted by PORTERS; we still
+    // serialize it identically — rejecting the write is the input type's job (SD-3).
     case "DateTime":
+    case "System[DateTime]":
       return scalar(isoToPortersDateTime(String(value)));
     // Age shares Date's wire format (`yyyy/mm/dd`): we write the birthdate.
     case "Date":
     case "Age":
       return scalar(isoToPortersDate(String(value)));
-    // Id / Number / User & Reference (ID-only) / string Data Types all serialize
-    // as a scalar (the string types stay distinct labels per ADR-0016).
-    case "Id":
+    // System[Id] / Number / User & System[Reference] (ID-only) / string Data Types all
+    // serialize as a scalar (the string types stay distinct labels per ADR-0016).
+    case "System[Id]":
     case "Number":
     case "User":
-    case "Reference":
+    case "System[Reference]":
     case "SinglelineText":
     case "MultilineText":
     case "Mail":
@@ -68,7 +71,7 @@ export const encodeField = (
 // back to Text — symmetric with decode's raw-string passthrough (fail-safe).
 const encodeItem = (
   prefix: string,
-  fields: ReadonlyMap<string, FieldType>,
+  fields: ReadonlyMap<string, DataType>,
   item: WriteItem,
 ): string => {
   const parts: string[] = [];
@@ -86,7 +89,7 @@ const encodeItem = (
 export const buildWriteXml = (config: {
   resource: string;
   prefix: string;
-  fields: ReadonlyMap<string, FieldType>;
+  fields: ReadonlyMap<string, DataType>;
   items: WriteItem[];
 }): string => {
   const items = config.items

@@ -11,7 +11,7 @@
 // the first alias only. The full static Process type is future work (SD-3).
 
 import type { Requester } from "../http/requester";
-import type { FieldType } from "../xml/decode";
+import type { DataType } from "../xml/decode";
 import {
   createResource,
   type Resource,
@@ -21,17 +21,17 @@ import {
   type SearchQuery,
 } from "./resource";
 
-const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+const FIELDS = new Map<string, DataType>([
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
-  ["P_Client", "Reference"],
-  ["P_Recruiter", "Reference"],
-  ["P_Job", "Reference"],
-  ["P_Candidate", "Reference"],
-  ["P_Resume", "Reference"],
-  ["P_RegistrationDate", "DateTime"],
+  ["P_Client", "System[Reference]"],
+  ["P_Recruiter", "System[Reference]"],
+  ["P_Job", "System[Reference]"],
+  ["P_Candidate", "System[Reference]"],
+  ["P_Resume", "System[Reference]"],
+  ["P_RegistrationDate", "System[DateTime]"],
   ["P_RegisteredBy", "User"],
-  ["P_UpdateDate", "DateTime"],
+  ["P_UpdateDate", "System[DateTime]"],
   ["P_UpdatedBy", "User"],
   ["P_Phase", "Option"],
   ["P_PhaseDate", "DateTime"],

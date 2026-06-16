@@ -2,7 +2,7 @@
 // (create / update) over the generic resource factory. A Resume belongs to a Candidate;
 // P_Candidate is System[Reference] (Write = the Person id).
 //
-// P_DateOfBirth is the Age Field Type — catalogued as "Age". Its wire value is the
+// P_DateOfBirth is the Age Data Type — catalogued as "Age". Its wire value is the
 // birthdate (`yyyy/mm/dd`, same as Date); PORTERS derives the displayed age in its UI.
 // Display-only Reference fields (P_Mail, P_*Reference — they mirror a Person value and are
 // not writable) are intentionally left out of the catalog: scalar mirrors read through as
@@ -10,7 +10,7 @@
 // fields (U_) are future work. The full static Resume type is future work (SD-3).
 
 import type { Requester } from "../http/requester";
-import type { FieldType } from "../xml/decode";
+import type { DataType } from "../xml/decode";
 import {
   createResource,
   type Resource,
@@ -20,13 +20,13 @@ import {
   type SearchQuery,
 } from "./resource";
 
-const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+const FIELDS = new Map<string, DataType>([
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
-  ["P_Candidate", "Reference"],
-  ["P_RegistrationDate", "DateTime"],
+  ["P_Candidate", "System[Reference]"],
+  ["P_RegistrationDate", "System[DateTime]"],
   ["P_RegisteredBy", "User"],
-  ["P_UpdateDate", "DateTime"],
+  ["P_UpdateDate", "System[DateTime]"],
   ["P_UpdatedBy", "User"],
   ["P_Phase", "Option"],
   ["P_PhaseDate", "DateTime"],

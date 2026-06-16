@@ -6,7 +6,7 @@ import type { UserRef } from "../xml/decode";
 import { createResumeResource } from "./resume";
 
 // The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
-// Resume-specific catalog (each field decodes by its Field Type) and config
+// Resume-specific catalog (each field decodes by its Data Type) and config
 // (root name `Resume`, path `resume`, alias prefix `Resume`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];
 const REF_FIELDS = ["P_Candidate"];
@@ -30,7 +30,7 @@ const NUMBER_FIELDS = [
   "P_DesiredHourlyRate",
   "P_HourlyRate",
 ];
-const AGE_FIELDS = ["P_DateOfBirth"]; // Age Field Type — wire value is yyyy/mm/dd
+const AGE_FIELDS = ["P_DateOfBirth"]; // Age Data Type — wire value is yyyy/mm/dd
 const TEXT_FIELDS = [
   "P_PhaseMemo",
   "P_Name",
@@ -83,7 +83,7 @@ const resource = (calls: Call[], body: string) =>
   });
 
 describe("createResumeResource — decode catalog", () => {
-  it("decodes every catalogued field by its Field Type", async () => {
+  it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const r = (await resource(calls, ALL).search()).items[0];
 

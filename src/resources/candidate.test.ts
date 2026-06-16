@@ -6,7 +6,7 @@ import type { UserRef } from "../xml/decode";
 import { createCandidateResource } from "./candidate";
 
 // The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
-// Candidate-specific catalog (each field decodes by its Field Type) and config
+// Candidate-specific catalog (each field decodes by its Data Type) and config
 // (root name `Candidate`, path `candidate`, alias prefix `Person`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];
 const DATETIME_FIELDS = ["P_RegistrationDate", "P_UpdateDate", "P_PhaseDate"];
@@ -60,7 +60,7 @@ const resource = (calls: Call[], body: string) =>
   });
 
 describe("createCandidateResource — decode catalog", () => {
-  it("decodes every catalogued field by its Field Type", async () => {
+  it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const c = (await resource(calls, ALL).search()).items[0];
 

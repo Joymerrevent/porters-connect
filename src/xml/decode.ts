@@ -1,16 +1,21 @@
-// Field-Type-driven value decoding (ADR-0011). Input is the raw node (string or
+// Data-Type-driven value decoding (ADR-0011). Input is the raw node (string or
 // nested object) from the parser; output is the typed value. Empty -> null.
 
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
 import { asRecord, asString } from "./raw";
 
-// Granularity = PORTERS Data Type (ADR-0016). Currency collapses to Number and the
-// three Option subtypes to Option (PORTERS' own Data Type does the same); the string
-// Data Types stay distinct (room for future validation / normalisation).
-export type FieldType =
-  | "Id"
+// Granularity = PORTERS Data Type (ADR-0016). Labels are the literal Data Type
+// strings, incl. the System family (`System[Id]` / `System[DateTime]` / `System[Reference]`).
+// Currency collapses to Number and the three Option subtypes to Option (PORTERS' own
+// Data Type does the same); the string Data Types stay distinct (room for future
+// validation / normalisation). The `System[…]` qualifier marks system-managed values
+// (auto-assigned, often Write-restricted); that lifecycle is enforced via input types,
+// not here — decoding is by value shape.
+export type DataType =
+  | "System[Id]"
   | "Number"
   | "DateTime"
+  | "System[DateTime]"
   | "Date"
   | "Age"
   | "SinglelineText"
@@ -20,7 +25,7 @@ export type FieldType =
   | "URL"
   | "User"
   | "Option"
-  | "Reference";
+  | "System[Reference]";
 
 /** A referenced User (Read is nested; Write is `User.P_Id` only). */
 export type UserRef = {
@@ -74,8 +79,8 @@ const decodeOption = (raw: unknown): string[] | null => {
 // System[Reference] Read mirrors User: <Field><Resource>...</Resource></Field>, but the
 // inner tag varies (Client/Recruiter/...). Write is ID-only, so we decode the referenced
 // record's id — enough to round-trip. Richer reference reading is future work (SD-3).
-// NB: this "Reference" is System[Reference] (a nested record). It is NOT the display-only
-// Field-Type-16 "Reference" (a scalar mirror of a related value), which is left uncatalogued.
+// NB: the label is literally `System[Reference]` (a nested record). It is NOT the
+// display-only Field-Type-16 "Reference" (a scalar mirror, Data Type `—`), left uncatalogued.
 const decodeReference = (raw: unknown): number | null => {
   const outer = asRecord(raw);
   if (!outer) return null;
@@ -91,15 +96,15 @@ const decodeReference = (raw: unknown): number | null => {
   return null;
 };
 
-/** Decode one field's raw node by its Field Type. */
-export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
+/** Decode one field's raw node by its Data Type. */
+export const decodeField = (type: DataType, raw: unknown): FieldValue => {
   // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
   // `=== undefined` / `=== null` are defense-in-depth — every switch branch below
   // also maps them to null, so dropping either is an equivalent mutant.
   // Stryker disable next-line ConditionalExpression: see above (undefined/null are redundant with the switch)
   if (raw === "" || raw === undefined || raw === null) return null;
   switch (type) {
-    case "Id":
+    case "System[Id]":
     case "Number": {
       // raw is neither "" nor non-string here (guarded above), so `s` is a
       // non-empty string or undefined — `s === ""` would be dead.
@@ -114,7 +119,10 @@ export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
     case "Telephone":
     case "URL":
       return asString(raw) ?? null;
-    case "DateTime": {
+    // FT-12 DateTime and the system timestamps (registration/update) share the wire
+    // format; System[DateTime] is Write-restricted, but that is a write-time concern.
+    case "DateTime":
+    case "System[DateTime]": {
       const s = asString(raw);
       return s === undefined ? null : portersDateTimeToIso(s);
     }
@@ -129,7 +137,7 @@ export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
       return decodeUser(raw);
     case "Option":
       return decodeOption(raw);
-    case "Reference":
+    case "System[Reference]":
       return decodeReference(raw);
   }
 };

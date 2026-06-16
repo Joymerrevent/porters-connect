@@ -79,6 +79,15 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
 - 関連実装: `src/xml/decode.ts` の `FieldType`、各 `src/resources/*.ts` のカタログ。
 - 別件（本 ADR と独立に対応）: 複数選択 Option の read 全 alias 返却（実害修正）。
 - 現状の差異棚卸し（2026-06-15）: Mail/Telephone→Text、Currency→Number、Singleline/Multiline→Text、Option 3 種→Option、Age は #19 で独立済み。
+- 実装時の確定（2026-06-17）: 案B を **System 系にもリテラル一致**で適用した。内部 `FieldType`
+  は Data Type 文字列をそのまま使い、`Id`→`System[Id]`・`Reference`→`System[Reference]` に改名、
+  FT-12 `DateTime` とシステムタイムスタンプ `System[DateTime]`（登録日/更新日・Write 不可）を
+  **別ラベルに分離**（ワイヤー形式は同一で decode/encode は共有）。`System[…]` 修飾はライフサイクル
+  （自動採番・Write 制限）を表し値の形ではないため、Write 制限は本型ではなく入力型側（SD-3）で担保する。
+  これで非 System 系と同じ「Data Type に一致」基準を System 系にも一貫適用できた。
+  - 併せて**型名も実態に合わせて `FieldType` → `DataType` に改名**した（保持するのは Field Type ではなく
+    Data Type であり、名前が決定に追従していなかったため）。内部専用で公開 API は不変。本 ADR の表題は
+    起票時の問い（「FieldType の粒度を Field Type/Data Type どちらに合わせるか」）を歴史的経緯として残す。
 
 [fdt]: ../reference/resource-api/field-data-types.md
 [0004]: 0004-field-type-model.md

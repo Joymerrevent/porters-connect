@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { FieldType } from "../xml/decode";
+import type { DataType } from "../xml/decode";
 import { createResource, type ResourceConfig } from "./resource";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
-// live in candidate/job tests). One field per Field Type is enough — per-type
+// live in candidate/job tests). One field per Data Type is enough — per-type
 // decoding is covered by decode.test.ts; here we test the wiring.
-const FIELDS = new Map<string, FieldType>([
-  ["P_Id", "Id"],
+const FIELDS = new Map<string, DataType>([
+  ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
   ["P_When", "DateTime"],
   ["P_Phase", "Option"],
