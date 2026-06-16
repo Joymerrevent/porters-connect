@@ -11,17 +11,18 @@ grep -rn "VERIFY(live)" src test
 
 ## 一覧
 
-| #    | 項目                       | 現在の対応 / 仮定                                                   | 不確実な理由                                                          | コード箇所                             | 確認方法                                   |
-| ---- | -------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------ |
-| LV-1 | Option 末端 alias の接頭辞 | `Option.` 付き（例 `Option.P_PersonPhase_Applied`）を verbatim 返却 | ライブ Read 例は `Option.P_Tokyo`、旧 fixture は接頭辞なしだった      | `src/xml/decode.ts`（`decodeOption`）  | 実 Read レスポンスの `OptionRoot` 子タグ名 |
-| LV-2 | OptionRoot ラッパーの有無  | あっても無くても動くよう**両対応**                                  | ライブのテンプレは Root あり・サンプルは Root なし（ADR-0011 で保留） | `src/xml/decode.ts`（`decodeOption`）  | 実 Read に `OptionRoot` が出るか           |
-| LV-3 | Attachment の get 条件     | `Id:eq=<id>` で 1 件取得                                            | Attachment は接頭辞無し・条件 alias を実機未確認                      | `src/resources/attachment.ts`（`get`） | 実 Read で `Id` 条件が通るか               |
-| LV-4 | Attachment Read の既定項目 | `get` は 6 項目を明示要求                                           | `field` 未指定時に `Content` を返すか未確認                           | `src/resources/attachment.ts`（`get`） | `field` 未指定時の出力                     |
+| #    | 項目                       | 現在の対応 / 仮定                                                   | 不確実な理由                                                          | コード箇所                             | 確認方法                                   | 状態・確認結果 |
+| ---- | -------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------ | -------------- |
+| LV-1 | Option 末端 alias の接頭辞 | `Option.` 付き（例 `Option.P_PersonPhase_Applied`）を verbatim 返却 | ライブ Read 例は `Option.P_Tokyo`、旧 fixture は接頭辞なしだった      | `src/xml/decode.ts`（`decodeOption`）  | 実 Read レスポンスの `OptionRoot` 子タグ名 | 未確認         |
+| LV-2 | OptionRoot ラッパーの有無  | あっても無くても動くよう**両対応**                                  | ライブのテンプレは Root あり・サンプルは Root なし（ADR-0011 で保留） | `src/xml/decode.ts`（`decodeOption`）  | 実 Read に `OptionRoot` が出るか           | 未確認         |
+| LV-3 | Attachment の get 条件     | `Id:eq=<id>` で 1 件取得                                            | Attachment は接頭辞無し・条件 alias を実機未確認                      | `src/resources/attachment.ts`（`get`） | 実 Read で `Id` 条件が通るか               | 未確認         |
+| LV-4 | Attachment Read の既定項目 | `get` は 6 項目を明示要求                                           | `field` 未指定時に `Content` を返すか未確認                           | `src/resources/attachment.ts`（`get`） | `field` 未指定時の出力                     | 未確認         |
 
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、この表に 1 行追加する。
-- 確定したら表から削除し、コメントを通常コメントへ。仕様が重いものは ADR 化する。
+- 確定しても**行は削除しない**。「状態・確認結果」に**確認日と実レスポンスでの結果**を追記して履歴を残す（例 `確定 2026-07-01: 接頭辞あり`）。
+- 確定したらコード側は通常コメントへ戻す（`VERIFY(live)` トークンは外し、`LV-N` への参照は残してトレースを保つ）。仕様が重い確定は ADR 化し、この表からリンクする。
 
 ## 関連
 
