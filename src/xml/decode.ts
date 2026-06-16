@@ -1,4 +1,4 @@
-// Field-Type-driven value decoding (ADR-0011). Input is the raw node (string or
+// Data-Type-driven value decoding (ADR-0011). Input is the raw node (string or
 // nested object) from the parser; output is the typed value. Empty -> null.
 
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
@@ -11,7 +11,7 @@ import { asRecord, asString } from "./raw";
 // validation / normalisation). The `System[…]` qualifier marks system-managed values
 // (auto-assigned, often Write-restricted); that lifecycle is enforced via input types,
 // not here — decoding is by value shape.
-export type FieldType =
+export type DataType =
   | "System[Id]"
   | "Number"
   | "DateTime"
@@ -96,8 +96,8 @@ const decodeReference = (raw: unknown): number | null => {
   return null;
 };
 
-/** Decode one field's raw node by its Field Type. */
-export const decodeField = (type: FieldType, raw: unknown): FieldValue => {
+/** Decode one field's raw node by its Data Type. */
+export const decodeField = (type: DataType, raw: unknown): FieldValue => {
   // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
   // `=== undefined` / `=== null` are defense-in-depth — every switch branch below
   // also maps them to null, so dropping either is an equivalent mutant.

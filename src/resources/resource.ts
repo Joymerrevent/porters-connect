@@ -1,12 +1,12 @@
 // Generic resource accessor (ADR-0004/0005/0011): the Read (search / searchAll /
 // get) + Write (create / update) shape shared by every PORTERS resource. A resource
-// module supplies its names + Field-Type catalog; this owns the wiring and keeps XML
+// module supplies its names + Data-Type catalog; this owns the wiring and keeps XML
 // out of resources/ (parse/encode live in xml/). Standard `P_` fields use the catalog;
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
 
 import { PortersResourceError, resourceError } from "../errors";
 import type { Requester } from "../http/requester";
-import { decodeField, type FieldType, type FieldValue } from "../xml/decode";
+import { decodeField, type DataType, type FieldValue } from "../xml/decode";
 import { buildWriteXml, type WriteItem } from "../xml/encode";
 import { parseResourcePage, parseWriteResult } from "../xml/parser";
 
@@ -34,7 +34,7 @@ export type SearchQuery = {
  */
 export type ResourceInput = WriteItem;
 
-/** Static description of a resource: names + Field-Type catalog. */
+/** Static description of a resource: names + Data-Type catalog. */
 export type ResourceConfig = {
   /** Root element + Write resource name, e.g. `"Candidate"`. */
   name: string;
@@ -42,8 +42,8 @@ export type ResourceConfig = {
   path: string;
   /** Field alias prefix, e.g. `"Person"`. */
   prefix: string;
-  /** Field-Type catalog: bare alias -> type. */
-  fields: ReadonlyMap<string, FieldType>;
+  /** Data-Type catalog: bare alias -> type. */
+  fields: ReadonlyMap<string, DataType>;
 };
 
 export type Resource = {

@@ -1,10 +1,10 @@
-// Field-Type-driven value encoding for Write (ADR-0011). Read and Write
+// Data-Type-driven value encoding for Write (ADR-0011). Read and Write
 // representations are asymmetric: User/System[Reference] write the ID only, Option writes
 // `<Field><OptionAlias/></Field>`, and DateTime/Date go ISO -> PORTERS. This is the
 // mirror of decode.ts; it builds the request body so XML stays out of resources/.
 
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
-import type { FieldType } from "./decode";
+import type { DataType } from "./decode";
 
 /**
  * A value to write. Scalars cover the string Data Types / Number / Id and the
@@ -32,7 +32,7 @@ const scalar = (v: string | number | string[]): string => escapeXml(String(v));
 
 /** Encode one field's value into the inner XML of its element. */
 export const encodeField = (
-  type: FieldType,
+  type: DataType,
   value: string | number | string[],
 ): string => {
   switch (type) {
@@ -71,7 +71,7 @@ export const encodeField = (
 // back to Text — symmetric with decode's raw-string passthrough (fail-safe).
 const encodeItem = (
   prefix: string,
-  fields: ReadonlyMap<string, FieldType>,
+  fields: ReadonlyMap<string, DataType>,
   item: WriteItem,
 ): string => {
   const parts: string[] = [];
@@ -89,7 +89,7 @@ const encodeItem = (
 export const buildWriteXml = (config: {
   resource: string;
   prefix: string;
-  fields: ReadonlyMap<string, FieldType>;
+  fields: ReadonlyMap<string, DataType>;
   items: WriteItem[];
 }): string => {
   const items = config.items

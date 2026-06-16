@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { FieldType } from "./decode";
+import type { DataType } from "./decode";
 import { buildWriteXml, encodeField } from "./encode";
 
-const FIELDS = new Map<string, FieldType>([
+const FIELDS = new Map<string, DataType>([
   ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
   ["P_Name", "SinglelineText"],
@@ -86,7 +86,7 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     expect(xml).not.toContain("P_Owner"); // undefined -> omitted
   });
 
-  it("uses the catalog Field Type (DateTime converts, not raw passthrough)", () => {
+  it("uses the catalog Data Type (DateTime converts, not raw passthrough)", () => {
     const xml = buildWriteXml({
       resource: "Candidate",
       prefix: "Person",

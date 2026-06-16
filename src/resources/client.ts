@@ -1,9 +1,9 @@
 // Client accessor (ADR-0004/0005/0011): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Only the Field-Type catalog and
+// (create / update) over the generic resource factory. Only the Data-Type catalog and
 // names are Client-specific. The full static Client type is future work (SD-3).
 
 import type { Requester } from "../http/requester";
-import type { FieldType } from "../xml/decode";
+import type { DataType } from "../xml/decode";
 import {
   createResource,
   type Resource,
@@ -13,7 +13,7 @@ import {
   type SearchQuery,
 } from "./resource";
 
-const FIELDS = new Map<string, FieldType>([
+const FIELDS = new Map<string, DataType>([
   ["P_Id", "System[Id]"],
   ["P_Owner", "User"],
   ["P_RegistrationDate", "System[DateTime]"],

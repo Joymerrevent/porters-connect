@@ -85,6 +85,9 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
   **別ラベルに分離**（ワイヤー形式は同一で decode/encode は共有）。`System[…]` 修飾はライフサイクル
   （自動採番・Write 制限）を表し値の形ではないため、Write 制限は本型ではなく入力型側（SD-3）で担保する。
   これで非 System 系と同じ「Data Type に一致」基準を System 系にも一貫適用できた。
+  - 併せて**型名も実態に合わせて `FieldType` → `DataType` に改名**した（保持するのは Field Type ではなく
+    Data Type であり、名前が決定に追従していなかったため）。内部専用で公開 API は不変。本 ADR の表題は
+    起票時の問い（「FieldType の粒度を Field Type/Data Type どちらに合わせるか」）を歴史的経緯として残す。
 
 [fdt]: ../reference/resource-api/field-data-types.md
 [0004]: 0004-field-type-model.md

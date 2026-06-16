@@ -5,7 +5,7 @@ import type { TransportRequest } from "../http/types";
 import type { UserRef } from "../xml/decode";
 import { createJobResource } from "./job";
 
-// Catalogued fields grouped by Field Type. Each group decodes differently from raw
+// Catalogued fields grouped by Data Type. Each group decodes differently from raw
 // passthrough, so observing every field pins its catalog entry (mutation coverage).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];
 const REF_FIELDS = ["P_Client", "P_Recruiter"];
@@ -81,7 +81,7 @@ const resource = (calls: Call[], body: string) =>
   });
 
 describe("createJobResource — decode catalog", () => {
-  it("decodes every catalogued field by its Field Type", async () => {
+  it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const job = (await resource(calls, ALL).search()).items[0];
 
