@@ -459,6 +459,36 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(sent).toHaveLength(1);
   });
 
+  it("skips the size guard when unboundedBody is set (file uploads)", async () => {
+    const sent: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        sent.push(req);
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    // a body well over the 15000-char limit goes through when unboundedBody is true
+    const body = "x".repeat(20000);
+    expect(
+      await r.request(
+        { method: "POST", url: "u", headers: {}, body },
+        (b) => b,
+        {
+          write: true,
+          unboundedBody: true,
+        },
+      ),
+    ).toBe("ok");
+    expect(sent).toHaveLength(1);
+  });
+
   it("waits backoff(attempt-1) between transient retries", async () => {
     vi.useFakeTimers();
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
