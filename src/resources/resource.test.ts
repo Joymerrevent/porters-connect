@@ -131,6 +131,39 @@ describe("createResource — Read", () => {
   });
 });
 
+describe("createResource — default field (ADR-0020)", () => {
+  // The default field set the factory derives from CONFIG's catalog: every alias prefixed,
+  // the User field expanded to its 4 readable sub-fields, the rest plain.
+  const DEFAULT_FIELD =
+    "field=W.P_Id,W.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail),W.P_When,W.P_Phase,W.P_Name";
+
+  it("search() with no field sends the catalog default (User expanded)", async () => {
+    const calls: Call[] = [];
+    await res(calls).search();
+    expect(decodeURIComponent(calls[0].req.url)).toContain(DEFAULT_FIELD);
+  });
+
+  it("field: [] opts into the API-native primary-key-only response (no field param)", async () => {
+    const calls: Call[] = [];
+    await res(calls).search({ field: [] });
+    expect(calls[0].req.url).not.toContain("field=");
+  });
+
+  it("a provided field list is sent verbatim (no default injected)", async () => {
+    const calls: Call[] = [];
+    await res(calls).search({ field: ["W.P_Name"] });
+    const url = decodeURIComponent(calls[0].req.url);
+    expect(url).toContain("field=W.P_Name");
+    expect(url).not.toContain("W.P_Owner"); // default not mixed in
+  });
+
+  it("get(id) sends the default field set so it returns a full record, not just P_Id", async () => {
+    const calls: Call[] = [];
+    await res(calls).get(7);
+    expect(decodeURIComponent(calls[0].req.url)).toContain(DEFAULT_FIELD);
+  });
+});
+
 describe("createResource — searchAll", () => {
   it("pages through all results (200/page) until total is reached", async () => {
     const calls: Call[] = [];

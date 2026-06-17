@@ -77,6 +77,19 @@ describe("createCandidateResource — decode catalog", () => {
     OPTION_FIELDS.forEach((f) => expect(rec[f]).toEqual([`Opt_${f}`])); // Option -> array
     TEXT_FIELDS.forEach((f) => expect(rec[f]).toBeNull()); // empty Text -> null (not "")
   });
+
+  // RV-2 / ADR-0020: field を省いた search() は既定 field（カタログ全項目）を送るので、全項目を
+  // 返す ALL fixture は本番挙動と整合する。その既定 field が実際に送られることを pin する。
+  it("search() sends the Candidate catalog default field (Person-prefixed, User expanded)", async () => {
+    const calls: Call[] = [];
+    await resource(calls, ALL).search();
+    const url = decodeURIComponent(calls[0].req.url);
+    expect(url).toContain("field=Person.P_Id,");
+    expect(url).toContain(
+      "Person.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
+    );
+    expect(url).toContain("Person.P_Phase"); // Option -> plain alias
+  });
 });
 
 describe("createCandidateResource — config & write", () => {

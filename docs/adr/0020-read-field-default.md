@@ -73,6 +73,7 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - **2a**: 既定 field を「カタログ → `{prefix}.{alias}`、User は 4 サブ展開、System[Reference] は ID のみ」で生成。[ADR-0011][0011] の decode 形と 1:1 対応。
 - **3a ＋ 透明化**: 既定は有用側（全項目）に倒し、`field: []`（明示的空配列）を API ネイティブの「主キーのみ」へのオプトアウトに割り当てる（件数・存在確認用途）。**「既定で全項目を送る」ことは README/JSDoc に明記**し、生挙動を隠さない。`field` 明示は従来どおり射影。
 - カタログを既定 field 生成にも使うことで [ADR-0019][0019] の single source of truth を一段広げる。
+- **Attachment（bespoke）もスコープに含める**（実装時に拡張・2026-06-17）: 専用アクセサ `attachment` も `field` 省略で既定送信する。ただし `Content`（Base64 ファイル本体・最大 ~14MB）は一覧での全件ダウンロードを避けるため**既定から除外**（メタデータのみ＝`Id`/`Resource`/`ResourceId`/`ContentType`/`FileName`）。`get()` は従来どおり `Content` 込み、`field: []` は主キーのみ。PORTERS の Image 既定（FileName のみ）と同思想。
 
 ### Consequences
 
@@ -104,7 +105,7 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - 接地: [docs/reference Read パラメータ（field 入れ子・User 4 項目・既定）][ref-read]、原典 [115010010367][src-mitigation]。
 - 検出元: [RV-1 / RV-2（docs/reviews/findings.md）][findings]。
 - 依存/関連: [ADR-0005][0005]（公開 API・SD-3）／[ADR-0019][0019]（カタログ SoT）／[ADR-0011][0011]（decode の User/Reference/Option 形）／[ADR-0016][0016]（DataType）。
-- 関連実装: `src/resources/resource.ts`（`buildReadUrl` / `search` / `searchAll` / `get` / `SearchQuery`）、各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`。
+- 関連実装: `src/resources/resource.ts`（`buildReadUrl` / `search` / `searchAll` / `get` / `SearchQuery`）、各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`、`src/resources/attachment.ts`（bespoke・`DEFAULT_FIELDS` でメタデータ既定）。
 - フォローアップ: accept 後に実装 PR（既定 field 生成・`get` の field 対応・RV-2 の fixture/テスト是正）。
 
 [0005]: 0005-public-api-shape.md
