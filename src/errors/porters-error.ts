@@ -8,6 +8,9 @@ export type ErrorCategory =
   | "validation"
   | "notFound"
   | "conflict"
+  // 予約（現状どの分類関数も produce しない）。PORTERS はレート超過時に判別可能なコードを
+  // 返さず接続を切るため、強制切断は PortersNetworkError（category "network"）として表面化する。
+  // 将来 429 相当の判別手段が得られたら配線するため型には残す（RV-3）。
   | "rateLimit"
   | "transient"
   | "network"
