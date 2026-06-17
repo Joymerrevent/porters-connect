@@ -11,17 +11,25 @@ import {
   createAttachmentResource,
   createCandidateResource,
   createClientResource,
+  createFieldResource,
   createJobResource,
+  createOptionResource,
+  createPartitionResource,
   createProcessResource,
   createResumeResource,
+  createUserResource,
 } from "./resources";
 import type {
   AttachmentResource,
   CandidateResource,
   ClientResource,
+  FieldResource,
   JobResource,
+  OptionResource,
+  PartitionResource,
   ProcessResource,
   ResumeResource,
+  UserResource,
 } from "./resources";
 import type { PartitionId, Scope } from "./types";
 
@@ -57,6 +65,14 @@ export class PortersClient {
   readonly process: ProcessResource;
   readonly resume: ResumeResource;
   readonly attachment: AttachmentResource;
+  /** Master Read: accessible partitions (ADR-0021/0022). */
+  readonly partition: PartitionResource;
+  /** Master Read: users, plus `current()` self-identification (ADR-0021/0022). */
+  readonly user: UserResource;
+  /** Master Read: a resource's field catalog (ADR-0021/0022). */
+  readonly field: FieldResource;
+  /** Master Read: a tenant's choice (option) master (ADR-0021/0022). */
+  readonly option: OptionResource;
   readonly #host: string;
 
   constructor(options: PortersClientOptions) {
@@ -88,6 +104,11 @@ export class PortersClient {
     this.process = createProcessResource(deps);
     this.resume = createResumeResource(deps);
     this.attachment = createAttachmentResource(deps);
+    // Partition Read takes no `partition` param (it discovers them); the rest use the default.
+    this.partition = createPartitionResource({ requester, host: options.host });
+    this.user = createUserResource(deps);
+    this.field = createFieldResource(deps);
+    this.option = createOptionResource(deps);
   }
 
   /** The configured API host. */

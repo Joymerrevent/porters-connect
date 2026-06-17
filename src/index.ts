@@ -73,6 +73,29 @@ export type {
   AttachmentSearchQuery,
   AttachmentUpdate,
 } from "./resources";
+
+// Master Read resources (read-only — ADR-0021/0022).
+export type {
+  Partition,
+  PartitionPage,
+  PartitionResource,
+  PartitionSearchQuery,
+} from "./resources";
+export type {
+  User,
+  UserPage,
+  UserResource,
+  UserSearchQuery,
+} from "./resources";
+export type {
+  Field,
+  FieldPage,
+  FieldResource,
+  FieldSearchQuery,
+  ResourceType,
+} from "./resources";
+export type { Option, OptionResource, OptionSearchQuery } from "./resources";
+
 export type { FieldValue, UserRef } from "./xml";
 
 // Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).

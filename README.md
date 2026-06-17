@@ -22,6 +22,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 - **良き API 市民**：自前スロットリング・リトライ（指数バックオフ）・リクエストサイズガード内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
 - **6 リソース対応**：Candidate / Job / Client / Process / Resume / Attachment（Read/Write）。
+- **マスタ Read**：Partition / User / Field / Option（読み取り専用・`user.current()` で自己同定）。
 
 ## 前提
 
@@ -135,6 +136,34 @@ new PortersClient({ host, appId, appSecret, partition, tokenStore });
 - `count`（1–200・既定 10）、`start`（0 始まり）。
 
 > **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは検索の状態フィルタで扱います。
+
+### マスタ Read（読み取り専用）
+
+マスタ系は**読み取り専用**で、実 API が受けるクエリだけを持ちます（`condition` と `get(id)` はありません）。
+
+| アクセサ            | リソース          | メソッド                           | 主なクエリ                                |
+| ------------------- | ----------------- | ---------------------------------- | ----------------------------------------- |
+| `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1=アクセス可能一覧・既定） |
+| `porters.user`      | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`      |
+| `porters.field`     | Field（項目定義） | `search` / `searchAll`             | `resource`（必須）/ `active`              |
+| `porters.option`    | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`             |
+
+```ts
+// アクセス可能な Partition（Company DB）を発見
+const partitions = await porters.partition.search();
+
+// 現在の API ユーザー（code_direct ではアプリ自身の User）＝自己同定
+const me = await porters.user.current();
+
+// Job リソースの項目定義（U_/A_ カスタム項目を含む）を取得
+const fields = await porters.field.search({ resource: "job" });
+
+// 選択肢マスタをフラットな配列で取得（親子は P_ParentId で復元）
+const options = await porters.option.search({ alias: "Option.P_Gender" });
+```
+
+- `porters.option.search()` は入れ子の選択肢ツリーを**深さ優先でフラット化**して返します（全ノード・`P_ParentId`/`P_Order` で階層復元可）。`start` が無いため `searchAll` はありません。
+- `porters.partition.current()` は提供しません（`request_type=0` は既定の `code_direct` 認証では 403 になるため）。一覧は `search()`（既定 `requestType: 1`）で取得します。
 
 ## 読み取り値の表現
 
