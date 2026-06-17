@@ -14,6 +14,7 @@ import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type FieldCatalog,
   type ReadRecord,
   type Resource,
   type ResourcePage,
@@ -40,12 +41,14 @@ const FIELDS = {
   P_CloseReason: "Option",
   P_ExpectedSalesAmount: "Number",
   P_ExpectedClosingDate: "Date",
-} as const;
+} as const satisfies FieldCatalog;
 
 // VERIFY(live): Process は関連リソースを繋ぐため、P_Owner 以外に P_Candidate / P_Job 等が
 // create 必須の可能性が高いが実機未確認。過剰な必須化を避け確証のある P_Owner のみ必須にする。
 // see docs/live-verification.md (LV-5)。
-const REQUIRED_ON_CREATE = ["P_Owner"] as const;
+const REQUIRED_ON_CREATE = [
+  "P_Owner",
+] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
  *  requested field `value | null`. */

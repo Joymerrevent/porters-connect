@@ -4,7 +4,7 @@ import { PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { FieldValue } from "../xml/decode";
-import { createResource } from "./resource";
+import { createResource, type FieldCatalog } from "./resource";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
 // live in candidate/job tests). One field per Data Type is enough — per-type
@@ -16,7 +16,7 @@ const FIELDS = {
   P_When: "DateTime",
   P_Phase: "Option",
   P_Name: "SinglelineText",
-} as const;
+} as const satisfies FieldCatalog;
 
 const CONFIG = {
   name: "Widget",

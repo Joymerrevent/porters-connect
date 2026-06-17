@@ -13,6 +13,7 @@ import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type FieldCatalog,
   type ReadRecord,
   type Resource,
   type ResourcePage,
@@ -51,12 +52,14 @@ const FIELDS = {
   P_ExpectSalary: "Number",
   P_DesiredHourlyRate: "Number",
   P_HourlyRate: "Number",
-} as const;
+} as const satisfies FieldCatalog;
 
 // VERIFY(live): Resume は Candidate に属するため P_Owner 以外に P_Candidate が create 必須の
 // 可能性が高いが実機未確認。過剰な必須化を避け確証のある P_Owner のみ必須にする。
 // see docs/live-verification.md (LV-5)。
-const REQUIRED_ON_CREATE = ["P_Owner"] as const;
+const REQUIRED_ON_CREATE = [
+  "P_Owner",
+] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Resume (a Candidate's CV / profile): known `P_` fields, each requested field
  *  `value | null`. */

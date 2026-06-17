@@ -11,6 +11,7 @@ import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type FieldCatalog,
   type ReadRecord,
   type Resource,
   type ResourcePage,
@@ -54,11 +55,13 @@ const FIELDS = {
   P_CapitalText: "SinglelineText",
   P_EmploymentType: "Option",
   P_ExpectedAgeReason: "Option",
-} as const;
+} as const satisfies FieldCatalog;
 
 // VERIFY(live): create 必須項目はテナント/契約依存。過剰な必須化を避け P_Owner のみ必須にする
 // （P_Client 等が必須の可能性あり）。see docs/live-verification.md (LV-5)。
-const REQUIRED_ON_CREATE = ["P_Owner"] as const;
+const REQUIRED_ON_CREATE = [
+  "P_Owner",
+] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */
 export type Job = ReadRecord<typeof FIELDS>;

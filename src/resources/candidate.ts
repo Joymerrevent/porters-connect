@@ -7,6 +7,7 @@ import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type FieldCatalog,
   type ReadRecord,
   type Resource,
   type ResourcePage,
@@ -33,12 +34,14 @@ const FIELDS = {
   P_Prefecture: "SinglelineText",
   P_City: "SinglelineText",
   P_Zipcode: "SinglelineText",
-} as const;
+} as const satisfies FieldCatalog;
 
 // P_Owner is generally required on create (docs/reference: 所有者・新規作成時は通常必須）。
 // VERIFY(live): 他に create 必須の項目があるかはテナント/契約依存。過剰な必須化を避け P_Owner のみ
 // 必須にする。see docs/live-verification.md (LV-5)。
-const REQUIRED_ON_CREATE = ["P_Owner"] as const;
+const REQUIRED_ON_CREATE = [
+  "P_Owner",
+] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Candidate: known `P_` fields, each requested field `value | null`. */
 export type Candidate = ReadRecord<typeof FIELDS>;
