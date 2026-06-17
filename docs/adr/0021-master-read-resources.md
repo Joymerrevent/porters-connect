@@ -30,8 +30,11 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
    ログイン中の Partition / User を返す（[gotchas][gotchas]）。[basic-design][bd] §118 は「L1 が提供するオンボーディング補助」と位置づける。
    通常の `search` とはパラメータ・意味が異なる。さらに Partition 発見は **`partition` 必須パラメータとの鶏卵**
    （まだ partition を知らない段階で叩く）があり、実機未確認。
-4. **Option の入れ子 `Items`**。Option Read は選択肢マスタを返し、`Items` という**親子（ツリー）コレクション**を含む
-   （[option 表][ref-masters]）。データ系の**フラットな**レコード decode では表現しきれない。
+4. **Option の入れ子 `Items`**。Option Read は選択肢マスタ（テナントの選択肢定義）を返し、各 `Item` が
+   同型の子 `Item` を `<Items>` に入れ子で持つ**再帰ツリー**。XML 形は正典記事に明記されており
+   （[Option-Read 記事の Output XML][src-option-read]）、(i) 親子は `P_ParentId`（上向き）と `Items`（下向き）の
+   **二重エンコード**、(ii) **子はトップレベルに出ず `Items` の内側にのみ**現れる、(iii) クエリは `field`/`condition` でなく
+   **`alias`/`level`/`enabled`** の bespoke。よってデータ系の**フラットな**レコード decode／共通クエリには素直に乗らない。
 
 問い: **マスタ Read を公開 API としてどう露出するか**。(a) アクセサの名前・形（衝突回避）、(b) 読み取り専用の型契約、
 (c) Option ツリーの表現、(d) ログイン発見の出し方、(e) 型付けの導出元 を決める。
@@ -68,10 +71,12 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 
 ### 軸3: Option の入れ子 `Items`（ツリー）の表現
 
-- **案3a: フラット＋`P_ParentId`（`Items` は当面そのまま/後回し）** — `Option.P_Id/P_Name/P_Alias/P_ParentId/P_Type/P_Order` を
-  フラットに返す。親子は `P_ParentId` で利用側が辿れる。`Items` の構造化は将来（必要が出てから）。最も薄い。
-- **案3b: ツリー型で返す** — `children: Option[]` を組み立てて返す。難点: 第1層に再構築ロジックが増える／
-  `Items` の実 XML 形が未確認（[gotchas][gotchas]/[ADR-0011][0011] の接地待ち）で、確定前にツリー契約を固めると後で割れる。
+- **案3a: 再帰フラット化＋`P_ParentId`** — `Items` を**再帰的に降りて全ノードを 1 本のフラット配列**に集め、各ノードを
+  `Option.P_Id/P_Name/P_Alias/P_ParentId/P_Type/P_Order` のフラットなレコードで返す。階層は `P_ParentId`（＋`P_Order`）で
+  利用側が復元。情報損失なし・公開型はフラット（再帰型を固定しない）。※「トップレベル `Item` だけ返す」だと**子が欠落**するため、
+  フラットでも `Items` の再帰走査は必須（上記論点4-ii）。
+- **案3b: ツリー型で返す** — `children: Option[]` を組み立てて返す。XML 形は接地済み（[src-option-read][src-option-read]）で
+  実装は可能だが、難点は**再帰型を公開契約に固定**すること（後から平坦化したくなっても破壊的変更）と第1層の再構築ロジック増。
 
 ### 軸4: ログイン中 Partition / User の発見（`request_type=0`）
 
@@ -97,8 +102,9 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
   改名注記（amended）を付す（accepted ADR 本文は書き換えない）。
 - **2a（専用 readonly 契約）**: 存在しない Write を型に出さない＝フェイルセーフ。`resource.ts` の Read 内部を共有関数へ切り出し、
   データ系と**同じカタログ/decode/ページング**を再利用（重複ゼロ）。
-- **3a（フラット＋`P_ParentId`）**: 薄いラッパーを保ち、`Items` の実 XML 形が確定する（[ADR-0011][0011] の接地）まで
-  ツリー契約を固定しない。親子は `P_ParentId` で表現可能。`Items` の構造化は follow-up。
+- **3a（再帰フラット化＋`P_ParentId`）**: XML 形は接地済み（[src-option-read][src-option-read]）。それでも**再帰型を公開契約に
+  固定せず**、`Items` を再帰走査して全ノードをフラット配列で返す（損失なし）。階層は `P_ParentId`＋`P_Order` で復元容易＝薄いラッパーを保つ。
+  ツリー型（案3b）への移行が要れば将来 follow-up で（フラットは破壊的変更なく拡張可能）。
 - **4a（`current()` 発見メソッド）**: [basic-design][bd] §118 のオンボーディングを v1 で提供。`request_type=0` と
   partition 鶏卵をこのメソッドに閉じ込め、通常 `search` を汚さない。
 - **5a（カタログ駆動）**: [ADR-0019][0019]/[ADR-0020][0020] の SoT・既定 field・decode をそのまま流用。型 `—` は `SinglelineText`。
@@ -110,9 +116,12 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
   アクセサがデータ系と同じ単数形で統一され、`tenant(id)` はスコープの意図がより明示的。
 - Bad: [ADR-0008][0008] 計画名 `porters.partition(id)` の改名（`tenant(id)`）が必要＝[basic-design][bd] への波及反映と
   ADR-0008 への注記。Read 内部の共有関数化に伴うリファクタ（`resource.ts` 分割）が要る。スコープ関数は未実装のため、改名の実コスト＝ドキュメントのみ。
-- Neutral: Option の `Items` ツリー・Partition 発見の `partition` 鶏卵・`User.P_Department`（System[Department]）の decode 形は
-  **実機未確認**＝[live-verification][lv] に LV エントリを追加し、`VERIFY(live)` で接地する。新スコープ
-  `partition_r`/`user_r`/`field_r`/`option_r` は既存 `Scope`（`${string}_r`）テンプレートに収まり**型変更不要**。
+- Neutral: Option の `Items` ツリーの**基本形は接地済み**（[src-option-read][src-option-read]）。残る不確実性は
+  (i) 実テナントで **3 階層以上**にネストし得るか、(ii) `<Items/>` 空要素の parse 形（`""`/`{}`/欠落）、(iii) フラット化時の
+  **兄弟順**（`P_Order` 依存か出現順か）に限られ、いずれも小さい。一方 **Partition 発見の `partition` 鶏卵**と
+  **`User.P_Department`（System[Department]）の decode 形**は実機未確認＝[live-verification][lv] に LV エントリを追加し
+  `VERIFY(live)` で接地する。新スコープ `partition_r`/`user_r`/`field_r`/`option_r` は既存 `Scope`（`${string}_r`）テンプレートに
+  収まり**型変更不要**。
 
 ## Pros and Cons of the Options
 
@@ -129,8 +138,8 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 
 ### 軸3
 
-- **案3a**: Good=薄い・接地待ちのツリー契約を固定しない・`P_ParentId` で親子可。Bad=`Items` を今は構造化しない。
-- **案3b**: Good=ツリーが使いやすい。Bad=第1層に再構築・未確認 XML 形で契約が割れる恐れ。
+- **案3a**: Good=薄い・再帰型を公開契約に固定しない・`P_ParentId`＋`P_Order` で親子と順序を保持（損失なし）。Bad=フラットでも `Items` 再帰走査が要る・ツリーは利用側で再構築。
+- **案3b**: Good=ツリーがそのまま使える。Bad=再帰型を公開契約に固定（平坦化したくなると破壊的変更）・第1層に再構築ロジック増。
 
 ### 軸4
 
@@ -148,7 +157,8 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 - 接地: [docs/reference マスタ各表（partition/user/field/option）][ref-masters]・[Read パラメータ][ref-read]・[gotchas（request_type=0）][gotchas]。
 - 依存/関連: [ADR-0005][0005]（公開 API の形）／[ADR-0008][0008]（`partition(id)` スコープ＝命名衝突元）／
   [ADR-0019][0019]（カタログ SoT）／[ADR-0020][0020]（既定 field）／[ADR-0011][0011]（decode の入れ子形）／[ADR-0017][0017]（Option 値表現）。
-- 不確実性: [live-verification][lv]（Option `Items` の XML 形・Partition 発見の `partition` 鶏卵・`User.P_Department` の参照可否）を accept 後に LV 追加。
+- Option ツリーの接地: [Option-Read 記事の Output XML 例][src-option-read]（`Items` 再帰・`P_ParentId` 二重エンコード・`alias`/`level`/`enabled` クエリ）。
+- 不確実性: [live-verification][lv] に accept 後 LV 追加。Option は**残小**（ネスト深さ・`<Items/>` 空要素 parse・兄弟順）、Partition 発見の `partition` 鶏卵・`User.P_Department` の参照可否は**実機未確認**。
 - フォローアップ: accept 後に実装 PR（Read 内部の共有関数化 → マスタ factory → カタログ → テスト fixture → README/JSDoc）。
 
 [prd]: ../design/requirements.md
@@ -158,6 +168,7 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 [ref-masters]: ../reference/resource-api/resources/
 [ref-read]: ../reference/resource-api/README.md
 [gotchas]: ../reference/gotchas.md
+[src-option-read]: ../../tmp/porters-docs/txt/115012160328-Option-Read.md
 [0005]: 0005-public-api-shape.md
 [0008]: 0008-multitenancy-partition.md
 [0011]: 0011-xml-parse-serialize.md
