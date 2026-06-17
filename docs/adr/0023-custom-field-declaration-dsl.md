@@ -1,6 +1,6 @@
 # 23. カスタム項目宣言 DSL（`defineFields`）の詳細設計（R-16 実装）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-17
 - Deciders: jun.shiromoto (Joymerrevent)
 
