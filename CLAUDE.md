@@ -61,7 +61,7 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 ## コーディング規約
 
 - `any` を撒かない。リソース・スコープ・レスポンスは型で表現する。
-- フィールド型モデル：**標準 `P_` は同梱の静的型／テナント毎 `U_`・`A_` は利用者が宣言＋実行時検証**（ハイブリッド。`docs/adr/0004-field-type-model.md`）。
+- フィールド型モデル：**標準 `P_` は同梱の静的型／テナント毎 `U_`・`A_` は利用者が `defineFields` で宣言＋実行時検証**（ハイブリッド。`docs/adr/0004-field-type-model.md`／宣言 DSL の詳細設計は `docs/adr/0023-custom-field-declaration-dsl.md`）。
 - public API は `src/index.ts` から明示的に export。内部実装は外に漏らさない。
 - エラーは判別可能な型に整理：基底 `PortersError` ＋ 系統別サブクラス（Auth / Resource / Network / Config）＋ `category`（`docs/adr/0006-error-model.md`）。
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
@@ -96,6 +96,7 @@ src/
   http/{request,headers}.ts
   xml/parser.ts
   resources/{candidate,job,client,process,...}.ts
+  fields/define-fields.ts   # カスタム項目宣言 DSL（ADR-0023）
   types/
   util/datetime.ts
 ```
