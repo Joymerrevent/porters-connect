@@ -3,6 +3,7 @@
 // names are Client-specific; the static Client / input types derive from the catalog
 // (ADR-0019).
 
+import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
@@ -54,23 +55,27 @@ export type ClientCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ClientUpdateInput = UpdateInput<typeof FIELDS>;
-export type ClientResource = Resource<
-  typeof FIELDS,
+/** The Client accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+export type ClientResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+  typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]
 >;
 
-export const createClientResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): ClientResource =>
-  createResource(
+export const createClientResource = <C extends FieldCatalog = EmptyCatalog>(
+  deps: { requester: Requester; host: string; partition: number },
+  custom?: C,
+): ClientResource<C> => {
+  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
+  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
+  return createResource(
     {
       name: "Client",
       path: "client",
       prefix: "Client",
-      fields: FIELDS,
+      fields,
       requiredOnCreate: REQUIRED_ON_CREATE,
     },
     deps,
   );
+};

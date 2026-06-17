@@ -3,6 +3,7 @@
 // are Candidate-specific; the static Candidate / input types derive from the catalog
 // (single source of truth — ADR-0019).
 
+import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
@@ -54,23 +55,27 @@ export type CandidateCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type CandidateUpdateInput = UpdateInput<typeof FIELDS>;
-export type CandidateResource = Resource<
-  typeof FIELDS,
+/** The Candidate accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+export type CandidateResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+  typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]
 >;
 
-export const createCandidateResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): CandidateResource =>
-  createResource(
+export const createCandidateResource = <C extends FieldCatalog = EmptyCatalog>(
+  deps: { requester: Requester; host: string; partition: number },
+  custom?: C,
+): CandidateResource<C> => {
+  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
+  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
+  return createResource(
     {
       name: "Candidate",
       path: "candidate",
       prefix: "Person",
-      fields: FIELDS,
+      fields,
       requiredOnCreate: REQUIRED_ON_CREATE,
     },
     deps,
   );
+};
