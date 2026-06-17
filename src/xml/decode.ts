@@ -38,6 +38,20 @@ export type UserRef = {
 // `string[]` is the Option read value (a set of selected aliases — ADR-0017).
 export type FieldValue = string | number | string[] | UserRef | null;
 
+// Per-Data-Type decoded value (the non-null shape). A read value is `DecodedValue<D> | null`
+// (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
+// (ADR-0019): id/number/reference -> number, User -> UserRef, Option -> string[], rest -> string.
+export type DecodedValue<D extends DataType> = D extends
+  | "System[Id]"
+  | "Number"
+  | "System[Reference]"
+  ? number
+  : D extends "User"
+    ? UserRef
+    : D extends "Option"
+      ? string[]
+      : string;
+
 // alias タグは接頭辞付き想定（例 `User.P_Id`）だが、接頭辞無しにも両対応（ADR-0011）。
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパーを decodeField より前に定義する。
 const pickPrefixed = (

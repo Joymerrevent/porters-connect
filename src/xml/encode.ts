@@ -21,6 +21,25 @@ export type WriteValue = string | number | string[] | null | undefined;
 /** One record to write: field alias (bare, e.g. `P_Name`) -> value. */
 export type WriteItem = Record<string, WriteValue>;
 
+// Data Types a user may write. `System[Id]` is library-supplied (`P_Id=-1`/target id) and
+// `System[DateTime]` (registration/update) is Write-restricted by PORTERS — both are excluded
+// from the static Write input so they cannot be set (ADR-0016 promise, realized in ADR-0019).
+export type WritableDataType = Exclude<
+  DataType,
+  "System[Id]" | "System[DateTime]"
+>;
+
+// Per-Data-Type write value (mirror of `encodeField`): User / System[Reference] / Number take a
+// number, Option an alias array, the rest a scalar string. Drives the static Write type (ADR-0019).
+export type WriteValueOf<D extends DataType> = D extends
+  | "User"
+  | "System[Reference]"
+  | "Number"
+  ? number
+  : D extends "Option"
+    ? string[]
+    : string;
+
 // Element-content escaping. Only `& < >` are significant in PCDATA; we never emit
 // attributes, so quotes are left as-is.
 const escapeXml = (s: string): string =>

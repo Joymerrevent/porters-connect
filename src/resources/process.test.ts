@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/decode";
 import { createProcessResource } from "./process";
 
 // The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
@@ -66,19 +66,21 @@ describe("createProcessResource — decode catalog", () => {
   it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const p = (await resource(calls, ALL).search()).items[0];
+    // Closed ReadRecord has no string index (U1); read by-name through a loose view.
+    const rec = p as Record<string, FieldValue | undefined>;
 
     expect(p.P_Id).toBe(42); // Id -> number
     USER_FIELDS.forEach((f, i) =>
-      expect((p[f] as UserRef | null)?.P_Id).toBe(i + 1),
+      expect((rec[f] as UserRef | null)?.P_Id).toBe(i + 1),
     ); // User -> nested ref
-    REF_FIELDS.forEach((f, i) => expect(p[f]).toBe(500 + i)); // System[Reference] -> id
+    REF_FIELDS.forEach((f, i) => expect(rec[f]).toBe(500 + i)); // System[Reference] -> id
     DATETIME_FIELDS.forEach((f, i) =>
-      expect(p[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
+      expect(rec[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(p[f]).toEqual([`Opt_${f}`])); // Option -> array
-    NUMBER_FIELDS.forEach((f) => expect(p[f]).toBe(3000000)); // Currency -> number
-    DATE_FIELDS.forEach((f) => expect(p[f]).toBe("2025-06-07")); // Date -> yyyy-mm-dd
-    TEXT_FIELDS.forEach((f) => expect(p[f]).toBeNull()); // empty Text -> null (not "")
+    OPTION_FIELDS.forEach((f) => expect(rec[f]).toEqual([`Opt_${f}`])); // Option -> array
+    NUMBER_FIELDS.forEach((f) => expect(rec[f]).toBe(3000000)); // Currency -> number
+    DATE_FIELDS.forEach((f) => expect(rec[f]).toBe("2025-06-07")); // Date -> yyyy-mm-dd
+    TEXT_FIELDS.forEach((f) => expect(rec[f]).toBeNull()); // empty Text -> null (not "")
   });
 });
 

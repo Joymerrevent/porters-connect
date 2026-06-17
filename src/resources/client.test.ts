@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/decode";
 import { createClientResource } from "./client";
 
 // The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
@@ -63,16 +63,18 @@ describe("createClientResource — decode catalog", () => {
   it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const c = (await resource(calls, ALL).search()).items[0];
+    // Closed ReadRecord has no string index (U1); read by-name through a loose view.
+    const rec = c as Record<string, FieldValue | undefined>;
 
     expect(c.P_Id).toBe(42); // Id -> number
     USER_FIELDS.forEach((f, i) =>
-      expect((c[f] as UserRef | null)?.P_Id).toBe(i + 1),
+      expect((rec[f] as UserRef | null)?.P_Id).toBe(i + 1),
     ); // User -> nested ref
     DATETIME_FIELDS.forEach((f, i) =>
-      expect(c[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
+      expect(rec[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(c[f]).toEqual([`Opt_${f}`])); // Option -> array
-    TEXT_FIELDS.forEach((f) => expect(c[f]).toBeNull()); // empty Text -> null (not "")
+    OPTION_FIELDS.forEach((f) => expect(rec[f]).toEqual([`Opt_${f}`])); // Option -> array
+    TEXT_FIELDS.forEach((f) => expect(rec[f]).toBeNull()); // empty Text -> null (not "")
   });
 });
 
