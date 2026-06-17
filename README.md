@@ -293,7 +293,7 @@ try {
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
-[joymerrevent]: https://joymerrevent.com/
+[joymerrevent]: https://github.com/Joymerrevent
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
