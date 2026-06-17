@@ -1,4 +1,4 @@
-// Custom field declaration DSL: `defineFields` builder + runtime validation for
-// tenant-specific U_/A_ fields (ADR-0004 / ADR-0005). Placeholder until the
-// detailed design lands.
-export {};
+// Barrel: re-exports the custom field declaration DSL (ADR-0023). Public curation
+// (what npm consumers see) is in src/index.ts.
+
+export * from "./define-fields";

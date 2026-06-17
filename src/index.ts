@@ -25,6 +25,17 @@ export type {
 export type { Transport, TransportRequest, TransportResponse } from "./http";
 export type { PartitionId, Scope } from "./types";
 
+// Custom field declaration DSL (R-16 / ADR-0023): declare tenant U_/A_ fields so they
+// are typed and decode/encode by their declared Data Type.
+export { defineFields } from "./fields";
+export type {
+  CustomDataType,
+  DefinedFields,
+  FieldBuilder,
+  FieldDecls,
+  FieldDef,
+} from "./fields";
+
 export type {
   Candidate,
   CandidateCreateInput,
