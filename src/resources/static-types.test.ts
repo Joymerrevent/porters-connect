@@ -6,6 +6,7 @@ import type {
   CandidateCreateInput,
   CandidateUpdateInput,
 } from "./candidate";
+import type { ProcessCreateInput } from "./process";
 
 // Type-level tests for the catalog-derived static types (ADR-0019). These are no-ops at
 // runtime; `tsc --noEmit` (the typecheck gate) checks the assertions.
@@ -43,6 +44,23 @@ describe("SD-3 static resource types (ADR-0019)", () => {
       "P_RegistrationDate",
     );
     expectTypeOf<CandidateCreateInput>().not.toHaveProperty("P_UpdateDate");
+  });
+
+  it("create required set follows the reference per resource (Process = relations, LV-5)", () => {
+    // Process requires P_Owner + the five relation fields (docs/reference resources/process.md)
+    expectTypeOf<ProcessCreateInput>()
+      .toHaveProperty("P_Owner")
+      .toEqualTypeOf<number>();
+    expectTypeOf<ProcessCreateInput>()
+      .toHaveProperty("P_Job")
+      .toEqualTypeOf<number>();
+    expectTypeOf<ProcessCreateInput>()
+      .toHaveProperty("P_Candidate")
+      .toEqualTypeOf<number>();
+    // a non-required field stays optional
+    expectTypeOf<ProcessCreateInput>()
+      .toHaveProperty("P_PhaseMemo")
+      .toEqualTypeOf<string | null | undefined>();
   });
 
   it("update makes every writable field optional; same exclusions", () => {

@@ -36,9 +36,8 @@ const FIELDS = {
   P_Zipcode: "SinglelineText",
 } as const satisfies FieldCatalog;
 
-// P_Owner is generally required on create (docs/reference: 所有者・新規作成時は通常必須）。
-// VERIFY(live): 他に create 必須の項目があるかはテナント/契約依存。過剰な必須化を避け P_Owner のみ
-// 必須にする。see docs/live-verification.md (LV-5)。
+// Required on create per docs/reference (resources/candidate.md「新規必須」列): P_Owner。
+// （System[Id] の P_Id も新規必須だが lib が -1 を供給するため型からは除外。LV-5 は reference で確定。）
 const REQUIRED_ON_CREATE = [
   "P_Owner",
 ] as const satisfies readonly (keyof typeof FIELDS)[];

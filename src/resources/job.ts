@@ -57,10 +57,12 @@ const FIELDS = {
   P_ExpectedAgeReason: "Option",
 } as const satisfies FieldCatalog;
 
-// VERIFY(live): create 必須項目はテナント/契約依存。過剰な必須化を避け P_Owner のみ必須にする
-// （P_Client 等が必須の可能性あり）。see docs/live-verification.md (LV-5)。
+// Required on create per docs/reference (resources/job.md「新規必須」列): P_Owner / P_Client /
+// P_Recruiter（P_Id は System[Id]＝lib 供給のため除外）。LV-5 は reference で確定。
 const REQUIRED_ON_CREATE = [
   "P_Owner",
+  "P_Client",
+  "P_Recruiter",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */

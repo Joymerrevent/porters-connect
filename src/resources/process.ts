@@ -43,11 +43,16 @@ const FIELDS = {
   P_ExpectedClosingDate: "Date",
 } as const satisfies FieldCatalog;
 
-// VERIFY(live): Process は関連リソースを繋ぐため、P_Owner 以外に P_Candidate / P_Job 等が
-// create 必須の可能性が高いが実機未確認。過剰な必須化を避け確証のある P_Owner のみ必須にする。
-// see docs/live-verification.md (LV-5)。
+// Required on create per docs/reference (resources/process.md「新規必須」列): P_Owner と関連 5 項目
+// （P_Client / P_Recruiter / P_Job / P_Candidate / P_Resume）。P_Id は System[Id]＝lib 供給で除外。
+// LV-5 は reference で確定。
 const REQUIRED_ON_CREATE = [
   "P_Owner",
+  "P_Client",
+  "P_Recruiter",
+  "P_Job",
+  "P_Candidate",
+  "P_Resume",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
 /** A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
