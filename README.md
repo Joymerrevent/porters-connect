@@ -226,7 +226,7 @@ try {
   await porters.candidate.get(1);
 } catch (e) {
   if (e instanceof PortersError) {
-    e.category; // "auth" | "permission" | "notFound" | "rateLimit" | "network" | ...
+    e.category; // "auth" | "permission" | "notFound" | "conflict" | "network" | ...
     e.code; // PORTERS のコード（無い場合 null）
     e.retryable; // 再試行可否
     e.hint; // 対処のヒント（あれば）
@@ -236,6 +236,7 @@ try {
 
 - トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` を早期に throw。
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
+- レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します（`category` の `"rateLimit"` は将来の配線用に予約された値で、現状はどの分類も produce しません）。
 
 ## PORTERS 固有の注意
 
