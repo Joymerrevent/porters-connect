@@ -11,13 +11,13 @@ grep -rn "VERIFY(live)" src test
 
 ## サマリー
 
-| #    | 項目                         | 状態            |
-| ---- | ---------------------------- | --------------- |
-| LV-1 | Option 末端 alias の接頭辞   | 未確認          |
-| LV-2 | OptionRoot ラッパーの有無    | 未確認          |
-| LV-3 | Attachment の get 条件       | 未確認          |
-| LV-4 | Attachment Read の既定項目   | 未確認          |
-| LV-5 | リソース毎の create 必須項目 | 確定             |
+| #    | 項目                         | 状態   |
+| ---- | ---------------------------- | ------ |
+| LV-1 | Option 末端 alias の接頭辞   | 未確認 |
+| LV-2 | OptionRoot ラッパーの有無    | 未確認 |
+| LV-3 | Attachment の get 条件       | 未確認 |
+| LV-4 | Attachment Read の既定項目   | 未確認 |
+| LV-5 | リソース毎の create 必須項目 | 確定   |
 
 ---
 
