@@ -6,40 +6,26 @@
 
 import { PortersResourceError, resourceError } from "../errors";
 import type { Requester } from "../http/requester";
-import {
-  decodeField,
-  type DataType,
-  type DecodedValue,
-  type FieldValue,
-} from "../xml/decode";
+import type { DataType } from "../xml/decode";
 import {
   buildWriteXml,
   type WritableDataType,
   type WriteItem,
   type WriteValueOf,
 } from "../xml/encode";
-import { parseResourcePage, parseWriteResult } from "../xml/parser";
+import { parseWriteResult } from "../xml/parser";
+import {
+  decoderFor,
+  paginate,
+  runRead,
+  type FieldCatalog,
+  type ReadRecord,
+  type ResourcePage,
+} from "./read-core";
 
-// A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
-// Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
-export type FieldCatalog = Record<string, DataType>;
-
-/**
- * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
- * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). Custom
- * `U_`/`A_` aliases are not in the catalog, so they are not typed here (access via a cast until
- * the declaration DSL lands — ADR-0005 SD-2); at runtime they still pass through as raw values.
- */
-export type ReadRecord<F extends FieldCatalog> = {
-  [K in keyof F]?: DecodedValue<F[K]> | null;
-};
-
-export type ResourcePage<F extends FieldCatalog> = {
-  items: ReadRecord<F>[];
-  total: number;
-  count: number;
-  start: number;
-};
+// Shared Read types/internals live in read-core (reused by master resources). Re-export the
+// types so the data-resource modules keep importing them from "./resource".
+export type { FieldCatalog, ReadRecord, ResourcePage } from "./read-core";
 
 export type SearchQuery = {
   /**
@@ -104,16 +90,6 @@ export type Resource<F extends FieldCatalog, Req extends keyof F> = {
   /** Update one record by id; resolves to that id. */
   update(id: number, input: UpdateInput<F>): Promise<number>;
 };
-
-// Read max page size (docs/reference: count 1–200). searchAll pages by this.
-const PAGE_SIZE = 200;
-
-// `includes(".")` -> `includes("")` is an equivalent mutant: for a dotless key,
-// slice(indexOf(".") + 1) is slice(0), which equals the key — same as the else.
-// Stryker disable StringLiteral
-const bareAlias = (key: string): string =>
-  key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
-// Stryker restore StringLiteral
 
 // The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
 const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
@@ -193,23 +169,11 @@ export const createResource = <
   config: ResourceConfig<F, Req>,
   deps: { requester: Requester; host: string; partition: number },
 ): Resource<F, Req[number]> => {
-  // The catalog is `as const` for the types; decode/encode need a runtime lookup.
+  // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
   const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
+  const decode = decoderFor(config.fields);
   // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
   const defaultFields = defaultFieldList(config.prefix, config.fields);
-  const decodeItem = (item: Record<string, unknown>): ReadRecord<F> => {
-    const out: Record<string, FieldValue> = {};
-    for (const [key, raw] of Object.entries(item)) {
-      const alias = bareAlias(key);
-      const type = fieldMap.get(alias);
-      out[alias] = type
-        ? decodeField(type, raw)
-        : typeof raw === "string"
-          ? raw
-          : null;
-    }
-    return out as ReadRecord<F>;
-  };
 
   const readUrl = (q: SearchQuery): string =>
     buildReadUrl(deps.host, deps.partition, config.path, q);
@@ -223,37 +187,16 @@ export const createResource = <
   // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
   // only); a provided list is sent verbatim (ADR-0020).
   const search = (query: SearchQuery = {}): Promise<ResourcePage<F>> =>
-    deps.requester.request(
-      {
-        method: "GET",
-        url: readUrl({ ...query, field: query.field ?? defaultFields }),
-        headers: {},
-      },
-      (body) => {
-        const page = parseResourcePage(body);
-        return {
-          items: page.items.map(decodeItem),
-          total: page.total,
-          count: page.count,
-          start: page.start,
-        };
-      },
+    runRead(
+      deps.requester,
+      readUrl({ ...query, field: query.field ?? defaultFields }),
+      decode,
     );
 
-  // A generator can't be an arrow; a function expression still satisfies
-  // func-style:expression. Advance by the items actually returned and stop at
-  // `total` — or on an empty page (defensive against a stuck offset / infinite loop).
-  const searchAll = async function* (
+  const searchAll = (
     query: Omit<SearchQuery, "count" | "start"> = {},
-  ): AsyncGenerator<ReadRecord<F>> {
-    let start = 0;
-    for (;;) {
-      const page = await search({ ...query, count: PAGE_SIZE, start });
-      for (const item of page.items) yield item;
-      start += page.items.length;
-      if (page.items.length === 0 || start >= page.total) return;
-    }
-  };
+  ): AsyncIterable<ReadRecord<F>> =>
+    paginate((count, start) => search({ ...query, count, start }));
 
   const get = async (id: number): Promise<ReadRecord<F> | undefined> => {
     const page = await search({

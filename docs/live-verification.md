@@ -11,13 +11,16 @@ grep -rn "VERIFY(live)" src test
 
 ## サマリー
 
-| #    | 項目                         | 状態   |
-| ---- | ---------------------------- | ------ |
-| LV-1 | Option 末端 alias の接頭辞   | 未確認 |
-| LV-2 | OptionRoot ラッパーの有無    | 未確認 |
-| LV-3 | Attachment の get 条件       | 未確認 |
-| LV-4 | Attachment Read の既定項目   | 未確認 |
-| LV-5 | リソース毎の create 必須項目 | 確定   |
+| #    | 項目                               | 状態   |
+| ---- | ---------------------------------- | ------ |
+| LV-1 | Option 末端 alias の接頭辞         | 未確認 |
+| LV-2 | OptionRoot ラッパーの有無          | 未確認 |
+| LV-3 | Attachment の get 条件             | 未確認 |
+| LV-4 | Attachment Read の既定項目         | 未確認 |
+| LV-5 | リソース毎の create 必須項目       | 確定   |
+| LV-6 | Field `P_ReferTo` の入れ子形       | 未確認 |
+| LV-7 | User `current()` の実挙動          | 未確認 |
+| LV-8 | Partition Read の partition 非送信 | 未確認 |
 
 ---
 
@@ -66,6 +69,33 @@ grep -rn "VERIFY(live)" src test
 - **状態**: 確定
 - **確認結果**: reference で解決（Candidate=`P_Owner`／Job=+`P_Client`,`P_Recruiter`／Client=`P_Owner`／Process=関連6（`P_Client`/`P_Recruiter`/`P_Job`/`P_Candidate`/`P_Resume`）／Resume=+`P_Candidate`）。P_Id は System[Id]＝lib 供給で除外
 
+## LV-6 Field `P_ReferTo` の入れ子形
+
+- **現在の対応 / 仮定**: Option-type は `<Field.P_ReferTo><Option.P_Area/></Field.P_ReferTo>`、空は `<Field.P_ReferTo/>`。Option 値と同形とみなし `decodeOption` で参照 alias を `string[]`（空→null）として返す（[ADR-0022][a22]）
+- **不確実な理由**: Reference-type 項目（上位リソース参照）の `P_ReferTo` 入れ子形・複数要素の有無が実機未確認（doc サンプルは Option-type のみ）
+- **コード箇所**: `src/resources/field.ts`（`FIELDS.P_ReferTo: "Option"`）
+- **確認方法**: 実 Field Read で Option-type / Reference-type の `P_ReferTo` 出力
+- **状態**: 未確認
+- **確認結果**: —
+
+## LV-7 User `current()` の実挙動
+
+- **現在の対応 / 仮定**: `request_type=0`。`code_direct`（既定）では「ユーザー名＝アプリ名」の User（API アプリ自身）を 1 件返す（[ADR-0022][a22]）
+- **不確実な理由**: doc 記述ベースで、実テナントでアプリ User が常に 1 件返るか・複数アプリ時の挙動が未確認
+- **コード箇所**: `src/resources/user.ts`（`current`）
+- **確認方法**: 実 `user?request_type=0`（code_direct トークン）
+- **状態**: 未確認
+- **確認結果**: —
+
+## LV-8 Partition Read の partition 非送信
+
+- **現在の対応 / 仮定**: Partition Read は `partition` パラメータを送らない（`request_type` のみ）。doc の Method/Sample に `partition` が無いため（[ADR-0022][a22]）
+- **不確実な理由**: 実機で `partition` 無しのまま 200 で通るか未確認（他リソースは必須のため）
+- **コード箇所**: `src/resources/partition.ts`（`buildUrl`）
+- **確認方法**: 実 `partition?request_type=1`（partition 未指定）
+- **状態**: 未確認
+- **確認結果**: —
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -79,3 +109,4 @@ grep -rn "VERIFY(live)" src test
 
 [a2]: adr/0002-ground-design-in-live-api-docs.md
 [a11]: adr/0011-xml-parse-serialize.md
+[a22]: adr/0022-master-read-query-surface.md
