@@ -52,6 +52,7 @@
 | [0020][0020] | Read の field 既定挙動（省略時はカタログ導出の既定 field）  | 詳細設計 | accepted   |
 | [0021][0021] | マスタ Read の公開サーフェス（Partition/User/Field/Option） | 詳細設計 | accepted   |
 | [0022][0022] | マスタ Read のクエリ面と current() を実 Read API に接地     | 詳細設計 | accepted   |
+| [0023][0023] | カスタム項目宣言 DSL（`defineFields`）の詳細設計（R-16）    | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -105,3 +106,4 @@
 [0020]: 0020-read-field-default.md
 [0021]: 0021-master-read-resources.md
 [0022]: 0022-master-read-query-surface.md
+[0023]: 0023-custom-field-declaration-dsl.md
