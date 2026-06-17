@@ -27,35 +27,40 @@ export type { PartitionId, Scope } from "./types";
 
 export type {
   Candidate,
-  CandidateInput,
+  CandidateCreateInput,
+  CandidateUpdateInput,
   CandidatePage,
   CandidateResource,
   CandidateSearchQuery,
 } from "./resources";
 export type {
   Job,
-  JobInput,
+  JobCreateInput,
+  JobUpdateInput,
   JobPage,
   JobResource,
   JobSearchQuery,
 } from "./resources";
 export type {
   Client,
-  ClientInput,
+  ClientCreateInput,
+  ClientUpdateInput,
   ClientPage,
   ClientResource,
   ClientSearchQuery,
 } from "./resources";
 export type {
   Process,
-  ProcessInput,
+  ProcessCreateInput,
+  ProcessUpdateInput,
   ProcessPage,
   ProcessResource,
   ProcessSearchQuery,
 } from "./resources";
 export type {
   Resume,
-  ResumeInput,
+  ResumeCreateInput,
+  ResumeUpdateInput,
   ResumePage,
   ResumeResource,
   ResumeSearchQuery,

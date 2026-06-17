@@ -3,26 +3,28 @@ import { describe, expect, it } from "vitest";
 import { PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { DataType } from "../xml/decode";
-import { createResource, type ResourceConfig } from "./resource";
+import type { FieldValue } from "../xml/decode";
+import { createResource } from "./resource";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
 // live in candidate/job tests). One field per Data Type is enough — per-type
-// decoding is covered by decode.test.ts; here we test the wiring.
-const FIELDS = new Map<string, DataType>([
-  ["P_Id", "System[Id]"],
-  ["P_Owner", "User"],
-  ["P_When", "DateTime"],
-  ["P_Phase", "Option"],
-  ["P_Name", "SinglelineText"],
-]);
+// decoding is covered by decode.test.ts; here we test the wiring. No required-on-create
+// fields, so Write input is all-optional.
+const FIELDS = {
+  P_Id: "System[Id]",
+  P_Owner: "User",
+  P_When: "DateTime",
+  P_Phase: "Option",
+  P_Name: "SinglelineText",
+} as const;
 
-const CONFIG: ResourceConfig = {
+const CONFIG = {
   name: "Widget",
   path: "widget",
   prefix: "W",
   fields: FIELDS,
-};
+  requiredOnCreate: [],
+} as const;
 
 // A prefixed key (`W.P_Id`) exercises bareAlias; an unknown alias passes through.
 const OK = `<?xml version="1.0"?><Widget Total="1" Count="1" Start="0"><Code>0</Code><Item><W.P_Id>7</W.P_Id><W.U_x>raw</W.U_x></Item></Widget>`;
@@ -99,15 +101,17 @@ describe("createResource — Read", () => {
   it("decodes known fields (with bareAlias) and passes unknown aliases through", async () => {
     const calls: Call[] = [];
     const item = (await res(calls).search()).items[0];
+    // Custom `U_` aliases aren't on the closed ReadRecord (U1); read them via a loose view.
+    const rec = item as Record<string, FieldValue | undefined>;
     expect(item.P_Id).toBe(7); // Id -> number, via bareAlias on "W.P_Id" + catalog
-    expect(item.U_x).toBe("raw"); // unknown alias -> raw string
+    expect(rec.U_x).toBe("raw"); // unknown alias -> raw string
   });
 
   it("decodes a nested (non-string) unknown alias as null", async () => {
     const body = `<Widget Total="1" Count="1" Start="0"><Code>0</Code><Item><W.U_obj><n>1</n></W.U_obj></Item></Widget>`;
     const calls: Call[] = [];
     const item = (await res(calls, body).search()).items[0];
-    expect(item.U_obj).toBeNull();
+    expect((item as Record<string, FieldValue | undefined>).U_obj).toBeNull();
   });
 
   it("reads Total / Count / Start from the page", async () => {

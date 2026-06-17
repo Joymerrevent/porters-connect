@@ -6,15 +6,36 @@
 
 import { PortersResourceError, resourceError } from "../errors";
 import type { Requester } from "../http/requester";
-import { decodeField, type DataType, type FieldValue } from "../xml/decode";
-import { buildWriteXml, type WriteItem } from "../xml/encode";
+import {
+  decodeField,
+  type DataType,
+  type DecodedValue,
+  type FieldValue,
+} from "../xml/decode";
+import {
+  buildWriteXml,
+  type WritableDataType,
+  type WriteItem,
+  type WriteValueOf,
+} from "../xml/encode";
 import { parseResourcePage, parseWriteResult } from "../xml/parser";
 
-/** A decoded record. Known `P_` fields follow the catalog; custom `U_`/`A_` appear raw. */
-export type ResourceItem = Record<string, FieldValue>;
+// A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
+// Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
+export type FieldCatalog = Record<string, DataType>;
 
-export type ResourcePage = {
-  items: ResourceItem[];
+/**
+ * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
+ * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). Custom
+ * `U_`/`A_` aliases are not in the catalog, so they are not typed here (access via a cast until
+ * the declaration DSL lands — ADR-0005 SD-2); at runtime they still pass through as raw values.
+ */
+export type ReadRecord<F extends FieldCatalog> = {
+  [K in keyof F]?: DecodedValue<F[K]> | null;
+};
+
+export type ResourcePage<F extends FieldCatalog> = {
+  items: ReadRecord<F>[];
   total: number;
   count: number;
   start: number;
@@ -27,36 +48,55 @@ export type SearchQuery = {
   start?: number;
 };
 
-/**
- * Fields to write, keyed by bare alias (e.g. `P_Name`). `P_Id` is supplied by
- * `create` / `update` — don't set it. User / Reference fields take an ID (number);
- * Option fields take an alias (or aliases). `null` omits a field.
- */
-export type ResourceInput = WriteItem;
+// Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
+// System[DateTime] — ADR-0016/0019).
+type WritableKeys<F extends FieldCatalog> = {
+  [K in keyof F]: F[K] extends WritableDataType ? K : never;
+}[keyof F];
 
-/** Static description of a resource: names + Data-Type catalog. */
-export type ResourceConfig = {
+/**
+ * Create input (ADR-0019 W2): the `requiredOnCreate` aliases are **required** (non-null); every
+ * other writable field is optional (`null` omits). `P_Id` is supplied by the library — not here.
+ */
+export type CreateInput<F extends FieldCatalog, Req extends keyof F> = {
+  [K in Req]: WriteValueOf<F[K]>;
+} & {
+  [K in Exclude<WritableKeys<F>, Req>]?: WriteValueOf<F[K]> | null;
+};
+
+/** Update input (ADR-0019 W2): every writable field optional (`null` omits, `""` clears). */
+export type UpdateInput<F extends FieldCatalog> = {
+  [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
+};
+
+/** Static description of a resource: names + `as const` catalog + required-on-create aliases. */
+export type ResourceConfig<
+  F extends FieldCatalog,
+  Req extends readonly (keyof F)[],
+> = {
   /** Root element + Write resource name, e.g. `"Candidate"`. */
   name: string;
   /** URL path segment, e.g. `"candidate"`. */
   path: string;
   /** Field alias prefix, e.g. `"Person"`. */
   prefix: string;
-  /** Data-Type catalog: bare alias -> type. */
-  fields: ReadonlyMap<string, DataType>;
+  /** Data-Type catalog (`as const`): bare alias -> Data Type. */
+  fields: F;
+  /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
+  requiredOnCreate: Req;
 };
 
-export type Resource = {
-  search(query?: SearchQuery): Promise<ResourcePage>;
+export type Resource<F extends FieldCatalog, Req extends keyof F> = {
+  search(query?: SearchQuery): Promise<ResourcePage<F>>;
   /** Auto-paginating search: yields every matching record (200 per page). */
   searchAll(
     query?: Omit<SearchQuery, "count" | "start">,
-  ): AsyncIterable<ResourceItem>;
-  get(id: number): Promise<ResourceItem | undefined>;
+  ): AsyncIterable<ReadRecord<F>>;
+  get(id: number): Promise<ReadRecord<F> | undefined>;
   /** Create one record; resolves to the newly assigned id. */
-  create(input: ResourceInput): Promise<number>;
+  create(input: CreateInput<F, Req>): Promise<number>;
   /** Update one record by id; resolves to that id. */
-  update(id: number, input: ResourceInput): Promise<number>;
+  update(id: number, input: UpdateInput<F>): Promise<number>;
 };
 
 // Read max page size (docs/reference: count 1–200). searchAll pages by this.
@@ -124,22 +164,27 @@ export const buildWriteUrl = (
   path: string,
 ): string => `https://${host}/v1/${path}?partition=${partition}`;
 
-export const createResource = (
-  config: ResourceConfig,
+export const createResource = <
+  const F extends FieldCatalog,
+  const Req extends readonly (keyof F)[],
+>(
+  config: ResourceConfig<F, Req>,
   deps: { requester: Requester; host: string; partition: number },
-): Resource => {
-  const decodeItem = (item: Record<string, unknown>): ResourceItem => {
-    const out: ResourceItem = {};
+): Resource<F, Req[number]> => {
+  // The catalog is `as const` for the types; decode/encode need a runtime lookup.
+  const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
+  const decodeItem = (item: Record<string, unknown>): ReadRecord<F> => {
+    const out: Record<string, FieldValue> = {};
     for (const [key, raw] of Object.entries(item)) {
       const alias = bareAlias(key);
-      const type = config.fields.get(alias);
+      const type = fieldMap.get(alias);
       out[alias] = type
         ? decodeField(type, raw)
         : typeof raw === "string"
           ? raw
           : null;
     }
-    return out;
+    return out as ReadRecord<F>;
   };
 
   const readUrl = (q: SearchQuery): string =>
@@ -151,7 +196,7 @@ export const createResource = (
   const firstWriteId = (body: string): number =>
     firstWriteResultId(body, config.path, config.name);
 
-  const search = (query: SearchQuery = {}): Promise<ResourcePage> =>
+  const search = (query: SearchQuery = {}): Promise<ResourcePage<F>> =>
     deps.requester.request(
       { method: "GET", url: readUrl(query), headers: {} },
       (body) => {
@@ -170,7 +215,7 @@ export const createResource = (
   // `total` — or on an empty page (defensive against a stuck offset / infinite loop).
   const searchAll = async function* (
     query: Omit<SearchQuery, "count" | "start"> = {},
-  ): AsyncGenerator<ResourceItem> {
+  ): AsyncGenerator<ReadRecord<F>> {
     let start = 0;
     for (;;) {
       const page = await search({ ...query, count: PAGE_SIZE, start });
@@ -180,7 +225,7 @@ export const createResource = (
     }
   };
 
-  const get = async (id: number): Promise<ResourceItem | undefined> => {
+  const get = async (id: number): Promise<ReadRecord<F> | undefined> => {
     const page = await search({
       condition: { [`${config.prefix}.P_Id:eq`]: String(id) },
       count: 1,
@@ -200,7 +245,7 @@ export const createResource = (
         body: buildWriteXml({
           resource: config.name,
           prefix: config.prefix,
-          fields: config.fields,
+          fields: fieldMap,
           items: [item],
         }),
       },
@@ -208,10 +253,10 @@ export const createResource = (
       { write: true, idempotent },
     );
 
-  const create = (input: ResourceInput): Promise<number> =>
+  const create = (input: CreateInput<F, Req[number]>): Promise<number> =>
     write({ ...input, P_Id: -1 }, false);
 
-  const update = (id: number, input: ResourceInput): Promise<number> =>
+  const update = (id: number, input: UpdateInput<F>): Promise<number> =>
     write({ ...input, P_Id: id }, true);
 
   return { search, searchAll, get, create, update };

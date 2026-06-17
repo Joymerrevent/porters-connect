@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/decode";
 import { createJobResource } from "./job";
 
 // Catalogued fields grouped by Data Type. Each group decodes differently from raw
@@ -84,18 +84,20 @@ describe("createJobResource — decode catalog", () => {
   it("decodes every catalogued field by its Data Type", async () => {
     const calls: Call[] = [];
     const job = (await resource(calls, ALL).search()).items[0];
+    // Closed ReadRecord has no string index (U1); read by-name through a loose view.
+    const rec = job as Record<string, FieldValue | undefined>;
 
     expect(job.P_Id).toBe(42); // Id -> number
     USER_FIELDS.forEach((f, i) =>
-      expect((job[f] as UserRef | null)?.P_Id).toBe(i + 1),
+      expect((rec[f] as UserRef | null)?.P_Id).toBe(i + 1),
     ); // User -> nested ref
-    REF_FIELDS.forEach((f, i) => expect(job[f]).toBe(500 + i)); // System[Reference] -> id
+    REF_FIELDS.forEach((f, i) => expect(rec[f]).toBe(500 + i)); // System[Reference] -> id
     DATETIME_FIELDS.forEach((f, i) =>
-      expect(job[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
+      expect(rec[f]).toBe(`2020-01-0${i + 1}T03:04:05Z`),
     ); // DateTime -> ISO (...Z)
-    OPTION_FIELDS.forEach((f) => expect(job[f]).toEqual([`Opt_${f}`])); // Option -> array
-    NUMBER_FIELDS.forEach((f, i) => expect(job[f]).toBe(1000 * (i + 1))); // Number
-    TEXT_FIELDS.forEach((f) => expect(job[f]).toBeNull()); // empty Text -> null (not "")
+    OPTION_FIELDS.forEach((f) => expect(rec[f]).toEqual([`Opt_${f}`])); // Option -> array
+    NUMBER_FIELDS.forEach((f, i) => expect(rec[f]).toBe(1000 * (i + 1))); // Number
+    TEXT_FIELDS.forEach((f) => expect(rec[f]).toBeNull()); // empty Text -> null (not "")
   });
 });
 
