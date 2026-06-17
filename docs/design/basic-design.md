@@ -33,7 +33,7 @@
 ```text
 src/
   index.ts            # public export（ここからのみ公開）
-  client.ts           # PortersClient・porters.partition(id) スコープ
+  client.ts           # PortersClient・porters.tenant(id) スコープ
   auth/               # TokenProvider・code_direct 既定戦略・TokenStore・authorizationUrl/revoke
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・retry
   xml/                # parse / serialize（データ型別エンコード）
@@ -79,7 +79,7 @@ for await (const c of porters.candidate.searchAll({ condition })) {
   /* 200件刻み自動 */
 }
 
-const t = porters.partition(123); // マルチテナント・スコープ（ADR-0008）
+const t = porters.tenant(123); // マルチテナント・スコープ（ADR-0008／改名 ADR-0021）
 ```
 
 - アクセサ＝名前空間型付き。返り値は型付きオブジェクト（XML 非露出）。エラーは throw（§6 エラーモデル）。
@@ -114,7 +114,7 @@ accessor 呼び出し
 
 - **認証ストラテジ seam**：既定＝透過（`code_direct`＋キャッシュ＋Refresh）／自前 `TokenProvider`。`connect()` は不要（任意 `ensureAuthenticated()`）。
 - **初回権限付与**（ブラウザ `code`・人間）は前提手順。補助 `authorizationUrl()` / `exchangeAuthorizationCode()` / `revoke()`。
-- **マルチテナント**：`partition` は per-call ／ `porters.partition(id)` スコープ ／ テナント別 client。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
+- **マルチテナント**：`partition` は per-call ／ `porters.tenant(id)` スコープ（旧称 `partition(id)`・改名 ADR-0021）／ テナント別 client。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
 - **オンボーディング補助（L1 が提供）**：`authorizationUrl()` で初回権限付与に誘導し、`Partition Read` / `User Read`（`request_type=0`）でログイン中 partition を**発見**できる。
 - **end-user ↔ partition のマッピングは利用側（SaaS）の責務**。発見した partition の保存・ルーティングは SaaS。L1 は持たない。
 

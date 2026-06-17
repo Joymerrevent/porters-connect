@@ -6,6 +6,10 @@
 
 > 案2 ＋ 案3 で `accepted`（2026-06-13）。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
 > end-user ↔ partition のマッピングは**利用側（SaaS）の責務**で L1 には持たせない。
+>
+> **Amended by [ADR-0021][0021]（2026-06-17）**: 本文中のテナント・スコープ関数 `porters.partition(id)` は、
+> マスタ Read アクセサ `porters.partition` との命名衝突を避けるため **`porters.tenant(id)` に改名**された
+> （決定の根拠は ADR-0021 軸1）。以下の本文は当時の記録としてそのまま残す。
 
 ## Context and Problem Statement
 
@@ -105,3 +109,4 @@ PORTERS の構造（[authentication][auth] / [gotchas][gotchas]）:
 [glossary]: ../reference/glossary.md
 [0005]: 0005-public-api-shape.md
 [0007]: 0007-oauth-public-surface.md
+[0021]: 0021-master-read-resources.md
