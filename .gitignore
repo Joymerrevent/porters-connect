@@ -31,6 +31,10 @@ pnpm-debug.log*
 !.vscode/extensions.json
 !.vscode/settings.json
 
+# Claude Code: ローカル設定/状態は手元限り。共有するのは skills/ のみ
+.claude/*
+!.claude/skills/
+
 # Misc
 .cache/
 tmp/
