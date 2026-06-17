@@ -128,6 +128,8 @@ new PortersClient({ host, appId, appSecret, partition, tokenStore });
 **検索クエリ**（`query`）の主なキー：
 
 - `field`：取得する項目（接頭辞付き alias の配列。例 `["Person.P_Id", "Person.P_Name"]`）。
+  **省略するとカタログ上の全項目を既定取得**します（PORTERS は field 未指定だと主キーのみ返すため、
+  ライブラリが既定 field を補います）。`field: []`（空配列）を渡すと API 仕様どおり**主キーのみ**を返します（件数取得など）。
 - `condition`：検索条件。`{ "[Alias]:[suffix]": "値" }` 形式。`suffix` は型ごとに
   `eq`/`gt`/`ge`/`le`/`lt`（数値・日時）、`part`/`full`（テキスト）、`or`/`and`（Option）。
 - `count`（1–200・既定 10）、`start`（0 始まり）。

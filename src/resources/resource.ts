@@ -42,6 +42,12 @@ export type ResourcePage<F extends FieldCatalog> = {
 };
 
 export type SearchQuery = {
+  /**
+   * Output fields as prefixed aliases (e.g. `Person.P_Name`). **Omit** to fetch every catalogued
+   * field by default (ADR-0020): PORTERS returns only the primary key for a fieldless request, so
+   * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
+   * API-native "primary key only" response (e.g. counting). A non-empty list is sent verbatim.
+   */
   field?: string[];
   condition?: Record<string, string>;
   count?: number;
@@ -109,6 +115,22 @@ const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
 // Stryker restore StringLiteral
 
+// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
+const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
+
+// Default Read `field` list derived from the catalog (ADR-0020, 案A+2a). PORTERS returns only
+// `{Resource}.P_Id` for a fieldless request, so a typed-record read would otherwise drop every
+// known field despite the type promising them. We send every catalog alias as `{prefix}.{alias}`,
+// expanding User to its 4 readable sub-fields and leaving System[Reference] ID-only (`()` omitted)
+// so the wire shape matches decode.ts. The API-native "primary key only" stays reachable via
+// `field: []` (透明化 — see SearchQuery.field).
+const defaultFieldList = (prefix: string, fields: FieldCatalog): string[] =>
+  Object.entries(fields).map(([alias, type]) =>
+    type === "User"
+      ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
+      : `${prefix}.${alias}`,
+  );
+
 /**
  * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a
  * resource error (mapped, not swallowed); a missing result Item is unparseable. Shared by
@@ -173,6 +195,8 @@ export const createResource = <
 ): Resource<F, Req[number]> => {
   // The catalog is `as const` for the types; decode/encode need a runtime lookup.
   const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
+  // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
+  const defaultFields = defaultFieldList(config.prefix, config.fields);
   const decodeItem = (item: Record<string, unknown>): ReadRecord<F> => {
     const out: Record<string, FieldValue> = {};
     for (const [key, raw] of Object.entries(item)) {
@@ -196,9 +220,15 @@ export const createResource = <
   const firstWriteId = (body: string): number =>
     firstWriteResultId(body, config.path, config.name);
 
+  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
+  // only); a provided list is sent verbatim (ADR-0020).
   const search = (query: SearchQuery = {}): Promise<ResourcePage<F>> =>
     deps.requester.request(
-      { method: "GET", url: readUrl(query), headers: {} },
+      {
+        method: "GET",
+        url: readUrl({ ...query, field: query.field ?? defaultFields }),
+        headers: {},
+      },
       (body) => {
         const page = parseResourcePage(body);
         return {
