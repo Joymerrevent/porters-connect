@@ -1,11 +1,13 @@
 # 20. Read の field 既定挙動（省略時はカタログ導出の既定 field を送る）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-17
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> **proposed（要議論）**。本 ADR は問題と選択肢を提示し、末尾に推奨案を置く。
-> [ADR 運用ルール][readme]に従い、議論を経て `accepted` にする（自己 accept しない）。
+> 議論の結果 **案A（カタログ導出の既定 field）＋案2a（User/Reference の入れ子展開）＋案3a（`field: []`
+> で主キーのみにオプトアウト）＋軸4（`U_`/`A_` は既定対象外）** で accepted（2026-06-17）。
+> **透明化**：既定で全項目を送ることを README/JSDoc に明記し、API ネイティブの「ID のみ」は `field: []`
+> で到達可能に残す（薄いラッパーの fidelity を保つ）。コードへの反映は本 ADR を受けて別 PR で行う。
 > 検出元はレビュー指摘 [RV-1][findings]。
 
 ## Context and Problem Statement
@@ -31,6 +33,7 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - **フェイルセーフ / least surprise**: 既定経路で「空に見えるレコード」を返さない。型が「項目がある」と言うなら実行時もそうあるべき。
 - **single source of truth**: [ADR-0019][0019] で確立した `as const` カタログを、既定 field の生成にも使ってズレを作らない。
 - **API 忠実性**: PORTERS の field 選択意味論（入れ子・User は 4 サブ項目のみ・参照は ID）に正しく従う（[ref-read][ref-read]）。
+- **薄いラッパー fidelity vs typed-record の約束**: 第1層は薄く（[CLAUDE.md][claude]）＝原則 API に合わせる。だが [ADR-0019][0019]/[ADR-0005][0005] で typed record 面（既知項目を持つ型）を選んだ以上、未指定で ID のみ返すと「型は項目ありと言うのに実体は空」＝静かな誤り。生挙動（ID のみ）は `field: []` で到達可能に残し、両立させる。
 - **制限との両立**: リクエスト長 ~15000 文字・レート上限（[CLAUDE.md][claude] / [docs/reference][ref-read]）。既定の over-fetch を許容範囲に収める。
 - **公開値表現は不変**: 返す値の形（[ADR-0011][0011] の decode 契約：User=`UserRef`・Reference=id・Option=`string[]`）は変えない。
 - **後方互換**: 現状の既定（P_Id のみ）に依存した実利用は実質無い（無価値なため）。より有用な既定への変更はリスクが低い。
@@ -64,18 +67,16 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 
 ## Decision Outcome
 
-> 提案（要議論）。確定は議論後に別コミットで `accepted` 化する。
-
-推奨: **案A ＋ 案2a ＋ 案3a ＋ 軸4 のとおり（`U_`/`A_` は既定対象外）**。
+採用: **案A ＋ 案2a ＋ 案3a ＋ 軸4（`U_`/`A_` は既定対象外）**。
 
 - **A**: フェイルセーフと SD-3「簡易」型の約束（既知項目が入る）を実行時で実現する最短路。`get`/`search`/`searchAll` で挙動を揃えると驚きが少ない。
 - **2a**: 既定 field を「カタログ → `{prefix}.{alias}`、User は 4 サブ展開、System[Reference] は ID のみ」で生成。[ADR-0011][0011] の decode 形と 1:1 対応。
-- **3a**: 既定は有用側に倒し、`field: []` を「主キーのみ」のオプトアウトに割り当てる（件数・存在確認用途）。`field` 明示は従来どおり射影。
+- **3a ＋ 透明化**: 既定は有用側（全項目）に倒し、`field: []`（明示的空配列）を API ネイティブの「主キーのみ」へのオプトアウトに割り当てる（件数・存在確認用途）。**「既定で全項目を送る」ことは README/JSDoc に明記**し、生挙動を隠さない。`field` 明示は従来どおり射影。
 - カタログを既定 field 生成にも使うことで [ADR-0019][0019] の single source of truth を一段広げる。
 
 ### Consequences
 
-- Good: `get`/`search` が既定で意味あるレコードを返す。型（全項目 optional+nullable）と実行時が一致。README 例が正しくなる。RV-1 解消。
+- Good: `get`/`search` が既定で意味あるレコードを返す。型（全項目 optional+nullable）と実行時が一致。README 例が正しくなる。RV-1 解消。生挙動（ID のみ）は `field: []` で到達可能＝薄いラッパーの fidelity を保つ。
 - Bad: 既定の over-fetch（多項目・入れ子展開でリクエストが伸びる／レートに僅かに不利）。`field: []` の意味づけ（空＝主キーのみ）を周知する必要。
   実装は「カタログ→既定 field 文字列（入れ子含む）」生成＋ `get` への field 適用＋ [RV-2][findings]（非現実的 fixture）の是正。
 - Neutral: `U_`/`A_` は既定取得対象外（明示すれば取得可、型補助は SD-2 待ち）。リクエスト長超過時は既存の送信前ガードが働く。
@@ -106,7 +107,6 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - 関連実装: `src/resources/resource.ts`（`buildReadUrl` / `search` / `searchAll` / `get` / `SearchQuery`）、各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`。
 - フォローアップ: accept 後に実装 PR（既定 field 生成・`get` の field 対応・RV-2 の fixture/テスト是正）。
 
-[readme]: README.md
 [0005]: 0005-public-api-shape.md
 [0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md
