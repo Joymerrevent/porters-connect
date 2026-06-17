@@ -3,7 +3,7 @@
 [![License: MIT][mit-badge]][mit] ![Node >= 18][node-badge]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
-[Joymerrevent（ジョイメリベント）][joymerrevent] 製の**非公式（unofficial）**ラッパーです。
+[Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。
 
 > [!IMPORTANT]
 > これは**非公式**ライブラリです。ポーターズ株式会社とは無関係で、公式ロゴ・商標は使用していません。

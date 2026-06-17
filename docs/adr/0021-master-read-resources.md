@@ -19,7 +19,7 @@
 ## Context and Problem Statement
 
 PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
-**マスタ系 Read（Partition / User / Field / Option）**を v1 の必須に挙げている。
+**マスタ系 Read（Partition / User / Field / Option）** を v1 の必須に挙げている。
 データ系（Candidate ほか）は Read/Write とも実装・テスト済みだが、マスタ系は未着手。
 
 マスタ系は Read レスポンスの封筒（`<{Resource} Total Count Start><Item>…`）こそデータ系と共通だが、

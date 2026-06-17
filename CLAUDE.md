@@ -77,7 +77,7 @@ MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume 
 ## 絶対にやってはいけないこと
 
 - App ID / App Secret / ホスト名 / トークンを**コミットしない**。`.env.example`（値は空）のみ同梱。
-- PORTERS 公式ロゴを使わない。READMEで**「非公式（unofficial）」を明示**する。
+- PORTERS 公式ロゴを使わない。READMEで **「非公式（unofficial）」を明示**する。
 - 「利用には PORTERS 契約 ＋ Connect API オプション契約が必要」の注記を README から省かない。
 - ビジネスロジックを第1層に混ぜない（第1層は薄いラッパーに徹する）。
 
