@@ -14,8 +14,11 @@ import type { Transport, TransportRequest } from "./types";
 
 const API_VERSION = "2";
 
-// docs/reference: keep a whole request under ~15000 chars (a larger payload 400s).
-// A future 16KB cap is planned but undetermined — follow the canonical value.
+// docs/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).
+// "Whole" is load-bearing: a write's body dominates, but a read's length lives in the
+// URL (field / condition) — and ADR-0020 makes a fieldless Read send the catalog default
+// field set, so that URL grew. A future 16KB cap is planned but undetermined — follow the
+// canonical value.
 const MAX_REQUEST_LENGTH = 15000;
 
 const sleep = (ms: number): Promise<void> =>
@@ -68,20 +71,19 @@ export const createRequester = (o: RequesterOptions): Requester => {
     parse: (body: string) => T,
     spec: RequestSpec = {},
   ): Promise<T> => {
-    // Eager size guard: block an oversized body before throttle / auth / transport.
-    // A clear config error beats an opaque server 400, and we don't burn a throttle
-    // token or a token refresh on a request that cannot succeed (fail-safe). File
-    // uploads opt out via `unboundedBody` (they enforce their own limit — ADR-0018).
-    if (
-      !spec.unboundedBody &&
-      req.body !== undefined &&
-      req.body.length > MAX_REQUEST_LENGTH
-    ) {
+    // Eager size guard: block an oversized request before throttle / auth / transport.
+    // A clear config error beats an opaque server 400, and we don't burn a throttle token
+    // or a token refresh on a request that cannot succeed (fail-safe). PORTERS limits the
+    // whole request, so measure URL + body: a write's body or a read's field/condition
+    // query string can blow the cap (RV-5). File uploads opt out via `unboundedBody` (the
+    // body has its own limit — ADR-0018; their write URL is short, so skipping is safe).
+    const requestLength = req.url.length + (req.body?.length ?? 0);
+    if (!spec.unboundedBody && requestLength > MAX_REQUEST_LENGTH) {
       throw new PortersConfigError(
-        `request body is ${req.body.length} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
+        `request is ${requestLength} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
         {
           category: "config",
-          hint: "Split the write into smaller batches (PORTERS caps a request at ~15000 chars / 200 records).",
+          hint: "Shorten the request: narrow a read's field/condition, or split a write into batches of 200 or fewer records (PORTERS caps a request at ~15000 characters).",
         },
       );
     }
