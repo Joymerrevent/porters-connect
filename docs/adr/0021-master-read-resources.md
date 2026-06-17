@@ -10,6 +10,11 @@
 > で **accepted（2026-06-17）**。コードへの反映は本 ADR を受けて別 PR で行う。
 > 検出元: PRD [R-3][prd] が必須に挙げるマスタ Read（Partition / User / Field / Option）が未実装
 > （`src/fields/index.ts` はプレースホルダ、`src/resources/` にマスタ無し）＝唯一残った P0。
+>
+> **Amended by [ADR-0022][0022]（2026-06-17）**: 実装直前に正典 Read 記事を精読した結果、本 ADR は
+> 要約表ベースで**各マスタのクエリ・パラメータを取りこぼしていた**。**軸2 のクエリ面**（汎用 `SearchQuery` 流用・
+> `get(id)` 提供）と**軸4 の `current()` 意味論**（request_type=0＝ログイン中）を ADR-0022 が実 Read API に接地し直す
+> （各マスタ bespoke クエリ・`get(id)` 不在・`current()` は OAuth 方式依存）。軸1/軸3/軸5 と読み取り専用の核は不変。
 
 ## Context and Problem Statement
 
@@ -175,3 +180,4 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 [0017]: 0017-option-read-shape.md
 [0019]: 0019-static-resource-types.md
 [0020]: 0020-read-field-default.md
+[0022]: 0022-master-read-query-surface.md

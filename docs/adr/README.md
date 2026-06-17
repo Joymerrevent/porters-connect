@@ -51,6 +51,7 @@
 | [0019][0019] | 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3）  | 詳細設計 | accepted   |
 | [0020][0020] | Read の field 既定挙動（省略時はカタログ導出の既定 field）  | 詳細設計 | accepted   |
 | [0021][0021] | マスタ Read の公開サーフェス（Partition/User/Field/Option） | 詳細設計 | accepted   |
+| [0022][0022] | マスタ Read のクエリ面と current() を実 Read API に接地     | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -73,6 +74,7 @@
 - Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。コード反映は別 PR）。
 - Attachment リソースとファイル本体（Base64）→ [0018][0018]（accepted・専用アクセサ＋Base64 string＋10MB ガード。コード反映は別 PR）。
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
+- マスタ Read のクエリ面と current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
 ### 決定済み（ADR / PRD）
 
@@ -102,3 +104,4 @@
 [0019]: 0019-static-resource-types.md
 [0020]: 0020-read-field-default.md
 [0021]: 0021-master-read-resources.md
+[0022]: 0022-master-read-query-surface.md
