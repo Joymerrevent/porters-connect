@@ -425,13 +425,45 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     }
     expect(err).toBeInstanceOf(PortersConfigError);
     expect((err as PortersConfigError).category).toBe("config");
-    expect((err as PortersConfigError).message).toContain("15001");
+    // total = url ("u", 1) + body (15001) = 15002 > 15000
+    expect((err as PortersConfigError).message).toContain("15002");
     expect((err as PortersConfigError).message).toContain("15000");
-    expect((err as PortersConfigError).hint).toContain("smaller batches");
+    expect((err as PortersConfigError).hint).toContain("batches");
     expect(n).toBe(0); // never sent — guarded before transport
   });
 
-  it("allows a body exactly at the limit through to the transport", async () => {
+  it("rejects an oversized read URL (no body) before the transport — RV-5", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    let err: unknown;
+    try {
+      // A GET has no body; the length lives in the URL (field / condition query string).
+      await r.request(
+        { method: "GET", url: "u".repeat(15001), headers: {} },
+        (b) => b,
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).message).toContain("15001");
+    expect((err as PortersConfigError).hint).toContain("field/condition");
+    expect(n).toBe(0); // never sent — guarded before transport
+  });
+
+  it("allows a request exactly at the limit through to the transport", async () => {
     const sent: TransportRequest[] = [];
     const transport: Transport = {
       send: (req) => {
@@ -446,7 +478,8 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
       backoff: noBackoff,
     });
 
-    const body = "x".repeat(15000); // == limit is allowed; only > limit is blocked
+    // total = url ("u", 1) + body (14999) = 15000; == limit is allowed, only > is blocked
+    const body = "x".repeat(14999);
     expect(
       await r.request(
         { method: "POST", url: "u", headers: {}, body },
