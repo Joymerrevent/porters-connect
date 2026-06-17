@@ -25,6 +25,18 @@ const ALL_FIELDS = [
   "Content",
 ];
 
+// Default for search() when `field` is omitted (ADR-0020): metadata only — exclude the (large,
+// up to ~14MB Base64) `Content` so listing attachments doesn't download every file body. Fetch
+// `Content` explicitly via `field` or per-record via get(). Mirrors PORTERS' Image default
+// (FileName only). `field: []` still opts into the API-native primary-key-only response.
+const DEFAULT_FIELDS = [
+  "Id",
+  "Resource",
+  "ResourceId",
+  "ContentType",
+  "FileName",
+];
+
 /** A decoded Attachment. A field is `null` unless it was returned (see `field`). */
 export type Attachment = {
   id: number | null;
@@ -46,6 +58,12 @@ export type AttachmentPage = {
 };
 
 export type AttachmentSearchQuery = {
+  /**
+   * Output fields. **Omit** to fetch metadata by default (Id / Resource / ResourceId /
+   * ContentType / FileName) — the large Base64 `Content` is excluded so listing doesn't download
+   * every file body (ADR-0020); request `["Content", …]` or use `get()` for the body. Pass `[]`
+   * for the API-native primary-key-only response. A non-empty list is sent verbatim.
+   */
   field?: string[];
   condition?: Record<string, string>;
   count?: number;
@@ -110,11 +128,16 @@ export const createAttachmentResource = (deps: {
   host: string;
   partition: number;
 }): AttachmentResource => {
+  // `field` omitted -> metadata default (no Content); `[]` -> API-native primary key only;
+  // a provided list is sent verbatim (ADR-0020).
   const search = (query: AttachmentSearchQuery = {}): Promise<AttachmentPage> =>
     deps.requester.request(
       {
         method: "GET",
-        url: buildReadUrl(deps.host, deps.partition, "attachment", query),
+        url: buildReadUrl(deps.host, deps.partition, "attachment", {
+          ...query,
+          field: query.field ?? DEFAULT_FIELDS,
+        }),
         headers: {},
       },
       (body) => {

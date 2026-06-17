@@ -148,6 +148,33 @@ describe("createAttachmentResource — write", () => {
   });
 });
 
+describe("createAttachmentResource — default field (ADR-0020)", () => {
+  // Exact field param via URL parsing — `ContentType` contains the substring "Content",
+  // so a naive `toContain`/`not.toContain` can't tell metadata from the body field.
+  const fieldOf = (url: string): string | null =>
+    new URL(url).searchParams.get("field");
+
+  it("search() defaults to metadata fields, excluding the large Content body", async () => {
+    const calls: Call[] = [];
+    await resource(calls, READ_EMPTY).search();
+    expect(fieldOf(calls[0].req.url)).toBe(
+      "Id,Resource,ResourceId,ContentType,FileName",
+    );
+  });
+
+  it("field: [] opts into the API-native primary-key-only response", async () => {
+    const calls: Call[] = [];
+    await resource(calls, READ_EMPTY).search({ field: [] });
+    expect(fieldOf(calls[0].req.url)).toBeNull();
+  });
+
+  it("a provided field list (incl. Content) is sent verbatim", async () => {
+    const calls: Call[] = [];
+    await resource(calls, READ_EMPTY).search({ field: ["Id", "Content"] });
+    expect(fieldOf(calls[0].req.url)).toBe("Id,Content");
+  });
+});
+
 describe("createAttachmentResource — 10MB guard", () => {
   it("rejects content over the ~10MB limit before sending", async () => {
     const calls: Call[] = [];
