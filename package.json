@@ -2,7 +2,30 @@
   "name": "@joymerrevent/porters-connect",
   "version": "0.0.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
+  "keywords": [
+    "porters",
+    "hrbc",
+    "porters-connect",
+    "connect-api",
+    "recruiting",
+    "ats",
+    "typescript",
+    "api-client",
+    "unofficial"
+  ],
+  "homepage": "https://github.com/Joymerrevent/porters-connect#readme",
+  "bugs": {
+    "url": "https://github.com/Joymerrevent/porters-connect/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Joymerrevent/porters-connect.git"
+  },
   "license": "MIT",
+  "author": "Joymerrevent (https://joymerrevent.com/)",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
     "node": ">=18"
