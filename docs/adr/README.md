@@ -48,7 +48,7 @@
 | [0016][0016] | 内部 FieldType の粒度（Field Type か Data Type か）        | 詳細設計 | accepted   |
 | [0017][0017] | Option の読み取り値の表現（複数選択対応）                  | 詳細設計 | accepted   |
 | [0018][0018] | Attachment リソースとファイル本体（Base64）の扱い          | 詳細設計 | accepted   |
-| [0019][0019] | 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3） | 詳細設計 | proposed   |
+| [0019][0019] | 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3） | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 

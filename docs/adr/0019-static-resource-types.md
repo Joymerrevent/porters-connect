@@ -1,8 +1,12 @@
 # 19. 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-17
 - Deciders: jun.shiromoto (Joymerrevent)
+
+> 議論の結果 **案A（カタログ導出）＋案W2（create/update で入力型を分離・create は必須項目を型で要求）
+> ＋案U1（既知 `P_` のみ型付け）** で accepted（2026-06-17）。コードへの反映（`createResource` の generic 化・
+> `DataType→値型` マップ・各カタログへの required-on-create マーク・型テスト）は本 ADR を受けて別 PR で行う。
 
 ## Context and Problem Statement
 
@@ -48,17 +52,16 @@ field 選択は実行時。選択で型を絞る案は将来 P1）。
 - **案U2: open index signature** — 任意キーを許容。実行時は維持だが補完・誤キー検知が弱まる。
 - **案U3: 折衷** — 既知 `P_` ＋ `U_`/`A_` 接頭辞限定の緩い index。
 
-## Decision Outcome（提案・要承認）
+## Decision Outcome
 
-> 本 ADR は `proposed`。下記は**提案**であり、Decider の承認をもって `accepted` とし、その後に実装する。
-
-提案: **案A ＋ 案W1 ＋ 案U1**。
+採用: **案A ＋ 案W2 ＋ 案U1**。
 
 - **A**: カタログを単一の真実源にできゼロドリフト。`createResource<const TFields>` を generic 化し、
   `DataType → 復号値型`／`DataType → 書込値型` の型マップで Read/Write 型を導出する。型のみで実行時挙動は不変。
-- **W1**: [ADR-0005][0005] SD-3「簡易」に沿う。`System[DateTime]` 除外で [ADR-0016][0016] の約束
-  （Write 制限を入力型で担保）を実現。required-on-create（`P_Owner`）は型で強制せず PORTERS／実行時に委ねる
-  （簡易・フェイルセーフ）。将来 P1 で W2 を検討。
+- **W2**: `create` と `update` でメソッドが分かれている以上、入力型も分けるのが自然で安全。`create` は
+  新規作成で必須の項目（`P_Owner` 等。リソース毎に PORTERS 仕様から required を確定）を**型で必須**にし、
+  `update` は全項目任意。`P_Id`・`System[DateTime]` はいずれも型から除外（[ADR-0016][0016] の Write 制限を実現）。
+  required の根拠は各カタログに **required-on-create マーク**を持たせ、型と実行時で共有する。
 - **U1**: 公開型は既知 `P_` を精密にし、`U_`/`A_` は SD-2（defineFields）の将来作業に委ねる。本 ADR では
   open index を入れない（誤キー検知＝フェイルセーフを優先）。ただし**実行時は未知キーも従来どおり raw 通過**し、
   挙動は壊さない。
@@ -66,8 +69,10 @@ field 選択は実行時。選択で型を絞る案は将来 P1）。
 ### Consequences
 
 - Good: 補完・型安全。カタログ 1 箇所が真実源でズレ無し。`System[DateTime]` が型レベルで書けない。
-- Bad: 型マップ＋generic の実装と、全リソースの `as const` カタログへの移行。
-- Neutral: field 選択での型絞り込み・`U_`/`A_` 型注入・required-on-create は将来（P1）。
+  **create の必須項目漏れをコンパイル時に検知**できる。
+- Bad: 型マップ＋generic の実装と、全リソースの `as const` カタログへの移行。各リソースの**必須項目を
+  PORTERS 仕様から洗う調査**と、`create`/`update` の入力型分岐が要る。
+- Neutral: field 選択での型絞り込み・`U_`/`A_` 型注入は将来（P1）。
 
 ## Pros and Cons of the Options
 
@@ -93,7 +98,7 @@ field 選択は実行時。選択で型を絞る案は将来 P1）。
 - 前提/依存: [ADR-0004][0004]（型モデル）・[ADR-0005][0005]（公開 API・SD-3）・[ADR-0016][0016]（DataType）・[ADR-0017][0017]（Option）。
 - 関連実装: `src/resources/resource.ts`（`createResource` / `Resource` / `ResourceItem` / `ResourceInput`）、
   各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`（`DataType` / `FieldValue`）、`src/xml/encode.ts`（`WriteValue`）。
-- 将来（P1）: field 選択での返り値型の絞り込み（[ADR-0005][0005] SD-3）・`U_`/`A_` の型注入（SD-2 defineFields）・required-on-create（W2）。
+- 将来（P1）: field 選択での返り値型の絞り込み（[ADR-0005][0005] SD-3）・`U_`/`A_` の型注入（SD-2 defineFields）。
 
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
