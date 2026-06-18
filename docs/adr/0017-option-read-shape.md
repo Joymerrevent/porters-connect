@@ -10,7 +10,7 @@
 
 ## Context and Problem Statement
 
-PORTERS の Option フィールドには**単一選択（Dropdown / Radiobutton）と複数選択（Checkbox）**があり、[ADR-0016][0016] で**どちらも `Option`（Data Type）**として扱う（ライブラリは単一/複数を型で区別しない）。
+PORTERS の Option フィールドには**単一選択（Dropdown / Radiobutton）と複数選択（Checkbox）** があり、[ADR-0016][0016] で**どちらも `Option`（Data Type）** として扱う（ライブラリは単一/複数を型で区別しない）。
 
 **PORTERS は Read / Write とも Option を「選択 alias の集合」として表す**（リファレンスで確認）:
 

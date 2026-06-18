@@ -3,7 +3,7 @@
 [![License: MIT][mit-badge]][mit] ![Node >= 18][node-badge]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
-[Joymerrevent（ジョイメリベント）][joymerrevent] 製の**非公式（unofficial）**ラッパーです。
+[Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。
 
 > [!IMPORTANT]
 > これは**非公式**ライブラリです。ポーターズ株式会社とは無関係で、公式ロゴ・商標は使用していません。
@@ -293,7 +293,7 @@ try {
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
-[joymerrevent]: https://joymerrevent.com/
+[joymerrevent]: https://github.com/Joymerrevent
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md

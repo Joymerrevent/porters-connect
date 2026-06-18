@@ -40,7 +40,7 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
 
 **採用: 案B（PORTERS Data Type に整合）**。理由:
 
-- Data Type は **PORTERS 自身が定義する「値の形」**であり、独自の粒度を発明せず忠実。
+- Data Type は **PORTERS 自身が定義する「値の形」** であり、独自の粒度を発明せず忠実。
 - `Age` は Data Type として独立 → #19 の対応と整合（案C なら Age を Date に戻すことになり矛盾）。
 - `Mail`/`Telephone`/`URL`/`SinglelineText`/`MultilineText` を独立型に（将来の検証・正規化の足場）。decode/encode 実装は文字列系で共有しつつ、**型ラベルは Data Type に一致**させる。
 - `Currency`→`Number`（PORTERS 自身が Currency の Data Type を Number と定義）、Option 3 種→`Option`（Data Type は単一）。**PORTERS がしない区別は発明しない**。
