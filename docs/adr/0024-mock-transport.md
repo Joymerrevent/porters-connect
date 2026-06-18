@@ -1,6 +1,6 @@
 # 24. テスト/評価用の公開モックトランスポート（`createMockTransport`）— R-17/R-12
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-18
 - Deciders: jun.shiromoto (Joymerrevent)
 
