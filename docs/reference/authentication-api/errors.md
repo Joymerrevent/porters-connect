@@ -40,6 +40,8 @@ redirect の場合は `?error=コード`。**Resource API の Result Code（[res
 | 402  | アクセス許可が無い                        |
 
 エラーモデル（ライブラリの `PortersError`）への対応は ADR-0006 を参照。
+利用者向けの症状別対処は [エラーハンドリング ガイド][guide] を参照。
 
 [readme]: README.md
 [result-codes]: ../resource-api/result-codes.md
+[guide]: ../../guide/error-handling.md
