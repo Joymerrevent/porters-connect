@@ -292,6 +292,8 @@ try {
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
 - レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します（`category` の `"rateLimit"` は将来の配線用に予約された値で、現状はどの分類も produce しません）。
 
+> 症状別の早見表と 2 系統（認証 / リソース）のコード対応表は [エラーハンドリング ガイド][error-handling]にまとめています。
+
 ## PORTERS 固有の注意
 
 - **削除 API は存在しない**（`delete()` は提供しない）。
@@ -318,6 +320,7 @@ try {
 [node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
 [joymerrevent]: https://github.com/Joymerrevent
 [auth-flow]: ./docs/reference/authentication-api/README.md
+[error-handling]: ./docs/guide/error-handling.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [design]: ./docs/design/basic-design.md
