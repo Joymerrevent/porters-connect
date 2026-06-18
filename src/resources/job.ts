@@ -7,6 +7,7 @@
 // strings. Multi-select Option read returns the first alias only (full multi-Option is
 // future work). The static Job / input types derive from the catalog (ADR-0019).
 
+import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
@@ -77,23 +78,27 @@ export type JobCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type JobUpdateInput = UpdateInput<typeof FIELDS>;
-export type JobResource = Resource<
-  typeof FIELDS,
+/** The Job accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+export type JobResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+  typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]
 >;
 
-export const createJobResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): JobResource =>
-  createResource(
+export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(
+  deps: { requester: Requester; host: string; partition: number },
+  custom?: C,
+): JobResource<C> => {
+  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
+  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
+  return createResource(
     {
       name: "Job",
       path: "job",
       prefix: "Job",
-      fields: FIELDS,
+      fields,
       requiredOnCreate: REQUIRED_ON_CREATE,
     },
     deps,
   );
+};

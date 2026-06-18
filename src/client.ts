@@ -31,10 +31,16 @@ import type {
   ResumeResource,
   UserResource,
 } from "./resources";
+import type {
+  CustomFor,
+  DeclaredCatalogs,
+  DefinedFields,
+  EmptyCatalog,
+} from "./fields";
 import type { PartitionId, Scope } from "./types";
 
-/** Options for constructing a {@link PortersClient}. */
-export type PortersClientOptions = {
+/** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
+export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /**
    * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
    * (A representative value lives in docs/reference.)
@@ -51,6 +57,12 @@ export type PortersClientOptions = {
   tokenStore?: TokenStore;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
+  /**
+   * Tenant custom field declarations from {@link defineFields} (ADR-0023). Each resource's
+   * declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
+   * their declared Data Type and appear typed on reads / writes. Omit for standard `P_` only.
+   */
+  fields?: DefinedFields<C>;
 };
 
 /**
@@ -58,12 +70,12 @@ export type PortersClientOptions = {
  * requester and exposes namespaced resource accessors such as `candidate`
  * (ADR-0005).
  */
-export class PortersClient {
-  readonly candidate: CandidateResource;
-  readonly job: JobResource;
-  readonly client: ClientResource;
-  readonly process: ProcessResource;
-  readonly resume: ResumeResource;
+export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+  readonly job: JobResource<CustomFor<C, "job">>;
+  readonly client: ClientResource<CustomFor<C, "client">>;
+  readonly process: ProcessResource<CustomFor<C, "process">>;
+  readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
   /** Master Read: accessible partitions (ADR-0021/0022). */
   readonly partition: PartitionResource;
@@ -75,7 +87,7 @@ export class PortersClient {
   readonly option: OptionResource;
   readonly #host: string;
 
-  constructor(options: PortersClientOptions) {
+  constructor(options: PortersClientOptions<C>) {
     const transport = options.transport ?? createFetchTransport();
     const auth =
       options.auth ??
@@ -98,11 +110,16 @@ export class PortersClient {
       host: options.host,
       partition: options.partition ?? 0,
     };
-    this.candidate = createCandidateResource(deps);
-    this.job = createJobResource(deps);
-    this.client = createClientResource(deps);
-    this.process = createProcessResource(deps);
-    this.resume = createResumeResource(deps);
+    // The per-resource custom catalog declared via defineFields (or {} when none). Branded
+    // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
+    const customFor = <K extends keyof DeclaredCatalogs>(
+      key: K,
+    ): CustomFor<C, K> => (options.fields?.[key] ?? {}) as CustomFor<C, K>;
+    this.candidate = createCandidateResource(deps, customFor("candidate"));
+    this.job = createJobResource(deps, customFor("job"));
+    this.client = createClientResource(deps, customFor("client"));
+    this.process = createProcessResource(deps, customFor("process"));
+    this.resume = createResumeResource(deps, customFor("resume"));
     this.attachment = createAttachmentResource(deps);
     // Partition Read takes no `partition` param (it discovers them); the rest use the default.
     this.partition = createPartitionResource({ requester, host: options.host });

@@ -10,6 +10,7 @@
 // nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns
 // the first alias only. The static Process / input types derive from the catalog (ADR-0019).
 
+import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
@@ -68,23 +69,27 @@ export type ProcessCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
-export type ProcessResource = Resource<
-  typeof FIELDS,
+/** The Process accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+  typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]
 >;
 
-export const createProcessResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): ProcessResource =>
-  createResource(
+export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
+  deps: { requester: Requester; host: string; partition: number },
+  custom?: C,
+): ProcessResource<C> => {
+  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
+  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
+  return createResource(
     {
       name: "Process",
       path: "process",
       prefix: "Process",
-      fields: FIELDS,
+      fields,
       requiredOnCreate: REQUIRED_ON_CREATE,
     },
     deps,
   );
+};
