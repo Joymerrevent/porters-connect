@@ -40,6 +40,16 @@ const toResponse = (reply: MockReply): TransportResponse =>
     ? { status: 200, body: reply }
     : { status: reply.status ?? 200, body: reply.body };
 
+// method + path だけで「どの route を足すか」は十分。既定 field を載せた Read URL の
+// クエリは長大でノイズなので落とす（不正な URL はそのまま出す＝フェイルセーフ）。
+const routeLabel = (method: string, url: string): string => {
+  try {
+    return `${method} ${new URL(url).pathname}`;
+  } catch {
+    return `${method} ${url}`;
+  }
+};
+
 /**
  * Build a {@link Transport} that answers from a handler instead of the network — run the library
  * fully offline, with no PORTERS contract (R-17). Pass it as `new PortersClient({ transport })`.
@@ -70,7 +80,7 @@ export const createMockTransport = (
       if (reply === undefined) {
         return Promise.reject(
           new PortersConfigError(
-            `createMockTransport: no mock response for ${req.method} ${req.url} — add a case to your handler` +
+            `createMockTransport: no mock response for ${routeLabel(req.method, req.url)} — add a case to your handler` +
               ` (or pass { auth: false } to mock the auth endpoints too)`,
             { category: "config" },
           ),

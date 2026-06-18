@@ -3,11 +3,11 @@
 // are Candidate-specific; the static Candidate / input types derive from the catalog
 // (single source of truth — ADR-0019).
 
-import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
   type Resource,

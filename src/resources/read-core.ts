@@ -18,6 +18,14 @@ import { parseResourcePage, type RawItem } from "../xml/parser";
 export type FieldCatalog = Record<string, DataType>;
 
 /**
+ * "No custom fields": the intersection-identity default for the generic catalog params (ADR-0023).
+ * A bare `{}` is flagged by `no-empty-object-type`; `Record<never, never>` is the same empty object,
+ * lint-clean, adds no keys in `static & C`, and satisfies both `FieldCatalog` and `DeclaredCatalogs`.
+ * Lives here (with `FieldCatalog`) so resources need not import from the higher-level `fields/` (RV-8).
+ */
+export type EmptyCatalog = Record<never, never>;
+
+/**
  * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
  * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). Custom
  * `U_`/`A_` aliases are not in the catalog, so they are not typed here (access via a cast until

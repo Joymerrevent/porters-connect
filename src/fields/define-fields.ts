@@ -5,6 +5,7 @@
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
 import { PortersConfigError } from "../errors";
+import type { EmptyCatalog } from "../resources/read-core";
 import type { DataType } from "../xml/decode";
 
 /** One custom field's declared Data Type — the builder's return value (ADR-0023 D2). */
@@ -59,13 +60,6 @@ export type FieldDecls = {
 
 /** A per-resource custom catalog (bare alias -> Data Type), as produced by {@link defineFields}. */
 export type CustomCatalog = Record<string, DataType>;
-
-/**
- * "No custom fields": the intersection-identity default for the generic catalog params (ADR-0023).
- * A bare `{}` is flagged by `no-empty-object-type`; `Record<never, never>` is the same empty object,
- * lint-clean, adds no keys in `static & C`, and satisfies both `FieldCatalog` and `DeclaredCatalogs`.
- */
-export type EmptyCatalog = Record<never, never>;
 
 /** Map of (data) resource -> its custom catalog; the client merges these into the static catalogs. */
 export type DeclaredCatalogs = {

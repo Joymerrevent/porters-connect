@@ -46,6 +46,17 @@ describe("createMockTransport", () => {
     expect(res).toEqual({ status: 403, body: "<Error>1</Error>" });
   });
 
+  it("defaults an object reply without a status to 200", async () => {
+    const t = createMockTransport(() => ({
+      body: "<Candidate><Code>0</Code></Candidate>",
+    }));
+    const res = await t.send(req("https://h.test/v1/candidate"));
+    expect(res).toEqual({
+      status: 200,
+      body: "<Candidate><Code>0</Code></Candidate>",
+    });
+  });
+
   it("throws a clear PortersConfigError for an unmocked route (fail-safe)", async () => {
     const t = createMockTransport(() => undefined);
     await expect(
@@ -56,10 +67,22 @@ describe("createMockTransport", () => {
     await expect(
       t.send(req("https://h.test/v1/job", "GET")),
     ).rejects.toBeInstanceOf(PortersConfigError);
-    // the message names the method + url so the gap is obvious
-    await expect(t.send(req("https://h.test/v1/job"))).rejects.toThrow(
-      /GET https:\/\/h\.test\/v1\/job/,
-    );
+    // the message names method + path; the long default-field query is dropped
+    const msg = await t
+      .send(req("https://h.test/v1/job?field=Job.P_Id,Job.P_Owner"))
+      .then(() => "")
+      .catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+    expect(msg).toContain("GET /v1/job");
+    expect(msg).not.toContain("field=");
+  });
+
+  it("falls back to the raw url in the message when it is not parseable", async () => {
+    const t = createMockTransport(() => undefined);
+    const msg = await t
+      .send(req("not-a-valid-url"))
+      .then(() => "")
+      .catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+    expect(msg).toContain("GET not-a-valid-url");
   });
 
   it("with { auth: false } routes the auth endpoints to the handler", async () => {

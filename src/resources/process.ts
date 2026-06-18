@@ -10,11 +10,11 @@
 // nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns
 // the first alias only. The static Process / input types derive from the catalog (ADR-0019).
 
-import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
   type Resource,
