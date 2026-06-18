@@ -75,8 +75,31 @@ for await (const c of porters.candidate.searchAll({
 
 ## 契約なしで試す（オフライン評価）
 
-PORTERS 契約が無くても、注入可能な Transport にモック XML を返させれば**全機能をオフラインで**動かせます。
-リポジトリにそのまま動くサンプルを同梱しています（[`examples/offline-sandbox.ts`][sandbox]）。
+PORTERS 契約が無くても、公開ヘルパー `createMockTransport` にモック XML を返させれば**全機能をオフラインで**動かせます（OAuth / トークンは自動応答）。
+
+```ts
+import {
+  PortersClient,
+  createMockTransport,
+} from "@joymerrevent/porters-connect";
+
+const porters = new PortersClient({
+  host: "sandbox.invalid",
+  appId: "demo",
+  appSecret: "demo",
+  partition: 1,
+  transport: createMockTransport((req) =>
+    req.url.includes("/v1/candidate")
+      ? `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><Person.P_Id>1</Person.P_Id><Person.P_Name>山田 太郎</Person.P_Name></Item></Candidate>`
+      : undefined,
+  ), // 未モックのリクエストは明示エラー（フェイルセーフ）
+});
+
+const page = await porters.candidate.search();
+console.log(page.items[0]?.P_Name); // 山田 太郎
+```
+
+そのまま動くサンプルも同梱しています（[`examples/offline-sandbox.ts`][sandbox]）。
 
 ```sh
 pnpm sandbox

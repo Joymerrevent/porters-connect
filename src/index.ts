@@ -23,6 +23,9 @@ export type {
   TokenStore,
 } from "./auth";
 export type { Transport, TransportRequest, TransportResponse } from "./http";
+// Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
+export { createMockTransport } from "./http";
+export type { MockHandler, MockReply, MockTransportOptions } from "./http";
 export type { PartitionId, Scope } from "./types";
 
 // Custom field declaration DSL (R-16 / ADR-0023): declare tenant U_/A_ fields so they
