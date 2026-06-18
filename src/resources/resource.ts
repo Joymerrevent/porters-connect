@@ -25,7 +25,12 @@ import {
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
-export type { FieldCatalog, ReadRecord, ResourcePage } from "./read-core";
+export type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadRecord,
+  ResourcePage,
+} from "./read-core";
 
 export type SearchQuery = {
   /**

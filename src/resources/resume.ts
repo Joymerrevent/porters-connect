@@ -9,11 +9,11 @@
 // raw strings. Multi-select Option read returns the first alias only. Image-typed custom
 // fields (U_) are future work. The static Resume / input types derive from the catalog (ADR-0019).
 
-import type { EmptyCatalog } from "../fields";
 import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
+  type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
   type Resource,

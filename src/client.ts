@@ -31,12 +31,8 @@ import type {
   ResumeResource,
   UserResource,
 } from "./resources";
-import type {
-  CustomFor,
-  DeclaredCatalogs,
-  DefinedFields,
-  EmptyCatalog,
-} from "./fields";
+import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
+import type { EmptyCatalog } from "./resources/read-core";
 import type { PartitionId, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
