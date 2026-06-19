@@ -55,6 +55,24 @@ CHANGELOG の作り方:
 - **ブランチ**: 案1〜3 はトランク/GitHub-flow 前提。採用するなら **git-flow → GitHub-flow への簡素化**を併せて検討（本決定の重要サブ論点）。
 - **publish/tag**: CI で `pnpm publish`（`NPM_TOKEN` ＋ provenance）。「誰が tag/Release を打つか」は採用ツールが内包する（→ 単独のタグ用 Action は不要になりやすい）。
 
+### 推奨（私案・proposed のまま／決定は stakeholder）
+
+0.1.0–0.1.1 を手運用でリリースした経験と、直近で **git-flow ＋ Dependabot→develop ＋ ブランチ保護**を整備した経緯、
+および**日本語 curated CHANGELOG 重視**を踏まえ、次を推奨する（**確定ではない**）。
+
+- **第1候補：案2 changesets（git-flow 維持）。** 理由：
+  - CHANGELOG を**日本語で著述・curated 維持**できる（北極星「質」に直結。コミット導出より読み物として強い）。
+  - **deliberate**＝"Version Packages" PR をマージした時だけ publish。契約ゲートのある本ライブラリの「出す時期を人が握る」方針に合致。
+  - **既存の git-flow を作り替えない**＝直近整備（Dependabot→develop・保護ルール・runbook）を無駄にしない。
+  - 代償：単一パッケージで per-PR の changeset ファイルがやや過剰（許容範囲）。
+- **対抗：案1 release-please（＋GitHub-flow へ簡素化）。** ceremony 最小を最優先するなら有力。
+  代償は**ブランチ戦略の作り替え**と **CHANGELOG が commit 導出＝curation 弱**。GitHub-flow 移行を別途許容できるなら採用価値あり。
+- **不採用寄り**：案3 semantic-release（main マージ＝自動 publish＝出す時期を握れない・契約ゲートと不整合）／
+  案5 手運用継続（頻度が上がると破綻）。案4 自前 Action は保守コスト。
+
+> この推奨は**私案であり未確定**。stakeholder が議論のうえ決定し、status を accepted に更新する。
+> changesets 採用なら git-flow 維持、release-please 採用ならブランチ戦略は別 ADR で GitHub-flow 化を検討。
+>
 > 決定時に accept へ更新し、選んだ方式に応じて CI ワークフロー・ブランチ運用・CHANGELOG 運用を反映する。
 > ブランチ戦略が重くなる場合は**別 ADR に分割**してよい。
 
