@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: PORTERS 製品・Connect API 本体について
+    url: https://hrbcapi.porters.jp/hc/ja
+    about: このライブラリは非公式です。PORTERS 製品・API 本体の不具合や仕様の問い合わせは PORTERS 公式ヘルプセンターへ。
+  - name: セキュリティ脆弱性の報告（非公開）
+    url: https://github.com/Joymerrevent/porters-connect/security/advisories/new
+    about: 脆弱性は公開 Issue ではなく、こちらから非公開で報告してください（SECURITY.md 参照）。
