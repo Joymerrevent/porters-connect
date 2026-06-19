@@ -3,7 +3,7 @@
 - ステータス: draft
 - 日付: 2026-06-13
 - オーナー: jun.shiromoto (Joymerrevent)
-- 位置づけ: `SPEC_v1.md` は素案（superseded 予定）。設計の正は本 PRD・[docs/adr][adr]・[docs/reference][ref]。
+- 位置づけ: `docs/history/SPEC_v1.md` は素案（superseded 予定）。設計の正は本 PRD・[docs/adr][adr]・[docs/reference][ref]。
 - 対象: **第1層（TypeScript ラッパー）の v1**。第2層 MCP・第3層配布(Docker)・CLI は対象外（将来）。
 
 ## 1. 課題（Problem Statement）
