@@ -1,5 +1,12 @@
 # @joymerrevent/porters-connect — SPEC v1
 
+> ⚠️ **DEPRECATED / 素案（superseded・将来削除予定）**
+> 本書は初期調査ベースの素案で、推測（例: リクエスト上限 32KB）を含み、最新の決定とズレがあります。
+> **設計の正は `docs/`**: 要件 `docs/design/requirements.md` ／ 基本設計 `docs/design/basic-design.md` ／
+> 決定 `docs/adr/` ／ API 事実 `docs/reference/`。本書は**歴史的経緯としてのみ**残置しています。
+
+---
+
 > PORTERS Connect API（旧 HRBC）向け、非公式 TypeScript ラッパー & MCP サーバー。
 > Joymerrevent（ジョイメリベント）管理リポジトリ。
 
@@ -15,28 +22,30 @@
 
 ## 1. プロジェクト概要
 
-| 項目 | 内容 |
-|---|---|
-| パッケージ名（第1層） | `@joymerrevent/porters-connect` |
-| パッケージ名（第2層） | `@joymerrevent/porters-mcp`（後続フェーズ） |
-| 配布 | npm（npx 起動）＋ Docker イメージ（後続フェーズ） |
-| ライセンス | MIT |
-| GitHub リポジトリ | `joymerrevent/porters-connect`（組織アカウント。屋号管理） |
-| 公式との関係 | **非公式（unofficial）**。商標は株式会社ポーターズに帰属。READMEで明示 |
-| 言語 / ランタイム | TypeScript / Node.js（ESM 前提、CJS も配慮） |
-| 目的 | 収益化より「多くの実利用者に使われること」を最優先 |
+| 項目                  | 内容                                                                   |
+| --------------------- | ---------------------------------------------------------------------- |
+| パッケージ名（第1層） | `@joymerrevent/porters-connect`                                        |
+| パッケージ名（第2層） | `@joymerrevent/porters-mcp`（後続フェーズ）                            |
+| 配布                  | npm（npx 起動）＋ Docker イメージ（後続フェーズ）                      |
+| ライセンス            | MIT                                                                    |
+| GitHub リポジトリ     | `joymerrevent/porters-connect`（組織アカウント。屋号管理）             |
+| 公式との関係          | **非公式（unofficial）**。商標は株式会社ポーターズに帰属。READMEで明示 |
+| 言語 / ランタイム     | TypeScript / Node.js（ESM 前提、CJS も配慮）                           |
+| 目的                  | 収益化より「多くの実利用者に使われること」を最優先                     |
 
 ---
 
 ## 2. 背景（調査結果サマリ）
 
 ### 2.1 既存ライブラリは事実上ゼロ
+
 - npm / GitHub に PORTERS Connect API 専用の TS/JS ラッパー・SDK は**公式・非公式とも存在しない**（調査時点）。
 - 公開ナレッジは Qiita 記事（GAS で XML 操作）等の個別ハウツーのみ。再利用可能な npm パッケージは無し。
 - ポーターズ社は**公式 SDK を提供しておらず**、認定開発パートナー制度で外部開発に委ねる方針。
 - → **空白市場。デファクトを取りに行ける。**
 
 ### 2.2 PORTERS API の「使いにくさ」（＝ラッパーが解決すべき課題）
+
 - **レスポンスが XML**（`application/xml;charset=UTF-8` 統一）。JSON 非対応。
 - **OAuth が独自仕様**：トークンを独自ヘッダ `X-porters-hrbc-oauth-token` に載せる。認証コードの有効期限は発行から **30秒**。`code`（ブラウザ経由）/ `code_direct`（サーバ間直接）の2方式。スコープはリソース別 R/W（例 `candidate_r` / `candidate_w`）。
 - **UTC 前提**：日本時間運用には +9h の時差補正が必要。
@@ -47,11 +56,13 @@
 - ドキュメント自体はサインイン不要で公開（hrbcapi.porters.jp）。
 
 ### 2.3 リソース構成（公式 API List）
+
 - マスタ系：Partition / User / Field / Option
 - データ系：Client / Recruiter / Contact / Job / Candidate / Resume / Process / Activity / Contract / Sales / Opportunity / Phase / Attachment
 - 各リソースに必要スコープが定義されている。
 
 ### 2.4 市場・需要（推測を含む）
+
 - PORTERS は国内シェア No.1 を標榜、導入 2,200社超。ただし API 利用は**有償オプション（約3万円/月）かつ契約者限定**。
 - API 連携の実需は大口企業中心のごく一部（顧客の7割超が10ID以下の中小）。**実需は数十〜百数十社規模（推測）**。
 - 主要ターゲットは「人材会社から API 連携を受託するフリーランス / 受託開発者 / 制作会社」。
@@ -61,7 +72,7 @@
 
 ## 3. 設計原則（Joymerrevent の哲学に沿う）
 
-> 「動くものではなく、動き続けるものを作る」
+> 「壊れたときに安全側へ倒れるものを作る」（フェイルセーフ思想）
 
 1. **薄く・堅く**：第1層は「fetch + XMLパース + 型 + UTC補正 + OAuth」の薄いコアに徹する。ビジネスロジックを混ぜない。
 2. **XML を内部に隠蔽**：利用者には型付き JS オブジェクトのみを返す。XML は外に漏らさない。
@@ -74,7 +85,7 @@
 
 ## 4. アーキテクチャ（3層・積層設計）
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │ 第3層：配布                                   │
 │   npm（npx 起動）／ Docker イメージ           │
@@ -98,7 +109,8 @@
 ## 5. 第1層 詳細仕様（今フェーズの実装対象）
 
 ### 5.1 ディレクトリ構成（案）
-```
+
+```text
 porters-connect/
 ├── src/
 │   ├── index.ts              # public export
@@ -130,31 +142,39 @@ porters-connect/
 ```
 
 ### 5.2 公開 API（イメージ）
+
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST!,      // 契約時に通知されるホスト名
+  host: process.env.PORTERS_HOST!, // 契約時に通知されるホスト名
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
   scopes: ["candidate_r", "job_r"],
 });
 
 // XML を意識させず、型付きで返す
-const candidates = await porters.candidate.search({ /* 条件 */ });
+const candidates = await porters.candidate.search({
+  /* 条件 */
+});
 const job = await porters.job.get(jobId);
 ```
 
 ### 5.3 MVP で実装するリソース（優先順）
+
 1. **OAuth（認証）** — 全ての前提
 2. **Candidate**（R/W）
 3. **Job**（R/W）
 4. **Client**（R/W）
 5. **Process**（R/W）
 6. **Resume**（R）
+7. **Attachment**（R/W）
+
 - 残りリソース（Activity / Contract / Sales 等）は v0.2 以降で段階追加。
+- ※ Attachment の MVP 追加は ADR-0003 で決定（2026-06-13）。
 
 ### 5.4 横断機能
+
 - リトライ & スロットリング（15万/月のレート制限に配慮）
 - 32KB 超リクエストの事前検知 / 分割の警告
 - UTC↔JST 変換ユーティリティ
@@ -162,6 +182,7 @@ const job = await porters.job.get(jobId);
 - エラー型の整備（認証失敗 / レート超過 / 400 等を判別可能に）
 
 ### 5.5 依存ライブラリ候補
+
 - XML パース：`fast-xml-parser`
 - HTTP：標準 `fetch`（Node 18+）or `ky`（軽量・リトライ容易）
 - 型生成補助：必要に応じて手書き型 + テストで担保
@@ -199,12 +220,12 @@ const job = await porters.job.get(jobId);
 
 ## 9. ロードマップ
 
-| 段階 | 内容 | 判断基準 |
-|---|---|---|
-| 1. PoC | 契約環境で OAuth＋1リソース取得を型付きで実証 | コード量・型安全が明確に改善するか |
-| 2. MVP 公開 | 第1層を MIT で npm 公開（主要5リソース） | 3〜6か月で DL推移 / Issue / 実利用問い合わせ |
-| 3. 第2層 MCP | 安定後に MCP サーバー追加 | MCP 経由の実利用が見えるか |
-| 4. Docker / Catalog | 手応えありで Docker化・Catalog登録 | 月数千DL・複数組織利用が定常化 |
+| 段階                | 内容                                          | 判断基準                                     |
+| ------------------- | --------------------------------------------- | -------------------------------------------- |
+| 1. PoC              | 契約環境で OAuth＋1リソース取得を型付きで実証 | コード量・型安全が明確に改善するか           |
+| 2. MVP 公開         | 第1層を MIT で npm 公開（主要5リソース）      | 3〜6か月で DL推移 / Issue / 実利用問い合わせ |
+| 3. 第2層 MCP        | 安定後に MCP サーバー追加                     | MCP 経由の実利用が見えるか                   |
+| 4. Docker / Catalog | 手応えありで Docker化・Catalog登録            | 月数千DL・複数組織利用が定常化               |
 
 ---
 

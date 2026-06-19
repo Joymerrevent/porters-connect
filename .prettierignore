@@ -1,0 +1,16 @@
+# 依存・成果物
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# ツール設定（Claude Code のローカル設定など）
+.claude
+
+# 手書きの仕様/設計ドキュメントを整形対象外にしたい場合は追記する
+# 例:
+# SPEC.md
+# DESIGN.md

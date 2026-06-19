@@ -3,11 +3,15 @@
 Claude Code に最初に投げるプロンプトです。
 このリポジトリのルートに `SPEC_v1.md` と `CLAUDE.md` を置いた状態で、以下を貼り付けてください。
 
+> **注記（2026-06 追記）**: これはプロジェクト初期（scaffold 着手時）の**歴史的プロンプト**です。
+> 設計はその後 `docs/`（要件・基本設計 `docs/design/` ／ 決定 `docs/adr/` ／ API 事実 `docs/reference/`）へ移行し、そちらが正。
+> 本文中の `SPEC_v1.md` 参照（読み込み・「ディレクトリ構成 5.1」）は**素案（superseded・将来削除予定）** 前提で、`docs/design/basic-design.md` §2 に読み替えてください。
+
 ---
 
 ## 初手プロンプト（コピペ用）
 
-```
+```text
 このリポジトリで @joymerrevent/porters-connect を実装します。
 まず SPEC_v1.md と CLAUDE.md を読んでから着手してください。
 

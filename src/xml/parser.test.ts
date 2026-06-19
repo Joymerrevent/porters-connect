@@ -1,0 +1,215 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
+
+import { PortersAuthError, PortersResourceError } from "../errors/index";
+import {
+  parseAuthentication,
+  parseResourcePage,
+  parseWriteResult,
+} from "./parser";
+
+const fixture = (path: string): string =>
+  readFileSync(
+    fileURLToPath(new URL(`../../test/fixtures/${path}`, import.meta.url)),
+    "utf8",
+  );
+
+describe("parseResourcePage (ADR-0011)", () => {
+  it("reads Total/Count/Start and Items as raw strings", () => {
+    const page = parseResourcePage(fixture("candidate/read-basic.xml"));
+    expect(page.total).toBe(2);
+    expect(page.count).toBe(2);
+    expect(page.start).toBe(0);
+    expect(page.items).toHaveLength(2);
+    // raw string: no coercion at the parser layer
+    expect(page.items[0]["Person.P_Id"]).toBe("10001");
+  });
+
+  it("normalizes a 0-item response to an empty array", () => {
+    const page = parseResourcePage(fixture("candidate/read-empty.xml"));
+    expect(page.total).toBe(0);
+    expect(page.items).toEqual([]);
+  });
+
+  it("reads non-zero Total/Count/Start from their own attributes", () => {
+    // read-basic has Start="0", which can't distinguish the @_Start lookup from
+    // the missing-attribute default — use non-zero values for all three.
+    const page = parseResourcePage(
+      `<Candidate Total="9" Count="3" Start="6"><Code>0</Code></Candidate>`,
+    );
+    expect(page.total).toBe(9);
+    expect(page.count).toBe(3);
+    expect(page.start).toBe(6);
+  });
+
+  it("trims surrounding whitespace from raw values", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><A>  hi  </A></Item></Candidate>`,
+    );
+    expect(page.items[0].A).toBe("hi");
+  });
+
+  it("routes <Code>!=0 to a mapped PortersError (200+Code is an error)", () => {
+    let err: unknown;
+    try {
+      parseResourcePage(fixture("errors/resource-403.xml"));
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).code).toBe(403);
+    expect((err as PortersResourceError).category).toBe("permission");
+    expect((err as PortersResourceError).message).toBe(
+      "resource returned code 403",
+    );
+    expect((err as PortersResourceError).context?.resource).toBe("Candidate");
+  });
+
+  it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseResourcePage("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).message).toBe(
+      "unparseable resource response",
+    );
+  });
+
+  it("defaults missing attributes and Code to 0", () => {
+    const page = parseResourcePage(
+      "<Candidate><Item><Person.P_Id>1</Person.P_Id></Item></Candidate>",
+    );
+    expect(page.total).toBe(0); // @_Total missing -> "0"
+    expect(page.items).toHaveLength(1);
+  });
+
+  it("normalizes a non-record Item to an empty object", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>txt</Item></Candidate>`,
+    );
+    expect(page.items).toEqual([{}]);
+  });
+});
+
+describe("parseWriteResult (ADR-0011)", () => {
+  it("reads per-Item Id and Code from a Write response", () => {
+    const results = parseWriteResult(fixture("candidate/write-result.xml"));
+    expect(results).toEqual([{ id: 10001, code: 0 }]);
+  });
+
+  it("preserves per-Item results and order for a bulk write", () => {
+    const results = parseWriteResult(
+      `<Candidate><Item><Id>10001</Id><Code>0</Code></Item>` +
+        `<Item><Id>0</Id><Code>301</Code></Item></Candidate>`,
+    );
+    // a non-zero Code is returned, not thrown — the accessor applies the policy
+    expect(results).toEqual([
+      { id: 10001, code: 0 },
+      { id: 0, code: 301 },
+    ]);
+  });
+
+  it("defaults a missing Id / Code (and a non-record Item) to 0", () => {
+    const results = parseWriteResult(`<Candidate><Item/></Candidate>`);
+    expect(results).toEqual([{ id: 0, code: 0 }]);
+  });
+
+  it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseWriteResult("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).message).toBe(
+      "unparseable write response",
+    );
+  });
+});
+
+describe("parseAuthentication (ADR-0011)", () => {
+  it("parses token fields from a Token response", () => {
+    const a = parseAuthentication(
+      `<Authentication><AccessToken>A</AccessToken><AccessTokenExpiresIn>1800000</AccessTokenExpiresIn><RefreshToken>R</RefreshToken><RefreshTokenExpiresIn>7200000</RefreshTokenExpiresIn><Error>0</Error></Authentication>`,
+    );
+    expect(a.accessToken).toBe("A");
+    expect(a.refreshToken).toBe("R");
+    expect(a.accessTokenExpiresIn).toBe(1800000);
+  });
+
+  it("returns the code from a code_direct response", () => {
+    const a = parseAuthentication(
+      "<Authentication><Code>C</Code><Error>0</Error></Authentication>",
+    );
+    expect(a.code).toBe("C");
+    // a missing ExpiresIn stays undefined, not NaN
+    expect(a.accessTokenExpiresIn).toBeUndefined();
+  });
+
+  it("routes <Error>!=0 to a PortersAuthError", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>401</Error></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).code).toBe(401);
+  });
+
+  it("prefers the response <Message> over the default", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>401</Error><Message>bad creds</Message></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect((err as PortersAuthError).message).toBe("bad creds");
+  });
+
+  it("surfaces unparseable XML as PortersAuthError(unknown)", () => {
+    let err: unknown;
+    try {
+      parseAuthentication("plain text");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).category).toBe("unknown");
+    expect((err as PortersAuthError).message).toBe(
+      "unparseable authentication response",
+    );
+  });
+
+  it("auth error without a Message uses a default message", () => {
+    let err: unknown;
+    try {
+      parseAuthentication(
+        "<Authentication><Error>500</Error></Authentication>",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersAuthError);
+    expect((err as PortersAuthError).message).toBe("authentication error 500");
+  });
+
+  it("treats a missing <Error> as success", () => {
+    const a = parseAuthentication(
+      "<Authentication><Code>C</Code></Authentication>",
+    );
+    expect(a.code).toBe("C");
+  });
+});

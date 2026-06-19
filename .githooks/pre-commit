@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# 汎用 pre-commit フック（git-hooks レシピ）。
+# core.hooksPath=.githooks 経由で呼ばれる。リポジトリ直下にある設定を
+# 自動検出して lint を走らせ、失敗したら commit を中止する。
+# 一時的に飛ばすには: git commit --no-verify
+#
+# 依存ゼロ設計: ツールが無い項目は静かにスキップする（Node 専用ではない）。
+
+set -uo pipefail
+
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$root" || exit 0
+status=0
+
+run() { # run <label> <cmd...>
+  echo "pre-commit ▶ $1"
+  if ! "${@:2}"; then
+    echo "pre-commit ✗ $1 で失敗" >&2
+    status=1
+  fi
+}
+
+# 1) Markdown: markdownlint-cli2 の設定があれば実行
+for cfg in .markdownlint-cli2.jsonc .markdownlint-cli2.yaml .markdownlint-cli2.cjs .markdownlint.json .markdownlint.jsonc; do
+  if [ -f "$cfg" ]; then
+    if command -v npx >/dev/null 2>&1; then
+      # バージョン固定: commit のたびに最新版を取得すると、新ルールで突然ブロック
+      # される（再現性）・取得物が変わる（サプライチェーン）の両リスクがあるため。
+      # 上げるときは CI（ci.yml）と合わせて意図的に更新する。
+      run "markdownlint-cli2" npx -y markdownlint-cli2@0.22.1
+    else
+      echo "pre-commit ⚠ npx が無いため markdownlint をスキップ" >&2
+    fi
+    break
+  fi
+done
+
+# 2) Node プロジェクト: package.json に format:check / lint があれば実行
+if [ -f package.json ] && command -v node >/dev/null 2>&1; then
+  if [ -f pnpm-lock.yaml ]; then PM="pnpm"; elif [ -f yarn.lock ]; then PM="yarn"; else PM="npm"; fi
+  has() { node -e "process.exit((require('./package.json').scripts||{})['$1']?0:1)" 2>/dev/null; }
+  has format:check && run "format:check" "$PM" run format:check
+  has lint && run "lint" "$PM" run lint
+fi
+
+# 3) JSON: ステージされた *.json を jq で構文チェック（コメント可の .jsonc は対象外）
+#    設定ファイル（例: Claude Code の settings.json）は壊れていてもエラーにならず
+#    黙って無視されることがあるため、commit 時点で止める。staged 内容を検査する。
+if command -v jq >/dev/null 2>&1; then
+  while IFS= read -r f; do
+    if ! git show ":$f" | jq -e . >/dev/null 2>&1; then
+      echo "pre-commit ✗ JSON 構文エラー: $f" >&2
+      status=1
+    fi
+  done < <(git diff --cached --name-only --diff-filter=ACM -- '*.json')
+fi
+
+# 4) シークレット: gitleaks があれば staged 差分をスキャン（無ければ静かにスキップ）
+#    AI が生成するテキスト（メモリ等）にトークンが紛れて push される事故への保険。
+#    導入: brew install gitleaks（CI 側でも同等のスキャンを実施）
+if command -v gitleaks >/dev/null 2>&1; then
+  run "gitleaks（シークレットスキャン）" gitleaks git --pre-commit --staged --no-banner --redact
+fi
+
+if [ "$status" -ne 0 ]; then
+  echo "pre-commit ✗ チェックに失敗しました。修正するか、緊急時は git commit --no-verify で回避してください。" >&2
+fi
+exit "$status"
