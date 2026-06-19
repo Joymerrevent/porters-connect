@@ -6,8 +6,8 @@
 // birthdate (`yyyy/mm/dd`, same as Date); PORTERS derives the displayed age in its UI.
 // Display-only Reference fields (P_Mail, P_*Reference — they mirror a Person value and are
 // not writable) are intentionally left out of the catalog: scalar mirrors read through as
-// raw strings. Multi-select Option read returns the first alias only. Image-typed custom
-// fields (U_) are future work. The static Resume / input types derive from the catalog (ADR-0019).
+// raw strings. Multi-select Option read returns every selected alias as `string[]` (ADR-0017).
+// Image-typed custom fields (U_) are future work. The static Resume / input types derive from the catalog (ADR-0019).
 
 import type { Requester } from "../http/requester";
 import {

@@ -44,8 +44,8 @@
 
 ## 🧹 小さな整理（技術的負債）
 
-- [ ] `src/resources/{job,process,resume}.ts` のコメント「Multi-select Option read returns the first alias only」が実装と不一致（`decodeOption` は全 alias を返す = ADR-0017 既反映・`decode.test.ts` で担保）。コメントを実態に合わせる
-- [ ] メモリ `field-type-fidelity-followup` の更新（Option 複数選択は解消済み）
+- [x] `src/resources/{job,process,resume}.ts` のコメント「first alias only」を実態（全 alias を `string[]` で返す・ADR-0017）に修正
+- [x] メモリ `field-type-fidelity-followup` の更新（Option 複数選択・ラベル distinct 化は解消済み／残は per-type 値検証）
 - [x] 初期 scaffold 資料（SPEC_v1 / KICKOFF_PROMPT）を `docs/history/` へ移設（PR #50）
 
 ## 🚀 将来の機能アップ（Non-Goals / Future）

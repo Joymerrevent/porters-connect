@@ -7,8 +7,8 @@
 // Display-only Reference fields (P_JobOwner, P_Job*Reference, P_ResumeOwner,
 // P_Resume*Reference — they mirror a Job/Recruiter/Person value and are not writable) are
 // intentionally left out of the catalog: scalar mirrors read through as raw strings,
-// nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns
-// the first alias only. The static Process / input types derive from the catalog (ADR-0019).
+// nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns every
+// selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
 import type { Requester } from "../http/requester";
 import {

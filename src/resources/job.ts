@@ -4,8 +4,8 @@
 //
 // Display-only Reference fields (P_Mail, P_*Reference — they mirror a Recruiter value and
 // are not writable) are intentionally left out of the catalog: they read through as raw
-// strings. Multi-select Option read returns the first alias only (full multi-Option is
-// future work). The static Job / input types derive from the catalog (ADR-0019).
+// strings. Multi-select Option read returns every selected alias as `string[]` (ADR-0017).
+// The static Job / input types derive from the catalog (ADR-0019).
 
 import type { Requester } from "../http/requester";
 import {
