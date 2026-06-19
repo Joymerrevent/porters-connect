@@ -6,6 +6,8 @@ updates:
   # npm 依存。minor/patch は dev/prod ごとにまとめて PR ノイズを抑える（major は個別 PR）。
   - package-ecosystem: "npm"
     directory: "/"
+    # 依存更新 PR は開発統合ブランチ develop に向ける（git-flow。main は release で受ける）。
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -27,6 +29,7 @@ updates:
   # GitHub Actions のバージョン更新（ランナー強制移行に先回り）。
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす
