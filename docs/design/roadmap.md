@@ -63,10 +63,10 @@
 
 ### WS-B. 開発体験・ローカルゲート
 
-- [ ] `.editorconfig`
-- [ ] **pre-commit 導入**（薄い構成：`simple-git-hooks` ＋ `lint-staged`、または lefthook）。旧記載の「pre-commit あり」は誤りで未導入だったため、ここで正式導入する
-- [ ] commitlint（`@commitlint/config-conventional`）＝ Conventional Commits をローカル＋CI で強制
-- 定型セットアップは `project-recipes` スキルのレシピを優先活用
+- [x] `.editorconfig`
+- [x] **pre-commit 導入**（薄い構成：`simple-git-hooks` ＋ `lint-staged`）。旧記載の「pre-commit あり」は誤りで未導入だったため、ここで正式導入した
+- [x] commitlint（`@commitlint/config-conventional`）を**ローカル**（commit-msg フック）で強制。**CI ジョブは WS-C**
+- 定型セットアップは `project-recipes` スキルで codify 予定（既存 `git-hooks` は core.hooksPath 方式のため、simple-git-hooks 方式は別レシピ化）
 
 ### WS-C. CI/CD ハードニング
 
