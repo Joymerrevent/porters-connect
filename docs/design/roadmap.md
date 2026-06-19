@@ -53,13 +53,13 @@
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
-- [ ] `SECURITY.md`（報告窓口・非公式の免責）＋ GitHub private vulnerability reporting 有効化
-- [ ] `CONTRIBUTING.md`（git-flow／Conventional Commits／pnpm／コーディング規約 [ADR-0013][p13]／公開サーフェスは英語・内部コメント日本語可／契約＋Connect API オプション契約が必要・非公式／PR はメンテナがマージ）
-- [ ] `.github/ISSUE_TEMPLATE/`（bug / feature の Issue Forms ＋ `config.yml`）
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md`（全ゲート green／決定を伴うなら ADR／秘匿情報なし）
-- [ ] `.github/CODEOWNERS`
-- [ ] `CODE_OF_CONDUCT.md`（Contributor Covenant・任意）
-- [ ] README に「Contributing／セキュリティ報告／非公式の免責」節
+- [x] `SECURITY.md`（報告窓口・非公式の免責）＋ GitHub private vulnerability reporting 有効化
+- [x] `CONTRIBUTING.md`（git-flow／Conventional Commits／pnpm／コーディング規約 [ADR-0013][p13]／公開サーフェスは英語・内部コメント日本語可／契約＋Connect API オプション契約が必要・非公式／PR はメンテナがマージ）
+- [x] `.github/ISSUE_TEMPLATE/`（bug / feature の Issue Forms ＋ `config.yml`）
+- [x] `.github/PULL_REQUEST_TEMPLATE.md`（全ゲート green／決定を伴うなら ADR／秘匿情報なし）
+- [x] `.github/CODEOWNERS`
+- [x] `CODE_OF_CONDUCT.md`（Contributor Covenant）
+- [x] README に「Contributing／セキュリティ報告／非公式の免責」節
 
 ### WS-B. 開発体験・ローカルゲート
 

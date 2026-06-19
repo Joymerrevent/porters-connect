@@ -1,0 +1,59 @@
+name: バグ報告
+description: ライブラリの不具合を報告する（PORTERS 製品・API 本体の不具合は対象外）
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **非公式ライブラリです。** PORTERS 製品・Connect API 本体の不具合は PORTERS 公式へ。
+        ここは `@joymerrevent/porters-connect`（ライブラリ）のバグ専用です。
+  - type: textarea
+    id: what
+    attributes:
+      label: 症状
+      description: 何が起きたか
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順
+      description: 最小の再現コード・手順。可能なら createMockTransport を使った再現が望ましい
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ライブラリのバージョン
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js のバージョン
+      placeholder: "20.x"
+    validations:
+      required: true
+  - type: dropdown
+    id: env
+    attributes:
+      label: 実行環境
+      options:
+        - 実 PORTERS 契約あり（実 API）
+        - 契約なし（createMockTransport / オフライン）
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: エラー / ログ
+      description: スタックトレースやエラーメッセージ（秘匿情報は伏せてください）
+      render: shell
