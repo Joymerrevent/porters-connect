@@ -1,6 +1,6 @@
 # @joymerrevent/porters-connect
 
-[![License: MIT][mit-badge]][mit] ![Node >= 18][node-badge]
+[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 18][node-badge]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
 [Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。
@@ -34,11 +34,18 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 ## インストール
 
 ```sh
+# npm
 npm i @joymerrevent/porters-connect
-# pnpm add / yarn add も可
+
+# pnpm
+pnpm add @joymerrevent/porters-connect
+
+# yarn
+yarn add @joymerrevent/porters-connect
 ```
 
-- Node.js 18+（ESM）。TypeScript 同梱の型定義。
+- Node.js 18+（ESM）。TypeScript 型定義（`.d.ts`）同梱。
+- 公開先：[npm（`@joymerrevent/porters-connect`）][npm]。
 
 ## クイックスタート
 
@@ -315,6 +322,8 @@ try {
 
 [MIT][mit] © Joymerrevent
 
+[npm]: https://www.npmjs.com/package/@joymerrevent/porters-connect
+[npm-badge]: https://img.shields.io/npm/v/@joymerrevent/porters-connect
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
