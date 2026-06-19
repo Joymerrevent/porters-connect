@@ -64,9 +64,12 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "mutation": "stryker run",
-    "sandbox": "tsx examples/offline-sandbox.ts"
+    "sandbox": "tsx examples/offline-sandbox.ts",
+    "prepare": "simple-git-hooks"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^10.0.1",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
@@ -74,8 +77,10 @@
     "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
+    "lint-staged": "^17.0.7",
     "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.4",
+    "simple-git-hooks": "^2.13.1",
     "tsup": "^8.5.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
@@ -84,6 +89,23 @@
   },
   "dependencies": {
     "fast-xml-parser": "^5.9.2"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged",
+    "commit-msg": "pnpm exec commitlint --edit \"$1\""
+  },
+  "lint-staged": {
+    "*.{ts,tsx,cts,mts,js,jsx,cjs,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix",
+      "prettier --write"
+    ]
   },
   "pnpm": {
     "overrides": {
