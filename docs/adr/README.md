@@ -1,7 +1,7 @@
 # Architecture Decision Records (ADR)
 
 このディレクトリは `@joymerrevent/porters-connect` の設計判断を、決めた理由ごと残す場所です。
-`SPEC_v1.md` は**素案**であり、ここで議論・確定した内容が正となります。
+`docs/history/SPEC_v1.md` は**素案**であり、ここで議論・確定した内容が正となります。
 
 ## ADR とは
 

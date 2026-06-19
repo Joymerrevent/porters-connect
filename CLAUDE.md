@@ -2,7 +2,7 @@
 
 このファイルは Claude Code がこのリポジトリで作業する際に常時参照する規約です。
 設計の正は `docs/`（要件・基本設計: `docs/design/` ／ 決定: `docs/adr/` ／ API 事実: `docs/reference/`）を参照してください。
-`SPEC_v1.md` は初期の素案（superseded・将来削除予定）で、歴史的経緯としてのみ残置しています。
+`docs/history/SPEC_v1.md` は初期の素案（superseded・将来削除予定）で、歴史的経緯としてのみ残置しています。
 
 ---
 
