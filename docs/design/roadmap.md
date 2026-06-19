@@ -40,8 +40,8 @@
 
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
-- [ ] **npm アカウント作成 ＋ `@joymerrevent` 組織作成**（要 npm アカウント・[PRD §8][prd] の未確定事項）
-- [ ] 初版 **`pnpm publish` ＋ GitHub Release**（上記アカウント/組織の準備後・手順は [release-runbook][rb]）
+- [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成**
+- [x] 初版 **`pnpm publish` ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 

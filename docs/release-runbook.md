@@ -45,7 +45,7 @@
 ## 現在の状況（0.1.0）
 
 - ✅ `version` 0.1.0 ／ `CHANGELOG.md`（npm 同梱）／ `v0.1.0` タグ ／ main・develop マージ（git-flow）
-- ⏸ **npm publish ＋ GitHub Release** — npm アカウント＋`@joymerrevent` 組織の準備待ち（手順 0）
+- ✅ **npm publish ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
 
 ## 関連
 
