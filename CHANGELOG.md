@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-19
+
+メンテナンスリリース。**公開 API・実行コードの変更はありません**（`src/` 変更なし）。
+主に依存の更新とドキュメント整備です。
+
+### Changed
+
+- 依存 `fast-xml-parser` の下限を `^5.8.0` → `^5.9.2` に更新。
+- README に npm バッジとインストール手順（npm / pnpm / yarn）を追加。
+
+### Security
+
+- 開発依存（推移的）の脆弱性 4 件を解消（`js-yaml` / `markdown-it` / `esbuild` / `qs` を `pnpm.overrides` でパッチ版に固定）。**開発・ビルド時のみの依存で、公開物（`dist/`）には影響しません。**
+
 ## [0.1.0] - 2026-06-19
 
 初回リリース。PORTERS Connect API（旧 HRBC）を型安全・簡単に扱う**非公式** TypeScript ラッパー。
@@ -28,5 +42,6 @@
 [guide]: docs/guide/error-handling.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Joymerrevent/porters-connect/releases/tag/v0.1.0
