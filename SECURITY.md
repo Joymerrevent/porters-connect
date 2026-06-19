@@ -17,10 +17,7 @@
 
 ## 報告方法
 
-**公開 Issue では報告しないでください。** 次のいずれかでお願いします。
-
-1. **GitHub の private vulnerability reporting**（推奨）：リポジトリの **Security → Report a vulnerability** から非公開で報告。
-2. メール：<shiromoto_jun@joymerrevent.com>
+**公開 Issue では報告しないでください。** リポジトリの **Security → Report a vulnerability**（GitHub の private vulnerability reporting）から**非公開で**報告してください。
 
 報告には、影響範囲・再現手順・想定される攻撃シナリオ・対象バージョンを含めてください。
 
