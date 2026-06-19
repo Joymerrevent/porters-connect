@@ -36,10 +36,13 @@
 
 ## 🔜 リリースに向けた残タスク
 
-- [ ] `version` 確定（現 `0.0.0` → 初版番号）。semver。
-- [ ] CHANGELOG 作成（Keep a Changelog・`github-release` スキル）
+手順は [release-runbook][rb]。自動化の検討は [ADR-0025][adr25]（0.2.0 以降）。
+
+- [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
+- [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
+- [ ] **npm アカウント作成 ＋ `@joymerrevent` 組織作成**（要 npm アカウント・[PRD §8][prd] の未確定事項）
+- [ ] 初版 **`pnpm publish` ＋ GitHub Release**（上記アカウント/組織の準備後・手順は [release-runbook][rb]）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
-- [ ] 初版 npm publish（`publishConfig.access:"public"` は設定済み・公開操作のみ）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧹 小さな整理（技術的負債）
@@ -72,6 +75,8 @@
 - 歴史的経緯: [docs/history][history]
 
 [prd]: requirements.md
+[rb]: ../release-runbook.md
+[adr25]: ../adr/0025-release-automation.md
 [adr]: ../adr/README.md
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
