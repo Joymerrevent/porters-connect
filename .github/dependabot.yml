@@ -1,10 +1,35 @@
-# GitHub Actions のバージョン更新を自動 PR 化する（dependabot レシピが配布）。
-# 新バージョンの検知 → PR 作成 → CI 検証を GitHub 側で完結させ、
-# ランナー環境の強制移行（例: Node.js 20 廃止）にも先回りで気づけるようにする。
+# Dependabot 設定（version updates）。npm 依存と GitHub Actions の参照バージョンを
+# 定期的に PR 化して新しく保つ。脆弱性の自動修正 PR（security updates）は
+# リポジトリ設定のトグルで有効化しており、これと併用して穴を塞ぐ。
 version: 2
 updates:
+  # npm 依存。minor/patch は dev/prod ごとにまとめて PR ノイズを抑える（major は個別 PR）。
+  - package-ecosystem: "npm"
+    directory: "/"
+    # 依存更新 PR は開発統合ブランチ develop に向ける（git-flow。main は release で受ける）。
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      prod-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+
+  # GitHub Actions のバージョン更新（ランナー強制移行に先回り）。
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす
