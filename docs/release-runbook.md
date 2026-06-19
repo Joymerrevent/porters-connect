@@ -1,0 +1,59 @@
+# リリース手順書（runbook）
+
+- ステータス: living（**手運用**。自動化の方式は [ADR-0025][adr25] で検討中・0.2.0 以降）
+- 位置づけ: 0.1.x の手動リリース手順チェックリスト。npm セットアップ〜公開〜GitHub Release まで。
+- コマンドは **pnpm** で統一（`npm` は使わない）。
+
+## 0. 初回のみ：npm セットアップ
+
+- [ ] **npm アカウント作成**（<https://www.npmjs.com/>）＋メール認証
+  - username は**変更不可**（永続）なので慎重に。ただし公開パッケージ名には出ない（出るのは組織 `@joymerrevent`）。
+- [ ] **2 要素認証(2FA)** を有効化（推奨。publish 時に OTP を要求される）
+- [ ] **`@joymerrevent` 組織を npm 上で作成**（Free プラン＝公開パッケージは無料）。自分に publish 権限があること。
+  - スコープ付き `@joymerrevent/porters-connect` は、npm 側に `@joymerrevent` 組織が無いと publish 不可（[PRD §8][prd] の未確定事項）。
+- [ ] `pnpm login`（ローカル認証。CI 化する場合は `NPM_TOKEN`）
+
+## 1. リリース準備（git-flow・develop 上）
+
+- [ ] CHANGELOG の `## [Unreleased]` を `## [X.Y.Z] - YYYY-MM-DD` に確定し、空の `[Unreleased]` を再設置。末尾リンク定義を更新
+- [ ] `package.json` の `version` を `X.Y.Z` に bump
+- [ ] `release/X.Y.Z` ブランチを切ってコミット
+- [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
+
+## 2. main へマージ＋タグ
+
+- [ ] PR `release/X.Y.Z` → `main`（**merge commit**・squash しない＝履歴保持）
+- [ ] `git checkout main && git pull`
+- [ ] `git tag -a vX.Y.Z -m "porters-connect X.Y.Z"` → `git push origin vX.Y.Z`
+- [ ] `main` → `develop` へ back-merge して push（version/CHANGELOG を develop に戻す）
+
+## 3. npm 公開
+
+- [ ] `git checkout main && git pull`
+- [ ] `pnpm install && pnpm build`（公開物は `dist/`＝ビルド必須）
+- [ ] 中身確認: `pnpm pack --pack-destination /tmp` → `tar -tzf /tmp/joymerrevent-porters-connect-X.Y.Z.tgz`
+  - 期待: `dist/` ＋ `CHANGELOG.md` ＋ `README.md` ＋ `LICENSE` ＋ `package.json`
+- [ ] `pnpm publish`（`publishConfig.access:"public"` 設定済み。2FA なら OTP 入力）
+- [ ] 確認: `npm view @joymerrevent/porters-connect version` ／ npmjs.com のページ
+- ⚠️ **公開した版は上書き不可**。修正は必ず新バージョンで（`unpublish` は厳しく制限・非推奨）。
+
+## 4. GitHub Release
+
+- [ ] `gh release create vX.Y.Z --title "X.Y.Z" --notes "<CHANGELOG の該当節>"`
+  - npm 公開と**一緒に出す**（npm に無いのに Release だけ出すと利用者が `install` できず混乱するため）。
+
+## 現在の状況（0.1.0）
+
+- ✅ `version` 0.1.0 ／ `CHANGELOG.md`（npm 同梱）／ `v0.1.0` タグ ／ main・develop マージ（git-flow）
+- ✅ **npm publish ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
+
+## 関連
+
+- 現況/残タスク: [roadmap][rm]
+- 自動化の検討: [ADR-0025][adr25]（決定まではこの手運用が暫定）
+- 変更履歴: [CHANGELOG][cl]
+
+[prd]: design/requirements.md
+[rm]: design/roadmap.md
+[adr25]: adr/0025-release-automation.md
+[cl]: ../CHANGELOG.md
