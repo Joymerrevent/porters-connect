@@ -1,6 +1,6 @@
 # 27. リリース前ゲート（release readiness）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-20
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -50,7 +50,7 @@
 
 ## Decision Outcome
 
-未決（proposed）。
+**決定（accepted・2026-06-20）：ハイブリッドを採用。** SECURITY は版番号を撤去（案C）し、publint・attw・CHANGELOG 版エントリ・README バッジ↔engines を **CI 必須ゲート（案A）**で守る。案B（自動更新）は低頻度には過剰として不採用。理由は下記「推奨」のとおり。
 
 ### 推奨（私案）：ハイブリッド（消す ＋ 検査する）
 
@@ -68,7 +68,15 @@
 
 ### Consequences
 
-- （決定後に記入）
+実装は**別 PR**（ADR と分離）：
+
+- **`SECURITY.md`**：「対応バージョン」表を撤去し「最新リリース版のみサポート」と一般化（版番号を持たない＝ドリフト源を断つ）。
+- **README Node バッジ**：alt text を `engines` に合わせて修正（現在の漏れ）。
+- **CI 必須ゲート追加**（devDep ＋ ステップ）：
+  - `publint`（公開正当性）。
+  - `@arethetypeswrong/cli`（型解決）。`cjs-resolves-to-esm` を `ignoreRules` で除外（ESM-only の設計どおり）。
+  - 小スクリプト：CHANGELOG に現 version の `## [X.Y.Z]` 節があるか／README Node バッジが `engines.node` と一致するか。
+- 見送り（将来）：install スモーク・tarball 検査・link-check・Actions SHA ピン留め。
 
 ## Pros and Cons of the Options
 
