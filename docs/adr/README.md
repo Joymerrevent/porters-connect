@@ -57,6 +57,7 @@
 | [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
 | [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | accepted   |
 | [0027][0027] | リリース前ゲート（整合性・公開正当性）                      | プロセス | accepted   |
+| [0028][0028] | CI のパスベース最適化（docs skip）                          | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -115,3 +116,4 @@
 [0025]: 0025-release-automation.md
 [0026]: 0026-changelog-format.md
 [0027]: 0027-release-readiness-gate.md
+[0028]: 0028-ci-path-filtering.md
