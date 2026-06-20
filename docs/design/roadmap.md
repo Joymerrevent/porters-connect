@@ -77,8 +77,10 @@
 
 ### WS-D. リリース自動化（[ADR-0025][adr25]）
 
-- [ ] ADR-0025 に推奨を執筆（proposed）→ stakeholder 決定（accepted）
-- [ ] accepted 後：publish ワークフロー（`NPM_TOKEN`＋provenance）実装・[release-runbook][rb] 更新・必要ならブランチ戦略簡素化
+- [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
+- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）
+- [ ] `NPM_TOKEN` 発行＋CI secret 登録 → `changesets/action` ワークフロー（Version Packages PR 維持＋publish 自動化・provenance）
+- [ ] 最初の `changeset version` で CHANGELOG 形式を確定／[release-runbook][rb] を changesets ベースに更新
 
 ## 🧹 小さな整理（技術的負債）
 

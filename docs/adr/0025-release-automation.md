@@ -1,7 +1,7 @@
 # 25. CI/CD リリース自動化戦略（version / CHANGELOG / tag / publish）
 
-- Status: proposed
-- Date: 2026-06-19
+- Status: accepted
+- Date: 2026-06-19（accepted: 2026-06-20）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > **起票のみ（忘備）**。0.1.0 は手運用でリリースし、**0.2.0 以降の自動化方式を本 ADR で決める**。
@@ -45,7 +45,11 @@ CHANGELOG の作り方:
 
 ## Decision Outcome
 
-**未決（proposed）。0.1.0 手動リリース後に下記から確定する。** 現時点の**暫定の論点整理**（議論用・確定ではない）:
+**決定（accepted・2026-06-20）：案2 changesets を採用し、git-flow は維持する。**
+
+日本語 curated CHANGELOG を保ち、出す時期を人が握れる（deliberate）、直近整備した git-flow / Dependabot→develop / 保護ルールを作り替えない、を重視した結果。代償は変更ごとの changeset ファイル 1 枚（許容）。release-please は ceremony 最小だが、CHANGELOG が commit 導出で curation が弱く、GitHub-flow への作り替えを伴うため不採用。semantic-release（全自動 publish）・手運用継続・自前 Action も不採用。
+
+実装・運用は「### Consequences」を参照。以下は決定に至った論点整理（記録）:
 
 - deliberate（出す時期を握る）＋日本語 curated CHANGELOG を重視 → **案2 changesets** か **案1 release-please** が有力。
   - changesets: CHANGELOG を著述できる（日本語・curated）。代償は per-PR の changeset ファイル。
@@ -78,7 +82,13 @@ CHANGELOG の作り方:
 
 ### Consequences
 
-- （決定後に記入）
+- **ツール**: `@changesets/cli` を devDep に追加。`.changeset/` に変更ごとの changeset（bump 種別＋日本語説明）を置く。
+- **git-flow との統合**: `baseBranch` は `develop`。フィーチャ PR に `.changeset/*.md` を入れて develop に蓄積 → リリース時に `changeset version`（version bump＋CHANGELOG 生成＋changeset 消費）→ release ブランチ経由で main へマージ → main で `changeset publish`。runbook §2〜3 を changesets ベースに置換する。
+- **CHANGELOG**: changesets が生成する形式と、既存の Keep a Changelog 形式（`[Unreleased]`＋日付節）との整合は**最初の `changeset version` 時に確定**する（changesets 形式へ寄せる or custom changelog generator で現行形式を保つ）。＝実装時の小決定。
+- **publish/CI**: `changesets/action` ＋ `NPM_TOKEN`（CI secret）＋ npm provenance で「Version Packages PR 維持＋publish」を自動化。**NPM_TOKEN 発行は別途必要**。
+- **ブランチ戦略は不変**（git-flow 維持）。GitHub-flow 化はしない。
+
+> 実装フォローアップ: (1) `@changesets/cli` 導入＋設定＋scripts、(2) NPM_TOKEN 発行＋CI secret 登録、(3) `changesets/action` ワークフロー、(4) CHANGELOG 形式の確定、(5) runbook 更新。
 
 ## Pros and Cons of the Options
 
