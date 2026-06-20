@@ -28,7 +28,7 @@
   },
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "packageManager": "pnpm@10.29.3",
   "main": "./dist/index.js",
@@ -59,7 +59,7 @@
     "format:md": "prettier --write \"**/*.md\"",
     "format:md:check": "prettier --check \"**/*.md\"",
     "typecheck": "tsc --noEmit",
-    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node18",
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node20",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

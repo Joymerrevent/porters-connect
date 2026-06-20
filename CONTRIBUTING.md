@@ -19,7 +19,7 @@
 
 ## 開発環境
 
-- Node.js 18+ / **pnpm**（npm ではなく pnpm を使用）。
+- Node.js 20+ / **pnpm**（npm ではなく pnpm を使用）。
 
 ```sh
 pnpm install

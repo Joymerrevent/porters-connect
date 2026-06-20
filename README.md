@@ -44,7 +44,7 @@ pnpm add @joymerrevent/porters-connect
 yarn add @joymerrevent/porters-connect
 ```
 
-- Node.js 18+（ESM）。TypeScript 型定義（`.d.ts`）同梱。
+- Node.js 20+（ESM）。TypeScript 型定義（`.d.ts`）同梱。
 - 公開先：[npm（`@joymerrevent/porters-connect`）][npm]。
 
 ## クイックスタート
@@ -334,7 +334,7 @@ try {
 [npm-badge]: https://img.shields.io/npm/v/@joymerrevent/porters-connect
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
-[node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
+[node-badge]: https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg
 [joymerrevent]: https://github.com/Joymerrevent
 [contributing]: ./CONTRIBUTING.md
 [security]: ./SECURITY.md
