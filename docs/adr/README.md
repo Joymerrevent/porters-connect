@@ -56,6 +56,7 @@
 | [0024][0024] | テスト/評価用の公開モックトランスポート（R-17/R-12）        | 詳細設計 | accepted   |
 | [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
 | [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | accepted   |
+| [0027][0027] | バージョン連動文書のドリフト対策                            | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -113,3 +114,4 @@
 [0024]: 0024-mock-transport.md
 [0025]: 0025-release-automation.md
 [0026]: 0026-changelog-format.md
+[0027]: 0027-version-doc-drift.md
