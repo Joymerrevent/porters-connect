@@ -70,9 +70,9 @@
 
 ### WS-C. CI/CD ハードニング
 
-- [ ] CodeQL（コードスキャン）ワークフロー
-- [ ] commitlint の CI ジョブ
-- [ ] （任意）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）／テスト Node マトリクス（18/20/22）
+- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
+- [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲を検査）
+- [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）／テスト Node マトリクス（18/20/22）
 
 ### WS-D. リリース自動化（[ADR-0025][adr25]）
 
