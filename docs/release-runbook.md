@@ -27,15 +27,15 @@
 - [ ] `git tag -a vX.Y.Z -m "porters-connect X.Y.Z"` → `git push origin vX.Y.Z`
 - [ ] `main` → `develop` へ back-merge して push（version/CHANGELOG を develop に戻す）
 
-## 3. npm 公開
+## 3. npm 公開（タグ push で自動・OIDC Trusted Publishing）
 
-- [ ] `git checkout main && git pull`
-- [ ] `pnpm install && pnpm build`（公開物は `dist/`＝ビルド必須）
-- [ ] 中身確認: `pnpm pack --pack-destination /tmp` → `tar -tzf /tmp/joymerrevent-porters-connect-X.Y.Z.tgz`
-  - 期待: `dist/` ＋ `CHANGELOG.md` ＋ `README.md` ＋ `LICENSE` ＋ `package.json`
-- [ ] `pnpm publish`（`publishConfig.access:"public"` 設定済み。2FA なら OTP 入力）
+§2 で `git push origin vX.Y.Z` した時点で **`.github/workflows/release.yml` が起動し、OIDC で npm に publish** される（**NPM_TOKEN 不要**・provenance 自動・手動 publish 不要）。
+
+- [ ] Actions の **Release** ワークフローが green を確認
 - [ ] 確認: `npm view @joymerrevent/porters-connect version` ／ npmjs.com のページ
 - ⚠️ **公開した版は上書き不可**。修正は必ず新バージョンで（`unpublish` は厳しく制限・非推奨）。
+- 前提（初回のみ）: npmjs.com の該当パッケージ → **Settings → Trusted Publisher** に GitHub Actions（org `Joymerrevent` ／ repo `porters-connect` ／ workflow `release.yml`）を登録済みであること。
+- 失敗時の定番: `E404`（scoped）は npm < 11.5.1 が原因 → ワークフローは `npm@latest` に更新してから publish している。
 
 ## 4. GitHub Release
 

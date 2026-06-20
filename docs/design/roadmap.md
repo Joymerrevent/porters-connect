@@ -79,7 +79,7 @@
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）
-- [ ] `NPM_TOKEN` 発行＋CI secret 登録 → `changesets/action` ワークフロー（Version Packages PR 維持＋publish 自動化・provenance）
+- [x] publish ワークフロー `release.yml`（タグ push で **OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）→ 残: **npm 側で信頼登録**（org `Joymerrevent`／repo `porters-connect`／workflow `release.yml`）＝ユーザー操作
 - [ ] 最初の `changeset version` で CHANGELOG 形式を確定／[release-runbook][rb] を changesets ベースに更新
 
 ## 🧹 小さな整理（技術的負債）
