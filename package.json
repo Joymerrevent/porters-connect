@@ -65,9 +65,13 @@
     "test:coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "sandbox": "tsx examples/offline-sandbox.ts",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "pnpm build && changeset publish",
     "prepare": "simple-git-hooks"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^10.0.1",
