@@ -55,7 +55,7 @@
 | [0023][0023] | カスタム項目宣言 DSL（`defineFields`）の詳細設計（R-16）    | 詳細設計 | accepted   |
 | [0024][0024] | テスト/評価用の公開モックトランスポート（R-17/R-12）        | 詳細設計 | accepted   |
 | [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
-| [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | proposed   |
+| [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
