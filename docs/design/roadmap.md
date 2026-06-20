@@ -72,7 +72,8 @@
 
 - [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲を検査）
-- [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）／テスト Node マトリクス（18/20/22）
+- [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
+- [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
 
 ### WS-D. リリース自動化（[ADR-0025][adr25]）
 

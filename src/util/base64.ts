@@ -1,6 +1,6 @@
 // Opt-in binary <-> Base64 helpers for Attachment / Image content (ADR-0018). The
 // resource core takes a Base64 string; these let callers convert raw bytes without a
-// dependency. `btoa` / `atob` are globals on Node 18+ and browsers.
+// dependency. `btoa` / `atob` are globals on Node 20+ and browsers.
 
 /** Encode raw bytes to a Base64 string. */
 export const bytesToBase64 = (bytes: Uint8Array): string => {
