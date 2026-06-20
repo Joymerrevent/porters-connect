@@ -1,7 +1,7 @@
 # 25. CI/CD リリース自動化戦略（version / CHANGELOG / tag / publish）
 
-- Status: proposed
-- Date: 2026-06-19
+- Status: accepted
+- Date: 2026-06-19（accepted: 2026-06-20）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > **起票のみ（忘備）**。0.1.0 は手運用でリリースし、**0.2.0 以降の自動化方式を本 ADR で決める**。
@@ -45,7 +45,11 @@ CHANGELOG の作り方:
 
 ## Decision Outcome
 
-**未決（proposed）。0.1.0 手動リリース後に下記から確定する。** 現時点の**暫定の論点整理**（議論用・確定ではない）:
+**決定（accepted・2026-06-20）：案2 changesets を採用し、git-flow は維持する。**
+
+日本語 curated CHANGELOG を保ち、出す時期を人が握れる（deliberate）、直近整備した git-flow / Dependabot→develop / 保護ルールを作り替えない、を重視した結果。代償は変更ごとの changeset ファイル 1 枚（許容）。release-please は ceremony 最小だが、CHANGELOG が commit 導出で curation が弱く、GitHub-flow への作り替えを伴うため不採用。semantic-release（全自動 publish）・手運用継続・自前 Action も不採用。
+
+実装・運用は「### Consequences」を参照。以下は決定に至った論点整理（記録）:
 
 - deliberate（出す時期を握る）＋日本語 curated CHANGELOG を重視 → **案2 changesets** か **案1 release-please** が有力。
   - changesets: CHANGELOG を著述できる（日本語・curated）。代償は per-PR の changeset ファイル。
@@ -55,12 +59,36 @@ CHANGELOG の作り方:
 - **ブランチ**: 案1〜3 はトランク/GitHub-flow 前提。採用するなら **git-flow → GitHub-flow への簡素化**を併せて検討（本決定の重要サブ論点）。
 - **publish/tag**: CI で `pnpm publish`（`NPM_TOKEN` ＋ provenance）。「誰が tag/Release を打つか」は採用ツールが内包する（→ 単独のタグ用 Action は不要になりやすい）。
 
+### 推奨（私案・proposed のまま／決定は stakeholder）
+
+0.1.0–0.1.1 を手運用でリリースした経験と、直近で **git-flow ＋ Dependabot→develop ＋ ブランチ保護**を整備した経緯、
+および**日本語 curated CHANGELOG 重視**を踏まえ、次を推奨する（**確定ではない**）。
+
+- **第1候補：案2 changesets（git-flow 維持）。** 理由：
+  - CHANGELOG を**日本語で著述・curated 維持**できる（北極星「質」に直結。コミット導出より読み物として強い）。
+  - **deliberate**＝"Version Packages" PR をマージした時だけ publish。契約ゲートのある本ライブラリの「出す時期を人が握る」方針に合致。
+  - **既存の git-flow を作り替えない**＝直近整備（Dependabot→develop・保護ルール・runbook）を無駄にしない。
+  - 代償：単一パッケージで per-PR の changeset ファイルがやや過剰（許容範囲）。
+- **対抗：案1 release-please（＋GitHub-flow へ簡素化）。** ceremony 最小を最優先するなら有力。
+  代償は**ブランチ戦略の作り替え**と **CHANGELOG が commit 導出＝curation 弱**。GitHub-flow 移行を別途許容できるなら採用価値あり。
+- **不採用寄り**：案3 semantic-release（main マージ＝自動 publish＝出す時期を握れない・契約ゲートと不整合）／
+  案5 手運用継続（頻度が上がると破綻）。案4 自前 Action は保守コスト。
+
+> この推奨は**私案であり未確定**。stakeholder が議論のうえ決定し、status を accepted に更新する。
+> changesets 採用なら git-flow 維持、release-please 採用ならブランチ戦略は別 ADR で GitHub-flow 化を検討。
+>
 > 決定時に accept へ更新し、選んだ方式に応じて CI ワークフロー・ブランチ運用・CHANGELOG 運用を反映する。
 > ブランチ戦略が重くなる場合は**別 ADR に分割**してよい。
 
 ### Consequences
 
-- （決定後に記入）
+- **ツール**: `@changesets/cli` を devDep に追加。`.changeset/` に変更ごとの changeset（bump 種別＋日本語説明）を置く。
+- **git-flow との統合**: `baseBranch` は `develop`。フィーチャ PR に `.changeset/*.md` を入れて develop に蓄積 → リリース時に `changeset version`（version bump＋CHANGELOG 生成＋changeset 消費）→ release ブランチ経由で main へマージ → main で `changeset publish`。runbook §2〜3 を changesets ベースに置換する。
+- **CHANGELOG**: changesets が生成する形式と、既存の Keep a Changelog 形式（`[Unreleased]`＋日付節）との整合は**最初の `changeset version` 時に確定**する（changesets 形式へ寄せる or custom changelog generator で現行形式を保つ）。＝実装時の小決定。
+- **publish/CI**: `changesets/action` ＋ `NPM_TOKEN`（CI secret）＋ npm provenance で「Version Packages PR 維持＋publish」を自動化。**NPM_TOKEN 発行は別途必要**。
+- **ブランチ戦略は不変**（git-flow 維持）。GitHub-flow 化はしない。
+
+> 実装フォローアップ: (1) `@changesets/cli` 導入＋設定＋scripts、(2) NPM_TOKEN 発行＋CI secret 登録、(3) `changesets/action` ワークフロー、(4) CHANGELOG 形式の確定、(5) runbook 更新。
 
 ## Pros and Cons of the Options
 

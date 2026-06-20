@@ -27,6 +27,8 @@
     "build",
     "coverage",
     ".claude",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    // changesets の生成 README と contributor が書く changeset(.md) は参照スタイル強制の対象外
+    ".changeset"
   ]
 }

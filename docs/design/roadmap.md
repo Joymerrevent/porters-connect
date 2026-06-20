@@ -30,7 +30,8 @@
 ### 基盤・記録
 
 - ADR 0001〜0024 すべて accepted（[索引][adr]）
-- CI（ci / mutation）＋ pre-commit ＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker
+- CI（ci / mutation）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker
+  （※ pre-commit は未導入。下記「🧱 基盤構築」WS-B で正式導入する）
 - 品質ゲート green・216 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜8 はすべて `fixed`）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
@@ -44,6 +45,42 @@
 - [x] 初版 **`pnpm publish` ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
+
+## 🧱 基盤構築（進行中）
+
+機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
+リリース自動化の決定は [ADR-0025][adr25]（proposed）。各項目は branch→PR で進め、マージはメンテナ。
+
+### WS-A. コミュニティ・ヘルス／ガバナンス
+
+- [x] `SECURITY.md`（報告窓口・非公式の免責）＋ GitHub private vulnerability reporting 有効化
+- [x] `CONTRIBUTING.md`（git-flow／Conventional Commits／pnpm／コーディング規約 [ADR-0013][p13]／公開サーフェスは英語・内部コメント日本語可／契約＋Connect API オプション契約が必要・非公式／PR はメンテナがマージ）
+- [x] `.github/ISSUE_TEMPLATE/`（bug / feature の Issue Forms ＋ `config.yml`）
+- [x] `.github/PULL_REQUEST_TEMPLATE.md`（全ゲート green／決定を伴うなら ADR／秘匿情報なし）
+- [x] `.github/CODEOWNERS`
+- [x] `CODE_OF_CONDUCT.md`（Contributor Covenant）
+- [x] README に「Contributing／セキュリティ報告／非公式の免責」節
+
+### WS-B. 開発体験・ローカルゲート
+
+- [x] `.editorconfig`
+- [x] **pre-commit 導入**（薄い構成：`simple-git-hooks` ＋ `lint-staged`）。旧記載の「pre-commit あり」は誤りで未導入だったため、ここで正式導入した
+- [x] commitlint（`@commitlint/config-conventional`）を**ローカル**（commit-msg フック）で強制。**CI ジョブは WS-C**
+- 定型セットアップは `project-recipes` スキルで codify 予定（既存 `git-hooks` は core.hooksPath 方式のため、simple-git-hooks 方式は別レシピ化）
+
+### WS-C. CI/CD ハードニング
+
+- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
+- [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲を検査）
+- [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
+- [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
+
+### WS-D. リリース自動化（[ADR-0025][adr25]）
+
+- [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
+- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）
+- [x] publish ワークフロー `release.yml`（タグ push で **OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）→ 残: **npm 側で信頼登録**（org `Joymerrevent`／repo `porters-connect`／workflow `release.yml`）＝ユーザー操作
+- [ ] 最初の `changeset version` で CHANGELOG 形式を確定／[release-runbook][rb] を changesets ベースに更新
 
 ## 🧹 小さな整理（技術的負債）
 
@@ -77,6 +114,7 @@
 [prd]: requirements.md
 [rb]: ../release-runbook.md
 [adr25]: ../adr/0025-release-automation.md
+[p13]: ../adr/0013-coding-conventions-class-vs-function.md
 [adr]: ../adr/README.md
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md

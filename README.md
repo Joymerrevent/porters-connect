@@ -44,7 +44,7 @@ pnpm add @joymerrevent/porters-connect
 yarn add @joymerrevent/porters-connect
 ```
 
-- Node.js 18+（ESM）。TypeScript 型定義（`.d.ts`）同梱。
+- Node.js 20+（ESM）。TypeScript 型定義（`.d.ts`）同梱。
 - 公開先：[npm（`@joymerrevent/porters-connect`）][npm]。
 
 ## クイックスタート
@@ -318,6 +318,14 @@ try {
 - 設計・決定の記録：[ADR][adr] ／ 基本設計：[docs/design][design] ／ API 事実：[docs/reference][ref]
 - 提供元：[Joymerrevent][joymerrevent]
 
+## コントリビュート / セキュリティ
+
+- バグ報告・要望・質問は [Issues][issues] へ（外部からの提案は Issue 経由・PR 作成はコラボレーター限定）。詳しくは [CONTRIBUTING][contributing]。
+- 脆弱性は公開 Issue ではなく [セキュリティポリシー][security] の手順で**非公開**で報告してください。
+- 行動規範：[Contributor Covenant][coc]。
+
+> 念のため：本ライブラリは**非公式**です。PORTERS 製品・Connect API 本体の不具合や要望は PORTERS 公式へお願いします。
+
 ## ライセンス
 
 [MIT][mit] © Joymerrevent
@@ -326,8 +334,12 @@ try {
 [npm-badge]: https://img.shields.io/npm/v/@joymerrevent/porters-connect
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
-[node-badge]: https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg
+[node-badge]: https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg
 [joymerrevent]: https://github.com/Joymerrevent
+[contributing]: ./CONTRIBUTING.md
+[security]: ./SECURITY.md
+[coc]: ./CODE_OF_CONDUCT.md
+[issues]: https://github.com/Joymerrevent/porters-connect/issues
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [error-handling]: ./docs/guide/error-handling.md
 [sandbox]: ./examples/offline-sandbox.ts

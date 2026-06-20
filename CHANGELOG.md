@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-20
+
+### Changed
+
+- **最低 Node を 20 に引き上げ**（`engines` を `>=20`、ビルド target を `node20`）。Node 18 は EOL かつ開発ツールチェーン（vitest / eslint）が非対応のため。利用には Node 20 以上が必要です。
+
 ## [0.1.1] - 2026-06-19
 
 メンテナンスリリース。**公開 API・実行コードの変更はありません**（`src/` 変更なし）。
@@ -42,6 +48,7 @@
 [guide]: docs/guide/error-handling.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Joymerrevent/porters-connect/releases/tag/v0.1.0

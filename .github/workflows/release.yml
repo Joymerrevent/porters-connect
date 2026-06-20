@@ -1,0 +1,49 @@
+name: Release
+
+# タグ push（vX.Y.Z）で npm に publish する。
+# 認証は OIDC Trusted Publishing（NPM_TOKEN 不要・provenance 自動付与）。
+# version / CHANGELOG は release ブランチで `pnpm changeset:version` 済みの前提
+# （手順は docs/release-runbook.md）。npm 側で本 repo ＋ `release.yml` の信頼登録が必要。
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write # OIDC（Trusted Publishing）に必須
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+
+      # OIDC Trusted Publishing は npm >= 11.5.1 が必須（Actions 同梱は 10.x）。
+      # 未満だと scoped package で誤解を招く E404（認証エラーではなく）になる既知問題。
+      - name: Upgrade npm for OIDC trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # NPM_TOKEN は使わない。id-token: write ＋ npm 側の信頼登録で OIDC 認証。
+      # pnpm/changesets の publish は OIDC で E404 報告があるため npm CLI を直叩きする。
+      - name: Publish to npm (OIDC trusted publishing)
+        run: npm publish --access public

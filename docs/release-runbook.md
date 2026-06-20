@@ -15,9 +15,11 @@
 
 ## 1. リリース準備（git-flow・develop 上）
 
-- [ ] CHANGELOG の `## [Unreleased]` を `## [X.Y.Z] - YYYY-MM-DD` に確定し、空の `[Unreleased]` を再設置。末尾リンク定義を更新
-- [ ] `package.json` の `version` を `X.Y.Z` に bump
-- [ ] `release/X.Y.Z` ブランチを切ってコミット
+- [ ] 各変更 PR に `pnpm changeset`（`.changeset/*.md`）が入っていること（変更の記録）
+- [ ] `release/X.Y.Z` ブランチを切る
+- [ ] **CHANGELOG を手書き**（ADR-0026・案B）: `.changeset/*.md` の要約を `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD` に転記（Added/Changed/Fixed/Security）。空の `[Unreleased]` 再設置・末尾の compare リンク更新
+- [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
+- [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
 
 ## 2. main へマージ＋タグ
@@ -27,15 +29,15 @@
 - [ ] `git tag -a vX.Y.Z -m "porters-connect X.Y.Z"` → `git push origin vX.Y.Z`
 - [ ] `main` → `develop` へ back-merge して push（version/CHANGELOG を develop に戻す）
 
-## 3. npm 公開
+## 3. npm 公開（タグ push で自動・OIDC Trusted Publishing）
 
-- [ ] `git checkout main && git pull`
-- [ ] `pnpm install && pnpm build`（公開物は `dist/`＝ビルド必須）
-- [ ] 中身確認: `pnpm pack --pack-destination /tmp` → `tar -tzf /tmp/joymerrevent-porters-connect-X.Y.Z.tgz`
-  - 期待: `dist/` ＋ `CHANGELOG.md` ＋ `README.md` ＋ `LICENSE` ＋ `package.json`
-- [ ] `pnpm publish`（`publishConfig.access:"public"` 設定済み。2FA なら OTP 入力）
+§2 で `git push origin vX.Y.Z` した時点で **`.github/workflows/release.yml` が起動し、OIDC で npm に publish** される（**NPM_TOKEN 不要**・provenance 自動・手動 publish 不要）。
+
+- [ ] Actions の **Release** ワークフローが green を確認
 - [ ] 確認: `npm view @joymerrevent/porters-connect version` ／ npmjs.com のページ
 - ⚠️ **公開した版は上書き不可**。修正は必ず新バージョンで（`unpublish` は厳しく制限・非推奨）。
+- 前提（初回のみ）: npmjs.com の該当パッケージ → **Settings → Trusted Publisher** に GitHub Actions（org `Joymerrevent` ／ repo `porters-connect` ／ workflow `release.yml`）を登録済みであること。
+- 失敗時の定番: `E404`（scoped）は npm < 11.5.1 が原因 → ワークフローは `npm@latest` に更新してから publish している。
 
 ## 4. GitHub Release
 

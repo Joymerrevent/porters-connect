@@ -1,0 +1,39 @@
+name: CodeQL
+
+# 公開リポジトリのコードスキャン（GitHub code scanning）。
+# JS/TS は CodeQL がビルド不要で抽出するため build ステップは不要。
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: "23 3 * * 1" # 毎週月曜 03:23 UTC のフルスキャン
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: codeql
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # スキャン結果のアップロードに必要
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
