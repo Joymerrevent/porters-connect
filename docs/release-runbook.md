@@ -15,9 +15,11 @@
 
 ## 1. リリース準備（git-flow・develop 上）
 
-- [ ] CHANGELOG の `## [Unreleased]` を `## [X.Y.Z] - YYYY-MM-DD` に確定し、空の `[Unreleased]` を再設置。末尾リンク定義を更新
-- [ ] `package.json` の `version` を `X.Y.Z` に bump
-- [ ] `release/X.Y.Z` ブランチを切ってコミット
+- [ ] 各変更 PR に `pnpm changeset`（`.changeset/*.md`）が入っていること（変更の記録）
+- [ ] `release/X.Y.Z` ブランチを切る
+- [ ] **CHANGELOG を手書き**（ADR-0026・案B）: `.changeset/*.md` の要約を `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD` に転記（Added/Changed/Fixed/Security）。空の `[Unreleased]` 再設置・末尾の compare リンク更新
+- [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
+- [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
 
 ## 2. main へマージ＋タグ
