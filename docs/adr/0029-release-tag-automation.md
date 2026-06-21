@@ -1,7 +1,7 @@
 # 29. リリースのタグ付け・back-merge 自動化
 
 - Status: accepted
-- Date: 2026-06-20（accepted: 2026-06-21）
+- Date: 2026-06-20（accepted: 2026-06-21／back-merge を案F→案H に改訂: 2026-06-21）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 発端：0.2.0 は release PR マージ後に `git tag` → push（→`release.yml` が OIDC publish）、
@@ -47,26 +47,30 @@
 
 ## Decision Outcome
 
-**決定（accepted・2026-06-21）：タグ＋publish ＝ 案B、back-merge ＝ 案F。**
+**決定：タグ＋publish ＝ 案B（accepted・2026-06-21）、back-merge ＝ 案H・手動（改訂・2026-06-21）。**
+
+> 当初 back-merge は案F（直 push・bypass）としたが、調査により **`GITHUB_TOKEN` は保護ブランチへ
+> 直 push できない**と判明（要 GitHub App / PAT）。トークンレス／フェイルセーフ方針に反するため **案H に改訂**。
 
 - **タグ：自動**（`push: main` で version にタグが無ければ作成・push）。
 - **Release：人 or CC が作成**（`gh release create`／UI）＝**意図的リリースゲート**。ユーザートークンなので `release: published` を起動する。
 - **publish：`release.yml` を `on: release: published` に変更**し OIDC publish。Trusted Publisher は workflow 名 `release.yml` 一致なのでトリガー変更の影響なし。
-- **back-merge：auto-tag ワークフローで develop へ直 push**（bypass actor）＝完全自動。
+- **back-merge：手動**（release 後に `git merge` 1ステップ・runbook §2）。設定変更・Secret 追加なし＝完全トークンレスを維持。
 
 理由：タグ忘れを自動で消し、Release 作成という意図的ゲートで「出す時期を人が握る」を保ち、全工程トークンレス。
 案A（マージ＝即 publish）より意図的で、Release 作成（どのみちやる作業）が publish の引き金になるためステップも増えない。
+back-merge は案F が `GITHUB_TOKEN` で実現不可・完全自動には GitHub App（秘密鍵 Secret＋ruleset 化）が要る＝方針に反するため、低頻度・低リスクの手動（案H）を採る。
 
 ### Consequences
 
 実装は**別 PR**：
 
-- **`tag.yml`（新規）**：`on: push: main`。package.json の version にタグが無ければ `vX.Y.Z` を作成・push。併せて **main→develop back-merge を develop へ直 push**（version/CHANGELOG 同期）。
+- **`tag.yml`（新規）**：`on: push: main`。package.json の version にタグが無ければ `vX.Y.Z` を作成・push（タグのみ。back-merge は含めない）。
 - **`release.yml`（変更）**：トリガーを `on: push: tags` → **`on: release: published`** に。OIDC publish は維持。
-- **設定（要・手動）**：develop の保護ルールに **Actions ボットの bypass actor を追加**（案F の直 push のため）。
-- **運用**：release PR を main にマージ → tag＋back-merge 自動 → 人/CC が Release 作成 → publish 自動。
+- **back-merge：手動**（runbook §2 の `git merge` 1ステップ）。設定変更・Secret 追加なし＝完全トークンレスを維持。
+- **運用**：release PR を main にマージ → tag 自動 → back-merge 手動 → 人/CC が Release 作成 → publish 自動。
 - **runbook 更新**：上記フローに。
-- 注意：back-merge を bypass で直 push＝ボットが develop 保護を迂回できる（用途は version/CHANGELOG 同期に限定・低リスク）。
+- 将来：back-merge を完全自動にしたくなったら GitHub App を導入（案F の再評価）。それまでは手動で十分。
 
 ## Pros and Cons of the Options
 
@@ -89,16 +93,20 @@
 
 - Bad: タグ忘れが残る（発端の不満）。
 
-### back-merge（案F 直 push / 案G 自動 PR / 案H 手動）
+### back-merge（案F 直 push / 案G 自動 PR / 案H 手動＝採用）
 
-- 案F: 完全自動・PR 不要。代償＝bypass actor が要る（保護を一部迂回）。
+- 案F: 完全自動だが **`GITHUB_TOKEN` は保護ブランチへ直 push 不可**＝実現に **GitHub App**（秘密鍵 Secret＋ruleset 化＋bypass 登録）が要る。トークンレス／フェイルセーフ方針に反する。
 - 案G: PR で見えるが `GITHUB_TOKEN` 製 PR は CI が走らず一手間。
-- 案H: 単純だが手作業が残る。
+- **案H（採用）**: 単純・追加ゼロ・完全トークンレス。手作業1ステップだがリリースは低頻度で許容。
 
 ## More Information
 
 - 落とし穴の出典：`GITHUB_TOKEN` による push / PR・Release 作成は他のワークフローを連鎖起動しない（GitHub 既知の仕様）。`gh release create` を CLI（ユーザートークン）で実行した場合は起動する。
+- back-merge を案H にした根拠：`GITHUB_TOKEN` は保護ブランチへ直 push できない（要 GitHub App / PAT）。出典 [Ninjaneers][s1]／[community #25305][s2]／[Mercari Engineering][s3]。
 - 関連: [ADR-0025][adr25]（リリース自動化）／ `release.yml`（OIDC Trusted Publishing）／ [release-runbook][rb]。
 
 [adr25]: 0025-release-automation.md
 [rb]: ../release-runbook.md
+[s1]: https://medium.com/ninjaneers/letting-github-actions-push-to-protected-branches-a-how-to-57096876850d
+[s2]: https://github.com/orgs/community/discussions/25305
+[s3]: https://engineering.mercari.com/en/blog/entry/20241217-github-branch-protection/
