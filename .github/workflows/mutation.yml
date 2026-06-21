@@ -32,9 +32,9 @@ jobs:
         id: changes
         if: github.event_name == 'pull_request' || github.event_name == 'push'
         with:
+          predicate-quantifier: "every" # 非 md かつ 非 docs のときだけ該当（ci.yml と同方針）
           filters: |
             code:
-              - "**"
               - "!**/*.md"
               - "!docs/**"
 
