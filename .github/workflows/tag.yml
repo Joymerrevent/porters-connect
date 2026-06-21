@@ -1,0 +1,48 @@
+name: Tag
+
+# release PR を main にマージしたら、package.json の version にタグが無ければ
+# vX.Y.Z を自動作成・push する（ADR-0029 案B）。タグ忘れを構造的に無くす。
+# タグ作成後、人 or CC が GitHub Release を作成 → release.yml が OIDC publish。
+#
+# 注意: GITHUB_TOKEN で push したタグは他のワークフローを起動しない（落とし穴A）。
+#       publish は Release イベント起点なので、これで問題ない。
+# back-merge（main→develop）はここには含めない。GITHUB_TOKEN は保護ブランチへ
+# 直 push できないため、別途（手動 or GitHub App）で対応する（ADR-0029 案F/案H）。
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # タグ作成・push に必要
+
+concurrency:
+  group: tag-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # 既存タグの有無を判定するため全履歴・全タグが要る
+
+      - name: Read package version
+        id: ver
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag if missing
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          tag="v${VERSION}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "タグ ${tag} は既に存在 → 何もしない（リリース以外の main push）。"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${tag}" -m "porters-connect ${VERSION}"
+          git push origin "${tag}"
+          echo "タグ ${tag} を作成・push。次に GitHub Release を作成すると publish されます。"
