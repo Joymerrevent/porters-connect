@@ -60,6 +60,7 @@
 | [0028][0028] | CI のパスベース最適化（docs skip）                          | プロセス | accepted   |
 | [0029][0029] | リリースのタグ付け・back-merge 自動化                       | プロセス | accepted   |
 | [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                       | プロセス | accepted   |
+| [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -121,3 +122,4 @@
 [0028]: 0028-ci-path-filtering.md
 [0029]: 0029-release-tag-automation.md
 [0030]: 0030-backmerge-method.md
+[0031]: 0031-version-number-validation.md
