@@ -49,6 +49,10 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # リリース連動文書の整合チェック（ADR-0027）。常時実行（README/CHANGELOG 変更も拾うため）。
+      - name: Release invariants
+        run: pnpm check:release
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
@@ -61,6 +65,11 @@ jobs:
       - name: Build
         if: steps.changes.outputs.code == 'true'
         run: pnpm build
+
+      # 公開物の正当性（exports/files/types）と型解決（ADR-0027）。build 後に検査。
+      - name: Check publish (publint + attw)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm check:publish
 
       # 公開依存（prod）の high 以上のみブロックする狭いゲート（フェイルセーフ）。
       - name: Audit (production deps, high+)

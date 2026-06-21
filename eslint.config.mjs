@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
+import globals from "globals";
 
 // ESLint flat config（format+lint レシピの lint 部分）。
 // 役割分担: 整形は Prettier、ここでは「型だけでは拾えないバグ・品質」を検出する。
@@ -40,6 +41,7 @@ export default tseslint.config(
   {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: { ...globals.node } },
   },
 
   // 整形に関するルールを無効化（Prettier と競合させない）。必ず最後に置く。
