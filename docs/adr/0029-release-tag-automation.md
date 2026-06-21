@@ -49,6 +49,8 @@
 
 **決定（accepted・2026-06-21）：タグ＋publish ＝ 案B、back-merge ＝ 案F。**
 
+> **［2026-06-21 追記・supersede］** back-merge＝案F は `GITHUB_TOKEN` が保護ブランチへ直 push できず**実現不可**と判明し、[ADR-0030][adr30] で **案H（手動）に superseded**。タグ＋publish ＝ 案B は不変。以下の案F 記述は当時の決定の記録として残す。
+
 - **タグ：自動**（`push: main` で version にタグが無ければ作成・push）。
 - **Release：人 or CC が作成**（`gh release create`／UI）＝**意図的リリースゲート**。ユーザートークンなので `release: published` を起動する。
 - **publish：`release.yml` を `on: release: published` に変更**し OIDC publish。Trusted Publisher は workflow 名 `release.yml` 一致なのでトリガー変更の影響なし。
@@ -101,4 +103,5 @@
 - 関連: [ADR-0025][adr25]（リリース自動化）／ `release.yml`（OIDC Trusted Publishing）／ [release-runbook][rb]。
 
 [adr25]: 0025-release-automation.md
+[adr30]: 0030-backmerge-method.md
 [rb]: ../release-runbook.md
