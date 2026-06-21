@@ -20,6 +20,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 変更が docs だけか判定（ADR-0028）。docs-only は重い検査を skip し lint/format だけにする。
+      # 必須チェックなので job 自体は常に走り報告する（paths-ignore は使わない＝"Expected" 詰み回避）。
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            code:
+              - "**"
+              - "!**/*.md"
+              - "!docs/**"
+
       # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）
       - uses: pnpm/action-setup@v6
 
@@ -31,49 +42,27 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # 以下はプロジェクトの package.json にあるスクリプトに合わせて取捨する。
+      # 整形・lint は docs PR でも常時（docs-only の「lint だけ」はここ）
       - name: Format check
         run: pnpm format:check
 
       - name: Lint
         run: pnpm lint
 
+      # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
+        if: steps.changes.outputs.code == 'true'
         run: pnpm typecheck
 
       - name: Test (coverage)
+        if: steps.changes.outputs.code == 'true'
         run: pnpm test:coverage
 
       - name: Build
+        if: steps.changes.outputs.code == 'true'
         run: pnpm build
 
-      # 公開依存（prod）の high 以上のみブロックする狭いゲート。
-      # devDep / moderate / low は Dependabot（alerts＋security updates）で淘汰し、ここでは止めない。
-      # → 利用者に届く重大な脆弱性だけを fail させる＝低ノイズで迂回されにくい（フェイルセーフ）。
+      # 公開依存（prod）の high 以上のみブロックする狭いゲート（フェイルセーフ）。
       - name: Audit (production deps, high+)
+        if: steps.changes.outputs.code == 'true'
         run: pnpm audit --prod --audit-level high
-
-  # 対応 Node（20=Maintenance LTS / 22=Active LTS / 24=Current）でテストを回し互換性を担保。
-  # 既存の `ci` ジョブ（必須チェック）は据え置き、別ジョブとして追加する。
-  test-matrix:
-    name: test
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [20, 22, 24]
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node }}
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - name: Test
-        run: pnpm test

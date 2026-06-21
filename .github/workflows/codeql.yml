@@ -7,6 +7,11 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+    # CodeQL は自ソースのみ解析するため、ソース変更時だけ走らせる（許可リスト・ADR-0028）。
+    paths:
+      - "src/**"
+      - "examples/**"
+      - ".github/workflows/codeql.yml"
   schedule:
     - cron: "23 3 * * 1" # 毎週月曜 03:23 UTC のフルスキャン
 
