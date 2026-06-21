@@ -1,13 +1,15 @@
 name: Release
 
-# タグ push（vX.Y.Z）で npm に publish する。
+# GitHub Release の公開（release: published）で npm に publish する（ADR-0029 案B）。
+# タグは tag.yml が main へのマージで自動作成 → 人/CC が Release を作成（＝意図的ゲート）。
 # 認証は OIDC Trusted Publishing（NPM_TOKEN 不要・provenance 自動付与）。
 # version / CHANGELOG は release ブランチで `pnpm changeset:version` 済みの前提
 # （手順は docs/release-runbook.md）。npm 側で本 repo ＋ `release.yml` の信頼登録が必要。
+# ※ Release は人 or CC（gh release create＝ユーザートークン）が作る必要がある。
+#    GITHUB_TOKEN のワークフローが作った Release は release: published を起動しない。
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: read
