@@ -25,9 +25,11 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: changes
         with:
+          # "every": ファイルが全パターンを満たすときだけ該当（= 非 md かつ 非 docs）。
+          # 既定の "some" だと否定パターンの OR で全ファイルが該当し常に true になるため必須。
+          predicate-quantifier: "every"
           filters: |
             code:
-              - "**"
               - "!**/*.md"
               - "!docs/**"
 
