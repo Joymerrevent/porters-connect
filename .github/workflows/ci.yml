@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # 単調増加検証（ADR-0031）の baseline は直近の git タグ。既定の checkout は
+          # タグを取得しないため明示取得する（shallow のまま tag refs だけ足す＝軽い）。
+          fetch-tags: true
 
       # 変更が docs だけか判定（ADR-0028）。docs-only は重い検査を skip し lint/format だけにする。
       # 必須チェックなので job 自体は常に走り報告する（paths-ignore は使わない＝"Expected" 詰み回避）。
