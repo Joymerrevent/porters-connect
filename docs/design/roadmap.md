@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-06-19
+- 最終更新: 2026-06-22
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -29,27 +29,26 @@
 
 ### 基盤・記録
 
-- ADR 0001〜0024 すべて accepted（[索引][adr]）
-- CI（ci / mutation）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker
-  （※ pre-commit は未導入。下記「🧱 基盤構築」WS-B で正式導入する）
-- 品質ゲート green・216 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜8 はすべて `fixed`）
+- ADR 0001〜0032 すべて accepted（[索引][adr]）
+- CI（ci / mutation / codeql / commitlint / test）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
+- 品質ゲート green・230 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜9 はすべて `fixed`）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
 
-手順は [release-runbook][rb]。自動化の検討は [ADR-0025][adr25]（0.2.0 以降）。
+手順は [release-runbook][rb]。リリースは**半自動**（main マージで `tag.yml` が自動タグ → 人/CC が GitHub Release 作成 → `release.yml` が **OIDC Trusted Publishing** で npm 公開・NPM_TOKEN 不要）。決定は [ADR-0025][adr25]〜[0032][adr32]。
 
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
-- [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成**
-- [x] 初版 **`pnpm publish` ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
+- [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.2.1`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 を半自動フローでリリース
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
-## 🧱 基盤構築（進行中）
+## 🧱 基盤構築（ほぼ完了）
 
 機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
-リリース自動化の決定は [ADR-0025][adr25]（proposed）。各項目は branch→PR で進め、マージはメンテナ。
+リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。残るは WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）のみ。各項目は branch→PR で進め、マージはメンテナ。
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
@@ -75,12 +74,13 @@
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
 
-### WS-D. リリース自動化（[ADR-0025][adr25]）
+### WS-D. リリース自動化（[ADR-0025][adr25]〜[0032][adr32]）
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
-- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）
-- [x] publish ワークフロー `release.yml`（タグ push で **OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）→ 残: **npm 側で信頼登録**（org `Joymerrevent`／repo `porters-connect`／workflow `release.yml`）＝ユーザー操作
-- [ ] 最初の `changeset version` で CHANGELOG 形式を確定／[release-runbook][rb] を changesets ベースに更新
+- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.2.1 公開実績あり）
+- [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
+- [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
 ## 🧹 小さな整理（技術的負債）
 
@@ -114,6 +114,12 @@
 [prd]: requirements.md
 [rb]: ../release-runbook.md
 [adr25]: ../adr/0025-release-automation.md
+[adr26]: ../adr/0026-changelog-format.md
+[adr27]: ../adr/0027-release-readiness-gate.md
+[adr29]: ../adr/0029-release-tag-automation.md
+[adr30]: ../adr/0030-backmerge-method.md
+[adr31]: ../adr/0031-version-number-validation.md
+[adr32]: ../adr/0032-monotonic-check-release-scope.md
 [p13]: ../adr/0013-coding-conventions-class-vs-function.md
 [adr]: ../adr/README.md
 [findings]: ../reviews/findings.md
