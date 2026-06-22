@@ -3,6 +3,7 @@ name: Mutation
 # ミューテーションテスト（ADR-0015）の CI 強制。
 # PR / push は incremental（変更分だけ再評価＝高速）、nightly はフル run でドリフト検知。
 # break 閾値（stryker.config.json）を下回ると job が落ちる＝テスト品質の回帰を止める。
+# docs-only の PR/push は stryker を skip（必須チェックなので job は走り報告する・ADR-0028）。
 on:
   pull_request:
   push:
@@ -26,6 +27,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 変更が docs だけか判定（PR/push のみ）。docs-only は以降の重い処理を skip する（ADR-0028）。
+      - uses: dorny/paths-filter@v3
+        id: changes
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        with:
+          predicate-quantifier: "every" # 非 md かつ 非 docs のときだけ該当（ci.yml と同方針）
+          filters: |
+            code:
+              - "!**/*.md"
+              - "!docs/**"
+
       # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）
       - uses: pnpm/action-setup@v6
 
@@ -34,12 +46,15 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
 
+      # stryker を実行するときだけ install（docs-only PR は skip）
       - name: Install
+        if: (github.event_name == 'pull_request' || github.event_name == 'push') && steps.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: pnpm install --frozen-lockfile
 
       # incremental 結果（reports/stryker-incremental.json）を run 間で共有して PR を高速化。
       # key は run ごとに一意・restore-keys の前方一致で直近の結果を復元する（Stryker 推奨パターン）。
       - name: Restore Stryker incremental cache
+        if: (github.event_name == 'pull_request' || github.event_name == 'push') && steps.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: actions/cache@v5
         with:
           path: reports/stryker-incremental.json
@@ -47,9 +62,9 @@ jobs:
           restore-keys: |
             stryker-incremental-
 
-      # PR / push: incremental。未変更 mutant は再利用しつつ break 閾値は「全体スコア」に効く。
+      # PR / push（コード変更時）: incremental。docs-only は上の判定で skip。
       - name: Mutation (incremental)
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        if: (github.event_name == 'pull_request' || github.event_name == 'push') && steps.changes.outputs.code == 'true'
         run: pnpm exec stryker run --incremental
 
       # nightly / 手動: incremental 基準を作り直すフル run（蓄積したキャッシュのドリフトを是正）。

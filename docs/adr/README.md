@@ -56,6 +56,12 @@
 | [0024][0024] | テスト/評価用の公開モックトランスポート（R-17/R-12）        | 詳細設計 | accepted   |
 | [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
 | [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | accepted   |
+| [0027][0027] | リリース前ゲート（整合性・公開正当性）                      | プロセス | accepted   |
+| [0028][0028] | CI のパスベース最適化（docs skip）                          | プロセス | accepted   |
+| [0029][0029] | リリースのタグ付け・back-merge 自動化                       | プロセス | accepted   |
+| [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                       | プロセス | accepted   |
+| [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
+| [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -113,3 +119,9 @@
 [0024]: 0024-mock-transport.md
 [0025]: 0025-release-automation.md
 [0026]: 0026-changelog-format.md
+[0027]: 0027-release-readiness-gate.md
+[0028]: 0028-ci-path-filtering.md
+[0029]: 0029-release-tag-automation.md
+[0030]: 0030-backmerge-method.md
+[0031]: 0031-version-number-validation.md
+[0032]: 0032-monotonic-check-release-scope.md

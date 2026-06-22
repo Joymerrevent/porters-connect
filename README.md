@@ -1,6 +1,6 @@
 # @joymerrevent/porters-connect
 
-[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 18][node-badge]
+[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 20][node-badge]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
 [Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。

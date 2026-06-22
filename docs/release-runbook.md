@@ -1,7 +1,7 @@
 # リリース手順書（runbook）
 
-- ステータス: living（**手運用**。自動化の方式は [ADR-0025][adr25] で検討中・0.2.0 以降）
-- 位置づけ: 0.1.x の手動リリース手順チェックリスト。npm セットアップ〜公開〜GitHub Release まで。
+- ステータス: living（**半自動**・ADR-0029 案B）。タグ付け・publish は自動／back-merge は当面手動。
+- 位置づけ: リリース手順チェックリスト。準備 → main マージで自動タグ → Release 作成 → 自動 publish。
 - コマンドは **pnpm** で統一（`npm` は使わない）。
 
 ## 0. 初回のみ：npm セットアップ
@@ -22,16 +22,24 @@
 - [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
 
-## 2. main へマージ＋タグ
+## 2. main へマージ（タグは自動）
 
 - [ ] PR `release/X.Y.Z` → `main`（**merge commit**・squash しない＝履歴保持）
-- [ ] `git checkout main && git pull`
-- [ ] `git tag -a vX.Y.Z -m "porters-connect X.Y.Z"` → `git push origin vX.Y.Z`
-- [ ] `main` → `develop` へ back-merge して push（version/CHANGELOG を develop に戻す）
+- [ ] マージ後、**`tag.yml` が自動で `vX.Y.Z` を作成・push**（タグ忘れ防止・ADR-0029 案B）。Actions の **Tag** ワークフロー green を確認
+- [ ] **back-merge**（当面手動）: `main` → `develop`（version/CHANGELOG を develop に戻す）
+  - `git checkout develop && git pull && git merge --no-edit origin/main && git push`
+  - ※ 完全自動化（案F）は GitHub App が要る（`GITHUB_TOKEN` は保護ブランチへ直 push 不可）。未導入
 
-## 3. npm 公開（タグ push で自動・OIDC Trusted Publishing）
+## 3. GitHub Release を作成（＝publish の意図的ゲート）
 
-§2 で `git push origin vX.Y.Z` した時点で **`.github/workflows/release.yml` が起動し、OIDC で npm に publish** される（**NPM_TOKEN 不要**・provenance 自動・手動 publish 不要）。
+自動作成された `vX.Y.Z` タグから **GitHub Release を作る**。これが publish の引き金（出すタイミングを人が握る）。
+
+- [ ] `gh release create vX.Y.Z --title "X.Y.Z" --notes "<CHANGELOG の該当節>"`（UI の「Draft a release」でも可）
+  - **人 or CC（`gh release create`＝ユーザートークン）が作る**こと。`GITHUB_TOKEN` ワークフロー製の Release は publish を起動しない（落とし穴B）。
+
+## 4. npm 公開（Release 公開で自動・OIDC Trusted Publishing）
+
+§3 で Release を公開した時点で **`.github/workflows/release.yml` が起動し、OIDC で npm に publish** される（**NPM_TOKEN 不要**・provenance 自動・手動 publish 不要）。
 
 - [ ] Actions の **Release** ワークフローが green を確認
 - [ ] 確認: `npm view @joymerrevent/porters-connect version` ／ npmjs.com のページ
@@ -39,23 +47,20 @@
 - 前提（初回のみ）: npmjs.com の該当パッケージ → **Settings → Trusted Publisher** に GitHub Actions（org `Joymerrevent` ／ repo `porters-connect` ／ workflow `release.yml`）を登録済みであること。
 - 失敗時の定番: `E404`（scoped）は npm < 11.5.1 が原因 → ワークフローは `npm@latest` に更新してから publish している。
 
-## 4. GitHub Release
+## 現在の状況
 
-- [ ] `gh release create vX.Y.Z --title "X.Y.Z" --notes "<CHANGELOG の該当節>"`
-  - npm 公開と**一緒に出す**（npm に無いのに Release だけ出すと利用者が `install` できず混乱するため）。
-
-## 現在の状況（0.1.0）
-
-- ✅ `version` 0.1.0 ／ `CHANGELOG.md`（npm 同梱）／ `v0.1.0` タグ ／ main・develop マージ（git-flow）
-- ✅ **npm publish ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
+- ✅ 0.2.0 公開済み（`v0.2.0` タグ・OIDC Trusted Publishing で publish）。
+- ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
+- ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
 ## 関連
 
 - 現況/残タスク: [roadmap][rm]
-- 自動化の検討: [ADR-0025][adr25]（決定まではこの手運用が暫定）
+- 自動化の方式: [ADR-0025][adr25]（リリース自動化）／[ADR-0029][adr29]（タグ・back-merge）
 - 変更履歴: [CHANGELOG][cl]
 
 [prd]: design/requirements.md
 [rm]: design/roadmap.md
 [adr25]: adr/0025-release-automation.md
+[adr29]: adr/0029-release-tag-automation.md
 [cl]: ../CHANGELOG.md

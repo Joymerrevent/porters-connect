@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -68,9 +68,12 @@
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",
+    "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "check:release": "node scripts/check-release-invariants.mjs",
     "prepare": "simple-git-hooks"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.3",
     "@changesets/cli": "^2.31.0",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
@@ -81,9 +84,11 @@
     "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
     "lint-staged": "^17.0.7",
     "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.4",
+    "publint": "^0.3.21",
     "simple-git-hooks": "^2.13.1",
     "tsup": "^8.5.1",
     "tsx": "^4.22.4",

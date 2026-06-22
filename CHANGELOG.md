@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-22
+
+メンテナンスリリース。**公開 API・実行コードの変更はありません**（`src/` 変更なし）。
+主にリリース自動化・CI 整備とドキュメント拡充です。
+
+### Fixed
+
+- README の Node バッジ表記を `Node >= 18` → `Node >= 20` に修正（`engines` は 0.2.0 で既に `>=20`。バッジの追従漏れを解消し、以後は `check:release` でドリフトを検知）。
+
+### Changed
+
+- サポート方針を「最新の `0.1.x` のみ」から「**最新のリリース版のみ**」に更新（SECURITY.md）。
+- リリースを半自動化：`main` マージで自動タグ（`tag.yml`）＋ GitHub Release 公開で OIDC publish（`release.yml`）（ADR-0029）。
+- リリース前ゲートを CI に追加：version／CHANGELOG／README バッジのドリフト検査と版番号検証（`check:release`・ADR-0027／0031／0032）。
+- 公開物の健全性検査 `check:publish`（publint／are-the-types-wrong）を追加。
+- docs-only PR の CI を軽量化（ADR-0028）。
+
 ## [0.2.0] - 2026-06-20
 
 ### Changed
@@ -48,7 +65,8 @@
 [guide]: docs/guide/error-handling.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Joymerrevent/porters-connect/releases/tag/v0.1.0
