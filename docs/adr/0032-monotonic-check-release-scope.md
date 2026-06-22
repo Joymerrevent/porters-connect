@@ -1,7 +1,7 @@
 # 32. 単調増加検証を base=main の PR に限定（ADR-0031 (2) を改訂）
 
-- Status: proposed
-- Date: 2026-06-22
+- Status: accepted
+- Date: 2026-06-22（accepted: 2026-06-22）
 - Deciders: jun.shiromoto (Joymerrevent)
 - Supersedes: [ADR-0031][adr31] の**単調増加検証(2)の実行範囲**（毎 PR → base=main の PR 限定）。形式検証(1)・baseline=git タグ・自前比較は不変。
 
@@ -41,7 +41,7 @@ ADR-0031 の前提（version==baseline）が back-merge ラグを見落として
 
 ## Decision Outcome
 
-**推奨（proposed・チーム決定待ち）：案A。**
+**決定（accepted・2026-06-22）：案A。**
 
 (2) 単調増加検証を **base=main の PR に限定**する（`scripts/check-release-invariants.mjs` で release 文脈＝
 `GITHUB_BASE_REF === "main"` のときだけ逆行判定を実行）。形式検証(1)は全 PR/push/local で**常時**。
