@@ -1,7 +1,8 @@
 // リリース連動文書が package.json とズレていないか検査する（ADR-0027）。
 // さらに版番号そのものの妥当性も検査する（ADR-0031）:
 //   (1) semver 形式（MAJOR.MINOR.PATCH）か（常時・リリース状態に依らず正当であるべき）
-//   (2) 直近リリース（git タグ）より版が逆行していないか（毎 PR 安全: < で失敗・==/> は許可）
+//   (2) 直近リリース（git タグ）より版が逆行していないか（< で失敗・==/> は許可）
+//       — (2) は base=main の PR（リリース PR）でのみ検査（ADR-0032・back-merge ラグの誤検知回避）
 // CI 必須チェックに組み込み、リリース PR で文書更新漏れ・版番号ミスを構造的に防ぐ。
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -46,6 +47,7 @@ export const checkRelease = ({
   readme,
   minNode,
   baseline,
+  releaseContext,
 }) => {
   const errors = [];
 
@@ -79,9 +81,11 @@ export const checkRelease = ({
   }
 
   // (2) 単調増加検証（baseline ＝ 直近 git タグ・ADR-0031 案A/案C）。
-  // 形式不正時は数値比較が無意味なので skip（(1) で既に報告済み）。
-  // 判定は「< で失敗・==/> は許可」＝毎 PR 安全（通常 PR を落とさず逆行だけ弾く）。
-  if (versionOk && compareSemver(version, baseline) < 0) {
+  // base=main の PR（リリース PR）でのみ検査する（ADR-0032）。git-flow の手動 back-merge
+  // ラグで develop の version が最新タグを下回る窓があり、毎 PR で回すと無関係 PR を誤検知するため。
+  // 版の逆行が実害になるのは publish の瞬間＝必ず main 向け PR を通るので、そこで弾けば十分。
+  // 形式不正時は数値比較が無意味なので skip（(1) で既に報告済み）。判定は「< で失敗・==/> は許可」。
+  if (releaseContext && versionOk && compareSemver(version, baseline) < 0) {
     errors.push(
       `version "${version}" が直近リリース "${baseline}" より小さい（版の逆行）。baseline 以上にしてください。`,
     );
@@ -106,6 +110,9 @@ const main = () => {
   const pkg = JSON.parse(read("package.json"));
   const minNode = String(pkg.engines?.node ?? "").match(/(\d+)/)?.[1];
   const baseline = maxTagVersion(readTags());
+  // base=main の PR でのみ単調増加(2)を検査する（ADR-0032）。GitHub Actions の
+  // pull_request では GITHUB_BASE_REF にマージ先ブランチ名が入る。push/local では空。
+  const releaseContext = process.env.GITHUB_BASE_REF === "main";
 
   const errors = checkRelease({
     version: pkg.version,
@@ -113,6 +120,7 @@ const main = () => {
     readme: read("README.md"),
     minNode,
     baseline,
+    releaseContext,
   });
 
   if (errors.length > 0) {
@@ -120,8 +128,11 @@ const main = () => {
     for (const e of errors) console.error(`  - ${e}`);
     process.exit(1);
   }
+  const monotonicNote = releaseContext
+    ? ""
+    : "・単調増加は base=main の PR でのみ検査";
   console.log(
-    `✓ リリース不変条件 OK（version=${pkg.version}, baseline=${baseline}）`,
+    `✓ リリース不変条件 OK（version=${pkg.version}, baseline=${baseline}${monotonicNote}）`,
   );
 };
 
