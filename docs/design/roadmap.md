@@ -7,6 +7,14 @@
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
   詳細・根拠は各正典を参照する（重複させない）。
 
+## ▶️ 次の注力（決定済み・[ADR-0033][adr33]）
+
+stakeholder 判断（2026-06-22）で **案F（v1 公開面の積み残しを埋める）を先行 → 案A（第2層 MCP）を主軸**。
+案F = 受け入れ済み ADR / P0 要件が約束したが未実装のサーフェス群:
+F-1 OAuth 公開面 `porters.auth.*`（[ADR-0007][p7]）／ F-2 Read クエリ `order`・`keywords`・`itemstate`（[ADR-0005][p5]・R-5）／
+F-3 `tenant(id)` ＋ per-call `partition`（ADR-0008/0021）／ F-4 200 件一括書き込み＋自動分割（`CLAUDE.md`）。
+横断監査の証拠は [2026-06-22-03][rv3]、ドリフトは [findings][findings] RV-10〜12。各群は実装前に個別 ADR へ分岐。
+
 ## ✅ 完了
 
 ### コア層
@@ -23,8 +31,9 @@
 
 ### 要件（[PRD §6][prd]）
 
-- P0 = **R-1〜R-15 すべて実装**（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
+- P0 = **R-1〜R-15 を実装**（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
+  - ※ 横断監査で一部に**積み残し**判明（R-5 の `order`/`keywords`/`itemstate`・R-4 Link/Image・マルチテナント面）。是正は上記「▶️ 次の注力」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
@@ -120,7 +129,11 @@
 [adr30]: ../adr/0030-backmerge-method.md
 [adr31]: ../adr/0031-version-number-validation.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
+[adr33]: ../adr/0033-post-mvp-direction.md
+[p5]: ../adr/0005-public-api-shape.md
+[p7]: ../adr/0007-oauth-public-surface.md
 [p13]: ../adr/0013-coding-conventions-class-vs-function.md
+[rv3]: ../reviews/2026-06-22-03.md
 [adr]: ../adr/README.md
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
