@@ -62,6 +62,7 @@
 | [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                       | プロセス | accepted   |
 | [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
+| [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                      | 要件定義 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -125,3 +126,4 @@
 [0030]: 0030-backmerge-method.md
 [0031]: 0031-version-number-validation.md
 [0032]: 0032-monotonic-check-release-scope.md
+[0033]: 0033-post-mvp-direction.md
