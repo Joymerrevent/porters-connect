@@ -8,12 +8,14 @@ import {
 } from "./check-release-invariants.mjs";
 
 // 文書が整合し版番号も正当な「全部 OK」の入力（各テストで一部だけ崩す）。
+// releaseContext: true ＝ base=main の PR（単調増加(2)を検査する文脈・ADR-0032）。
 const ok = {
   version: "0.2.0",
   changelog: "## [0.2.0]\n- something",
   readme: "Node >= 20 ... node-%3E%3D20-brightgreen",
   minNode: "20",
   baseline: "0.2.0",
+  releaseContext: true,
 };
 
 describe("isValidSemver (ADR-0031)", () => {
@@ -90,14 +92,28 @@ describe("checkRelease (ADR-0027 + ADR-0031)", () => {
     expect(errors.some((e) => e.includes("版の逆行"))).toBe(false);
   });
 
-  it("flags a regressing version (< baseline)", () => {
+  it("flags a regressing version on a release PR (base=main)", () => {
     const errors = checkRelease({
       ...ok,
       version: "0.1.5",
       changelog: "## [0.1.5]",
       baseline: "0.2.0",
+      releaseContext: true,
     });
     expect(errors.some((e) => e.includes("版の逆行"))).toBe(true);
+  });
+
+  it("skips the monotonic check outside a release PR (ADR-0032)", () => {
+    // develop の通常 PR（base!=main）。back-merge ラグで version<baseline でも誤検知しない。
+    expect(
+      checkRelease({
+        ...ok,
+        version: "0.1.5",
+        changelog: "## [0.1.5]",
+        baseline: "0.2.0",
+        releaseContext: false,
+      }),
+    ).toEqual([]);
   });
 
   it("flags a missing CHANGELOG section", () => {
