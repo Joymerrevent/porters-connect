@@ -9,7 +9,7 @@ token lifecycle, closing the ADR-0007 SD-3/SD-6 backlog:
 
 - `authorizationUrl(opts)` / `revokeUrl(opts)` — build the browser `code` / `remove`
   grant URLs (the App Secret never appears in a URL).
-- `exchangeAuthorizationCode(code)` — exchange a redirect `?code=` for tokens and seat
+- `exchangeAuthorizationCode(code)` — exchange a redirect `?code=` for tokens and save
   them into the default strategy; resolves `void`, throws on failure.
 - `clearTokens()` — forget cached + stored tokens locally.
 - `ensureAuthenticated()` / `getToken()` — warm up / inspect the current Access Token

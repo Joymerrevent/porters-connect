@@ -132,7 +132,7 @@ describe("createAuthApi — authorizationUrl / revokeUrl (ADR-0034 SD-2/SD-4)", 
 });
 
 describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
-  it("exchanges the code and seats tokens so getToken returns them without code_direct", async () => {
+  it("exchanges the code and saves tokens so getToken returns them without code_direct", async () => {
     const { transport, calls } = recording(defaultBodies);
     const auth = withDefault(transport);
 

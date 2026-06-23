@@ -1,6 +1,6 @@
 // Public OAuth surface `porters.auth.*` (ADR-0034 F-1 / ADR-0007 SD-3/SD-6). A thin
 // facade over the active token provider: it builds the browser `code` / `remove` URLs,
-// exchanges a redirect `?code=` for tokens (seating them into the default strategy),
+// exchanges a redirect `?code=` for tokens (saving them into the default strategy),
 // warms up / inspects the token, and locally forgets tokens. Credential- and
 // default-strategy-dependent methods fail fast with a PortersConfigError under a custom
 // auth strategy (ADR-0034 SD-7). Factory style per ADR-0013; the App Secret never leaves
@@ -36,7 +36,7 @@ export type AuthApi = {
   /** Build the browser `code`-grant URL to open for the initial permission grant. */
   authorizationUrl(opts: AuthorizationUrlOptions): string;
   /**
-   * Exchange a redirect `?code=` for tokens and seat them into the default strategy.
+   * Exchange a redirect `?code=` for tokens and save them into the default strategy.
    * Resolves `void` on success (tokens are stored internally — inspect via
    * {@link AuthApi.getToken}); throws on failure: {@link PortersConfigError} (missing
    * credentials / custom strategy), `PortersAuthError` (token-endpoint error or expired
@@ -57,7 +57,7 @@ export type AuthApi = {
   getToken(): Promise<string>;
 };
 
-/** Internal seat/forget controls, present only when the default provider is in use. */
+/** Internal save/forget controls, present only when the default provider is in use. */
 export type AuthProviderControls = {
   prime(tokens: StoredTokens): Promise<void>;
   clear(): Promise<void>;

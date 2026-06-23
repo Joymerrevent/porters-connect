@@ -1,7 +1,7 @@
 // Default transparent TokenProvider (ADR-0007 / ADR-0012): code_direct -> token,
 // cache, hybrid refresh (proactive margin + on-demand), in-process single-flight.
 // Factory style per ADR-0013. Exposes internal prime/clear so the public auth API
-// (ADR-0034 F-1) can seat a browser-`code` exchange and locally forget tokens.
+// (ADR-0034 F-1) can save a browser-`code` exchange and locally forget tokens.
 
 import { PortersAuthError } from "../errors/index";
 import type { Transport } from "../http/index";
@@ -25,7 +25,7 @@ export type DefaultTokenProviderOptions = {
 
 /**
  * The default provider plus internal controls used by the public auth API
- * (ADR-0034 SD-8): {@link DefaultTokenProvider.prime} seats externally-acquired
+ * (ADR-0034 SD-8): {@link DefaultTokenProvider.prime} saves externally-acquired
  * tokens (browser `code` exchange) into cache + store; {@link DefaultTokenProvider.clear}
  * forgets them (local revoke). Deliberately *not* part of the public
  * {@link TokenProvider} contract — a custom strategy supplies neither.
@@ -54,7 +54,7 @@ export const createDefaultTokenProvider = (
     t !== undefined && now() < t.refreshTokenExpiresAt - margin;
 
   // Cache + persist freshly minted tokens so the next call (and other instances) reuse them.
-  const seat = async (tokens: StoredTokens): Promise<StoredTokens> => {
+  const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     cached = tokens;
     await store.set(tokens);
     return tokens;
@@ -64,7 +64,7 @@ export const createDefaultTokenProvider = (
     grantType: "oauth_code" | "refresh_token",
     code: string,
   ): Promise<StoredTokens> =>
-    seat(
+    save(
       await exchangeToken(
         {
           host: opts.host,
@@ -112,7 +112,7 @@ export const createDefaultTokenProvider = (
     getAccessToken: async (o) =>
       (await ensure(o?.forceRefresh ?? false)).accessToken,
     prime: async (tokens) => {
-      await seat(tokens);
+      await save(tokens);
     },
     clear: async () => {
       cached = undefined;
