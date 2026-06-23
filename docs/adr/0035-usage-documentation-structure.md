@@ -1,11 +1,11 @@
 # 35. 利用ドキュメントの構成（README の役割とトピック別 docs/guide の役割分担）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > F-1（`porters.auth.*`・[[0034-oauth-public-surface-impl]]）の実装を機に、**機能の使い方をどこに・どの粒度で書くか**の
-> 方針を決める。今後 F-2〜F-4 でも公開面が増えるため、**再利用できる構成方針**として起票。`proposed`（議論用）。
+> 方針を決める。今後 F-2〜F-4 でも公開面が増えるため、**再利用できる構成方針**として起票。案A で `accepted`（2026-06-23）。
 
 ## Context and Problem Statement
 
@@ -40,11 +40,11 @@ F-1 で `porters.auth.*`（初回ブラウザ付与 `authorizationUrl` / `exchan
 
 ## Decision Outcome
 
-**採用（提案）: 案A**。README は「**存在に気づき、最短で動かす**」入口に保ち、各機能の網羅的な手順は
+**採用: 案A**。README は「**存在に気づき、最短で動かす**」入口に保ち、各機能の網羅的な手順は
 `docs/guide/<topic>.md` に逃がす＝**肥大化を避けつつ穴も作らない**。[`error-handling`][error-handling] の前例と一貫し、
 F-2〜F-4 も同じ型で増やせる（再利用）。
 
-F-1 への具体的な適用（**議論対象**・accepted 後に別 PR で実施）:
+F-1 への具体的な適用（accepted・別 PR で実施）:
 
 - **新規 `docs/guide/oauth.md`**（章立て案）:
   1. 全体像（普段は透過 `code_direct`／初回だけ人手のブラウザ付与）

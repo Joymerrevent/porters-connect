@@ -64,7 +64,7 @@
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
 | [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                      | 要件定義 | accepted   |
 | [0034][0034] | OAuth 公開面 porters.auth.\* の詳細設計（F-1）              | 詳細設計 | accepted   |
-| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | proposed   |
+| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
