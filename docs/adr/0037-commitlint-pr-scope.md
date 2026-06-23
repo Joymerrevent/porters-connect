@@ -1,12 +1,12 @@
 # 37. commitlint CI はフィーチャー PR に限定し、リリース PR（base=main）ではスキップする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > リリース PR（`release/* → main`）の commitlint が、**0.x.y 以降の develop 全コミットを再 lint** し、過去の
 > スカッシュ件名の `subject-case` 違反で落ちる。[[0032-monotonic-check-release-scope]]（単調増加検証を base=main に限定）と
-> 対になる scope 調整。`proposed`（議論用）。
+> 対になる scope 調整。案A で `accepted`（2026-06-23）。
 
 ## Context and Problem Statement
 
@@ -42,7 +42,7 @@
 
 ## Decision Outcome
 
-**採用（提案）: 案A**。`commitlint.yml` のジョブ条件に `if: github.event.pull_request.base.ref != 'main'` を付け、
+**採用: 案A**。`commitlint.yml` のジョブ条件に `if: github.event.pull_request.base.ref != 'main'` を付け、
 **リリース PR（base=main）では commitlint をスキップ**する。リリース PR の中身は「フィーチャー PR で既検査の確定
 コミット」＋「ローカル commit-msg フックで検査済みのリリースコミット」のみなので、CI 再検査の価値が低く、過去件名で
 落ちる害の方が大きい。
