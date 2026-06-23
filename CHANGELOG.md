@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-23
+
+### Added
+
+- **OAuth 公開面 `porters.auth.*`**（ADR-0007 SD-3/SD-6 ／ ADR-0034・F-1）。初回のブラウザ権限付与とトークン運用を補助します。
+  - `authorizationUrl(opts)` / `revokeUrl(opts)` — ブラウザの `code` / `remove` グラント URL を生成（App Secret は URL に出さない）。
+  - `exchangeAuthorizationCode(code)` — redirect の `?code=` をトークンに交換し内部保存（成功時 `void`・失敗時 throw）。
+  - `clearTokens()` — ローカルの cache ＋ トークンストアを破棄。
+  - `ensureAuthenticated()` / `getToken()` — トークンのウォームアップ／取得（Refresh Token は返さない）。カスタム auth ストラテジでも動作。
+  - カスタムストラテジ下では credential 依存メソッドが `PortersConfigError`。新規 export 型 `AuthApi` / `AuthorizationUrlOptions` / `RevokeUrlOptions`。利用手順は [docs/guide/oauth.md][oauth-guide]。
+
+### Fixed
+
+- `PortersClientOptions.partition` の JSDoc 誤記（「overridable per call」）を訂正。per-call 上書きは未対応・予定（ADR-0033）で、partition は構築時に固定です（実行時の挙動変更なし）。
+
 ## [0.2.1] - 2026-06-22
 
 メンテナンスリリース。**公開 API・実行コードの変更はありません**（`src/` 変更なし）。
@@ -63,9 +78,11 @@
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
 [guide]: docs/guide/error-handling.md
+[oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...v0.1.1
