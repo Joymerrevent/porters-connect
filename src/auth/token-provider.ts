@@ -1,6 +1,6 @@
 // Default transparent TokenProvider (ADR-0007 / ADR-0012): code_direct -> token,
 // cache, hybrid refresh (proactive margin + on-demand), in-process single-flight.
-// Factory style per ADR-0013. Exposes internal prime/clear so the public auth API
+// Factory style per ADR-0013. Exposes internal cache/clear so the public auth API
 // (ADR-0034 F-1) can save a browser-`code` exchange and locally forget tokens.
 
 import { PortersAuthError } from "../errors/index";
@@ -25,13 +25,14 @@ export type DefaultTokenProviderOptions = {
 
 /**
  * The default provider plus internal controls used by the public auth API
- * (ADR-0034 SD-8): {@link DefaultTokenProvider.prime} saves externally-acquired
- * tokens (browser `code` exchange) into cache + store; {@link DefaultTokenProvider.clear}
- * forgets them (local revoke). Deliberately *not* part of the public
+ * (ADR-0034 SD-8): {@link DefaultTokenProvider.cache} saves externally-acquired
+ * tokens (browser `code` exchange) to the in-memory cache + token store;
+ * {@link DefaultTokenProvider.clear} forgets them (local revoke). Deliberately *not*
+ * part of the public
  * {@link TokenProvider} contract — a custom strategy supplies neither.
  */
 export type DefaultTokenProvider = TokenProvider & {
-  prime(tokens: StoredTokens): Promise<void>;
+  cache(tokens: StoredTokens): Promise<void>;
   clear(): Promise<void>;
 };
 
@@ -111,7 +112,7 @@ export const createDefaultTokenProvider = (
   return {
     getAccessToken: async (o) =>
       (await ensure(o?.forceRefresh ?? false)).accessToken,
-    prime: async (tokens) => {
+    cache: async (tokens) => {
       await save(tokens);
     },
     clear: async () => {

@@ -59,7 +59,7 @@ export type AuthApi = {
 
 /** Internal save/forget controls, present only when the default provider is in use. */
 export type AuthProviderControls = {
-  prime(tokens: StoredTokens): Promise<void>;
+  cache(tokens: StoredTokens): Promise<void>;
   clear(): Promise<void>;
 };
 
@@ -155,7 +155,7 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
         "oauth_code",
         code,
       );
-      await controls.prime(tokens);
+      await controls.cache(tokens);
     },
     clearTokens: async () => {
       const controls = requireDefaultStrategy("clearTokens");

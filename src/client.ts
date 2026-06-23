@@ -93,7 +93,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
   constructor(options: PortersClientOptions<C>) {
     const transport = options.transport ?? createFetchTransport();
     // Custom strategy (案3) takes over token supply; otherwise the default transparent
-    // provider also exposes prime/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
+    // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
     let auth: TokenProvider;
     let controls: AuthProviderControls | undefined = undefined;
     if (options.auth) {

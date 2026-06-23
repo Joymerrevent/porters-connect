@@ -145,7 +145,7 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     expect(tok).toHaveLength(1);
     expect(tok[0]?.body).toContain("grant_type=oauth_code");
     expect(tok[0]?.body).toContain("code=CODE_FROM_REDIRECT");
-    // primed cache -> getToken must not trigger a code_direct acquisition.
+    // cached -> getToken must not trigger a code_direct acquisition.
     expect(oauthCalls(calls)).toHaveLength(0);
   });
 
