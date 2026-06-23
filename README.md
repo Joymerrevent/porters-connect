@@ -29,7 +29,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 1. **PORTERS 契約 ＋ Connect API オプション契約**。ホスト名・App ID・App Secret が通知されます。
 2. **初回のみブラウザで権限付与**（人手・1 回）。`response_type=code` で対象 Company DB の権限を付与します。
    これを済ませれば、以降はライブラリが `code_direct`（サーバ間・ブラウザ不要）で無人運用できます。
-   詳細は [認証 API のフロー][auth-flow]を参照。
+   手順は [OAuth 認証ガイド][oauth-guide] を参照（API 仕様は [認証 API のフロー][auth-flow]）。
 
 ## インストール
 
@@ -136,6 +136,22 @@ new PortersClient({ host, appId, appSecret, partition, tokenStore });
 ```
 
 `transport`（HTTP 注入）や `auth`（独自 `TokenProvider`）も差し替え可能です。
+
+### 初回の権限付与（`porters.auth.*`）
+
+初回だけは人手でブラウザでの権限付与が必要です（「前提」を参照）。ライブラリは認可 URL の生成と `code` 交換を補助します。
+
+```ts
+// 1) 認可 URL を生成 → ユーザーのブラウザで開く（ログイン → 承諾）
+const url = porters.auth.authorizationUrl({
+  redirectUrl: "https://app.example.com/porters/callback",
+});
+
+// 2) redirect で戻る ?code= を交換（30 秒以内）。以後は透過運用に乗る
+await porters.auth.exchangeAuthorizationCode(code);
+```
+
+> 起動時確認 `ensureAuthenticated()`、利用終了 `revokeUrl()` ＋ `clearTokens()`、カスタムストラテジ時の挙動など `porters.auth.*` の全手順は [OAuth 認証ガイド][oauth-guide] にまとめています。
 
 ## リソースと操作
 
@@ -341,6 +357,7 @@ try {
 [coc]: ./CODE_OF_CONDUCT.md
 [issues]: https://github.com/Joymerrevent/porters-connect/issues
 [auth-flow]: ./docs/reference/authentication-api/README.md
+[oauth-guide]: ./docs/guide/oauth.md
 [error-handling]: ./docs/guide/error-handling.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
