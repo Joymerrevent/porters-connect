@@ -22,6 +22,12 @@ export type {
   TokenProvider,
   TokenStore,
 } from "./auth";
+// OAuth public surface `porters.auth.*` (ADR-0007 SD-3/SD-6 / ADR-0034 F-1).
+export type {
+  AuthApi,
+  AuthorizationUrlOptions,
+  RevokeUrlOptions,
+} from "./auth";
 export type { Transport, TransportRequest, TransportResponse } from "./http";
 // Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
 export { createMockTransport } from "./http";

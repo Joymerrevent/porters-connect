@@ -42,6 +42,7 @@
 - **401/402 は再送が安全**: トークン失効はサーバが受理せず弾いた＝**未実行が確定**。よって refresh 後は **`create` を再送しても重複しない**（[ADR-0010][0010] の「ネット不確定では create を再試行しない」と区別＝整合）。
 - **キャッシュキー**: PoC は **App 単位**（単一 partition）。**partition 単位**は [ADR-0008][0008] の「1 App トークンで複数 partition」検証後に確定。
 - **Refresh も失効** → `PortersAuthError`（再認証が必要・`category: "auth"`）。secret/token はログ・エラーに出さない（[requirements][prd] R-11）。
+  - ※ 既定（透過 `code_direct`）の挙動は [[0036-refresh-expiry-reacquire]] で amend: refresh 不可時は**自動 `code_direct` 再取得**し、`PortersAuthError` は `code_direct` 失敗時のみ。
 
 ### Consequences
 

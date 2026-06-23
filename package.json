@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -102,19 +102,6 @@
   "simple-git-hooks": {
     "pre-commit": "pnpm exec lint-staged",
     "commit-msg": "pnpm exec commitlint --edit \"$1\""
-  },
-  "lint-staged": {
-    "*.{ts,tsx,cts,mts,js,jsx,cjs,mjs}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.json": [
-      "prettier --write"
-    ],
-    "*.md": [
-      "markdownlint-cli2 --fix",
-      "prettier --write"
-    ]
   },
   "pnpm": {
     "overrides": {

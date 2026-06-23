@@ -1,11 +1,19 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-06-19
+- 最終更新: 2026-06-22
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
   詳細・根拠は各正典を参照する（重複させない）。
+
+## ▶️ 次の注力（決定済み・[ADR-0033][adr33]）
+
+stakeholder 判断（2026-06-22）で **案F（v1 公開面の積み残しを埋める）を先行 → 案A（第2層 MCP）を主軸**。
+案F = 受け入れ済み ADR / P0 要件が約束したが未実装のサーフェス群:
+F-1 OAuth 公開面 `porters.auth.*`（[ADR-0007][p7]）／ F-2 Read クエリ `order`・`keywords`・`itemstate`（[ADR-0005][p5]・R-5）／
+F-3 `tenant(id)` ＋ per-call `partition`（ADR-0008/0021）／ F-4 200 件一括書き込み＋自動分割（`CLAUDE.md`）。
+横断監査の証拠は [2026-06-22-03][rv3]、ドリフトは [findings][findings] RV-10〜12。各群は実装前に個別 ADR へ分岐。
 
 ## ✅ 完了
 
@@ -23,33 +31,33 @@
 
 ### 要件（[PRD §6][prd]）
 
-- P0 = **R-1〜R-15 すべて実装**（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
+- P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
+  - ※ 横断監査で一部に**積み残し**判明（R-5 の `order`/`keywords`/`itemstate`・R-4 Link/Image・マルチテナント面）。是正は上記「▶️ 次の注力」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
 
-- ADR 0001〜0024 すべて accepted（[索引][adr]）
-- CI（ci / mutation）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker
-  （※ pre-commit は未導入。下記「🧱 基盤構築」WS-B で正式導入する）
-- 品質ゲート green・216 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜8 はすべて `fixed`）
+- ADR 0001〜0032 すべて accepted（[索引][adr]）
+- CI（ci / mutation / codeql / commitlint / test）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
+- 品質ゲート green・230 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜9 はすべて `fixed`）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
 
-手順は [release-runbook][rb]。自動化の検討は [ADR-0025][adr25]（0.2.0 以降）。
+手順は [release-runbook][rb]。リリースは**半自動**（main マージで `tag.yml` が自動タグ → 人/CC が GitHub Release 作成 → `release.yml` が **OIDC Trusted Publishing** で npm 公開・NPM_TOKEN 不要）。決定は [ADR-0025][adr25]〜[0032][adr32]。
 
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
-- [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成**
-- [x] 初版 **`pnpm publish` ＋ GitHub Release** — `@joymerrevent/porters-connect@0.1.0` 公開済み（Release `v0.1.0`）
+- [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.2.1`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 を半自動フローでリリース
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
-## 🧱 基盤構築（進行中）
+## 🧱 基盤構築（ほぼ完了）
 
 機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
-リリース自動化の決定は [ADR-0025][adr25]（proposed）。各項目は branch→PR で進め、マージはメンテナ。
+リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。残るは WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）のみ。各項目は branch→PR で進め、マージはメンテナ。
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
@@ -75,12 +83,13 @@
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
 
-### WS-D. リリース自動化（[ADR-0025][adr25]）
+### WS-D. リリース自動化（[ADR-0025][adr25]〜[0032][adr32]）
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
-- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）
-- [x] publish ワークフロー `release.yml`（タグ push で **OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）→ 残: **npm 側で信頼登録**（org `Joymerrevent`／repo `porters-connect`／workflow `release.yml`）＝ユーザー操作
-- [ ] 最初の `changeset version` で CHANGELOG 形式を確定／[release-runbook][rb] を changesets ベースに更新
+- [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.2.1 公開実績あり）
+- [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
+- [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
 ## 🧹 小さな整理（技術的負債）
 
@@ -114,7 +123,17 @@
 [prd]: requirements.md
 [rb]: ../release-runbook.md
 [adr25]: ../adr/0025-release-automation.md
+[adr26]: ../adr/0026-changelog-format.md
+[adr27]: ../adr/0027-release-readiness-gate.md
+[adr29]: ../adr/0029-release-tag-automation.md
+[adr30]: ../adr/0030-backmerge-method.md
+[adr31]: ../adr/0031-version-number-validation.md
+[adr32]: ../adr/0032-monotonic-check-release-scope.md
+[adr33]: ../adr/0033-post-mvp-direction.md
+[p5]: ../adr/0005-public-api-shape.md
+[p7]: ../adr/0007-oauth-public-surface.md
 [p13]: ../adr/0013-coding-conventions-class-vs-function.md
+[rv3]: ../reviews/2026-06-22-03.md
 [adr]: ../adr/README.md
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md

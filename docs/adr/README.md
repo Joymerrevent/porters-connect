@@ -62,6 +62,11 @@
 | [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                       | プロセス | accepted   |
 | [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
+| [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                      | 要件定義 | accepted   |
+| [0034][0034] | OAuth 公開面 porters.auth.\* の詳細設計（F-1）              | 詳細設計 | accepted   |
+| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
+| [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
+| [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -125,3 +130,8 @@
 [0030]: 0030-backmerge-method.md
 [0031]: 0031-version-number-validation.md
 [0032]: 0032-monotonic-check-release-scope.md
+[0033]: 0033-post-mvp-direction.md
+[0034]: 0034-oauth-public-surface-impl.md
+[0035]: 0035-usage-documentation-structure.md
+[0036]: 0036-refresh-expiry-reacquire.md
+[0037]: 0037-commitlint-pr-scope.md

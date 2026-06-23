@@ -1,5 +1,10 @@
-import { createDefaultTokenProvider } from "./auth";
-import type { TokenProvider, TokenStore } from "./auth";
+import { createAuthApi, createDefaultTokenProvider } from "./auth";
+import type {
+  AuthApi,
+  AuthProviderControls,
+  TokenProvider,
+  TokenStore,
+} from "./auth";
 import {
   createFetchTransport,
   createRequester,
@@ -45,7 +50,7 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
-  /** Default partition; overridable per call (ADR-0008). */
+  /** Partition (Company DB) used for every call. Per-call override is not yet supported (planned — see ADR-0033). */
   partition?: PartitionId;
   /** Custom auth strategy; defaults to the transparent code_direct strategy. */
   auth?: TokenProvider;
@@ -73,6 +78,8 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
+  /** OAuth surface: initial browser grant, token warm-up/inspection, local revoke (ADR-0007/0034). */
+  readonly auth: AuthApi;
   /** Master Read: accessible partitions (ADR-0021/0022). */
   readonly partition: PartitionResource;
   /** Master Read: users, plus `current()` self-identification (ADR-0021/0022). */
@@ -85,15 +92,32 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
 
   constructor(options: PortersClientOptions<C>) {
     const transport = options.transport ?? createFetchTransport();
-    const auth =
-      options.auth ??
-      createDefaultTokenProvider({
+    // Custom strategy (案3) takes over token supply; otherwise the default transparent
+    // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
+    let auth: TokenProvider;
+    let controls: AuthProviderControls | undefined = undefined;
+    if (options.auth) {
+      auth = options.auth;
+    } else {
+      const provider = createDefaultTokenProvider({
         host: options.host,
         appId: options.appId ?? "",
         appSecret: options.appSecret ?? "",
         transport,
         tokenStore: options.tokenStore,
       });
+      auth = provider;
+      controls = provider;
+    }
+    this.auth = createAuthApi({
+      host: options.host,
+      appId: options.appId,
+      appSecret: options.appSecret,
+      scopes: options.scopes,
+      transport,
+      provider: auth,
+      controls,
+    });
     const requester = createRequester({
       transport,
       auth,
