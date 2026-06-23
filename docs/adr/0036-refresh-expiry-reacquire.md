@@ -1,12 +1,12 @@
 # 36. refresh 失効時は code_direct で自動再取得する（ADR-0007/0012 の amend・RV-11）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 横断監査 [RV-11][findings] で検出した doc↔実装の乖離を解消する。[[0007-oauth-public-surface]] / [[0012-token-cache-refresh]]
 > が「Refresh も失効 → `PortersAuthError`」と定めるが、既定（透過 `code_direct`）の実装は**自動 `code_direct` 再取得**する。
-> **実装が妥当**なので doc を実装に合わせる amend。コード変更なし。`proposed`（議論用）。
+> **実装が妥当**なので doc を実装に合わせる amend。コード変更なし。案A で `accepted`（2026-06-23）。
 
 ## Context and Problem Statement
 
@@ -43,7 +43,7 @@
 
 ## Decision Outcome
 
-**採用（提案）: 案A**。`code_direct` 既定では「refresh 失効＝自動再取得」が安全かつ望ましい挙動で、実装は既にそうなっている。
+**採用: 案A**。`code_direct` 既定では「refresh 失効＝自動再取得」が安全かつ望ましい挙動で、実装は既にそうなっている。
 doc 側を実装の事実に合わせ、`PortersAuthError`（再認証が必要）は**本当に再認証が要るとき＝ code_direct 自体が失敗したとき**に
 限定して定義する。案B は透過既定の可用性・DX を損ない `code_direct` 前提と矛盾。案C は hook/observability が要り過剰。
 
