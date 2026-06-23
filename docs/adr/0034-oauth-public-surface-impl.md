@@ -1,12 +1,12 @@
 # 34. OAuth 公開面 porters.auth.\* の詳細設計（F-1）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [[0007-oauth-public-surface]]（基本設計・SD-3/SD-6）が約束した公開面 `porters.auth.*` を実装に落とす**詳細設計**。
 > [[0033-post-mvp-direction]] 案F-1（v1 公開面の積み残し）。**公開シェイプは ADR-0007 で確定済み**で再決定しない。
-> 本 ADR は**内部実装と、reference に接地した挙動の確定**に限る。`proposed`（議論待ち）。
+> 本 ADR は**内部実装と、reference に接地した挙動の確定**に限る。案A ＋ SD 全採用で `accepted`（2026-06-23）。
 
 ## Context and Problem Statement
 
@@ -53,12 +53,12 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
 
 ## Decision Outcome
 
-**採用（提案）: 案A（専用ファサード factory）**。`code_direct` の透過 provider（資格を持つ既定ストラテジ）と
+**採用: 案A（専用ファサード factory）**。`code_direct` の透過 provider（資格を持つ既定ストラテジ）と
 公開ヘルパー群を**同じ資格情報・transport の上で**1 ファイル1責務に分けつつ、交換結果を既定 provider に seat できる。
 案B は `PortersClient`（クラス＝Error 派生と client のみ、ADR-0013）に手続きを溜め込み肥大化。案C は**カスタム
 ストラテジ（案3）には資格が無い**のに契約へ URL 生成/交換を強制してしまい、seam が壊れる。
 
-以下サブ決定（いずれも提案・議論対象）:
+以下サブ決定（確定）:
 
 - **SD-1 namespace = `porters.auth`**（ADR-0007 既定）。公開型 `AuthApi`（メソッド集合の契約 `type`）。
 - **SD-2 `authorizationUrl(opts): string`** — **純粋 URL builder（ネットワークなし）**。
@@ -67,8 +67,10 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
   `PortersConfigError`（code/remove は scope 必須）。**`secret` は載せない**。
 - **SD-3 `exchangeAuthorizationCode(code): Promise<void>`** — redirect の `?code=` を `POST {host}/v1/token`
   （`grant_type=oauth_code`）で交換し、得たトークンを**既定 provider に seat（`prime`）＋ `TokenStore` に書き戻す**。
-  交換ロジックは既定 provider の内部 `exchange` と共有（`token-exchange.ts` に抽出）。返り値は `void`（以後は普段どおり
-  resource を呼ぶだけ＝DX）。検査は `getToken()`。
+  交換ロジックは既定 provider の内部 `exchange` と共有（`token-exchange.ts` に抽出）。**成功時は `void`**（seat 済みで
+  返す値が無い＝以後は普段どおり resource を呼ぶだけ＝DX。検査は `getToken()`）。**失敗は throw**（戻り値で失敗を
+  表さない・[[0006-error-model]]）: Token の `<Error>≠0`／`code` 失効（30 秒）は `PortersAuthError`、ネットワークは
+  `PortersNetworkError`、appId/secret 欠落は `PortersConfigError`。
 - **SD-4 `remove` はブラウザ必須 → 役割を分解**。pure なサーバ revoke は API に無い（[oauth][oauth]）ので、
   ADR-0007 の `revoke(scopes)` を次の 2 つで realize する:
   - **`revokeUrl(opts): string`** — `response_type=remove` のブラウザ URL を生成（利用者が開いて削除承諾）。
