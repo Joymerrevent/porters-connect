@@ -75,10 +75,10 @@ const token = await porters.auth.getToken();
 
 既定（透過ストラテジ）のトークン保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
 
-永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（良き API 市民）。`TokenStore` は**非同期メソッド 3 つ**の契約です。
+永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（良き API 市民）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
 ```ts
-// 契約（StoredTokens とも型 export 済み）
+// get / set / clear の 3 つ（StoredTokens とも型 export 済み）
 type TokenStore = {
   get(): Promise<StoredTokens | undefined>; // 無ければ undefined
   set(tokens: StoredTokens): Promise<void>; // 取得・更新のたびに書き込まれる
@@ -146,10 +146,10 @@ await porters.auth.clearTokens();
 
 ## カスタム認証ストラテジ使用時
 
-`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の透過ストラテジを置き換え）。`TokenProvider` は**メソッド 1 つだけ**の契約です。
+`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の透過ストラテジを置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
 
 ```ts
-// 契約（opts は GetAccessTokenOptions として型 export 済み）
+// 実装するのは getAccessToken の 1 つだけ（opts は GetAccessTokenOptions として型 export 済み）
 type TokenProvider = {
   getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
 };
@@ -179,17 +179,8 @@ const porters = new PortersClient({ host, auth });
 
 > 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。
 
-独自ストラテジではライブラリが初回付与の grant を代行できないため、**credential 依存メソッドは `PortersConfigError` を投げます**（`getAccessToken` に委譲する 2 つは動きます）。
-
-```ts
-await porters.auth.getToken(); // OK（独自ストラテジに委譲）
-await porters.auth.ensureAuthenticated(); // OK（委譲）
-
-porters.auth.authorizationUrl({ redirectUrl }); // PortersConfigError
-await porters.auth.exchangeAuthorizationCode(code); // PortersConfigError
-porters.auth.revokeUrl({ redirectUrl }); // PortersConfigError
-await porters.auth.clearTokens(); // PortersConfigError
-```
+独自ストラテジのとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
+残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
 | メソッド                                    | 既定ストラテジ | カスタムストラテジ   |
 | ------------------------------------------- | -------------- | -------------------- |
