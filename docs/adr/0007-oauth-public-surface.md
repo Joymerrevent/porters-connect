@@ -111,6 +111,7 @@ interface TokenStore {
 ### エラーの surface（[ADR-0006][0006]）
 
 - Refresh も失効 → **`PortersAuthError`**（再認証が必要・`category: "auth"`）。
+  - ※ 既定（透過 `code_direct`）の挙動は [[0036-refresh-expiry-reacquire]] で amend: refresh 不可時は**自動 `code_direct` 再取得**し、`PortersAuthError` は `code_direct` 自体が失敗したときのみ。
 - **初回権限付与が未実施** → Resource が code `403` → `PortersResourceError`（`category: "permission"`）＋ヒント「初回の権限付与（ブラウザ `code`）を実施」。
 - secret/token は**ログ・エラー・スナップショットに出さない**。
 
