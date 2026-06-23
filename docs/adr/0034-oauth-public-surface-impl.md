@@ -133,6 +133,8 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
 - 位置づけ: [[0033-post-mvp-direction]] 案F-1。横断監査の証拠は [reviews][rev]。
 - 後続/対象外: per-call `partition` ＆ tenant キー付け（F-3・[[0008-multitenancy-partition]]）、ライブ検証（[live-verification][lv]・
   契約環境後）。実装は別 PR（ADR 先行→実装の順）。
+- 実装ノート（accepted 後追記・決定不変）: SD-8 の内部 seam は実装で `prime(tokens)` → `cache(tokens)` に改名
+  （命名のみ。やること＝キャッシュ＋トークンストア保存は同じ。`clear()` は同名）。本文の `prime` 表記は記録として残置。
 
 [oauth]: ../reference/authentication-api/oauth.md
 [token]: ../reference/authentication-api/token.md
