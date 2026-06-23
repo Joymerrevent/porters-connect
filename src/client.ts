@@ -50,7 +50,7 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
-  /** Default partition; overridable per call (ADR-0008). */
+  /** Partition (Company DB) used for every call. Per-call override is not yet supported (planned — see ADR-0033). */
   partition?: PartitionId;
   /** Custom auth strategy; defaults to the transparent code_direct strategy. */
   auth?: TokenProvider;
