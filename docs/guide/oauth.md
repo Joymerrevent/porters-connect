@@ -71,6 +71,60 @@ const token = await porters.auth.getToken();
 どちらも省略可能です（通常はリソース呼び出し時に自動取得されます）。`ensureAuthenticated()` は
 「起動直後に認証の不備を検知したい」ときに有効です。
 
+## トークンの永続化（`tokenStore`）
+
+既定（透過ストラテジ）のトークン保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
+
+永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（良き API 市民）。`TokenStore` は**非同期メソッド 3 つ**の契約です。
+
+```ts
+// 契約（StoredTokens とも型 export 済み）
+type TokenStore = {
+  get(): Promise<StoredTokens | undefined>; // 無ければ undefined
+  set(tokens: StoredTokens): Promise<void>; // 取得・更新のたびに書き込まれる
+  clear(): Promise<void>; // auth.clearTokens() から呼ばれる
+};
+
+type StoredTokens = {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: number; // epoch ms（絶対時刻）
+  refreshTokenExpiresAt: number; // epoch ms（絶対時刻）
+};
+```
+
+`StoredTokens` は素直な JSON（`*ExpiresAt` は絶対時刻の epoch ms）なので、そのまま直列化して保存できます。
+
+```ts
+import { PortersClient } from "@joymerrevent/porters-connect";
+import type { TokenStore, StoredTokens } from "@joymerrevent/porters-connect";
+
+// 任意の KV ストアにバックする例
+const tokenStore: TokenStore = {
+  get: async () => {
+    const json = await kv.get("porters:tokens");
+    return json ? (JSON.parse(json) as StoredTokens) : undefined;
+  },
+  set: async (tokens) => {
+    await kv.set("porters:tokens", JSON.stringify(tokens));
+  },
+  clear: async () => {
+    await kv.del("porters:tokens");
+  },
+};
+
+const porters = new PortersClient({
+  host,
+  appId,
+  appSecret,
+  scopes: ["candidate_r"],
+  tokenStore, // 省略時はインメモリ
+});
+```
+
+- `tokenStore` が効くのは**既定ストラテジのときだけ**です。独自 `TokenProvider`（後述の「カスタム認証ストラテジ使用時」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
+- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です（[ADR-0012][adr-0012]）。
+
 ## 利用終了（権限の削除）
 
 PORTERS にはサーバ間で完結する権限削除 API がなく、**`remove` もブラウザでの承諾が必要**です。
@@ -171,12 +225,13 @@ try {
 
 ## 参考
 
-- 設計: [ADR-0007（OAuth 公開面）][adr-0007] / [ADR-0034（F-1 実装）][adr-0034]
+- 設計: [ADR-0007（OAuth 公開面）][adr-0007] / [ADR-0034（F-1 実装）][adr-0034] / [ADR-0012（トークンのキャッシュ/更新）][adr-0012]
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
 - 関連ガイド: [エラーハンドリング][error-handling] ／ 透過運用は [README の「認証」][readme]
 
 [adr-0007]: ../adr/0007-oauth-public-surface.md
 [adr-0034]: ../adr/0034-oauth-public-surface-impl.md
+[adr-0012]: ../adr/0012-token-cache-refresh.md
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./error-handling.md
 [readme]: ../../README.md
