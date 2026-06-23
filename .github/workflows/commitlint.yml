@@ -15,6 +15,10 @@ concurrency:
 jobs:
   commitlint:
     name: commitlint
+    # リリース PR（base=main）は develop の確定コミットを再 lint するだけで、過去のスカッシュ件名
+    # （= PR タイトル・当時 commitlint 未検査）で落ちうる（共有履歴ゆえ修正不能）。新規コミットの検査は
+    # フィーチャー PR（base=develop）で担保するため、base=main の PR ではスキップする（ADR-0037）。
+    if: github.event.pull_request.base.ref != 'main'
     runs-on: ubuntu-latest
     steps:
       # PR 範囲のコミットを検査するため全履歴を取得する
