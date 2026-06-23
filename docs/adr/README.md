@@ -66,6 +66,7 @@
 | [0034][0034] | OAuth 公開面 porters.auth.\* の詳細設計（F-1）              | 詳細設計 | accepted   |
 | [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
+| [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -133,3 +134,4 @@
 [0034]: 0034-oauth-public-surface-impl.md
 [0035]: 0035-usage-documentation-structure.md
 [0036]: 0036-refresh-expiry-reacquire.md
+[0037]: 0037-commitlint-pr-scope.md
