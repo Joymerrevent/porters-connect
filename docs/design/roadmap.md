@@ -7,14 +7,37 @@
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
   詳細・根拠は各正典を参照する（重複させない）。
 
-## ▶️ 次の注力（決定済み・[ADR-0033][adr33]）
+## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.3.0 時点）
 
-stakeholder 判断（2026-06-22）で **案F（v1 公開面の積み残しを埋める）を先行 → 案A（第2層 MCP）を主軸**。
-案F = 受け入れ済み ADR / P0 要件が約束したが未実装のサーフェス群:
-**F-1 OAuth 公開面 `porters.auth.*`（[ADR-0007][p7]・ADR-0034）は完了**（0.3.0 で公開・利用手順は `docs/guide/oauth.md`）。
-残りは **F-2 Read クエリ `order`・`keywords`・`itemstate`（[ADR-0005][p5]・R-5）← 次の着手** ／ F-3 `tenant(id)` ＋ per-call `partition`（ADR-0008/0021）／
-F-4 200 件一括書き込み＋自動分割（`CLAUDE.md`）。各群は実装前に個別 ADR へ分岐。
-横断監査の証拠は [2026-06-22-03][rv3]、検出ドリフト RV-10〜12 は **すべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
+方針（stakeholder 判断 2026-06-22）: **案F（v1 公開面の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
+各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
+
+完了: **F-1 OAuth 公開面 `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）。
+横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
+
+### いま着手（Now）
+
+- [ ] **F-2 Read クエリ面** — `order` / `keywords` / `itemstate`（＋ typed `condition`）。[ADR-0005][p5]・R-5。`itemstate` は削除済みデータを読む唯一の正規手段。**まず詳細設計 ADR を起票**。
+
+### 次にやる（案F の残り）
+
+- [ ] **F-3 マルチテナント面** — `tenant(id)` ＋ per-call `partition` 上書き（ADR-0008 / 0021）。
+- [ ] **F-4 一括書き込み** — 200 件バッチ＋200 超の自動分割（`CLAUDE.md`。encoder は配列対応済み・公開 API は単件のみ）。
+
+### 主軸（案F 完了後）
+
+- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。
+- [ ] 案C ローカルフェイクサーバー（MCP の評価基盤・案A の加速）／ 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
+
+### 補助・随時
+
+- [ ] 案D `defineFields` 深掘り（値検証・テナント実在チェック・Field Read からの宣言生成・ADR-0023）。
+- [ ] 案E 採用面 — 対応 PORTERS / API バージョン表記の確定（[PRD §8][prd]）・README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
+- [ ] PRD オープン論点（[§8][prd]）の確定。
+
+### 契約取得後（ブロック中・リリース非ブロッカー）
+
+- ライブ検証 LV-1〜8（[live-verification][lv]）。→ 後述「🔌 ライブ検証」。
 
 ## ✅ 完了
 
