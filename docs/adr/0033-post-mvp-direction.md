@@ -109,9 +109,9 @@ MCP の評価基盤として**案C の薄い版を先行/並行**、リソース
 - 案F の根拠（積み残しの出典）: [[0007-oauth-public-surface]]（OAuth 公開面・F-1）、[[0005-public-api-shape]]（Read クエリ面・R-5・F-2）、[[0008-multitenancy-partition]] ＋ [[0021-master-read-resources]]（tenant/partition・F-3）、`CLAUDE.md`（200 件分割・F-4）。横断監査 2026-06-22 で検出。
 - 関連: [[0024-mock-transport]]（案C の前提）、[[0023-custom-field-declaration-dsl]]（案D）、[PRD §3 非ゴール／§9 フェーズ][prd]、[roadmap][roadmap]（🚀 将来）、[live-verification][lv]（契約後タスク）。
 - B 群（ドリフト・要修正）は本 ADR の対象外で [findings][findings] に起票（per-call partition の JSDoc 偽宣言・refresh 失効時の挙動乖離・roadmap の coverage 過大）。
-- 採用後の反映先（`accepted` 後）: `docs/design/roadmap.md`・必要なら `CLAUDE.md` の MVP/フェーズ記述。主軸に決まった案・案F の各群は個別 ADR（例: MCP のパッケージ構成、クエリ面の抽象化）へ分岐する。
+- 採用後の反映先（`accepted` 後）: `docs/roadmap.md`・必要なら `CLAUDE.md` の MVP/フェーズ記述。主軸に決まった案・案F の各群は個別 ADR（例: MCP のパッケージ構成、クエリ面の抽象化）へ分岐する。
 
 [prd]: ../design/requirements.md
-[roadmap]: ../design/roadmap.md
+[roadmap]: ../roadmap.md
 [lv]: ../live-verification.md
 [findings]: ../reviews/findings.md
