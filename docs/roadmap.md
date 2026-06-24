@@ -144,21 +144,21 @@
 - 契約後検証: [live-verification][lv]
 - 歴史的経緯: [docs/history][history]
 
-[prd]: requirements.md
-[rb]: ../release-runbook.md
-[adr25]: ../adr/0025-release-automation.md
-[adr26]: ../adr/0026-changelog-format.md
-[adr27]: ../adr/0027-release-readiness-gate.md
-[adr29]: ../adr/0029-release-tag-automation.md
-[adr30]: ../adr/0030-backmerge-method.md
-[adr31]: ../adr/0031-version-number-validation.md
-[adr32]: ../adr/0032-monotonic-check-release-scope.md
-[adr33]: ../adr/0033-post-mvp-direction.md
-[p5]: ../adr/0005-public-api-shape.md
-[p7]: ../adr/0007-oauth-public-surface.md
-[p13]: ../adr/0013-coding-conventions-class-vs-function.md
-[rv3]: ../reviews/2026-06-22-03.md
-[adr]: ../adr/README.md
-[findings]: ../reviews/findings.md
-[lv]: ../live-verification.md
-[history]: ../history/README.md
+[prd]: design/requirements.md
+[rb]: release-runbook.md
+[adr25]: adr/0025-release-automation.md
+[adr26]: adr/0026-changelog-format.md
+[adr27]: adr/0027-release-readiness-gate.md
+[adr29]: adr/0029-release-tag-automation.md
+[adr30]: adr/0030-backmerge-method.md
+[adr31]: adr/0031-version-number-validation.md
+[adr32]: adr/0032-monotonic-check-release-scope.md
+[adr33]: adr/0033-post-mvp-direction.md
+[p5]: adr/0005-public-api-shape.md
+[p7]: adr/0007-oauth-public-surface.md
+[p13]: adr/0013-coding-conventions-class-vs-function.md
+[rv3]: reviews/2026-06-22-03.md
+[adr]: adr/README.md
+[findings]: reviews/findings.md
+[lv]: live-verification.md
+[history]: history/README.md

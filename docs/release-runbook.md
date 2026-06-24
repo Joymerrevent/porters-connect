@@ -60,7 +60,7 @@
 - 変更履歴: [CHANGELOG][cl]
 
 [prd]: design/requirements.md
-[rm]: design/roadmap.md
+[rm]: roadmap.md
 [adr25]: adr/0025-release-automation.md
 [adr29]: adr/0029-release-tag-automation.md
 [cl]: ../CHANGELOG.md
