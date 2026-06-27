@@ -1,6 +1,6 @@
 # 38. Read クエリ面 `order` / `keywords` / `itemstate` ＋ typed `condition` の詳細設計（F-2）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-06-27
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,8 @@
 > [[0033-post-mvp-direction]] 案F-2（v1 公開面の積み残し）。**公開シェイプの骨子は ADR-0005 で確定済み**
 > （`condition` / `order` / `count` / `start`）で再決定しない。本 ADR は **typed `condition` の型モデル・
 > `keywords` / `itemstate` の形・値正規化・`itemstate` の condition 制約・エンコード配置**を reference に接地して詰める。
-> `proposed`（議論待ち）。
+> **推奨案（案1a／案2a／案4a／clean break ＋ 各 SD）全採用で `accepted`（2026-06-27）。** 実装は別 PR（ADR 先行 → 実装）。
+> 公開型 `condition` の loose→typed は破壊的変更で、pre-1.0 ゆえ semver minor（`0.3.0` → `0.4.0`）として実装 PR で出す。
 
 ## Context and Problem Statement
 
@@ -97,11 +98,11 @@ reference が定める事実（要点）:
 - `condition` を loose `Record<string,string>` → typed に変える＝**公開型の破壊的変更**。pre-1.0（0.x）なので semver 上 **minor バンプ**。
   移行は CHANGELOG / guide に明記。loose 併存（`typed | Record`）は型安全を薄めるため**採らない**（clean break）。
 
-## Decision Outcome（recommended・proposed）
+## Decision Outcome
 
-> **`proposed`。下記は推奨方針で、accept 前にチームで議論する**（特に軸1 の型モデル＝型安全 vs 保守コスト、軸7 の破壊的変更）。
+> **`accepted`（2026-06-27）。** Decider 承認により下記の推奨方針を全採用（軸1 の型モデルは型安全を優先し案1a、軸7 の破壊的変更は pre-1.0 minor で受容）。
 
-推奨: **案1a ／ 案2a ／ 軸3 ガード ／ 案4a ／ 値正規化あり ／ 新 `query.ts` ／ clean break**。サブ決定:
+採用: **案1a ／ 案2a ／ 軸3 ガード ／ 案4a ／ 値正規化あり ／ 新 `query.ts` ／ clean break**。サブ決定:
 
 - **SD-1 condition = 案1a（Data-Type 認識）**。`Condition<F>` を catalog `F` 上の mapped type とし、各 alias の許可 suffix と値型を `F[alias]` の Data Type から導く。
   未知 alias・誤 suffix は型エラー。複数 alias は AND（reference）。上位階層 field は表現せず、紐づく ID 項目（Reference 型 alias）の `eq`/`or` で ID 検索を表す。
