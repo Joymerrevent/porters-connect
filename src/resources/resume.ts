@@ -66,7 +66,7 @@ const REQUIRED_ON_CREATE = [
  *  `value | null`. */
 export type Resume = ReadRecord<typeof FIELDS>;
 export type ResumePage = ResourcePage<typeof FIELDS>;
-export type ResumeSearchQuery = SearchQuery;
+export type ResumeSearchQuery = SearchQuery<typeof FIELDS>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ResumeCreateInput = CreateInput<

@@ -1,5 +1,7 @@
 // Barrel: re-exports the resources module.
 
+// Typed Read query surface (ADR-0038 / F-2): shared, catalog-parametrised query types.
+export type { Condition, ItemState, Order, SearchQuery } from "./resource";
 export * from "./candidate";
 export * from "./job";
 export * from "./client";

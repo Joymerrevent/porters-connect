@@ -59,9 +59,10 @@ const porters = new PortersClient({
   partition: 123, // Partition（Company DB）Id
 });
 
-// 検索（最大 200 件/ページ）
+// 検索（最大 200 件/ページ）。condition は項目の Data Type ごとに型付き
 const page = await porters.candidate.search({
-  condition: { "Person.P_Name:part": "山田" }, // 部分一致
+  condition: { P_Name: { part: "山田" } }, // テキストは part（部分一致）/ full（完全一致）
+  order: [{ P_UpdateDate: "desc" }], // 並び順（数値・日時・System のみ）
   count: 50,
 });
 console.log(page.total, page.items.length);
@@ -72,7 +73,7 @@ console.log(one?.P_Name);
 
 // 全件を自動ページング（200 件刻み）
 for await (const c of porters.candidate.searchAll({
-  condition: { "Person.P_Prefecture:eq": "東京都" },
+  condition: { P_Prefecture: { full: "東京都" } },
 })) {
   // c は 1 件ずつ
 }
@@ -172,16 +173,21 @@ await porters.auth.exchangeAuthorizationCode(code);
 - `create(input)` → 採番された **id（number）**。
 - `update(id, input)` → その **id**。
 
-**検索クエリ**（`query`）の主なキー：
+**検索クエリ**（`query`）の主なキー（すべて型安全。**項目の Data Type が許す演算子だけ**を受けます）：
 
 - `field`：取得する項目（接頭辞付き alias の配列。例 `["Person.P_Id", "Person.P_Name"]`）。
   **省略するとカタログ上の全項目を既定取得**します（PORTERS は field 未指定だと主キーのみ返すため、
   ライブラリが既定 field を補います）。`field: []`（空配列）を渡すと API 仕様どおり**主キーのみ**を返します（件数取得など）。
-- `condition`：検索条件。`{ "[Alias]:[suffix]": "値" }` 形式。`suffix` は型ごとに
-  `eq`/`gt`/`ge`/`le`/`lt`（数値・日時）、`part`/`full`（テキスト）、`or`/`and`（Option）。
+- `condition`：検索条件。`{ 項目: { 演算子: 値 } }` 形式（複数項目は AND）。演算子は Data Type ごとに
+  `eq`/`gt`/`ge`/`le`/`lt`（数値・日時・Id）、`part`/`full`（テキスト）、`or`/`and`（Option・参照/ユーザー型は ID）。
+  **日時の値は ISO 8601（UTC `…Z`）**で渡すと PORTERS 形式へ自動変換します。
+- `order`：並び順。`[{ 項目: "asc" | "desc" }]`（数値・日時・System 型のみ）。
+- `keywords`：テキスト項目のキーワード AND 検索（`string[]`・カンマ込み **100 文字まで**）。
+- `itemstate`：`"existing"`（既定）/ `"deleted"` / `"all"`。削除済みデータの取得。
 - `count`（1–200・既定 10）、`start`（0 始まり）。
 
-> **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは検索の状態フィルタで扱います。
+> **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは `itemstate: "deleted"` で読みます
+> （`condition` は `P_Id` / `P_UpdateDate` / `P_UpdatedBy` に限られ、更新日は 90 日以内）。
 
 ### マスタ Read（読み取り専用）
 

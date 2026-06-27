@@ -69,7 +69,7 @@ const REQUIRED_ON_CREATE = [
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */
 export type Job = ReadRecord<typeof FIELDS>;
 export type JobPage = ResourcePage<typeof FIELDS>;
-export type JobSearchQuery = SearchQuery;
+export type JobSearchQuery = SearchQuery<typeof FIELDS>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type JobCreateInput = CreateInput<
