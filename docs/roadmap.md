@@ -13,16 +13,15 @@
 各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
 
 完了: **F-1 OAuth 公開面 `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）。
-**F-2 Read クエリ面**（`order` / `keywords` / `itemstate` ＋ Data Type 別の typed `condition`・[ADR-0038][adr38] accepted・[ADR-0005][p5] R-5）。
-`condition` は loose `Record` → 型付き形へ（破壊的・pre-1.0 ゆえ **0.4.0 minor**）、`itemstate` で削除済み Read を回復。
 横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
 
 ### いま着手（Now）
 
-- [ ] **F-3 マルチテナント面** — `tenant(id)` ＋ per-call `partition` 上書き（ADR-0008 / 0021）。
+- [x] **F-2 Read クエリ面** — `order` / `keywords` / `itemstate`（＋ typed `condition`）。[ADR-0005][p5]・R-5。`itemstate` は削除済みデータを読む唯一の正規手段。詳細設計 [ADR-0038][adr38]・実装 #98（0.4.0 minor）。
 
 ### 次にやる（案F の残り）
 
+- [ ] **F-3 マルチテナント面** — `tenant(id)` ＋ per-call `partition` 上書き（ADR-0008 / 0021）。
 - [ ] **F-4 一括書き込み** — 200 件バッチ＋200 超の自動分割（`CLAUDE.md`。encoder は配列対応済み・公開 API は単件のみ）。
 
 ### 主軸（案F 完了後）
@@ -59,7 +58,6 @@
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
   - ※ 横断監査で一部に**積み残し**判明（R-5 の `order`/`keywords`/`itemstate`・R-4 Link/Image・マルチテナント面）。是正は上記「▶️ 次の注力」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
-    **R-5（`order`/`keywords`/`itemstate` ＋ typed `condition`）は F-2＝[ADR-0038][adr38] で解消**（残りは R-4 Link/Image・マルチテナント面 F-3）。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
