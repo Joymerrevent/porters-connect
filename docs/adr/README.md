@@ -68,6 +68,7 @@
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
 | [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | accepted   |
 | [0038][0038] | Read クエリ面 condition/order/keywords/itemstate（F-2）     | 詳細設計 | accepted   |
+| [0039][0039] | リリース PR は commitlint を範囲限定で実行（0037 改訂）     | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -137,3 +138,4 @@
 [0036]: 0036-refresh-expiry-reacquire.md
 [0037]: 0037-commitlint-pr-scope.md
 [0038]: 0038-read-query-surface-impl.md
+[0039]: 0039-commitlint-release-range.md
