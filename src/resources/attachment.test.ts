@@ -146,6 +146,19 @@ describe("createAttachmentResource — write", () => {
       "field=Id,Resource,ResourceId,ContentType,FileName,Content",
     );
   });
+
+  it("search() passes loose condition / count / start through (no prefix)", async () => {
+    const calls: Call[] = [];
+    await resource(calls, READ_EMPTY).search({
+      condition: { "Id:eq": "3" },
+      count: 5,
+      start: 10,
+    });
+    const url = decodeURIComponent(calls[0].req.url);
+    expect(url).toContain("condition=Id:eq=3");
+    expect(url).toContain("count=5");
+    expect(url).toContain("start=10");
+  });
 });
 
 describe("createAttachmentResource — default field (ADR-0020)", () => {

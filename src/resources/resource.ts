@@ -22,6 +22,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./read-core";
+import { appendReadQuery, type Condition, type SearchQuery } from "./query";
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
@@ -31,19 +32,9 @@ export type {
   ReadRecord,
   ResourcePage,
 } from "./read-core";
-
-export type SearchQuery = {
-  /**
-   * Output fields as prefixed aliases (e.g. `Person.P_Name`). **Omit** to fetch every catalogued
-   * field by default (ADR-0020): PORTERS returns only the primary key for a fieldless request, so
-   * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
-   * API-native "primary key only" response (e.g. counting). A non-empty list is sent verbatim.
-   */
-  field?: string[];
-  condition?: Record<string, string>;
-  count?: number;
-  start?: number;
-};
+// Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
+// and the public barrel keep importing the query types from "./resource".
+export type { Condition, ItemState, Order, SearchQuery } from "./query";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).
@@ -84,10 +75,10 @@ export type ResourceConfig<
 };
 
 export type Resource<F extends FieldCatalog, Req extends keyof F> = {
-  search(query?: SearchQuery): Promise<ResourcePage<F>>;
+  search(query?: SearchQuery<F>): Promise<ResourcePage<F>>;
   /** Auto-paginating search: yields every matching record (200 per page). */
   searchAll(
-    query?: Omit<SearchQuery, "count" | "start">,
+    query?: Omit<SearchQuery<F>, "count" | "start">,
   ): AsyncIterable<ReadRecord<F>>;
   get(id: number): Promise<ReadRecord<F> | undefined>;
   /** Create one record; resolves to the newly assigned id. */
@@ -141,20 +132,23 @@ export const firstWriteResultId = (
   return first.id;
 };
 
-/** Build a Read URL: `https://{host}/v1/{path}?partition=…&field=…&condition=…&count=…&start=…`. */
-export const buildReadUrl = (
+/**
+ * Build a Read URL: `https://{host}/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`.
+ * `ctx` (alias prefix + Data-Type map) drives the typed query encoding (ADR-0038): condition/order
+ * prefixing, date ISO -> PORTERS, and the keyword/itemstate guards. Attachment is bespoke (no prefix
+ * / no catalog) and builds its own loose URL — see attachment.ts.
+ */
+export const buildReadUrl = <F extends FieldCatalog>(
   host: string,
   partition: number,
   path: string,
-  q: SearchQuery,
+  q: SearchQuery<F>,
+  ctx: { prefix: string; fields: ReadonlyMap<string, DataType> },
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
   if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
-  if (q.condition) {
-    const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
-    if (conds.length > 0) p.set("condition", conds.join(","));
-  }
+  appendReadQuery(p, q, ctx);
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
   return `https://${host}/v1/${path}?${p.toString()}`;
@@ -180,8 +174,11 @@ export const createResource = <
   // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
   const defaultFields = defaultFieldList(config.prefix, config.fields);
 
-  const readUrl = (q: SearchQuery): string =>
-    buildReadUrl(deps.host, deps.partition, config.path, q);
+  const readUrl = (q: SearchQuery<F>): string =>
+    buildReadUrl(deps.host, deps.partition, config.path, q, {
+      prefix: config.prefix,
+      fields: fieldMap,
+    });
 
   const writeUrl = (): string =>
     buildWriteUrl(deps.host, deps.partition, config.path);
@@ -191,7 +188,7 @@ export const createResource = <
 
   // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
   // only); a provided list is sent verbatim (ADR-0020).
-  const search = (query: SearchQuery = {}): Promise<ResourcePage<F>> =>
+  const search = (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
     runRead(
       deps.requester,
       readUrl({ ...query, field: query.field ?? defaultFields }),
@@ -199,15 +196,15 @@ export const createResource = <
     );
 
   const searchAll = (
-    query: Omit<SearchQuery, "count" | "start"> = {},
+    query: Omit<SearchQuery<F>, "count" | "start"> = {},
   ): AsyncIterable<ReadRecord<F>> =>
     paginate((count, start) => search({ ...query, count, start }));
 
   const get = async (id: number): Promise<ReadRecord<F> | undefined> => {
-    const page = await search({
-      condition: { [`${config.prefix}.P_Id:eq`]: String(id) },
-      count: 1,
-    });
+    // Every catalog carries `P_Id` (System[Id]); the generic `F` can't prove it statically, so
+    // build the condition at runtime and let the encoder prefix it (`{prefix}.P_Id:eq=id`).
+    const condition = { P_Id: { eq: id } } as unknown as Condition<F>;
+    const page = await search({ condition, count: 1 });
     return page.items[0];
   };
 

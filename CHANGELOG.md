@@ -5,6 +5,25 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-27
+
+### Added
+
+- **Read クエリ面の拡充**（F-2 / ADR-0038・ADR-0005 R-5）。データ系の `search` / `searchAll` が次を受けます。
+  - `order` — 並び順 `[{ 項目: "asc" | "desc" }]`（数値・日時・System 型のみ）。
+  - `keywords` — テキスト項目の AND キーワード検索（`string[]`・カンマ込み 100 文字まで。超過は送信前に `PortersConfigError`）。
+  - `itemstate` — `"existing"`（既定）/ `"deleted"` / `"all"`。削除 API 非提供下で**削除済みデータを読む唯一の手段**
+    （`condition` は `P_Id` / `P_UpdateDate` / `P_UpdatedBy` に限定・実行時ガード／更新日 90 日以内は PORTERS 側が自動付与）。
+  - 新規 export 型 `Condition` / `Order` / `ItemState` / `SearchQuery`。
+
+### Changed
+
+- **（破壊的）`condition` を型安全化**。`{ "Person.P_Name:part": "山田" }`（loose な `Record<string,string>`）から
+  **`{ P_Name: { part: "山田" } }`**（項目の Data Type が許す演算子だけを受ける型付き形・ADR-0038 案1a）へ変更。
+  日時の値は ISO 8601（UTC `…Z`）で渡すと PORTERS 形式へ自動変換。**pre-1.0 のため minor**。
+  - 移行: キーを `"Alias:suffix"` から**接頭辞なしの項目名**へ、値を `{ suffix: 値 }` へ。
+    例 `{ "Person.P_Id:eq": "1" }` → `{ P_Id: { eq: 1 } }`。テキスト項目は `eq` 不可（`part` / `full`）。
+
 ## [0.3.0] - 2026-06-23
 
 ### Added
@@ -81,7 +100,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0

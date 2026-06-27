@@ -126,7 +126,7 @@ CHANGELOG の作り方:
 - follow-up: 採用後の `NPM_TOKEN` 設定・npm provenance・(必要なら) Renovate/Dependabot との連携。
 
 [cl]: ../../CHANGELOG.md
-[rm]: ../design/roadmap.md
+[rm]: ../roadmap.md
 [p13]: 0013-coding-conventions-class-vs-function.md
 [p14]: 0014-test-coverage-policy.md
 [p15]: 0015-mutation-testing.md

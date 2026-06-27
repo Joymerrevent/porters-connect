@@ -60,7 +60,7 @@ const REQUIRED_ON_CREATE = [
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
 export type ProcessPage = ResourcePage<typeof FIELDS>;
-export type ProcessSearchQuery = SearchQuery;
+export type ProcessSearchQuery = SearchQuery<typeof FIELDS>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ProcessCreateInput = CreateInput<

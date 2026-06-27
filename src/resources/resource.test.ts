@@ -64,7 +64,7 @@ describe("createResource — Read", () => {
     const calls: Call[] = [];
     await res(calls).search({
       field: ["P_Id", "P_Name"],
-      condition: { "W.P_Id:eq": "1" },
+      condition: { P_Id: { eq: 1 } },
       count: 50,
       start: 100,
     });
@@ -78,14 +78,29 @@ describe("createResource — Read", () => {
     expect(url).toContain("start=100");
   });
 
-  it("joins multiple conditions with a comma", async () => {
+  it("joins multiple conditions with a comma (each prefixed, by Data Type)", async () => {
     const calls: Call[] = [];
     await res(calls).search({
-      condition: { "W.P_Id:eq": "1", "W.P_Name:part": "x" },
+      condition: { P_Id: { eq: 1 }, P_Name: { part: "x" } },
     });
     expect(decodeURIComponent(calls[0].req.url)).toContain(
       "condition=W.P_Id:eq=1,W.P_Name:part=x",
     );
+  });
+
+  it("wires order / keywords / itemstate through search()", async () => {
+    const calls: Call[] = [];
+    await res(calls).search({
+      condition: { P_Id: { eq: 7 } },
+      order: [{ P_When: "desc" }],
+      keywords: ["alpha", "beta"],
+      itemstate: "deleted",
+    });
+    const url = decodeURIComponent(calls[0].req.url);
+    expect(url).toContain("condition=W.P_Id:eq=7");
+    expect(url).toContain("order=W.P_When:desc");
+    expect(url).toContain("keywords=alpha,beta");
+    expect(url).toContain("itemstate=deleted");
   });
 
   it("omits empty condition / field and undefined count / start", async () => {
@@ -173,7 +188,7 @@ describe("createResource — searchAll", () => {
       partition: 12,
     });
     const items = await collect(
-      r.searchAll({ condition: { "W.P_Name:part": "x" } }),
+      r.searchAll({ condition: { P_Name: { part: "x" } } }),
     );
     expect(items.map((c) => c.P_Id)).toEqual([1, 2, 3]);
     expect(calls).toHaveLength(2);
