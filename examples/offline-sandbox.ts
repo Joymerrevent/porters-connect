@@ -59,9 +59,9 @@ const porters = new PortersClient({
   }),
 });
 
-// 1) 検索：型付きオブジェクトが返る（XML は外に出ない）
+// 1) 検索：型付きオブジェクトが返る（XML は外に出ない）。condition は Data Type ごとに型付き
 const page = await porters.candidate.search({
-  condition: { "Person.P_Name:part": "山田" },
+  condition: { P_Name: { part: "山田" } },
 });
 console.log("■ search:", page.total, "件");
 for (const c of page.items) {

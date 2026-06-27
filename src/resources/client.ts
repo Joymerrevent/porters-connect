@@ -46,7 +46,7 @@ const REQUIRED_ON_CREATE = [
 /** A decoded Client (company): known `P_` fields, each requested field `value | null`. */
 export type Client = ReadRecord<typeof FIELDS>;
 export type ClientPage = ResourcePage<typeof FIELDS>;
-export type ClientSearchQuery = SearchQuery;
+export type ClientSearchQuery = SearchQuery<typeof FIELDS>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ClientCreateInput = CreateInput<

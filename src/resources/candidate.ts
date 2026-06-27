@@ -46,7 +46,7 @@ const REQUIRED_ON_CREATE = [
 /** A decoded Candidate: known `P_` fields, each requested field `value | null`. */
 export type Candidate = ReadRecord<typeof FIELDS>;
 export type CandidatePage = ResourcePage<typeof FIELDS>;
-export type CandidateSearchQuery = SearchQuery;
+export type CandidateSearchQuery = SearchQuery<typeof FIELDS>;
 
 /** Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable. */
 export type CandidateCreateInput = CreateInput<

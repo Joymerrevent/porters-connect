@@ -10,7 +10,7 @@ import type { Requester } from "../http/requester";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { buildReadUrl, buildWriteUrl, firstWriteResultId } from "./resource";
+import { buildWriteUrl, firstWriteResultId } from "./resource";
 
 // A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
 // (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
@@ -95,6 +95,26 @@ export type AttachmentResource = {
   update(id: number, input: AttachmentUpdate): Promise<number>;
 };
 
+// Bespoke Read URL (ADR-0018): Attachment has no alias prefix and no Data-Type catalog, so it keeps
+// the loose `condition` (`{ "Id:eq": "123" }`) and stays off the typed data-resource builder
+// (ADR-0038). itemstate/order/keywords do not apply to Attachment.
+const buildAttachmentReadUrl = (
+  host: string,
+  partition: number,
+  q: AttachmentSearchQuery,
+): string => {
+  const p = new URLSearchParams();
+  p.set("partition", String(partition));
+  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
+  if (q.condition) {
+    const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
+    if (conds.length > 0) p.set("condition", conds.join(","));
+  }
+  if (q.count !== undefined) p.set("count", String(q.count));
+  if (q.start !== undefined) p.set("start", String(q.start));
+  return `https://${host}/v1/attachment?${p.toString()}`;
+};
+
 const numOrNull = (v: unknown): number | null => {
   const s = asString(v);
   return s === undefined ? null : Number(s);
@@ -134,7 +154,7 @@ export const createAttachmentResource = (deps: {
     deps.requester.request(
       {
         method: "GET",
-        url: buildReadUrl(deps.host, deps.partition, "attachment", {
+        url: buildAttachmentReadUrl(deps.host, deps.partition, {
           ...query,
           field: query.field ?? DEFAULT_FIELDS,
         }),

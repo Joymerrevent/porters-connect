@@ -17,7 +17,7 @@
 
 ### いま着手（Now）
 
-- [ ] **F-2 Read クエリ面** — `order` / `keywords` / `itemstate`（＋ typed `condition`）。[ADR-0005][p5]・R-5。`itemstate` は削除済みデータを読む唯一の正規手段。**まず詳細設計 ADR を起票**。
+- [x] **F-2 Read クエリ面** — `order` / `keywords` / `itemstate`（＋ typed `condition`）。[ADR-0005][p5]・R-5。`itemstate` は削除済みデータを読む唯一の正規手段。詳細設計 [ADR-0038][adr38]・実装 #98（0.4.0 minor）。
 
 ### 次にやる（案F の残り）
 
@@ -154,6 +154,7 @@
 [adr31]: adr/0031-version-number-validation.md
 [adr32]: adr/0032-monotonic-check-release-scope.md
 [adr33]: adr/0033-post-mvp-direction.md
+[adr38]: adr/0038-read-query-surface-impl.md
 [p5]: adr/0005-public-api-shape.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
