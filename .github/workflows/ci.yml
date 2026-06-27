@@ -26,7 +26,7 @@ jobs:
 
       # 変更が docs だけか判定（ADR-0028）。docs-only は重い検査を skip し lint/format だけにする。
       # 必須チェックなので job 自体は常に走り報告する（paths-ignore は使わない＝"Expected" 詰み回避）。
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: changes
         with:
           # "every": ファイルが全パターンを満たすときだけ該当（= 非 md かつ 非 docs）。
