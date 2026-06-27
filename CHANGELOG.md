@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-27
+
 ### Added
 
 - **Read クエリ面の拡充**（F-2 / ADR-0038・ADR-0005 R-5）。データ系の `search` / `searchAll` が次を受けます。
@@ -98,7 +100,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0
