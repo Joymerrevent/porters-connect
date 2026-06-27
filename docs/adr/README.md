@@ -67,6 +67,7 @@
 | [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
 | [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | accepted   |
+| [0038][0038] | Read クエリ面 condition/order/keywords/itemstate（F-2）     | 詳細設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -78,7 +79,7 @@
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
-- **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開面は ADR-0005 で確定済み・詳細は実装時）
+- **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開面は ADR-0005 で確定済み）。詳細設計は [0038][0038]（proposed・F-2）で起票
 
 ### 【詳細設計】（実装フェーズで決める）
 
@@ -135,3 +136,4 @@
 [0035]: 0035-usage-documentation-structure.md
 [0036]: 0036-refresh-expiry-reacquire.md
 [0037]: 0037-commitlint-pr-scope.md
+[0038]: 0038-read-query-surface-impl.md
