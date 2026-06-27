@@ -1,9 +1,14 @@
 # 37. commitlint CI はフィーチャー PR に限定し、リリース PR（base=main）ではスキップする
 
-- Status: accepted
+- Status: superseded by [[0039-commitlint-release-range]]
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
+> **Superseded by [[0039-commitlint-release-range]]（2026-06-27）**: 本 ADR の「リリース PR で commitlint を一律
+> スキップ」は、リリースコミット件名の CI 担保が消える副作用があった。0039 は **スキップをやめ、(案A) lint 範囲を
+> `origin/develop..HEAD` に絞って走らせ＋(案D) feature PR の PR タイトルも lint** する形へ更新した。以下は決定当時の
+> 記録として残置（accepted ADR は書き換えない）。
+>
 > リリース PR（`release/* → main`）の commitlint が、**0.x.y 以降の develop 全コミットを再 lint** し、過去の
 > スカッシュ件名の `subject-case` 違反で落ちる。[[0032-monotonic-check-release-scope]]（単調増加検証を base=main に限定）と
 > 対になる scope 調整。案A で `accepted`（2026-06-23）。

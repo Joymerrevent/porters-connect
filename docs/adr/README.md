@@ -66,9 +66,9 @@
 | [0034][0034] | OAuth 公開面 porters.auth.\* の詳細設計（F-1）              | 詳細設計 | accepted   |
 | [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
-| [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | accepted   |
+| [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | superseded |
 | [0038][0038] | Read クエリ面 condition/order/keywords/itemstate（F-2）     | 詳細設計 | accepted   |
-| [0039][0039] | リリース PR は commitlint を範囲限定で実行（0037 改訂）     | プロセス | proposed   |
+| [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
