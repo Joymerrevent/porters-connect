@@ -52,3 +52,13 @@ jobs:
           --from "${{ steps.range.outputs.from }}"
           --to "${{ github.event.pull_request.head.sha }}"
           --verbose
+
+      # 案D（ADR-0039）: feature PR（base≠main）の PR タイトルはスカッシュマージで develop の件名になる。
+      # 当時 commitlint 未検査のまま規約違反タイトルが develop 履歴へ入る入口を塞ぐため、PR タイトルも検査する。
+      # タイトルは env 経由で渡し、run への直接展開（スクリプトインジェクション）を避ける。
+      # dependabot の "Bump …" タイトルは commitlint.config.js の ignores で除外済み。
+      - name: Lint PR title
+        if: github.event.pull_request.base.ref != 'main'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint --verbose
