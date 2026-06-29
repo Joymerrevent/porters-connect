@@ -69,7 +69,7 @@
 | [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | superseded |
 | [0038][0038] | Read クエリ面 condition/order/keywords/itemstate（F-2）     | 詳細設計 | accepted   |
 | [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
-| [0040][0040] | マルチテナント面 tenant(id) スコープ（F-3）                 | 詳細設計 | proposed   |
+| [0040][0040] | マルチテナント面 tenant(id) スコープ（F-3）                 | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 

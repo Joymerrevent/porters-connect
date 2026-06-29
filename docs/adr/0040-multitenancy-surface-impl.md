@@ -1,7 +1,7 @@
 # 40. マルチテナント面 `tenant(id)` スコープの詳細設計（F-3）
 
-- Status: proposed
-- Date: 2026-06-28
+- Status: accepted
+- Date: 2026-06-29
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [[0008-multitenancy-partition]]（基本設計・案1 per-call ／ 案2 `tenant(id)` スコープ ／ 案3 テナント別 client）と
@@ -9,11 +9,9 @@
 > **詳細設計**。**公開面の骨子（3 つの渡し方・`tenant(id)` 命名）は ADR-0008/0021/0005 で確定済み**で再決定しない。
 > 本 ADR は **partition の渡し方（per-call 引数 か `tenant(id)` スコープ集約 か）・`tenant(id)` の戻り形と露出範囲・
 > partition 解決・テナント別トークン seam を今開くか・配置・semver** を現行コードに接地して詰める。[[0033-post-mvp-direction]] 案F-3。
-> **`proposed`。実装は別 PR（ADR 先行 → 実装）。自己 accept しない。**
->
-> **decider 決定（2026-06-29）**: 軸1＝**案1c**（per-call 引数を設けず `tenant(id)` スコープ＋client 既定の 2 層に集約）、
-> 軸4＝**案4a**（テナント別トークン seam は遅延・案3 と scope で両対応）。下記 Decision Outcome に反映済み。**status を `accepted` へ
-> 進める最終承認待ち**（accepted ADR は以後書き換えないため、確定面を decider が最終確認する）。
+> **decider 承認により `accepted`（2026-06-29）**: 軸1＝**案1c**（per-call 引数を設けず `tenant(id)` スコープ＋client 既定の 2 層に集約）、
+> 軸4＝**案4a**（テナント別トークン seam は遅延・案3 と scope で両対応）を採用（下記 Decision Outcome）。
+> **反映（basic-design/JSDoc/CHANGELOG/roadmap・実装）は accept 後に別 PR で行う**（[[0033-post-mvp-direction]] 案F の進め方・ADR 先行 → 実装）。
 
 ## Context and Problem Statement
 
@@ -97,7 +95,7 @@ partition の渡し方を **3 つ**（案1 呼び出し毎指定＋client 既定
 
 ## Decision Outcome
 
-> **decider 決定（2026-06-29）に基づく確定方針（status を `accepted` へ進める最終承認待ち）。** 反映（basic-design/JSDoc/CHANGELOG・実装）は accept 後。
+> **`accepted`（2026-06-29）。** decider 承認による確定方針。反映（basic-design/JSDoc/CHANGELOG/roadmap・実装）は accept 後に別 PR。
 
 採用: **案1c ／ 案2a ／ 軸3 の 2 層解決 ／ 案4a（auth seam は遅延） ／ 軸5 配置 ／ 非破壊 minor ／ 軸7 テスト**。サブ決定:
 
