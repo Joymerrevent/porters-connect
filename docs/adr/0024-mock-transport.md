@@ -4,9 +4,9 @@
 - Date: 2026-06-18
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> [requirements][prd] R-17（評価用サンドボックス）の実装面を確定する。注入可能な Transport の seam は
+> [requirements][prd] R-17（評価用サンドボックス）の実装を確定する。注入可能な Transport の seam は
 > [ADR-0005][0005]（公開 API・R-12）／[ADR-0009][0009]（HTTP トランスポート）で決定済み。本 ADR は
-> その seam に挿す**公開モック実装**の API 形と公開面を詳細設計し、評価のための代替手段（ネットワーク層
+> その seam に挿す**公開モック実装**の API 形と公開 API を詳細設計し、評価のための代替手段（ネットワーク層
 > モック・フェイクサーバー）との棲み分けを決める。
 
 ## Context and Problem Statement
@@ -37,7 +37,7 @@
 - **評価可能性**（R-12/R-17）: 契約なしで動く。
 - **DX「簡単」**: 認証等の定型を消し、リソース XML を書くだけ。
 - **頑健性（内部非結合）**: 評価手段は**公開契約（seam）に接地**し、内部実装（`fetch`）に結合しない。
-- **薄く・堅く**: 依存ゼロ・最小面。重い常駐物をコアに持ち込まない。
+- **薄く・堅く**: 依存ゼロ・最小限。重い常駐物をコアに持ち込まない。
 - **フェイルセーフ**: 未モックは黙って空応答にせず明示する。
 - **既存 seam と整合**: `createFetchTransport` と対になる `create*Transport` 命名・契約型 `Transport`。
 
@@ -61,7 +61,7 @@ follow-up（コアと分離した別パッケージ）。案2 は公式の軸に
 - **D3 応答コアの型と未モック時**: `MockReply = string | { status?: number; body: string }`。文字列は `200`。
   ハンドラが `undefined` を返し（かつ認証エンドポイントでもない）場合は、**`PortersConfigError` を method+url
   付きで throw**（フェイルセーフ：未モック箇所を黙殺しない）。
-- **D4 公開面 = メインエントリ**: `createFetchTransport` と同じ公開面に置く。小さく tree-shakeable。
+- **D4 公開 API = メインエントリ**: `createFetchTransport` と同じ公開 API に置く。小さく tree-shakeable。
   `/testing` サブパス分離は将来。
 - **D5 薄く保つ**: XML/フィクスチャ生成器・モックトークンストアは持たない（既定インメモリ・[docs/reference][ref]
   の XML 例で足りる）。

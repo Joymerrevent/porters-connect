@@ -24,7 +24,7 @@
 
 ## フェーズ凡例
 
-各 ADR / バックログ項目に**フェーズ**を付ける：**プロセス**（進め方・メタ）／ **要件定義**（何を作るか・PRD 担当）／ **基本設計**（外部仕様・全体像：公開 API・型・エラー・認証面・層責務）／ **詳細設計**（内部実装・実装フェーズで決める）。
+各 ADR / バックログ項目に**フェーズ**を付ける：**プロセス**（進め方・メタ）／ **要件定義**（何を作るか・PRD 担当）／ **基本設計**（外部仕様・全体像：公開 API・型・エラー・認証・層責務）／ **詳細設計**（内部実装・実装フェーズで決める）。
 
 ## 一覧
 
@@ -36,7 +36,7 @@
 | [0004][0004] | リソース／フィールドの型モデル（P\_ ＋ U\_/A\_）            | 基本設計 | accepted   |
 | [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー）  | 基本設計 | accepted   |
 | [0006][0006] | エラーモデル（PortersError・category・リトライ可否）        | 基本設計 | accepted   |
-| [0007][0007] | OAuth 認証の公開面（code/code_direct・トークン管理）        | 基本設計 | accepted   |
+| [0007][0007] | OAuth 認証の公開 API（code/code_direct・トークン管理）      | 基本設計 | accepted   |
 | [0008][0008] | マルチテナント運用とパーティション選択                      | 基本設計 | accepted   |
 | [0009][0009] | HTTP トランスポート（既定 fetch・注入 seam）                | 詳細設計 | accepted   |
 | [0010][0010] | リトライ／スロットリングの機構                              | 詳細設計 | accepted   |
@@ -51,7 +51,7 @@
 | [0019][0019] | 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3）  | 詳細設計 | accepted   |
 | [0020][0020] | Read の field 既定挙動（省略時はカタログ導出の既定 field）  | 詳細設計 | accepted   |
 | [0021][0021] | マスタ Read の公開サーフェス（Partition/User/Field/Option） | 詳細設計 | accepted   |
-| [0022][0022] | マスタ Read のクエリ面と current() を実 Read API に接地     | 詳細設計 | accepted   |
+| [0022][0022] | マスタ Read のクエリと current() を実 Read API に接地       | 詳細設計 | accepted   |
 | [0023][0023] | カスタム項目宣言 DSL（`defineFields`）の詳細設計（R-16）    | 詳細設計 | accepted   |
 | [0024][0024] | テスト/評価用の公開モックトランスポート（R-17/R-12）        | 詳細設計 | accepted   |
 | [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
@@ -63,13 +63,13 @@
 | [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
 | [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                      | 要件定義 | accepted   |
-| [0034][0034] | OAuth 公開面 porters.auth.\* の詳細設計（F-1）              | 詳細設計 | accepted   |
+| [0034][0034] | OAuth 公開 API porters.auth.\* の詳細設計（F-1）            | 詳細設計 | accepted   |
 | [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
 | [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | superseded |
-| [0038][0038] | Read クエリ面 condition/order/keywords/itemstate（F-2）     | 詳細設計 | accepted   |
+| [0038][0038] | Read クエリ condition/order/keywords/itemstate（F-2）       | 詳細設計 | accepted   |
 | [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
-| [0040][0040] | マルチテナント面 tenant(id) スコープ（F-3）                 | 詳細設計 | accepted   |
+| [0040][0040] | マルチテナント tenant(id) スコープ（F-3）                   | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -81,7 +81,7 @@
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
-- **ページング・検索条件の抽象化** — 公開クエリ面（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開面は ADR-0005 で確定済み）。詳細設計は [0038][0038]（accepted・F-2）で確定。実装は別 PR
+- **ページング・検索条件の抽象化** — 公開クエリ（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開 API は ADR-0005 で確定済み）。詳細設計は [0038][0038]（accepted・F-2）で確定。実装は別 PR
 
 ### 【詳細設計】（実装フェーズで決める）
 
@@ -92,11 +92,11 @@
 - Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。コード反映は別 PR）。
 - Attachment リソースとファイル本体（Base64）→ [0018][0018]（accepted・専用アクセサ＋Base64 string＋10MB ガード。コード反映は別 PR）。
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
-- マスタ Read のクエリ面と current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
+- マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
 ### 決定済み（ADR / PRD）
 
-- 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開面: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
+- 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md

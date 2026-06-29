@@ -9,10 +9,10 @@
 
 ## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.5.0 時点）
 
-方針（stakeholder 判断 2026-06-22）: **案F（v1 公開面の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
+方針（stakeholder 判断 2026-06-22）: **案F（v1 公開 API の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
 各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
 
-完了: **F-1 OAuth 公開面 `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ面**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）／**F-3 マルチテナント面**（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0 で公開・利用手順 `docs/guide/multi-tenancy.md`）。
+完了: **F-1 OAuth 公開 API `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）／**F-3 マルチテナント**（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0 で公開・利用手順 `docs/guide/multi-tenancy.md`）。
 横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
 
 ### いま着手（Now）
@@ -27,7 +27,7 @@
 ### 補助・随時
 
 - [ ] 案D `defineFields` 深掘り（値検証・テナント実在チェック・Field Read からの宣言生成・ADR-0023）。
-- [ ] 案E 採用面 — 対応 PORTERS / API バージョン表記の確定（[PRD §8][prd]）・README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
+- [ ] 案E 採用 — 対応 PORTERS / API バージョン表記の確定（[PRD §8][prd]）・README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
 - [ ] PRD オープン論点（[§8][prd]）の確定。
 
 ### 契約取得後（ブロック中・リリース非ブロッカー）
@@ -40,7 +40,7 @@
 
 - HTTP transport（fetch 既定＋注入 seam）／requester（スロットル・認証・指数バックオフ・送信前サイズガード = URL+body 合算）
 - XML parse/encode（Option・User/Reference・DateTime/Date を正規化）／datetime（ISO ⇄ PORTERS）
-- OAuth（`code_direct`・トークン ms 単位・キャッシュ＋自動リフレッシュ・差し替え可能ストア）＋ **公開面 `porters.auth.*`**（初回ブラウザ付与 `authorizationUrl`/`exchangeAuthorizationCode`・利用終了 `revokeUrl`/`clearTokens`・`ensureAuthenticated`/`getToken`・F-1 / ADR-0034）
+- OAuth（`code_direct`・トークン ms 単位・キャッシュ＋自動リフレッシュ・差し替え可能ストア）＋ **公開 API `porters.auth.*`**（初回ブラウザ付与 `authorizationUrl`/`exchangeAuthorizationCode`・利用終了 `revokeUrl`/`clearTokens`・`ensureAuthenticated`/`getToken`・F-1 / ADR-0034）
 - エラーモデル（基底 `PortersError` ＋ 系統別 4 サブクラス ＋ `category` 11 種・未知は `unknown`）
 
 ### リソース（MVP 完了 = [R-3][prd]）
@@ -52,7 +52,7 @@
 
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
-  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント面（`tenant(id)`）は F-3（ADR-0040・0.5.0）で公開済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
+  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（ADR-0040・0.5.0）で公開済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
@@ -69,7 +69,7 @@
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.5.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開面 `porters.auth.*`、0.4.0 で F-2 Read クエリ面＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント面＝`porters.tenant(id)` ＋ `TenantScope` を同梱）
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.5.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope` を同梱）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 

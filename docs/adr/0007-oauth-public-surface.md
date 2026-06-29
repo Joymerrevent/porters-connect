@@ -1,4 +1,4 @@
-# 7. OAuth 認証の公開面（資格情報・code/code_direct・トークン管理・tokenStore）
+# 7. OAuth 認証の公開 API（資格情報・code/code_direct・トークン管理・tokenStore）
 
 - Status: accepted
 - Date: 2026-06-13
@@ -16,7 +16,7 @@ PORTERS の OAuth は独自仕様（[authentication][auth]）:
 - code 有効期限 **30 秒**、Access Token **約30分**、Refresh Token **約2時間**。Resource 呼び出しは `X-porters-hrbc-oauth-token` ヘッダ。`X-P-ConnectAPI-Version: 2`。
 
 本ライブラリはサーバサイド前提。**普段の運用は `code_direct` で自動化**したいが、**初回の権限付与だけは人間のブラウザ操作が必須**。
-この二相をどう公開面に落とすか。
+この二相をどう公開 API に落とすか。
 
 ## Decision Drivers
 

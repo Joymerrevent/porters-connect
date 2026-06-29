@@ -44,7 +44,7 @@ PORTERS 固有の制約（[gotchas][gotchas] / [resource-api][rapi] / [headers][
 
 ### Consequences
 
-- Good: 依存ゼロ・Node 標準・モック容易。公開面に HTTP 実装が漏れない。
+- Good: 依存ゼロ・Node 標準・モック容易。公開 API に HTTP 実装が漏れない。
 - Good: **切替の影響は `src/http`（`Transport` インターフェース）1 点に閉じる**。既定 fetch 実装は
   別ファイル（例 `http/fetch-transport.ts`）に置き、resources/auth/xml と[リトライ/スロットル][0010]は
   **`Transport` の上位**に積む＝実装非依存。`fetch → ky → undici` の差し替えは「新実装＋既定配線の 1 箇所」だけ。

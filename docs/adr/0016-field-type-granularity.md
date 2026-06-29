@@ -54,7 +54,7 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
 
 - Good: PORTERS の型体系に忠実・単一基準で説明可能。Age の独立が正当化される。型別検証の足場ができる。
 - Bad: 文字列系の型が増える（Singleline/Multiline/Mail/Telephone/URL）。decode/encode は共有でもカタログ・テストの記述量が増える。
-- Neutral: 利用者向けの値は不変。将来 FieldType を公開するなら本決定がその面にも効く（→ 公開 API の ADR と連携）。
+- Neutral: 利用者向けの値は不変。将来 FieldType を公開するなら本決定がその点にも効く（→ 公開 API の ADR と連携）。
 
 ## Pros and Cons of the Options
 
