@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-06-27
+- 最終更新: 2026-06-29
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -17,11 +17,11 @@
 
 ### いま着手（Now）
 
-- [ ] **F-3 マルチテナント面** — `tenant(id)` ＋ per-call `partition` 上書き（ADR-0008 / 0021）。
-
-### 次にやる（案F の残り）
-
 - [ ] **F-4 一括書き込み** — 200 件バッチ＋200 超の自動分割（`CLAUDE.md`。encoder は配列対応済み・公開 API は単件のみ）。
+
+### 実装済み・公開待ち
+
+- [x] **F-3 マルチテナント面** — `porters.tenant(id)` スコープ（`TenantScope`）＋ client 既定の 2 層解決（[ADR-0040][adr40] 案1c・ADR-0008 / 0021）。per-call 引数は設けない。**develop に実装済み・0.5.0 で公開予定**。
 
 ### 主軸（案F 完了後）
 
@@ -56,7 +56,7 @@
 
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
-  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**。残りは R-4 Link/Image・マルチテナント面（F-3）。是正は上記「▶️ 次の注力」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
+  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント面（`tenant(id)`）は F-3（ADR-0040・0.5.0 予定）で実装済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
@@ -155,6 +155,7 @@
 [adr33]: adr/0033-post-mvp-direction.md
 [adr38]: adr/0038-read-query-surface-impl.md
 [adr39]: adr/0039-commitlint-release-range.md
+[adr40]: adr/0040-multitenancy-surface-impl.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md

@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersClient } from "./client";
+import type { TenantScope } from "./client";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/decode";
 
@@ -227,5 +228,65 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
     const page = await client.attachment.search();
     expect(page.items[0]?.id).toBe(11111); // Id -> number, via the wired accessor
     expect(page.items[0]?.fileName).toBe("cv.pdf");
+  });
+});
+
+describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
+  // An empty Read envelope; parseResourcePage is root-name-agnostic, so one body fits every
+  // accessor (data / attachment / master). `auth` injected -> no oauth dance, only resource calls.
+  const recording = (): { transport: Transport; calls: TransportRequest[] } => {
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({
+          status: 200,
+          body: `<R Total="0" Count="0" Start="0"><Code>0</Code></R>`,
+        });
+      },
+    };
+    return { transport, calls };
+  };
+
+  const tenantClient = (transport: Transport): PortersClient =>
+    new PortersClient({
+      host: "t.test",
+      partition: 999, // client default
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+  it("routes tenant(id) calls to partition=<id>, overriding the client default", async () => {
+    const rec = recording();
+    await tenantClient(rec.transport).tenant(123).candidate.search();
+    expect(rec.calls[0]?.url).toContain("partition=123");
+    expect(rec.calls[0]?.url).not.toContain("partition=999");
+  });
+
+  it("leaves bare (untenanted) accessors on the client-default partition", async () => {
+    const rec = recording();
+    await tenantClient(rec.transport).candidate.search();
+    expect(rec.calls[0]?.url).toContain("partition=999");
+  });
+
+  it("binds the partition across data, attachment and master accessors", async () => {
+    const rec = recording();
+    const t = tenantClient(rec.transport).tenant(42);
+    await t.candidate.search(); // data resource
+    await t.attachment.search(); // bespoke Attachment
+    await t.user.search(); // master Read
+    expect(rec.calls).toHaveLength(3);
+    for (const c of rec.calls) expect(c.url).toContain("partition=42");
+  });
+
+  it("exposes partition-bound accessors and omits auth / partition / tenant (type)", () => {
+    expectTypeOf<TenantScope>().toHaveProperty("candidate");
+    expectTypeOf<TenantScope>().toHaveProperty("attachment");
+    expectTypeOf<TenantScope>().toHaveProperty("user");
+    expectTypeOf<TenantScope>().toHaveProperty("option");
+    // App-level / discovery / non-nesting are intentionally absent from the scope.
+    expectTypeOf<TenantScope>().not.toHaveProperty("auth");
+    expectTypeOf<TenantScope>().not.toHaveProperty("partition");
+    expectTypeOf<TenantScope>().not.toHaveProperty("tenant");
   });
 });

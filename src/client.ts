@@ -50,7 +50,11 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
-  /** Partition (Company DB) used for every call. Per-call override is not yet supported (planned — see ADR-0033). */
+  /**
+   * Default partition (Company DB) for every call. For multi-tenant routing, bind a partition
+   * per call with {@link PortersClient.tenant} (ADR-0040 / F-3); for a fully separated per-partition
+   * token, construct a dedicated client per tenant instead (ADR-0008 案3).
+   */
   partition?: PartitionId;
   /** Custom auth strategy; defaults to the transparent code_direct strategy. */
   auth?: TokenProvider;
@@ -64,6 +68,23 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
    * their declared Data Type and appear typed on reads / writes. Omit for standard `P_` only.
    */
   fields?: DefinedFields<C>;
+};
+
+/**
+ * The partition-bound resource accessors returned by {@link PortersClient.tenant} (ADR-0040 / F-3).
+ * Every accessor here routes to the bound tenant's partition. `auth` (App-level), the `partition`
+ * master (discovery — partition-less), and `tenant` itself (no nesting) are deliberately absent.
+ */
+export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+  readonly job: JobResource<CustomFor<C, "job">>;
+  readonly client: ClientResource<CustomFor<C, "client">>;
+  readonly process: ProcessResource<CustomFor<C, "process">>;
+  readonly resume: ResumeResource<CustomFor<C, "resume">>;
+  readonly attachment: AttachmentResource;
+  readonly user: UserResource;
+  readonly field: FieldResource;
+  readonly option: OptionResource;
 };
 
 /**
@@ -88,6 +109,16 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
   readonly field: FieldResource;
   /** Master Read: a tenant's choice (option) master (ADR-0021/0022). */
   readonly option: OptionResource;
+  /**
+   * Bind a tenant's partition (Company DB) once and route every call through it — the multi-tenant
+   * scope (ADR-0008 案2 / renamed in ADR-0021 / implemented in ADR-0040 F-3).
+   * `porters.tenant(123).candidate.search(...)` sends `partition=123` without repeating it, overriding
+   * the client-default `partition`. Returns the partition-bound accessors (data + attachment + master
+   * User/Field/Option); `auth` (App-level), the `partition` master (discovery — takes no partition),
+   * and `tenant` itself (no nesting) are intentionally omitted. For a fully separated per-partition
+   * token, construct a dedicated {@link PortersClient} per tenant instead (ADR-0008 案3).
+   */
+  readonly tenant: (id: PartitionId) => TenantScope<C>;
   readonly #host: string;
 
   constructor(options: PortersClientOptions<C>) {
@@ -125,27 +156,42 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       backoff: expoBackoff(),
     });
     this.#host = options.host;
-    const deps = {
-      requester,
-      host: options.host,
-      partition: options.partition ?? 0,
-    };
     // The per-resource custom catalog declared via defineFields (or {} when none). Branded
     // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
     const customFor = <K extends keyof DeclaredCatalogs>(
       key: K,
     ): CustomFor<C, K> => (options.fields?.[key] ?? {}) as CustomFor<C, K>;
-    this.candidate = createCandidateResource(deps, customFor("candidate"));
-    this.job = createJobResource(deps, customFor("job"));
-    this.client = createClientResource(deps, customFor("client"));
-    this.process = createProcessResource(deps, customFor("process"));
-    this.resume = createResumeResource(deps, customFor("resume"));
-    this.attachment = createAttachmentResource(deps);
-    // Partition Read takes no `partition` param (it discovers them); the rest use the default.
+    // Build the partition-bound accessor bundle for a given partition. The root client uses the
+    // default partition; `tenant(id)` re-binds it (ADR-0040 / F-3) by re-running the same factories
+    // with `partition` overridden — resources are already `deps.partition`-driven, so the factories
+    // need no change. Partition Read is App-level (no partition) and built once below, not here.
+    const buildScope = (partition: number): TenantScope<C> => {
+      const deps = { requester, host: options.host, partition };
+      return {
+        candidate: createCandidateResource(deps, customFor("candidate")),
+        job: createJobResource(deps, customFor("job")),
+        client: createClientResource(deps, customFor("client")),
+        process: createProcessResource(deps, customFor("process")),
+        resume: createResumeResource(deps, customFor("resume")),
+        attachment: createAttachmentResource(deps),
+        user: createUserResource(deps),
+        field: createFieldResource(deps),
+        option: createOptionResource(deps),
+      };
+    };
+    this.tenant = buildScope;
+    const root = buildScope(options.partition ?? 0);
+    this.candidate = root.candidate;
+    this.job = root.job;
+    this.client = root.client;
+    this.process = root.process;
+    this.resume = root.resume;
+    this.attachment = root.attachment;
+    this.user = root.user;
+    this.field = root.field;
+    this.option = root.option;
+    // Partition Read takes no `partition` param (it discovers them); App-level, not tenant-bound.
     this.partition = createPartitionResource({ requester, host: options.host });
-    this.user = createUserResource(deps);
-    this.field = createFieldResource(deps);
-    this.option = createOptionResource(deps);
   }
 
   /** The configured API host. */

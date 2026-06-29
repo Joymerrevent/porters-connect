@@ -56,8 +56,12 @@ const porters = new PortersClient({
   host: process.env.PORTERS_HOST!, // 契約時に通知される値。ハードコード禁止
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
-  partition: 123, // Partition（Company DB）Id
+  partition: 123, // 既定 Partition（Company DB）Id
 });
+
+// 複数 partition を 1 つの App で扱う SaaS は porters.tenant(id) で束ねる
+const t = porters.tenant(456);
+await t.candidate.search({ condition: { P_Name: { part: "鈴木" } } }); // partition=456
 
 // 検索（最大 200 件/ページ）。condition は項目の Data Type ごとに型付き
 const page = await porters.candidate.search({
@@ -79,6 +83,8 @@ for await (const c of porters.candidate.searchAll({
 }
 ```
 
+> 複数 partition を 1 つの App で扱う（マルチテナント SaaS）場合の `porters.tenant(id)` スコープ・テナント別 client・partition 発見は [マルチテナント ガイド][multi-tenancy] にまとめています。
+>
 > 認証情報やホスト名は**コミットしない**でください。`.env.example` を参考に `.env` で渡します。
 
 ## 契約なしで試す（オフライン評価）
@@ -365,6 +371,7 @@ try {
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [oauth-guide]: ./docs/guide/oauth.md
 [error-handling]: ./docs/guide/error-handling.md
+[multi-tenancy]: ./docs/guide/multi-tenancy.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [design]: ./docs/design/basic-design.md
