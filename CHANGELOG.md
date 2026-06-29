@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-29
+
 ### Added
 
 - **マルチテナント面**（F-3 / ADR-0040・ADR-0008/0021）。`porters.tenant(id)` で partition（Company DB）を
@@ -110,7 +112,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1
