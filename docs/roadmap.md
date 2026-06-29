@@ -1,28 +1,27 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-06-24
+- 最終更新: 2026-06-29
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
   詳細・根拠は各正典を参照する（重複させない）。
 
-## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.3.0 時点）
+## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.4.0 時点）
 
 方針（stakeholder 判断 2026-06-22）: **案F（v1 公開面の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
 各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
 
-完了: **F-1 OAuth 公開面 `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）。
+完了: **F-1 OAuth 公開面 `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ面**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）。
 横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
 
 ### いま着手（Now）
 
-- [x] **F-2 Read クエリ面** — `order` / `keywords` / `itemstate`（＋ typed `condition`）。[ADR-0005][p5]・R-5。`itemstate` は削除済みデータを読む唯一の正規手段。詳細設計 [ADR-0038][adr38]・実装 #98（0.4.0 minor）。
-
-### 次にやる（案F の残り）
-
-- [ ] **F-3 マルチテナント面** — `tenant(id)` ＋ per-call `partition` 上書き（ADR-0008 / 0021）。
 - [ ] **F-4 一括書き込み** — 200 件バッチ＋200 超の自動分割（`CLAUDE.md`。encoder は配列対応済み・公開 API は単件のみ）。
+
+### 実装済み・公開待ち
+
+- [x] **F-3 マルチテナント面** — `porters.tenant(id)` スコープ（`TenantScope`）＋ client 既定の 2 層解決（[ADR-0040][adr40] 案1c・ADR-0008 / 0021）。per-call 引数は設けない。**develop に実装済み・0.5.0 で公開予定**。
 
 ### 主軸（案F 完了後）
 
@@ -57,24 +56,24 @@
 
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
-  - ※ 横断監査で一部に**積み残し**判明（R-5 の `order`/`keywords`/`itemstate`・R-4 Link/Image・マルチテナント面）。是正は上記「▶️ 次の注力」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
+  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント面（`tenant(id)`）は F-3（ADR-0040・0.5.0 予定）で実装済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
 ### 基盤・記録
 
-- ADR 0001〜0037 すべて accepted（[索引][adr]）
+- ADR 0001〜0039 accepted（0037 は 0039 で superseded）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・246 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜12 はすべて `fixed`）
+- 品質ゲート green・269 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜12 はすべて `fixed`）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
 
-手順は [release-runbook][rb]。リリースは**半自動**（main マージで `tag.yml` が自動タグ → 人/CC が GitHub Release 作成 → `release.yml` が **OIDC Trusted Publishing** で npm 公開・NPM_TOKEN 不要）。決定は [ADR-0025][adr25]〜[0032][adr32]（commitlint CI を base≠main に限定＝リリース PR でスキップは ADR-0037）。
+手順は [release-runbook][rb]。リリースは**半自動**（main マージで `tag.yml` が自動タグ → 人/CC が GitHub Release 作成 → `release.yml` が **OIDC Trusted Publishing** で npm 公開・NPM_TOKEN 不要）。決定は [ADR-0025][adr25]〜[0032][adr32]（commitlint は [ADR-0039][adr39] で改訂：リリース PR は lint 範囲を限定して実行＋feature PR は PR タイトルも検査。旧 ADR-0037 のスキップは superseded）。
 
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.3.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開面 `porters.auth.*` を同梱）
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.4.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開面 `porters.auth.*`、0.4.0 で F-2 Read クエリ面＝typed `condition` ＋ `order`/`keywords`/`itemstate` を同梱）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
@@ -103,7 +102,7 @@
 ### WS-C. CI/CD ハードニング
 
 - [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
-- [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲を検査）
+- [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
 
@@ -155,7 +154,8 @@
 [adr32]: adr/0032-monotonic-check-release-scope.md
 [adr33]: adr/0033-post-mvp-direction.md
 [adr38]: adr/0038-read-query-surface-impl.md
-[p5]: adr/0005-public-api-shape.md
+[adr39]: adr/0039-commitlint-release-range.md
+[adr40]: adr/0040-multitenancy-surface-impl.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md

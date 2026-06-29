@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-29
+
+### Added
+
+- **マルチテナント面**（F-3 / ADR-0040・ADR-0008/0021）。`porters.tenant(id)` で partition（Company DB）を
+  束ねたアクセサ群 `TenantScope` を返します。`porters.tenant(123).candidate.search(...)` は `partition=123`
+  を毎回付与し、未束ねの呼び出しは **client 既定 `partition`** を使います（解決は tenant スコープ／client 既定の 2 層）。
+  - スコープは data（candidate/job/client/process/resume）＋ attachment ＋ master Read（user/field/option）を露出。
+    `auth`（App 単位）・`partition` マスタ（発見専用・partition 非送信）・`tenant`（ネスト不可）は含みません。
+  - partition 別トークンが必要な場合は**テナント別 `PortersClient`** を構築（ADR-0008 案3）。
+  - 新規 export 型 `TenantScope`。`PortersClientOptions.partition` の JSDoc を更新（per-call 引数は設けない方針）。
+
 ## [0.4.0] - 2026-06-27
 
 ### Added
@@ -100,7 +112,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.0...v0.2.1

@@ -57,7 +57,7 @@ const porters = new PortersClient({
   appId,
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
-  partition, // 既定 partition（per-call で上書き可）
+  partition, // 既定 partition（マルチテナントは porters.tenant(id) で束ねる・ADR-0040）
   fields: myFields, // defineFields の宣言（任意）
   tokenStore,
   transport, // 任意（注入）
@@ -79,7 +79,7 @@ for await (const c of porters.candidate.searchAll({ condition })) {
   /* 200件刻み自動 */
 }
 
-const t = porters.tenant(123); // マルチテナント・スコープ（ADR-0008／改名 ADR-0021）
+const t = porters.tenant(123); // マルチテナント・スコープ（ADR-0008／改名 ADR-0021／実装 ADR-0040）
 ```
 
 - アクセサ＝名前空間型付き。返り値は型付きオブジェクト（XML 非露出）。エラーは throw（§6 エラーモデル）。
@@ -89,7 +89,7 @@ const t = porters.tenant(123); // マルチテナント・スコープ（ADR-000
 ```text
 accessor 呼び出し
   → 入力検証（fields/クエリ。不正は PortersConfigError を同期 throw）
-  → partition 解決（per-call / scope / client 既定）
+  → partition 解決（tenant スコープ / client 既定の 2 層・ADR-0040）
   → トークン取得（TokenProvider：既定は code_direct＋キャッシュ、失効時 Refresh）
   → リクエスト組み立て（Read=クエリ / Write=XML、サイズ ~15000字 ガード）
   → transport 送信（自前スロットリングで分散、retryable は指数バックオフ）
@@ -114,7 +114,7 @@ accessor 呼び出し
 
 - **認証ストラテジ seam**：既定＝透過（`code_direct`＋キャッシュ＋Refresh）／自前 `TokenProvider`。`connect()` は不要（任意 `ensureAuthenticated()`）。
 - **初回権限付与**（ブラウザ `code`・人間）は前提手順。補助 `authorizationUrl()` / `exchangeAuthorizationCode()` / `revoke()`。
-- **マルチテナント**：`partition` は per-call ／ `porters.tenant(id)` スコープ（旧称 `partition(id)`・改名 ADR-0021）／ テナント別 client。認証は**両対応**（共有トークン＋partition 切替／partition 別トークン）。
+- **マルチテナント**：partition は **`porters.tenant(id)` スコープ**（旧称 `partition(id)`・改名 ADR-0021・実装 ADR-0040 案1c）で束ね、未束ねの呼び出しは **client 既定 partition**。完全分離は**テナント別 client**。per-call 引数は設けない（解決は scope ／ client 既定の 2 層）。認証は**両対応**（共有トークン＋partition 切替＝scope／partition 別トークン＝テナント別 client）。
 - **オンボーディング補助（L1 が提供）**：`authorizationUrl()` で初回権限付与に誘導し、`Partition Read` / `User Read`（`request_type=0`）でログイン中 partition を**発見**できる。
 - **end-user ↔ partition のマッピングは利用側（SaaS）の責務**。発見した partition の保存・ルーティングは SaaS。L1 は持たない。
 

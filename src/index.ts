@@ -1,7 +1,8 @@
 // Public surface. Only what is exported here is part of the supported API.
 
 export { PortersClient } from "./client";
-export type { PortersClientOptions } from "./client";
+// `TenantScope` is the partition-bound accessor bundle from `porters.tenant(id)` (ADR-0040 / F-3).
+export type { PortersClientOptions, TenantScope } from "./client";
 
 export {
   PortersError,
