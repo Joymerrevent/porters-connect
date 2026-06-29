@@ -70,6 +70,7 @@
 | [0038][0038] | Read クエリ condition/order/keywords/itemstate（F-2）       | 詳細設計 | accepted   |
 | [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
 | [0040][0040] | マルチテナント tenant(id) スコープ（F-3）                   | 詳細設計 | accepted   |
+| [0041][0041] | 一括書き込み createMany / updateMany（F-4）                 | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -141,3 +142,4 @@
 [0038]: 0038-read-query-surface-impl.md
 [0039]: 0039-commitlint-release-range.md
 [0040]: 0040-multitenancy-surface-impl.md
+[0041]: 0041-bulk-write-surface-impl.md
