@@ -63,10 +63,12 @@ const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
         },
       );
     }
-    // Start a new batch when the next record would breach either bound.
+    // Start a new batch when the next record would breach either bound. Never reached with an empty
+    // batch: on the first record `length` and `batch.length` are 0 and an over-budget record already
+    // threw above, so `batch` is always non-empty here (no empty batch is ever pushed).
     if (
-      batch.length > 0 &&
-      (batch.length >= MAX_ITEMS_PER_REQUEST || length + e.xml.length > budget)
+      batch.length >= MAX_ITEMS_PER_REQUEST ||
+      length + e.xml.length > budget
     ) {
       batches.push(batch);
       batch = [];
