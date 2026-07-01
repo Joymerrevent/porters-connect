@@ -1,11 +1,11 @@
-# 38. Read クエリ面 `order` / `keywords` / `itemstate` ＋ typed `condition` の詳細設計（F-2）
+# 38. Read クエリ `order` / `keywords` / `itemstate` ＋ typed `condition` の詳細設計（F-2）
 
 - Status: accepted
 - Date: 2026-06-27
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> [[0005-public-api-shape]]（公開 API の形・R-5）が約束した検索クエリ面を実装に落とす**詳細設計**。
-> [[0033-post-mvp-direction]] 案F-2（v1 公開面の積み残し）。**公開シェイプの骨子は ADR-0005 で確定済み**
+> [[0005-public-api-shape]]（公開 API の形・R-5）が約束した検索クエリを実装に落とす**詳細設計**。
+> [[0033-post-mvp-direction]] 案F-2（v1 公開 API の積み残し）。**公開シェイプの骨子は ADR-0005 で確定済み**
 > （`condition` / `order` / `count` / `start`）で再決定しない。本 ADR は **typed `condition` の型モデル・
 > `keywords` / `itemstate` の形・値正規化・`itemstate` の condition 制約・エンコード配置**を reference に接地して詰める。
 > **推奨案（案1a／案2a／案4a／clean break ＋ 各 SD）全採用で `accepted`（2026-06-27）。** 実装は別 PR（ADR 先行 → 実装）。
@@ -16,7 +16,7 @@
 現状の公開検索クエリ `SearchQuery`（`src/resources/resource.ts:35-46`）は **`{ field, condition, count, start }` のみ**で、
 `condition` は loose な `Record<string, string>`（キーに `Alias:suffix`、値は生文字列。例
 `{ "Person.P_Id:eq": "1" }`）。**`order` / `keywords` / `itemstate` は不在**。横断監査（2026-06-22・[reviews][rev]）で
-[R-5][prd]（型付き検索面）の積み残しと判明し、[[0033-post-mvp-direction]] 案F-2 として起票された。
+[R-5][prd]（型付き検索）の積み残しと判明し、[[0033-post-mvp-direction]] 案F-2 として起票された。
 
 [[0005-public-api-shape]] は公開シェイプを `condition: { P_UpdateDate: { ge: "…Z" } }` / `order: [{ P_Id: "desc" }]` と
 **スケッチ**したが、型モデル（suffix を Data Type で絞るか）・値正規化（ISO ⇄ PORTERS）・`keywords` / `itemstate` の形・
@@ -121,7 +121,7 @@ reference が定める事実（要点）:
 
 ### Consequences
 
-- Good: [R-5][prd] の積み残しを解消し、reference 忠実で**型安全な検索面**が出荷。`itemstate` で削除済み Read を回復（削除 API 非提供下の唯一手段）。送信前ガードでフェイルセーフ。master Read と責務分離を保つ。
+- Good: [R-5][prd] の積み残しを解消し、reference 忠実で**型安全な検索**が出荷。`itemstate` で削除済み Read を回復（削除 API 非提供下の唯一手段）。送信前ガードでフェイルセーフ。master Read と責務分離を保つ。
 - Bad: 案1a の Data-Type 認識 mapped type は **TS 型機構が増え保守負荷**（薄さとのトレードオフ）。`condition` の loose→typed は**破壊的変更**（pre-1.0 minor・移行周知が要る）。
 - Neutral: master Read（[[0022-master-read-query-surface]]）は対象外で不変。`P_Deleted` の型付き fidelity は follow-up / LV に送る。`itemstate=deleted/all` の 90 日自動フィルタ等の実挙動は [live-verification][lv] で接地（契約環境後）。
 
@@ -151,7 +151,7 @@ reference が定める事実（要点）:
 - 責務分離: [[0022-master-read-query-surface]]（master は bespoke・本 ADR 対象外）。
 - 位置づけ: [[0033-post-mvp-direction]] 案F-2。横断監査の証拠は [reviews][rev]。要件 [R-5][prd] / 日時 [R-10][prd]。
 - 不確実性 → [live-verification][lv]: `P_Deleted` の Data Type、`itemstate=deleted/all` の 90 日自動フィルタ実挙動、Telephone keyword の数字正規化。
-- 後続/対象外: 実装は別 PR（ADR 先行 → 実装の順・[[0033-post-mvp-direction]] 案F の進め方）。マルチテナント面（F-3・[[0008-multitenancy-partition]]）・一括書き込み（F-4）は本 ADR 対象外。
+- 後続/対象外: 実装は別 PR（ADR 先行 → 実装の順・[[0033-post-mvp-direction]] 案F の進め方）。マルチテナント（F-3・[[0008-multitenancy-partition]]）・一括書き込み（F-4）は本 ADR 対象外。
 
 [param]: ../../tmp/porters-docs/txt/115008016927-Read-API-Parameter.md
 [del]: ../../tmp/porters-docs/txt/360000589007-2018-04-10-Read系APIでの削除済みデータの取得.md

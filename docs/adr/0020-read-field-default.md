@@ -33,7 +33,7 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - **フェイルセーフ / least surprise**: 既定経路で「空に見えるレコード」を返さない。型が「項目がある」と言うなら実行時もそうあるべき。
 - **single source of truth**: [ADR-0019][0019] で確立した `as const` カタログを、既定 field の生成にも使ってズレを作らない。
 - **API 忠実性**: PORTERS の field 選択意味論（入れ子・User は 4 サブ項目のみ・参照は ID）に正しく従う（[ref-read][ref-read]）。
-- **薄いラッパー fidelity vs typed-record の約束**: 第1層は薄く（[CLAUDE.md][claude]）＝原則 API に合わせる。だが [ADR-0019][0019]/[ADR-0005][0005] で typed record 面（既知項目を持つ型）を選んだ以上、未指定で ID のみ返すと「型は項目ありと言うのに実体は空」＝静かな誤り。生挙動（ID のみ）は `field: []` で到達可能に残し、両立させる。
+- **薄いラッパー fidelity vs typed-record の約束**: 第1層は薄く（[CLAUDE.md][claude]）＝原則 API に合わせる。だが [ADR-0019][0019]/[ADR-0005][0005] で typed record（既知項目を持つ型）を選んだ以上、未指定で ID のみ返すと「型は項目ありと言うのに実体は空」＝静かな誤り。生挙動（ID のみ）は `field: []` で到達可能に残し、両立させる。
 - **制限との両立**: リクエスト長 ~15000 文字・レート上限（[CLAUDE.md][claude] / [docs/reference][ref-read]）。既定の over-fetch を許容範囲に収める。
 - **公開値表現は不変**: 返す値の形（[ADR-0011][0011] の decode 契約：User=`UserRef`・Reference=id・Option=`string[]`）は変えない。
 - **後方互換**: 現状の既定（P_Id のみ）に依存した実利用は実質無い（無価値なため）。より有用な既定への変更はリスクが低い。
