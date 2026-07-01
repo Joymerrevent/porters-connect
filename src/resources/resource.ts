@@ -23,6 +23,7 @@ import {
   type ResourcePage,
 } from "./read-core";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
+import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
@@ -35,6 +36,9 @@ export type {
 // Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
 // and the public barrel keep importing the query types from "./resource".
 export type { Condition, ItemState, Order, SearchQuery } from "./query";
+// Bulk write result (ADR-0041 / F-4). Defined in bulk-write.ts; re-exported so resource modules and
+// the public barrel keep importing the bulk types from "./resource".
+export type { BulkWriteResult, BulkWriteResultItem } from "./bulk-write";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).
@@ -85,6 +89,21 @@ export type Resource<F extends FieldCatalog, Req extends keyof F> = {
   create(input: CreateInput<F, Req>): Promise<number>;
   /** Update one record by id; resolves to that id. */
   update(id: number, input: UpdateInput<F>): Promise<number>;
+  /**
+   * Create many records in one call (ADR-0041 / F-4). Auto-batched to ≤200 records and under the
+   * request size cap. **Not atomic** — inspect the {@link BulkWriteResult}: per-record failures are
+   * returned (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
+   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
+   * duplicate creates. Empty input sends no request.
+   */
+  createMany(inputs: CreateInput<F, Req>[]): Promise<BulkWriteResult>;
+  /**
+   * Update many records by id in one call (ADR-0041 / F-4). Auto-batched like {@link createMany};
+   * per-record failures are returned in the {@link BulkWriteResult}, not thrown.
+   */
+  updateMany(
+    items: { id: number; fields: UpdateInput<F> }[],
+  ): Promise<BulkWriteResult>;
 };
 
 // The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
@@ -234,5 +253,34 @@ export const createResource = <
   const update = (id: number, input: UpdateInput<F>): Promise<number> =>
     write({ ...input, P_Id: id }, true);
 
-  return { search, searchAll, get, create, update };
+  // Bulk write (ADR-0041): map each input to a WriteItem with its P_Id (create = -1, update = id) —
+  // mirroring single write — and hand the array to the batching executor. createMany is
+  // non-idempotent (P_Id=-1), updateMany idempotent (targets ids).
+  const target = {
+    name: config.name,
+    prefix: config.prefix,
+    fields: fieldMap,
+    partition: deps.partition,
+  };
+  const createMany = (
+    inputs: CreateInput<F, Req[number]>[],
+  ): Promise<BulkWriteResult> =>
+    runBulkWrite(
+      deps.requester,
+      { ...target, url: writeUrl() },
+      inputs.map((input) => ({ ...input, P_Id: -1 })),
+      false,
+    );
+
+  const updateMany = (
+    items: { id: number; fields: UpdateInput<F> }[],
+  ): Promise<BulkWriteResult> =>
+    runBulkWrite(
+      deps.requester,
+      { ...target, url: writeUrl() },
+      items.map(({ id, fields }) => ({ ...fields, P_Id: id })),
+      true,
+    );
+
+  return { search, searchAll, get, create, update, createMany, updateMany };
 };

@@ -18,8 +18,9 @@ const API_VERSION = "2";
 // "Whole" is load-bearing: a write's body dominates, but a read's length lives in the
 // URL (field / condition) — and ADR-0020 makes a fieldless Read send the catalog default
 // field set, so that URL grew. A future 16KB cap is planned but undetermined — follow the
-// canonical value.
-const MAX_REQUEST_LENGTH = 15000;
+// canonical value. Exported so the bulk-write chunker sizes each batch under the same cap
+// (ADR-0041) instead of relying on this guard to reject an oversized batch mid-run.
+export const MAX_REQUEST_LENGTH = 15000;
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));

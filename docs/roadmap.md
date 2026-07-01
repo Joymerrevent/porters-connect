@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-06-29
+- 最終更新: 2026-07-01
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -17,12 +17,12 @@
 
 ### いま着手（Now）
 
-- [ ] **F-4 一括書き込み** — 200 件バッチ＋200 超の自動分割（`CLAUDE.md`。encoder は配列対応済み・公開 API は単件のみ）。
-
-### 主軸（案F 完了後）
-
-- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。
+- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了によりこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
 - [ ] 案C ローカルフェイクサーバー（MCP の評価基盤・案A の加速）／ 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
+
+### 実装済み・公開待ち
+
+- [x] **F-4 一括書き込み** — `createMany` / `updateMany` ＋ `BulkWriteResult`（200 件＋サイズで自動分割・部分成功を返す・[ADR-0041][adr41] 案1a/案2a）。**develop に実装済み・0.6.0 で公開予定・利用手順 `docs/guide/bulk-write.md`**。**これで案F（v1 公開 API の積み残し）は完了**。
 
 ### 補助・随時
 
@@ -152,6 +152,7 @@
 [adr38]: adr/0038-read-query-surface-impl.md
 [adr39]: adr/0039-commitlint-release-range.md
 [adr40]: adr/0040-multitenancy-surface-impl.md
+[adr41]: adr/0041-bulk-write-surface-impl.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md
