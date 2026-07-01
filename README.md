@@ -281,9 +281,16 @@ await porters.process.create({
   P_Candidate: 10001,
   P_Resume: 50,
 });
+
+// 一括作成／更新（200 件＋サイズで自動分割・部分成功を返す）
+const bulk = await porters.candidate.createMany([
+  { P_Owner: 5, P_Name: "山田 太郎" },
+  { P_Owner: 5, P_Name: "鈴木 花子" },
+]);
+if (bulk.hasFailures) console.warn(bulk.failed); // per-item は throw せず結果で返す
 ```
 
-> 1 リクエストの長さは**約 15000 文字**まで（PORTERS 仕様）。超えるとライブラリが送信前に弾きます。
+> 1 リクエストの長さは**約 15000 文字**まで（PORTERS 仕様）。超えるとライブラリが送信前に弾きます。一括書き込み（`createMany` / `updateMany`）は 200 件＋サイズで自動分割し、部分成功を `BulkWriteResult` で返します — 詳しくは [一括書き込み ガイド][bulk-write] を参照。
 
 ## 添付ファイル（Attachment）
 
@@ -372,6 +379,7 @@ try {
 [oauth-guide]: ./docs/guide/oauth.md
 [error-handling]: ./docs/guide/error-handling.md
 [multi-tenancy]: ./docs/guide/multi-tenancy.md
+[bulk-write]: ./docs/guide/bulk-write.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [design]: ./docs/design/basic-design.md

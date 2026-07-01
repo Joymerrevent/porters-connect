@@ -104,6 +104,16 @@ const encodeItem = (
   return parts.join("");
 };
 
+/**
+ * One record as its full `<Item>…</Item>` element. Exposed so the bulk-write chunker can
+ * measure each record's serialized length when packing a request under the size cap (ADR-0041).
+ */
+export const encodeWriteItem = (
+  prefix: string,
+  fields: ReadonlyMap<string, DataType>,
+  item: WriteItem,
+): string => `<Item>${encodeItem(prefix, fields, item)}</Item>`;
+
 /** Build a Write request body: `<{Resource}><Item>…</Item>…</{Resource}>`. */
 export const buildWriteXml = (config: {
   resource: string;
@@ -112,10 +122,7 @@ export const buildWriteXml = (config: {
   items: WriteItem[];
 }): string => {
   const items = config.items
-    .map(
-      (item) =>
-        `<Item>${encodeItem(config.prefix, config.fields, item)}</Item>`,
-    )
+    .map((item) => encodeWriteItem(config.prefix, config.fields, item))
     .join("");
   return `<${config.resource}>${items}</${config.resource}>`;
 };
