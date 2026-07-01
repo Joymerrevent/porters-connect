@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-01
+
 ### Added
 
 - **一括書き込み**（F-4 / ADR-0041・`CLAUDE.md`）。各データ系リソースに **`createMany`** / **`updateMany`** を追加。
@@ -122,7 +124,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0
