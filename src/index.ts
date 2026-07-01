@@ -49,6 +49,8 @@ export type {
 // Typed Read query surface shared by data resources (ADR-0038 / F-2): condition / order /
 // keywords / itemstate. Per-resource `*SearchQuery` aliases below specialise `SearchQuery`.
 export type { Condition, ItemState, Order, SearchQuery } from "./resources";
+// Bulk write result from createMany / updateMany (ADR-0041 / F-4).
+export type { BulkWriteResult, BulkWriteResultItem } from "./resources";
 
 export type {
   Candidate,

@@ -5,7 +5,7 @@
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0004][0004]（型モデル・案H）と [ADR-0005][0005]（公開 API・SD-2 ビルダー）が決めた
-> 「標準 `P_` は静的型／カスタム `U_`・`A_` は利用者が宣言 → 型導出＋実行時検証」の**実装面**を確定する。
+> 「標準 `P_` は静的型／カスタム `U_`・`A_` は利用者が宣言 → 型導出＋実行時検証」の**実装**を確定する。
 > 本 ADR は新しい方針を作るのではなく、両 ADR を**詳細設計レベルで接地**する。
 
 ## Context and Problem Statement
@@ -54,7 +54,7 @@
 - **D2 宣言 DSL = ビルダー**（[ADR-0005][0005] SD-2）: `defineFields({ candidate: (f) => ({...}) })`。
   各 `f.X()` は `FieldDef<DataType>`（`{ readonly dataType }`）を返す。結果は **branded**
   （phantom symbol）＝「検証済み」マークで、`PortersClient` は再検証しない。
-- **D3 ビルダーの型面**: カスタム項目に適用しうる Data Type のみ公開する＝
+- **D3 ビルダーの型**: カスタム項目に適用しうる Data Type のみ公開する＝
   `number` / `singlelineText` / `multilineText` / `mail` / `telephone` / `url` /
   `date` / `dateTime` / `age` / `option` / `user`。
   System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は**システム管理＝標準項目の領域**

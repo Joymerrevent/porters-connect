@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-01
+
+### Added
+
+- **一括書き込み**（F-4 / ADR-0041・`CLAUDE.md`）。各データ系リソースに **`createMany`** / **`updateMany`** を追加。
+  - `porters.candidate.createMany([...])` / `updateMany([{ id, fields }, ...])` で複数レコードをまとめて書き込み。
+  - **1 リクエスト最大 200 件＋約 15000 文字**に自動分割（バッチを逐次送信）。1 件で上限超過は送信前に `PortersConfigError`。
+  - **非アトミック**: 戻り値 **`BulkWriteResult`**（`results`＝送信順の per-item `{ index, id, code, ok }`／`failed`／`hasFailures`）で
+    部分成功を返します（per-item の失敗は throw しません）。リクエスト全体の失敗のみ throw（バッチ途中の失敗は既書き込み件数を hint に付与）。
+  - `createMany` はバッチ跨ぎで**非冪等**（全体の再実行は作成を重複させ得る）。Attachment は対象外（単件のみ）。
+  - 新規 export 型 `BulkWriteResult` / `BulkWriteResultItem`。
+
 ## [0.5.0] - 2026-06-29
 
 ### Added
@@ -112,7 +124,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.2.1...v0.3.0

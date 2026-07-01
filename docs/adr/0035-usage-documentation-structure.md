@@ -5,7 +5,7 @@
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > F-1（`porters.auth.*`・[[0034-oauth-public-surface-impl]]）の実装を機に、**機能の使い方をどこに・どの粒度で書くか**の
-> 方針を決める。今後 F-2〜F-4 でも公開面が増えるため、**再利用できる構成方針**として起票。案A で `accepted`（2026-06-23）。
+> 方針を決める。今後 F-2〜F-4 でも公開 API が増えるため、**再利用できる構成方針**として起票。案A で `accepted`（2026-06-23）。
 
 ## Context and Problem Statement
 
@@ -15,7 +15,7 @@ F-1 で `porters.auth.*`（初回ブラウザ付与 `authorizationUrl` / `exchan
 （[authentication-api][auth-ref]）で、**ライブラリ `porters.auth.*` の使い方ではない**。＝実利用者が初回付与を実装する
 手がかりが README から辿れない（ドキュメントの穴）。
 
-今後 **F-2（Read クエリ面）・F-3（マルチテナント）・F-4（一括書き込み）** でも公開面が増える。毎回 README に全部
+今後 **F-2（Read クエリ）・F-3（マルチテナント）・F-4（一括書き込み）** でも公開 API が増える。毎回 README に全部
 書けば**肥大化**し、書かなければ利用者が手順を**見つけられない**（フェイルセーフに反する）。
 既に [`docs/guide/error-handling.md`][error-handling]（README は短い節＋ `>` ポインタ、深掘りはガイド）という**前例**がある。
 
@@ -28,7 +28,7 @@ F-1 で `porters.auth.*`（初回ブラウザ付与 `authorizationUrl` / `exchan
 - **保守性**: README の肥大化を避ける。**1 トピック 1 ファイル**＝差分が小さく・探しやすい・更新箇所が局所化。
 - **フェイルセーフ**: 初回付与のような**必須手順が必ず辿れる**こと。穴（手順が無い）を作らない。
 - **既存パターンとの一貫**: [`error-handling`][error-handling] と同形なら学習コストが低く、F-2〜F-4 も同じ型で足せる。
-- **日本語ファースト →（後で）英語**（`CLAUDE.md`）。公開面の用語・型名は英語、解説は日本語。
+- **日本語ファースト →（後で）英語**（`CLAUDE.md`）。公開 API の用語・型名は英語、解説は日本語。
 - **md 規約**: 参照スタイルリンク・markdownlint（`CLAUDE.md`）。
 
 ## Considered Options
@@ -84,7 +84,7 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
 
 - 起点: F-1 実装（`porters.auth.*`・[[0034-oauth-public-surface-impl]] / [[0007-oauth-public-surface]]）。
 - 前例: [`docs/guide/error-handling.md`][error-handling]（README 短節＋ポインタ＝本 ADR が一般化する形）。
-- 規約: `CLAUDE.md`（日本語ファースト／公開面は英語／md 参照スタイル）。
+- 規約: `CLAUDE.md`（日本語ファースト／公開 API は英語／md 参照スタイル）。
 - 後続: 本 ADR が `accepted` になったら、**別 PR**で `docs/guide/oauth.md` 新設＋README 追記（ADR 先行→実装の順）。
   F-2〜F-4 も同じ型（`docs/guide/<topic>.md` ＋ README 短節）で追加する。
 
