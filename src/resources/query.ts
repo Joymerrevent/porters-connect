@@ -67,11 +67,7 @@ type ConditionFor<D extends DataType> = D extends "System[Id]"
     : D extends "DateTime" | "System[DateTime]" | "Date" | "Age"
       ? TemporalCondition
       : D extends
-            | "SinglelineText"
-            | "MultilineText"
-            | "Mail"
-            | "Telephone"
-            | "URL"
+            "SinglelineText" | "MultilineText" | "Mail" | "Telephone" | "URL"
         ? TextCondition
         : D extends "Option"
           ? OptionCondition
@@ -92,12 +88,7 @@ export type Condition<F extends FieldCatalog> = {
 // --- order (reference: Read - Order; only Number/Currency/Age/Date/DateTime/System are sortable) ---
 
 type OrderableDataType =
-  | "System[Id]"
-  | "System[DateTime]"
-  | "Number"
-  | "DateTime"
-  | "Date"
-  | "Age";
+  "System[Id]" | "System[DateTime]" | "Number" | "DateTime" | "Date" | "Age";
 
 type OrderableKeys<F extends FieldCatalog> = {
   [K in keyof F]: F[K] extends OrderableDataType ? K : never;
