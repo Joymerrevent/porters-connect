@@ -154,9 +154,7 @@ const porters = new PortersClient({
 });
 
 // XML を意識させず、型付きで返す
-const candidates = await porters.candidate.search({
-  /* 条件 */
-});
+const candidates = await porters.candidate.search({/* 条件 */});
 const job = await porters.job.get(jobId);
 ```
 

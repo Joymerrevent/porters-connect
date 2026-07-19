@@ -32,9 +32,7 @@ export type WritableDataType = Exclude<
 // Per-Data-Type write value (mirror of `encodeField`): User / System[Reference] / Number take a
 // number, Option an alias array, the rest a scalar string. Drives the static Write type (ADR-0019).
 export type WriteValueOf<D extends DataType> = D extends
-  | "User"
-  | "System[Reference]"
-  | "Number"
+  "User" | "System[Reference]" | "Number"
   ? number
   : D extends "Option"
     ? string[]
