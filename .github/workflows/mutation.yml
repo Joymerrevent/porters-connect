@@ -25,10 +25,10 @@ jobs:
     name: stryker
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       # 変更が docs だけか判定（PR/push のみ）。docs-only は以降の重い処理を skip する（ADR-0028）。
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: changes
         if: github.event_name == 'pull_request' || github.event_name == 'push'
         with:
@@ -39,9 +39,9 @@ jobs:
               - "!docs/**"
 
       # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -55,7 +55,7 @@ jobs:
       # key は run ごとに一意・restore-keys の前方一致で直近の結果を復元する（Stryker 推奨パターン）。
       - name: Restore Stryker incremental cache
         if: (github.event_name == 'pull_request' || github.event_name == 'push') && steps.changes.outputs.code == 'true' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: reports/stryker-incremental.json
           key: stryker-incremental-${{ github.run_id }}
