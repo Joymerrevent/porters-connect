@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-07-01
+- 最終更新: 2026-07-19
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -54,7 +54,7 @@
 ### 基盤・記録
 
 - ADR 0001〜0039 accepted（0037 は 0039 で superseded）（[索引][adr]）
-- CI（ci / mutation / codeql / commitlint / test）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
+- CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・269 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜12 はすべて `fixed`）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
@@ -69,10 +69,10 @@
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
-## 🧱 基盤構築（ほぼ完了）
+## 🧱 基盤構築（完了）
 
 機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
-リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。残るは WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）のみ。各項目は branch→PR で進め、マージはメンテナ。
+リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）も入れ、**基盤構築は完了**。各項目は branch→PR で進め、マージはメンテナ。
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
@@ -96,7 +96,7 @@
 - [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
-- [ ] （任意・未着手）OpenSSF Scorecard／Actions の SHA ピン留め（Dependabot 更新と両立）
+- [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
 
 ### WS-D. リリース自動化（[ADR-0025][adr25]〜[0032][adr32]）
 

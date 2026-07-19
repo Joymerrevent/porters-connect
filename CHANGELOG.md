@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-07-19
+
+### Changed
+
+- **サプライチェーン強靭化（CI/CD）**: 全 GitHub Actions ワークフローの `uses:` を**タグから 40 桁コミット SHA にピン留め**（版コメント付きで Dependabot が SHA＋版を追従更新）。
+  あわせて **OpenSSF Scorecard** ワークフロー（`scorecard.yml`）を追加し、結果を code scanning（SARIF）へ＋OpenSSF へ公開。いずれも **CI/リポジトリ側の変更で、公開される挙動・型には影響しません**。
+- README に **OpenSSF Scorecard バッジ**を追加。
+
 ## [0.6.1] - 2026-07-19
 
 ### Changed
@@ -132,7 +140,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
