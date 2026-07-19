@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-07-19
+
+### Changed
+
+- **最低要求 `fast-xml-parser` を `^5.10.1` に引き上げ**（従来 `^5.9.2`）。5.10.1 は複数 DOCTYPE 宣言の拒否など
+  パース面の硬化を含みます（公開 API は不変）。あわせて内部の Prettier 3.9.5 追従整形・CI（`actions/setup-node@7`）・
+  開発依存の更新を取り込み。いずれも公開される挙動・型には影響しません。
+
 ## [0.6.0] - 2026-07-01
 
 ### Added
@@ -124,7 +132,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.3.0...v0.4.0

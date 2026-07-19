@@ -44,11 +44,7 @@ export type FieldBuilder = {
 
 /** Data resources that accept custom fields (ADR-0023 D6). Master / Attachment are excluded. */
 export type CustomFieldResource =
-  | "candidate"
-  | "job"
-  | "client"
-  | "process"
-  | "resume";
+  "candidate" | "job" | "client" | "process" | "resume";
 
 /** One resource's custom field declarations: alias -> {@link FieldDef}. */
 export type ResourceDecl = Record<string, FieldDef<DataType>>;

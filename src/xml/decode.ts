@@ -42,9 +42,7 @@ export type FieldValue = string | number | string[] | UserRef | null;
 // (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
 // (ADR-0019): id/number/reference -> number, User -> UserRef, Option -> string[], rest -> string.
 export type DecodedValue<D extends DataType> = D extends
-  | "System[Id]"
-  | "Number"
-  | "System[Reference]"
+  "System[Id]" | "Number" | "System[Reference]"
   ? number
   : D extends "User"
     ? UserRef

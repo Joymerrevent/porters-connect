@@ -7,22 +7,18 @@
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
   詳細・根拠は各正典を参照する（重複させない）。
 
-## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.5.0 時点）
+## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.6.0 時点）
 
 方針（stakeholder 判断 2026-06-22）: **案F（v1 公開 API の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
 各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
 
-完了: **F-1 OAuth 公開 API `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）／**F-3 マルチテナント**（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0 で公開・利用手順 `docs/guide/multi-tenancy.md`）。
+完了: **F-1 OAuth 公開 API `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）／**F-3 マルチテナント**（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0 で公開・利用手順 `docs/guide/multi-tenancy.md`）／**F-4 一括書き込み**（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0 で公開・利用手順 `docs/guide/bulk-write.md`）。**案F はこれで完了**。
 横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
 
 ### いま着手（Now）
 
 - [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了によりこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
 - [ ] 案C ローカルフェイクサーバー（MCP の評価基盤・案A の加速）／ 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
-
-### 実装済み・公開待ち
-
-- [x] **F-4 一括書き込み** — `createMany` / `updateMany` ＋ `BulkWriteResult`（200 件＋サイズで自動分割・部分成功を返す・[ADR-0041][adr41] 案1a/案2a）。**develop に実装済み・0.6.0 で公開予定・利用手順 `docs/guide/bulk-write.md`**。**これで案F（v1 公開 API の積み残し）は完了**。
 
 ### 補助・随時
 
@@ -69,7 +65,7 @@
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.5.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope` を同梱）
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.6.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult` を同梱）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
