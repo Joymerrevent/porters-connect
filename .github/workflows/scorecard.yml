@@ -1,0 +1,59 @@
+name: Scorecard
+
+# OpenSSF Scorecard によるサプライチェーン健全性スキャン（公式スターター準拠）。
+# 既定ブランチ（main）に対して定期・push・ブランチ保護変更で走らせ、結果を
+# code scanning（Security タブ）へ SARIF で上げつつ OpenSSF へ公開する（バッジ用）。
+# publish_results は「公開リポジトリのスコア＝公開メタデータ」のみを送信し、機微情報は含まない。
+#
+# 注意: 既定ブランチ以外／fork PR では publish 用の id-token が無く失敗するため、
+#       PR トリガは付けない（＝必須チェックにもしない）。
+on:
+  branch_protection_rule: # ブランチ保護ルールの変更で再評価
+  schedule:
+    - cron: "27 2 * * 1" # 毎週月曜 02:27 UTC（codeql の 03:23 と時間をずらす）
+  push:
+    branches: [main]
+
+# 既定は読み取りのみ。書き込みは job で必要な分だけ付与する（codeql.yml と同方針）。
+permissions:
+  contents: read
+
+concurrency:
+  group: scorecard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analysis:
+    name: scorecard
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # SARIF を code scanning にアップロードするのに必要
+      id-token: write # publish_results（OpenSSF への公開）の OIDC に必要
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # 公開リポジトリのスコアを OpenSSF に公開（README バッジ・REST API 用）。
+          publish_results: true
+
+      # SARIF を成果物として保持（デバッグ・監査用。短期保存で十分）。
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      # code scanning（Security タブ）へ取り込み、指摘を PR/コードと紐付ける。
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
+        with:
+          sarif_file: results.sarif

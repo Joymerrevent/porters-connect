@@ -1,6 +1,6 @@
 # @joymerrevent/porters-connect
 
-[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 20][node-badge]
+[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 20][node-badge] [![OpenSSF Scorecard][scorecard-badge]][scorecard]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
 [Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。
@@ -370,6 +370,8 @@ try {
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 [node-badge]: https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg
+[scorecard]: https://scorecard.dev/viewer/?uri=github.com/Joymerrevent/porters-connect
+[scorecard-badge]: https://api.scorecard.dev/projects/github.com/Joymerrevent/porters-connect/badge
 [joymerrevent]: https://github.com/Joymerrevent
 [contributing]: ./CONTRIBUTING.md
 [security]: ./SECURITY.md
