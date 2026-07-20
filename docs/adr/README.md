@@ -71,6 +71,7 @@
 | [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
 | [0040][0040] | マルチテナント tenant(id) スコープ（F-3）                   | 詳細設計 | accepted   |
 | [0041][0041] | 一括書き込み createMany / updateMany（F-4）                 | 詳細設計 | accepted   |
+| [0042][0042] | 対応 PORTERS/API バージョン表記方針（v2 を契約の正）        | 要件定義 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -78,7 +79,7 @@
 
 ### 【要件定義】
 
-- PRD オープン論点（[requirements §8][prd]）の確定 — 成功指標の数値化タイミング・対応 PORTERS/API バージョン表記・npm/組織名最終確認 ほか
+- PRD オープン論点（[requirements §8][prd]）の確定 — 成功指標の数値化タイミング・npm/組織名最終確認 ほか（**対応 PORTERS/API バージョン表記は [0042][0042]（accepted）で確定**）
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
@@ -143,3 +144,4 @@
 [0039]: 0039-commitlint-release-range.md
 [0040]: 0040-multitenancy-surface-impl.md
 [0041]: 0041-bulk-write-surface-impl.md
+[0042]: 0042-supported-version-policy.md
