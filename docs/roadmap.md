@@ -17,8 +17,9 @@
 
 ### いま着手（Now）
 
-- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了によりこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
-- [ ] 案C ローカルフェイクサーバー（MCP の評価基盤・案A の加速）／ 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
+- [ ] **案C ローカルフェイクサーバー（[ADR-0043][adr43] accepted）** — MCP（案A）より**先行**（stakeholder 2026-07-20）。評価基盤＝L1 結合＋MCP e2e をオフライン化。実装タスクは [フェイクサーバー実装計画][fake-plan]（フェーズ1 の縦スライスから着手）。
+- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了によりこれが主軸**。フェイク先行後に詳細設計 ADR（パッケージ構成・ツール表面）から着手。
+- [ ] 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
 
 ### 補助・随時
 
@@ -150,6 +151,8 @@
 [adr40]: adr/0040-multitenancy-surface-impl.md
 [adr41]: adr/0041-bulk-write-surface-impl.md
 [adr42]: adr/0042-supported-version-policy.md
+[adr43]: adr/0043-local-fake-server.md
+[fake-plan]: design/fake-server-plan.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md
