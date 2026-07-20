@@ -70,17 +70,19 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
 
 - **D-提供形態**: **「挙動コア」を1つ実装し、2 つのアダプタで露出**（推奨）。
   - (1) **状態あり Fake `Transport`**（インプロセス・[[0009-http-transport]] の seam に注入）＝ L1 結合テスト・SDK テスト向け。**TLS/https 問題を回避**でき最速・決定的。
-  - (2) **起動可能な HTTP サーバー**（`host` を向ける）＝ N2（アプリ無改変）・**MCP の e2e**（別プロセスが HTTP で叩く）向け。
+  - (2) **起動可能な HTTP サーバー**（`host` を向ける）＝ N2（アプリ無改変）・**MCP の e2e**（別プロセスが HTTP で叩く）向け。**外部消費が要る＝package 昇格（D-パッケージ）と対で**用意する（近い需要は L1 なので (1) を先行）。
   - 1 つの挙動コア → 2 アダプタで、片方に寄せず**再利用最大化**。
 - **D-localhost/https**: HTTP サーバー・アダプタは **http（localhost）と自己署名 TLS の両対応**を検討。ライブラリ側で localhost に http で向けられるか（`PORTERS_HOST`＋スキーム設定）を確認し、必要なら**コアに小さな設定 seam**を足す（別途・最小）。L1 はインプロセス Transport で https 問題を踏まない。
-- **D-パッケージ**: **別パッケージ**（pnpm workspace 化）。名称候補 `@joymerrevent/porters-fake`（ADR-0024 は `porters-mock-server` を例示。ただし「mock」は `createMockTransport` と紛らわしいため **fake** で区別）。**公開/private は当面 private でも可**（まず内部評価基盤として）。
+- **D-パッケージ**: **まず in-repo・dev-only**（このリポジトリ内・`src/` の外＝例 `test/fake/`）。既存設定で**公開 tarball 非同梱**（`files` は `dist` のみ）かつ**カバレッジ対象外**（coverage include は `src/**` のみ・perFile 100%）＝**追加設定なしで満たす**。`test/fixtures` を直接流用しドリフトを断つ。
+  - ADR-0024 の「**コア非結合・薄く**」の本質は「**公開物に混ぜない**」ことで、**別 npm package は必須でない**。in-repo・dev-only で満たしつつ、この repo の開発（L1 結合テスト）に最も便利（stakeholder 2026-07-20）。
+  - **昇格可能に保つ**: 公開サーフェス／共有 fixtures 境界で実装し、**MCP e2e／N2 配布の需要が出たら** workspace/公開 package へ昇格（名称候補 `@joymerrevent/porters-fake`。「mock」は `createMockTransport` と紛らわしいため **fake** で区別）。**monorepo 化の是非は昇格時に判断**（`porters-mcp` の配置＝案A と併せて・今は決めない）。
 - **D-棲み分け（`createMockTransport`）**: **`createMockTransport`＝薄い・状態なし・N1**（[[0024-mock-transport]]）／**Fake＝状態あり・高忠実・N2＋e2e**。両者は `Transport` 契約型を共有。README/ガイドに「いつどちらを使うか」を明記。
 - **D-fixture 共有**: ワイヤ形状は**ライブラリの encode/parse・`docs/reference` の XML 例を単一ソース**として共有（フェイクで手書きせず、可能な範囲で `porters-connect` に依存 or 共有 fixtures モジュール）。**ドリフト防止**。
 
 ### Consequences
 
-- Good: 契約なしで **L1 結合・L2（MCP）e2e** をオフライン化。忠実度の**強制関数**（理解のズレを MCP 前に炙り出す）。注入で異常系テストが可能。**コアは薄いまま**（別パッケージ）。
-- Bad: **新パッケージ＋monorepo（pnpm workspace）ツール**が増える。**https/localhost 対応**の重さ。API 理解の追随という保守コスト。
+- Good: 契約なしで **L1 結合・L2（MCP）e2e** をオフライン化。忠実度の**強制関数**（理解のズレを MCP 前に炙り出す）。注入で異常系テストが可能。**コアは薄いまま**（in-repo・dev-only＝`src` 外・tarball 非同梱）。**monorepo ツールを今は導入しない**（just-released な単一パッケージ構成を揺らさない＝小さな blast radius）。
+- Bad: **https/localhost 対応**の重さ（HTTP サーバー・アダプタ＝昇格時）。API 理解の追随という保守コスト。昇格時に **extraction が要る**（ただし公開サーフェスで作れば機械的）。
 - Neutral: 忠実度を reference に固定するため、**未文書の挙動は LV 項目**として明示的に残る（フェイルセーフ・後で契約検証）。
 
 ## Pros and Cons of the Options
@@ -105,6 +107,6 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
 - 直接の親: [[0024-mock-transport]] D7（本 ADR はその follow-up）／N1=`createMockTransport`・N2=本フェイク。
 - 接地/前提: [[0009-http-transport]]（Transport seam・`https://` URL 組立）／[[0002-ground-design-in-live-api-docs]]（reference が正）／[[0006-error-model]]／[[0010-retry-throttle]]／[[0007-oauth-public-surface]]。
 - 位置づけ: [[0033-post-mvp-direction]] 案C（MCP 評価基盤）→ 案A（MCP）。未文書挙動は [live-verification][lv] へ。
-- 実装（accept 後・別 PR・別パッケージ）: pnpm workspace 化、挙動コア＋2 アダプタ（Fake `Transport`／HTTP サーバー）、注入 API、fixture 共有、README/ガイドの棲み分け。
+- 実装（accept 後・別 PR）: **まず in-repo・dev-only**（`test/fake/`）に挙動コア＋**Fake `Transport` アダプタ**→ L1 結合テスト・注入 API・`test/fixtures` 共有・`createMockTransport` との棲み分けを README/ガイドへ。**HTTP サーバー・アダプタ＋package 昇格（pnpm workspace / monorepo 判断）は N2・MCP e2e の需要時**。
 
 [lv]: ../live-verification.md
