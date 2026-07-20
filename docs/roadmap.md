@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-07-19
+- 最終更新: 2026-07-20
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -23,8 +23,8 @@
 ### 補助・随時
 
 - [ ] 案D `defineFields` 深掘り（値検証・テナント実在チェック・Field Read からの宣言生成・ADR-0023）。
-- [ ] 案E 採用 — 対応 PORTERS / API バージョン表記の確定（[PRD §8][prd]）・README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
-- [ ] PRD オープン論点（[§8][prd]）の確定。
+- [ ] 案E 採用 — **対応 PORTERS / API バージョン表記の確定は [ADR-0042][adr42] で完了**。残るは README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
+- [ ] PRD オープン論点（[§8][prd]）の確定（対応バージョン表記は [ADR-0042][adr42] で解決済み・残りは成功指標の数値化タイミング／npm・組織名確認 等）。
 
 ### 契約取得後（ブロック中・リリース非ブロッカー）
 
@@ -66,7 +66,7 @@
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
 - [x] 公開済み — **`@joymerrevent/porters-connect@0.6.2`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）
-- [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
+- [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
@@ -149,6 +149,7 @@
 [adr39]: adr/0039-commitlint-release-range.md
 [adr40]: adr/0040-multitenancy-surface-impl.md
 [adr41]: adr/0041-bulk-write-surface-impl.md
+[adr42]: adr/0042-supported-version-policy.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md
