@@ -72,7 +72,12 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
   - (1) **状態あり Fake `Transport`**（インプロセス・[[0009-http-transport]] の seam に注入）＝ L1 結合テスト・SDK テスト向け。**TLS/https 問題を回避**でき最速・決定的。
   - (2) **起動可能な HTTP サーバー**（`host` を向ける）＝ N2（アプリ無改変）・**MCP の e2e**（別プロセスが HTTP で叩く）向け。**外部消費が要る＝package 昇格（D-パッケージ）と対で**用意する（近い需要は L1 なので (1) を先行）。
   - 1 つの挙動コア → 2 アダプタで、片方に寄せず**再利用最大化**。
-- **D-localhost/https**: HTTP サーバー・アダプタは **http（localhost）と自己署名 TLS の両対応**を検討。ライブラリ側で localhost に http で向けられるか（`PORTERS_HOST`＋スキーム設定）を確認し、必要なら**コアに小さな設定 seam**を足す（別途・最小）。L1 はインプロセス Transport で https 問題を踏まない。
+- **D-アクセスポイント/scheme（http でフェイクに向ける）**（確認済み 2026-07-20）: ライブラリは `https://` を**ハードコード**（`src/auth/*`・`src/resources/*` の URL 組立 **8 箇所**・host はホスト名のみ）。→ **無改造アプリ（N2＝本フェイクの主目的）を `http://localhost` へ向けるにはライブラリ対応が要る**。決定:
+  - **アクセスポイントを設定可能に**（base URL / scheme・**既定 https**）。8 箇所を **1 関数に集約**し scheme 分岐を1回だけ入れる。**VPN/LB・内部ゲートウェイ越し**も同じ seam でカバー（localhost 特例にしない）。
+  - **http は明示設定でのみ**有効（既定 https＝安全）。**http 使用時は警告を、ループバック含め毎起動で必ず出す**。**専用の環境変数（例 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`）でのみ抑止**（**allow ≠ silence**＝http を許すだけでは黙らない・黙るには意識的操作が要る＝フェイルセーフ）。警告は**プロセス内 1 回**（毎リクエストのスパム回避／抑止しない限り毎起動で必ず出る）。
+  - **フェイクサーバーは http（証明書不要）。自己署名 https は不採用**（過剰）。
+  - 汎用ネットワーク（forward proxy 等）は**既存 Transport seam**（custom fetch 注入）に委ね、専用機能は作らない（YAGNI）。
+  - **L1 のインプロセス Fake `Transport` はこの scheme 問題を踏まない**（seam が横取り・TLS/ネットワーク無し）＝近期は変更不要。上記ライブラリ変更は **HTTP サーバー・アダプタ（N2 無改造検証）** のための昇格時作業。独立性が高いので**将来別 ADR へ切り出しても可**（当面は本 ADR に内包）。
 - **D-パッケージ**: **まず in-repo・dev-only**（このリポジトリ内・`src/` の外＝例 `test/fake/`）。既存設定で**公開 tarball 非同梱**（`files` は `dist` のみ）かつ**カバレッジ対象外**（coverage include は `src/**` のみ・perFile 100%）＝**追加設定なしで満たす**。`test/fixtures` を直接流用しドリフトを断つ。
   - ADR-0024 の「**コア非結合・薄く**」の本質は「**公開物に混ぜない**」ことで、**別 npm package は必須でない**。in-repo・dev-only で満たしつつ、この repo の開発（L1 結合テスト）に最も便利（stakeholder 2026-07-20）。
   - **昇格可能に保つ**: 公開サーフェス／共有 fixtures 境界で実装し、**MCP e2e／N2 配布の需要が出たら** workspace/公開 package へ昇格（名称候補 `@joymerrevent/porters-fake`。「mock」は `createMockTransport` と紛らわしいため **fake** で区別）。**monorepo 化の是非は昇格時に判断**（`porters-mcp` の配置＝案A と併せて・今は決めない）。
@@ -107,6 +112,6 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
 - 直接の親: [[0024-mock-transport]] D7（本 ADR はその follow-up）／N1=`createMockTransport`・N2=本フェイク。
 - 接地/前提: [[0009-http-transport]]（Transport seam・`https://` URL 組立）／[[0002-ground-design-in-live-api-docs]]（reference が正）／[[0006-error-model]]／[[0010-retry-throttle]]／[[0007-oauth-public-surface]]。
 - 位置づけ: [[0033-post-mvp-direction]] 案C（MCP 評価基盤）→ 案A（MCP）。未文書挙動は [live-verification][lv] へ。
-- 実装（accept 後・別 PR）: **まず in-repo・dev-only**（`test/fake/`）に挙動コア＋**Fake `Transport` アダプタ**→ L1 結合テスト・注入 API・`test/fixtures` 共有・`createMockTransport` との棲み分けを README/ガイドへ。**HTTP サーバー・アダプタ＋package 昇格（pnpm workspace / monorepo 判断）は N2・MCP e2e の需要時**。
+- 実装（accept 後・別 PR）: **まず in-repo・dev-only**（`test/fake/`）に挙動コア＋**Fake `Transport` アダプタ**→ L1 結合テスト・注入 API・`test/fixtures` 共有・`createMockTransport` との棲み分けを README/ガイドへ。**HTTP サーバー・アダプタ＋package 昇格（pnpm workspace / monorepo 判断）＋ライブラリ側の小変更（URL 組立 8 箇所の集約・アクセスポイント/scheme 設定・ループバック外含む http 警告）は N2・MCP e2e の需要時**（ライブラリ変更は別 PR ／必要なら別 ADR）。
 
 [lv]: ../live-verification.md
