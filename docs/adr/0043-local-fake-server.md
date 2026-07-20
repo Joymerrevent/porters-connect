@@ -1,14 +1,14 @@
-# 43. ローカル フェイクサーバーの設計（忠実度ポリシー・提供形態・別パッケージ）
+# 43. ローカル フェイクサーバーの設計（忠実度ポリシー・提供形態・in-repo 先行）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-07-20
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [[0024-mock-transport]] の D7 が follow-up として本 ADR に送った「**ローカル フェイクサーバー（N2・アプリ無改変・
-> 高忠実・コアと分離した別パッケージ）**」を設計する。roadmap 案C（**MCP の評価基盤・案A の加速**）に対応し、
+> 高忠実・コアと分離）**」を設計する。roadmap 案C（**MCP の評価基盤・案A の加速**）に対応し、
 > **MCP（案A）より先に着手**する方針（stakeholder 2026-07-20）。本 ADR は **忠実度ポリシー**を Decision の核に据え、
-> 提供形態・パッケージ構成・`createMockTransport` との棲み分け・fixture 二重管理の回避を詰める。
-> **`proposed`（decider の accept 待ち）。実装は accept 後・別 PR・別パッケージ。**
+> 提供形態・パッケージ構成（**in-repo・dev-only 先行に確定**）・`createMockTransport` との棲み分け・fixture 二重管理の回避を詰める。
+> **decider 承認により `accepted`（2026-07-20）**。実装は accept 後・別 PR（**まず in-repo・dev-only** の Fake `Transport` から）。
 
 ## Context and Problem Statement
 
@@ -48,7 +48,7 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
 
 ## Decision Outcome
 
-**採用: 案B（ある程度忠実）**（stakeholder が 2026-07-20 に選択）。`accepted` は decider の明示承認を待つ。
+**採用: 案B（ある程度忠実）**（stakeholder が 2026-07-20 に選択）。**decider 承認により accepted（2026-07-20）**。
 
 ### 忠実度ポリシー（この ADR の核）
 
