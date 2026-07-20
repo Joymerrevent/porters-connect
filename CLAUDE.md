@@ -105,7 +105,7 @@ src/
 
 ## バージョン管理
 
-- PORTERS は 8.x→9.x と更新が続く。**対応 PORTERS バージョンを README とコードコメントに明記**する。
+- **互換性の契約は Connect API Version**（`X-P-ConnectAPI-Version: 2` 既定送信・v2 前提。ADR-0042）。**製品 PORTERS 8.x/9.x は参考**（更新が続くため全数保証はしない）。追従は API version 基準で判断し、README・コードコメントに明記する。
 - semver に従う。破壊的変更はメジャーバンプ。
 
 ---
