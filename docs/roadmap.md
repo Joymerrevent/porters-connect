@@ -65,7 +65,7 @@
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.6.0`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult` を同梱）
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.6.2`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）
 - [ ] 対応 PORTERS / API バージョン明記の確定（[PRD §8][prd] オープン論点・stakeholder 判断。README には Connect API v2 / PORTERS 8.x・9.x 記載済み）
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
