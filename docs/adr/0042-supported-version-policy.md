@@ -1,6 +1,6 @@
 # 42. 対応 PORTERS / API バージョンの表記方針（Connect API Version を契約の正とする）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-07-20
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,7 @@
 > API version 1/2 の関係）」を確定する。[[0033-post-mvp-direction]] 案E（採用の地固め）の一部。README には既に
 > 「Connect API Version 2 / PORTERS 8.x・9.x 想定」と**記載はある**が、**何を互換性の約束（契約）とするかの方針が未定**で、
 > 追従判断の基準も曖昧だった。本 ADR は**方針を明文化**して §8 を閉じる。
-> **stakeholder は 2026-07-20 の議論で案A（API version を契約の正）を選択**。本 ADR は `proposed`（decider の accept 待ち）。
+> **decider 承認により `accepted`（2026-07-20）**: 案A（Connect API Version を契約の正）を採用（下記 Decision Outcome）。
 > **反映（README「対応バージョン」節・コードコメント・PRD 整合）は accept 後・別 PR。**
 
 ## Context and Problem Statement
@@ -45,7 +45,7 @@ PORTERS には 2 系統のバージョンがある：
 
 ## Decision Outcome
 
-**選択: 案A**（stakeholder が 2026-07-20 に選択・recommended）。`accepted` は decider の明示承認を待つ。
+**選択: 案A**（Connect API Version を契約の正）。**decider 承認により accepted（2026-07-20）**。
 
 明文化する方針:
 
