@@ -12,6 +12,7 @@ import type { Backoff } from "./retry";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
 
+// Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
 const API_VERSION = "2";
 
 // docs/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).

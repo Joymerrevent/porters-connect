@@ -117,7 +117,7 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 
 - [stakeholder] 成功指標の**数値化のタイミング**（ベースライン＝最初の実利用が出てから設定する想定で良いか）。
 - [stakeholder/eng] **サンドボックス(R-17)** は P1 で良いか、それとも GTM 上 P0 に引き上げるか（モック基盤 R-12 は P0 確定）。
-- [eng] **対応 PORTERS バージョン**として何を明記するか（製品 8.x/9.x と API version 1/2 の関係）。
+- （解決済み）**対応 PORTERS / API バージョン表記**は [ADR-0042][adr42] で確定＝**Connect API Version を契約の正**（`X-P-ConnectAPI-Version: 2` 前提）、製品 8.x/9.x は参考情報。
 - [eng] v1 で **CJS 出力**まで出すか（ESM のみで開始し P2 か）。
 - [eng・要検証] **1 つの App トークンで複数 partition を叩けるか**（ADR-0008。App 登録は App 単位＝確定。設計は両対応のため未確定でもブロックしない）。PoC / ポーターズ確認。
 - （解決済み）トークンストア・初回 code グラントの扱いは ADR-0007 で確定。
@@ -139,4 +139,5 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 - API 事実: [docs/reference][ref]（認証・形式・制限・リソース・型・Write・落とし穴・用語）
 
 [adr]: ../adr/README.md
+[adr42]: ../adr/0042-supported-version-policy.md
 [ref]: ../reference/README.md
