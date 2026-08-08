@@ -16,7 +16,12 @@ import { buildWriteUrl, firstWriteResultId } from "./resource";
 // (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
 const MAX_CONTENT_CHARS = 14_000_000;
 
-const ALL_FIELDS = [
+/**
+ * Every Attachment field name, in wire order. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds its Attachment table from this list rather than a copy that could drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
+export const ATTACHMENT_FIELD_NAMES = [
   "Id",
   "Resource",
   "ResourceId",
@@ -176,7 +181,7 @@ export const createAttachmentResource = (deps: {
   // See docs/live-verification.md (LV-3, LV-4).
   const get = async (id: number): Promise<Attachment | undefined> => {
     const page = await search({
-      field: ALL_FIELDS,
+      field: ATTACHMENT_FIELD_NAMES,
       condition: { "Id:eq": String(id) },
       count: 1,
     });

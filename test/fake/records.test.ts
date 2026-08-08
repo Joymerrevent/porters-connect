@@ -3,8 +3,14 @@
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
+import type { FakeResource } from "./resources";
 import { createRecord, updateRecord, type RecordContext } from "./records";
 import { createFakeStore } from "./store";
+
+const CANDIDATE: FakeResource = {
+  descriptor: CANDIDATE_DESCRIPTOR,
+  idAlias: "P_Id",
+};
 
 const setup = () => {
   let clock = Date.parse("2026-01-02T03:04:05Z");
@@ -24,7 +30,7 @@ describe("createRecord", () => {
 
     const record = createRecord(
       store,
-      CANDIDATE_DESCRIPTOR,
+      CANDIDATE,
       { P_Id: "-1", P_Owner: "5", P_Name: "山田 太郎" },
       context,
     );
@@ -45,7 +51,7 @@ describe("createRecord", () => {
 
     const record = createRecord(
       store,
-      CANDIDATE_DESCRIPTOR,
+      CANDIDATE,
       { P_Id: "-1", P_RegistrationDate: "1999/01/01 00:00:00" },
       context,
     );
@@ -58,7 +64,7 @@ describe("createRecord", () => {
 
     const record = createRecord(
       store,
-      CANDIDATE_DESCRIPTOR,
+      CANDIDATE,
       { P_Id: "-1", P_RegisteredBy: "42" },
       context,
     );
@@ -73,7 +79,7 @@ describe("updateRecord", () => {
     const { store, context, advance } = setup();
     createRecord(
       store,
-      CANDIDATE_DESCRIPTOR,
+      CANDIDATE,
       { P_Id: "-1", P_Owner: "5", P_Name: "山田 太郎" },
       context,
     );
@@ -81,7 +87,7 @@ describe("updateRecord", () => {
     advance(86_400_000);
     const updated = updateRecord(
       store,
-      CANDIDATE_DESCRIPTOR,
+      CANDIDATE,
       10001,
       { P_Id: "10001", P_Name: "山田 太郎（更新）" },
       context,
@@ -97,13 +103,7 @@ describe("updateRecord", () => {
     const { store, context } = setup();
 
     expect(
-      updateRecord(
-        store,
-        CANDIDATE_DESCRIPTOR,
-        10001,
-        { P_Name: "x" },
-        context,
-      ),
+      updateRecord(store, CANDIDATE, 10001, { P_Name: "x" }, context),
     ).toBeUndefined();
     expect(store.list("candidate")).toHaveLength(0);
   });

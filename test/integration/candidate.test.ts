@@ -166,7 +166,8 @@ describe("error paths against the fake server", () => {
 
   it("fails loud on a route the fake does not implement yet", async () => {
     const { porters } = setup();
-    await expect(porters.job.search()).rejects.toMatchObject({
+    // The master reads land in phase 3; until then they must fail loudly, not answer empty.
+    await expect(porters.partition.search()).rejects.toMatchObject({
       name: "PortersConfigError",
       category: "config",
     });

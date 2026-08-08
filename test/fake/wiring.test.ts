@@ -9,10 +9,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
+import { ATTACHMENT_FIELD_NAMES } from "../../src/resources/attachment";
 import { decoderFor } from "../../src/resources/read-core";
 import { buildWriteXml } from "../../src/xml/encode";
 import { parseResourcePage, parseWriteResult } from "../../src/xml/parser";
-import { FAKE_RESOURCES } from "./resources";
+import { ATTACHMENT_DESCRIPTOR, FAKE_RESOURCES } from "./resources";
 
 const fixture = (path: string): string =>
   readFileSync(
@@ -23,9 +24,41 @@ const fixture = (path: string): string =>
 describe("fake server wiring", () => {
   it("routes on the library's own resource descriptor, not a copy", () => {
     // Same object identity = there is no second catalog that could drift from the resource module.
-    expect(FAKE_RESOURCES.get("candidate")).toBe(CANDIDATE_DESCRIPTOR);
+    expect(FAKE_RESOURCES.get("candidate")?.descriptor).toBe(
+      CANDIDATE_DESCRIPTOR,
+    );
     expect(CANDIDATE_DESCRIPTOR.prefix).toBe("Person");
     expect(CANDIDATE_DESCRIPTOR.fields.P_Owner).toBe("User");
+  });
+
+  it("serves every MVP resource, each keyed on its own primary key", () => {
+    expect([...FAKE_RESOURCES.keys()].sort()).toEqual([
+      "attachment",
+      "candidate",
+      "client",
+      "job",
+      "process",
+      "resume",
+    ]);
+    for (const [path, resource] of FAKE_RESOURCES) {
+      expect(resource.descriptor.path).toBe(path);
+      expect(resource.descriptor.fields[resource.idAlias]).toBe("System[Id]");
+    }
+  });
+
+  it("keeps the hand-written Attachment table in step with the library's field list", () => {
+    // Attachment is bespoke in the library too (no catalog to borrow), so the fake types its
+    // fields itself — but the *names* come from the library, and this is the alarm if they change.
+    expect(Object.keys(ATTACHMENT_DESCRIPTOR.fields)).toEqual(
+      ATTACHMENT_FIELD_NAMES,
+    );
+    expect(
+      Object.values(ATTACHMENT_DESCRIPTOR.fields).every(
+        (type) => type !== undefined,
+      ),
+    ).toBe(true);
+    // No alias prefix: its tags are bare (`<FileName>`), unlike `<Person.P_Name>`.
+    expect(ATTACHMENT_DESCRIPTOR.prefix).toBe("");
   });
 
   it("reads the shared fixtures and decodes them through the library", () => {
