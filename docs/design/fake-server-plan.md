@@ -79,11 +79,26 @@
   **RV-13**（HTTP ステータスを一切見ていない）・**RV-14**（Write のルート `<Code>` を読まない）を起票。
   どちらも挙動変更を伴うため**別 ADR / 別 PR**（LV-11 の実機確認が先）。
 
-## フェーズ 2 — データ系リソース横展開
+## フェーズ 2 — データ系リソース横展開 ✅ 完了
 
-- [ ] Job / Client / Process / Resume（generic `/v1/{path}`・フェーズ1 の型を流用）
-- [ ] **Attachment**（Base64・`unboundedBody` 経路・単件）
-- [ ] 200 件超 → **分割要求**の挙動（一括書き込み `createMany`/`updateMany` を Fake 越しに検証）
+- [x] Job / Client / Process / Resume（generic `/v1/{path}`・フェーズ1 の型を流用）
+- [x] **Attachment**（Base64・`unboundedBody` 経路・単件）
+- [x] 200 件超 → **分割要求**の挙動（一括書き込み `createMany`/`updateMany` を Fake 越しに検証）
+
+### フェーズ 2 で確定したこと（実装メモ）
+
+- **経路表の一般化**: `FakeResource`＝`{ descriptor, idAlias, unboundedWrite? }`。フェーズ1 が暗黙に前提していた
+  「主キーは `P_Id`」「alias には接頭辞がある」を**リソース属性に外出し**した（Attachment は `Id`・接頭辞なし）。
+  store も `FakeTable`（path ＋ 主キー alias）を受け取る形へ。
+- **descriptor の追加 export**: `JOB_/CLIENT_/PROCESS_/RESUME_DESCRIPTOR`（Candidate と同じ型・同じ理由）。
+  Attachment はライブラリ側にもカタログが無い（`decodeAttachment` が手書き）ため、**フィールド名だけ**を
+  `ATTACHMENT_FIELD_NAMES` として export し、Data Type はフェイクが持つ。ドリフト検知は `wiring.test.ts` の
+  「フェイクの表がライブラリの名前一覧と一致する」テストで担保。
+- **Attachment はサイズ上限を免除**: ライブラリが `unboundedBody` で送る経路（ADR-0018）に合わせ、
+  フェイクも `unboundedWrite` のリソースでは ~15000 字ガードを適用しない。でないと正当なアップロードが 400 になる。
+- **判明した事実**: 一括 create は **~15000 字の上限が先に効く**（1 件 ≒ 110 字なら 130 件程度で分割）ため、
+  **200 件バウンドに到達しない**。200 件が効くのは ID のみ update のような小さいレコードのとき。
+  テストは「分割数」ではなく**両方の不変条件**（1 リクエスト ≤200 件かつ ≤15000 字・全件書き込み・順序保持）を検証する。
 
 ## フェーズ 3 — マスタ Read
 

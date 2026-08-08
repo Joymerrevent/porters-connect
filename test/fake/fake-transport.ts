@@ -17,12 +17,11 @@ import {
 } from "../../src/errors/index";
 import { MAX_REQUEST_LENGTH } from "../../src/http/requester";
 import type { TransportRequest, TransportResponse } from "../../src/http/types";
-import type { ResourceDescriptor } from "../../src/resources/resource";
 import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";
 import { parseReadQuery, runReadQuery } from "./query";
 import { createRecord, updateRecord, type RecordContext } from "./records";
-import { FAKE_RESOURCES } from "./resources";
+import { FAKE_RESOURCES, type FakeResource } from "./resources";
 import { createFakeStore } from "./store";
 import {
   WIRED_OPTIONS,
@@ -66,7 +65,7 @@ type RouteKind = "auth" | "resource" | "unknown";
 /** A resolved request target: the auth endpoints, one known resource, or nothing. */
 type Route =
   | { kind: "auth"; path: string }
-  | { kind: "resource"; descriptor: ResourceDescriptor }
+  | { kind: "resource"; resource: FakeResource }
   | { kind: "unknown" };
 
 const sleep = (ms: number): Promise<void> =>
@@ -81,10 +80,10 @@ const routeList = (): string =>
 
 const resolveRoute = (path: string): Route => {
   if (path === OAUTH_PATH || path === TOKEN_PATH) return { kind: "auth", path };
-  const descriptor = path.startsWith(API_PREFIX)
+  const resource = path.startsWith(API_PREFIX)
     ? FAKE_RESOURCES.get(path.slice(API_PREFIX.length))
     : undefined;
-  return descriptor ? { kind: "resource", descriptor } : { kind: "unknown" };
+  return resource ? { kind: "resource", resource } : { kind: "unknown" };
 };
 
 // A header lookup that ignores case — the library sends canonical casing, but a Transport must not
@@ -196,24 +195,24 @@ export const createFakeTransport = (
   };
 
   const resourceError = (
-    descriptor: ResourceDescriptor,
+    resource: FakeResource,
     code: number,
     message: string,
   ): TransportResponse => ({
     // Result-code errors ride HTTP 200 (reference); the library routes on `<Code>`.
     status: 200,
-    body: buildResourceErrorXml(descriptor.name, code, message),
+    body: buildResourceErrorXml(resource.descriptor.name, code, message),
   });
 
   const checkAccess = (
     req: TransportRequest,
     url: URL,
-    descriptor: ResourceDescriptor,
+    resource: FakeResource,
   ): TransportResponse | undefined => {
     const version = header(req, API_VERSION_HEADER);
     if (version !== undefined && !SUPPORTED_API_VERSIONS.has(version)) {
       return resourceError(
-        descriptor,
+        resource,
         CODE_INVALID_VERSION,
         `unsupported ${API_VERSION_HEADER}: ${version}`,
       );
@@ -221,14 +220,14 @@ export const createFakeTransport = (
     const state = auth.checkAccessToken(header(req, AUTH_TOKEN_HEADER));
     if (state === "expired") {
       return resourceError(
-        descriptor,
+        resource,
         CODE_TOKEN_EXPIRED,
         "Access Token has expired",
       );
     }
     if (state === "invalid") {
       return resourceError(
-        descriptor,
+        resource,
         CODE_TOKEN_INVALID,
         "Invalid Access Token",
       );
@@ -236,7 +235,7 @@ export const createFakeTransport = (
     const partition = url.searchParams.get("partition");
     if (partition === null || !partitions.has(partition)) {
       return resourceError(
-        descriptor,
+        resource,
         CODE_PARTITION_NOT_FOUND,
         `unknown partition: ${partition ?? "(none)"}`,
       );
@@ -244,22 +243,19 @@ export const createFakeTransport = (
     return undefined;
   };
 
-  const handleRead = (
-    url: URL,
-    descriptor: ResourceDescriptor,
-  ): TransportResponse => {
-    const query = parseReadQuery(url, descriptor.prefix);
+  const handleRead = (url: URL, resource: FakeResource): TransportResponse => {
+    const query = parseReadQuery(url, resource.descriptor.prefix);
     const { items, total } = runReadQuery(
-      store.list(descriptor.path),
+      store.list(resource.descriptor.path),
       query,
-      descriptor.fields,
+      resource.descriptor.fields,
     );
     return {
       status: 200,
       body: buildReadPageXml({
-        resource: descriptor.name,
-        prefix: descriptor.prefix,
-        fields: descriptor.fields,
+        resource: resource.descriptor.name,
+        prefix: resource.descriptor.prefix,
+        fields: resource.descriptor.fields,
         masters,
         records: items,
         selection: query.selection,
@@ -271,17 +267,17 @@ export const createFakeTransport = (
 
   // One `<Item>`: `P_Id = -1` creates, any other id updates that record (write-format.md).
   const writeItem = (
-    descriptor: ResourceDescriptor,
+    resource: FakeResource,
     item: FakeRecord,
   ): { id: number; code: number } => {
-    const rawId = item.P_Id;
+    const rawId = item[resource.idAlias];
     const id = typeof rawId === "string" ? Number(rawId) : Number.NaN;
     if (!Number.isInteger(id)) return { id: 0, code: CODE_INVALID_PARAMETER };
     if (id === -1) {
-      const created = createRecord(store, descriptor, item, context);
-      return { id: Number(created.P_Id), code: 0 };
+      const created = createRecord(store, resource, item, context);
+      return { id: Number(created[resource.idAlias]), code: 0 };
     }
-    const updated = updateRecord(store, descriptor, id, item, context);
+    const updated = updateRecord(store, resource, id, item, context);
     // VERIFY(live): the code for "update targeted a record that does not exist" is unconfirmed;
     // 7 (Resource が存在しない) is the closest documented match — see LV-11.
     return updated === undefined
@@ -291,13 +287,13 @@ export const createFakeTransport = (
 
   const handleWrite = (
     req: TransportRequest,
-    descriptor: ResourceDescriptor,
+    resource: FakeResource,
     forcedCodes: number[] | undefined,
   ): TransportResponse => {
-    const parsed = parseWriteBody(req.body ?? "", descriptor.prefix);
-    if (parsed === undefined || parsed.resource !== descriptor.name) {
+    const parsed = parseWriteBody(req.body ?? "", resource.descriptor.prefix);
+    if (parsed === undefined || parsed.resource !== resource.descriptor.name) {
       return resourceError(
-        descriptor,
+        resource,
         CODE_INVALID_PARAMETER,
         "malformed write body",
       );
@@ -306,7 +302,7 @@ export const createFakeTransport = (
       // VERIFY(live): the reference only says "split into 200-record requests"; which code PORTERS
       // answers with — and whether it is a root-level error at all — is unconfirmed. See LV-11.
       return resourceError(
-        descriptor,
+        resource,
         CODE_TOO_MANY_PARAMETERS,
         `${parsed.items.length} records exceed the ${MAX_ITEMS_PER_REQUEST}-record limit`,
       );
@@ -316,31 +312,34 @@ export const createFakeTransport = (
       // An injected non-zero code fails that record without touching the store, exactly as a
       // per-item validation failure would.
       if (forced !== undefined && forced !== 0) return { id: 0, code: forced };
-      return writeItem(descriptor, item);
+      return writeItem(resource, item);
     });
-    return { status: 200, body: buildWriteResultXml(descriptor.name, results) };
+    return {
+      status: 200,
+      body: buildWriteResultXml(resource.descriptor.name, results),
+    };
   };
 
   const handleResource = (
     req: TransportRequest,
     url: URL,
-    descriptor: ResourceDescriptor,
+    resource: FakeResource,
   ): TransportResponse => {
     const write = req.method === "POST";
     const fault = takeFault("resource", write);
     if (fault?.kind === "resultCode") {
       return resourceError(
-        descriptor,
+        resource,
         fault.code,
         fault.message ?? `injected result code ${fault.code}`,
       );
     }
-    const denied = checkAccess(req, url, descriptor);
+    const denied = checkAccess(req, url, resource);
     if (denied) return denied;
-    if (!write) return handleRead(url, descriptor);
+    if (!write) return handleRead(url, resource);
     return handleWrite(
       req,
-      descriptor,
+      resource,
       fault?.kind === "writeItemCodes" ? fault.codes : undefined,
     );
   };
@@ -400,12 +399,20 @@ export const createFakeTransport = (
     // PORTERS rejects an over-long request as a whole (URL + body, ~15000 chars). The body it
     // answers with is undocumented, so the fake sends a bare HTTP 400 — and the library's own
     // send-time guard is what keeps this unreachable in practice. VERIFY(live): see LV-9.
-    if (req.url.length + (req.body?.length ?? 0) > MAX_REQUEST_LENGTH) {
+    // A file upload is exempt: Attachment content has its own 10MB limit (ADR-0018), which is why
+    // the library sends it with `unboundedBody` — the fake has to honour the same exemption or a
+    // legitimate upload would 400 here.
+    const unbounded =
+      target.kind === "resource" && write && target.resource.unboundedWrite;
+    if (
+      !unbounded &&
+      req.url.length + (req.body?.length ?? 0) > MAX_REQUEST_LENGTH
+    ) {
       return { status: 400, body: "request too long" };
     }
 
     if (target.kind === "auth") return handleAuth(req, url, target.path);
-    return handleResource(req, url, target.descriptor);
+    return handleResource(req, url, target.resource);
   };
 
   const control: FakeControl = {

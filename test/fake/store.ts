@@ -10,14 +10,25 @@
 
 import type { FakeRecord } from "./types";
 
+/**
+ * A table: which bucket, and which field is its primary key. The alias differs by resource —
+ * `P_Id` for the data resources, `Id` for the bespoke Attachment — so it travels with the call
+ * instead of being assumed.
+ */
+export type FakeTable = { path: string; idAlias: string };
+
 export type FakeStore = {
   /** Every record of one resource path, in insertion order. */
   list(path: string): FakeRecord[];
-  find(path: string, id: number): FakeRecord | undefined;
+  find(table: FakeTable, id: number): FakeRecord | undefined;
   /** Insert a new record, assigning the next id for that path. */
-  create(path: string, fields: FakeRecord): FakeRecord;
+  create(table: FakeTable, fields: FakeRecord): FakeRecord;
   /** Merge into an existing record (PORTERS updates only the fields you send). */
-  update(path: string, id: number, fields: FakeRecord): FakeRecord | undefined;
+  update(
+    table: FakeTable,
+    id: number,
+    fields: FakeRecord,
+  ): FakeRecord | undefined;
   /** Forget every record and restart the id sequences. */
   reset(): void;
 };
@@ -43,22 +54,25 @@ export const createFakeStore = (): FakeStore => {
     return id;
   };
 
-  const find = (path: string, id: number): FakeRecord | undefined =>
-    listOf(path).find((record) => record.P_Id === String(id));
+  const find = (table: FakeTable, id: number): FakeRecord | undefined =>
+    listOf(table.path).find((record) => record[table.idAlias] === String(id));
 
   return {
     list: listOf,
     find,
-    create: (path, fields) => {
-      // The id is the store's to assign: a caller-sent `P_Id` (`-1` on create) never survives.
-      const record: FakeRecord = { ...fields, P_Id: String(nextId(path)) };
-      listOf(path).push(record);
+    create: (table, fields) => {
+      // The id is the store's to assign: a caller-sent id (`-1` on create) never survives.
+      const record: FakeRecord = {
+        ...fields,
+        [table.idAlias]: String(nextId(table.path)),
+      };
+      listOf(table.path).push(record);
       return record;
     },
-    update: (path, id, fields) => {
-      const record = find(path, id);
+    update: (table, id, fields) => {
+      const record = find(table, id);
       if (record === undefined) return undefined;
-      Object.assign(record, fields, { P_Id: record.P_Id });
+      Object.assign(record, fields, { [table.idAlias]: record[table.idAlias] });
       return record;
     },
     reset: () => {

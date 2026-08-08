@@ -41,6 +41,11 @@ const escapeXml = (s: string): string =>
 const element = (tag: string, inner: string): string =>
   inner === "" ? `<${tag} />` : `<${tag}>${inner}</${tag}>`;
 
+// `{prefix}.{alias}` for the data resources; the bespoke Attachment has no prefix, so its tags are
+// the bare field names (`<FileName>`, not `<Attachment.FileName>`) — ADR-0018.
+const qualify = (prefix: string, alias: string): string =>
+  prefix === "" ? alias : `${prefix}.${alias}`;
+
 /** One `field=` entry: the bare alias plus any narrowed sub-fields (`Person.P_Owner(User.P_Id)`). */
 export type FieldSelection = { alias: string; sub: string[] };
 
@@ -160,7 +165,7 @@ export const buildItemXml = (args: {
 }): string => {
   const children = args.selection
     .map(({ alias, sub }) => {
-      const tag = `${args.prefix}.${alias}`;
+      const tag = qualify(args.prefix, alias);
       const value = args.record[alias];
       // A requested-but-unset field comes back as an empty element (see the reference's own
       // sample) — the library decodes that to `null`.
