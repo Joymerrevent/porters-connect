@@ -1,7 +1,7 @@
 # フェイクサーバー実装計画（ADR-0043）
 
 - ステータス: living（着手中・随時更新）
-- 最終更新: 2026-07-20
+- 最終更新: 2026-08-08
 - 位置づけ: [ADR-0043][adr43]（accepted）の**実装タスクリスト**。決定の正は ADR-0043、本書は**進め方（フェーズ・チェックリスト）**。
   新しいセッションでもここを見れば続きから着手できる。詳細な設計判断は重複させず ADR を参照する。
 
@@ -21,16 +21,32 @@
 
 ---
 
-## フェーズ 0 — 足場（skeleton）
+## フェーズ 0 — 足場（skeleton）✅ 完了
 
-- [ ] `test/fake/` を作成（`src/` の外＝非公開・非カバレッジを確認）
-- [ ] `createFakeTransport(options?)` → `Transport` の骨格（`send(req)` で method＋path routing）
-- [ ] **挙動コア**（state store）のインターフェース定義（リソース別インメモリ・ID 採番・削除なし）
-- [ ] **注入 API** の型（`{ failNext?, forceCode?, rateLimit?, latencyMs?, ... }` 等の枠）
-- [ ] 再利用の配線確認（`src/xml/*` を import できる・`test/fixtures` を読める）
-- [ ] 未実装ルートは**明示エラー**（`createMockTransport` 同様フェイルセーフ）
+- [x] `test/fake/` を作成（`src/` の外＝非公開・非カバレッジを確認）
+- [x] `createFakeTransport(options?)` → `Transport` の骨格（`send(req)` で method＋path routing）
+- [x] **挙動コア**（state store）のインターフェース定義（リソース別インメモリ・ID 採番・削除なし）
+- [x] **注入 API** の型（`{ failNext?, forceCode?, rateLimit?, latencyMs?, ... }` 等の枠）
+- [x] 再利用の配線確認（`src/xml/*` を import できる・`test/fixtures` を読める）
+- [x] 未実装ルートは**明示エラー**（`createMockTransport` 同様フェイルセーフ）
 
-## フェーズ 1 — 縦スライス（OAuth＋Candidate 往復＋注入）★最初の PR
+### フェーズ 0 で確定したこと（実装メモ）
+
+- **ファイル構成**: `test/fake/{types,store,resources,fake-transport,index}.ts` ＋ テスト
+  （`store.test.ts` / `fake-transport.test.ts` / `wiring.test.ts`）。責務は phase 1 以降の追加先と一致
+  （XML＝`wire.ts`・Read クエリ＝`query.ts`・OAuth＝`oauth.ts` を後から足す）。
+- **ルーティングの単一ソース**: `src/resources/candidate.ts` が `CANDIDATE_DESCRIPTOR`（name/path/prefix/fields）を
+  **export**し、フェイクはそれを import して経路表を作る（`ResourceConfig` は `ResourceDescriptor` ＋ `requiredOnCreate` に分解）。
+  カタログの写しを持たない＝ドリフト不可能（ADR-0043 D-fixture 共有）。**`src/index.ts` には出さない**ので公開 API は不変。
+- **未実装の可視化（フェイルセーフ）**: 未ルートの path・未実装の endpoint・**未配線のオプション**（`rateLimit` 等）・
+  **未適用の注入 kind**（`resultCode` 等）はすべて `PortersConfigError` で落ちる。「渡したのに何も起きない」＝
+  偽の green を作らない。配線済みの集合は `WIRED_OPTIONS` / `WIRED_FAULT_KINDS` が正。
+- **フェーズ 0 で既に動くもの**: routing・`latencyMs`（＋`setLatency`）・state store（ID 採番 10001〜・**delete なし**）・
+  transport 層の注入（`network`＝retryable な `PortersNetworkError` ／ `http`＝生の status/body）。
+- **品質ゲートの配線**: `test/tsconfig.json` を追加し `pnpm typecheck` を `tsc --noEmit && tsc -p test` に拡張
+  （eslint の型付き lint も同 project を使う）。coverage（include=`src/**`）と tarball（`files`=`dist`）は**設定変更なしで**対象外。
+
+## フェーズ 1 — 縦スライス（OAuth＋Candidate 往復＋注入）★次の PR
 
 - [ ] **OAuth 自動応答**: `/v1/oauth`（code_direct）＋`/v1/token`。`parseAuthentication` が食う envelope・トークン TTL（ms）を忠実に（`AccessTokenExpiresIn` 等）
 - [ ] **Candidate CRUD 往復**（状態あり）:
@@ -72,7 +88,8 @@
 
 ## 進め方メモ
 
-- 1 フェーズ ≒ 1〜数 PR。**フェーズ1（縦スライス）を最初の PR** にして設計を実証してから横展開。
+- **1 フェーズ = 1 PR**（レビュー単位を小さく保つ・stakeholder 2026-08-08）。フェーズ0（足場）→ フェーズ1（縦スライス）で
+  設計を実証してから横展開する。
 - ブランチ→develop 向け PR→メンテナがマージ（既存フロー）。件名・PR タイトルは先頭大文字を避ける（commitlint）。
 - ADR-0043 の決定を変えたくなったら**書き換えず新 ADR**（ADR 運用ルール）。
 
