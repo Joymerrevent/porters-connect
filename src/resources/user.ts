@@ -6,6 +6,7 @@
 // their read availability/decode shape is unconfirmed (see docs/live-verification.md).
 
 import type { Requester } from "../http/requester";
+import type { ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -21,6 +22,19 @@ const FIELDS = {
   P_Name: "SinglelineText",
   P_Mail: "Mail",
 } as const satisfies FieldCatalog;
+
+/**
+ * User's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds User Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`User.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const USER_DESCRIPTOR = {
+  name: "User",
+  path: "user",
+  prefix: "User",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
 
 /** A decoded User (PORTERS operator). `P_Type`: 0 = standard user, 1 = system admin. */
 export type User = ReadRecord<typeof FIELDS>;

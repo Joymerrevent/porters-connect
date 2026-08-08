@@ -5,6 +5,7 @@
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
 import type { Requester } from "../http/requester";
+import type { ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -16,7 +17,11 @@ import {
 
 // Resource-type selector -> Value code (docs/reference resources-list). Master/Phase/Attachment
 // have no Value, so only the R/W data resources are selectable here.
-const RESOURCE_VALUE = {
+/**
+ * Field Read's `resource` selector -> Value code (docs/reference resources-list). Exported for
+ * in-repo dev tooling: the fake server maps the code back to a resource. Not published.
+ */
+export const RESOURCE_VALUE = {
   candidate: 1,
   job: 3,
   client: 5,
@@ -47,6 +52,19 @@ const FIELDS = {
   P_ReferTo: "Option",
   P_ResourceType: "Number",
 } as const satisfies FieldCatalog;
+
+/**
+ * Field's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds Field Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`Field.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const FIELD_DESCRIPTOR = {
+  name: "Field",
+  path: "field",
+  prefix: "Field",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
 
 /** A decoded Field definition. `P_Required`: 0 = normal, 1 = required. */
 export type Field = ReadRecord<typeof FIELDS>;

@@ -110,9 +110,24 @@ const userInner = (masters: FakeMasters, id: string, sub: string[]): string => {
   return element("User", children);
 };
 
-// An `Option` field reads back as the selected leaf aliases under `<OptionRoot>`, each carrying its
-// id + display name (reference: Read レスポンス XML). Only the alias round-trips (ADR-0017).
-const optionInner = (masters: FakeMasters, aliases: string[]): string => {
+/**
+ * How an Option-typed field nests on read:
+ * - `root` — the data resources: `<OptionRoot><Alias><Option.P_Id/><Option.P_Name/></Alias></OptionRoot>`
+ * - `bare` — Field master's `P_ReferTo`: `<Field.P_ReferTo><Option.P_Area/></Field.P_ReferTo>`
+ *   (ADR-0022 fact 6 — no wrapper, no children). `decodeOption` tolerates both.
+ */
+export type OptionShape = "root" | "bare";
+
+// An `Option` field reads back as the selected leaf aliases, each carrying its id + display name
+// (reference: Read レスポンス XML). Only the alias round-trips (ADR-0017).
+const optionInner = (
+  masters: FakeMasters,
+  aliases: string[],
+  shape: OptionShape,
+): string => {
+  if (shape === "bare") {
+    return aliases.map((alias) => element(alias, "")).join("");
+  }
   const children = aliases
     .map((alias) => {
       const entry = masters.option(alias);
@@ -138,12 +153,13 @@ const fieldInner = (
   type: DataType | undefined,
   value: FakeValue,
   sub: string[],
+  optionShape: OptionShape,
 ): string => {
-  if (Array.isArray(value)) return optionInner(masters, value);
+  if (Array.isArray(value)) return optionInner(masters, value, optionShape);
   switch (type) {
     case "Option":
       // A single selection may have been stored as a bare alias — normalise to the read shape.
-      return optionInner(masters, [value]);
+      return optionInner(masters, [value], optionShape);
     case "User":
       return userInner(masters, value, sub);
     case "System[Reference]":
@@ -155,55 +171,82 @@ const fieldInner = (
   }
 };
 
-/** Render one stored record as an `<Item>`, limited to the selected fields. */
-export const buildItemXml = (args: {
+/** How to render a record's fields: the alias prefix, the catalog, and the Option nesting. */
+export type ItemShape = {
   prefix: string;
   fields: Readonly<Record<string, DataType>>;
   masters: FakeMasters;
-  record: FakeRecord;
-  selection: FieldSelection[];
-}): string => {
-  const children = args.selection
+  /** Default `root`. */
+  optionShape?: OptionShape;
+};
+
+/**
+ * Render one stored record as an `<Item>`, limited to the selected fields. `nested` is appended
+ * verbatim inside the item — the Option master uses it for its recursive `<Items>` collection.
+ */
+export const buildItemXml = (
+  shape: ItemShape,
+  record: FakeRecord,
+  selection: FieldSelection[],
+  nested = "",
+): string => {
+  const children = selection
     .map(({ alias, sub }) => {
-      const tag = qualify(args.prefix, alias);
-      const value = args.record[alias];
+      const tag = qualify(shape.prefix, alias);
+      const value = record[alias];
       // A requested-but-unset field comes back as an empty element (see the reference's own
       // sample) — the library decodes that to `null`.
       if (value === undefined) return element(tag, "");
+      // A tenant's custom `U_`/`A_` field is not in the static catalog (it is declared with
+      // `defineFields` — ADR-0023), so its Data Type has to come from the request: the library
+      // asks for a User-typed field as `alias(User.P_Id,…)`, and nothing else nests like that.
+      const declaredUser =
+        sub.length > 0 && sub.every((name) => name.startsWith("User."));
+      const type =
+        shape.fields[alias] ?? (declaredUser ? ("User" as const) : undefined);
       return element(
         tag,
-        fieldInner(args.masters, args.fields[alias], value, sub),
+        fieldInner(
+          shape.masters,
+          type,
+          value,
+          sub,
+          shape.optionShape ?? "root",
+        ),
       );
     })
     .join("");
-  return element("Item", children);
+  return element("Item", children + nested);
 };
 
-/** Build a Read page: the `Total`/`Count`/`Start` envelope `parseResourcePage` expects. */
+/**
+ * Build a Read page. The standard envelope carries `Total`/`Count`/`Start`; the Option master
+ * answers with `<Code>` and a recursive `<Items>` tree instead, so `paging: false` drops the
+ * attributes (ADR-0022 fact 5). `items` lets a caller pass pre-rendered `<Item>`s (the tree).
+ */
 export const buildReadPageXml = (args: {
   resource: string;
-  prefix: string;
-  fields: Readonly<Record<string, DataType>>;
-  masters: FakeMasters;
-  records: FakeRecord[];
-  selection: FieldSelection[];
-  total: number;
-  start: number;
+  shape: ItemShape;
+  records?: FakeRecord[];
+  selection?: FieldSelection[];
+  items?: string;
+  total?: number;
+  start?: number;
+  paging?: boolean;
 }): string => {
-  const items = args.records
-    .map((record) =>
-      buildItemXml({
-        prefix: args.prefix,
-        fields: args.fields,
-        masters: args.masters,
-        record,
-        selection: args.selection,
-      }),
-    )
-    .join("");
+  const items =
+    args.items ??
+    (args.records ?? [])
+      .map((record) => buildItemXml(args.shape, record, args.selection ?? []))
+      .join("");
+  const count = args.records?.length ?? 0;
+  const attributes =
+    args.paging === false
+      ? ""
+      : ` Total="${args.total ?? count}" Count="${count}" Start="${args.start ?? 0}"`;
   return (
-    `${DECLARATION}<${args.resource} Total="${args.total}" Count="${args.records.length}" ` +
-    `Start="${args.start}"><Code>0</Code>${items}</${args.resource}>`
+    `${DECLARATION}<${args.resource}${attributes}>` +
+    `<Code>0</Code>${items}</${args.resource}>`
   );
 };
 

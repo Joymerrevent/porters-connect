@@ -36,14 +36,26 @@ describe("fake server wiring", () => {
       "attachment",
       "candidate",
       "client",
+      // masters (read-only)
+      "field",
       "job",
+      "option",
+      "partition",
       "process",
       "resume",
+      "user",
     ]);
     for (const [path, resource] of FAKE_RESOURCES) {
       expect(resource.descriptor.path).toBe(path);
       expect(resource.descriptor.fields[resource.idAlias]).toBe("System[Id]");
     }
+    // Only the masters carry a bespoke read handler; only Partition takes no `partition`.
+    expect(
+      [...FAKE_RESOURCES.values()].filter((r) => r.master !== undefined).length,
+    ).toBe(4);
+    expect(
+      [...FAKE_RESOURCES.values()].filter((r) => r.partitionless).length,
+    ).toBe(1);
   });
 
   it("keeps the hand-written Attachment table in step with the library's field list", () => {

@@ -21,7 +21,11 @@ import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";
 import { parseReadQuery, runReadQuery } from "./query";
 import { createRecord, updateRecord, type RecordContext } from "./records";
-import { FAKE_RESOURCES, type FakeResource } from "./resources";
+import {
+  FAKE_DATA_DESCRIPTORS,
+  FAKE_RESOURCES,
+  type FakeResource,
+} from "./resources";
 import { createFakeStore } from "./store";
 import {
   WIRED_OPTIONS,
@@ -232,6 +236,9 @@ export const createFakeTransport = (
         "Invalid Access Token",
       );
     }
+    // Partition Read is how an App discovers its partitions, so it is the one route that sends
+    // none (ADR-0022 fact 3).
+    if (resource.partitionless) return undefined;
     const partition = url.searchParams.get("partition");
     if (partition === null || !partitions.has(partition)) {
       return resourceError(
@@ -254,15 +261,36 @@ export const createFakeTransport = (
       status: 200,
       body: buildReadPageXml({
         resource: resource.descriptor.name,
-        prefix: resource.descriptor.prefix,
-        fields: resource.descriptor.fields,
-        masters,
+        shape: {
+          prefix: resource.descriptor.prefix,
+          fields: resource.descriptor.fields,
+          masters,
+        },
         records: items,
         selection: query.selection,
         total,
         start: query.start,
       }),
     };
+  };
+
+  // A write names Users by id and Options by alias; register them so the masters can serve them
+  // afterwards (`/v1/user`, `/v1/option`) and so a read expands them losslessly. Real PORTERS
+  // requires them to exist beforehand — the fake accepts them and remembers instead (fail-safe:
+  // a value you wrote never disappears).
+  const registerReferenced = (
+    resource: FakeResource,
+    item: FakeRecord,
+  ): void => {
+    for (const [alias, value] of Object.entries(item)) {
+      const type = resource.descriptor.fields[alias];
+      if (type === "User" && typeof value === "string") masters.user(value);
+      if (type === "Option") {
+        for (const selected of Array.isArray(value) ? value : [value]) {
+          masters.option(selected);
+        }
+      }
+    }
   };
 
   // One `<Item>`: `P_Id = -1` creates, any other id updates that record (write-format.md).
@@ -273,6 +301,7 @@ export const createFakeTransport = (
     const rawId = item[resource.idAlias];
     const id = typeof rawId === "string" ? Number(rawId) : Number.NaN;
     if (!Number.isInteger(id)) return { id: 0, code: CODE_INVALID_PARAMETER };
+    registerReferenced(resource, item);
     if (id === -1) {
       const created = createRecord(store, resource, item, context);
       return { id: Number(created[resource.idAlias]), code: 0 };
@@ -334,8 +363,25 @@ export const createFakeTransport = (
         fault.message ?? `injected result code ${fault.code}`,
       );
     }
+    // PORTERS has no Write API for the masters, so neither does the fake: a POST here is a bug in
+    // the caller, not a PORTERS error to imitate — surface it before anything else (fail-safe).
+    if (write && resource.master !== undefined) {
+      throw new PortersConfigError(
+        `fake server: ${resource.descriptor.name} is read-only (PORTERS has no Write API for the masters)`,
+        { category: "config" },
+      );
+    }
     const denied = checkAccess(req, url, resource);
     if (denied) return denied;
+    if (resource.master !== undefined) {
+      return resource.master(url, {
+        masters,
+        partitions: [...partitions].map(Number),
+        currentUserId: context.currentUserId,
+        optionTree: options.optionTree ?? [],
+        resources: FAKE_DATA_DESCRIPTORS,
+      });
+    }
     if (!write) return handleRead(url, resource);
     return handleWrite(
       req,

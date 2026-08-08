@@ -11,19 +11,20 @@ grep -rn "VERIFY(live)" src test
 
 ## サマリー
 
-| #     | 項目                                            | 状態   |
-| ----- | ----------------------------------------------- | ------ |
-| LV-1  | Option 末端 alias の接頭辞                      | 未確認 |
-| LV-2  | OptionRoot ラッパーの有無                       | 未確認 |
-| LV-3  | Attachment の get 条件                          | 未確認 |
-| LV-4  | Attachment Read の既定項目                      | 未確認 |
-| LV-5  | リソース毎の create 必須項目                    | 確定   |
-| LV-6  | Field `P_ReferTo` の入れ子形                    | 未確認 |
-| LV-7  | User `current()` の実挙動                       | 未確認 |
-| LV-8  | Partition Read の partition 非送信              | 未確認 |
-| LV-9  | 制約違反時の HTTP 応答（長さ/レート）           | 未確認 |
-| LV-10 | System[Reference] Read の入れ子タグ             | 未確認 |
-| LV-11 | Write 失敗時の Result Code（対象なし/200 件超） | 未確認 |
+| #     | 項目                                                | 状態   |
+| ----- | --------------------------------------------------- | ------ |
+| LV-1  | Option 末端 alias の接頭辞                          | 未確認 |
+| LV-2  | OptionRoot ラッパーの有無                           | 未確認 |
+| LV-3  | Attachment の get 条件                              | 未確認 |
+| LV-4  | Attachment Read の既定項目                          | 未確認 |
+| LV-5  | リソース毎の create 必須項目                        | 確定   |
+| LV-6  | Field `P_ReferTo` の入れ子形                        | 未確認 |
+| LV-7  | User `current()` の実挙動                           | 未確認 |
+| LV-8  | Partition Read の partition 非送信                  | 未確認 |
+| LV-9  | 制約違反時の HTTP 応答（長さ/レート）               | 未確認 |
+| LV-10 | System[Reference] Read の入れ子タグ                 | 未確認 |
+| LV-11 | Write 失敗時の Result Code（対象なし/200 件超）     | 未確認 |
+| LV-12 | Field Read の P_Alias 表記と System 系の Field Type | 未確認 |
 
 ---
 
@@ -129,6 +130,18 @@ grep -rn "VERIFY(live)" src test
 - **確認結果**: —
 - **関連**: ルート `<Code>` をライブラリが読まない件は [findings][findings] RV-14
 
+## LV-12 Field Read の `P_Alias` 表記と System 系の Field Type
+
+- **現在の対応 / 仮定**: フェイクの Field Read は `P_Alias` を**接頭辞つき**（`Person.P_Name`）で返し、
+  `P_Type` は [field-data-types][fdt] の Value を使う。Option 系（5/6/7）は代表して **7（Dropdown）**、
+  Value が未公開の `System[DateTime]` / `System[Reference]` は **11（System）** を返す
+- **不確実な理由**: reference の Field 項目表は Alias の表記例を持たず、System 系サブタイプの Field Type Value も
+  公開されていない（Option は 3 サブタイプが同じ Data Type に畳まれる）
+- **コード箇所**: `test/fake/master-read.ts`（`FIELD_TYPE_VALUE` / `readField`）
+- **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
+- **状態**: 未確認
+- **確認結果**: —
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -141,6 +154,7 @@ grep -rn "VERIFY(live)" src test
 - XML 内部: [ADR-0011][a11]（接頭辞・ラッパーの揺れは実/サンプル XML を fixture 化して確定する方針）
 
 [findings]: reviews/findings.md
+[fdt]: reference/resource-api/field-data-types.md
 [a2]: adr/0002-ground-design-in-live-api-docs.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md
