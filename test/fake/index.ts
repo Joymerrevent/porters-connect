@@ -8,6 +8,8 @@
 //     (create -> search -> update), or when the failure you want is the API's, not the stub's.
 
 export * from "./fake-transport";
+export * from "./http-server";
+export * from "./http-transport";
 export * from "./masters";
 export * from "./records";
 export * from "./resources";

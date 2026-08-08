@@ -65,6 +65,7 @@
     "test:coverage": "vitest run --coverage",
     "mutation": "stryker run",
     "sandbox": "tsx examples/offline-sandbox.ts",
+    "fake:serve": "tsx test/fake/serve.ts",
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",
