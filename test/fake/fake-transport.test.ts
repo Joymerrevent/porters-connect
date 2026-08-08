@@ -71,13 +71,6 @@ describe("fake transport routing", () => {
     });
   });
 
-  it("rejects an option whose behaviour has not landed yet", () => {
-    expect(() =>
-      createFakeTransport({ rateLimit: { readPerMinute: 1 } }),
-    ).toThrow(/option\(s\) rateLimit are declared but not wired yet/);
-    expect(() => createFakeTransport({ latencyMs: 0 })).not.toThrow();
-  });
-
   it("refuses to seed a resource it cannot serve", () => {
     expect(() =>
       createFakeTransport({ seed: { recruiter: [{ P_Name: "x" }] } }),
@@ -160,6 +153,65 @@ describe("fake transport write guards", () => {
 
     expect(resultCode(answer.body)).toBe(102);
     expect(fake.control.records("candidate")).toHaveLength(0);
+  });
+});
+
+describe("fake transport rate limits", () => {
+  it("closes the connection when a per-minute cap is exceeded", async () => {
+    const fake = createFakeTransport({ rateLimit: { readPerMinute: 1 } });
+    const token = await authenticate(fake);
+
+    expect(resultCode((await fake.send(read(token))).body)).toBe(0);
+
+    const failure = fake.send(read(token));
+    await expect(failure).rejects.toThrow(PortersNetworkError);
+    // Retryable: the reference says the connection *may* be closed, not that the call is doomed.
+    await expect(failure).rejects.toMatchObject({
+      category: "network",
+      retryable: true,
+    });
+  });
+
+  it("can answer HTTP 429 instead, for the other reading of the limit", async () => {
+    const fake = createFakeTransport({
+      rateLimit: { readPerMinute: 1, mode: "http429" },
+    });
+    const token = await authenticate(fake);
+    await fake.send(read(token));
+
+    expect((await fake.send(read(token))).status).toBe(429);
+  });
+
+  it("counts Read and Write separately", async () => {
+    const fake = createFakeTransport({
+      rateLimit: { readPerMinute: 1, writePerMinute: 1 },
+    });
+    const token = await authenticate(fake);
+    await fake.send(read(token));
+
+    // The read cap is used up, but the write bucket is still open.
+    const body =
+      "<Candidate><Item><Person.P_Id>-1</Person.P_Id></Item></Candidate>";
+    expect(resultCode((await fake.send(write(token, body))).body)).toBe(0);
+    await expect(fake.send(read(token))).rejects.toThrow(PortersNetworkError);
+  });
+
+  it("rejects before authentication is even considered", async () => {
+    const fake = createFakeTransport({ rateLimit: { readPerMinute: 0 } });
+
+    // No token at all: the limiter answers first, exactly as an edge would.
+    await expect(fake.send(read("no-such-token"))).rejects.toThrow(
+      PortersNetworkError,
+    );
+  });
+
+  it("does not count the Authentication API", async () => {
+    const fake = createFakeTransport({ rateLimit: { readPerMinute: 1 } });
+
+    // The OAuth + Token round-trip is two requests; the read after it still fits the cap of 1.
+    const token = await authenticate(fake);
+
+    expect(resultCode((await fake.send(read(token))).body)).toBe(0);
   });
 });
 
