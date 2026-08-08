@@ -61,11 +61,13 @@ export type UpdateInput<F extends FieldCatalog> = {
   [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
 };
 
-/** Static description of a resource: names + `as const` catalog + required-on-create aliases. */
-export type ResourceConfig<
-  F extends FieldCatalog,
-  Req extends readonly (keyof F)[],
-> = {
+/**
+ * The tenant-independent half of a resource definition: names + the standard `P_` catalog.
+ * Each resource module exports its own (e.g. `CANDIDATE_DESCRIPTOR`) so in-repo dev tooling —
+ * the fake server (ADR-0043) — derives wire shapes from the *same* catalog instead of a copy
+ * that could drift. Not part of the published API: `src/index.ts` is curated.
+ */
+export type ResourceDescriptor<F extends FieldCatalog = FieldCatalog> = {
   /** Root element + Write resource name, e.g. `"Candidate"`. */
   name: string;
   /** URL path segment, e.g. `"candidate"`. */
@@ -74,6 +76,13 @@ export type ResourceConfig<
   prefix: string;
   /** Data-Type catalog (`as const`): bare alias -> Data Type. */
   fields: F;
+};
+
+/** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */
+export type ResourceConfig<
+  F extends FieldCatalog,
+  Req extends readonly (keyof F)[],
+> = ResourceDescriptor<F> & {
   /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
   requiredOnCreate: Req;
 };

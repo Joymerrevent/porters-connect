@@ -11,6 +11,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
@@ -43,6 +44,18 @@ const REQUIRED_ON_CREATE = [
   "P_Owner",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+/**
+ * Candidate's names + standard catalog. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds Candidate wire shapes from this very catalog, so the two cannot drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
+export const CANDIDATE_DESCRIPTOR = {
+  name: "Candidate",
+  path: "candidate",
+  prefix: "Person",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
+
 /** A decoded Candidate: known `P_` fields, each requested field `value | null`. */
 export type Candidate = ReadRecord<typeof FIELDS>;
 export type CandidatePage = ResourcePage<typeof FIELDS>;
@@ -69,13 +82,7 @@ export const createCandidateResource = <C extends FieldCatalog = EmptyCatalog>(
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createResource(
-    {
-      name: "Candidate",
-      path: "candidate",
-      prefix: "Person",
-      fields,
-      requiredOnCreate: REQUIRED_ON_CREATE,
-    },
+    { ...CANDIDATE_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );
 };

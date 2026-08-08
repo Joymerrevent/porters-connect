@@ -58,7 +58,7 @@
     "lint:md:fix": "markdownlint-cli2 --fix",
     "format:md": "prettier --write \"**/*.md\"",
     "format:md:check": "prettier --check \"**/*.md\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p test",
     "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node20",
     "test": "vitest run",
     "test:watch": "vitest",
