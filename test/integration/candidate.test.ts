@@ -164,10 +164,16 @@ describe("error paths against the fake server", () => {
     });
   });
 
-  it("fails loud on a route the fake does not implement yet", async () => {
-    const { porters } = setup();
-    // The master reads land in phase 3; until then they must fail loudly, not answer empty.
-    await expect(porters.partition.search()).rejects.toMatchObject({
+  it("fails loud on a resource outside the MVP", async () => {
+    const { fake } = setup();
+    // Recruiter et al. are v0.2+ in the library too; the fake must say so rather than answer empty.
+    await expect(
+      fake.send({
+        method: "GET",
+        url: "https://fake.test/v1/recruiter?partition=1",
+        headers: {},
+      }),
+    ).rejects.toMatchObject({
       name: "PortersConfigError",
       category: "config",
     });

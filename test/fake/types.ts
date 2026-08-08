@@ -18,12 +18,27 @@ export type FakeValue = string | string[];
 /** One stored record: bare alias (`P_Name`) -> wire value. `P_Id` is always present. */
 export type FakeRecord = Record<string, FakeValue>;
 
-/** A user in the fake's User master, used to expand `User`-typed fields on read. */
+/** A user in the fake's User master: expands `User`-typed fields, and is what `/v1/user` reads. */
 export type FakeUser = {
   P_Id: number;
+  /** `0` = standard user, `1` = system admin (docs/reference). Default `0`. */
   P_Type?: string;
   P_Name?: string;
   P_Mail?: string;
+};
+
+/**
+ * One node of the Option master tree that `/v1/option` reads. PORTERS returns choices as a
+ * recursive `<Items>` tree; seed one here when a test cares about the hierarchy (the aliases a
+ * write used are otherwise served as flat roots).
+ */
+export type FakeOptionNode = {
+  /** Leaf alias as it appears in a value, e.g. `Option.P_Tokyo`. */
+  alias: string;
+  name?: string;
+  /** `0` = ordinary choice, `1`–`11` = a phase kind (docs/reference). Default `0`. */
+  type?: number;
+  children?: FakeOptionNode[];
 };
 
 /**
@@ -73,8 +88,10 @@ export type FakeTransportOptions = {
   partitions?: number[];
   /** Records to pre-load, keyed by URL path segment (e.g. `candidate`). Ids are assigned here. */
   seed?: Record<string, FakeRecord[]>;
-  /** Users returned when expanding `User`-typed fields. Unknown ids are auto-registered. */
+  /** Users returned when expanding `User`-typed fields, and read by `/v1/user`. */
   users?: FakeUser[];
+  /** The Option master tree read by `/v1/option`. Omit to serve the used aliases as flat roots. */
+  optionTree?: FakeOptionNode[];
   /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */
   currentUserId?: number;
   /** Per-minute caps; `false` disables them. **Phase 4** — rejected until then. */
@@ -88,6 +105,7 @@ export const WIRED_OPTIONS = [
   "partitions",
   "seed",
   "users",
+  "optionTree",
   "currentUserId",
 ] as const;
 

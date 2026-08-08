@@ -100,11 +100,28 @@
   **200 件バウンドに到達しない**。200 件が効くのは ID のみ update のような小さいレコードのとき。
   テストは「分割数」ではなく**両方の不変条件**（1 リクエスト ≤200 件かつ ≤15000 字・全件書き込み・順序保持）を検証する。
 
-## フェーズ 3 — マスタ Read
+## フェーズ 3 — マスタ Read ✅ 完了
 
-- [ ] Partition / Field / Option（読み取り専用・bespoke クエリ）
-- [ ] User＋`current()`（自己同定）
-- [ ] Option 複数選択・User/Reference・DateTime のフィールド型往復を網羅
+- [x] Partition / Field / Option（読み取り専用・bespoke クエリ）
+- [x] User＋`current()`（自己同定）
+- [x] Option 複数選択・User/Reference・DateTime のフィールド型往復を網羅
+
+### フェーズ 3 で確定したこと（実装メモ）
+
+- **マスタは generic Read に乗せない**（[ADR-0022][adr22]）。`master-read.ts` に 4 本の bespoke ハンドラを置き、
+  `FakeResource.master` で dispatch。`condition`/`get(id)` は無く、`field` を取るのは User だけ。
+- **`request_type` は OAuth 方式依存**（ADR-0022 事実4）。フェイクは `code_direct` として振る舞うので、
+  **Partition `request_type=0` は Result Code 403**、**User `request_type=0` はアプリ自身のユーザー**（`currentUserId`）。
+- **マスタのデータ源はフェイクの既存状態**: Partition＝`partitions` オプション／User＝User マスタ（`User` 型項目の展開と同じ registry）／
+  **Field＝リソース descriptor のカタログそのもの**（ライブラリの正から Field 行を生成）／Option＝`optionTree` シード。
+- **書き込みで参照した値をマスタに登録**する（`registerReferenced`）。`P_Owner: 77` と書けば `/v1/user` に 77 が現れ、
+  Option alias も `/v1/option` に出る＝「書いた値が消えない」（フェイルセーフ）。
+- **封筒の差**: Partition/User/Field は `Total/Count/Start`、**Option は `<Code>` ＋ 再帰 `<Items>`**（属性なし・ADR-0022 事実5）。
+  `Field.P_ReferTo` は **`<OptionRoot>` を挟まない**入れ子（事実6）＝ `optionShape: "bare"`。
+- **カスタム項目の User 型はリクエストから推論**: 静的カタログに無い `U_`/`A_` は Data Type が分からないが、
+  ライブラリは User 型を `alias(User.P_Id,…)` と展開して要求する。この形だけが User なので、
+  **サブ選択の有無を型の手がかり**に使う（ADR-0023 の宣言を二重管理しないため）。
+- 未確定挙動は **LV-12**（Field Read の `P_Alias` 表記・System 系の Field Type Value）に登録。
 
 ## フェーズ 4 — 忠実度の作り込み（制約・エラー・接地）
 
@@ -136,6 +153,7 @@
 [adr43]: ../adr/0043-local-fake-server.md
 [adr24]: ../adr/0024-mock-transport.md
 [findings]: ../reviews/findings.md
+[adr22]: ../adr/0022-master-read-query-surface.md
 [rm]: ../roadmap.md
 [ref]: ../reference/README.md
 [lv]: ../live-verification.md

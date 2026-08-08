@@ -22,6 +22,10 @@ export type FakeOptionEntry = { id: string; name: string };
 export type FakeMasters = {
   user(id: string): FakeUserEntry;
   option(alias: string): FakeOptionEntry;
+  /** Every known user, declared or auto-registered — what `/v1/user` reads. */
+  userList(): FakeUserEntry[];
+  /** Every option alias seen so far — the fallback content of `/v1/option`. */
+  optionAliases(): string[];
   /** Forget everything auto-registered, keeping the declared users. */
   reset(): void;
 };
@@ -64,6 +68,8 @@ export const createFakeMasters = (opts: {
       options.set(alias, entry);
       return entry;
     },
+    userList: () => [...users.values()],
+    optionAliases: () => [...options.keys()],
     reset: () => {
       options.clear();
       seed();

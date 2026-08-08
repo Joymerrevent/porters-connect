@@ -13,6 +13,7 @@ import {
   parseWriteResult,
 } from "../../src/xml/parser";
 import { createFakeMasters } from "./masters";
+import type { FakeRecord } from "./types";
 import {
   buildAuthenticationXml,
   buildReadPageXml,
@@ -31,15 +32,13 @@ const select = (...aliases: string[]): FieldSelection[] =>
   aliases.map((alias) => ({ alias, sub: [] }));
 
 const page = (
-  records: Parameters<typeof buildReadPageXml>[0]["records"],
+  records: FakeRecord[],
   selection: FieldSelection[],
   masters = createFakeMasters({}),
 ): string =>
   buildReadPageXml({
     resource: CANDIDATE_DESCRIPTOR.name,
-    prefix: PREFIX,
-    fields: FIELDS,
-    masters,
+    shape: { prefix: PREFIX, fields: FIELDS, masters },
     records,
     selection,
     total: records.length,
@@ -104,9 +103,7 @@ describe("buildReadPageXml", () => {
   it("builds the envelope parseResourcePage expects", () => {
     const xml = buildReadPageXml({
       resource: "Candidate",
-      prefix: PREFIX,
-      fields: FIELDS,
-      masters: createFakeMasters({}),
+      shape: { prefix: PREFIX, fields: FIELDS, masters: createFakeMasters({}) },
       records: [{ P_Id: "10001" }, { P_Id: "10002" }],
       selection: select("P_Id"),
       total: 7,

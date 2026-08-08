@@ -9,6 +9,7 @@ import type { Requester } from "../http/requester";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
 import { decoderFor, type FieldCatalog, type ReadRecord } from "./read-core";
+import type { ResourceDescriptor } from "./resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -18,6 +19,19 @@ const FIELDS = {
   P_Type: "Number",
   P_Order: "Number",
 } as const satisfies FieldCatalog;
+
+/**
+ * Option's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds Option Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`Option.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const OPTION_DESCRIPTOR = {
+  name: "Option",
+  path: "option",
+  prefix: "Option",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
 
 /** A decoded Option (one choice). `P_ParentId` links to the parent; `P_Type` 0 = normal, 1–11 = a phase kind. */
 export type Option = ReadRecord<typeof FIELDS>;
