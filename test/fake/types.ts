@@ -6,10 +6,9 @@
 // library runs against it completely unchanged: no HTTP, no TLS, no `host` rewiring (the startable
 // HTTP server adapter is phase 5 of the plan).
 //
-// **Phase 0 = skeleton.** This file defines the *shape* of the options and the injection API so
-// later phases only fill in behaviour. Anything not yet honoured is rejected at construction /
-// injection time with a named `PortersConfigError` instead of being silently ignored — a fake that
-// quietly does nothing would turn into a green test that proves nothing (fail-safe).
+// Anything the current phase does not honour yet is rejected at construction with a named
+// `PortersConfigError` instead of being silently ignored — a fake that quietly does nothing would
+// turn into a green test that proves nothing (fail-safe).
 
 import type { Transport } from "../../src/http/types";
 
@@ -19,7 +18,7 @@ export type FakeValue = string | string[];
 /** One stored record: bare alias (`P_Name`) -> wire value. `P_Id` is always present. */
 export type FakeRecord = Record<string, FakeValue>;
 
-/** A user in the fake's User master, used to expand `User`-typed fields on read (phase 1). */
+/** A user in the fake's User master, used to expand `User`-typed fields on read. */
 export type FakeUser = {
   P_Id: number;
   P_Type?: string;
@@ -32,9 +31,10 @@ export type FakeUser = {
  * by the next request they *target*, so a fault queued for a resource call is not eaten by the
  * OAuth round-trip the library makes first:
  *
- * - `network` / `http` -> the next request of any kind (**wired in phase 0**)
- * - `resultCode` / `writeItemCodes` -> the next Resource API request (phase 1)
- * - `authError` -> the next Authentication API request (phase 1)
+ * - `network` / `http` -> the next request of any kind
+ * - `resultCode` -> the next Resource API request
+ * - `writeItemCodes` -> the next Resource API **write**
+ * - `authError` -> the next Authentication API request (`/v1/oauth`, `/v1/token`)
  */
 export type FakeFault =
   /** Fail like a dropped connection: a retryable `PortersNetworkError`, as `fetch` would. */
@@ -48,16 +48,14 @@ export type FakeFault =
   /** Answer with an Authentication API error envelope (`<Authentication><Error>…`). */
   | { kind: "authError"; error: number; message?: string };
 
-/** Fault kinds the current phase actually applies; the rest are rejected on injection. */
-export const WIRED_FAULT_KINDS = ["network", "http"] as const;
-
 /**
  * Per-minute request caps (reference: Read 2000 / Write 500 per minute). Enforced from phase 4.
  *
  * `mode` decides what exceeding them does. The reference only says the connection *may be forcibly
  * closed* and explicitly notes that **no HTTP 429 / Retry-After is documented**, so `disconnect`
  * (a `PortersNetworkError`, like a dropped `fetch`) is the grounded default; `http429` exists
- * because ADR-0043 names a 429 as a constraint trigger worth exercising.
+ * because ADR-0043 names a 429 as a constraint trigger worth exercising. Until then a 429 is
+ * reachable through `failNext({ kind: "http", status: 429 })`.
  */
 export type FakeRateLimit = {
   readPerMinute?: number;
@@ -67,24 +65,31 @@ export type FakeRateLimit = {
 
 /** Options for {@link createFakeTransport}. */
 export type FakeTransportOptions = {
-  /** Artificial delay before every answer (ms). Default `0`. **Phase 0.** */
+  /** Artificial delay before every answer (ms). Default `0`. */
   latencyMs?: number;
-  /** Injectable clock for token TTLs / server timestamps. Default `Date.now`. Phase 1. */
+  /** Injectable clock for token TTLs / server timestamps. Default `Date.now`. */
   now?: () => number;
-  /** Partition ids the fake accepts; anything else answers Result Code 404. Phase 1. */
+  /** Partition ids the fake accepts; anything else answers Result Code 404. Default `[1]`. */
   partitions?: number[];
-  /** Records to pre-load, keyed by URL path segment (e.g. `candidate`). Phase 1. */
+  /** Records to pre-load, keyed by URL path segment (e.g. `candidate`). Ids are assigned here. */
   seed?: Record<string, FakeRecord[]>;
-  /** Users returned when expanding `User`-typed fields. Phase 1. */
+  /** Users returned when expanding `User`-typed fields. Unknown ids are auto-registered. */
   users?: FakeUser[];
-  /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Phase 1. */
+  /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */
   currentUserId?: number;
-  /** Per-minute caps; `false` disables them. Phase 4. */
+  /** Per-minute caps; `false` disables them. **Phase 4** — rejected until then. */
   rateLimit?: FakeRateLimit | false;
 };
 
 /** Option keys the current phase actually honours; the rest are rejected at construction. */
-export const WIRED_OPTIONS = ["latencyMs"] as const;
+export const WIRED_OPTIONS = [
+  "latencyMs",
+  "now",
+  "partitions",
+  "seed",
+  "users",
+  "currentUserId",
+] as const;
 
 /** Deterministic controls for driving the fake from a test. */
 export type FakeControl = {
@@ -94,11 +99,15 @@ export type FakeControl = {
   clearFaults(): void;
   /** The faults still queued, oldest first — lets a test assert nothing was silently eaten. */
   pendingFaults(): readonly FakeFault[];
+  /** Expire every issued Access Token, so the next call gets Result Code 401 (refresh path). */
+  expireAccessTokens(): void;
+  /** Mint an OAuth `code` as the browser grant would, for `auth.exchangeAuthorizationCode`. */
+  issueAuthorizationCode(): string;
   /** The stored records of one resource path — for assertions. */
   records(path: string): FakeRecord[];
   /** Replace the artificial latency (ms). */
   setLatency(ms: number): void;
-  /** Clear records, faults and every other piece of accumulated state. */
+  /** Clear records, masters, tokens and faults, then re-apply `seed`. */
   reset(): void;
 };
 
