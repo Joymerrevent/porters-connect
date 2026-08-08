@@ -46,18 +46,38 @@
 - **品質ゲートの配線**: `test/tsconfig.json` を追加し `pnpm typecheck` を `tsc --noEmit && tsc -p test` に拡張
   （eslint の型付き lint も同 project を使う）。coverage（include=`src/**`）と tarball（`files`=`dist`）は**設定変更なしで**対象外。
 
-## フェーズ 1 — 縦スライス（OAuth＋Candidate 往復＋注入）★次の PR
+## フェーズ 1 — 縦スライス（OAuth＋Candidate 往復＋注入）✅ 完了
 
-- [ ] **OAuth 自動応答**: `/v1/oauth`（code_direct）＋`/v1/token`。`parseAuthentication` が食う envelope・トークン TTL（ms）を忠実に（`AccessTokenExpiresIn` 等）
-- [ ] **Candidate CRUD 往復**（状態あり）:
-  - [ ] 受信 write XML（`buildWriteXml` 出力）を **`fast-xml-parser` で解釈** → store 反映（create=ID 採番／update=対象 ID）
-  - [ ] write 応答 = `parseWriteResult` が食う `<Item><Id/><Code/></Item>`（送信順・同数・per-item code）
-  - [ ] read 応答 = `parseResourcePage` が食う envelope（`Total`/`Count`/`Start`＋items）。field は `encodeField`/`decodeField` の型で往復
-- [ ] **注入（第1弾）**: 特定 result code／400（サイズ超過）／429（レート）を決定的に出せる
-- [ ] **結合テスト**: `new PortersClient({ transport: createFakeTransport() })` を駆動 — search / create / update / read の往復 ＋ 注入の異常系（`PortersError`＋`category`）
-- [ ] **フェイク自身のテスト**（envelope 構築・store 遷移の単体）
-- [ ] ドキュメント: `createMockTransport`（薄い N1）↔ Fake（状態あり N2/e2e）の**棲み分けメモ**
-- [ ] 品質ゲート: typecheck / lint / format / test green（`test/fake` は coverage 100% 対象外だが lint 等は通す）
+- [x] **OAuth 自動応答**: `/v1/oauth`（code_direct）＋`/v1/token`。`parseAuthentication` が食う envelope・トークン TTL（ms）を忠実に（`AccessTokenExpiresIn` 等）
+- [x] **Candidate CRUD 往復**（状態あり）:
+  - [x] 受信 write XML（`buildWriteXml` 出力）を **`fast-xml-parser` で解釈** → store 反映（create=ID 採番／update=対象 ID）
+  - [x] write 応答 = `parseWriteResult` が食う `<Item><Id/><Code/></Item>`（送信順・同数・per-item code）
+  - [x] read 応答 = `parseResourcePage` が食う envelope（`Total`/`Count`/`Start`＋items）。field は `encodeField`/`decodeField` の型で往復
+- [x] **注入（第1弾）**: 特定 result code／400（サイズ超過）／429（レート）を決定的に出せる
+- [x] **結合テスト**: `new PortersClient({ transport: createFakeTransport() })` を駆動 — search / create / update / read の往復 ＋ 注入の異常系（`PortersError`＋`category`）
+- [x] **フェイク自身のテスト**（envelope 構築・store 遷移の単体）
+- [x] ドキュメント: `createMockTransport`（薄い N1）↔ Fake（状態あり N2/e2e）の**棲み分けメモ**
+- [x] 品質ゲート: typecheck / lint / format / test green（`test/fake` は coverage 100% 対象外だが lint 等は通す）
+
+### フェーズ 1 で確定したこと（実装メモ）
+
+- **ファイル追加**: `wire.ts`（XML 入出力）・`query.ts`（Read パラメータ）・`oauth.ts`（トークン生存期間）・
+  `masters.ts`（User/Option マスタ）・`records.ts`（サーバ所有フィールド）。`store.ts` はフェーズ0のまま**無変更**
+  （レコードだけを持ち、フィールドの意味は上の層が決める＝骨格が正しかったことの確認）。
+- **Read/Write の非対称を実装**: User は ID で書き `<User>` 入れ子で読む／Option は裸 alias で書き `<OptionRoot>` で読む／
+  DateTime は PORTERS 形式で往復。`field=Person.P_Owner(User.P_Id,…)` のサブ選択も尊重する。
+- **サーバ所有フィールド**: `P_Id`（`-1`＝新規）・`P_RegistrationDate`/`P_UpdateDate`（Write 不可）はフェイクが打刻し、
+  `P_RegisteredBy`/`P_UpdatedBy` は**省略時のみ**自動割当（write-format.md）。
+- **注入の的（target）**: 注入は「次のリクエスト」ではなく**次の該当リクエスト**で消費する
+  （`resultCode` は Resource・`authError` は Authentication・`writeItemCodes` は Write のみ）。
+  でないと初回の OAuth 往復に食われて的を外す。`pendingFaults()` で消費されていないことを検証できる。
+- **レート 429** は `failNext({ kind: "http", status: 429 })` で決定的に出せる。**1 分あたり上限の自動発火は
+  フェーズ4**（reference が「429 とは書いておらず強制切断され得る」としか言わないため、既定は切断＝LV-9）。
+- **未確定の挙動は LV 化**: LV-9（長さ/レート超過の HTTP 応答）・LV-10（System[Reference] の入れ子タグ）・
+  LV-11（Write 失敗時の Result Code）を追加し、コードに `VERIFY(live)` を残した。
+- **副産物（ライブラリ側の所見）**: フェイクを「忠実度の強制関数」として使った結果、[findings][findings] に
+  **RV-13**（HTTP ステータスを一切見ていない）・**RV-14**（Write のルート `<Code>` を読まない）を起票。
+  どちらも挙動変更を伴うため**別 ADR / 別 PR**（LV-11 の実機確認が先）。
 
 ## フェーズ 2 — データ系リソース横展開
 
@@ -100,6 +120,7 @@
 
 [adr43]: ../adr/0043-local-fake-server.md
 [adr24]: ../adr/0024-mock-transport.md
+[findings]: ../reviews/findings.md
 [rm]: ../roadmap.md
 [ref]: ../reference/README.md
 [lv]: ../live-verification.md

@@ -5,8 +5,8 @@
 // PORTERS has no delete API, so this store has no delete either — the constraint is honoured by
 // construction rather than by a rule someone has to remember (fail-safe).
 //
-// **Phase 0 = the state core only.** Data-Type-aware field handling (User / Option expansion,
-// server-owned timestamps) arrives with the wire layer in phase 1.
+// Records only: what a *field* means (server-owned timestamps, User / Option expansion) is decided
+// one layer up, in `records.ts` and `wire.ts`, where the Data-Type catalog is in hand.
 
 import type { FakeRecord } from "./types";
 

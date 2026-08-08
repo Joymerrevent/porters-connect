@@ -1,36 +1,67 @@
-// The fake server's skeleton: URL routing, the fault-injection frame, and the state core wired
-// together behind the `Transport` seam (ADR-0043 phase 0 — docs/design/fake-server-plan.md).
+// The fake server itself: routing, the PORTERS-side guards (auth header, API version, partition,
+// request length) and deterministic fault injection, exposed as a `Transport` (ADR-0043).
 //
-// Layering mirrors the real thing and is what the later phases fill in:
-//   phase 0  this file (routing / injection frame) + `store.ts` (state) + `resources.ts` (routes)
-//   phase 1  OAuth + Candidate round-trip + Result-Code injection (adds the XML + query layers)
-//   phase 2+ the remaining resources, the master reads, the constraint triggers
+// Layering mirrors the real thing: this file owns *protocol* concerns, `store.ts` + `records.ts` +
+// `masters.ts` the state, `wire.ts` the XML, `query.ts` the Read parameters, `oauth.ts` the token
+// lifecycle.
 //
-// Fail-safe throughout: a route that is not implemented yet, an option that is not honoured yet
-// and a fault kind that is not applied yet all raise a named `PortersConfigError`. A half-built
-// fake must never look like a passing test.
+// Fail-safe throughout: a route that is not implemented yet and an option that is not honoured yet
+// both raise a named `PortersConfigError`. A half-built fake must never look like a passing test.
+//
+//   phase 1 (here)  OAuth + Candidate Read/Write round-trip + Result-Code / size injection
+//   phase 2+        the remaining resources, the master reads, the per-minute rate caps
 
 import {
   PortersConfigError,
   PortersNetworkError,
 } from "../../src/errors/index";
+import { MAX_REQUEST_LENGTH } from "../../src/http/requester";
 import type { TransportRequest, TransportResponse } from "../../src/http/types";
 import type { ResourceDescriptor } from "../../src/resources/resource";
+import { createFakeMasters } from "./masters";
+import { createFakeAuth } from "./oauth";
+import { parseReadQuery, runReadQuery } from "./query";
+import { createRecord, updateRecord, type RecordContext } from "./records";
 import { FAKE_RESOURCES } from "./resources";
 import { createFakeStore } from "./store";
 import {
-  WIRED_FAULT_KINDS,
   WIRED_OPTIONS,
   type FakeControl,
   type FakeFault,
+  type FakeRecord,
   type FakeTransport,
   type FakeTransportOptions,
 } from "./types";
+import {
+  buildAuthenticationXml,
+  buildReadPageXml,
+  buildResourceErrorXml,
+  buildWriteResultXml,
+  parseWriteBody,
+} from "./wire";
 
 /** The API prefix every PORTERS endpoint sits under. */
 const API_PREFIX = "/v1/";
 const OAUTH_PATH = "/v1/oauth";
 const TOKEN_PATH = "/v1/token";
+
+// Resource Result Codes this fake can raise (docs/reference/resource-api/result-codes.md).
+const CODE_NOT_FOUND = 7;
+const CODE_INVALID_PARAMETER = 100;
+const CODE_TOO_MANY_PARAMETERS = 102;
+const CODE_INVALID_VERSION = 146;
+const CODE_TOKEN_EXPIRED = 401;
+const CODE_TOKEN_INVALID = 402;
+const CODE_PARTITION_NOT_FOUND = 404;
+
+/** One request carries at most 200 records (reference: Read / Write とも最大 200 件). */
+const MAX_ITEMS_PER_REQUEST = 200;
+
+const AUTH_TOKEN_HEADER = "X-porters-hrbc-oauth-token";
+const API_VERSION_HEADER = "X-P-ConnectAPI-Version";
+const SUPPORTED_API_VERSIONS = new Set(["1", "2"]);
+
+type RouteKind = "auth" | "resource" | "unknown";
 
 /** A resolved request target: the auth endpoints, one known resource, or nothing. */
 type Route =
@@ -48,12 +79,22 @@ const routeList = (): string =>
     ...[...FAKE_RESOURCES.keys()].map((p) => API_PREFIX + p),
   ].join(", ");
 
-const resolve = (path: string): Route => {
+const resolveRoute = (path: string): Route => {
   if (path === OAUTH_PATH || path === TOKEN_PATH) return { kind: "auth", path };
   const descriptor = path.startsWith(API_PREFIX)
     ? FAKE_RESOURCES.get(path.slice(API_PREFIX.length))
     : undefined;
   return descriptor ? { kind: "resource", descriptor } : { kind: "unknown" };
+};
+
+// A header lookup that ignores case — the library sends canonical casing, but a Transport must not
+// depend on that.
+const header = (req: TransportRequest, name: string): string | undefined => {
+  const wanted = name.toLowerCase();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (key.toLowerCase() === wanted) return value;
+  }
+  return undefined;
 };
 
 // An option whose behaviour has not landed yet must not be accepted silently: a test that passes
@@ -63,7 +104,7 @@ const rejectUnwiredOptions = (options: FakeTransportOptions): void => {
   const unwired = Object.keys(options).filter((key) => !wired.has(key));
   if (unwired.length > 0) {
     throw new PortersConfigError(
-      `fake server: option(s) ${unwired.join(", ")} are declared but not wired yet (phase 0 skeleton)`,
+      `fake server: option(s) ${unwired.join(", ")} are declared but not wired yet`,
       {
         category: "config",
         hint: `Wired so far: ${[...wired].join(", ")}. The rest land in the phases listed in docs/design/fake-server-plan.md.`,
@@ -72,41 +113,262 @@ const rejectUnwiredOptions = (options: FakeTransportOptions): void => {
   }
 };
 
-const notImplemented = (what: string, phase: string): PortersConfigError =>
-  new PortersConfigError(`fake server: ${what} is not implemented yet`, {
-    category: "config",
-    hint: `It lands in ${phase} of docs/design/fake-server-plan.md.`,
-  });
-
 /**
  * Build a stateful fake PORTERS server behind the `Transport` seam (ADR-0043). Unlike
- * {@link createMockTransport} — a stateless stub for single-call unit tests (N1) — this one is
- * meant to remember what you wrote and to enforce the API's own constraints, so a whole
- * `create -> search -> update` flow can run offline (N2 / L1 integration).
- *
- * **Phase 0**: routing, the injection frame and the state core are in place; every endpoint still
- * answers with an explicit "not implemented yet" error. OAuth and the Candidate round-trip land in
- * phase 1.
+ * {@link createMockTransport} — a stateless stub for single-call unit tests (N1) — this one
+ * remembers what you wrote and enforces the API's own constraints, so a whole
+ * `create -> search -> update` flow runs offline (N2 / L1 integration).
  *
  * @example
  * const fake = createFakeTransport();
- * const porters = new PortersClient({ host: "fake.test", transport: fake });
- * fake.control.failNext({ kind: "network" }); // the next request fails like a dropped connection
+ * const porters = new PortersClient({ host: "fake.test", appId: "a", appSecret: "s",
+ *   partition: 1, transport: fake });
+ * const id = await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+ * fake.control.failNext({ kind: "resultCode", code: 403 }); // next call fails deterministically
  */
 export const createFakeTransport = (
   options: FakeTransportOptions = {},
 ): FakeTransport => {
   rejectUnwiredOptions(options);
+  const now = options.now ?? (() => Date.now());
+  const partitions = new Set((options.partitions ?? [1]).map(String));
+  const context: RecordContext = {
+    now,
+    currentUserId: options.currentUserId ?? 1,
+  };
   const store = createFakeStore();
+  const masters = createFakeMasters({ users: options.users });
+  const auth = createFakeAuth({ now });
   const faults: FakeFault[] = [];
   let latencyMs = options.latencyMs ?? 0;
 
-  const takeFault = (): FakeFault | undefined => faults.shift();
+  const applySeed = (): void => {
+    for (const [path, records] of Object.entries(options.seed ?? {})) {
+      const descriptor = FAKE_RESOURCES.get(path);
+      if (descriptor === undefined) {
+        throw new PortersConfigError(
+          `fake server: cannot seed unknown resource "${path}"`,
+          {
+            category: "config",
+            hint: `Known resources: ${[...FAKE_RESOURCES.keys()].join(", ")}.`,
+          },
+        );
+      }
+      for (const record of records) {
+        createRecord(store, descriptor, record, context);
+      }
+    }
+  };
+  applySeed();
+
+  const matchesRoute = (
+    fault: FakeFault,
+    kind: RouteKind,
+    write: boolean,
+  ): boolean => {
+    switch (fault.kind) {
+      case "network":
+      case "http":
+        return true;
+      case "authError":
+        return kind === "auth";
+      case "writeItemCodes":
+        return kind === "resource" && write;
+      case "resultCode":
+        return kind === "resource";
+    }
+  };
+
+  // Consume the queued fault only when it targets this request, so a fault queued for a resource
+  // call is not swallowed by the OAuth round-trip the library makes first. `only` narrows further,
+  // letting the outer routing take just the transport-level faults (network / raw HTTP).
+  const takeFault = (
+    kind: RouteKind,
+    write: boolean,
+    only?: (fault: FakeFault) => boolean,
+  ): FakeFault | undefined => {
+    const next = faults[0];
+    if (next === undefined) return undefined;
+    if (!matchesRoute(next, kind, write)) return undefined;
+    if (only !== undefined && !only(next)) return undefined;
+    faults.shift();
+    return next;
+  };
+
+  const resourceError = (
+    descriptor: ResourceDescriptor,
+    code: number,
+    message: string,
+  ): TransportResponse => ({
+    // Result-code errors ride HTTP 200 (reference); the library routes on `<Code>`.
+    status: 200,
+    body: buildResourceErrorXml(descriptor.name, code, message),
+  });
+
+  const checkAccess = (
+    req: TransportRequest,
+    url: URL,
+    descriptor: ResourceDescriptor,
+  ): TransportResponse | undefined => {
+    const version = header(req, API_VERSION_HEADER);
+    if (version !== undefined && !SUPPORTED_API_VERSIONS.has(version)) {
+      return resourceError(
+        descriptor,
+        CODE_INVALID_VERSION,
+        `unsupported ${API_VERSION_HEADER}: ${version}`,
+      );
+    }
+    const state = auth.checkAccessToken(header(req, AUTH_TOKEN_HEADER));
+    if (state === "expired") {
+      return resourceError(
+        descriptor,
+        CODE_TOKEN_EXPIRED,
+        "Access Token has expired",
+      );
+    }
+    if (state === "invalid") {
+      return resourceError(
+        descriptor,
+        CODE_TOKEN_INVALID,
+        "Invalid Access Token",
+      );
+    }
+    const partition = url.searchParams.get("partition");
+    if (partition === null || !partitions.has(partition)) {
+      return resourceError(
+        descriptor,
+        CODE_PARTITION_NOT_FOUND,
+        `unknown partition: ${partition ?? "(none)"}`,
+      );
+    }
+    return undefined;
+  };
+
+  const handleRead = (
+    url: URL,
+    descriptor: ResourceDescriptor,
+  ): TransportResponse => {
+    const query = parseReadQuery(url, descriptor.prefix);
+    const { items, total } = runReadQuery(
+      store.list(descriptor.path),
+      query,
+      descriptor.fields,
+    );
+    return {
+      status: 200,
+      body: buildReadPageXml({
+        resource: descriptor.name,
+        prefix: descriptor.prefix,
+        fields: descriptor.fields,
+        masters,
+        records: items,
+        selection: query.selection,
+        total,
+        start: query.start,
+      }),
+    };
+  };
+
+  // One `<Item>`: `P_Id = -1` creates, any other id updates that record (write-format.md).
+  const writeItem = (
+    descriptor: ResourceDescriptor,
+    item: FakeRecord,
+  ): { id: number; code: number } => {
+    const rawId = item.P_Id;
+    const id = typeof rawId === "string" ? Number(rawId) : Number.NaN;
+    if (!Number.isInteger(id)) return { id: 0, code: CODE_INVALID_PARAMETER };
+    if (id === -1) {
+      const created = createRecord(store, descriptor, item, context);
+      return { id: Number(created.P_Id), code: 0 };
+    }
+    const updated = updateRecord(store, descriptor, id, item, context);
+    // VERIFY(live): the code for "update targeted a record that does not exist" is unconfirmed;
+    // 7 (Resource が存在しない) is the closest documented match — see LV-11.
+    return updated === undefined
+      ? { id, code: CODE_NOT_FOUND }
+      : { id, code: 0 };
+  };
+
+  const handleWrite = (
+    req: TransportRequest,
+    descriptor: ResourceDescriptor,
+    forcedCodes: number[] | undefined,
+  ): TransportResponse => {
+    const parsed = parseWriteBody(req.body ?? "", descriptor.prefix);
+    if (parsed === undefined || parsed.resource !== descriptor.name) {
+      return resourceError(
+        descriptor,
+        CODE_INVALID_PARAMETER,
+        "malformed write body",
+      );
+    }
+    if (parsed.items.length > MAX_ITEMS_PER_REQUEST) {
+      // VERIFY(live): the reference only says "split into 200-record requests"; which code PORTERS
+      // answers with — and whether it is a root-level error at all — is unconfirmed. See LV-11.
+      return resourceError(
+        descriptor,
+        CODE_TOO_MANY_PARAMETERS,
+        `${parsed.items.length} records exceed the ${MAX_ITEMS_PER_REQUEST}-record limit`,
+      );
+    }
+    const results = parsed.items.map((item, index) => {
+      const forced = forcedCodes?.[index];
+      // An injected non-zero code fails that record without touching the store, exactly as a
+      // per-item validation failure would.
+      if (forced !== undefined && forced !== 0) return { id: 0, code: forced };
+      return writeItem(descriptor, item);
+    });
+    return { status: 200, body: buildWriteResultXml(descriptor.name, results) };
+  };
+
+  const handleResource = (
+    req: TransportRequest,
+    url: URL,
+    descriptor: ResourceDescriptor,
+  ): TransportResponse => {
+    const write = req.method === "POST";
+    const fault = takeFault("resource", write);
+    if (fault?.kind === "resultCode") {
+      return resourceError(
+        descriptor,
+        fault.code,
+        fault.message ?? `injected result code ${fault.code}`,
+      );
+    }
+    const denied = checkAccess(req, url, descriptor);
+    if (denied) return denied;
+    if (!write) return handleRead(url, descriptor);
+    return handleWrite(
+      req,
+      descriptor,
+      fault?.kind === "writeItemCodes" ? fault.codes : undefined,
+    );
+  };
+
+  const handleAuth = (
+    req: TransportRequest,
+    url: URL,
+    path: string,
+  ): TransportResponse => {
+    const fault = takeFault("auth", false);
+    if (fault?.kind === "authError") {
+      return {
+        status: 200,
+        body: buildAuthenticationXml({
+          Error: String(fault.error),
+          Message:
+            fault.message ?? `injected authentication error ${fault.error}`,
+        }),
+      };
+    }
+    if (path === TOKEN_PATH) return auth.handleToken(req.body);
+    return auth.handleOAuth(url);
+  };
 
   const send = async (req: TransportRequest): Promise<TransportResponse> => {
     if (latencyMs > 0) await sleep(latencyMs);
     const url = new URL(req.url);
-    const target = resolve(url.pathname);
+    const target = resolveRoute(url.pathname);
     if (target.kind === "unknown") {
       throw new PortersConfigError(
         `fake server: no route for ${req.method} ${url.pathname}`,
@@ -117,48 +379,55 @@ export const createFakeTransport = (
       );
     }
 
-    // Transport-level faults need no PORTERS envelope, so they are answered here. The
-    // envelope-level kinds (resultCode / writeItemCodes / authError) stay queued for the handlers
-    // that know the resource name and item count — phase 1.
-    const fault = takeFault();
-    if (fault?.kind === "network") {
+    // Transport-level faults need no PORTERS envelope, so they are answered here; the
+    // envelope-level kinds stay queued for the handler that knows the resource name / item count.
+    const write = req.method === "POST";
+    const transportFault = takeFault(
+      target.kind,
+      write,
+      (f) => f.kind === "network" || f.kind === "http",
+    );
+    if (transportFault?.kind === "network") {
       throw new PortersNetworkError(
-        fault.message ?? "fake server: connection reset",
+        transportFault.message ?? "fake server: connection reset",
         { category: "network", retryable: true },
       );
     }
-    if (fault?.kind === "http") {
-      return { status: fault.status, body: fault.body ?? "" };
+    if (transportFault?.kind === "http") {
+      return { status: transportFault.status, body: transportFault.body ?? "" };
     }
 
-    if (target.kind === "auth") {
-      throw notImplemented(`the auth endpoint ${target.path}`, "phase 1");
+    // PORTERS rejects an over-long request as a whole (URL + body, ~15000 chars). The body it
+    // answers with is undocumented, so the fake sends a bare HTTP 400 — and the library's own
+    // send-time guard is what keeps this unreachable in practice. VERIFY(live): see LV-9.
+    if (req.url.length + (req.body?.length ?? 0) > MAX_REQUEST_LENGTH) {
+      return { status: 400, body: "request too long" };
     }
-    throw notImplemented(
-      `${req.method} ${API_PREFIX}${target.descriptor.path}`,
-      "phase 1 (Candidate) / phase 2 (the other resources)",
-    );
+
+    if (target.kind === "auth") return handleAuth(req, url, target.path);
+    return handleResource(req, url, target.descriptor);
   };
 
   const control: FakeControl = {
     failNext: (fault, times = 1) => {
-      const wired = new Set<string>(WIRED_FAULT_KINDS);
-      if (!wired.has(fault.kind)) {
-        throw notImplemented(`fault kind "${fault.kind}"`, "phase 1");
-      }
       for (let i = 0; i < times; i += 1) faults.push(fault);
     },
     clearFaults: () => {
       faults.length = 0;
     },
     pendingFaults: () => [...faults],
+    expireAccessTokens: () => auth.expireAccessTokens(),
+    issueAuthorizationCode: () => auth.issueAuthorizationCode(),
     records: (path) => store.list(path),
     setLatency: (ms) => {
       latencyMs = ms;
     },
     reset: () => {
       faults.length = 0;
+      auth.reset();
+      masters.reset();
       store.reset();
+      applySeed();
     },
   };
 

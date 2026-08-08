@@ -11,16 +11,19 @@ grep -rn "VERIFY(live)" src test
 
 ## サマリー
 
-| #    | 項目                               | 状態   |
-| ---- | ---------------------------------- | ------ |
-| LV-1 | Option 末端 alias の接頭辞         | 未確認 |
-| LV-2 | OptionRoot ラッパーの有無          | 未確認 |
-| LV-3 | Attachment の get 条件             | 未確認 |
-| LV-4 | Attachment Read の既定項目         | 未確認 |
-| LV-5 | リソース毎の create 必須項目       | 確定   |
-| LV-6 | Field `P_ReferTo` の入れ子形       | 未確認 |
-| LV-7 | User `current()` の実挙動          | 未確認 |
-| LV-8 | Partition Read の partition 非送信 | 未確認 |
+| #     | 項目                                            | 状態   |
+| ----- | ----------------------------------------------- | ------ |
+| LV-1  | Option 末端 alias の接頭辞                      | 未確認 |
+| LV-2  | OptionRoot ラッパーの有無                       | 未確認 |
+| LV-3  | Attachment の get 条件                          | 未確認 |
+| LV-4  | Attachment Read の既定項目                      | 未確認 |
+| LV-5  | リソース毎の create 必須項目                    | 確定   |
+| LV-6  | Field `P_ReferTo` の入れ子形                    | 未確認 |
+| LV-7  | User `current()` の実挙動                       | 未確認 |
+| LV-8  | Partition Read の partition 非送信              | 未確認 |
+| LV-9  | 制約違反時の HTTP 応答（長さ/レート）           | 未確認 |
+| LV-10 | System[Reference] Read の入れ子タグ             | 未確認 |
+| LV-11 | Write 失敗時の Result Code（対象なし/200 件超） | 未確認 |
 
 ---
 
@@ -96,6 +99,36 @@ grep -rn "VERIFY(live)" src test
 - **状態**: 未確認
 - **確認結果**: —
 
+## LV-9 制約違反時の HTTP 応答（リクエスト長 / レート超過）
+
+- **現在の対応 / 仮定**: 約 15000 文字超は **HTTP 400 ＋ 非 XML ボディ**（フェイクは `request too long` を返す）。
+  レート超過は **強制切断**（`PortersNetworkError`）＝ reference が「HTTP 429 / Retry-After の記載は無い・強制切断され得る」と言うため
+- **不確実な理由**: reference は上限値だけを示し、超過時の **HTTP ステータス・ボディ形状を書いていない**（旧 SPEC の「32KB で 400」は陳腐化）
+- **コード箇所**: `test/fake/fake-transport.ts`（サイズガードの 400）／ライブラリ側は `src/http/requester.ts`（送信前ガードで到達させない）
+- **確認方法**: 15000 文字超のリクエストを実機に投げてステータス・ボディを記録／1 分あたり上限超のバーストで切断挙動を観測
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: HTTP ステータスをライブラリが見ていない件は [findings][findings] RV-13
+
+## LV-10 System[Reference] Read の入れ子タグ
+
+- **現在の対応 / 仮定**: 参照先レコードは `<Field><Reference><P_Id>id</P_Id></Reference></Field>` 相当の**中立なタグ**で表現（`decodeReference` は最初の record 型の子から `P_Id` を読むため通る）
+- **不確実な理由**: 実際のタグは**参照先リソース名**（例 `<Candidate>`）のはずだが、Data Type カタログは参照先リソースを持たないため、フェイク側で正しい名前を決められない
+- **コード箇所**: `test/fake/wire.ts`（`referenceInner`）／`src/xml/decode.ts`（`decodeReference`）
+- **確認方法**: `Resume.P_Candidate` 等の実 Read レスポンスで入れ子タグ名と内側の alias（`Candidate.P_Id` か `P_Id` か）を確認
+- **状態**: 未確認
+- **確認結果**: —
+
+## LV-11 Write 失敗時の Result Code（対象なし / 200 件超）
+
+- **現在の対応 / 仮定**: 更新対象 ID が存在しない → **per-item `<Code>7`**（Resource が存在しない）。1 リクエスト 200 件超 → **ルート `<Code>102`**（パラメータが多すぎ）
+- **不確実な理由**: reference は「200 件ずつ分割」とだけ書き、**超過時のコード**も、Write エラーが per-item か**ルート `<Code>`** かも明示していない（成功時の Write 応答にルート `<Code>` は無い）
+- **コード箇所**: `test/fake/fake-transport.ts`（`writeItem` / `handleWrite`）
+- **確認方法**: 存在しない ID への update・201 件の一括 Write を実機に投げ、応答 XML の形（ルート `<Code>` の有無）とコードを記録
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: ルート `<Code>` をライブラリが読まない件は [findings][findings] RV-14
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -107,6 +140,7 @@ grep -rn "VERIFY(live)" src test
 - 接地方針: [ADR-0002][a2]（v1 設計を実 PORTERS API ドキュメントに接地）
 - XML 内部: [ADR-0011][a11]（接頭辞・ラッパーの揺れは実/サンプル XML を fixture 化して確定する方針）
 
+[findings]: reviews/findings.md
 [a2]: adr/0002-ground-design-in-live-api-docs.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md

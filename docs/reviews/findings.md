@@ -22,6 +22,8 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-10 | 🟡     | アーキテクチャ / DX       | fixed |
 | RV-11 | 🟡     | 認証                      | fixed |
 | RV-12 | 🟢     | ドキュメント              | fixed |
+| RV-13 | 🟡     | エラーモデル / API 忠実性 | open  |
+| RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -123,7 +125,27 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **状態**: fixed
 - **処置**: roadmap の P0 見出しを「R-1〜R-15 を実装」→「大半を実装・一部に積み残しあり（※）」に訂正（R-5/R-4/マルチテナントの積み残しは既存脚注＋ADR-0033 案F に集約済み）。PRD の R-4 を「Link/Image の正規化は v1 では未対応・deferred」と明示し、P0 名指し↔future 扱いの不整合を解消。0.3.0 プレリリース整備で対応
 
+## RV-13 🟡 エラーモデル / API 忠実性（HTTP ステータスを一切見ていない）
+
+- **概要**: `requester` は `transport.send()` の戻り値の **`status` を参照せず**、常に body を parse する。reference は「エラーは **HTTP 200 以外**、または `<Code>` が 0 以外」と 2 系統を定義しているのに、前者（HTTP レベルのエラー）が未処理。結果、502/503/429 やプロキシ・LB が返す非 XML ボディは `parseResourcePage` の「unparseable resource response」＝ `category: "unknown"` に落ち、**リトライ可否も判断できない**。`PortersError.httpStatus`（型にはある）は常に `undefined`
+- **根拠**: `src/http/requester.ts:105-106`（`const res = await o.transport.send(...); return parse(res.body);` — `res.status` 不使用）/ `src/http/fetch-transport.ts:27`（status は取得済み）/ `docs/reference/resource-api/README.md:78`「成功は HTTP 200 かつ `<Code>0`。エラーは HTTP 200 以外、または `<Code>` が 0 以外」/ `src/errors/porters-error.ts:36`（`httpStatus`）
+- **検出経緯**: [ADR-0043][adr43] フェイクサーバー phase 1 の実装中（フェイクが HTTP 400 を返す経路を作った際に判明）。フェイクの狙い＝「忠実度の強制関数」が実際に効いた例
+- **推奨**: `requester` で status を分類し `PortersError.httpStatus` に載せる（5xx→`server`・retryable / 429→`rateLimit`（現状どこも produce していない category）/ 4xx→`config` or `permission`）。ボディが PORTERS envelope ならそちらを優先。**挙動変更＝要 ADR**（エラー分類は [ADR-0006][adr6] の管轄）
+- **状態**: open
+- **処置**: —
+
+## RV-14 🟡 エラーモデル / API 忠実性（Write のルート `<Code>` を読まない）
+
+- **概要**: `parseWriteResult` は `<Item>` だけを読み、ルート直下の `<Code>`（リクエスト単位のエラー）を見ない。Write がリクエストごと失敗した応答（`<Candidate><Code>102</Code></Candidate>` 等）は `<Item>` 0 件となり、単件 write では「write returned no result item」＝ `category: "unknown"`、一括 write では「N results for M records」に化ける。**本当の Result Code が失われる**
+- **根拠**: `src/xml/parser.ts:89-105`（`parseWriteResult` はルート `<Code>` を参照しない）/ `src/resources/resource.ts:137`（`write returned no result item`）/ `src/resources/bulk-write.ts:149-154`（件数不一致エラー）/ `docs/reference/resource-api/write-format.md`（Write 応答にルート `<Code>` は「無い」とあるが、**エラー時の形は未文書**）
+- **検出経緯**: RV-13 と同じく [ADR-0043][adr43] phase 1 実装中。なおエラー時のルート `<Code>` の有無自体が未確認のため [live-verification][lv] **LV-11** に登録済み（実機確認が先）
+- **推奨**: LV-11 の確認結果を待って対応を決める。ルート `<Code>` がありうるなら `parseWriteResult` で先読みし `resourceError(code)` を投げる（Read と対称）。**挙動変更＝要 ADR**
+- **状態**: open
+- **処置**: —
+
+[adr6]: ../adr/0006-error-model.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
+[adr43]: ../adr/0043-local-fake-server.md
 [run3]: 2026-06-22-03.md
 [lv]: ../live-verification.md

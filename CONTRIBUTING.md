@@ -33,6 +33,19 @@ pnpm sandbox       # オフラインのサンプル実行
 
 提出前に **すべての品質ゲート（typecheck / lint / format:check / test / build）が green** であることを確認してください。CI でも同じゲートが走ります。
 
+### テストの書き分け（モック / フェイク）
+
+契約なしで動かす手段が 2 つあります。**どちらを使うかは「1 回の呼び出しを見たいのか、流れを見たいのか」**で決めます。
+
+|            | `createMockTransport`（`src`・**公開 API**）     | `createFakeTransport`（`test/fake`・**開発専用**）                     |
+| ---------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
+| 性質       | 状態を持たないスタブ（リクエスト→固定の応答）    | 状態を持つフェイクサーバー（OAuth・レコード・API の制約）              |
+| 使いどころ | 単体テスト・利用者向けサンプル（`pnpm sandbox`） | 結合テスト（`create → search → update` の往復）・異常系の注入          |
+| 出せる失敗 | 自分で書いた XML / status                        | 実 Result Code・トークン失効・partition 不一致・長さ超過・注入した障害 |
+| 配布       | npm に含む（利用者も使える）                     | **含まない**（`files` = `dist`・coverage 対象外）                      |
+
+フェイクの設計は [ADR-0043][adr43]、実装フェーズは [フェイクサーバー実装計画][fake-plan] を参照してください。
+
 ## ブランチ運用（git-flow）
 
 - ベースは **`develop`**（統合ブランチ）。`main` はリリース済みの状態。
@@ -68,3 +81,5 @@ pnpm sandbox       # オフラインのサンプル実行
 [coc]: ./CODE_OF_CONDUCT.md
 [adr]: ./docs/adr/README.md
 [adr13]: ./docs/adr/0013-coding-conventions-class-vs-function.md
+[adr43]: ./docs/adr/0043-local-fake-server.md
+[fake-plan]: ./docs/design/fake-server-plan.md
