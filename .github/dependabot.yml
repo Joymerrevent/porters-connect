@@ -32,11 +32,18 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
-    # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす
+    # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす。
+    # ただし major はランタイム変更（Node バージョン）や入力の破壊的変更を伴うため
+    # グループから外して個別 PR で受ける（npm 側と同方針）。まとめると「1 件だけ
+    # 懸念がある」ときにグループ全体を止めるか丸ごと通すかの二択になり、切り戻しの
+    # 単位も大きくなる＝壊れたときに安全側へ倒せない。
     groups:
       actions:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
     # コミットメッセージを conventional commits（ci プレフィックス）に揃える
     commit-message:
       prefix: "ci"
