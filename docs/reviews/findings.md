@@ -24,6 +24,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-12 | 🟢     | ドキュメント              | fixed |
 | RV-13 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
+| RV-15 | 🟢     | エラーモデル / DX         | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -143,7 +144,25 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **状態**: open
 - **処置**: —
 
+## RV-15 🟢 エラーモデル / DX（送信前ガードが同期 throw する経路がある）
+
+- **概要**: Promise を返す公開メソッドの一部が、**Promise を返す前に同期 throw** する。`search()` は URL 組立
+  （`buildReadUrl` → `appendReadQuery`）を **async 境界の外**で行うため、`keywords` 100 字超・`itemstate` 制限違反は
+  同期例外になる。`attachment.create/update` の 10MB ガードも同様。一方 `requester` のサイズガードは async 内なので
+  reject される＝**同じ `PortersConfigError` が経路によって throw だったり reject だったり**する。
+  `porters.candidate.search(q).catch(handler)` は前者を捕まえられない（`await` + try/catch なら捕まる）
+- **根拠**: `src/resources/resource.ts:210-215`（`search` が `readUrl(...)` を同期評価）/ `src/resources/query.ts:240`（keywords ガード）,
+  `:186`（itemstate ガード）/ `src/resources/attachment.ts:200,214`（`guardContent`）/ 対比: `src/http/requester.ts:83`（async 内）。
+  方針としては [ADR-0024][adr24] の `createMockTransport` が「**同期 throw ではなく reject** させる（Transport 契約に忠実）」と
+  明記しており、公開リソース面がその原則から外れている
+- **検出経緯**: [ADR-0043][adr43] フェーズ4 の制約テスト作成中（`expect(...).rejects` が効かず判明）
+- **推奨**: 公開メソッドを `async` にする／ガードを Promise 内へ移すなどで **常に reject** に統一する（薄い変更・挙動は
+  「例外の届き方」のみ）。破壊的ではないが公開契約の明確化なので **ADR で一言決める**のが妥当
+- **状態**: open
+- **処置**: —
+
 [adr6]: ../adr/0006-error-model.md
+[adr24]: ../adr/0024-mock-transport.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [adr43]: ../adr/0043-local-fake-server.md

@@ -20,6 +20,7 @@ import type { TransportRequest, TransportResponse } from "../../src/http/types";
 import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";
 import { parseReadQuery, runReadQuery } from "./query";
+import { createRateLimiter } from "./rate-limit";
 import { createRecord, updateRecord, type RecordContext } from "./records";
 import {
   FAKE_DATA_DESCRIPTORS,
@@ -28,7 +29,6 @@ import {
 } from "./resources";
 import { createFakeStore } from "./store";
 import {
-  WIRED_OPTIONS,
   type FakeControl,
   type FakeFault,
   type FakeRecord,
@@ -100,22 +100,6 @@ const header = (req: TransportRequest, name: string): string | undefined => {
   return undefined;
 };
 
-// An option whose behaviour has not landed yet must not be accepted silently: a test that passes
-// `rateLimit` and sees no rate limiting would "pass" for the wrong reason.
-const rejectUnwiredOptions = (options: FakeTransportOptions): void => {
-  const wired = new Set<string>(WIRED_OPTIONS);
-  const unwired = Object.keys(options).filter((key) => !wired.has(key));
-  if (unwired.length > 0) {
-    throw new PortersConfigError(
-      `fake server: option(s) ${unwired.join(", ")} are declared but not wired yet`,
-      {
-        category: "config",
-        hint: `Wired so far: ${[...wired].join(", ")}. The rest land in the phases listed in docs/design/fake-server-plan.md.`,
-      },
-    );
-  }
-};
-
 /**
  * Build a stateful fake PORTERS server behind the `Transport` seam (ADR-0043). Unlike
  * {@link createMockTransport} — a stateless stub for single-call unit tests (N1) — this one
@@ -132,7 +116,6 @@ const rejectUnwiredOptions = (options: FakeTransportOptions): void => {
 export const createFakeTransport = (
   options: FakeTransportOptions = {},
 ): FakeTransport => {
-  rejectUnwiredOptions(options);
   const now = options.now ?? (() => Date.now());
   const partitions = new Set((options.partitions ?? [1]).map(String));
   const context: RecordContext = {
@@ -142,6 +125,7 @@ export const createFakeTransport = (
   const store = createFakeStore();
   const masters = createFakeMasters({ users: options.users });
   const auth = createFakeAuth({ now });
+  const rate = createRateLimiter(options.rateLimit, now);
   const faults: FakeFault[] = [];
   let latencyMs = options.latencyMs ?? 0;
 
@@ -363,6 +347,15 @@ export const createFakeTransport = (
         fault.message ?? `injected result code ${fault.code}`,
       );
     }
+    // Rate limiting sits in front of everything else, as an edge would: an over-cap request never
+    // reaches auth or the store.
+    if (!rate.take(write ? "write" : "read")) {
+      if (rate.mode === "http429") return { status: 429, body: "" };
+      throw new PortersNetworkError(
+        "fake server: connection closed (request limit exceeded)",
+        { category: "network", retryable: true },
+      );
+    }
     // PORTERS has no Write API for the masters, so neither does the fake: a POST here is a bug in
     // the caller, not a PORTERS error to imitate — surface it before anything else (fail-safe).
     if (write && resource.master !== undefined) {
@@ -477,6 +470,7 @@ export const createFakeTransport = (
     },
     reset: () => {
       faults.length = 0;
+      rate.reset();
       auth.reset();
       masters.reset();
       store.reset();

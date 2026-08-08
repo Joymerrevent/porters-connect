@@ -5,10 +5,6 @@
 // the fake itself stays trustworthy. It implements the public `Transport` seam, which means the
 // library runs against it completely unchanged: no HTTP, no TLS, no `host` rewiring (the startable
 // HTTP server adapter is phase 5 of the plan).
-//
-// Anything the current phase does not honour yet is rejected at construction with a named
-// `PortersConfigError` instead of being silently ignored — a fake that quietly does nothing would
-// turn into a green test that proves nothing (fail-safe).
 
 import type { Transport } from "../../src/http/types";
 
@@ -64,17 +60,24 @@ export type FakeFault =
   | { kind: "authError"; error: number; message?: string };
 
 /**
- * Per-minute request caps (reference: Read 2000 / Write 500 per minute). Enforced from phase 4.
+ * Request caps on the Resource API (reference: Read 2000 / Write 500 per minute, and a contractual
+ * ~150,000 accesses per month). Enforced by default at the reference values — the library throttles
+ * itself to 90% of the per-minute caps, so a well-behaved caller never reaches them.
  *
  * `mode` decides what exceeding them does. The reference only says the connection *may be forcibly
  * closed* and explicitly notes that **no HTTP 429 / Retry-After is documented**, so `disconnect`
- * (a `PortersNetworkError`, like a dropped `fetch`) is the grounded default; `http429` exists
- * because ADR-0043 names a 429 as a constraint trigger worth exercising. Until then a 429 is
- * reachable through `failNext({ kind: "http", status: 429 })`.
+ * (a `PortersNetworkError`, like a dropped `fetch`) is the grounded default; `http429` is offered
+ * because ADR-0043 names a 429 as a constraint trigger worth exercising. Which one the live API
+ * does is unverified — see docs/live-verification.md (LV-9).
  */
 export type FakeRateLimit = {
+  /** Default 2000. */
   readPerMinute?: number;
+  /** Default 500. */
   writePerMinute?: number;
+  /** Read + Write over a rolling 30 days. Default 150000. */
+  perMonth?: number;
+  /** Default `disconnect`. */
   mode?: "disconnect" | "http429";
 };
 
@@ -94,20 +97,9 @@ export type FakeTransportOptions = {
   optionTree?: FakeOptionNode[];
   /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */
   currentUserId?: number;
-  /** Per-minute caps; `false` disables them. **Phase 4** — rejected until then. */
+  /** Request caps; `false` disables them. Defaults to the reference limits. */
   rateLimit?: FakeRateLimit | false;
 };
-
-/** Option keys the current phase actually honours; the rest are rejected at construction. */
-export const WIRED_OPTIONS = [
-  "latencyMs",
-  "now",
-  "partitions",
-  "seed",
-  "users",
-  "optionTree",
-  "currentUserId",
-] as const;
 
 /** Deterministic controls for driving the fake from a test. */
 export type FakeControl = {

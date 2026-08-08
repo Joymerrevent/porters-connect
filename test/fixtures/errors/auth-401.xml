@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Authentication>
+  <Error>401</Error>
+  <Message>Refresh Token has expired</Message>
+</Authentication>
