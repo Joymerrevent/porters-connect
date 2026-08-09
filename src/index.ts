@@ -33,7 +33,8 @@ export type { Transport, TransportRequest, TransportResponse } from "./http";
 // Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
 export { createMockTransport } from "./http";
 export type { MockHandler, MockReply, MockTransportOptions } from "./http";
-export type { PartitionId, Scope } from "./types";
+// `Scheme` is the access-point URL scheme accepted by `PortersClientOptions.scheme` (ADR-0047).
+export type { PartitionId, Scheme, Scope } from "./types";
 
 // Custom field declaration DSL (R-16 / ADR-0023): declare tenant U_/A_ fields so they
 // are typed and decode/encode by their declared Data Type.

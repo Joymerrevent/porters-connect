@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { PortersClient } from "./client";
 import type { TenantScope } from "./client";
+import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/decode";
 
@@ -98,6 +99,32 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(oauth?.url).toContain("app_id=AID");
     expect(token?.body).toContain("secret=SEC");
     expect(candidate?.url).toContain("partition=7");
+  });
+
+  // ADR-0047: the access point is one setting, applied to every URL the library builds — auth,
+  // data resources and the App-level Partition master alike — and http is announced, not assumed.
+  it("sends every URL to the configured scheme, warning once about cleartext", async () => {
+    resetInsecureSchemeWarning();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { transport, calls } = recordingTransport();
+    const client = new PortersClient({
+      host: "127.0.0.1:4010",
+      scheme: "http",
+      appId: "AID",
+      partition: 7,
+      transport,
+    });
+    await client.candidate.search();
+    await client.partition.search();
+
+    expect(calls.map((c) => c.url.split("?")[0])).toEqual([
+      "http://127.0.0.1:4010/v1/oauth",
+      "http://127.0.0.1:4010/v1/token",
+      "http://127.0.0.1:4010/v1/candidate",
+      "http://127.0.0.1:4010/v1/partition",
+    ]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 
   it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {

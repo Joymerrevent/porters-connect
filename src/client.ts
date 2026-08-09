@@ -10,6 +10,7 @@ import {
   createRequester,
   createThrottle,
   expoBackoff,
+  warnIfInsecureScheme,
 } from "./http";
 import type { AccessPoint, Transport } from "./http";
 import {
@@ -38,7 +39,7 @@ import type {
 } from "./resources";
 import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
-import type { PartitionId, Scope } from "./types";
+import type { PartitionId, Scheme, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
 export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
@@ -47,6 +48,14 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
    * (A representative value lives in docs/reference.) May carry a port — `localhost:4010`.
    */
   host: string;
+  /**
+   * URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
+   * local fake server or a trusted tunnel: it sends every request — the OAuth token header
+   * included — in cleartext, so the library warns once per process (loopback is not exempt).
+   * Silence it only where cleartext is intended, with the env var
+   * `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1`.
+   */
+  scheme?: Scheme;
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
@@ -122,8 +131,13 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
   readonly #accessPoint: AccessPoint;
 
   constructor(options: PortersClientOptions<C>) {
-    // Where every URL is sent. Resolved once here; `apiUrl` is the only place that renders it.
-    const accessPoint: AccessPoint = { host: options.host };
+    // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
+    // renders it. Plain http warns loudly (once per process) — allowing it never silences it.
+    const accessPoint: AccessPoint = {
+      host: options.host,
+      scheme: options.scheme,
+    };
+    warnIfInsecureScheme(options.scheme, options.host);
     const transport = options.transport ?? createFetchTransport();
     // Custom strategy (案3) takes over token supply; otherwise the default transparent
     // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
