@@ -5,7 +5,7 @@
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
 
 import { PortersResourceError, resourceError } from "../errors";
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { DataType } from "../xml/decode";
 import {
   buildWriteXml,
@@ -20,6 +20,7 @@ import {
   runRead,
   type FieldCatalog,
   type ReadRecord,
+  type ResourceDeps,
   type ResourcePage,
 } from "./read-core";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
@@ -31,6 +32,7 @@ export type {
   EmptyCatalog,
   FieldCatalog,
   ReadRecord,
+  ResourceDeps,
   ResourcePage,
 } from "./read-core";
 // Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
@@ -161,13 +163,14 @@ export const firstWriteResultId = (
 };
 
 /**
- * Build a Read URL: `https://{host}/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`.
+ * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
+ * at the configured access point (ADR-0047).
  * `ctx` (alias prefix + Data-Type map) drives the typed query encoding (ADR-0038): condition/order
  * prefixing, date ISO -> PORTERS, and the keyword/itemstate guards. Attachment is bespoke (no prefix
  * / no catalog) and builds its own loose URL — see attachment.ts.
  */
 export const buildReadUrl = <F extends FieldCatalog>(
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   path: string,
   q: SearchQuery<F>,
@@ -179,22 +182,27 @@ export const buildReadUrl = <F extends FieldCatalog>(
   appendReadQuery(p, q, ctx);
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/${path}?${p.toString()}`;
+  return apiUrl(accessPoint, path, p);
 };
 
-/** Build a Write URL: `https://{host}/v1/{path}?partition=…`. */
+/** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */
 export const buildWriteUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   path: string,
-): string => `https://${host}/v1/${path}?partition=${partition}`;
+): string =>
+  apiUrl(
+    accessPoint,
+    path,
+    new URLSearchParams({ partition: String(partition) }),
+  );
 
 export const createResource = <
   const F extends FieldCatalog,
   const Req extends readonly (keyof F)[],
 >(
   config: ResourceConfig<F, Req>,
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
 ): Resource<F, Req[number]> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
   const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
@@ -203,13 +211,13 @@ export const createResource = <
   const defaultFields = defaultFieldList(config.prefix, config.fields);
 
   const readUrl = (q: SearchQuery<F>): string =>
-    buildReadUrl(deps.host, deps.partition, config.path, q, {
+    buildReadUrl(deps.accessPoint, deps.partition, config.path, q, {
       prefix: config.prefix,
       fields: fieldMap,
     });
 
   const writeUrl = (): string =>
-    buildWriteUrl(deps.host, deps.partition, config.path);
+    buildWriteUrl(deps.accessPoint, deps.partition, config.path);
 
   const firstWriteId = (body: string): number =>
     firstWriteResultId(body, config.path, config.name);

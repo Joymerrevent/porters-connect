@@ -4,8 +4,8 @@
 // 0 = the login partition (only under the browser `code` grant — 403s under code_direct, so
 // it is not exposed; ADR-0022 D3b). No `get(id)`: the API has no id/condition filter.
 
-import type { Requester } from "../http/requester";
-import type { ResourceDescriptor } from "./resource";
+import { apiUrl, type AccessPoint } from "../http/access-point";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -56,21 +56,23 @@ export type PartitionResource = {
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
-const buildUrl = (host: string, q: PartitionSearchQuery): string => {
+const buildUrl = (
+  accessPoint: AccessPoint,
+  q: PartitionSearchQuery,
+): string => {
   const p = new URLSearchParams();
   p.set("request_type", String(q.requestType ?? 1));
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/partition?${p.toString()}`;
+  return apiUrl(accessPoint, "partition", p);
 };
 
-export const createPartitionResource = (deps: {
-  requester: Requester;
-  host: string;
-}): PartitionResource => {
+export const createPartitionResource = (
+  deps: Omit<ResourceDeps, "partition">,
+): PartitionResource => {
   const decode = decoderFor(FIELDS);
   const search = (query: PartitionSearchQuery = {}): Promise<PartitionPage> =>
-    runRead(deps.requester, buildUrl(deps.host, query), decode);
+    runRead(deps.requester, buildUrl(deps.accessPoint, query), decode);
   const searchAll = (
     query: Omit<PartitionSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<Partition> =>

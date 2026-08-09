@@ -54,6 +54,7 @@ src/
 ```ts
 const porters = new PortersClient({
   host, // 必須（PORTERS_HOST 経由・ハードコード禁止）。代表値 api-hrbc-jp.porterscloud.com は参考
+  scheme, // 任意（既定 "https"）。"http" はローカルのフェイク等でのみ・毎プロセス警告（ADR-0047）
   appId,
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
@@ -124,6 +125,8 @@ accessor 呼び出し
   - ※ 数値は理解のための目安。**正典は [docs/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
 - **秘匿情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
+  - **アクセスポイント**：URL 組立は 1 関数（`http/access-point.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
+    抑止は専用 env のみ（許可と沈黙は別・[ADR-0047][a47]）。
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
 - **言語**：公開サーフェスは英語、内部コメントは日本語可（CLAUDE.md）。
 
@@ -163,3 +166,4 @@ accessor 呼び出し
 [a10]: ../adr/0010-retry-throttle.md
 [a11]: ../adr/0011-xml-parse-serialize.md
 [a12]: ../adr/0012-token-cache-refresh.md
+[a47]: ../adr/0047-access-point-scheme.md

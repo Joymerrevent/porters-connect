@@ -1,7 +1,7 @@
 # フェイクサーバー実装計画（ADR-0043）
 
 - ステータス: living（着手中・随時更新）
-- 最終更新: 2026-08-08
+- 最終更新: 2026-08-10
 - 位置づけ: [ADR-0043][adr43]（accepted）の**実装タスクリスト**。決定の正は ADR-0043、本書は**進め方（フェーズ・チェックリスト）**。
   新しいセッションでもここを見れば続きから着手できる。詳細な設計判断は重複させず ADR を参照する。
 
@@ -171,20 +171,36 @@
   - `PortersConfigError`（未実装ルート・マスタへの Write）→ **HTTP 501 ＋ メッセージ**。別プロセスからは例外を
     投げられないので、空の結果と誤読されない形にする（フェイルセーフ）。
   - PORTERS が使わない verb（DELETE 等）→ **405**。削除 API は無いので、あるように見せない。
-- **接続はまだ `transport` 差し替えが要る**（`createForwardingTransport`）。ライブラリが `https://` を
-  10 箇所でハードコードしているため。`PORTERS_HOST` を向けるだけで済むのは**フェーズ6**。
+- **接続は当時まだ `transport` 差し替えが要った**（`createForwardingTransport`）。ライブラリが `https://` を
+  10 箇所でハードコードしていたため。`PORTERS_HOST` ＋ `scheme` を向けるだけで済むようになったのは**フェーズ6**。
 - **起動**: `pnpm fake:serve`（既定 127.0.0.1:4010・`PORT` で変更）。デモ用に候補者2件・ユーザー2件・
   Option ツリーを seed 済みで、curl でもそのまま叩ける。
 
-## フェーズ 6 — アクセスポイント / scheme 設定（真の N2・要 ADR）
+## フェーズ 6 — アクセスポイント / scheme 設定（真の N2・要 ADR）✅ 完了
 
 - [x] **ADR 起票**（別 PR・`proposed` → 議論 → accepted）: 公開サーフェスの追加と http のセキュリティ姿勢を決める
       → **[ADR-0047][adr47] accepted（案B＝`host` ＋ `scheme`・2026-08-09）**
-- [ ] **ライブラリ側の小変更**: URL 組立 **10 箇所**を 1 関数に集約／**アクセスポイント・scheme 設定**（既定 https・VPN/LB も同 seam）／
+- [x] **ライブラリ側の小変更**: URL 組立 **10 箇所**を 1 関数に集約／**アクセスポイント・scheme 設定**（既定 https・VPN/LB も同 seam）／
       **http は明示のみ＋ループバック含め毎起動で警告＋env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING` 等）で抑止**。
       フェイクは **http（証明書不要）**、自己署名 https は不採用
-- [ ] これで初めて **`PORTERS_HOST` ＋ `scheme: "http"` だけ＝アプリ無改造**が成立する
+- [x] これで初めて **`PORTERS_HOST` ＋ `scheme: "http"` だけ＝アプリ無改造**が成立する
       （フェーズ5 の `createForwardingTransport` は削除せず残す＝ライブラリ非依存で繋ぐ手段）
+
+### フェーズ 6 で確定したこと（実装メモ）
+
+- **集約先**: `src/http/access-point.ts` の `apiUrl(accessPoint, path, params?)` 1 本。`AccessPoint`＝`{ host, scheme? }` を
+  **deps に載せて配る**（`host: string` を廃止）。データ系リソースの deps は `ResourceDeps`（`read-core.ts`）に名前を付け、
+  Partition だけ `Omit<ResourceDeps, "partition">`（partition を取らない API のため）。
+  **`https://` の直書きは src から消えた**＝リソースを足しても増えない。
+- **警告の実装**（`src/http/insecure-http-warning.ts`）: `scheme: "http"` のとき `console.warn` を**プロセス内 1 回**。
+  **抑止は env のみ**（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`）で、`""`/`0`/`false` は**抑止しない**
+  ＝曖昧な値で黙らない（フェイルセーフ）。**env で抑止しても「出した」フラグは立てない**ので、
+  env を外した次のクライアントはちゃんと警告される。
+- **公開 API の増分は 2 つだけ**: `PortersClientOptions.scheme` と型 `Scheme`。`host` の意味・`PORTERS_HOST` の運用・
+  `PortersClient.host` は不変（内部は `#accessPoint.host` を返す）。semver は **minor**。
+- **無改造の実証**: `test/integration/http-server.test.ts` の最後の describe が
+  `new PortersClient({ host: "127.0.0.1:<port>", scheme: "http" })` **だけ**でフェイクと往復する（transport 差し替え無し）。
+  `createForwardingTransport` は削除せず残置（設定に触れないアプリ向け）。
 
 ## フェーズ 7 — package 昇格・配布（外部消費の需要時）
 

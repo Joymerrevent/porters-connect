@@ -5,13 +5,13 @@
 // rides the POST body (ADR-0034 SD-9), never a URL/log.
 
 import { PortersAuthError } from "../errors/index";
-import type { Transport } from "../http/index";
+import { apiUrl, type AccessPoint, type Transport } from "../http/index";
 import { parseAuthentication } from "../xml/parser";
 import type { StoredTokens } from "./types";
 
 /** Credentials + seams shared by every token exchange. */
 export type TokenExchangeDeps = {
-  host: string;
+  accessPoint: AccessPoint;
   appId: string;
   appSecret: string;
   transport: Transport;
@@ -41,7 +41,7 @@ export const exchangeToken = async (
   }).toString();
   const res = await deps.transport.send({
     method: "POST",
-    url: `https://${deps.host}/v1/token`,
+    url: apiUrl(deps.accessPoint, "token"),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });

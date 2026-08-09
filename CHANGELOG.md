@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- **アクセスポイントの scheme 設定**（[ADR-0047][adr47]）。`PortersClient` に **`scheme?: "https" | "http"`**（既定 `"https"`）を追加し、
+  型 **`Scheme`** を公開。`host` の意味・`PORTERS_HOST` の運用・`porters.host` は不変です（ポートが要る場合は `host` に含める＝`localhost:4010`）。
+  - ローカルのフェイクサーバーや信頼できるトンネルへ、**アプリを改造せず**（`transport` 差し替えなしで）向けられます。
+  - `scheme: "http"` はトークンを含む全リクエストが**平文**で流れるため、**ループバックを含め毎プロセス 1 回**警告します。
+    抑止は専用の環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` のみ＝**許可（`scheme`）と沈黙（env）は別**です。
+  - 既定は従来どおり `https` で、既存コードの挙動は変わりません。
+
+### Changed
+
+- 内部: `https://{host}/v1/...` を 10 箇所で組み立てていた URL 生成を **1 関数へ集約**（公開される挙動は不変）。
+
 ## [0.6.2] - 2026-07-19
 
 ### Changed
@@ -137,6 +150,7 @@
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
 [guide]: docs/guide/error-handling.md
+[adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/

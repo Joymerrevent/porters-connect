@@ -7,7 +7,6 @@
 // strings. Multi-select Option read returns every selected alias as `string[]` (ADR-0017).
 // The static Job / input types derive from the catalog (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -15,6 +14,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
   type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
@@ -98,7 +98,7 @@ export type JobResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): JobResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;

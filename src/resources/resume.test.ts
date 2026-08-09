@@ -78,7 +78,7 @@ const stub = (body: string, calls: Call[]): Requester => ({
 const resource = (calls: Call[], body: string) =>
   createResumeResource({
     requester: stub(body, calls),
-    host: "h.test",
+    accessPoint: { host: "h.test" },
     partition: 12,
   });
 

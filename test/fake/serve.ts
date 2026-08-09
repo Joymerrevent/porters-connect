@@ -5,13 +5,13 @@
  *   PORT=5000 pnpm fake:serve
  *
  * 契約なしで実 HTTP を喋るので、curl でも別プロセス（MCP サーバー等）からでも叩けます。
- * ライブラリから使う場合は、`host` はそのままに transport だけ差し替えます:
+ * ライブラリからは**設定だけ**で繋げます（ADR-0047・フェーズ6＝アプリ無改造）:
  *
- *   import { createForwardingTransport } from "./test/fake/index";
- *   new PortersClient({ host: "fake.test", appId: "a", appSecret: "s", partition: 1,
- *     transport: createForwardingTransport({ baseUrl: "http://127.0.0.1:4010" }) });
+ *   new PortersClient({ host: "127.0.0.1:4010", scheme: "http",
+ *     appId: "a", appSecret: "s", partition: 1 });
  *
- * `PORTERS_HOST` を向けるだけで済む（＝アプリ無改造）ようにするのはフェーズ6。
+ * `scheme: "http"` は毎プロセス 1 回警告します（抑止は PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1）。
+ * 設定に触れない場合は transport 差し替え（`createForwardingTransport`）も従来どおり使えます。
  */
 import { startFakeServer } from "./http-server";
 import { FAKE_RESOURCES } from "./resources";
@@ -49,6 +49,9 @@ console.log(`fake PORTERS server listening on ${server.url}`);
 console.log(`  auth      /v1/oauth (code_direct), /v1/token`);
 console.log(`  resources ${routes.join(", ")}`);
 console.log(`  seeded    2 candidates, 2 users, 1 option tree`);
+console.log(
+  `  connect   new PortersClient({ host: "${new URL(server.url).host}", scheme: "http" })`,
+);
 console.log(
   `  try       curl -s "${server.url}/v1/oauth?app_id=demo&response_type=code_direct"`,
 );

@@ -54,8 +54,20 @@ pnpm sandbox       # オフラインのサンプル実行
 pnpm fake:serve            # http://127.0.0.1:4010（PORT で変更可）
 ```
 
-ライブラリから繋ぐときは、`host` はアプリの設定のままで **transport だけ**差し替えます
-（ライブラリは URL を `https://` で組むため。`PORTERS_HOST` を向けるだけで済むようにするのは今後のフェーズ）。
+ライブラリから繋ぐときは、**設定だけ**を書き換えます（[ADR-0047][adr47]）。フェイクは証明書を持たないので
+`scheme: "http"` を明示します。**アプリのコードは変えません**。
+
+```ts
+new PortersClient({
+  host: "127.0.0.1:4010", // PORTERS_HOST に入れる値（ポート込み）
+  scheme: "http", // 明示したときだけ平文。毎プロセス 1 回警告します
+});
+```
+
+警告は意図した平文利用でのみ `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` で抑止します（許可と沈黙は別）。
+
+ライブラリの設定に触れず transport 側で繋ぎたいときは、フェーズ5 の転送 transport も残してあります
+（`host` はアプリの設定のまま・ライブラリ非依存）。
 
 ```ts
 import { createForwardingTransport } from "./test/fake/index";
@@ -102,4 +114,5 @@ new PortersClient({
 [adr]: ./docs/adr/README.md
 [adr13]: ./docs/adr/0013-coding-conventions-class-vs-function.md
 [adr43]: ./docs/adr/0043-local-fake-server.md
+[adr47]: ./docs/adr/0047-access-point-scheme.md
 [fake-plan]: ./docs/design/fake-server-plan.md

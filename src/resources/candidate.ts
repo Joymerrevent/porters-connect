@@ -3,7 +3,6 @@
 // are Candidate-specific; the static Candidate / input types derive from the catalog
 // (single source of truth — ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -11,6 +10,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
   type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
@@ -75,7 +75,7 @@ export type CandidateResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createCandidateResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): CandidateResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;

@@ -5,11 +5,11 @@
 // `alias`/`level`/`enabled`/`count` — no `start` (no offset paging → no searchAll), no
 // `field`/`condition`/`get(id)`.
 
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
 import { decoderFor, type FieldCatalog, type ReadRecord } from "./read-core";
-import type { ResourceDescriptor } from "./resource";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -53,7 +53,7 @@ export type OptionResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: OptionSearchQuery,
 ): string => {
@@ -63,18 +63,14 @@ const buildUrl = (
   if (q.level !== undefined) p.set("level", String(q.level));
   if (q.enabled !== undefined) p.set("enabled", String(q.enabled));
   if (q.count !== undefined) p.set("count", String(q.count));
-  return `https://${host}/v1/option?${p.toString()}`;
+  return apiUrl(accessPoint, "option", p);
 };
 
 // Decode one node's own fields, dropping the nested `Items` collection (handled by the walk).
 const withoutItems = (raw: RawItem): RawItem =>
   Object.fromEntries(Object.entries(raw).filter(([k]) => k !== "Items"));
 
-export const createOptionResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): OptionResource => {
+export const createOptionResource = (deps: ResourceDeps): OptionResource => {
   const decode = decoderFor(FIELDS);
   // Depth-first flatten: push each node, then recurse into its <Items><Item>… children.
   const flatten = (items: RawItem[], out: Option[]): void => {
@@ -90,7 +86,7 @@ export const createOptionResource = (deps: {
     deps.requester.request(
       {
         method: "GET",
-        url: buildUrl(deps.host, deps.partition, query),
+        url: buildUrl(deps.accessPoint, deps.partition, query),
         headers: {},
       },
       (body) => {

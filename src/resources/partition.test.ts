@@ -29,7 +29,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 const res = (calls: Call[], ...bodies: string[]) =>
   createPartitionResource({
     requester: stub(bodies.length > 0 ? bodies : [ONE], calls),
-    host: "h.test",
+    accessPoint: { host: "h.test" },
   });
 
 const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
@@ -64,7 +64,7 @@ describe("createPartitionResource", () => {
     const calls: Call[] = [];
     const r = createPartitionResource({
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
-      host: "h.test",
+      accessPoint: { host: "h.test" },
     });
     const items = await collect(r.searchAll());
     expect(items.map((p) => p.P_Id)).toEqual([1, 2, 3]);

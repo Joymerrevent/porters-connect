@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-07-20
+- 最終更新: 2026-08-10
 - 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
@@ -19,9 +19,10 @@
 
 - [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了・案C（評価基盤）も整ったのでこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
 - [x] **案C ローカルフェイクサーバー（[ADR-0043][adr43] accepted）** — MCP（案A）より**先行**（stakeholder 2026-07-20）。
-      **フェーズ0〜5 完了**＝L1 結合テストがオフラインで回り、`pnpm fake:serve` で HTTP 起動もできる（MCP e2e はここで足りる）。
-      残るフェーズ6（アクセスポイント/scheme 設定・要 ADR＝「無改造アプリ」対応）／フェーズ7（package 昇格・配布）は
-      **需要が出てから**（stakeholder 2026-08-09）。詳細は [フェイクサーバー実装計画][fake-plan]。
+      **フェーズ0〜6 完了**＝L1 結合テストがオフラインで回り、`pnpm fake:serve` で HTTP 起動もでき（MCP e2e はここで足りる）、
+      **`host` ＋ `scheme: "http"` だけで無改造アプリを向けられる**（[ADR-0047][adr47]・URL 組立を 1 関数に集約）。
+      残るフェーズ7（package 昇格・配布）は**需要が出てから**（stakeholder 2026-08-09）。
+      詳細は [フェイクサーバー実装計画][fake-plan]。
 - [ ] 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
 
 ### 補助・随時
@@ -55,18 +56,19 @@
   - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（ADR-0040・0.5.0）で公開済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
-### 評価基盤（[ADR-0043][adr43]・フェーズ0〜5）
+### 評価基盤（[ADR-0043][adr43]・フェーズ0〜6）
 
 - in-repo フェイクサーバー（`test/fake/`・dev-only＝tarball 非同梱）: 独自 OAuth・状態あり CRUD 往復・
   Read クエリ・マスタ Read・制約（~15000字/200件/レート）・注入（result code / per-item / auth / network / HTTP）
-- `pnpm fake:serve` で **ローカル HTTP 起動**（curl・別プロセスから叩ける）＋ 転送 Transport（ライブラリ変更不要）
+- `pnpm fake:serve` で **ローカル HTTP 起動**（curl・別プロセスから叩ける）＋ 転送 Transport（ライブラリ非依存）
+- **アプリ無改造で接続**: `host` ＋ `scheme: "http"` のみ（[ADR-0047][adr47]）。http は毎プロセス 1 回警告・抑止は専用 env
 - L1 結合テストが契約なしで回る（`PortersClient` をそのまま駆動）
 
 ### 基盤・記録
 
 - ADR 0001〜0039 accepted（0037 は 0039 で superseded）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・488 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12 は `fixed`／**RV-13〜15 は open**＝フェイク実装中に判明したライブラリ側の所見。いずれも挙動変更を伴うため ADR 待ち）
+- 品質ゲート green・502 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12 は `fixed`／**RV-13〜15 は open**＝フェイク実装中に判明したライブラリ側の所見。いずれも挙動変更を伴うため ADR 待ち）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
@@ -162,6 +164,7 @@
 [adr41]: adr/0041-bulk-write-surface-impl.md
 [adr42]: adr/0042-supported-version-policy.md
 [adr43]: adr/0043-local-fake-server.md
+[adr47]: adr/0047-access-point-scheme.md
 [fake-plan]: design/fake-server-plan.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md

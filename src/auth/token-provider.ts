@@ -4,14 +4,14 @@
 // (ADR-0034 F-1) can save a browser-`code` exchange and locally forget tokens.
 
 import { PortersAuthError } from "../errors/index";
-import type { Transport } from "../http/index";
+import { apiUrl, type AccessPoint, type Transport } from "../http/index";
 import { parseAuthentication } from "../xml/parser";
 import { createMemoryTokenStore } from "./memory-store";
 import { exchangeToken } from "./token-exchange";
 import type { StoredTokens, TokenProvider, TokenStore } from "./types";
 
 export type DefaultTokenProviderOptions = {
-  host: string;
+  accessPoint: AccessPoint;
   appId: string;
   appSecret: string;
   transport: Transport;
@@ -68,7 +68,7 @@ export const createDefaultTokenProvider = (
     save(
       await exchangeToken(
         {
-          host: opts.host,
+          accessPoint: opts.accessPoint,
           appId: opts.appId,
           appSecret: opts.appSecret,
           transport: opts.transport,
@@ -81,9 +81,14 @@ export const createDefaultTokenProvider = (
 
   // code_direct -> token (initial acquisition; requires prior browser grant).
   const acquire = async (): Promise<StoredTokens> => {
-    const url =
-      `https://${opts.host}/v1/oauth` +
-      `?app_id=${encodeURIComponent(opts.appId)}&response_type=code_direct`;
+    const url = apiUrl(
+      opts.accessPoint,
+      "oauth",
+      new URLSearchParams({
+        app_id: opts.appId,
+        response_type: "code_direct",
+      }),
+    );
     const res = await opts.transport.send({ method: "GET", url, headers: {} });
     const { code } = parseAuthentication(res.body);
     if (code === undefined) {

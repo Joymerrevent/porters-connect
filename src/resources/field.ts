@@ -4,8 +4,8 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { Requester } from "../http/requester";
-import type { ResourceDescriptor } from "./resource";
+import { apiUrl, type AccessPoint } from "../http/access-point";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -88,7 +88,7 @@ export type FieldResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: FieldSearchQuery,
 ): string => {
@@ -98,17 +98,17 @@ const buildUrl = (
   p.set("active", String(q.active ?? -1));
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/field?${p.toString()}`;
+  return apiUrl(accessPoint, "field", p);
 };
 
-export const createFieldResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): FieldResource => {
+export const createFieldResource = (deps: ResourceDeps): FieldResource => {
   const decode = decoderFor(FIELDS);
   const search = (query: FieldSearchQuery): Promise<FieldPage> =>
-    runRead(deps.requester, buildUrl(deps.host, deps.partition, query), decode);
+    runRead(
+      deps.requester,
+      buildUrl(deps.accessPoint, deps.partition, query),
+      decode,
+    );
   const searchAll = (
     query: Omit<FieldSearchQuery, "count" | "start">,
   ): AsyncIterable<Field> =>
