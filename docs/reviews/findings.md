@@ -143,7 +143,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: RV-13 と同じく [ADR-0043][adr43] phase 1 実装中。なおエラー時のルート `<Code>` の有無自体が未確認のため [live-verification][lv] **LV-11** に登録済み（実機確認が先）
 - **推奨**: LV-11 の確認結果を待って対応を決める。ルート `<Code>` がありうるなら `parseWriteResult` で先読みし `resourceError(code)` を投げる（Read と対称）。**挙動変更＝要 ADR**
 - **状態**: open
-- **処置**: —
+- **処置**: [ADR-0045][adr45] を **accepted**（案A＝ルート `<Code>` を常に先読み・decider 2026-08-09）。**LV-11 の確認を待たず先回りで実装**する判断（外した場合のコストが非対称）。仮定は `VERIFY(live)` ＋ LV-11 に紐づけ、形が違うと判明したら新 ADR で supersede。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-15 🟢 エラーモデル / DX（送信前ガードが同期 throw する経路がある）
 
@@ -179,6 +179,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr24]: ../adr/0024-mock-transport.md
 [adr43]: ../adr/0043-local-fake-server.md
 [adr44]: ../adr/0044-http-status-handling.md
+[adr45]: ../adr/0045-write-response-root-code.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [run3]: 2026-06-22-03.md

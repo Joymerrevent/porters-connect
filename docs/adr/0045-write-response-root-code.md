@@ -1,12 +1,14 @@
 # 45. Write 応答のルート `<Code>`（リクエスト単位の失敗）をどう扱うか
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings][findings] **RV-14** の是正案。[ADR-0043][adr43] のフェイクサーバー実装中に、
 > リクエスト単位で失敗した Write の Result Code が失われることが判明した。
 > **ただし「エラー時にルート `<Code>` が出るのか」自体が未確認**（[live-verification][lv] LV-11）。
+> **decider が案A を選択し `accepted`（2026-08-09）**＝ LV-11 の確認を待たず先回りで実装する。
+> 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -52,14 +54,27 @@ Write の成功応答は Read と非対称で、ルートに `Total`/`Count`/`St
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案A を推奨。ただし LV-11 の確認が取れるまでは `deferred` でも可**。
+採用: **案A（ルート `<Code>` を常に先読みし、非 0 なら `resourceError(code)` を投げる）**。decider が 2026-08-09 に選択。
+**LV-11 の確認を待たず先回りで実装する**（`deferred` は採らない）。
 
 理由: Read 側は既にルート `<Code>` を見て `resourceError` に写像しており、**同じ envelope 族で扱いを変える理由がない**。
 ルート `<Code>` が実際には出ないなら案A のコードは単に発火しない（害がない）が、出るなら情報の消失を防げる＝
 **外した場合のコストが非対称**（実装しておく方が安全側）。
 
-ただし「先回りで実装したが実際の形が違った」場合、**誤ったコードで分類する**リスクは残る。
-そのため案A を採るなら、実装に `VERIFY(live)` を付けて LV-11 に紐づけることを条件とする。
+実装時に守ること（accept 時の合意事項）:
+
+1. **判定順**: `parseWriteResult` はまずルート `<Code>` を見る。**存在して非 0 なら** `resourceError(code)` を throw
+   （Read の `parseResourcePage` と同じ写像）。`0` または不在なら従来どおり `<Item>` を読む＝**成功パスは不変**。
+2. **単件・一括の両方で効かせる**: 単件は `firstWriteResultId` の「no result item」より**手前**で、
+   一括は `runBulkWrite` の件数不一致チェックより**手前**で表面化させる（どちらも本当のコードを失わせない）。
+3. **仮定であることを残す**: 実装に `VERIFY(live)` を付け [live-verification][lv] **LV-11** に紐づける
+   （accept 時の条件）。エラー時の Write envelope を `test/fixtures/errors/**` に追加し、
+   フェイクの出力と突き合わせる（フェーズ4 と同じ方式）。
+4. **確認後に形が違ったら新 ADR**: LV-11 の実機確認で応答形が異なると判明した場合、本 ADR は**書き換えず**
+   新しい ADR を起こして supersede する（ADR 運用ルール）。
+5. **[ADR-0044][adr44] との境界**: 「HTTP 200 以外」は 0044、「HTTP 200 ＋ ルート `<Code>`≠0」は本 ADR。
+   両方を満たす応答（200 以外 ＋ envelope）は 0044 の判定順（envelope 優先）に従うため、
+   結果として本 ADR の写像が使われる。**実装順序は 0044 → 0045 を推奨**（判定順の土台が先）。
 
 ### Consequences
 
