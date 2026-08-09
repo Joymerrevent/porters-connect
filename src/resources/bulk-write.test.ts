@@ -76,7 +76,7 @@ const resource = (requester: Requester) =>
       fields: FIELDS,
       requiredOnCreate: REQUIRED,
     },
-    { requester, host: "h.test", partition: 7 },
+    { requester, accessPoint: { host: "h.test" }, partition: 7 },
   );
 
 // Tiny records + short prefix so 200 fit under the size cap — exercises the 200-count boundary
@@ -94,7 +94,7 @@ const smallResource = (requester: Requester) =>
       fields: SMALL,
       requiredOnCreate: ["P_A"] as const,
     },
-    { requester, host: "h.test", partition: 7 },
+    { requester, accessPoint: { host: "h.test" }, partition: 7 },
   );
 
 // Exact per-request budget for the `resource` above (must match runBulkWrite's math), and a helper
@@ -103,7 +103,7 @@ const smallResource = (requester: Requester) =>
 const FIELD_MAP = new Map(Object.entries(FIELDS));
 const BUDGET =
   MAX_REQUEST_LENGTH -
-  buildWriteUrl("h.test", 7, "candidate").length -
+  buildWriteUrl({ host: "h.test" }, 7, "candidate").length -
   "<Candidate></Candidate>".length;
 const sentLen = (memo: string): number =>
   encodeWriteItem("Person", FIELD_MAP, { P_Owner: 1, P_Memo: memo, P_Id: -1 })

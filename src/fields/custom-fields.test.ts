@@ -24,7 +24,11 @@ const stub = (body: string, calls: Call[]): Requester => ({
 
 const resource = (calls: Call[], body: string) =>
   createCandidateResource(
-    { requester: stub(body, calls), host: "h.test", partition: 12 },
+    {
+      requester: stub(body, calls),
+      accessPoint: { host: "h.test" },
+      partition: 12,
+    },
     custom,
   );
 

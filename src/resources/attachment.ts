@@ -6,11 +6,15 @@
 // `content` with `util/base64`.
 
 import { PortersConfigError } from "../errors";
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { buildWriteUrl, firstWriteResultId } from "./resource";
+import {
+  buildWriteUrl,
+  firstWriteResultId,
+  type ResourceDeps,
+} from "./resource";
 
 // A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
 // (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
@@ -104,7 +108,7 @@ export type AttachmentResource = {
 // the loose `condition` (`{ "Id:eq": "123" }`) and stays off the typed data-resource builder
 // (ADR-0038). itemstate/order/keywords do not apply to Attachment.
 const buildAttachmentReadUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: AttachmentSearchQuery,
 ): string => {
@@ -117,7 +121,7 @@ const buildAttachmentReadUrl = (
   }
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/attachment?${p.toString()}`;
+  return apiUrl(accessPoint, "attachment", p);
 };
 
 const numOrNull = (v: unknown): number | null => {
@@ -148,18 +152,16 @@ const guardContent = (content: string | undefined): void => {
   }
 };
 
-export const createAttachmentResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): AttachmentResource => {
+export const createAttachmentResource = (
+  deps: ResourceDeps,
+): AttachmentResource => {
   // `field` omitted -> metadata default (no Content); `[]` -> API-native primary key only;
   // a provided list is sent verbatim (ADR-0020).
   const search = (query: AttachmentSearchQuery = {}): Promise<AttachmentPage> =>
     deps.requester.request(
       {
         method: "GET",
-        url: buildAttachmentReadUrl(deps.host, deps.partition, {
+        url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, {
           ...query,
           field: query.field ?? DEFAULT_FIELDS,
         }),
@@ -192,7 +194,7 @@ export const createAttachmentResource = (deps: {
     deps.requester.request(
       {
         method: "POST",
-        url: buildWriteUrl(deps.host, deps.partition, "attachment"),
+        url: buildWriteUrl(deps.accessPoint, deps.partition, "attachment"),
         headers: {},
         body: `<Attachment><Item>${inner}</Item></Attachment>`,
       },

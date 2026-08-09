@@ -60,7 +60,7 @@ const tokenCalls = (calls: TransportRequest[]): TransportRequest[] =>
   calls.filter((c) => c.url.includes("/v1/token"));
 
 const opts = (transport: Transport, now: () => number) => ({
-  host: "example.test",
+  accessPoint: { host: "example.test" },
   appId: "app",
   appSecret: "secret",
   transport,
@@ -124,7 +124,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -140,7 +140,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -157,7 +157,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -223,7 +223,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
   it("uses the default clock when `now` is not provided", async () => {
     const { transport, calls } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -253,7 +253,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     await store.set(seeded);
     const { transport, calls } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -278,7 +278,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     let t = 1000;
     const { transport } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,

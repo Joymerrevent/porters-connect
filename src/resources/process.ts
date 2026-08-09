@@ -10,7 +10,6 @@
 // nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns every
 // selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -18,6 +17,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
   type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
@@ -89,7 +89,7 @@ export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): ProcessResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;

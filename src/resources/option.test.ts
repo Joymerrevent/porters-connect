@@ -31,7 +31,7 @@ const stub = (body: string, calls: Call[]): Requester => ({
 const res = (calls: Call[], body: string = GENDER) =>
   createOptionResource({
     requester: stub(body, calls),
-    host: "h.test",
+    accessPoint: { host: "h.test" },
     partition: 12,
   });
 

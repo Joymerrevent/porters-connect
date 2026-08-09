@@ -3,7 +3,6 @@
 // names are Client-specific; the static Client / input types derive from the catalog
 // (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -11,6 +10,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
   type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
@@ -75,7 +75,7 @@ export type ClientResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createClientResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): ClientResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;

@@ -5,8 +5,8 @@
 // the API has no id filter. Extended HR fields (department/telephone/dates/…) are deferred —
 // their read availability/decode shape is unconfirmed (see docs/live-verification.md).
 
-import type { Requester } from "../http/requester";
-import type { ResourceDescriptor } from "./resource";
+import { apiUrl, type AccessPoint } from "../http/access-point";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -67,7 +67,7 @@ export type UserResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: UserSearchQuery,
 ): string => {
@@ -78,17 +78,17 @@ const buildUrl = (
   if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/user?${p.toString()}`;
+  return apiUrl(accessPoint, "user", p);
 };
 
-export const createUserResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): UserResource => {
+export const createUserResource = (deps: ResourceDeps): UserResource => {
   const decode = decoderFor(FIELDS);
   const search = (query: UserSearchQuery = {}): Promise<UserPage> =>
-    runRead(deps.requester, buildUrl(deps.host, deps.partition, query), decode);
+    runRead(
+      deps.requester,
+      buildUrl(deps.accessPoint, deps.partition, query),
+      decode,
+    );
   const searchAll = (
     query: Omit<UserSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<User> =>

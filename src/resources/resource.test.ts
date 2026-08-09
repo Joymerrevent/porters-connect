@@ -49,7 +49,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 const res = (calls: Call[], ...bodies: string[]) =>
   createResource(CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [OK], calls),
-    host: "h.test",
+    accessPoint: { host: "h.test" },
     partition: 12,
   });
 
@@ -184,7 +184,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
-      host: "h.test",
+      accessPoint: { host: "h.test" },
       partition: 12,
     });
     const items = await collect(
@@ -201,7 +201,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(2, [1, 2]), page(2, [])], calls),
-      host: "h.test",
+      accessPoint: { host: "h.test" },
       partition: 12,
     });
     const items = await collect(r.searchAll());
@@ -213,7 +213,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(5, []), page(5, [])], calls),
-      host: "h.test",
+      accessPoint: { host: "h.test" },
       partition: 12,
     });
     const items = await collect(r.searchAll());
