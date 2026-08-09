@@ -3,13 +3,14 @@
 // round-trips, the same injected failures, the same constraint answers, now with an actual
 // request/response on the wire.
 //
-// The library still builds `https://{host}/...` URLs (10 sites), so the connection is made with the
-// forwarding transport. Removing that last swap — pointing `PORTERS_HOST` at localhost directly —
-// is phase 6.
+// Most cases here connect with the forwarding transport, which is library-independent and stays
+// supported. The last describe is phase 6 (ADR-0047): the same fake reached by configuration
+// alone — `host` + `scheme: "http"` — with nothing swapped out of the app.
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PortersClient } from "../../src/client";
+import { resetInsecureSchemeWarning } from "../../src/http/insecure-http-warning";
 import type { UserRef } from "../../src/xml/decode";
 import { startFakeServer, type FakeServer } from "../fake/index";
 
@@ -145,5 +146,40 @@ describe("the fake over HTTP", () => {
       "application/xml; charset=UTF-8",
     );
     expect(await response.text()).toContain("<Code>fake-code-1</Code>");
+  });
+});
+
+// Phase 6 (ADR-0047): the point of the scheme setting. An app that already runs against PORTERS
+// reaches the fake by changing configuration only — the same two values it would set from the
+// environment — with no transport swap and no library patch in between.
+describe("an unmodified app, pointed at the fake by configuration alone", () => {
+  it("connects with host + scheme: http, and says so once", async () => {
+    const server = await startFakeServer({
+      users: [OWNER],
+      log: () => undefined,
+    });
+    running = server;
+    resetInsecureSchemeWarning();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const porters = new PortersClient({
+      host: new URL(server.url).host, // what PORTERS_HOST would carry: `127.0.0.1:<port>`
+      scheme: "http",
+      appId: "app-id",
+      appSecret: "app-secret",
+      partition: 1,
+    });
+
+    const id = await porters.candidate.create({
+      P_Owner: 5,
+      P_Name: "山田 太郎",
+    });
+    const created = await porters.candidate.get(id);
+
+    expect(created?.P_Name).toBe("山田 太郎");
+    expect(created?.P_Owner as UserRef).toEqual(OWNER);
+    // Loopback earns no exemption: cleartext is announced, once per process (ADR-0047).
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });

@@ -1,10 +1,11 @@
-// Point the library at a local fake server **without changing the library** (ADR-0043 phase 5).
+// Point the library at a local fake server **without depending on library support** (ADR-0043
+// phase 5).
 //
-// The library builds every URL as `https://{host}/v1/...` (10 sites), so a local HTTP server cannot
-// be reached by setting `host` alone — making that work is a library change, deferred to phase 6.
-// Until then this Transport rewrites scheme + authority on the way out and delegates to the normal
-// fetch transport, so everything above it (throttle, retry, auth, XML) runs untouched: an app only
-// swaps its `transport`.
+// Since phase 6 (ADR-0047) the library can be aimed at the fake by configuration alone —
+// `host` + `scheme: "http"` — which is the way an unmodified app should connect. This Transport
+// stays for the cases that setting cannot cover: rewriting scheme + authority on the way out and
+// delegating to the normal fetch transport, so everything above it (throttle, retry, auth, XML)
+// runs untouched while the app keeps whatever `host` it was configured with.
 
 import { createFetchTransport } from "../../src/http/fetch-transport";
 import type { Transport } from "../../src/http/types";
@@ -29,6 +30,9 @@ const rewrite = (url: string, baseUrl: string): string => {
 /**
  * Build a {@link Transport} that forwards every request to `baseUrl`, keeping path, query, headers
  * and body as the library wrote them.
+ *
+ * Prefer `new PortersClient({ host, scheme: "http" })` (ADR-0047) when the app may be configured;
+ * reach for this when it may not.
  *
  * @example
  * const server = await startFakeServer();

@@ -11,8 +11,9 @@
 //                           like an empty result to a client in another process (fail-safe)
 //
 // http, not https: the fake needs no certificate, and self-signed TLS was explicitly rejected
-// (ADR-0043 D-アクセスポイント). Pointing the *library* at it still needs the transport swap from
-// `http-transport.ts` until phase 6 lands the scheme setting.
+// (ADR-0043 D-アクセスポイント / ADR-0047). Since phase 6 the library reaches it by configuration
+// alone — `new PortersClient({ host: "127.0.0.1:<port>", scheme: "http" })`; the transport swap in
+// `http-transport.ts` remains for apps whose configuration cannot be touched.
 
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -38,7 +39,7 @@ export type FakeServer = {
   readonly port: number;
   /** The same controls as the in-process fake: fault injection, records, reset. */
   readonly control: FakeControl;
-  /** A {@link Transport} pointing the library here (no library change needed — phase 6 removes it). */
+  /** A {@link Transport} pointing the library here, for when `scheme: "http"` is not an option. */
   transport(): Transport;
   close(): Promise<void>;
 };
