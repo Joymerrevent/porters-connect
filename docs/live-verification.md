@@ -133,7 +133,9 @@ grep -rn "VERIFY(live)" src test
 - **確認方法**: 存在しない ID への update・201 件の一括 Write を実機に投げ、応答 XML の形（ルート `<Code>` の有無）とコードを記録
 - **状態**: 未確認
 - **確認結果**: —
-- **関連**: ルート `<Code>` をライブラリが読まない件は [findings][findings] RV-14
+- **関連**: ルート `<Code>` をライブラリが読まない件は [findings][findings] RV-14。
+  **ADR-0045（accepted・案A）で「確認を待たず先読みを実装する」と決定済み**＝本 LV の確認結果次第では
+  新 ADR で supersede する（実装には `VERIFY(live)` を残す）
 
 ## LV-12 Field Read の `P_Alias` 表記と System 系の Field Type
 

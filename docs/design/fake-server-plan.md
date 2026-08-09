@@ -178,11 +178,13 @@
 
 ## フェーズ 6 — アクセスポイント / scheme 設定（真の N2・要 ADR）
 
-- [ ] **ADR 起票**（別 PR・`proposed` → 議論 → accepted）: 公開サーフェスの追加と http のセキュリティ姿勢を決める
+- [x] **ADR 起票**（別 PR・`proposed` → 議論 → accepted）: 公開サーフェスの追加と http のセキュリティ姿勢を決める
+      → **[ADR-0047][adr47] accepted（案B＝`host` ＋ `scheme`・2026-08-09）**
 - [ ] **ライブラリ側の小変更**: URL 組立 **10 箇所**を 1 関数に集約／**アクセスポイント・scheme 設定**（既定 https・VPN/LB も同 seam）／
       **http は明示のみ＋ループバック含め毎起動で警告＋env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING` 等）で抑止**。
       フェイクは **http（証明書不要）**、自己署名 https は不採用
-- [ ] これで初めて **`PORTERS_HOST` を向けるだけ＝アプリ無改造**が成立する
+- [ ] これで初めて **`PORTERS_HOST` ＋ `scheme: "http"` だけ＝アプリ無改造**が成立する
+      （フェーズ5 の `createForwardingTransport` は削除せず残す＝ライブラリ非依存で繋ぐ手段）
 
 ## フェーズ 7 — package 昇格・配布（外部消費の需要時）
 
@@ -204,6 +206,7 @@
 - 全体像: [roadmap][rm]（「いま着手」）／ API 事実: [docs/reference][ref]／ 契約後検証: [live-verification][lv]
 
 [adr43]: ../adr/0043-local-fake-server.md
+[adr47]: ../adr/0047-access-point-scheme.md
 [adr24]: ../adr/0024-mock-transport.md
 [findings]: ../reviews/findings.md
 [adr22]: ../adr/0022-master-read-query-surface.md

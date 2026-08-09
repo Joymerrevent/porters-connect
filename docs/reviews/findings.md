@@ -25,6 +25,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-13 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-15 | 🟢     | エラーモデル / DX         | open  |
+| RV-16 | 🟢     | ドキュメント              | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -133,7 +134,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: [ADR-0043][adr43] フェイクサーバー phase 1 の実装中（フェイクが HTTP 400 を返す経路を作った際に判明）。フェイクの狙い＝「忠実度の強制関数」が実際に効いた例
 - **推奨**: `requester` で status を分類し `PortersError.httpStatus` に載せる（5xx→`server`・retryable / 429→`rateLimit`（現状どこも produce していない category）/ 4xx→`config` or `permission`）。ボディが PORTERS envelope ならそちらを優先。**挙動変更＝要 ADR**（エラー分類は [ADR-0006][adr6] の管轄）
 - **状態**: open
-- **処置**: —
+- **処置**: [ADR-0044][adr44] を **accepted**（案A＝status を分類しつつ envelope を優先・decider 2026-08-09）。判定順・写像・`rateLimit` の解禁・LV-9 紐づけまで ADR で確定済み。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-14 🟡 エラーモデル / API 忠実性（Write のルート `<Code>` を読まない）
 
@@ -142,7 +143,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: RV-13 と同じく [ADR-0043][adr43] phase 1 実装中。なおエラー時のルート `<Code>` の有無自体が未確認のため [live-verification][lv] **LV-11** に登録済み（実機確認が先）
 - **推奨**: LV-11 の確認結果を待って対応を決める。ルート `<Code>` がありうるなら `parseWriteResult` で先読みし `resourceError(code)` を投げる（Read と対称）。**挙動変更＝要 ADR**
 - **状態**: open
-- **処置**: —
+- **処置**: [ADR-0045][adr45] を **accepted**（案A＝ルート `<Code>` を常に先読み・decider 2026-08-09）。**LV-11 の確認を待たず先回りで実装**する判断（外した場合のコストが非対称）。仮定は `VERIFY(live)` ＋ LV-11 に紐づけ、形が違うと判明したら新 ADR で supersede。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-15 🟢 エラーモデル / DX（送信前ガードが同期 throw する経路がある）
 
@@ -159,12 +160,28 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **推奨**: 公開メソッドを `async` にする／ガードを Promise 内へ移すなどで **常に reject** に統一する（薄い変更・挙動は
   「例外の届き方」のみ）。破壊的ではないが公開契約の明確化なので **ADR で一言決める**のが妥当
 - **状態**: open
+- **処置**: [ADR-0046][adr46] を **accepted**（案A＝公開メソッドを `async` 化して reject に統一・decider 2026-08-09）。「`Promise` を返す公開メソッドは同期 throw しない」を契約として確定。対象/対象外・`searchAll` は変更不要・semver は minor・退行防止の横断テストまで ADR で決定済み。**実装は別 PR**（完了時に `fixed` へ）
+
+## RV-16 🟢 ドキュメント（月次クォータを内蔵スロットルが守るかのような記述）
+
+- **概要**: README「PORTERS 固有の注意」が「レート制限：1 分あたり Read 2000 / Write 500、**月 15 万アクセス。内蔵スロットリングで分散。**」と書くが、
+  内蔵スロットル（`createThrottle`）は **1 分バケットのみ**で月次の概念を持たない。CLAUDE.md も「15万アクセス/月。リトライ＆スロットリングを内蔵」と同じ含みがある。
+  読者は「月次上限もライブラリが守る」と解釈しうるが、プロセスをまたぐ累積は原理的に守れない（永続化なし＝守れないのが妥当）
+- **根拠**: `README.md:343` / `CLAUDE.md`（PORTERS API 固有の注意点 6）/ 実装は `src/http/throttle.ts:12-13,43-44`（`readPerMin`/`writePerMin` のみ）/
+  出典は `docs/reference/resource-api/README.md:88`（月次は**契約条件**であり API ドキュメントの制限ではない旨）
+- **検出経緯**: [ADR-0043][adr43] フェーズ4（フェイクに月次クォータを実装した際、ライブラリ側に対応物が無いことが判明）
+- **推奨**: 記述を実態に合わせる — 「**1 分あたりの上限は内蔵スロットルで自制**。月次クォータ（約15万・契約条件）は**アプリ側の運用責務**」と書き分ける。
+  実装変更は不要（プロセス横断の累積管理はライブラリの責務ではない＝薄いラッパー方針）
+- **状態**: open
 - **処置**: —
 
 [adr6]: ../adr/0006-error-model.md
 [adr24]: ../adr/0024-mock-transport.md
+[adr43]: ../adr/0043-local-fake-server.md
+[adr44]: ../adr/0044-http-status-handling.md
+[adr45]: ../adr/0045-write-response-root-code.md
+[adr46]: ../adr/0046-guard-error-contract.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
-[adr43]: ../adr/0043-local-fake-server.md
 [run3]: 2026-06-22-03.md
 [lv]: ../live-verification.md
