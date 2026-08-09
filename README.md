@@ -54,6 +54,8 @@ import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
   host: process.env.PORTERS_HOST!, // 契約時に通知される値。ハードコード禁止
+  // 既定 https。ローカルのフェイクへ向けるときだけ env で "http" を渡す（不正値は https 側に倒す）
+  scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
   partition: 123, // 既定 Partition（Company DB）Id
@@ -349,6 +351,15 @@ try {
 
   ```ts
   new PortersClient({ host: "localhost:4010", scheme: "http" }); // ローカル検証用
+  ```
+
+  **ライブラリは `host` / `scheme` を環境変数から読みません**（設定の出所を明示にするため。読むのは上の警告抑止 1 本だけ）。
+  env で本番⇔ローカルを切り替えたい場合は、クイックスタートのように**アプリ側で `PORTERS_SCHEME` を `scheme` に渡して**ください
+  （`.env.example` に雛形あり）。以後はコードを触らず env の差し替えだけで向き先が変わります。
+
+  ```sh
+  PORTERS_HOST=127.0.0.1:4010 PORTERS_SCHEME=http node app.js # ローカルのフェイクへ
+  PORTERS_HOST=xxxxx.example.com node app.js                  # 本番（未設定なら https）
   ```
 
 ## 対応バージョン
