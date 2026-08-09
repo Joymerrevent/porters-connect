@@ -160,7 +160,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **推奨**: 公開メソッドを `async` にする／ガードを Promise 内へ移すなどで **常に reject** に統一する（薄い変更・挙動は
   「例外の届き方」のみ）。破壊的ではないが公開契約の明確化なので **ADR で一言決める**のが妥当
 - **状態**: open
-- **処置**: —
+- **処置**: [ADR-0046][adr46] を **accepted**（案A＝公開メソッドを `async` 化して reject に統一・decider 2026-08-09）。「`Promise` を返す公開メソッドは同期 throw しない」を契約として確定。対象/対象外・`searchAll` は変更不要・semver は minor・退行防止の横断テストまで ADR で決定済み。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-16 🟢 ドキュメント（月次クォータを内蔵スロットルが守るかのような記述）
 
@@ -180,6 +180,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr43]: ../adr/0043-local-fake-server.md
 [adr44]: ../adr/0044-http-status-handling.md
 [adr45]: ../adr/0045-write-response-root-code.md
+[adr46]: ../adr/0046-guard-error-contract.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [run3]: 2026-06-22-03.md

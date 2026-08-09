@@ -1,11 +1,12 @@
 # 46. 送信前ガードの例外契約（同期 throw か reject か）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings][findings] **RV-15** の是正案。Promise を返す公開メソッドの一部が、
 > **Promise を返す前に同期 throw** する。[ADR-0024][adr24] が Transport 層で明示した原則と、公開リソース面がずれている。
+> **decider が案A を選択し `accepted`（2026-08-09）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -55,7 +56,7 @@
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案A を推奨**。
+採用: **案A（公開メソッドを `async` にして reject に統一する）**。decider が 2026-08-09 に選択。
 
 理由: 変更が**局所的**（関数を `async` にするだけ・ガードのロジックも位置も変えない）で、
 [ADR-0024][adr24] が既に選んだ原則（Promise の契約に忠実）と揃う。案B はクエリ検証の実行位置が変わり、
@@ -63,8 +64,25 @@
 
 **破壊的変更ではない**と考える: 例外の種類・メッセージ・`category` は変わらず、届き方が「同期 → reject」に変わるだけ。
 `await` 利用者は無影響、`.catch()` 利用者は**今まで漏れていた例外を捕まえられるようになる**（改善）。
-ただし「同期 throw を前提に `try { porters.x() } catch` を書いている」コードは挙動が変わるため、
-リリースノートに明記する（semver 上は minor で足りるか、patch でよいかは decider 判断）。
+
+**この ADR で確定する契約**: **`Promise` を返す公開メソッドは、いかなる理由でも同期 throw しない**。
+設定ミス（`PortersConfigError`）も含め、すべて reject で届く。
+
+実装時に守ること（accept 時の合意事項）:
+
+1. **対象**: データ系リソース（`search` / `get` / `create` / `update` / `createMany` / `updateMany`）・
+   Attachment（`search` / `get` / `create` / `update`）・マスタ Read（`search` / `current`）・
+   `auth.exchangeAuthorizationCode` / `clearTokens` / `ensureAuthenticated` / `getToken`。
+   **ガードのロジックと実装位置は変えない**（`async` 化＝例外の届き方だけを変える）。
+2. **対象外（同期のままでよい）**: `Promise` を返さない API — `PortersClient` のコンストラクタ、`defineFields`、
+   `auth.authorizationUrl` / `auth.revokeUrl`（`string` を返す）。ここは同期 throw が正しい。
+3. **`searchAll` は既に問題ない**: `paginate` が async generator で、URL 組立は最初の `next()` 以降に走る
+   ＝呼び出し時点では throw しない。**確認だけ行い、無用な変更はしない**（テストで固定する）。
+4. **semver**: 観測可能な挙動が変わるため **minor** を既定とする（`patch` にはしない）。
+   CHANGELOG に「`.catch()` で捕まえられるようになった／同期 throw を前提にしたコードは影響を受ける」を明記。
+5. **テスト**: `expect(() => …).toThrow` を `rejects` へ書き換える（`test/integration/constraints.test.ts` ほか）。
+   併せて「Promise を返す公開メソッドは同期 throw しない」を**横断的に確認するテスト**を 1 本置き、退行を防ぐ。
+6. **ドキュメント**: [エラーハンドリング ガイド][guide]に「公開メソッドの例外は常に reject で届く」を明記する。
 
 ### Consequences
 
@@ -106,6 +124,7 @@
   [ADR-0038][adr38]（Read クエリ＝ガードの出所）。
 
 [findings]: ../reviews/findings.md
+[guide]: ../guide/error-handling.md
 [adr5]: 0005-public-api-shape.md
 [adr6]: 0006-error-model.md
 [adr24]: 0024-mock-transport.md
