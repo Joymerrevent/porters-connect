@@ -1,11 +1,12 @@
 # 47. アクセスポイント / scheme を設定可能にする（http を明示的に許す条件）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0043][adr43] が「D-アクセスポイント/scheme」として内包していた論点を、独立の判断として切り出す
 > （フェイクサーバー実装計画の**フェーズ6**）。**公開サーフェスの追加とセキュリティ姿勢**を決めるため、実装前に単独で決める。
+> **decider が案B を選択し `accepted`（2026-08-09）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -54,11 +55,30 @@
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案B ＋ 共通事項 1〜4 を推奨**。
+採用: **案B（`host` はそのまま、`scheme` を足す）＋ 共通事項 1〜4**。decider が 2026-08-09 に選択。
 
 理由: `host` は「契約時に通知される非公開値を env で受ける」という既存の運用（CLAUDE.md）と README・PRD の記述に
 深く結びついており、`baseUrl` へ寄せると**その運用まで書き換わる**。scheme だけを足せば、既存利用者の設定は 1 文字も変わらず、
 ローカル・VPN 越しの需要は満たせる。URL 組立の集約（10 箇所 → 1 関数）は案A/B どちらでも前提作業として行う。
+
+実装時に守ること（accept 時の合意事項）:
+
+1. **URL 組立を 1 関数へ集約**してから scheme 分岐を入れる（現在 10 箇所・リソースを足すたびに増えている）。
+   集約が先＝分岐を 1 回だけ書くための前提作業。
+2. **公開オプションは `scheme?: "https" | "http"`（既定 `"https"`）**。`host` の意味・`PORTERS_HOST` の運用は不変。
+   ポートが要る場合は `host` に含める（`localhost:4010`）。
+3. **警告は「毎起動・ループバック含め必ず」**。`scheme: "http"` のとき `console.warn` を **プロセス内 1 回**出す
+   （毎リクエストのスパムは避ける）。localhost だからと免除しない。
+4. **抑止は専用 env のみ**＝ `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`。**許可 ≠ 沈黙**：`scheme: "http"` を
+   設定しただけでは黙らず、黙らせるには意識的な操作を要する。この分離が本 ADR の核心。
+5. **自己署名 https は不採用**。フェイクは http のまま（証明書運用を持ち込まない）。
+6. **semver は minor**（公開オプションの追加）。
+7. **パス prefix 付きゲートウェイ**（`https://gw/porters/v1/...`）は**対象外**。必要になったら別 ADR で扱う。
+8. **フェイク側の完了条件**: [フェイクサーバー実装計画][fake-plan] フェーズ6 として、
+   `PORTERS_HOST=localhost:4010` ＋ `scheme: "http"` だけでフェイクに繋がること（＝アプリ無改造）を結合テストで示す。
+   フェーズ5 の `createForwardingTransport` は**削除せず残す**（ライブラリ非依存で繋ぐ手段として有用）。
+9. **ドキュメント**: README「ホスト名は非公開」節に scheme と警告の説明を追加、CONTRIBUTING のフェイク接続手順を
+   transport 差し替えから `scheme` へ差し替える。
 
 ### Consequences
 

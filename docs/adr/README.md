@@ -76,7 +76,7 @@
 | [0044][0044] | HTTP ステータスをエラーモデルに配線する（RV-13）            | 詳細設計 | accepted   |
 | [0045][0045] | Write 応答のルート `<Code>` の扱い（RV-14）                 | 詳細設計 | accepted   |
 | [0046][0046] | 送信前ガードの例外契約（同期 throw か reject か・RV-15）    | 基本設計 | accepted   |
-| [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | proposed   |
+| [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -101,13 +101,15 @@
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
-### 【議論中】proposed の ADR（accept 待ち・1 判断 1 ファイル）
+### 【accept 済み・実装待ち】
 
-2026-08-09 のレビュー（[docs/reviews][reviews]）から起票。**accept は decider の判断**、実装は accept 後に別 PR。
+2026-08-09 のレビュー（[docs/reviews][reviews]）から起票し、同日に decider が全件 accept。**proposed は現在なし**。
+実装は ADR ごとに別 PR（未着手）。
 
-- [0047][0047] アクセスポイント・scheme 設定（フェイク フェーズ6）
-- **accept 済み**: [0044][0044]・[0045][0045]・[0046][0046]（いずれも案A・2026-08-09）。実装は別 PR で未着手
-  （実装順序は 0044 → 0045 を推奨＝判定順の土台が先。0046 は独立して着手可・semver は minor）
+- [0044][0044]（案A）HTTP ステータスの扱い ／ [0045][0045]（案A）Write ルート `<Code>` の扱い
+  — **実装順序は 0044 → 0045**（判定順の土台が先）
+- [0046][0046]（案A）送信前ガードの例外契約 — 独立して着手可・semver は minor
+- [0047][0047]（案B）アクセスポイント・scheme 設定 — フェイク フェーズ6 の前提・semver は minor
 
 ### 決定済み（ADR / PRD）
 
