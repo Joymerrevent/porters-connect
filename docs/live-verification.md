@@ -25,6 +25,7 @@ grep -rn "VERIFY(live)" src test
 | LV-10 | System[Reference] Read の入れ子タグ                 | 未確認 |
 | LV-11 | Write 失敗時の Result Code（対象なし/200 件超）     | 未確認 |
 | LV-12 | Field Read の P_Alias 表記と System 系の Field Type | 未確認 |
+| LV-13 | 1 App トークンで複数 partition を叩けるか           | 未確認 |
 
 ---
 
@@ -149,6 +150,20 @@ grep -rn "VERIFY(live)" src test
 - **状態**: 未確認
 - **確認結果**: —
 
+## LV-13 1 つの App トークンで複数 partition を叩けるか
+
+- **現在の対応 / 仮定**: **叩ける前提**。`porters.tenant(id)`（[ADR-0040][a40] / F-3）は**同一トークンのまま**
+  `partition` クエリだけを差し替える。1 client = 1 トークンで複数テナントを扱える、という仮定の上に立つ実装
+- **不確実な理由**: App 登録が App 単位である点は確定だが、**発行されたトークンのアクセス範囲が partition を跨ぐか**は未確認。
+  [ADR-0008][a8] は両対応（跨げないなら案3＝テナントごとに専用 client を構築）なので**設計はブロックされない**が、
+  `tenant(id)` の使い勝手は結論に左右される
+- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/resource.ts`（`partition` をクエリに載せる）
+- **確認方法**: アクセス権を付与した 2 つの partition に対し、**同一の Access Token** で Read を投げて両方 200 ＋ `<Code>0`
+  が返るか。片方が 403/404 なら案3（テナントごとに client）を推奨経路に格上げする
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: PRD §8 から移送（2026-08-09）。旧記載は「PoC / ポーターズ確認」
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -163,5 +178,7 @@ grep -rn "VERIFY(live)" src test
 [findings]: reviews/findings.md
 [fdt]: reference/resource-api/field-data-types.md
 [a2]: adr/0002-ground-design-in-live-api-docs.md
+[a8]: adr/0008-multitenancy-partition.md
+[a40]: adr/0040-multitenancy-surface-impl.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md

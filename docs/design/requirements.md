@@ -115,13 +115,16 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 
 ## 8. オープン論点（Open Questions）
 
+> 決着したものは**消さずに「（解決済み）」を付けて残す**（判断の経緯を保つ）。実機がないと確定しない項目は
+> [live-verification][lv] へ移す。**2026-08-09 時点で本当に未決なのは 2 件**（成功指標の数値化タイミング・CJS 出力）。
+
 - [stakeholder] 成功指標の**数値化のタイミング**（ベースライン＝最初の実利用が出てから設定する想定で良いか）。
-- [stakeholder/eng] **サンドボックス(R-17)** は P1 で良いか、それとも GTM 上 P0 に引き上げるか（モック基盤 R-12 は P0 確定）。
+- （解決済み）**サンドボックス(R-17)** は **P1 のまま出荷**して決着（[ADR-0024][adr24] の `createMockTransport` ＋ `pnpm sandbox` を v0.1.0 に同梱）。P0 への引き上げは不要だった。
 - （解決済み）**対応 PORTERS / API バージョン表記**は [ADR-0042][adr42] で確定＝**Connect API Version を契約の正**（`X-P-ConnectAPI-Version: 2` 前提）、製品 8.x/9.x は参考情報。
 - [eng] v1 で **CJS 出力**まで出すか（ESM のみで開始し P2 か）。
-- [eng・要検証] **1 つの App トークンで複数 partition を叩けるか**（ADR-0008。App 登録は App 単位＝確定。設計は両対応のため未確定でもブロックしない）。PoC / ポーターズ確認。
+- （移送）**1 つの App トークンで複数 partition を叩けるか** は実機でしか確定しないため、[live-verification][lv] **LV-13** に移した（`tenant(id)`／F-3 が同一トークンのまま partition を差し替える実装＝この仮定の上に立つ）。設計は両対応なのでリリースはブロックしない。
 - （解決済み）トークンストア・初回 code グラントの扱いは ADR-0007 で確定。
-- [stakeholder] npm スコープ/組織 `@joymerrevent` / GitHub `Joymerrevent` の最終確認（README の「非公式」「契約必須」注記の文面含む）。
+- （解決済み）**npm スコープ/組織** `@joymerrevent` / GitHub `Joymerrevent` は確定（`@joymerrevent/porters-connect` を 0.6.2 まで公開済み・README の「非公式」「契約必須」注記も整備済み）。
 
 ## 9. フェーズ計画（Timeline / Phasing）
 
@@ -139,5 +142,7 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 - API 事実: [docs/reference][ref]（認証・形式・制限・リソース・型・Write・落とし穴・用語）
 
 [adr]: ../adr/README.md
+[adr24]: ../adr/0024-mock-transport.md
 [adr42]: ../adr/0042-supported-version-policy.md
+[lv]: ../live-verification.md
 [ref]: ../reference/README.md
