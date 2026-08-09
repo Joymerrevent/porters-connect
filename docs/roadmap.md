@@ -17,8 +17,11 @@
 
 ### いま着手（Now）
 
-- [ ] **案C ローカルフェイクサーバー（[ADR-0043][adr43] accepted）** — MCP（案A）より**先行**（stakeholder 2026-07-20）。評価基盤＝L1 結合＋MCP e2e をオフライン化。実装タスクは [フェイクサーバー実装計画][fake-plan]（フェーズ1 の縦スライスから着手）。
-- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了によりこれが主軸**。フェイク先行後に詳細設計 ADR（パッケージ構成・ツール表面）から着手。
+- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了・案C（評価基盤）も整ったのでこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
+- [x] **案C ローカルフェイクサーバー（[ADR-0043][adr43] accepted）** — MCP（案A）より**先行**（stakeholder 2026-07-20）。
+      **フェーズ0〜5 完了**＝L1 結合テストがオフラインで回り、`pnpm fake:serve` で HTTP 起動もできる（MCP e2e はここで足りる）。
+      残るフェーズ6（アクセスポイント/scheme 設定・要 ADR＝「無改造アプリ」対応）／フェーズ7（package 昇格・配布）は
+      **需要が出てから**（stakeholder 2026-08-09）。詳細は [フェイクサーバー実装計画][fake-plan]。
 - [ ] 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
 
 ### 補助・随時
@@ -52,11 +55,18 @@
   - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（ADR-0040・0.5.0）で公開済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
 - P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
 
+### 評価基盤（[ADR-0043][adr43]・フェーズ0〜5）
+
+- in-repo フェイクサーバー（`test/fake/`・dev-only＝tarball 非同梱）: 独自 OAuth・状態あり CRUD 往復・
+  Read クエリ・マスタ Read・制約（~15000字/200件/レート）・注入（result code / per-item / auth / network / HTTP）
+- `pnpm fake:serve` で **ローカル HTTP 起動**（curl・別プロセスから叩ける）＋ 転送 Transport（ライブラリ変更不要）
+- L1 結合テストが契約なしで回る（`PortersClient` をそのまま駆動）
+
 ### 基盤・記録
 
 - ADR 0001〜0039 accepted（0037 は 0039 で superseded）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・269 tests／project-review プロセス＋台帳（[findings][findings] の RV-1〜12 はすべて `fixed`）
+- 品質ゲート green・488 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12 は `fixed`／**RV-13〜15 は open**＝フェイク実装中に判明したライブラリ側の所見。いずれも挙動変更を伴うため ADR 待ち）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
