@@ -46,6 +46,26 @@ pnpm sandbox       # オフラインのサンプル実行
 
 フェイクの設計は [ADR-0043][adr43]、実装フェーズは [フェイクサーバー実装計画][fake-plan] を参照してください。
 
+### フェイクをローカルサーバーとして起動する
+
+別プロセス（curl・スクラッチスクリプト・将来の MCP サーバー）から叩きたいときは HTTP で起動します。
+
+```sh
+pnpm fake:serve            # http://127.0.0.1:4010（PORT で変更可）
+```
+
+ライブラリから繋ぐときは、`host` はアプリの設定のままで **transport だけ**差し替えます
+（ライブラリは URL を `https://` で組むため。`PORTERS_HOST` を向けるだけで済むようにするのは今後のフェーズ）。
+
+```ts
+import { createForwardingTransport } from "./test/fake/index";
+
+new PortersClient({
+  host: "fake.test",
+  transport: createForwardingTransport({ baseUrl: "http://127.0.0.1:4010" }),
+});
+```
+
 ## ブランチ運用（git-flow）
 
 - ベースは **`develop`**（統合ブランチ）。`main` はリリース済みの状態。

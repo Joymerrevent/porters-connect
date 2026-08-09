@@ -148,10 +148,44 @@
 - **接地の棚卸し**: `grep -rn "VERIFY(live)" src test` で仮定が LV-1〜12 に対応することを確認済み
   （フェイク由来は LV-9/10/11/12）。
 
-## フェーズ 5 — 昇格（後日・N2／MCP e2e の需要時）
+> **フェーズ5 の分割（stakeholder 2026-08-09）**: 旧フェーズ5 は「HTTP 化」「無改造対応（ライブラリ変更）」「配布」の
+> **3 つの別物**が混ざっていた。必要になる場面も前提も違うので、5／6／7 に割り直した。
+> MCP e2e は「HTTP で叩けること」だけが要る＝**フェーズ5 で足りる**（monorepo 内から相対参照できるため）。
+> 「無改造アプリ」を名乗れるのは**フェーズ6 から**、外部 repo が使えるのは**フェーズ7 から**。
 
-- [ ] **HTTP サーバー・アダプタ**（挙動コアを HTTP でラップ・`host` を向ける）
-- [ ] **ライブラリ側の小変更**（別 PR・要すれば別 ADR）: URL 組立 8 箇所を1関数に集約／**アクセスポイント・scheme 設定**（既定 https・VPN/LB も同 seam）／**http は明示のみ＋ループバック含め毎起動で警告＋env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING` 等）で抑止**。フェイクは **http（証明書不要）**、自己署名 https は不採用
+## フェーズ 5 — ローカル HTTP サーバー（ライブラリ変更なし）✅ 完了
+
+- [x] **HTTP サーバー・アダプタ**（挙動コアを `node:http` でラップ・`pnpm fake:serve` で起動）
+- [x] **転送 Transport**（`https://{host}/v1/...` → `http://localhost:PORT/v1/...` に書き換えて実 fetch）＝
+      アプリは `transport` 1 行だけ差し替え。**ライブラリのコード変更は不要**
+- [x] 強制切断・注入・制約が **HTTP 越しでも同じ形**で出ることを結合テストで確認
+- [x] in-repo・dev-only のまま（配布はフェーズ7）
+
+### フェーズ 5 で確定したこと（実装メモ）
+
+- **挙動コアは無変更**。`http-server.ts` は `IncomingMessage` → `TransportRequest` → HTTP レスポンスに
+  変換するだけの薄いアダプタ。フェーズ0〜4 の資産がそのまま HTTP 越しで動く。
+- **例外は「ワイヤ上の意味」に翻訳**する:
+  - `PortersNetworkError`（レート超過など）→ **ソケットを destroy**。reference が言う「強制切断」を実際に起こす＝
+    クライアントは本物のネットワーク失敗として受け取る（in-process と同じ形）。
+  - `PortersConfigError`（未実装ルート・マスタへの Write）→ **HTTP 501 ＋ メッセージ**。別プロセスからは例外を
+    投げられないので、空の結果と誤読されない形にする（フェイルセーフ）。
+  - PORTERS が使わない verb（DELETE 等）→ **405**。削除 API は無いので、あるように見せない。
+- **接続はまだ `transport` 差し替えが要る**（`createForwardingTransport`）。ライブラリが `https://` を
+  10 箇所でハードコードしているため。`PORTERS_HOST` を向けるだけで済むのは**フェーズ6**。
+- **起動**: `pnpm fake:serve`（既定 127.0.0.1:4010・`PORT` で変更）。デモ用に候補者2件・ユーザー2件・
+  Option ツリーを seed 済みで、curl でもそのまま叩ける。
+
+## フェーズ 6 — アクセスポイント / scheme 設定（真の N2・要 ADR）
+
+- [ ] **ADR 起票**（別 PR・`proposed` → 議論 → accepted）: 公開サーフェスの追加と http のセキュリティ姿勢を決める
+- [ ] **ライブラリ側の小変更**: URL 組立 **10 箇所**を 1 関数に集約／**アクセスポイント・scheme 設定**（既定 https・VPN/LB も同 seam）／
+      **http は明示のみ＋ループバック含め毎起動で警告＋env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING` 等）で抑止**。
+      フェイクは **http（証明書不要）**、自己署名 https は不採用
+- [ ] これで初めて **`PORTERS_HOST` を向けるだけ＝アプリ無改造**が成立する
+
+## フェーズ 7 — package 昇格・配布（外部消費の需要時）
+
 - [ ] **package 昇格**: pnpm workspace 化・`@joymerrevent/porters-fake`（`porters-mock-server` ではなく **fake**）・monorepo 判断（`porters-mcp`＝案A の配置と併せて）
 - [ ] N2 利用ガイド（無改造アプリを `http://localhost` へ）
 
