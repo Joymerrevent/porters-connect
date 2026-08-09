@@ -1,11 +1,12 @@
 # 44. HTTP ステータスをエラーモデルに配線する（非 PORTERS ボディの扱い）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings][findings] **RV-13** の是正案。[ADR-0043][adr43] のフェイクサーバー実装中に、
 > 「PORTERS 以外が返す HTTP エラー」を通す経路が無いことが判明した。**挙動変更を伴うため実装前に決める**。
+> **decider が案A を選択し `accepted`（2026-08-09）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -49,11 +50,25 @@
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案A を推奨**。
+採用: **案A（status を見て分類し、ボディの envelope を優先する）**。decider が 2026-08-09 に選択。
 
 理由: reference が「HTTP 200 以外**または** `<Code>`≠0」と書いている以上、**どちらが来ても正しく扱える**必要がある。
 PORTERS の envelope があるならそれが最も具体的な情報なので優先し、無い場合だけ status に落ちる（＝情報量の多い順）。
 `httpStatus` を常に載せることで、利用者が独自判断する材料も残る。
+
+実装時に守ること（accept 時の合意事項）:
+
+1. **判定順**: `status` に関わらず、まず body を PORTERS envelope として parse できるか試す。
+   できればそのエラー（`<Code>` / `<Error>`）を採用し、**`httpStatus` を必ず添える**。
+2. **status からの写像**（envelope が無い場合）: 5xx → `server`（retryable）／429 → `rateLimit`（retryable）／
+   408 → `network`（retryable）／401・403 → `permission`／その他 4xx → `config`／未知 → `unknown`。
+   いずれも `code` は `null`（PORTERS のコードではないため）＋ `httpStatus` を載せる。
+3. **`rateLimit` を初めて produce する**: [findings][findings] RV-3 で「予約値」とした category が
+   429 経由で到達しうるようになる。README・[エラーハンドリング ガイド][guide]の「予約・未 produce」記述を更新する。
+4. **未確認である旨を残す**: 実 PORTERS がどの status を返すかは未確認。写像に `VERIFY(live)` を付け
+   [live-verification][lv] **LV-9** に紐づける。
+5. **既存テストの更新**: `test/integration/constraints.test.ts` の 429 テストは現状（`unknown`）を固定しているので、
+   `rateLimit` / retryable を期待する形に書き換える。
 
 ### Consequences
 
@@ -93,6 +108,7 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
+[guide]: ../guide/error-handling.md
 [ref-resource]: ../reference/resource-api/README.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md

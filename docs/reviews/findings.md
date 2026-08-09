@@ -134,7 +134,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: [ADR-0043][adr43] フェイクサーバー phase 1 の実装中（フェイクが HTTP 400 を返す経路を作った際に判明）。フェイクの狙い＝「忠実度の強制関数」が実際に効いた例
 - **推奨**: `requester` で status を分類し `PortersError.httpStatus` に載せる（5xx→`server`・retryable / 429→`rateLimit`（現状どこも produce していない category）/ 4xx→`config` or `permission`）。ボディが PORTERS envelope ならそちらを優先。**挙動変更＝要 ADR**（エラー分類は [ADR-0006][adr6] の管轄）
 - **状態**: open
-- **処置**: —
+- **処置**: [ADR-0044][adr44] を **accepted**（案A＝status を分類しつつ envelope を優先・decider 2026-08-09）。判定順・写像・`rateLimit` の解禁・LV-9 紐づけまで ADR で確定済み。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-14 🟡 エラーモデル / API 忠実性（Write のルート `<Code>` を読まない）
 
@@ -178,6 +178,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr6]: ../adr/0006-error-model.md
 [adr24]: ../adr/0024-mock-transport.md
 [adr43]: ../adr/0043-local-fake-server.md
+[adr44]: ../adr/0044-http-status-handling.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [run3]: 2026-06-22-03.md
