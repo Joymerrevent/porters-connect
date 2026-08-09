@@ -73,6 +73,10 @@
 | [0041][0041] | 一括書き込み createMany / updateMany（F-4）                 | 詳細設計 | accepted   |
 | [0042][0042] | 対応 PORTERS/API バージョン表記方針（v2 を契約の正）        | 要件定義 | accepted   |
 | [0043][0043] | ローカル フェイクサーバー（忠実度ポリシー・提供形態）       | 詳細設計 | accepted   |
+| [0044][0044] | HTTP ステータスをエラーモデルに配線する（RV-13）            | 詳細設計 | proposed   |
+| [0045][0045] | Write 応答のルート `<Code>` の扱い（RV-14）                 | 詳細設計 | proposed   |
+| [0046][0046] | 送信前ガードの例外契約（同期 throw か reject か・RV-15）    | 基本設計 | proposed   |
+| [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -97,12 +101,20 @@
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
+### 【議論中】proposed の ADR（accept 待ち・1 判断 1 ファイル）
+
+2026-08-09 のレビュー（[docs/reviews][reviews]）から起票。**accept は decider の判断**、実装は accept 後に別 PR。
+
+- [0044][0044] HTTP ステータスの扱い（RV-13）／[0045][0045] Write ルート `<Code>` の扱い（RV-14・LV-11 依存）／
+  [0046][0046] 送信前ガードの例外契約（RV-15）／[0047][0047] アクセスポイント・scheme 設定（フェイク フェーズ6）
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md
+[reviews]: ../reviews/findings.md
 [0000-template-md]: 0000-template.md
 [0001]: 0001-record-architecture-decisions.md
 [0002]: 0002-ground-design-in-live-api-docs.md
@@ -147,3 +159,7 @@
 [0041]: 0041-bulk-write-surface-impl.md
 [0042]: 0042-supported-version-policy.md
 [0043]: 0043-local-fake-server.md
+[0044]: 0044-http-status-handling.md
+[0045]: 0045-write-response-root-code.md
+[0046]: 0046-guard-error-contract.md
+[0047]: 0047-access-point-scheme.md
