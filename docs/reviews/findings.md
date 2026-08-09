@@ -25,7 +25,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-13 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-15 | 🟢     | エラーモデル / DX         | open  |
-| RV-16 | 🟢     | ドキュメント              | open  |
+| RV-16 | 🟢     | ドキュメント              | fixed |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -172,8 +172,8 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: [ADR-0043][adr43] フェーズ4（フェイクに月次クォータを実装した際、ライブラリ側に対応物が無いことが判明）
 - **推奨**: 記述を実態に合わせる — 「**1 分あたりの上限は内蔵スロットルで自制**。月次クォータ（約15万・契約条件）は**アプリ側の運用責務**」と書き分ける。
   実装変更は不要（プロセス横断の累積管理はライブラリの責務ではない＝薄いラッパー方針）
-- **状態**: open
-- **処置**: —
+- **状態**: fixed
+- **処置**: README「PORTERS 固有の注意」・CLAUDE.md「PORTERS API 固有の注意点 6」・[エラーハンドリング ガイド][guide]の 3 箇所を書き分けた（分単位＝内蔵スロットルで自制／月次＝契約条件・利用側の運用責務）。実装変更なし（薄いラッパー方針どおり）
 
 [adr6]: ../adr/0006-error-model.md
 [adr24]: ../adr/0024-mock-transport.md
@@ -184,4 +184,5 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [run3]: 2026-06-22-03.md
+[guide]: ../guide/error-handling.md
 [lv]: ../live-verification.md
