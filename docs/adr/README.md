@@ -84,7 +84,10 @@
 
 ### 【要件定義】
 
-- PRD オープン論点（[requirements §8][prd]）の確定 — 成功指標の数値化タイミング・npm/組織名最終確認 ほか（**対応 PORTERS/API バージョン表記は [0042][0042]（accepted）で確定**）
+- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-08-09 の棚卸しで残るのは 2 件**：
+  「成功指標の数値化タイミング」[stakeholder]／「v1 で CJS 出力まで出すか」[eng]。
+  （バージョン表記は [0042][0042]、サンドボックス R-17 は P1 のまま出荷、npm スコープ/組織は公開実績で決着。
+  「1 App トークンで複数 partition」は実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
@@ -118,6 +121,7 @@
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md
 [reviews]: ../reviews/findings.md
+[lv-doc]: ../live-verification.md
 [0000-template-md]: 0000-template.md
 [0001]: 0001-record-architecture-decisions.md
 [0002]: 0002-ground-design-in-live-api-docs.md
