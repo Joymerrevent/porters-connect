@@ -54,6 +54,10 @@ pnpm sandbox       # オフラインのサンプル実行
 pnpm fake:serve            # http://127.0.0.1:4010（PORT で変更可）
 ```
 
+**ライブラリを介さず curl だけで叩く手順**（認証 → Read/Write → マスタ → 制約・異常系 → 注入）は
+[フェイクサーバー 手動確認 手順書][fake-runbook] にまとめてあります。「ライブラリが悪いのか、フェイクが悪いのか、
+そもそも API の形がそうなのか」を切り分けたいときはここから。
+
 ライブラリから繋ぐときは、**設定だけ**を書き換えます（[ADR-0047][adr47]）。フェイクは証明書を持たないので
 `scheme: "http"` を明示します。**アプリのコードは変えません**。
 
@@ -116,3 +120,4 @@ new PortersClient({
 [adr43]: ./docs/adr/0043-local-fake-server.md
 [adr47]: ./docs/adr/0047-access-point-scheme.md
 [fake-plan]: ./docs/design/fake-server-plan.md
+[fake-runbook]: ./docs/fake-server-runbook.md

@@ -219,9 +219,11 @@
 ## 関連
 
 - 決定: [ADR-0043][adr43]（フェイクサーバー設計）／[ADR-0024][adr24]（`createMockTransport`＝N1・本フェイクは N2 follow-up）
+- 手を動かす: [フェイクサーバー 手動確認 手順書][runbook]（curl だけで認証 → CRUD → マスタ → 制約・注入まで叩く）
 - 全体像: [roadmap][rm]（「いま着手」）／ API 事実: [docs/reference][ref]／ 契約後検証: [live-verification][lv]
 
 [adr43]: ../adr/0043-local-fake-server.md
+[runbook]: ../fake-server-runbook.md
 [adr47]: ../adr/0047-access-point-scheme.md
 [adr24]: ../adr/0024-mock-transport.md
 [findings]: ../reviews/findings.md
