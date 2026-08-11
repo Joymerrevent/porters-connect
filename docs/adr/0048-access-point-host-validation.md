@@ -1,12 +1,13 @@
 # 48. アクセスポイント `host` の書式を検証する（設定ミスを安全側へ倒す）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-10
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings][findings] **RV-17** の是正案。`host` は検証されないまま URL に連結されるため、書式を誤ると
 > 例外ではなく**別ホスト宛の実リクエスト**になる。[ADR-0047][adr47] で `scheme` が独立し `host` の意味が
 > 「ホスト（＋ポート）のみ」と確定した今、その契約を**実行時にも強制するか**を決める。
+> **decider が案A ＋ 機構2 を選択し `accepted`（2026-08-11）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -84,22 +85,47 @@
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案A ＋ 機構2 を推奨**。
+採用: **案A（`PortersClient` 構築時に検証して `PortersConfigError` を投げる）＋ 機構2（`new URL()` ラウンドトリップ）**。
+decider が 2026-08-11 に選択。
 
 理由: 検証は**設定の問題**であって通信の問題ではないので、設定を受け取った瞬間＝構築時に落とすのが素直
 （案A）。`apiUrl` は「1 箇所で組み立てる」役に徹したままにできる。
-機構2 を推す理由は**列挙に頼らないこと**で、想定外の書き方（`user@host`・空白・`//host`）も
+機構2 を採る理由は**列挙に頼らないこと**で、想定外の書き方（`user@host`・空白・`//host`）も
 「ラウンドトリップしない」の一言で落ちる。ライブラリ側のコードはむしろ短くなり、薄いラッパーの方針と両立する。
 
-`scheme` の検証も同じガードに含める（`"https" | "http"` 以外は `PortersConfigError`）。
+**この ADR で確定する契約**: **`host` は「ホスト（＋ポート）」だけを表す**。スキーム・パス・userinfo・空白を
+含む値は**接続を試みる前に** `PortersConfigError` で拒否する。**曖昧な設定で黙って別の宛先へ繋がない**。
+
+実装時に守ること（accept 時の合意事項）:
+
+1. **検証の位置は `PortersClient` の構築時**（1 回）。`apiUrl()` は文字列組立に徹したままにし、
+   リクエスト経路に分岐を増やさない。検証関数そのものは `src/http/access-point.ts` に置いてよい
+   （アクセスポイントの知識はそこに集約する）。
+2. **判定は機構2**: `https://` を付けてパースし、次の 3 つをすべて満たすことを要求する —
+   (a) `new URL()` が成功する、(b) `url.host` が入力の小文字化と一致する、(c) `url.pathname` が `/` である。
+   これで `https://a.test`・`""`・`a.test/`・`a.test/gw`・`user@a.test`・`a test`・`//a.test` が落ち、
+   `a.test`・`a.test:8080`・`127.0.0.1:4010` は通る。
+3. **既知の制限（IDN）**: `url.host` は punycode に正規化されるため、非 ASCII のホストは (b) を満たさず弾かれる。
+   PORTERS のホストは契約通知の ASCII 値なので実害はなく、必要なら **punycode 表記で渡せば通る**。
+   この制限は JSDoc とエラーの `hint` に書き、利用者が原因を推測せずに済むようにする。
+4. **`scheme` も同じガードで検証**する。型は `"https" | "http"` に縛られているが、JS からの利用や `as` 越しでは
+   任意の文字列が入りうる。`ftp://host/v1/...` を黙って組み立てず、同じ `PortersConfigError` で落とす。
+5. **エラーの形**: `PortersConfigError`（`category: "config"`）＋ **直し方の `hint`**
+   （「`host` にはスキームやパスを含めず、ホスト名（必要ならポート）だけを渡す。例: `xxxxx.example.com` /
+   `127.0.0.1:4010`」）。受け取った値はメッセージに含めてよい（`host` は秘匿値だが、
+   例外は利用者自身のプロセス内に留まる。ログ出力の判断は利用者側の責務）。
+6. **semver は patch**。狭めるのは**そもそも正しく動いていなかった入力**だけ（誤ったホストへ送られていた、
+   またはリトライで失敗していた）＝バグ修正として扱う。CHANGELOG には「`host` の書式を構築時に検証するようになった」
+   と、弾かれる代表例を書く。
+7. **テスト**: 異常系を pin する — スキーム込み／空／末尾 `/`／パス付き／`user@host`／空白／不正 `scheme`。
+   併せて正常系（`a.test`・`a.test:8080`・`127.0.0.1:4010`・punycode）も固定し、**既存の正しい設定が
+   1 文字も変わらず通る**ことを保証する。
+8. **ドキュメント**: `PortersClientOptions.host` の JSDoc に「スキーム・パスを含めない」を明文化し、
+   [エラーハンドリング ガイド][guide]の `config` カテゴリの例に加える。README の該当節は既に正しいので変更不要。
 
 **[ADR-0046][adr46] との関係**: あちらは「**Promise を返す公開メソッド**は同期 throw しない」という契約であり、
 本 ADR の対象は**コンストラクタ**＝ Promise を返さない同期 API なので、同期 throw で矛盾しない
 （ADR-0046 の Consequences(Neutral) が明示している範囲）。
-
-**semver**: 受け入れ入力を狭めるが、狭めるのは**そもそも正しく動いていなかった入力**だけ
-（誤ったホストへ送られていた／リトライで失敗していた）なので **patch** が妥当と考える。
-ただし「今まで例外が出なかった経路で例外が出る」ことは事実なので、minor に倒す判断もありうる（decider 判断）。
 
 ### Consequences
 
@@ -150,6 +176,7 @@
 
 [findings]: ../reviews/findings.md
 [run]: ../reviews/2026-08-10-01.md
+[guide]: ../guide/error-handling.md
 [adr6]: 0006-error-model.md
 [adr9]: 0009-http-transport.md
 [adr46]: 0046-guard-error-contract.md
