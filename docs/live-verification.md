@@ -110,12 +110,15 @@ grep -rn "VERIFY(live)" src test
 - **不確実な理由**: reference は上限値だけを示し、超過時の **HTTP ステータス・ボディ形状を書いていない**（旧 SPEC の「32KB で 400」は陳腐化）。
   月次クォータは API ドキュメントではなく**契約条件**として示されているため、超過時の挙動・集計単位も不明
 - **コード箇所**: `test/fake/fake-transport.ts`（サイズガードの 400）／`test/fake/rate-limit.ts`（分・月の窓）／
-  ライブラリ側は `src/http/requester.ts`（送信前ガードで到達させない）・`src/http/throttle.ts`（上限の 90% で自制）
+  ライブラリ側は `src/http/requester.ts`（送信前ガードで到達させない・応答 status の分岐）・
+  `src/errors/classify.ts`（`httpStatusCategory` ＝ status→category の写像）・`src/http/throttle.ts`（上限の 90% で自制）
 - **確認方法**: 15000 文字超のリクエストを実機に投げてステータス・ボディを記録／1 分あたり上限超のバーストで切断挙動を観測／
   月次クォータ超過時の応答と、カウントのリセット時期を確認
 - **状態**: 未確認
 - **確認結果**: —
-- **関連**: HTTP ステータスをライブラリが見ていない件は [findings][findings] RV-13
+- **関連**: HTTP ステータスをライブラリが見ていない件は [findings][findings] RV-13。
+  **ADR-0044（accepted・案A）で status→category の写像を実装済み**＝本 LV の確認結果しだいでは写像を見直す
+  （実装に `VERIFY(live)` を残してある）
 
 ## LV-10 System[Reference] Read の入れ子タグ
 
