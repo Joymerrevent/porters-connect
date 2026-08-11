@@ -1,47 +1,95 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-10
-- 位置づけ: プロジェクト横断の「完了 / 残作業 / 将来」を 1 枚で見渡すための**現況ドキュメント**。
+- 最終更新: 2026-08-11
+- 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
-  契約後に確定する仮定は [live-verification][lv]。本書はそれらへのインデックス＋進捗ビューであり、
+  契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
   詳細・根拠は各正典を参照する（重複させない）。
 
-## ▶️ 次の作業・残作業（[ADR-0033][adr33]・v0.6.0 時点）
+---
 
-方針（stakeholder 判断 2026-06-22）: **案F（v1 公開 API の積み残し）を先行 → 案A（第2層 MCP）を主軸**。
-各群は実装前に個別 ADR（詳細設計）へ分岐し、F-1 と同じ流れ（**ADR 起票 → 議論 → accepted → 実装 → docs → リリース**）で進める。
+## ▶️ いま何をやるか
 
-完了: **F-1 OAuth 公開 API `porters.auth.*`**（[ADR-0007][p7] SD-3/SD-6・ADR-0034 ／ 0.3.0 で公開・利用手順 `docs/guide/oauth.md`）／**F-2 Read クエリ**（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0 で公開）／**F-3 マルチテナント**（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0 で公開・利用手順 `docs/guide/multi-tenancy.md`）／**F-4 一括書き込み**（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0 で公開・利用手順 `docs/guide/bulk-write.md`）。**案F はこれで完了**。
-横断監査 [2026-06-22-03][rv3] の検出ドリフト **RV-10〜12 はすべて fixed**（[findings][findings]・RV-11 は ADR-0036 で refresh 挙動を amend）。
+### 着手可能（ブロック無し・上から順に）
 
-### いま着手（Now）
+| #   | やること                                              | 根拠                       | semver           | 備考                                             |
+| --- | ----------------------------------------------------- | -------------------------- | ---------------- | ------------------------------------------------ |
+| 1   | **ADR-0044 実装** HTTP ステータスをエラーモデルへ配線 | [ADR-0044][adr44] ／ RV-13 | 未確定（要判断） | 判定順の土台。**2 より先に**                     |
+| 2   | **ADR-0045 実装** Write 応答のルート `<Code>`         | [ADR-0045][adr45] ／ RV-14 | 未確定（要判断） | LV-11 未確認のまま先回り実装する決定済み         |
+| 3   | **ADR-0046 実装** 送信前ガードを reject に統一        | [ADR-0046][adr46] ／ RV-15 | minor            | 独立して着手可                                   |
+| 4   | **ADR-0048 実装** `host` の書式検証                   | [ADR-0048][adr48] ／ RV-17 | patch            | 独立して着手可。3 と同 PR でもよい               |
+| 5   | **0.7.0 リリース**                                    | [release-runbook][rb]      | minor            | scheme（[ADR-0047][adr47]・実装済み）＋ 上記是正 |
+| 6   | **案A 第2層 MCP サーバー** の詳細設計 ADR             | [ADR-0033][adr33]          | —                | 戦略ゴール。パッケージ構成・ツール表面から       |
 
-- [ ] **案A 第2層 MCP サーバー** `@joymerrevent/porters-mcp` — 戦略ゴール（AI から PORTERS 操作）。**案F 完了・案C（評価基盤）も整ったのでこれが主軸**。詳細設計 ADR（パッケージ構成・ツール表面）から着手。
-- [x] **案C ローカルフェイクサーバー（[ADR-0043][adr43] accepted）** — MCP（案A）より**先行**（stakeholder 2026-07-20）。
-      **フェーズ0〜6 完了**＝L1 結合テストがオフラインで回り、`pnpm fake:serve` で HTTP 起動もでき（MCP e2e はここで足りる）、
-      **`host` ＋ `scheme: "http"` だけで無改造アプリを向けられる**（[ADR-0047][adr47]・URL 組立を 1 関数に集約）。
-      残るフェーズ7（package 昇格・配布）は**需要が出てから**（stakeholder 2026-08-09）。
-      詳細は [フェイクサーバー実装計画][fake-plan]。
-- [ ] 案B MVP 外リソース R/W（需要に応じ機会的に）。→ 後述「🚀 将来の機能アップ」。
+- 1〜4 は **ADR accepted 済み・実装のみ未着手**。流れは `ADR 起票 → 議論 → accepted → 実装 → docs → リリース` で、
+  いずれも**実装は別 PR**（ADR と実装を混ぜない）。完了したら [findings][findings] の該当 RV を `fixed` にする。
+- semver「未確定」の 2 件は ADR 本文に区分の記載が無い。**実装 PR で decider が判断**する（挙動変更を伴うため minor 想定）。
+- 6 は 1〜5 と独立。評価基盤（フェイクサーバー）が揃っているので、e2e の足場は追加不要。
 
-### 補助・随時
+### 随時・任意（急がない）
 
-- [ ] 案D `defineFields` 深掘り（値検証・テナント実在チェック・Field Read からの宣言生成・ADR-0023）。
-- [ ] 案E 採用 — **対応 PORTERS / API バージョン表記の確定は [ADR-0042][adr42] で完了**。残るは README 英語版。→ 後述「🔜 リリースに向けた残タスク」。
-- [ ] PRD オープン論点（[§8][prd]）の確定（対応バージョン表記は [ADR-0042][adr42] で解決済み・残りは成功指標の数値化タイミング／npm・組織名確認 等）。
+- [ ] **R-4 の積み残し: Link / Image 型の正規化**（[PRD R-4][prd] で **v1 未対応・deferred** と明記。P0 要件で唯一残っている穴。
+      需要が出たら詳細設計 ADR から。カスタム項目側の Image 対応は下の案D に含む＝別物）
+- [ ] 案D `defineFields` 深掘り（値レベルの実行時検証・テナント実在チェック・Field Read からの宣言生成。[ADR-0023][adr23]）
+- [ ] 案B MVP 外リソースの R/W（需要に応じ機会的に）→ 後述「🚀 将来の機能アップ」
+- [ ] （任意）README 英語版（日本語ファースト → 英語）
 
-### 契約取得後（ブロック中・リリース非ブロッカー）
+### 待ち（自分では進められない）
 
-- ライブ検証 LV-1〜8（[live-verification][lv]）。→ 後述「🔌 ライブ検証」。
+| 待ちの種類   | 中身                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| **契約待ち** | ライブ検証 **LV-1〜13**（[live-verification][lv]）。リリースのブロッカーではない                             |
+| **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09）          |
+| **判断待ち** | PRD [§8][prd] オープン論点 **2 件** — 成功指標の数値化タイミング[stakeholder]／v1 で CJS 出力まで出すか[eng] |
+
+### TODO の見取り図（どこを見れば何が分かるか）
+
+TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
+
+| ファイル                      | 何の TODO か                                 | いまの状態                              |
+| ----------------------------- | -------------------------------------------- | --------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 6 件                           |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | **open 4 件** = RV-13/14/15/17          |
+| [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | 実装待ち 0044・0045・0046・0048         |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）           |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）        |
+
+> GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
+
+---
+
+## 🧭 方針（[ADR-0033][adr33]・stakeholder 2026-06-22）
+
+**案F（v1 公開 API の積み残し）を先行 → 案A（第2層 MCP）を主軸**。各群は実装前に個別 ADR（詳細設計）へ分岐する。
+
+| 案  | 内容                      | 状態                                                    |
+| --- | ------------------------- | ------------------------------------------------------- |
+| F   | v1 公開 API の積み残し    | ✅ **完了**（F-1〜F-4。下記）                           |
+| C   | ローカル フェイクサーバー | ✅ フェーズ0〜6 完了（フェーズ7 は需要待ち）            |
+| A   | 第2層 MCP サーバー        | ▶️ **これが主軸**（詳細設計 ADR から）                  |
+| B   | MVP 外リソース R/W        | 随時（需要に応じ機会的に）                              |
+| D   | `defineFields` 深掘り     | 随時                                                    |
+| E   | 対応バージョン表記        | ✅ [ADR-0042][adr42] で確定（残るは README 英語版のみ） |
+
+**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/guide/oauth.md`）／
+F-2 Read クエリ（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0）／
+F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/guide/multi-tenancy.md`）／
+F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/guide/bulk-write.md`）。
+
+横断監査 [2026-06-22-03][rv3] の検出ドリフト RV-10〜12 はすべて `fixed`（RV-11 は [ADR-0036][adr36] で refresh 挙動を amend）。
+
+---
 
 ## ✅ 完了
 
 ### コア層
 
 - HTTP transport（fetch 既定＋注入 seam）／requester（スロットル・認証・指数バックオフ・送信前サイズガード = URL+body 合算）
+- **URL 組立を 1 関数に集約**（`apiUrl`）＋ アクセスポイント / scheme 設定（[ADR-0047][adr47]・既定 https・http は明示＋警告）
 - XML parse/encode（Option・User/Reference・DateTime/Date を正規化）／datetime（ISO ⇄ PORTERS）
-- OAuth（`code_direct`・トークン ms 単位・キャッシュ＋自動リフレッシュ・差し替え可能ストア）＋ **公開 API `porters.auth.*`**（初回ブラウザ付与 `authorizationUrl`/`exchangeAuthorizationCode`・利用終了 `revokeUrl`/`clearTokens`・`ensureAuthenticated`/`getToken`・F-1 / ADR-0034）
+- OAuth（`code_direct`・トークン ms 単位・キャッシュ＋自動リフレッシュ・差し替え可能ストア）＋ **公開 API `porters.auth.*`**（初回ブラウザ付与 `authorizationUrl`/`exchangeAuthorizationCode`・利用終了 `revokeUrl`/`clearTokens`・`ensureAuthenticated`/`getToken`・F-1 / [ADR-0034][adr34]）
 - エラーモデル（基底 `PortersError` ＋ 系統別 4 サブクラス ＋ `category` 11 種・未知は `unknown`）
 
 ### リソース（MVP 完了 = [R-3][prd]）
@@ -53,8 +101,8 @@
 
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
-  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（ADR-0040・0.5.0）で公開済み**。残りは R-4 Link/Image。是正は上記「▶️ 次の作業」[ADR-0033][adr33] 案F／[findings][findings] RV-12。
-- P1 = **すべて実装**: R-16 `defineFields`（ADR-0023）／ R-17 `createMockTransport`＋サンドボックス（ADR-0024）／ R-18 エラー対処ガイド
+  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（[ADR-0040][adr40]・0.5.0）で公開済み**。残るは **R-4 の Link / Image 正規化のみ**（PRD で deferred 明記済み・上記「随時・任意」に掲載）。
+- P1 = **すべて実装**: R-16 `defineFields`（[ADR-0023][adr23]）／ R-17 `createMockTransport`＋サンドボックス（[ADR-0024][adr24]）／ R-18 エラー対処ガイド
 
 ### 評価基盤（[ADR-0043][adr43]・フェーズ0〜6）
 
@@ -63,12 +111,13 @@
 - `pnpm fake:serve` で **ローカル HTTP 起動**（curl・別プロセスから叩ける）＋ 転送 Transport（ライブラリ非依存）
 - **アプリ無改造で接続**: `host` ＋ `scheme: "http"` のみ（[ADR-0047][adr47]）。http は毎プロセス 1 回警告・抑止は専用 env
 - L1 結合テストが契約なしで回る（`PortersClient` をそのまま駆動）
+- **curl だけで叩く手順書**（[fake-server-runbook][fake-runbook]）— 認証 → CRUD → マスタ → 制約・注入まで実測検証済み
 
 ### 基盤・記録
 
-- ADR 0001〜0039 accepted（0037 は 0039 で superseded）（[索引][adr]）
+- ADR 0001〜0048 accepted（0037 は 0039 で superseded・proposed は現在なし）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・502 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12 は `fixed`／**RV-13〜15 は open**＝フェイク実装中に判明したライブラリ側の所見。いずれも挙動変更を伴うため ADR 待ち）
+- 品質ゲート green・503 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12・16・18 は `fixed`／**RV-13/14/15/17 は open**）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
@@ -78,14 +127,23 @@
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.6.2`**（npm latest）。0.1.0 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 を半自動フローでリリース（0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.6.2`**（npm latest・2026-08-11 にレジストリで確認）。**全 10 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2
+      （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
+      0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
+      0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
+      0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）。
+      各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
+- [ ] **次リリース 0.7.0** — changeset（scheme・minor）と [CHANGELOG][changelog] `[Unreleased]` は**記載済み**。
+      残るは release ブランチでの版 bump → main マージ → Release 作成。
+      上記「着手可能」1〜4 の是正を同梱するかは着手状況しだい
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
 
-機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
-リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）も入れ、**基盤構築は完了**。各項目は branch→PR で進め、マージはメンテナ。
+機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固めた期間の記録。
+リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）まで入れて**基盤構築は完了**しており、**残タスクはない**。
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
@@ -102,11 +160,11 @@
 - [x] `.editorconfig`
 - [x] **pre-commit 導入**（薄い構成：`simple-git-hooks` ＋ `lint-staged`）。旧記載の「pre-commit あり」は誤りで未導入だったため、ここで正式導入した
 - [x] commitlint（`@commitlint/config-conventional`）を**ローカル**（commit-msg フック）で強制。**CI ジョブは WS-C**
-- 定型セットアップは `project-recipes` スキルで codify 予定（既存 `git-hooks` は core.hooksPath 方式のため、simple-git-hooks 方式は別レシピ化）
+- [x] 定型セットアップを `project-recipes` スキルへ codify 済み（**`ts-commit-gates` レシピ**＝simple-git-hooks ＋ lint-staged ＋ commitlint。既存 `git-hooks` は core.hooksPath 方式なので別レシピとして分けた）
 
 ### WS-C. CI/CD ハードニング
 
-- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
+- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。**default branch=main にも反映済み**＝main で走る）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
@@ -115,13 +173,13 @@
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.2.1 公開実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.6.2 の**全 10 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
 ## 🧹 小さな整理（技術的負債）
 
-- [x] `src/resources/{job,process,resume}.ts` のコメント「first alias only」を実態（全 alias を `string[]` で返す・ADR-0017）に修正
+- [x] `src/resources/{job,process,resume}.ts` のコメント「first alias only」を実態（全 alias を `string[]` で返す・[ADR-0017][adr17]）に修正
 - [x] メモリ `field-type-fidelity-followup` の更新（Option 複数選択・ラベル distinct 化は解消済み／残は per-type 値検証）
 - [x] 初期 scaffold 資料（SPEC_v1 / KICKOFF_PROMPT）を `docs/history/` へ移設（PR #50）
 
@@ -129,27 +187,33 @@
 
 [PRD §3 非ゴール][prd] ／ [ADR 論点バックログ][adr] と対応。
 
-- 第2層 MCP サーバー（`@joymerrevent/porters-mcp`）
-- N2 ローカル フェイクサーバー（高忠実なオフライン評価・別パッケージ・別 ADR。ADR-0024 follow-up）
+- 第2層 MCP サーバー（`@joymerrevent/porters-mcp`）＝ 案A。**着手対象**なので上記「いま何をやるか」も参照
+- フェイクサーバーの **package 昇格・配布**（`@joymerrevent/porters-fake`・フェーズ7・需要が出てから）
 - MVP 外リソースの R/W: Recruiter / Contact / Activity / Contract / Sales / Opportunity / Phase（v0.2 以降）
 - CJS 出力 / CLI / Docker 配布 / 公開プレイグラウンド
-- `defineFields` follow-up（ADR-0023）: 値レベルの厳格な実行時検証・テナント実在チェック・Field Read からの宣言雛形生成・Attachment / Reference / Image 型のカスタム項目
+- `defineFields` follow-up（[ADR-0023][adr23]）: 値レベルの厳格な実行時検証・テナント実在チェック・Field Read からの宣言雛形生成・Attachment / Reference / Image 型のカスタム項目
 
 ## 🔌 ライブ検証（契約環境が必要・契約後タスク）
 
-実 PORTERS 契約が無いと確定できない仮定は [live-verification][lv]（LV-1〜8）に集約。リリースのブロッカーではないが、
+実 PORTERS 契約が無いと確定できない仮定は [live-verification][lv]（**LV-1〜13**）に集約。リリースのブロッカーではないが、
 契約取得後に実機で確定し、必要なら fixture を実データへ差し替える。
+LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反時の HTTP 応答・System[Reference] の入れ子・Write 失敗時の Result Code・Field Read の表記）。
 
 ## 関連
 
 - 要件: [requirements][prd]（PRD・フェーズ計画は §9）
 - 決定: [docs/adr][adr]
-- レビュー指摘台帳: [findings][findings]
+- レビュー指摘台帳: [findings][findings]（最新スナップショット: [2026-08-10-01][run]）
 - 契約後検証: [live-verification][lv]
+- フェイクサーバー: [実装計画][fake-plan] ／ [curl 手順書][fake-runbook]
 - 歴史的経緯: [docs/history][history]
 
 [prd]: design/requirements.md
 [rb]: release-runbook.md
+[changelog]: ../CHANGELOG.md
+[adr17]: adr/0017-option-read-shape.md
+[adr23]: adr/0023-custom-field-declaration-dsl.md
+[adr24]: adr/0024-mock-transport.md
 [adr25]: adr/0025-release-automation.md
 [adr26]: adr/0026-changelog-format.md
 [adr27]: adr/0027-release-readiness-gate.md
@@ -158,17 +222,25 @@
 [adr31]: adr/0031-version-number-validation.md
 [adr32]: adr/0032-monotonic-check-release-scope.md
 [adr33]: adr/0033-post-mvp-direction.md
+[adr34]: adr/0034-oauth-public-surface-impl.md
+[adr36]: adr/0036-refresh-expiry-reacquire.md
 [adr38]: adr/0038-read-query-surface-impl.md
 [adr39]: adr/0039-commitlint-release-range.md
 [adr40]: adr/0040-multitenancy-surface-impl.md
 [adr41]: adr/0041-bulk-write-surface-impl.md
 [adr42]: adr/0042-supported-version-policy.md
 [adr43]: adr/0043-local-fake-server.md
+[adr44]: adr/0044-http-status-handling.md
+[adr45]: adr/0045-write-response-root-code.md
+[adr46]: adr/0046-guard-error-contract.md
 [adr47]: adr/0047-access-point-scheme.md
+[adr48]: adr/0048-access-point-host-validation.md
 [fake-plan]: design/fake-server-plan.md
+[fake-runbook]: fake-server-runbook.md
 [p7]: adr/0007-oauth-public-surface.md
 [p13]: adr/0013-coding-conventions-class-vs-function.md
 [rv3]: reviews/2026-06-22-03.md
+[run]: reviews/2026-08-10-01.md
 [adr]: adr/README.md
 [findings]: reviews/findings.md
 [lv]: live-verification.md
