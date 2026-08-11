@@ -1,16 +1,20 @@
 // Request pipeline (ADR-0009/0010/0012): throttle -> auth header -> transport,
 // with reactive token refresh (401/402) and bounded backoff retry. The
 // idempotency guard keeps non-idempotent writes (create) from double-applying.
+// The response is read through both error channels — HTTP status and PORTERS
+// envelope (ADR-0044).
 
 import type { TokenProvider } from "../auth/types";
 import {
+  httpStatusError,
+  withHttpStatus,
   PortersConfigError,
   PortersError,
   PortersNetworkError,
 } from "../errors/index";
 import type { Backoff } from "./retry";
 import type { Throttle } from "./throttle";
-import type { Transport, TransportRequest } from "./types";
+import type { Transport, TransportRequest, TransportResponse } from "./types";
 
 // Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
 const API_VERSION = "2";
@@ -39,6 +43,33 @@ const withAuth = (
     ...(write ? { "Content-Type": "application/xml; charset=UTF-8" } : {}),
   },
 });
+
+// Both halves of what the reference calls an error — "HTTP != 200 **or** `<Code>` != 0" — read in
+// one place (ADR-0044). An envelope with a PORTERS code wins: it is the most specific answer there
+// is, so that error is kept and the status stamped alongside. Without one, a non-2xx is classified
+// from the status, because `parse` would otherwise read a proxy's HTML error page as a well-formed
+// empty page and hand the caller "no results" (fail-safe).
+const readResponse = <T>(
+  res: TransportResponse,
+  parse: (body: string) => T,
+): T => {
+  const ok = res.status >= 200 && res.status < 300;
+  try {
+    const parsed = parse(res.body);
+    if (ok) return parsed;
+  } catch (e) {
+    // Not ours: on a success status that failure *is* the failure, so it passes through untouched.
+    if (!(e instanceof PortersError)) {
+      if (ok) throw e;
+      throw httpStatusError(res.status, e);
+    }
+    // A PORTERS code means the API itself answered — keep it. So does any failure on a 2xx, where
+    // the status has nothing to add. Otherwise the status explains more than "unparseable" does.
+    if (ok || e.code !== null) throw withHttpStatus(e, res.status);
+    throw httpStatusError(res.status, e);
+  }
+  throw httpStatusError(res.status);
+};
 
 export type RequesterOptions = {
   transport: Transport;
@@ -103,7 +134,7 @@ export const createRequester = (o: RequesterOptions): Requester => {
         );
         forceRefresh = false;
         const res = await o.transport.send(withAuth(req, token, write));
-        return parse(res.body);
+        return readResponse(res, parse);
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
         // reactive: token expired -> refresh once and retry (safe even for create).
