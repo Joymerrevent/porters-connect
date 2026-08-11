@@ -26,6 +26,8 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-15 | 🟢     | エラーモデル / DX         | open  |
 | RV-16 | 🟢     | ドキュメント              | fixed |
+| RV-17 | 🟡     | フェイルセーフ / 設定検証 | open  |
+| RV-18 | 🟢     | ドキュメント / 計画       | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -175,12 +177,59 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **状態**: fixed
 - **処置**: README「PORTERS 固有の注意」・CLAUDE.md「PORTERS API 固有の注意点 6」・[エラーハンドリング ガイド][guide]の 3 箇所を書き分けた（分単位＝内蔵スロットルで自制／月次＝契約条件・利用側の運用責務）。実装変更なし（薄いラッパー方針どおり）
 
+## RV-17 🟡 フェイルセーフ / 設定検証（`host` の書式を検証せず、設定ミスが別ホストへの実リクエストになる）
+
+- **概要**: `host` は**一切検証されない**まま `{scheme}://{host}/v1/{path}` に文字列連結される。書式を誤ると
+  URL は例外を出さず**別のホスト名として解決可能な形**に化け、認証リクエストがそこへ実際に飛ぶ:
+  - `host: "https://xxxxx.example.com"`（`PORTERS_HOST` にスキーム込みで入れる典型的な設定ミス）
+    → `https://https://xxxxx.example.com/v1/oauth` → **DNS 宛先は `https`**・path は `//xxxxx.example.com/v1/oauth`
+  - `host: ""`（env 未設定・`!` で押し通した場合）→ `https:///v1/oauth` → **DNS 宛先は `v1`**
+  - `host: "example.com/"` → `https://example.com//v1/...`（宛先は正しいがパスが二重スラッシュ）
+    いずれも `new URL()` は throw せず**成功する**。結果 (a) 解決すれば **App ID（OAuth のクエリ）・App Secret
+    （Token の body）が意図しないホストへ送信**され、(b) 解決しなければ `PortersNetworkError`（**retryable: true**）
+    になり、直しようのない設定ミスをリトライで叩き続ける。**設定エラーが `config` ではなく `network` に化ける**
+- **根拠**: `src/http/access-point.ts:20-29`（`apiUrl` は連結のみ・検証なし）/ `src/client.ts:136-139`（`options.host` を
+  素通しで `AccessPoint` 化）, `:47-50`（`host` の JSDoc。ポートは含めるが**スキーム・パスは含めない**とは書いていない）/
+  `src/auth/token-exchange.ts:37-38,44`（`secret` を `apiUrl(accessPoint,"token")` へ POST）/
+  `src/http/fetch-transport.ts:29-33`（fetch 失敗は一律 `retryable: true` の network）。
+  実測（`new PortersClient({host}).candidate.search()` の 1 本目の宛先）:
+  正しい host → `example.test`／スキーム付き → `https`／空 → `v1`。
+  docs 側は正しい（`README.md:347`「ポートが要る場合は `host` に含めます」・`.env.example`・[ADR-0047][adr47]）が、
+  **正しさを型でも実行時でも強制していない**
+- **検出経緯**: 2026-08-10 レビュー。[ADR-0047][adr47] で scheme が独立したオプションになり、
+  `host` が「ホスト（＋ポート）だけ」を意味することが**契約として明確になった**ため、その契約を破る入力の扱いを確認した
+- **推奨**: 構築時に `host` を検証し `PortersConfigError`（`category: "config"`・hint 付き）で**早く・明確に**落とす。
+  条件は薄くてよい: 非空／`://` を含まない／`/` を含まない／空白を含まない（`host:port` は許可）。
+  検証は `apiUrl` ではなく `PortersClient` の構築時が適切（1 回で済み、リクエスト経路を汚さない）。
+  現行の正しい設定は影響を受けないが、**受け入れ入力を狭める＝公開契約の明確化**なので軽い ADR を 1 本推奨
+  （既存の送信前ガード＝長さ・10MB と同じ「早く落とす」系列に置く）
+- **状態**: open
+- **処置**: [ADR-0048][adr48] を **proposed** で起票（2026-08-10）。推奨は案A（構築時に検証）＋ 機構2
+  （`new URL` ラウンドトリップ＝列挙に頼らない）。`scheme` の実行時検証も同じガードに含める。
+  **accept は decider の判断**・実装は accept 後の別 PR（完了時に `fixed` へ）
+
+## RV-18 🟢 ドキュメント / 計画（accepted 済み ADR-0044〜0046 の実装が roadmap に現れない）
+
+- **概要**: [ADR-0044][adr44]/[ADR-0045][adr45]/[ADR-0046][adr46] は 2026-08-09 に **accepted**（実装は別 PR）だが、
+  [roadmap][rm] の「いま着手（Now）」には**案A（MCP）とフェイク フェーズ7 しか無い**。台帳（RV-13〜15）を読まないと
+  「決まっているが未実装の挙動変更が 3 件ある」ことが計画上見えない。ADR 運用（起票 → accepted → **実装** → docs → リリース）の
+  最後の 3 工程が、計画の正典から抜け落ちている状態
+- **根拠**: `docs/roadmap.md:18-26`（「いま着手」に案A・案C フェーズ7 のみ）/ `docs/adr/README.md:112-115`
+  （「実装順序は 0044 → 0045」「0046 は独立して着手可」と**実装順序まで決まっている**）/ 台帳 RV-13/14/15（すべて open）
+- **推奨**: roadmap の「いま着手」に 1 行足す — 「**エラーモデルの是正**（ADR-0044 → 0045 → 0046 の実装・RV-13/14/15）」。
+  実装内容は ADR と台帳が正なので roadmap 側は**ポインタのみ**でよい（重複させない）
+- **状態**: open
+- **処置**: —
+
 [adr6]: ../adr/0006-error-model.md
 [adr24]: ../adr/0024-mock-transport.md
 [adr43]: ../adr/0043-local-fake-server.md
 [adr44]: ../adr/0044-http-status-handling.md
 [adr45]: ../adr/0045-write-response-root-code.md
 [adr46]: ../adr/0046-guard-error-contract.md
+[adr47]: ../adr/0047-access-point-scheme.md
+[adr48]: ../adr/0048-access-point-host-validation.md
+[rm]: ../roadmap.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
 [run3]: 2026-06-22-03.md
