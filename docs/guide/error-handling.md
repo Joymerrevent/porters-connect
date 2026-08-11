@@ -11,12 +11,12 @@ PORTERS への問い合わせを増やさず**自己解決**できるよう、�
 
 すべての PORTERS 由来エラーは基底 `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
 
-| クラス                 | 系統                             | `code` の空間     |
-| ---------------------- | -------------------------------- | ----------------- |
-| `PortersAuthError`     | OAuth / Token（認証 API）        | 認証 `<Error>`    |
-| `PortersResourceError` | Resource API（Read / Write）     | リソース `<Code>` |
-| `PortersNetworkError`  | 接続 / タイムアウト / 切断       | `null`            |
-| `PortersConfigError`   | 設定・使い方の誤り（同期 throw） | `null`            |
+| クラス                 | 系統                                        | `code` の空間     |
+| ---------------------- | ------------------------------------------- | ----------------- |
+| `PortersAuthError`     | OAuth / Token（認証 API）                   | 認証 `<Error>`    |
+| `PortersResourceError` | Resource API（Read / Write）                | リソース `<Code>` |
+| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429  | `null`            |
+| `PortersConfigError`   | 設定・使い方の誤り（同期 throw）／ HTTP 4xx | `null`            |
 
 > **2 系統は番号が重複し意味が違います**（例: `401` は認証では Refresh Token 失効、リソースでは
 > Access Token 期限切れ）。`instanceof` で系統を大別してから `code` を見てください。
@@ -29,6 +29,7 @@ e.category; // "auth" | "permission" | "validation" | "notFound" | "conflict" |
 e.code; // PORTERS の生コード（network / config は null）
 e.retryable; // 再試行してよいか（構築時に算出）
 e.hint; // 対処ヒント（既定は英語）
+e.httpStatus; // 応答の HTTP ステータス（応答を伴わない失敗では undefined）
 e.context; // { resource?, operation?, partition? }
 ```
 
@@ -85,27 +86,72 @@ try {
   二重登録を避けるため再試行せず、握り潰さずに表面化します。
 - **レート制限 → 自前スロットリングで超えない設計**: 1 分 Read 2000 / Write 500 を内蔵スロットルで
   分散します。超過時 PORTERS は判別可能なコードを返さず**接続を切る**ため、`PortersNetworkError`
-  （`category: "network"`）として表面化します。`category: "rateLimit"` は将来配線用の予約値で、
-  現状はどの分類も produce しません。なお**月次クォータ（約 15 万アクセス/月）は契約条件**で、
+  （`category: "network"`）として表面化します。`category: "rateLimit"` になるのは**HTTP 429 が
+  観測できた場合だけ**（プロキシ経由など。後述）。なお**月次クォータ（約 15 万アクセス/月）は契約条件**で、
   内蔵スロットルは分単位のみを見ます。月次の消費管理は利用側の運用責務です。
 - **リクエストサイズ → 送信前ガード**: 全体 ~15000 文字を超える要求は、サーバの不透明な 400 を
   待たずに送信前へ `PortersConfigError`（`category: "config"`）で弾きます（`hint` に分割を提案）。
 
+## 非 PORTERS ボディの HTTP エラー（[ADR-0044][adr-0044]）
+
+PORTERS の reference はエラーを **2 系統**で定義しています — 「**HTTP 200 以外**、または `<Code>` が 0 以外」。
+後者は PORTERS 自身の答えですが、前者は **PORTERS まで届かなかった**ときにも起こります
+（ロードバランサ・プロキシ・WAF・メンテナンス画面が代わりに応答する）。この場合ボディは XML ですらないため、
+`<Code>` は存在しません。
+
+ライブラリは**情報量の多い方**を採ります。
+
+| 応答                            | 表面化するエラー                                              |
+| ------------------------------- | ------------------------------------------------------------- |
+| 200 ＋ `<Code>`≠0               | その `<Code>` の分類（従来どおり）＋ `httpStatus: 200`        |
+| 200 以外 ＋ PORTERS の `<Code>` | **`<Code>` が優先**（envelope が最も具体的）＋ `httpStatus`   |
+| 200 以外 ＋ envelope 無し       | **status から分類**（下表）・`code` は `null`                 |
+| 200 以外 ＋ parse できるボディ  | 値は返さない（HTML のエラーページは「空ページ」に見えるため） |
+
+status からの分類は次のとおりです。
+
+| HTTP status | category     | クラス                | retryable |
+| ----------- | ------------ | --------------------- | --------- |
+| 5xx         | `server`     | `PortersNetworkError` | ✅        |
+| 429         | `rateLimit`  | `PortersNetworkError` | ✅        |
+| 408         | `network`    | `PortersNetworkError` | ✅        |
+| 401 / 403   | `permission` | `PortersAuthError`    | ❌        |
+| その他 4xx  | `config`     | `PortersConfigError`  | ❌        |
+| 上記以外    | `unknown`    | `PortersError`        | ❌        |
+
+```ts
+try {
+  await porters.candidate.search();
+} catch (e) {
+  if (!(e instanceof PortersError)) throw e;
+  if (e.code === null && e.httpStatus !== undefined) {
+    // PORTERS の応答ではない（間に何かが挟まっている）
+    console.error(e.httpStatus, e.category, e.hint);
+  }
+}
+```
+
+> **retryable なもの（5xx / 429 / 408）は `PortersNetworkError`** です。5xx は「書き込みが適用されたか
+> 分からない」状態なので、**非冪等な `create` は自動再送しません**（既存の冪等性ガードがそのまま効く＝フェイルセーフ）。
+>
+> なお**実 PORTERS がどの status を返すかは未確認**です（契約後に確認 — [live-verification][lv] LV-9）。
+> 上表は「PORTERS 以外が返す HTTP エラーを安全側へ倒す」ための写像であり、確定した仕様ではありません。
+
 ## category 一覧と対処方針
 
-| category     | 意味                                       | 主な原因 / 対処                                             |
-| ------------ | ------------------------------------------ | ----------------------------------------------------------- |
-| `auth`       | 認証情報・トークン・コード                 | Refresh 失効 → 再認証（ブラウザ `code` 付与）／資格情報確認 |
-| `permission` | スコープ・データ権限・IP 制限              | その Company DB へ権限付与／スコープ追加／IP 申請           |
-| `validation` | 入力・パラメータ・書式・itemstate・version | 入力を見直す（後述の早見表）                                |
-| `notFound`   | リソース / パーティションが無い            | id・partition・契約期間を確認                               |
-| `conflict`   | 重複・子要素あり・被参照                   | 重複作成を避ける／依存関係を解消                            |
-| `rateLimit`  | レート上限（予約・未 produce）             | 現状は `network` として表面化（上記参照）                   |
-| `transient`  | 一時障害・トランザクション                 | 自動リトライ対象（再試行可）                                |
-| `network`    | 接続・タイムアウト・レート切断             | 自動リトライ後も失敗なら時間をおく／回線・レートを確認      |
-| `server`     | PORTERS 内部エラー                         | 時間をおいて再試行／継続するなら PORTERS へ報告             |
-| `config`     | 設定・使い方の誤り（同期 throw）           | 呼び出し前の不正：宣言・オプション・サイズを修正            |
-| `unknown`    | 未知（フェイルセーフ）                     | `code` と `hint` を確認／握り潰さず surface 済み            |
+| category     | 意味                                       | 主な原因 / 対処                                              |
+| ------------ | ------------------------------------------ | ------------------------------------------------------------ |
+| `auth`       | 認証情報・トークン・コード                 | Refresh 失効 → 再認証（ブラウザ `code` 付与）／資格情報確認  |
+| `permission` | スコープ・データ権限・IP 制限              | その Company DB へ権限付与／スコープ追加／IP 申請            |
+| `validation` | 入力・パラメータ・書式・itemstate・version | 入力を見直す（後述の早見表）                                 |
+| `notFound`   | リソース / パーティションが無い            | id・partition・契約期間を確認                                |
+| `conflict`   | 重複・子要素あり・被参照                   | 重複作成を避ける／依存関係を解消                             |
+| `rateLimit`  | レート上限（HTTP 429 を観測できた場合）    | 送信ペースを落とす／時間をおく（PORTERS 直結では `network`） |
+| `transient`  | 一時障害・トランザクション                 | 自動リトライ対象（再試行可）                                 |
+| `network`    | 接続・タイムアウト・レート切断             | 自動リトライ後も失敗なら時間をおく／回線・レートを確認       |
+| `server`     | PORTERS 内部エラー                         | 時間をおいて再試行／継続するなら PORTERS へ報告              |
+| `config`     | 設定・使い方の誤り（同期 throw）           | 呼び出し前の不正：宣言・オプション・サイズを修正             |
+| `unknown`    | 未知（フェイルセーフ）                     | `code` と `hint` を確認／握り潰さず surface 済み             |
 
 ## 症状 → 原因 → 対処（早見表）
 
@@ -124,6 +170,7 @@ try {
 | `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）       |
 | `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                     |
 | `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                     |
+| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）        |
 
 ## コード対応表（2 系統）
 
@@ -158,11 +205,14 @@ try {
 
 ## 関連
 
-- 設計判断: [ADR-0006（エラーモデル）][adr-0006]
+- 設計判断: [ADR-0006（エラーモデル）][adr-0006] ／ [ADR-0044（HTTP ステータスの扱い）][adr-0044]
 - 一次情報: [リソース Result Code][result-codes] ／ [認証エラーコード][auth-errors]
 - 認証フロー: [認証 API のフロー][auth-flow]
+- 契約後に確認する仮定: [live-verification][lv]
 
 [adr-0006]: ../adr/0006-error-model.md
+[adr-0044]: ../adr/0044-http-status-handling.md
+[lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md
 [auth-flow]: ../reference/authentication-api/README.md
