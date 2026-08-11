@@ -114,7 +114,7 @@ describe("HTTP status classification (ADR-0044)", () => {
     expect(server.httpStatus).toBe(503);
     expect(server.retryable).toBe(true);
     expect(server.message).toContain("503");
-    expect(server.hint).toContain("intermediary");
+    expect(server.hint).toContain("load balancer");
 
     const rate = httpStatusError(429);
     expect(rate).toBeInstanceOf(PortersNetworkError);
