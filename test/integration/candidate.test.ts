@@ -137,6 +137,46 @@ describe("error paths against the fake server", () => {
     });
   });
 
+  it("classifies a gateway 5xx that never reached PORTERS (ADR-0044)", async () => {
+    const { fake, porters } = setup();
+    await porters.candidate.search(); // warm up auth, so the fault lands on the read
+
+    // What a load balancer / maintenance page actually returns: an error status and no envelope.
+    // Queued for every attempt (initial + 3 retries) so the retry budget runs out.
+    fake.control.failNext(
+      { kind: "http", status: 503, body: "<html>maintenance</html>" },
+      4,
+    );
+
+    await expect(porters.candidate.search()).rejects.toMatchObject({
+      name: "PortersNetworkError",
+      category: "server",
+      retryable: true,
+      code: null, // no PORTERS code exists — an intermediary answered
+      httpStatus: 503,
+    });
+    expect(fake.control.pendingFaults()).toHaveLength(0); // all four attempts were made
+  });
+
+  it("keeps the Result Code when an error status does carry an envelope", async () => {
+    const { fake, porters } = setup();
+    await porters.candidate.search();
+
+    fake.control.failNext({
+      kind: "http",
+      status: 400,
+      body: "<Candidate><Code>403</Code></Candidate>",
+    });
+
+    // Both channels disagree in specificity; the envelope wins and the status rides along.
+    await expect(porters.candidate.search()).rejects.toMatchObject({
+      name: "PortersResourceError",
+      category: "permission",
+      code: 403,
+      httpStatus: 400,
+    });
+  });
+
   it("re-authenticates transparently when the Access Token expires", async () => {
     const { fake, porters } = setup();
     await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
