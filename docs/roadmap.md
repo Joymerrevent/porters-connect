@@ -29,6 +29,8 @@
 
 ### 随時・任意（急がない）
 
+- [ ] **R-4 の積み残し: Link / Image 型の正規化**（[PRD R-4][prd] で **v1 未対応・deferred** と明記。P0 要件で唯一残っている穴。
+      需要が出たら詳細設計 ADR から。カスタム項目側の Image 対応は下の案D に含む＝別物）
 - [ ] 案D `defineFields` 深掘り（値レベルの実行時検証・テナント実在チェック・Field Read からの宣言生成。[ADR-0023][adr23]）
 - [ ] 案B MVP 外リソースの R/W（需要に応じ機会的に）→ 後述「🚀 将来の機能アップ」
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
@@ -99,7 +101,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - P0 = R-1〜R-15（**大半を実装。一部に積み残しあり**＝下記 ※）（OAuth・型付き client・リソース・XML 隠蔽・型付きクエリ・自動ページング・
   レート市民＋リトライ・サイズガード・構造化エラー・日時 ISO・秘匿非漏洩・モック transport・型安全・配布・言語方針）
-  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（[ADR-0040][adr40]・0.5.0）で公開済み**。残りは R-4 Link/Image（PRD で deferred 明記済み）。
+  - ※ 横断監査で一部に**積み残し**判明。**R-5 の `order`/`keywords`/`itemstate` は F-2（0.4.0）で是正済み**、**マルチテナント（`tenant(id)`）は F-3（[ADR-0040][adr40]・0.5.0）で公開済み**。残るは **R-4 の Link / Image 正規化のみ**（PRD で deferred 明記済み・上記「随時・任意」に掲載）。
 - P1 = **すべて実装**: R-16 `defineFields`（[ADR-0023][adr23]）／ R-17 `createMockTransport`＋サンドボックス（[ADR-0024][adr24]）／ R-18 エラー対処ガイド
 
 ### 評価基盤（[ADR-0043][adr43]・フェーズ0〜6）
@@ -133,13 +135,15 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
-- [ ] **次リリース 0.7.0** — changeset 登録済み（scheme・minor）。上記「着手可能」1〜4 の是正を載せるかは着手状況しだい
+- [ ] **次リリース 0.7.0** — changeset（scheme・minor）と [CHANGELOG][changelog] `[Unreleased]` は**記載済み**。
+      残るは release ブランチでの版 bump → main マージ → Release 作成。
+      上記「着手可能」1〜4 の是正を同梱するかは着手状況しだい
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
 
-機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固める。
-リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）も入れ、**基盤構築は完了**。各項目は branch→PR で進め、マージはメンテナ。
+機能開発を一旦止め、公開リポジトリの基盤（コミュニティ・ヘルス＋開発体験＋CI/CD）を固めた期間の記録。
+リリース自動化の決定は [ADR-0025][adr25]〜[0032][adr32]（accepted）。WS-C の任意項目（OpenSSF Scorecard / SHA ピン留め）まで入れて**基盤構築は完了**しており、**残タスクはない**。
 
 ### WS-A. コミュニティ・ヘルス／ガバナンス
 
@@ -156,11 +160,11 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `.editorconfig`
 - [x] **pre-commit 導入**（薄い構成：`simple-git-hooks` ＋ `lint-staged`）。旧記載の「pre-commit あり」は誤りで未導入だったため、ここで正式導入した
 - [x] commitlint（`@commitlint/config-conventional`）を**ローカル**（commit-msg フック）で強制。**CI ジョブは WS-C**
-- 定型セットアップは `project-recipes` スキルで codify 予定（既存 `git-hooks` は core.hooksPath 方式のため、simple-git-hooks 方式は別レシピ化）
+- [x] 定型セットアップを `project-recipes` スキルへ codify 済み（**`ts-commit-gates` レシピ**＝simple-git-hooks ＋ lint-staged ＋ commitlint。既存 `git-hooks` は core.hooksPath 方式なので別レシピとして分けた）
 
 ### WS-C. CI/CD ハードニング
 
-- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。default branch=main でも走るよう main へ反映は別途）
+- [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。**default branch=main にも反映済み**＝main で走る）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
@@ -169,7 +173,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.2.1 公開実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.6.2 の**全 10 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
