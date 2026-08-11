@@ -77,6 +77,7 @@
 | [0045][0045] | Write 応答のルート `<Code>` の扱い（RV-14）                 | 詳細設計 | accepted   |
 | [0046][0046] | 送信前ガードの例外契約（同期 throw か reject か・RV-15）    | 基本設計 | accepted   |
 | [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | accepted   |
+| [0048][0048] | アクセスポイント `host` の書式検証（RV-17）                 | 基本設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -106,13 +107,16 @@
 
 ### 【accept 済み・実装待ち】
 
-2026-08-09 のレビュー（[docs/reviews][reviews]）から起票し、同日に decider が全件 accept。**proposed は現在なし**。
-実装は ADR ごとに別 PR（未着手）。
+2026-08-09 / 2026-08-10 のレビュー（[docs/reviews][reviews]）から起票し、decider が全件 accept。
+**proposed は現在なし**。実装は ADR ごとに別 PR（0044〜0046・0048 は未着手・0047 は実装済み）。
 
 - [0044][0044]（案A）HTTP ステータスの扱い ／ [0045][0045]（案A）Write ルート `<Code>` の扱い
   — **実装順序は 0044 → 0045**（判定順の土台が先）
 - [0046][0046]（案A）送信前ガードの例外契約 — 独立して着手可・semver は minor
 - [0047][0047]（案B）アクセスポイント・scheme 設定 — フェイク フェーズ6 の前提・semver は minor
+  — **実装済み**（`fafdfea`・0.7.0 で公開予定）
+- [0048][0048]（案A ＋ 機構2）アクセスポイント `host` の書式検証 — 独立して着手可・semver は patch。
+  0047 の続き（`host` の意味を実行時にも強制する）
 
 ### 決定済み（ADR / PRD）
 
@@ -170,3 +174,4 @@
 [0045]: 0045-write-response-root-code.md
 [0046]: 0046-guard-error-contract.md
 [0047]: 0047-access-point-scheme.md
+[0048]: 0048-access-point-host-validation.md
