@@ -48,7 +48,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                 | いまの状態                              |
 | ----------------------------- | -------------------------------------------- | --------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 6 件                           |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | **open 5 件** = RV-13/14/15/17/18       |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | **open 4 件** = RV-13/14/15/17          |
 | [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | 実装待ち 0044・0045・0046・0048         |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）           |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
@@ -115,7 +115,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - ADR 0001〜0048 accepted（0037 は 0039 で superseded・proposed は現在なし）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・503 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12・16 は `fixed`／**RV-13/14/15/17/18 は open**）
+- 品質ゲート green・503 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12・16・18 は `fixed`／**RV-13/14/15/17 は open**）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
