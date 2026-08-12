@@ -5,7 +5,12 @@
 // rides the POST body (ADR-0034 SD-9), never a URL/log.
 
 import { PortersAuthError } from "../errors/index";
-import { apiUrl, type AccessPoint, type Transport } from "../http/index";
+import {
+  apiUrl,
+  readResponse,
+  type AccessPoint,
+  type Transport,
+} from "../http/index";
 import { parseAuthentication } from "../xml/parser";
 import type { StoredTokens } from "./types";
 
@@ -45,7 +50,10 @@ export const exchangeToken = async (
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  const a = parseAuthentication(res.body);
+  // Read both error channels, exactly as the Resource API path does (ADR-0050): a gateway's
+  // non-XML 5xx would otherwise land as "unparseable authentication response" — `unknown` and
+  // not retryable — right at the front of every request the library makes.
+  const a = readResponse(res, parseAuthentication);
   if (a.accessToken === undefined || a.refreshToken === undefined) {
     throw new PortersAuthError("token response missing tokens", {
       category: "auth",

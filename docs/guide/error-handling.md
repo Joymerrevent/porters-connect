@@ -118,7 +118,7 @@ try {
 - **リクエストサイズ → 送信前ガード**: 全体 ~15000 文字を超える要求は、サーバの不透明な 400 を
   待たずに送信前へ `PortersConfigError`（`category: "config"`）で弾きます（`hint` に分割を提案）。
 
-## 非 PORTERS ボディの HTTP エラー（[ADR-0044][adr-0044]）
+## 非 PORTERS ボディの HTTP エラー（[ADR-0044][adr-0044] / [ADR-0050][adr-0050]）
 
 PORTERS の reference はエラーを **2 系統**で定義しています — 「**HTTP 200 以外**、または `<Code>` が 0 以外」。
 後者は PORTERS 自身の答えですが、前者は **PORTERS まで届かなかった**ときにも起こります
@@ -156,6 +156,10 @@ try {
   }
 }
 ```
+
+この判定は**すべての経路で同じ**です — Resource API だけでなく、**OAuth / Token のやり取り**にも同じように効きます
+（[ADR-0050][adr-0050]）。トークン取得は全リクエストの前段なので、そこで起きたゲートウェイの 5xx も
+`server`・retryable として分類され、**内蔵リトライで自動回復**しえます。
 
 > **retryable なもの（5xx / 429 / 408）は `PortersNetworkError`** です。5xx は「書き込みが適用されたか
 > 分からない」状態なので、**非冪等な `create` は自動再送しません**（既存の冪等性ガードがそのまま効く＝フェイルセーフ）。
@@ -270,6 +274,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 [adr-0047]: ../adr/0047-access-point-scheme.md
 [adr-0048]: ../adr/0048-access-point-host-validation.md
 [adr-0049]: ../adr/0049-host-port-roundtrip.md
+[adr-0050]: ../adr/0050-auth-http-status-handling.md
 [lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md

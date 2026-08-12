@@ -45,6 +45,11 @@
   - **200 以外の応答は、ボディが parse できても値を返しません**（プロキシの HTML エラーページが
     「空ページ」として通り、利用者に「0 件」と見えるのを防ぐため）。
   - 写像は**未確認の仮定**です（実 PORTERS がどの status を返すかは契約後に確認 — LV-9）。
+  - **同じ判定が OAuth / Token のやり取りにも効きます**（[ADR-0050][adr50]）。トークン取得は全リクエストの
+    前段なので、そこでゲートウェイの 5xx が起きると従来は `category: "unknown"`・再試行不可として
+    **処理全体が止まって**いました。今後は `server`・retryable に分類され、**内蔵リトライで自動回復**しえます。
+    認証経路が `PortersNetworkError` / `PortersConfigError` を投げうる点だけ、`catch` の分岐にご注意ください
+    （いずれも `porters.auth.*` の JSDoc が挙げている系統です）。
 - **Write 応答のルート `<Code>` を先読み**（[ADR-0045][adr45]）。**リクエストごと拒否された Write** の Result Code が
   失われなくなりました。
   - 従来は単件 `create` / `update` が **「write returned no result item」**（`category: "unknown"`）、
@@ -205,6 +210,7 @@
 [adr46]: docs/adr/0046-guard-error-contract.md
 [adr48]: docs/adr/0048-access-point-host-validation.md
 [adr49]: docs/adr/0049-host-port-roundtrip.md
+[adr50]: docs/adr/0050-auth-http-status-handling.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/

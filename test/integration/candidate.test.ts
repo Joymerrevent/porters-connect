@@ -153,6 +153,38 @@ describe("error paths against the fake server", () => {
     });
   });
 
+  it("classifies a gateway 5xx on the token round-trip, and retries it (ADR-0050)", async () => {
+    const { fake, porters } = setup();
+    // Queued before anything runs, so the fault lands on `/v1/oauth` — the first request the
+    // library makes. Token acquisition sits in front of every call, so this used to fail the whole
+    // operation as `unknown` / not retryable (RV-19). Four faults = initial + 3 retries.
+    fake.control.failNext(
+      { kind: "http", status: 503, body: "<html>maintenance</html>" },
+      4,
+    );
+
+    await expect(porters.candidate.search()).rejects.toMatchObject({
+      name: "PortersNetworkError",
+      category: "server",
+      retryable: true,
+      code: null,
+      httpStatus: 503,
+    });
+    // All four attempts were made: the retry budget is now reachable from the auth path too.
+    expect(fake.control.pendingFaults()).toHaveLength(0);
+  });
+
+  it("recovers when the gateway 5xx on auth is transient (ADR-0050)", async () => {
+    const { fake, porters } = setup();
+    // One bad answer, then the gateway is healthy again — the caller never sees it.
+    fake.control.failNext({ kind: "http", status: 503 });
+
+    await expect(porters.candidate.search()).resolves.toMatchObject({
+      total: 0,
+    });
+    expect(fake.control.pendingFaults()).toHaveLength(0);
+  });
+
   it("classifies a gateway 5xx that never reached PORTERS (ADR-0044)", async () => {
     const { fake, porters } = setup();
     await porters.candidate.search(); // warm up auth, so the fault lands on the read
