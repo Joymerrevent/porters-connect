@@ -274,6 +274,11 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   **挙動変更＝要 ADR**（ADR-0044 の適用範囲を広げる新 ADR）。認証系は `PortersAuthError` に寄せるか、
   status 由来の分類（`server`/`rateLimit` 等）に従うかも同時に決める必要がある
 - **状態**: open
+- **処置**: [ADR-0050][adr50] を **`proposed` で起票**（2026-08-12・**推奨は案A**＝`readResponse` を `http/` へ切り出して
+  共有し、[ADR-0044][adr44] の判定順・写像をそのまま認証 2 経路へ適用）。サブクラスの論点は「**502 は認証の失敗ではない**」
+  ＝[ADR-0006][adr6] の「サブクラス＝発生系統」に従い、案C（すべて `PortersAuthError`）は推さない整理。
+  冪等性ガードが送信前の失敗にも掛かる件は RV-22 と同じ論点として切り分けた。semver は minor・
+  **0.7.0 のブロッカーではない**。**decider の決定待ち**
 
 ## RV-20 🟡 フェイルセーフ / API 忠実性（HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る）
 
@@ -345,6 +350,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr47]: ../adr/0047-access-point-scheme.md
 [adr48]: ../adr/0048-access-point-host-validation.md
 [adr49]: ../adr/0049-host-port-roundtrip.md
+[adr50]: ../adr/0050-auth-http-status-handling.md
 [rm]: ../roadmap.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
