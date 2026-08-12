@@ -38,7 +38,7 @@ describe("apiUrl (ADR-0047)", () => {
   });
 });
 
-describe("validateAccessPoint (ADR-0048)", () => {
+describe("validateAccessPoint (ADR-0048 / ADR-0049)", () => {
   it("accepts what a working configuration already looks like", () => {
     // The guarantee that matters: nothing that works today has to change by one character.
     for (const host of [
@@ -47,8 +47,12 @@ describe("validateAccessPoint (ADR-0048)", () => {
       "127.0.0.1:4010",
       "localhost:4010",
       "[::1]:4010",
-      "XXXXX.EXAMPLE.COM", // case is normalized by the parser, not rejected
+      "XXXXX.EXAMPLE.COM", // upper case is valid; the probe scheme leaves it alone (ADR-0049)
       "xn--eckwd4c7c.test", // a non-ASCII host, written the way it has to be written
+      // Redundant but legal: a port equal to the scheme's default. Parsing with `https://` used to
+      // drop these and reject them (RV-21) — the probe scheme has no default port (ADR-0049).
+      "a.test:443",
+      "a.test:80",
     ]) {
       expect(() => validateAccessPoint({ host }), host).not.toThrow();
     }
@@ -57,6 +61,10 @@ describe("validateAccessPoint (ADR-0048)", () => {
     ).not.toThrow();
     expect(() =>
       validateAccessPoint({ host: "a.test", scheme: "https" }),
+    ).not.toThrow();
+    // The verdict does not depend on which scheme the request will use.
+    expect(() =>
+      validateAccessPoint({ host: "localhost:443", scheme: "http" }),
     ).not.toThrow();
   });
 
@@ -70,8 +78,11 @@ describe("validateAccessPoint (ADR-0048)", () => {
     { host: "a test", why: "whitespace" },
     { host: "//a.test", why: "a protocol-relative prefix" },
     { host: "a.test?partition=1", why: "a query string" },
+    { host: "a.test#frag", why: "a fragment" },
+    { host: "a.test\\gw", why: "a backslash separator" },
     { host: "日本語.test", why: "non-ASCII (punycode is required)" },
-    { host: "a.test:443", why: "the default port, which does not round-trip" },
+    { host: "a.test:", why: "a colon with no port" },
+    { host: "a.test:abc", why: "a non-numeric port" },
   ])("rejects $host — $why", ({ host }) => {
     let err: unknown;
     try {
@@ -83,10 +94,11 @@ describe("validateAccessPoint (ADR-0048)", () => {
     expect((err as PortersConfigError).category).toBe("config");
     // The value is echoed back so the reader sees what was actually configured...
     expect((err as PortersConfigError).message).toContain(JSON.stringify(host));
-    // ...and the hint says how to fix it, including both known limits.
+    // ...and the hint says how to fix it, including the one known limit that remains.
     expect((err as PortersConfigError).hint).toContain("host name only");
-    expect((err as PortersConfigError).hint).toContain("443");
     expect((err as PortersConfigError).hint).toContain("punycode");
+    // The default-port caveat is gone with ADR-0049 — the hint must not resurrect it.
+    expect((err as PortersConfigError).hint).not.toContain("443");
   });
 
   it("rejects a scheme the type forbids but JS can still pass", () => {
