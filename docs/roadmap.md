@@ -13,15 +13,17 @@
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                   | 根拠                       | semver | 備考                                                   |
-| --- | ------------------------------------------ | -------------------------- | ------ | ------------------------------------------------------ |
-| 1   | **RV-21 の判断** `host` の `:443` を通すか | [findings][findings] RV-21 | —      | **0.7.0 に載る挙動**＝リリース前に決めるのが望ましい   |
-| 2   | **0.7.0 リリース**                         | [release-runbook][rb]      | minor  | scheme（[ADR-0047][adr47]）＋ 下記 4 件の是正          |
-| 3   | **RV-19 / RV-20 の是正 ADR** を起票        | [findings][findings]       | 未確定 | どちらも挙動変更＝要 ADR。リリースのブロッカーではない |
-| 4   | **案A 第2層 MCP サーバー** の詳細設計 ADR  | [ADR-0033][adr33]          | —      | 戦略ゴール。パッケージ構成・ツール表面から             |
+| #   | やること                                            | 根拠                       | semver | 備考                                                                        |
+| --- | --------------------------------------------------- | -------------------------- | ------ | --------------------------------------------------------------------------- |
+| 1   | **[ADR-0049][adr49] の決定**（`host` の既定ポート） | [findings][findings] RV-21 | patch  | `proposed`・推奨は案C。**0.7.0 に載る挙動**＝リリース前に決めるのが望ましい |
+| 2   | **0.7.0 リリース**                                  | [release-runbook][rb]      | minor  | scheme（[ADR-0047][adr47]）＋ 下記 4 件の是正                               |
+| 3   | **RV-19 / RV-20 の是正 ADR** を起票                 | [findings][findings]       | 未確定 | どちらも挙動変更＝要 ADR。リリースのブロッカーではない                      |
+| 4   | **案A 第2層 MCP サーバー** の詳細設計 ADR           | [ADR-0033][adr33]          | —      | 戦略ゴール。パッケージ構成・ツール表面から                                  |
 
 - **ADR-0044・0045・0046・0048 の実装は完了**（RV-13/14/15/17 はすべて `fixed`）。**accept 済み・実装待ちの ADR は無い**。
-- 1 は 2 者択一（現状維持 ／ 既定ポートだけ許容）。(b) を採るなら ADR-0048 の追補 ADR を 1 本。
+- 1 は [ADR-0049][adr49]（`proposed`）で 3 案を整理済み — 案A 現状維持 ／ 案B `:443` だけ特例 ／
+  **案C 既定ポートを持たないスキームでパース（推奨）**。accept されたら実装は別 PR
+  （`access-point.ts` の判定式 ＋ テスト ＋ 文言）。
 - 2 は「[Unreleased] を確定させて出す」だけ。手順は [release-runbook][rb]（release ブランチで版 bump → main → Release 作成）。
 - 3 は実装 4 本の過程で判明した積み残し（**RV-19** 認証経路が status を見ない／**RV-20** 200 ＋ 非 PORTERS ボディが空ページに見える）。
   いずれも**既存の挙動**で、今回の変更による退行ではない。加えて **RV-22**（429 後に `create` を再送しない）は
@@ -120,7 +122,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0048 accepted（0037 は 0039 で superseded・proposed は現在なし）（[索引][adr]）
+- ADR 0001〜0048 accepted（0037 は 0039 で superseded）＋ **0049 は proposed（議論中）**（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・543 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜18 は `fixed`／
   **RV-19〜22 は open**＝実装 4 本の過程で判明した積み残し）
@@ -241,6 +243,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr46]: adr/0046-guard-error-contract.md
 [adr47]: adr/0047-access-point-scheme.md
 [adr48]: adr/0048-access-point-host-validation.md
+[adr49]: adr/0049-host-port-roundtrip.md
 [fake-plan]: design/fake-server-plan.md
 [fake-runbook]: fake-server-runbook.md
 [p7]: adr/0007-oauth-public-surface.md
