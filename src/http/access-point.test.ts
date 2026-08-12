@@ -1,9 +1,12 @@
 // The single URL builder (ADR-0047). Every request in the library is rendered here, so these
 // cases pin the shape the API sees: scheme default, opt-in http, and query joining.
+// The validator (ADR-0048) is pinned alongside it: what `apiUrl` is allowed to be handed.
 
 import { describe, expect, it } from "vitest";
 
-import { apiUrl } from "./access-point";
+import { PortersConfigError } from "../errors/index";
+import { apiUrl, validateAccessPoint } from "./access-point";
+import type { Scheme } from "../types/index";
 
 describe("apiUrl (ADR-0047)", () => {
   it("defaults to https when no scheme is configured", () => {
@@ -32,5 +35,71 @@ describe("apiUrl (ADR-0047)", () => {
     expect(apiUrl({ host: "h.test" }, "candidate", new URLSearchParams())).toBe(
       "https://h.test/v1/candidate",
     );
+  });
+});
+
+describe("validateAccessPoint (ADR-0048)", () => {
+  it("accepts what a working configuration already looks like", () => {
+    // The guarantee that matters: nothing that works today has to change by one character.
+    for (const host of [
+      "xxxxx.example.com",
+      "a.test:8080",
+      "127.0.0.1:4010",
+      "localhost:4010",
+      "[::1]:4010",
+      "XXXXX.EXAMPLE.COM", // case is normalized by the parser, not rejected
+      "xn--eckwd4c7c.test", // a non-ASCII host, written the way it has to be written
+    ]) {
+      expect(() => validateAccessPoint({ host }), host).not.toThrow();
+    }
+    expect(() =>
+      validateAccessPoint({ host: "a.test", scheme: "http" }),
+    ).not.toThrow();
+    expect(() =>
+      validateAccessPoint({ host: "a.test", scheme: "https" }),
+    ).not.toThrow();
+  });
+
+  it.each([
+    { host: "https://a.test", why: "a scheme (the PORTERS_HOST mix-up)" },
+    { host: "http://a.test", why: "a scheme, the other one" },
+    { host: "", why: "empty — an unset env pushed through with `!`" },
+    { host: "a.test/", why: "a trailing slash" },
+    { host: "a.test/gw", why: "a path prefix (out of scope — ADR-0047)" },
+    { host: "user@a.test", why: "userinfo" },
+    { host: "a test", why: "whitespace" },
+    { host: "//a.test", why: "a protocol-relative prefix" },
+    { host: "a.test?partition=1", why: "a query string" },
+    { host: "日本語.test", why: "non-ASCII (punycode is required)" },
+    { host: "a.test:443", why: "the default port, which does not round-trip" },
+  ])("rejects $host — $why", ({ host }) => {
+    let err: unknown;
+    try {
+      validateAccessPoint({ host });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).category).toBe("config");
+    // The value is echoed back so the reader sees what was actually configured...
+    expect((err as PortersConfigError).message).toContain(JSON.stringify(host));
+    // ...and the hint says how to fix it, including both known limits.
+    expect((err as PortersConfigError).hint).toContain("host name only");
+    expect((err as PortersConfigError).hint).toContain("443");
+    expect((err as PortersConfigError).hint).toContain("punycode");
+  });
+
+  it("rejects a scheme the type forbids but JS can still pass", () => {
+    let err: unknown;
+    try {
+      // What an untyped caller (or an `as` cast) can hand over: without this it would quietly
+      // assemble `ftp://a.test/v1/...`.
+      validateAccessPoint({ host: "a.test", scheme: "ftp" as Scheme });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).message).toContain("ftp");
+    expect((err as PortersConfigError).hint).toContain("https");
   });
 });

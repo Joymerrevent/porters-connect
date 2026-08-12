@@ -10,6 +10,7 @@ import {
   createRequester,
   createThrottle,
   expoBackoff,
+  validateAccessPoint,
   warnIfInsecureScheme,
 } from "./http";
 import type { AccessPoint, Transport } from "./http";
@@ -46,6 +47,11 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /**
    * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
    * (A representative value lives in docs/reference.) May carry a port — `localhost:4010`.
+   *
+   * The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
+   * `https://xxxxx.example.com` is rejected at construction with a {@link PortersConfigError}
+   * rather than silently addressing a different host (ADR-0048). Omit the default port (`:443`),
+   * and write a non-ASCII host in punycode.
    */
   host: string;
   /**
@@ -132,11 +138,15 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
 
   constructor(options: PortersClientOptions<C>) {
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
-    // renders it. Plain http warns loudly (once per process) — allowing it never silences it.
+    // renders it. Checked once here too (ADR-0048): a malformed `host` is a configuration
+    // problem, so it fails where the configuration was handed over — before any credential can
+    // be posted to whatever the wrong value happens to resolve to. Plain http warns loudly
+    // (once per process) — allowing it never silences it.
     const accessPoint: AccessPoint = {
       host: options.host,
       scheme: options.scheme,
     };
+    validateAccessPoint(accessPoint);
     warnIfInsecureScheme(options.scheme, options.host);
     const transport = options.transport ?? createFetchTransport();
     // Custom strategy (案3) takes over token supply; otherwise the default transparent
