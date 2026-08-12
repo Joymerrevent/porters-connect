@@ -28,6 +28,10 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-16 | 🟢     | ドキュメント              | fixed |
 | RV-17 | 🟡     | フェイルセーフ / 設定検証 | fixed |
 | RV-18 | 🟢     | ドキュメント / 計画       | fixed |
+| RV-19 | 🟡     | エラーモデル / 認証       | open  |
+| RV-20 | 🟡     | フェイルセーフ / 忠実性   | open  |
+| RV-21 | 🟢     | 設定検証 / 後方互換       | open  |
+| RV-22 | 🟢     | リトライ / DX             | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -251,7 +255,80 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   内容は ADR と台帳が正＝roadmap 側はポインタのみ（重複させない）。併せて陳腐化していた記述
   （ADR 件数・テスト数・open の RV 一覧・LV の範囲・PRD §8 の残論点）も実態へ是正した
 
+## RV-19 🟡 エラーモデル / 認証（認証 API 経路が HTTP ステータスを見ない）
+
+- **概要**: [ADR-0044][adr44] で `requester` は `res.status` を見るようになったが、**OAuth / Token の 2 経路は
+  `transport.send` を直接呼んでおり status を捨てたまま**。ロードバランサ・プロキシ・WAF が返す非 XML の 4xx/5xx は
+  `parseAuthentication` の「unparseable authentication response」＝ `category: "unknown"`・`httpStatus: undefined`・
+  `retryable: false` になる。**トークン取得は全リクエストの前段**なので、一時的な 502 でも
+  「原因不明・再試行不可」として全体が止まる（Resource API 側なら `server`/retryable に分類され自動リトライされる状況）。
+  RV-13 と同じ穴が認証系にだけ残っている状態
+- **根拠**: `src/auth/token-provider.ts:92-93`（`code_direct` の GET／status 不使用）/
+  `src/auth/token-exchange.ts:42-48`（Token の POST／status 不使用）/
+  対比 `src/http/requester.ts:52-73`（`readResponse` が両系統を読む）/
+  `docs/reference/resource-api/README.md`（「エラーは HTTP 200 以外、または `<Code>` が 0 以外」）
+- **検出経緯**: [ADR-0044][adr44] の実装中（PR #143）。ADR の「影響範囲」が `requester` に限定されていたため、
+  **決定の範囲を勝手に広げず**別 finding として起票した
+- **推奨**: ADR-0044 の判定順（envelope 優先 → 無ければ status から分類）を認証経路にも適用する。
+  実装上は `readResponse` 相当を `http/` に切り出して両経路で共有するのが薄い。
+  **挙動変更＝要 ADR**（ADR-0044 の適用範囲を広げる新 ADR）。認証系は `PortersAuthError` に寄せるか、
+  status 由来の分類（`server`/`rateLimit` 等）に従うかも同時に決める必要がある
+- **状態**: open
+
+## RV-20 🟡 フェイルセーフ / API 忠実性（HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る）
+
+- **概要**: `parseResourcePage` は**任意の XML/HTML を受け取っても throw しない**。ルート要素が何であれ
+  `asRecord` を通れば body 扱いになり、`<Code>` が無ければ `toInt` が 0（＝成功）を返すため、
+  `total: 0 / items: []` の**正常な空ページ**として返る。[ADR-0044][adr44] で「200 以外なら値を返さない」ようにしたので
+  プロキシの 5xx は塞がったが、**HTTP 200 を返す中間装置**（キャプティブポータル、SSO のログイン画面、
+  200 で通知ページを返す WAF）では今も「0 件」に見える。**データが無いのか届いていないのかを利用者が区別できない**
+- **根拠**: `src/xml/parser.ts:48-74`（`rootKey` があれば body 扱い・`<Code>` 不在は 0）/
+  `src/xml/parser.test.ts`（「defaults missing attributes and Code to 0」が現在の寛容さを固定している）/
+  reference は「成功は **HTTP 200 かつ `<Code>0`**」＝ `<Code>` の存在は成功の要件
+- **検出経緯**: [ADR-0044][adr44] の実装中（PR #143）。「非 2xx で parse に成功しても値を返さない」判断の根拠を
+  確認していて、200 側には同じ穴が残ると分かった
+- **推奨**: いずれか — (a) **ルート要素名を検証**する（期待するリソース名か `Authentication` か）、
+  (b) **`<Code>` の不在を「envelope ではない」と見なす**（reference の「200 かつ `<Code>0`」に接地）。
+  (b) は現行 fixture・テストの寛容な既定を変えるため影響が広い。**挙動変更＝要 ADR**
+- **状態**: open
+
+## RV-21 🟢 設定検証 / 後方互換（既定ポート `:443` 付きの `host` が弾かれる）
+
+- **概要**: [ADR-0048][adr48] 機構2 の条件 (b)「`url.host` が入力の小文字化と一致」は、
+  **既定ポートを書いた `host` を通さない**。`new URL("https://a.test:443").host` はパーサが `:443` を落として
+  `a.test` を返すため、ラウンドトリップが成立しない。結果、**現在正しく動作している
+  `PORTERS_HOST=xxxxx.example.com:443` が 0.7.0 で構築時エラーになる**。
+  ADR-0048 の Decision Drivers「**既存の正しい設定を壊さない**（現在動いている `host:port` は 1 文字も変えずに通る）」と
+  部分的に衝突する
+- **根拠**: `src/http/access-point.ts:76`（条件 (b)）/ [ADR-0048][adr48] Decision Outcome 2・Decision Drivers /
+  実測: `new URL("https://a.test:443").host === "a.test"`（`a.test:8080` は保持される＝既定ポートだけの問題）
+- **検出経緯**: [ADR-0048][adr48] の実装中（PR #146）。ADR で決まった機構を実装側の判断で緩めるべきではないため、
+  **ADR どおり実装**したうえで hint（「既定ポート (443) は省く」）・テスト・[ガイド][guide]に既知の制限として明記し、
+  判断は本 finding に委ねた
+- **推奨**: どちらかを decider が選ぶ — (a) **現状維持**（`:443` を省けば通る・hint で誘導済み。仕様を単純に保つ）、
+  (b) **既定ポートだけ許容**（`url.port` が空で、`url.hostname` ＋ `":443"` が入力の小文字化と一致する場合を通す）。
+  (b) を採るなら ADR-0048 の追補 ADR。**0.7.0 に載る挙動なので、リリース前に決めるのが望ましい**
+- **状態**: open
+
+## RV-22 🟢 リトライ / DX（HTTP 429 の後、非冪等な `create` が自動再送されない）
+
+- **概要**: [ADR-0044][adr44] の実装で `429 → category: "rateLimit"` を `PortersNetworkError` にした結果、
+  requester の冪等性ガード（「非冪等な write ＋ network 不確実 → 再送しない」）に掛かり、
+  **`create` / `createMany` は 429 の後リトライされずに表面化**する。5xx（適用されたか不明）では正しい判断だが、
+  **429 は「処理される前に拒否された」ことが分かっている**ので、再送しても二重登録は起きない。
+  安全側ではあるが、自動回復できる場面を 1 つ落としている
+- **根拠**: `src/errors/classify.ts:119-124,153`（`rateLimit` を retryable な network 系に置く）/
+  `src/http/requester.ts:147`（冪等性ガードは `PortersNetworkError` を見る）/
+  [ADR-0010][adr10]（リトライ方針）
+- **検出経緯**: [ADR-0044][adr44] の実装中（PR #143）。サブクラスの選択（429 を `PortersNetworkError` にする）に
+  伴う副作用として認識したうえで、**安全側に倒す**判断で実装した
+- **推奨**: 冪等性ガードを「network 不確実」に限定する（例: `category === "rateLimit"` は適用外にする、
+  または「送信前に拒否された」ことを表す印を持たせる）。**挙動変更＝要 ADR**。
+  なお PORTERS 直結では 429 は観測されない想定（強制切断）なので、**優先度は低い**（プロキシ経由の環境でのみ効く）
+- **状態**: open
+
 [adr6]: ../adr/0006-error-model.md
+[adr10]: ../adr/0010-retry-throttle.md
 [adr24]: ../adr/0024-mock-transport.md
 [adr43]: ../adr/0043-local-fake-server.md
 [adr44]: ../adr/0044-http-status-handling.md
