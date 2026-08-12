@@ -170,6 +170,8 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
     ensureAuthenticated: async () => {
       await opts.provider.getAccessToken();
     },
-    getToken: () => opts.provider.getAccessToken(),
+    // `async` so a custom strategy that throws synchronously still reaches the caller as a
+    // rejection — a Promise-returning method never throws (ADR-0046).
+    getToken: async () => opts.provider.getAccessToken(),
   };
 };

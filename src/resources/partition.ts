@@ -71,7 +71,11 @@ export const createPartitionResource = (
   deps: Omit<ResourceDeps, "partition">,
 ): PartitionResource => {
   const decode = decoderFor(FIELDS);
-  const search = (query: PartitionSearchQuery = {}): Promise<PartitionPage> =>
+  // `async` for the exception contract: a Promise-returning public method never throws
+  // synchronously, whatever URL building does (ADR-0046).
+  const search = async (
+    query: PartitionSearchQuery = {},
+  ): Promise<PartitionPage> =>
     runRead(deps.requester, buildUrl(deps.accessPoint, query), decode);
   const searchAll = (
     query: Omit<PartitionSearchQuery, "count" | "start"> = {},

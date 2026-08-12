@@ -83,7 +83,8 @@ const buildUrl = (
 
 export const createUserResource = (deps: ResourceDeps): UserResource => {
   const decode = decoderFor(FIELDS);
-  const search = (query: UserSearchQuery = {}): Promise<UserPage> =>
+  // `async` for the exception contract (ADR-0046).
+  const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
     runRead(
       deps.requester,
       buildUrl(deps.accessPoint, deps.partition, query),

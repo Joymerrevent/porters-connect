@@ -82,7 +82,8 @@ export const createOptionResource = (deps: ResourceDeps): OptionResource => {
       flatten(children, out);
     }
   };
-  const search = (query: OptionSearchQuery = {}): Promise<Option[]> =>
+  // `async` for the exception contract (ADR-0046).
+  const search = async (query: OptionSearchQuery = {}): Promise<Option[]> =>
     deps.requester.request(
       {
         method: "GET",
