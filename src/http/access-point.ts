@@ -21,10 +21,17 @@ export type AccessPoint = {
 
 const HOST_HINT =
   "Pass the host name only (with a port if needed) — no scheme, path, userinfo or whitespace." +
-  ' Examples: "xxxxx.example.com", "127.0.0.1:4010". Omit the default port (443). A non-ASCII host must be given in punycode.';
+  ' Examples: "xxxxx.example.com", "127.0.0.1:4010". A non-ASCII host must be given in punycode.';
 
 const configError = (message: string, hint: string): PortersConfigError =>
   new PortersConfigError(message, { category: "config", hint });
+
+// The scheme the round-trip parses with (ADR-0049). Deliberately *not* `https`: WHATWG URL knows
+// the default port of a special scheme and drops it, so `a.test:443` came back as `a.test` and was
+// rejected for not round-tripping — a config that works today, refused for a parser's convenience.
+// An unknown scheme has no default port, so every port survives. The name only ever appears in
+// this file; nothing is sent anywhere with it.
+const PROBE_SCHEME = "porters-check";
 
 /**
  * Reject an access point the library cannot honour — **before** a single request is built
@@ -39,12 +46,12 @@ const configError = (message: string, hint: string): PortersConfigError =>
  * diagnosis. Both are the wrong way to fall over.
  *
  * The test is a round-trip rather than a list of forbidden patterns, so shapes nobody thought of
- * are rejected too (fail-safe): parse `https://{host}` and require that it parses, that `url.host`
- * comes back as the input (lowercased), and that the path is `/`.
+ * are rejected too (fail-safe): parse `{PROBE_SCHEME}://{host}` and require that it parses, that
+ * `url.host` comes back as the input (case-insensitively), and that nothing follows the authority.
  *
- * Known limits, both by design: `url.host` is punycode-normalized, so a non-ASCII host must be
- * written in punycode (PORTERS issues ASCII host names); and the redundant default port — `:443`
- * — is dropped by the parser, so it does not round-trip and is rejected. Both say so in the hint.
+ * Known limit, by design: a host is percent-encoded rather than punycode-decoded here, so a
+ * non-ASCII host does not round-trip and must be written in punycode (PORTERS issues ASCII host
+ * names). The hint says so.
  */
 export const validateAccessPoint = (accessPoint: AccessPoint): void => {
   const { host, scheme } = accessPoint;
@@ -62,18 +69,29 @@ export const validateAccessPoint = (accessPoint: AccessPoint): void => {
       `host ${JSON.stringify(host)} is not a bare host name`,
       HOST_HINT,
     );
+  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
+  // `porters-check://` parses and `url.host` is `""` — which "matches" an empty input. An unset
+  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
+  // so it is spelled out rather than inferred.
+  if (host === "") throw rejected();
   let url: URL;
   try {
-    url = new URL(`https://${host}`);
+    url = new URL(`${PROBE_SCHEME}://${host}`);
   } catch {
     throw rejected();
   }
-  // The `pathname` half is belt-and-suspenders: a path can only appear after a delimiter that
-  // also ends the authority, so an input carrying one already fails the host comparison (checked
-  // exhaustively over a delimiter-rich alphabet — no counterexample). It stays because ADR-0048
-  // names all three conditions and reading it as "host, and nothing after it" is the point.
-  // Stryker disable next-line ConditionalExpression: equivalent — a non-"/" path implies a host mismatch
-  if (url.host !== host.toLowerCase() || url.pathname !== "/") throw rejected();
+  // An unknown scheme leaves the host's case alone (a special scheme lowercases it), so compare
+  // case-insensitively — an upper-case host is valid.
+  //
+  // The `pathname` half is belt-and-suspenders, as it was under `https://` (ADR-0048): a path can
+  // only follow a delimiter that also ends the authority, so any input carrying one already fails
+  // the host comparison. Re-checked exhaustively against this probe scheme — no counterexample.
+  // ADR-0049 expected it to become load-bearing here; it did not. It stays because "the host, and
+  // nothing after it" is the contract being read, not because a test can tell the difference.
+  // Stryker disable next-line ConditionalExpression: equivalent — a non-empty path implies a host mismatch
+  if (url.host.toLowerCase() !== host.toLowerCase() || url.pathname !== "") {
+    throw rejected();
+  }
 };
 
 /** Build an API URL: `{scheme}://{host}/v1/{path}` plus `?{params}` when any are given. */

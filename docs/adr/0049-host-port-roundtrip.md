@@ -93,9 +93,14 @@
       （`porters-check://XXXXX.EXAMPLE.COM` の `url.host` は大文字のまま）。
       現在通っている大文字ホストを落とさないため、`url.host.toLowerCase() === host.toLowerCase()` とする。
    3. **`pathname === "/"` を `pathname === ""` へ**。非特殊スキームでは裸のホストの `pathname` は空文字になる。
-      [ADR-0048][adr48] の実装時、この条件は host 比較に包含される（equivalent mutant）と分かっていたが、
+      ~~[ADR-0048][adr48] の実装時、この条件は host 比較に包含される（equivalent mutant）と分かっていたが、
       **本 ADR 後は実際に効く**（`//a.test` と `a.test/` を落とすのはこの条件）ので、
-      **Stryker の equivalent 注記は外す**。
+      **Stryker の equivalent 注記は外す**。~~
+      **訂正（実装時 2026-08-12）**: この見立ては誤りだった。本スキームでも
+      **`pathname` 条件は host 比較に包含される**（`//a.test` は `url.host` が `""` に、`a.test/` は
+      `a.test` になり、どちらも**先に host 比較で落ちる**。区切り文字を含む長さ 4 までの総当たりで反例なし）。
+      条件は**「ホストと、その後ろに何も無いこと」を読ませるために残す**が、
+      **Stryker の equivalent 注記も残す**（テストで差を観測できないため）。決定そのものは変わらない。
 2. **空文字を明示的に弾く**。非特殊スキームは**空の authority を許す**（`porters-check://` はパースに成功し
    `url.host === ""`）。`host === ""` は RV-17 の実例（env 未設定を `!` で押し通した場合）なので、
    **非空チェックを 1 行足す**。ここだけは列挙に戻る＝本決定の唯一のコストであり、**省略しない**。

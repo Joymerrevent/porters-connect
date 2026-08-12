@@ -50,8 +50,8 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
    *
    * The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
    * `https://xxxxx.example.com` is rejected at construction with a {@link PortersConfigError}
-   * rather than silently addressing a different host (ADR-0048). Omit the default port (`:443`),
-   * and write a non-ASCII host in punycode.
+   * rather than silently addressing a different host (ADR-0048). Any port is fine — including a
+   * redundant `:443` (ADR-0049). Write a non-ASCII host in punycode.
    */
   host: string;
   /**

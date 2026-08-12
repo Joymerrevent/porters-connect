@@ -16,15 +16,16 @@
 
 ### Fixed
 
-- **アクセスポイントの書式を構築時に検証**（[ADR-0048][adr48]）。`host` は**ホスト（＋必要ならポート）だけ**を表します。
-  スキーム・パス・userinfo・空白を含む値は、**接続を試みる前に** `new PortersClient(...)` が
-  `PortersConfigError`（`category: "config"` ＋ 直し方の `hint`）で拒否します。
+- **アクセスポイントの書式を構築時に検証**（[ADR-0048][adr48]・[ADR-0049][adr49]）。`host` は
+  **ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
+  **接続を試みる前に** `new PortersClient(...)` が `PortersConfigError`（`category: "config"` ＋ 直し方の `hint`）で拒否します。
   - 従来これらは**例外にならず**、`host: "https://xxxxx.example.com"` は `https` という**別ホスト宛の実リクエスト**に、
     `host: ""` は `v1` 宛になっていました。**App ID / App Secret が意図しない宛先へ送られる**か、
     名前が解決しなければ**設定ミスが `network` エラーとして延々リトライ**される状態でした。
-  - **弾かれる例**: `https://a.test`／`""`／`a.test/`／`a.test/gw`／`user@a.test`／`a test`／
-    非 ASCII ホスト（**punycode** で渡してください）／既定ポート付き `a.test:443`（`:443` は省いてください）。
-  - **通る例**: `a.test`／`a.test:8080`／`127.0.0.1:4010` — **既存の正しい設定は 1 文字も変わりません**。
+  - **弾かれる例**: `https://a.test`／`""`／`a.test/`／`a.test/gw`／`user@a.test`／`a test`／`//a.test`／
+    非 ASCII ホスト（**punycode** で渡してください）。
+  - **通る例**: `a.test`／`a.test:8080`／`127.0.0.1:4010`／`[::1]:4010`／大文字ホスト — **既存の正しい設定は
+    1 文字も変わりません**。**ポートはどれでも書けます**（冗長な `:443` も通ります）。
   - `scheme` も同じガードで検証します（型は `"https" | "http"` ですが、JS や `as` 越しの値を黙って組み立てないため）。
 
 ### Changed
@@ -203,6 +204,7 @@
 [adr45]: docs/adr/0045-write-response-root-code.md
 [adr46]: docs/adr/0046-guard-error-contract.md
 [adr48]: docs/adr/0048-access-point-host-validation.md
+[adr49]: docs/adr/0049-host-port-roundtrip.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/

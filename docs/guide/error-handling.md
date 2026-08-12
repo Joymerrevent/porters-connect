@@ -163,7 +163,7 @@ try {
 > なお**実 PORTERS がどの status を返すかは未確認**です（契約後に確認 — [live-verification][lv] LV-9）。
 > 上表は「PORTERS 以外が返す HTTP エラーを安全側へ倒す」ための写像であり、確定した仕様ではありません。
 
-## アクセスポイントの書式（[ADR-0048][adr-0048]）
+## アクセスポイントの書式（[ADR-0048][adr-0048] / [ADR-0049][adr-0049]）
 
 `host` は**ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
 **接続を試みる前に** `PortersConfigError`（`category: "config"`）で拒否されます。
@@ -171,6 +171,7 @@ try {
 ```ts
 new PortersClient({ host: "xxxxx.example.com" }); // ✅
 new PortersClient({ host: "127.0.0.1:4010", scheme: "http" }); // ✅ ポートは host に含める
+new PortersClient({ host: "xxxxx.example.com:443" }); // ✅ 冗長でも通る
 new PortersClient({ host: "https://xxxxx.example.com" }); // ❌ PortersConfigError
 new PortersClient({ host: "" }); // ❌ （env 未設定を押し通した場合）
 new PortersClient({ host: "xxxxx.example.com/gw" }); // ❌ パス prefix は対象外（ADR-0047）
@@ -180,10 +181,10 @@ new PortersClient({ host: "xxxxx.example.com/gw" }); // ❌ パス prefix は対
 App ID / App Secret がそこへ実際に送られる（または直しようのない設定ミスが `network` として
 延々リトライされる）ためです。**曖昧な設定で黙って別の宛先へ繋がない**のが本ライブラリの契約です。
 
-2 つだけ既知の制限があります（どちらもエラーの `hint` に出ます）。
+**ポートはどれでも書けます**（`:8080` も、冗長な `:443` も通ります — [ADR-0049][adr-0049]）。
+既知の制限は 1 つだけです（エラーの `hint` にも出ます）。
 
 - **非 ASCII のホストは punycode 表記**で渡してください（`xn--...`）。
-- **既定ポート `:443` は書かない**でください（パーサが落とすため書式検証を通りません）。
 
 なお**パス prefix 付きのゲートウェイ**（`https://gw/porters/v1/...`）は [ADR-0047][adr-0047] で対象外と決めており、
 本検証はその決定を実行時にも明示するものです。
@@ -268,6 +269,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 [adr-0046]: ../adr/0046-guard-error-contract.md
 [adr-0047]: ../adr/0047-access-point-scheme.md
 [adr-0048]: ../adr/0048-access-point-host-validation.md
+[adr-0049]: ../adr/0049-host-port-roundtrip.md
 [lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md
