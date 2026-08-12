@@ -127,6 +127,36 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     warn.mockRestore();
   });
 
+  it("refuses a malformed host at construction, before anything is sent (ADR-0048)", () => {
+    resetInsecureSchemeWarning();
+    const { transport, calls } = recordingTransport();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // `PORTERS_HOST` with the scheme included: the mistake that used to build
+    // `https://https://xxxxx.example.com/v1/oauth` and post the App Secret to whatever `https`
+    // resolves to. It now fails where the configuration was handed over. `scheme: "http"` is set
+    // so the cleartext warning *would* fire — the check runs first.
+    expect(
+      () =>
+        new PortersClient({
+          host: "https://xxxxx.example.com",
+          scheme: "http",
+          appId: "AID",
+          appSecret: "SECRET",
+          transport,
+        }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+      }),
+    );
+
+    expect(calls).toHaveLength(0); // nothing was sent — no credential left the process
+    expect(warn).not.toHaveBeenCalled(); // and no cleartext warning about a config that is invalid
+    warn.mockRestore();
+  });
+
   it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({ host: "h.test", transport });
