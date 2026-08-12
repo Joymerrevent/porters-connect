@@ -274,6 +274,11 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   **挙動変更＝要 ADR**（ADR-0044 の適用範囲を広げる新 ADR）。認証系は `PortersAuthError` に寄せるか、
   status 由来の分類（`server`/`rateLimit` 等）に従うかも同時に決める必要がある
 - **状態**: open
+- **処置**: [ADR-0050][adr50] を **accepted**（**案A**＝`readResponse` を `http/` へ切り出して共有し、
+  [ADR-0044][adr44] の判定順・写像をそのまま認証 2 経路へ適用・decider 2026-08-12）。サブクラスの論点は
+  「**502 は認証の失敗ではない**」＝[ADR-0006][adr6] の「サブクラス＝発生系統」に従い、案C（すべて `PortersAuthError`）は不採用。
+  冪等性ガードが送信前の失敗にも掛かる件は RV-22 と同じ論点として切り分け、本 ADR では触らない。
+  semver は **minor**・**0.7.0 のブロッカーではない**（間に合えば同梱）。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-20 🟡 フェイルセーフ / API 忠実性（HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る）
 
@@ -300,15 +305,24 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   `PORTERS_HOST=xxxxx.example.com:443` が 0.7.0 で構築時エラーになる**。
   ADR-0048 の Decision Drivers「**既存の正しい設定を壊さない**（現在動いている `host:port` は 1 文字も変えずに通る）」と
   部分的に衝突する
+  さらに、検証は `scheme` の設定に関わらず**常に `https://` でパース**するため、弾かれる集合は
+  「**`scheme` を問わず `:443`**」になる。`scheme: "http"` にとって 443 は既定ポートではなく**意味のある指定**
+  なのに弾かれる＝利用者には説明できない形（実装の都合が漏れている）
 - **根拠**: `src/http/access-point.ts:76`（条件 (b)）/ [ADR-0048][adr48] Decision Outcome 2・Decision Drivers /
-  実測: `new URL("https://a.test:443").host === "a.test"`（`a.test:8080` は保持される＝既定ポートだけの問題）
+  実装した `validateAccessPoint` の実測 — `:8080` `:3000` `:4010` `:80` は**通る**／`:443` は https でも
+  `scheme: "http"` でも**弾かれる**（`new URL("https://a.test:443").host === "a.test"`）
 - **検出経緯**: [ADR-0048][adr48] の実装中（PR #146）。ADR で決まった機構を実装側の判断で緩めるべきではないため、
   **ADR どおり実装**したうえで hint（「既定ポート (443) は省く」）・テスト・[ガイド][guide]に既知の制限として明記し、
   判断は本 finding に委ねた
-- **推奨**: どちらかを decider が選ぶ — (a) **現状維持**（`:443` を省けば通る・hint で誘導済み。仕様を単純に保つ）、
-  (b) **既定ポートだけ許容**（`url.port` が空で、`url.hostname` ＋ `":443"` が入力の小文字化と一致する場合を通す）。
-  (b) を採るなら ADR-0048 の追補 ADR。**0.7.0 に載る挙動なので、リリース前に決めるのが望ましい**
+- **推奨**: decider が選ぶ — (a) **現状維持**（`:443` を省けば通る・hint で誘導済み。仕様を単純に保つ）、
+  (b) **既定ポートだけ許容**（`url.port` が空で、`url.hostname` ＋ `":443"` が入力の小文字化と一致する場合を通す）、
+  (c) **既定ポートを持たないスキームでパース**（`porters-check://{host}`）＝**どのポートも落とさない**・
+  機構2 の性質（列挙に頼らないラウンドトリップ）を保てる。**0.7.0 に載る挙動なので、リリース前に決めるのが望ましい**
 - **状態**: open
+- **処置**: [ADR-0049][adr49] を **accepted**（**案C**＝既定ポートを持たないスキーム `porters-check://` でパースし、
+  どのポートも落とさない・decider 2026-08-12）。判定式の変更 3 点（基底スキーム／両側小文字化／`pathname === ""`）と
+  空文字の明示チェック、通る 9 例・弾く 14 例の全件 pin、hint とガイドから既定ポートの制限を落とすことまで ADR で確定。
+  semver は **patch**、**0.7.0 の前に実装する**（往復を利用者に見せないため）。**実装は別 PR**（完了時に `fixed` へ）
 
 ## RV-22 🟢 リトライ / DX（HTTP 429 の後、非冪等な `create` が自動再送されない）
 
@@ -336,6 +350,8 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr46]: ../adr/0046-guard-error-contract.md
 [adr47]: ../adr/0047-access-point-scheme.md
 [adr48]: ../adr/0048-access-point-host-validation.md
+[adr49]: ../adr/0049-host-port-roundtrip.md
+[adr50]: ../adr/0050-auth-http-status-handling.md
 [rm]: ../roadmap.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
