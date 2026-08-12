@@ -1,13 +1,13 @@
 # 50. 認証 API 経路にも HTTP ステータスを配線する（[ADR-0044][adr44] の適用範囲）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-12
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings][findings] **RV-19** の是正案。[ADR-0044][adr44] で `requester` は `res.status` を見るようになったが、
 > **OAuth / Token の 2 経路は `transport.send` を直接呼んでおり status を捨てたまま**で、同じ穴が認証系にだけ残っている。
 > 0044 の影響範囲が `requester` に限定されていたため実装時には手を付けず、別 finding として起票した。
-> **適用範囲を広げるかどうか**を決める。
+> **decider が案A を選択し `accepted`（2026-08-12）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -63,7 +63,7 @@ status 由来のエラーをどの系統（サブクラス）で表すか。**
 
 ## Decision Outcome
 
-採用: **（未決定・議論用）案A を推奨**。
+採用: **案A（`readResponse` を共有し、認証経路にも同じ判定順を適用する）**。decider が 2026-08-12 に選択。
 
 理由: [ADR-0044][adr44] が決めたのは「**PORTERS の応答でない HTTP エラーをどう扱うか**」であって、
 Resource API 固有の話ではない。**同じ問いに 2 つの答えを持たない**のが素直で、実装も
@@ -92,10 +92,10 @@ Resource API 固有の話ではない。**同じ問いに 2 つの答えを持�
 
 **semver**: **minor**（[ADR-0044][adr44] と同じ理由。観測可能な挙動が変わる）。
 `category` が `unknown` から `server` / `permission` などに変わり、これまで失敗していた一時障害が**自動回復するようになる**。
-`patch` に倒す判断もありうる（decider 判断）。
 
 **リリースとの関係**: **0.7.0 のブロッカーではない**。RV-19 は今回の変更による退行ではなく、
-0.4.0 以前から存在する挙動なので、0.8.0 で構わない。
+0.4.0 以前から存在する挙動なので、**0.7.0 に間に合えば同梱・間に合わなければ次版**でよい
+（[ADR-0049][adr49] のように「先に入れないと利用者に往復を見せる」性質の変更ではない）。
 
 ### Consequences
 
@@ -151,4 +151,5 @@ Resource API 固有の話ではない。**同じ問いに 2 つの答えを持�
 [adr10]: 0010-retry-throttle.md
 [adr34]: 0034-oauth-public-surface-impl.md
 [adr44]: 0044-http-status-handling.md
+[adr49]: 0049-host-port-roundtrip.md
 [adr46]: 0046-guard-error-contract.md
