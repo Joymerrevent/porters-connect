@@ -133,13 +133,14 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: 更新対象 ID が存在しない → **per-item `<Code>7`**（Resource が存在しない）。1 リクエスト 200 件超 → **ルート `<Code>102`**（パラメータが多すぎ）
 - **不確実な理由**: reference は「200 件ずつ分割」とだけ書き、**超過時のコード**も、Write エラーが per-item か**ルート `<Code>`** かも明示していない（成功時の Write 応答にルート `<Code>` は無い）
-- **コード箇所**: `test/fake/fake-transport.ts`（`writeItem` / `handleWrite`）
+- **コード箇所**: `test/fake/fake-transport.ts`（`writeItem` / `handleWrite`）／
+  ライブラリ側は `src/xml/parser.ts`（`parseWriteResult` がルート `<Code>` を先読み）
 - **確認方法**: 存在しない ID への update・201 件の一括 Write を実機に投げ、応答 XML の形（ルート `<Code>` の有無）とコードを記録
 - **状態**: 未確認
 - **確認結果**: —
 - **関連**: ルート `<Code>` をライブラリが読まない件は [findings][findings] RV-14。
-  **ADR-0045（accepted・案A）で「確認を待たず先読みを実装する」と決定済み**＝本 LV の確認結果次第では
-  新 ADR で supersede する（実装には `VERIFY(live)` を残す）
+  **ADR-0045（accepted・案A）で「確認を待たず先読みを実装する」と決定し、実装済み**＝本 LV の確認結果次第では
+  新 ADR で supersede する（実装には `VERIFY(live)` を残してある）
 
 ## LV-12 Field Read の `P_Alias` 表記と System 系の Field Type
 

@@ -49,6 +49,17 @@ const authFailure = (body: string): PortersError => {
   }
 };
 
+// A Write rejected as a whole: the reason is at the root, not in an <Item> (ADR-0045).
+const writeFailure = (body: string): PortersError => {
+  try {
+    parseWriteResult(body);
+    throw new Error("expected the envelope to fail");
+  } catch (error) {
+    if (error instanceof PortersError) return error;
+    throw error;
+  }
+};
+
 const shape = (error: PortersError) => ({
   name: error.name,
   code: error.code,
@@ -88,6 +99,18 @@ describe("the fake's error envelopes match the reference fixtures", () => {
     );
 
     expect(fromFake).toEqual(fromFixture);
+  });
+
+  it("produces the same request-level write failure as the root-code fixture", () => {
+    // The whole-request rejection the fake answers with when a write carries more than 200 records.
+    // Both sides go through parseWriteResult, which reads the root <Code> first (ADR-0045).
+    const fromFixture = writeFailure(fixture("errors/write-root-102.xml"));
+    const fromFake = writeFailure(
+      buildResourceErrorXml("Candidate", 102, "Too many parameters."),
+    );
+
+    expect(shape(fromFake)).toEqual(shape(fromFixture));
+    expect(fromFixture.code).toBe(102);
   });
 
   it.each([

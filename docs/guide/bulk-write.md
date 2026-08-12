@@ -54,7 +54,10 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 ## エラー時の扱い（全体失敗・非冪等）
 
-- **リクエスト全体の失敗**（HTTP エラー・通信断・パース不能）だけが throw されます。
+- **リクエスト全体の失敗**（HTTP エラー・通信断・パース不能・**リクエスト単位の拒否**）だけが throw されます。
+- リクエストごと拒否された場合（PORTERS が `<Item>` を返さず、ルートの `<Code>` だけで答える形）は、
+  その **Result Code がそのまま `PortersResourceError` として** throw されます（[ADR-0045][adr-0045]）。
+  件数不一致のような不透明なエラーにはなりません。
 - バッチ途中（2 つ目以降）で失敗した場合、**既に書き込まれた件数**を `hint` に付けて `PortersResourceError`
   を throw します。`createMany` はバッチ跨ぎで**非冪等**なので、**全体を再実行すると作成が重複**します。
   回復は「失敗位置以降のレコードだけ」を再送してください（`updateMany` は id 指定で冪等）。
@@ -64,5 +67,6 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 - **Attachment** は単件のみ（`create` / `update`）。本体が巨大な Base64 のため一括は提供しません。
 
 [adr-0041]: ../adr/0041-bulk-write-surface-impl.md
+[adr-0045]: ../adr/0045-write-response-root-code.md
 [write-format]: ../reference/resource-api/write-format.md
 [result-codes]: ../reference/resource-api/result-codes.md

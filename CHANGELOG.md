@@ -31,6 +31,14 @@
   - **200 以外の応答は、ボディが parse できても値を返しません**（プロキシの HTML エラーページが
     「空ページ」として通り、利用者に「0 件」と見えるのを防ぐため）。
   - 写像は**未確認の仮定**です（実 PORTERS がどの status を返すかは契約後に確認 — LV-9）。
+- **Write 応答のルート `<Code>` を先読み**（[ADR-0045][adr45]）。**リクエストごと拒否された Write** の Result Code が
+  失われなくなりました。
+  - 従来は単件 `create` / `update` が **「write returned no result item」**（`category: "unknown"`）、
+    `createMany` / `updateMany` が**件数不一致エラー**になり、原因のコードが消えていました。
+  - 今後は本当の Result Code（例 `102` → `category: "validation"`）が `PortersResourceError` として表面化します
+    （`context.operation: "write"` 付き）。Read（`<Code>`≠0）と同じ写像です。
+  - **成功パスは不変**です（成功応答にルート `<Code>` は無く、あっても `0` なら従来どおり `<Item>` を読みます）。
+  - エラー時にルート `<Code>` が返ること自体は**未確認の仮定**です（契約後に確認 — LV-11）。
 - 内部: `https://{host}/v1/...` を 10 箇所で組み立てていた URL 生成を **1 関数へ集約**（公開される挙動は不変）。
 
 ## [0.6.2] - 2026-07-19
@@ -166,6 +174,7 @@
 
 [guide]: docs/guide/error-handling.md
 [adr44]: docs/adr/0044-http-status-handling.md
+[adr45]: docs/adr/0045-write-response-root-code.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/

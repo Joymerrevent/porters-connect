@@ -111,6 +111,27 @@ describe("bulk write through the fake", () => {
     expect(fake.control.records("candidate")).toHaveLength(2);
   });
 
+  it("surfaces a request-level rejection as its Result Code, not a count mismatch", async () => {
+    const { fake, porters } = setup();
+    // The whole request is refused, so the answer carries a root <Code> and no <Item> at all —
+    // which used to reach the caller as "0 result(s) for 3 record(s)" / `unknown` (RV-14).
+    fake.control.failNext({ kind: "resultCode", code: 102 });
+
+    await expect(
+      porters.candidate.createMany(
+        Array.from({ length: 3 }, (_, i) => ({
+          P_Owner: 5,
+          P_Name: `候補者 ${i}`,
+        })),
+      ),
+    ).rejects.toMatchObject({
+      name: "PortersResourceError",
+      code: 102,
+      category: "validation",
+    });
+    expect(fake.control.records("candidate")).toHaveLength(0);
+  });
+
   it("empty input sends nothing", async () => {
     const { porters, writes } = setup();
 
