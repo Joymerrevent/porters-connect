@@ -43,8 +43,11 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
 3. **UTC 前提**。ライブラリは日時を **ISO 8601（UTC, `...Z`）に正規化**して入出力し、**JST 等の業務タイムゾーン変換はしない**（利用側の責務）。`util/datetime.ts`（PORTERS 形式 ⇄ ISO）に集約。
 4. **削除 API は存在しない**。`delete()` メソッドを生やさない（型レベルで非対応を明示）。
 5. **リクエストが長すぎると 400 エラー**。正典は**約 15000 文字**（`docs/reference` 準拠。旧 SPEC_v1 の「32KB」は陳腐化。将来 16KB 上限を検討中・未確定 → 追従）。送信前に検知し弾く（`http/requester.ts` の `MAX_REQUEST_LENGTH`）。200 件超は 200 件ずつに分割。
-6. **レート制限**：15万アクセス/月。リトライ＆スロットリングを内蔵。
+6. **レート制限**：1 分あたり Read 2000 / Write 500 は**内蔵スロットリング＋リトライで自制**（`http/throttle.ts` は分バケットのみ）。
+   **月 15 万アクセスは契約条件**であり、プロセス横断の累積管理はライブラリの責務にしない（利用側の運用責務）。
 7. **ホスト名は非公開**：契約時に通知される値を環境変数（`PORTERS_HOST`）で受け取る。ハードコード禁止。
+   **URL 組立は 1 箇所**（`http/access-point.ts` の `apiUrl`）に集約。scheme は既定 `https`・`http` は明示時のみで
+   毎プロセス 1 回警告し、抑止は専用 env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`）だけ＝**許可と沈黙は分ける**（ADR-0047）。
 
 ---
 
@@ -105,7 +108,7 @@ src/
 
 ## バージョン管理
 
-- PORTERS は 8.x→9.x と更新が続く。**対応 PORTERS バージョンを README とコードコメントに明記**する。
+- **互換性の契約は Connect API Version**（`X-P-ConnectAPI-Version: 2` 既定送信・v2 前提。ADR-0042）。**製品 PORTERS 8.x/9.x は参考**（更新が続くため全数保証はしない）。追従は API version 基準で判断し、README・コードコメントに明記する。
 - semver に従う。破壊的変更はメジャーバンプ。
 
 ---

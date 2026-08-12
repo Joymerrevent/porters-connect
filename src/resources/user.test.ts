@@ -32,7 +32,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 const res = (calls: Call[], ...bodies: string[]) =>
   createUserResource({
     requester: stub(bodies.length > 0 ? bodies : [TWO], calls),
-    host: "h.test",
+    accessPoint: { host: "h.test" },
     partition: 12,
   });
 
@@ -92,7 +92,7 @@ describe("createUserResource", () => {
     const calls: Call[] = [];
     const r = createUserResource({
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
-      host: "h.test",
+      accessPoint: { host: "h.test" },
       partition: 12,
     });
     const items = await collect(r.searchAll());

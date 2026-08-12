@@ -7,7 +7,6 @@
 // strings. Multi-select Option read returns every selected alias as `string[]` (ADR-0017).
 // The static Job / input types derive from the catalog (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -15,6 +14,8 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
+  type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
@@ -66,6 +67,18 @@ const REQUIRED_ON_CREATE = [
   "P_Recruiter",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+/**
+ * Job's names + standard catalog. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds Job wire shapes from this very catalog, so the two cannot drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
+export const JOB_DESCRIPTOR = {
+  name: "Job",
+  path: "job",
+  prefix: "Job",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
+
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */
 export type Job = ReadRecord<typeof FIELDS>;
 export type JobPage = ResourcePage<typeof FIELDS>;
@@ -85,20 +98,14 @@ export type JobResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): JobResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createResource(
-    {
-      name: "Job",
-      path: "job",
-      prefix: "Job",
-      fields,
-      requiredOnCreate: REQUIRED_ON_CREATE,
-    },
+    { ...JOB_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );
 };

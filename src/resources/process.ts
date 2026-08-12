@@ -10,7 +10,6 @@
 // nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns every
 // selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -18,6 +17,8 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
+  type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
@@ -56,6 +57,18 @@ const REQUIRED_ON_CREATE = [
   "P_Resume",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+/**
+ * Process's names + standard catalog. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds Process wire shapes from this very catalog, so the two cannot drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
+export const PROCESS_DESCRIPTOR = {
+  name: "Process",
+  path: "process",
+  prefix: "Process",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
+
 /** A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
@@ -76,20 +89,14 @@ export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): ProcessResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createResource(
-    {
-      name: "Process",
-      path: "process",
-      prefix: "Process",
-      fields,
-      requiredOnCreate: REQUIRED_ON_CREATE,
-    },
+    { ...PROCESS_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );
 };

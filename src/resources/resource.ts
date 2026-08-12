@@ -5,7 +5,7 @@
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
 
 import { PortersResourceError, resourceError } from "../errors";
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { DataType } from "../xml/decode";
 import {
   buildWriteXml,
@@ -20,6 +20,7 @@ import {
   runRead,
   type FieldCatalog,
   type ReadRecord,
+  type ResourceDeps,
   type ResourcePage,
 } from "./read-core";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
@@ -31,6 +32,7 @@ export type {
   EmptyCatalog,
   FieldCatalog,
   ReadRecord,
+  ResourceDeps,
   ResourcePage,
 } from "./read-core";
 // Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
@@ -61,11 +63,13 @@ export type UpdateInput<F extends FieldCatalog> = {
   [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
 };
 
-/** Static description of a resource: names + `as const` catalog + required-on-create aliases. */
-export type ResourceConfig<
-  F extends FieldCatalog,
-  Req extends readonly (keyof F)[],
-> = {
+/**
+ * The tenant-independent half of a resource definition: names + the standard `P_` catalog.
+ * Each resource module exports its own (e.g. `CANDIDATE_DESCRIPTOR`) so in-repo dev tooling —
+ * the fake server (ADR-0043) — derives wire shapes from the *same* catalog instead of a copy
+ * that could drift. Not part of the published API: `src/index.ts` is curated.
+ */
+export type ResourceDescriptor<F extends FieldCatalog = FieldCatalog> = {
   /** Root element + Write resource name, e.g. `"Candidate"`. */
   name: string;
   /** URL path segment, e.g. `"candidate"`. */
@@ -74,6 +78,13 @@ export type ResourceConfig<
   prefix: string;
   /** Data-Type catalog (`as const`): bare alias -> Data Type. */
   fields: F;
+};
+
+/** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */
+export type ResourceConfig<
+  F extends FieldCatalog,
+  Req extends readonly (keyof F)[],
+> = ResourceDescriptor<F> & {
   /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
   requiredOnCreate: Req;
 };
@@ -152,13 +163,14 @@ export const firstWriteResultId = (
 };
 
 /**
- * Build a Read URL: `https://{host}/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`.
+ * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
+ * at the configured access point (ADR-0047).
  * `ctx` (alias prefix + Data-Type map) drives the typed query encoding (ADR-0038): condition/order
  * prefixing, date ISO -> PORTERS, and the keyword/itemstate guards. Attachment is bespoke (no prefix
  * / no catalog) and builds its own loose URL — see attachment.ts.
  */
 export const buildReadUrl = <F extends FieldCatalog>(
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   path: string,
   q: SearchQuery<F>,
@@ -170,22 +182,27 @@ export const buildReadUrl = <F extends FieldCatalog>(
   appendReadQuery(p, q, ctx);
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/${path}?${p.toString()}`;
+  return apiUrl(accessPoint, path, p);
 };
 
-/** Build a Write URL: `https://{host}/v1/{path}?partition=…`. */
+/** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */
 export const buildWriteUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   path: string,
-): string => `https://${host}/v1/${path}?partition=${partition}`;
+): string =>
+  apiUrl(
+    accessPoint,
+    path,
+    new URLSearchParams({ partition: String(partition) }),
+  );
 
 export const createResource = <
   const F extends FieldCatalog,
   const Req extends readonly (keyof F)[],
 >(
   config: ResourceConfig<F, Req>,
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
 ): Resource<F, Req[number]> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
   const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
@@ -194,20 +211,23 @@ export const createResource = <
   const defaultFields = defaultFieldList(config.prefix, config.fields);
 
   const readUrl = (q: SearchQuery<F>): string =>
-    buildReadUrl(deps.host, deps.partition, config.path, q, {
+    buildReadUrl(deps.accessPoint, deps.partition, config.path, q, {
       prefix: config.prefix,
       fields: fieldMap,
     });
 
   const writeUrl = (): string =>
-    buildWriteUrl(deps.host, deps.partition, config.path);
+    buildWriteUrl(deps.accessPoint, deps.partition, config.path);
 
   const firstWriteId = (body: string): number =>
     firstWriteResultId(body, config.path, config.name);
 
   // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
   // only); a provided list is sent verbatim (ADR-0020).
-  const search = (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
+  // `async` for the exception contract, not for the body: URL building runs the typed-query
+  // guards (keyword length, itemstate), and a Promise-returning method must never throw
+  // synchronously — every failure reaches the caller as a rejection (ADR-0046).
+  const search = async (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
     runRead(
       deps.requester,
       readUrl({ ...query, field: query.field ?? defaultFields }),
@@ -230,7 +250,8 @@ export const createResource = <
   // create forces P_Id=-1 (non-idempotent: a retry would duplicate); update forces
   // the target id (idempotent: re-applying the same write is safe). Forcing P_Id
   // after the spread means a caller-supplied P_Id never overrides it.
-  const write = (item: WriteItem, idempotent: boolean): Promise<number> =>
+  // `async` so encoding failures reject rather than throw synchronously (ADR-0046).
+  const write = async (item: WriteItem, idempotent: boolean): Promise<number> =>
     deps.requester.request(
       {
         method: "POST",
@@ -262,7 +283,10 @@ export const createResource = <
     fields: fieldMap,
     partition: deps.partition,
   };
-  const createMany = (
+  // `async` for the exception contract: the arguments (URL build, per-item mapping) are evaluated
+  // before `runBulkWrite` is entered, so without it a failure there would throw synchronously
+  // instead of rejecting (ADR-0046).
+  const createMany = async (
     inputs: CreateInput<F, Req[number]>[],
   ): Promise<BulkWriteResult> =>
     runBulkWrite(
@@ -272,7 +296,7 @@ export const createResource = <
       false,
     );
 
-  const updateMany = (
+  const updateMany = async (
     items: { id: number; fields: UpdateInput<F> }[],
   ): Promise<BulkWriteResult> =>
     runBulkWrite(

@@ -5,10 +5,11 @@
 // `alias`/`level`/`enabled`/`count` — no `start` (no offset paging → no searchAll), no
 // `field`/`condition`/`get(id)`.
 
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
 import { decoderFor, type FieldCatalog, type ReadRecord } from "./read-core";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -18,6 +19,19 @@ const FIELDS = {
   P_Type: "Number",
   P_Order: "Number",
 } as const satisfies FieldCatalog;
+
+/**
+ * Option's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds Option Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`Option.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const OPTION_DESCRIPTOR = {
+  name: "Option",
+  path: "option",
+  prefix: "Option",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
 
 /** A decoded Option (one choice). `P_ParentId` links to the parent; `P_Type` 0 = normal, 1–11 = a phase kind. */
 export type Option = ReadRecord<typeof FIELDS>;
@@ -39,7 +53,7 @@ export type OptionResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: OptionSearchQuery,
 ): string => {
@@ -49,18 +63,14 @@ const buildUrl = (
   if (q.level !== undefined) p.set("level", String(q.level));
   if (q.enabled !== undefined) p.set("enabled", String(q.enabled));
   if (q.count !== undefined) p.set("count", String(q.count));
-  return `https://${host}/v1/option?${p.toString()}`;
+  return apiUrl(accessPoint, "option", p);
 };
 
 // Decode one node's own fields, dropping the nested `Items` collection (handled by the walk).
 const withoutItems = (raw: RawItem): RawItem =>
   Object.fromEntries(Object.entries(raw).filter(([k]) => k !== "Items"));
 
-export const createOptionResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): OptionResource => {
+export const createOptionResource = (deps: ResourceDeps): OptionResource => {
   const decode = decoderFor(FIELDS);
   // Depth-first flatten: push each node, then recurse into its <Items><Item>… children.
   const flatten = (items: RawItem[], out: Option[]): void => {
@@ -72,11 +82,12 @@ export const createOptionResource = (deps: {
       flatten(children, out);
     }
   };
-  const search = (query: OptionSearchQuery = {}): Promise<Option[]> =>
+  // `async` for the exception contract (ADR-0046).
+  const search = async (query: OptionSearchQuery = {}): Promise<Option[]> =>
     deps.requester.request(
       {
         method: "GET",
-        url: buildUrl(deps.host, deps.partition, query),
+        url: buildUrl(deps.accessPoint, deps.partition, query),
         headers: {},
       },
       (body) => {

@@ -1,6 +1,8 @@
 // Request pipeline (ADR-0009/0010/0012): throttle -> auth header -> transport,
 // with reactive token refresh (401/402) and bounded backoff retry. The
 // idempotency guard keeps non-idempotent writes (create) from double-applying.
+// The response is read through both error channels — HTTP status and PORTERS
+// envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
 import type { TokenProvider } from "../auth/types";
 import {
@@ -8,10 +10,12 @@ import {
   PortersError,
   PortersNetworkError,
 } from "../errors/index";
+import { readResponse } from "./read-response";
 import type { Backoff } from "./retry";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
 
+// Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
 const API_VERSION = "2";
 
 // docs/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).
@@ -102,7 +106,7 @@ export const createRequester = (o: RequesterOptions): Requester => {
         );
         forceRefresh = false;
         const res = await o.transport.send(withAuth(req, token, write));
-        return parse(res.body);
+        return readResponse(res, parse);
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
         // reactive: token expired -> refresh once and retry (safe even for create).

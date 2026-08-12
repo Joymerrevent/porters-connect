@@ -5,7 +5,8 @@
 // the API has no id filter. Extended HR fields (department/telephone/dates/…) are deferred —
 // their read availability/decode shape is unconfirmed (see docs/live-verification.md).
 
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -21,6 +22,19 @@ const FIELDS = {
   P_Name: "SinglelineText",
   P_Mail: "Mail",
 } as const satisfies FieldCatalog;
+
+/**
+ * User's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds User Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`User.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const USER_DESCRIPTOR = {
+  name: "User",
+  path: "user",
+  prefix: "User",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
 
 /** A decoded User (PORTERS operator). `P_Type`: 0 = standard user, 1 = system admin. */
 export type User = ReadRecord<typeof FIELDS>;
@@ -53,7 +67,7 @@ export type UserResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: UserSearchQuery,
 ): string => {
@@ -64,17 +78,18 @@ const buildUrl = (
   if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/user?${p.toString()}`;
+  return apiUrl(accessPoint, "user", p);
 };
 
-export const createUserResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): UserResource => {
+export const createUserResource = (deps: ResourceDeps): UserResource => {
   const decode = decoderFor(FIELDS);
-  const search = (query: UserSearchQuery = {}): Promise<UserPage> =>
-    runRead(deps.requester, buildUrl(deps.host, deps.partition, query), decode);
+  // `async` for the exception contract (ADR-0046).
+  const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
+    runRead(
+      deps.requester,
+      buildUrl(deps.accessPoint, deps.partition, query),
+      decode,
+    );
   const searchAll = (
     query: Omit<UserSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<User> =>

@@ -54,6 +54,8 @@ import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
   host: process.env.PORTERS_HOST!, // 契約時に通知される値。ハードコード禁止
+  // 既定 https。ローカルのフェイクへ向けるときだけ env で "http" を渡す（不正値は https 側に倒す）
+  scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
   partition: 123, // 既定 Partition（Company DB）Id
@@ -326,13 +328,21 @@ try {
     e.code; // PORTERS のコード（無い場合 null）
     e.retryable; // 再試行可否
     e.hint; // 対処のヒント（あれば）
+    e.httpStatus; // 応答の HTTP ステータス（応答を伴わない失敗では undefined）
   }
 }
 ```
 
-- トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` を早期に throw。
+- トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` で早期に落とします。
+- **`Promise` を返す公開メソッドは同期 throw しません**（[ADR-0046][adr46]）。設定ミスも含め常に **reject** で届くので、
+  `porters.candidate.search(q).catch(handler)` でも捕まえられます（`string` を返す `auth.authorizationUrl` や
+  コンストラクタなど、Promise を返さない API は同期 throw のままです）。
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
-- レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します（`category` の `"rateLimit"` は将来の配線用に予約された値で、現状はどの分類も produce しません）。
+- レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します。
+- **PORTERS の応答でない HTTP エラー**（LB・プロキシ・メンテナンス画面の 4xx/5xx）も分類されます（[ADR-0044][adr44]）。
+  PORTERS の `<Code>` を持つ応答はそちらが優先され、無い場合だけ status から判定します
+  （5xx → `server`・429 → `rateLimit`・408 → `network`・401/403 → `permission`・その他 4xx → `config`）。
+  いずれも `code` は `null`、`httpStatus` にステータスが載ります。
 
 > 症状別の早見表と 2 系統（認証 / リソース）のコード対応表は [エラーハンドリング ガイド][error-handling]にまとめています。
 
@@ -340,13 +350,30 @@ try {
 
 - **削除 API は存在しない**（`delete()` は提供しない）。
 - **日時は UTC 前提**。ISO 8601（`...Z`）で入出力し、JST 等の変換はしない（利用側の責務）。
-- **レート制限**：1 分あたり Read 2000 / Write 500、月 15 万アクセス。内蔵スロットリングで分散。
-- **ホスト名は非公開**：`PORTERS_HOST` で受け取り、ハードコードしない。
+- **レート制限**：1 分あたり Read 2000 / Write 500 は**内蔵スロットリングで自制**します（上限の 90% で分散）。
+  **月 15 万アクセスは契約条件**で、プロセスをまたぐ累積は本ライブラリでは管理できません（**利用側の運用責務**）。
+- **ホスト名は非公開**：`PORTERS_HOST` で受け取り、ハードコードしない。ポートが要る場合は `host` に含めます（`localhost:4010`）。
+- **アクセスポイントの scheme**（[ADR-0047][adr47]）：既定は `https`。ローカルのフェイクサーバーや信頼できるトンネルに向けるときだけ
+  **`scheme: "http"`** を明示できます。http はトークンを含む全リクエストが**平文**で流れるため、**ループバックでも毎プロセス 1 回**警告します。
+  抑止は専用の環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` のみ＝**許可（`scheme`）と沈黙（env）は別**です。
+
+  ```ts
+  new PortersClient({ host: "localhost:4010", scheme: "http" }); // ローカル検証用
+  ```
+
+  **ライブラリは `host` / `scheme` を環境変数から読みません**（設定の出所を明示にするため。読むのは上の警告抑止 1 本だけ）。
+  env で本番⇔ローカルを切り替えたい場合は、クイックスタートのように**アプリ側で `PORTERS_SCHEME` を `scheme` に渡して**ください
+  （`.env.example` に雛形あり）。以後はコードを触らず env の差し替えだけで向き先が変わります。
+
+  ```sh
+  PORTERS_HOST=127.0.0.1:4010 PORTERS_SCHEME=http node app.js # ローカルのフェイクへ
+  PORTERS_HOST=xxxxx.example.com node app.js                  # 本番（未設定なら https）
+  ```
 
 ## 対応バージョン
 
-- **Connect API Version 2**（ヘッダ `X-P-ConnectAPI-Version: 2` を既定送信）。
-- PORTERS 8.x / 9.x を想定。**正典は [docs/reference][ref]**（実 API ドキュメントに接地）。
+- **契約は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定送信し、**v2 を動作の前提**とします（担当者型・部署型 Link 等は v2 必須）。互換性はこの **API version** で明示します。
+- **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正典は [docs/reference][ref]**（実 API ドキュメントに接地）。
 
 ## リンク
 
@@ -384,5 +411,8 @@ try {
 [bulk-write]: ./docs/guide/bulk-write.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
+[adr44]: ./docs/adr/0044-http-status-handling.md
+[adr46]: ./docs/adr/0046-guard-error-contract.md
+[adr47]: ./docs/adr/0047-access-point-scheme.md
 [design]: ./docs/design/basic-design.md
 [ref]: ./docs/reference/README.md

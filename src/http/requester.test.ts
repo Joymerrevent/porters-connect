@@ -522,6 +522,54 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(sent).toHaveLength(1);
   });
 
+  // The classification rules themselves (which channel wins, when a status overrides a parsed
+  // body, what carries `httpStatus`) are specified next to the code in `read-response.test.ts`.
+  // What belongs here is what the *pipeline* does with the result: retry, and the guard that
+  // keeps a non-idempotent write from being replayed.
+  it("retries a retryable HTTP status and gives up after maxRetries", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 503, body: "" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+      maxRetries: 2,
+    });
+
+    await expect(r.request(base, (b) => b)).rejects.toMatchObject({
+      category: "server",
+      httpStatus: 503,
+    });
+    expect(n).toBe(3); // initial + 2 retries
+  });
+
+  it("does not replay a create after a 5xx (it may already have applied)", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 500, body: "" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    await expect(
+      r.request(post, (b) => b, { write: true, idempotent: false }),
+    ).rejects.toBeInstanceOf(PortersNetworkError);
+    expect(n).toBe(1); // the idempotency guard covers HTTP-level uncertainty too
+  });
+
   it("waits backoff(attempt-1) between transient retries", async () => {
     vi.useFakeTimers();
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");

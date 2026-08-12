@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersAuthError } from "../errors/index";
-import type { Transport, TransportRequest } from "../http/index";
+import type {
+  Transport,
+  TransportRequest,
+  TransportResponse,
+} from "../http/index";
 import { createMemoryTokenStore } from "./memory-store";
 import { createDefaultTokenProvider } from "./token-provider";
 import type { StoredTokens, TokenStore } from "./types";
@@ -60,7 +64,7 @@ const tokenCalls = (calls: TransportRequest[]): TransportRequest[] =>
   calls.filter((c) => c.url.includes("/v1/token"));
 
 const opts = (transport: Transport, now: () => number) => ({
-  host: "example.test",
+  accessPoint: { host: "example.test" },
   appId: "app",
   appSecret: "secret",
   transport,
@@ -124,7 +128,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -140,7 +144,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -157,7 +161,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     const { transport, calls } = makeTransport();
     let t = 1000;
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -223,7 +227,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
   it("uses the default clock when `now` is not provided", async () => {
     const { transport, calls } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -253,7 +257,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     await store.set(seeded);
     const { transport, calls } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -278,7 +282,7 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     let t = 1000;
     const { transport } = makeTransport();
     const auth = createDefaultTokenProvider({
-      host: "example.test",
+      accessPoint: { host: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
@@ -289,5 +293,93 @@ describe("createDefaultTokenProvider (ADR-0007 / ADR-0012)", () => {
     t = 1000 + ACCESS_EXPIRES_IN - MARGIN; // force a refresh, cache is warm
     await auth.getAccessToken();
     expect(getCalls).toBe(1); // warm cache must not re-read the store
+  });
+});
+
+describe("HTTP status on the authentication endpoints (ADR-0050)", () => {
+  // What a load balancer / WAF actually returns in front of `/v1/oauth`: an error status and no
+  // envelope. Before ADR-0050 this collapsed into "unparseable authentication response" —
+  // `category: "unknown"`, `retryable: false` — at the very front of every request (RV-19).
+  const answering = (
+    res: TransportResponse,
+    match = "/v1/oauth",
+  ): MockTransport => {
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        if (req.url.includes(match)) return Promise.resolve(res);
+        return Promise.resolve({ status: 200, body: CODE_DIRECT_XML });
+      },
+    };
+    return { transport, calls };
+  };
+
+  const provider = (transport: Transport) =>
+    createDefaultTokenProvider({
+      accessPoint: { host: "example.test" },
+      appId: "app",
+      appSecret: "secret",
+      transport,
+    });
+
+  it("classifies a gateway 5xx on code_direct", async () => {
+    const { transport } = answering({
+      status: 503,
+      body: "<html>maintenance</html>",
+    });
+
+    await expect(provider(transport).getAccessToken()).rejects.toMatchObject({
+      name: "PortersNetworkError",
+      category: "server",
+      retryable: true,
+      code: null, // no PORTERS code exists — an intermediary answered
+      httpStatus: 503,
+    });
+  });
+
+  it("classifies a gateway 5xx on the token exchange", async () => {
+    const { transport } = answering(
+      { status: 502, body: "<html>bad gateway</html>" },
+      "/v1/token",
+    );
+
+    await expect(provider(transport).getAccessToken()).rejects.toMatchObject({
+      name: "PortersNetworkError",
+      category: "server",
+      retryable: true,
+      httpStatus: 502,
+    });
+  });
+
+  it("keeps the <Error> code when an error status carries an envelope", async () => {
+    // Both channels answer; the envelope is the more specific one and wins (ADR-0044 判定順).
+    const { transport } = answering({
+      status: 400,
+      body: `<Authentication><Error>103</Error><Message>Invalid code</Message></Authentication>`,
+    });
+
+    await expect(provider(transport).getAccessToken()).rejects.toMatchObject({
+      name: "PortersAuthError",
+      category: "auth",
+      code: 103,
+      httpStatus: 400,
+    });
+  });
+
+  it("leaves an ordinary <Error> response exactly as it was", async () => {
+    // The regression that matters: HTTP 200 + `<Error>` is the everyday failure, and ADR-0050
+    // must not have touched it.
+    const { transport } = answering({
+      status: 200,
+      body: `<Authentication><Error>401</Error><Message>Refresh Token has expired</Message></Authentication>`,
+    });
+
+    await expect(provider(transport).getAccessToken()).rejects.toMatchObject({
+      name: "PortersAuthError",
+      category: "auth",
+      code: 401,
+      httpStatus: 200, // stamped, as everywhere else (ADR-0044)
+    });
   });
 });

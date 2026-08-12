@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { PortersClient } from "./client";
 import type { TenantScope } from "./client";
+import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/decode";
 
@@ -98,6 +99,62 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(oauth?.url).toContain("app_id=AID");
     expect(token?.body).toContain("secret=SEC");
     expect(candidate?.url).toContain("partition=7");
+  });
+
+  // ADR-0047: the access point is one setting, applied to every URL the library builds — auth,
+  // data resources and the App-level Partition master alike — and http is announced, not assumed.
+  it("sends every URL to the configured scheme, warning once about cleartext", async () => {
+    resetInsecureSchemeWarning();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { transport, calls } = recordingTransport();
+    const client = new PortersClient({
+      host: "127.0.0.1:4010",
+      scheme: "http",
+      appId: "AID",
+      partition: 7,
+      transport,
+    });
+    await client.candidate.search();
+    await client.partition.search();
+
+    expect(calls.map((c) => c.url.split("?")[0])).toEqual([
+      "http://127.0.0.1:4010/v1/oauth",
+      "http://127.0.0.1:4010/v1/token",
+      "http://127.0.0.1:4010/v1/candidate",
+      "http://127.0.0.1:4010/v1/partition",
+    ]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
+  it("refuses a malformed host at construction, before anything is sent (ADR-0048)", () => {
+    resetInsecureSchemeWarning();
+    const { transport, calls } = recordingTransport();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    // `PORTERS_HOST` with the scheme included: the mistake that used to build
+    // `https://https://xxxxx.example.com/v1/oauth` and post the App Secret to whatever `https`
+    // resolves to. It now fails where the configuration was handed over. `scheme: "http"` is set
+    // so the cleartext warning *would* fire — the check runs first.
+    expect(
+      () =>
+        new PortersClient({
+          host: "https://xxxxx.example.com",
+          scheme: "http",
+          appId: "AID",
+          appSecret: "SECRET",
+          transport,
+        }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+      }),
+    );
+
+    expect(calls).toHaveLength(0); // nothing was sent — no credential left the process
+    expect(warn).not.toHaveBeenCalled(); // and no cleartext warning about a config that is invalid
+    warn.mockRestore();
   });
 
   it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {

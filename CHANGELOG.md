@@ -5,6 +5,80 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-13
+
+エラーの見え方をまとめて是正した版です。**PORTERS の応答ではない HTTP エラー**が分類されるようになり、
+**例外は常に reject で届き**、**アクセスポイントの設定ミスは接続前に落ちます**。公開 API の形（型・メソッド）は不変で、
+既存コードは原則そのまま動きます（同期 throw を前提にしたテストだけ修正が要ります）。
+
+### Added
+
+- **アクセスポイントの scheme 設定**（[ADR-0047][adr47]）。`PortersClient` に **`scheme?: "https" | "http"`**（既定 `"https"`）を追加し、
+  型 **`Scheme`** を公開。`host` の意味・`PORTERS_HOST` の運用・`porters.host` は不変です（ポートが要る場合は `host` に含める＝`localhost:4010`）。
+  - ローカルのフェイクサーバーや信頼できるトンネルへ、**アプリを改造せず**（`transport` 差し替えなしで）向けられます。
+  - `scheme: "http"` はトークンを含む全リクエストが**平文**で流れるため、**ループバックを含め毎プロセス 1 回**警告します。
+    抑止は専用の環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` のみ＝**許可（`scheme`）と沈黙（env）は別**です。
+  - 既定は従来どおり `https` で、既存コードの挙動は変わりません。
+
+### Fixed
+
+- **アクセスポイントの書式を構築時に検証**（[ADR-0048][adr48]・[ADR-0049][adr49]）。`host` は
+  **ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
+  **接続を試みる前に** `new PortersClient(...)` が `PortersConfigError`（`category: "config"` ＋ 直し方の `hint`）で拒否します。
+  - 従来これらは**例外にならず**、`host: "https://xxxxx.example.com"` は `https` という**別ホスト宛の実リクエスト**に、
+    `host: ""` は `v1` 宛になっていました。**App ID / App Secret が意図しない宛先へ送られる**か、
+    名前が解決しなければ**設定ミスが `network` エラーとして延々リトライ**される状態でした。
+  - **弾かれる例**: `https://a.test`／`""`／`a.test/`／`a.test/gw`／`user@a.test`／`a test`／`//a.test`／
+    非 ASCII ホスト（**punycode** で渡してください）。
+  - **通る例**: `a.test`／`a.test:8080`／`127.0.0.1:4010`／`[::1]:4010`／大文字ホスト — **既存の正しい設定は
+    1 文字も変わりません**。**ポートはどれでも書けます**（冗長な `:443` も通ります）。
+  - `scheme` も同じガードで検証します（型は `"https" | "http"` ですが、JS や `as` 越しの値を黙って組み立てないため）。
+
+### Changed
+
+- **HTTP ステータスをエラーモデルへ配線**（[ADR-0044][adr44]）。PORTERS の応答**ではない** HTTP エラー
+  （ロードバランサ・プロキシ・WAF・メンテナンス画面が返す 4xx/5xx）が `category: "unknown"` に落ちず、
+  分類されて表面化するようになりました。
+  - **判定順は envelope 優先**: PORTERS の `<Code>` / `<Error>` を持つ応答は従来どおりその分類を採用し、
+    `httpStatus` を添えます。envelope が無い場合だけ status から判定します
+    （5xx → `server`／429 → `rateLimit`／408 → `network`／401・403 → `permission`／その他 4xx → `config`／
+    上記以外 → `unknown`。いずれも `code` は `null`）。
+  - **`PortersError.httpStatus` が実際に載る**ようになりました（応答を伴う失敗のみ。送信前ガードや接続失敗では `undefined`）。
+  - **`category: "rateLimit"` が初めて produce されます**（HTTP 429 を観測できる環境＝プロキシ経由など。
+    PORTERS 直結のレート超過は従来どおり強制切断＝`network`）。
+  - retryable な 3 種（5xx / 429 / 408）は `PortersNetworkError` です。5xx は書き込みが適用されたか不明なため、
+    **非冪等な `create` は自動再送しません**（既存の冪等性ガードがそのまま効きます）。
+  - **200 以外の応答は、ボディが parse できても値を返しません**（プロキシの HTML エラーページが
+    「空ページ」として通り、利用者に「0 件」と見えるのを防ぐため）。
+  - 写像は**未確認の仮定**です（実 PORTERS がどの status を返すかは契約後に確認 — LV-9）。
+  - **同じ判定が OAuth / Token のやり取りにも効きます**（[ADR-0050][adr50]）。トークン取得は全リクエストの
+    前段なので、そこでゲートウェイの 5xx が起きると従来は `category: "unknown"`・再試行不可として
+    **処理全体が止まって**いました。今後は `server`・retryable に分類され、**内蔵リトライで自動回復**しえます。
+    認証経路が `PortersNetworkError` / `PortersConfigError` を投げうる点だけ、`catch` の分岐にご注意ください
+    （いずれも `porters.auth.*` の JSDoc が挙げている系統です）。
+- **Write 応答のルート `<Code>` を先読み**（[ADR-0045][adr45]）。**リクエストごと拒否された Write** の Result Code が
+  失われなくなりました。
+  - 従来は単件 `create` / `update` が **「write returned no result item」**（`category: "unknown"`）、
+    `createMany` / `updateMany` が**件数不一致エラー**になり、原因のコードが消えていました。
+  - 今後は本当の Result Code（例 `102` → `category: "validation"`）が `PortersResourceError` として表面化します
+    （`context.operation: "write"` 付き）。Read（`<Code>`≠0）と同じ写像です。
+  - **成功パスは不変**です（成功応答にルート `<Code>` は無く、あっても `0` なら従来どおり `<Item>` を読みます）。
+  - エラー時にルート `<Code>` が返ること自体は**未確認の仮定**です（契約後に確認 — LV-11）。
+- **例外の届き方を reject に統一**（[ADR-0046][adr46]）。**`Promise` を返す公開メソッドは、いかなる理由でも
+  同期 throw しなくなりました**。設定ミス（`PortersConfigError`）も含め、すべて **reject** で届きます。
+  - これまで **`keywords` 100 字超・`itemstate` の制限違反・Attachment 10MB 超**は Promise を返す**前に**
+    同期 throw していたため、**`porters.candidate.search(q).catch(handler)` では捕まえられません**でした。
+    今後は `.catch()` でも捕まえられます。
+  - **ガードのロジックと実装位置は不変**です（送信前に弾く点・無駄な往復が起きない点は変わりません）。
+    変わったのは例外の届き方だけです。
+  - `await` ＋ try/catch で書いている場合は**影響ありません**。**同期 throw を前提にしたコード**
+    （`expect(() => …).toThrow(…)` など）は `rejects` へ修正が必要です。
+  - 対象は データ系（`search` / `get` / `create` / `update` / `createMany` / `updateMany`）・
+    Attachment（`search` / `get` / `create` / `update`）・マスタ Read（`search` / `current`）・`auth.*` の Promise 系。
+    **`Promise` を返さない API**（`new PortersClient(...)`・`defineFields`・`auth.authorizationUrl` /
+    `auth.revokeUrl`）は**同期 throw のまま**です。
+- 内部: `https://{host}/v1/...` を 10 箇所で組み立てていた URL 生成を **1 関数へ集約**（公開される挙動は不変）。
+
 ## [0.6.2] - 2026-07-19
 
 ### Changed
@@ -137,10 +211,18 @@
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
 [guide]: docs/guide/error-handling.md
+[adr44]: docs/adr/0044-http-status-handling.md
+[adr45]: docs/adr/0045-write-response-root-code.md
+[adr46]: docs/adr/0046-guard-error-contract.md
+[adr48]: docs/adr/0048-access-point-host-validation.md
+[adr49]: docs/adr/0049-host-port-roundtrip.md
+[adr50]: docs/adr/0050-auth-http-status-handling.md
+[adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0

@@ -10,8 +10,10 @@ import {
   createRequester,
   createThrottle,
   expoBackoff,
+  validateAccessPoint,
+  warnIfInsecureScheme,
 } from "./http";
-import type { Transport } from "./http";
+import type { AccessPoint, Transport } from "./http";
 import {
   createAttachmentResource,
   createCandidateResource,
@@ -38,15 +40,28 @@ import type {
 } from "./resources";
 import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
-import type { PartitionId, Scope } from "./types";
+import type { PartitionId, Scheme, Scope } from "./types";
 
 /** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
 export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /**
    * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
-   * (A representative value lives in docs/reference.)
+   * (A representative value lives in docs/reference.) May carry a port — `localhost:4010`.
+   *
+   * The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
+   * `https://xxxxx.example.com` is rejected at construction with a {@link PortersConfigError}
+   * rather than silently addressing a different host (ADR-0048). Any port is fine — including a
+   * redundant `:443` (ADR-0049). Write a non-ASCII host in punycode.
    */
   host: string;
+  /**
+   * URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
+   * local fake server or a trusted tunnel: it sends every request — the OAuth token header
+   * included — in cleartext, so the library warns once per process (loopback is not exempt).
+   * Silence it only where cleartext is intended, with the env var
+   * `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1`.
+   */
+  scheme?: Scheme;
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
@@ -119,9 +134,20 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
    * token, construct a dedicated {@link PortersClient} per tenant instead (ADR-0008 案3).
    */
   readonly tenant: (id: PartitionId) => TenantScope<C>;
-  readonly #host: string;
+  readonly #accessPoint: AccessPoint;
 
   constructor(options: PortersClientOptions<C>) {
+    // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
+    // renders it. Checked once here too (ADR-0048): a malformed `host` is a configuration
+    // problem, so it fails where the configuration was handed over — before any credential can
+    // be posted to whatever the wrong value happens to resolve to. Plain http warns loudly
+    // (once per process) — allowing it never silences it.
+    const accessPoint: AccessPoint = {
+      host: options.host,
+      scheme: options.scheme,
+    };
+    validateAccessPoint(accessPoint);
+    warnIfInsecureScheme(options.scheme, options.host);
     const transport = options.transport ?? createFetchTransport();
     // Custom strategy (案3) takes over token supply; otherwise the default transparent
     // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
@@ -131,7 +157,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       auth = options.auth;
     } else {
       const provider = createDefaultTokenProvider({
-        host: options.host,
+        accessPoint,
         appId: options.appId ?? "",
         appSecret: options.appSecret ?? "",
         transport,
@@ -141,7 +167,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       controls = provider;
     }
     this.auth = createAuthApi({
-      host: options.host,
+      accessPoint,
       appId: options.appId,
       appSecret: options.appSecret,
       scopes: options.scopes,
@@ -155,7 +181,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       throttle: createThrottle(),
       backoff: expoBackoff(),
     });
-    this.#host = options.host;
+    this.#accessPoint = accessPoint;
     // The per-resource custom catalog declared via defineFields (or {} when none). Branded
     // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
     const customFor = <K extends keyof DeclaredCatalogs>(
@@ -166,7 +192,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     // with `partition` overridden — resources are already `deps.partition`-driven, so the factories
     // need no change. Partition Read is App-level (no partition) and built once below, not here.
     const buildScope = (partition: number): TenantScope<C> => {
-      const deps = { requester, host: options.host, partition };
+      const deps = { requester, accessPoint, partition };
       return {
         candidate: createCandidateResource(deps, customFor("candidate")),
         job: createJobResource(deps, customFor("job")),
@@ -191,11 +217,11 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     this.field = root.field;
     this.option = root.option;
     // Partition Read takes no `partition` param (it discovers them); App-level, not tenant-bound.
-    this.partition = createPartitionResource({ requester, host: options.host });
+    this.partition = createPartitionResource({ requester, accessPoint });
   }
 
   /** The configured API host. */
   get host(): string {
-    return this.#host;
+    return this.#accessPoint.host;
   }
 }

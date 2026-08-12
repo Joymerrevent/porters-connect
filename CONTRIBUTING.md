@@ -33,6 +33,55 @@ pnpm sandbox       # オフラインのサンプル実行
 
 提出前に **すべての品質ゲート（typecheck / lint / format:check / test / build）が green** であることを確認してください。CI でも同じゲートが走ります。
 
+### テストの書き分け（モック / フェイク）
+
+契約なしで動かす手段が 2 つあります。**どちらを使うかは「1 回の呼び出しを見たいのか、流れを見たいのか」**で決めます。
+
+|            | `createMockTransport`（`src`・**公開 API**）     | `createFakeTransport`（`test/fake`・**開発専用**）                     |
+| ---------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
+| 性質       | 状態を持たないスタブ（リクエスト→固定の応答）    | 状態を持つフェイクサーバー（OAuth・レコード・API の制約）              |
+| 使いどころ | 単体テスト・利用者向けサンプル（`pnpm sandbox`） | 結合テスト（`create → search → update` の往復）・異常系の注入          |
+| 出せる失敗 | 自分で書いた XML / status                        | 実 Result Code・トークン失効・partition 不一致・長さ超過・注入した障害 |
+| 配布       | npm に含む（利用者も使える）                     | **含まない**（`files` = `dist`・coverage 対象外）                      |
+
+フェイクの設計は [ADR-0043][adr43]、実装フェーズは [フェイクサーバー実装計画][fake-plan] を参照してください。
+
+### フェイクをローカルサーバーとして起動する
+
+別プロセス（curl・スクラッチスクリプト・将来の MCP サーバー）から叩きたいときは HTTP で起動します。
+
+```sh
+pnpm fake:serve            # http://127.0.0.1:4010（PORT で変更可）
+```
+
+**ライブラリを介さず curl だけで叩く手順**（認証 → Read/Write → マスタ → 制約・異常系 → 注入）は
+[フェイクサーバー 手動確認 手順書][fake-runbook] にまとめてあります。「ライブラリが悪いのか、フェイクが悪いのか、
+そもそも API の形がそうなのか」を切り分けたいときはここから。
+
+ライブラリから繋ぐときは、**設定だけ**を書き換えます（[ADR-0047][adr47]）。フェイクは証明書を持たないので
+`scheme: "http"` を明示します。**アプリのコードは変えません**。
+
+```ts
+new PortersClient({
+  host: "127.0.0.1:4010", // PORTERS_HOST に入れる値（ポート込み）
+  scheme: "http", // 明示したときだけ平文。毎プロセス 1 回警告します
+});
+```
+
+警告は意図した平文利用でのみ `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` で抑止します（許可と沈黙は別）。
+
+ライブラリの設定に触れず transport 側で繋ぎたいときは、フェーズ5 の転送 transport も残してあります
+（`host` はアプリの設定のまま・ライブラリ非依存）。
+
+```ts
+import { createForwardingTransport } from "./test/fake/index";
+
+new PortersClient({
+  host: "fake.test",
+  transport: createForwardingTransport({ baseUrl: "http://127.0.0.1:4010" }),
+});
+```
+
 ## ブランチ運用（git-flow）
 
 - ベースは **`develop`**（統合ブランチ）。`main` はリリース済みの状態。
@@ -68,3 +117,7 @@ pnpm sandbox       # オフラインのサンプル実行
 [coc]: ./CODE_OF_CONDUCT.md
 [adr]: ./docs/adr/README.md
 [adr13]: ./docs/adr/0013-coding-conventions-class-vs-function.md
+[adr43]: ./docs/adr/0043-local-fake-server.md
+[adr47]: ./docs/adr/0047-access-point-scheme.md
+[fake-plan]: ./docs/design/fake-server-plan.md
+[fake-runbook]: ./docs/fake-server-runbook.md

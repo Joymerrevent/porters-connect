@@ -7,7 +7,7 @@
 // the Token POST body (SD-9).
 
 import { PortersConfigError } from "../errors/index";
-import type { Transport } from "../http/index";
+import { apiUrl, type AccessPoint, type Transport } from "../http/index";
 import type { Scope } from "../types/index";
 import { exchangeToken } from "./token-exchange";
 import type { StoredTokens, TokenProvider } from "./types";
@@ -64,7 +64,7 @@ export type AuthProviderControls = {
 };
 
 export type AuthApiOptions = {
-  host: string;
+  accessPoint: AccessPoint;
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
@@ -141,7 +141,7 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
       scope: resolveScopes(o.scopes).join(","),
     });
     if (o.state !== undefined) params.set("state", o.state);
-    return `https://${opts.host}/v1/oauth?${params.toString()}`;
+    return apiUrl(opts.accessPoint, "oauth", params);
   };
 
   return {
@@ -151,7 +151,13 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
       const controls = requireDefaultStrategy("exchangeAuthorizationCode");
       const { appId, appSecret } = requireCredentials();
       const tokens = await exchangeToken(
-        { host: opts.host, appId, appSecret, transport: opts.transport, now },
+        {
+          accessPoint: opts.accessPoint,
+          appId,
+          appSecret,
+          transport: opts.transport,
+          now,
+        },
         "oauth_code",
         code,
       );
@@ -164,6 +170,8 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
     ensureAuthenticated: async () => {
       await opts.provider.getAccessToken();
     },
-    getToken: () => opts.provider.getAccessToken(),
+    // `async` so a custom strategy that throws synchronously still reaches the caller as a
+    // rejection — a Promise-returning method never throws (ADR-0046).
+    getToken: async () => opts.provider.getAccessToken(),
   };
 };

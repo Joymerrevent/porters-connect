@@ -71,6 +71,15 @@
 | [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
 | [0040][0040] | マルチテナント tenant(id) スコープ（F-3）                   | 詳細設計 | accepted   |
 | [0041][0041] | 一括書き込み createMany / updateMany（F-4）                 | 詳細設計 | accepted   |
+| [0042][0042] | 対応 PORTERS/API バージョン表記方針（v2 を契約の正）        | 要件定義 | accepted   |
+| [0043][0043] | ローカル フェイクサーバー（忠実度ポリシー・提供形態）       | 詳細設計 | accepted   |
+| [0044][0044] | HTTP ステータスをエラーモデルに配線する（RV-13）            | 詳細設計 | accepted   |
+| [0045][0045] | Write 応答のルート `<Code>` の扱い（RV-14）                 | 詳細設計 | accepted   |
+| [0046][0046] | 送信前ガードの例外契約（同期 throw か reject か・RV-15）    | 基本設計 | accepted   |
+| [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | accepted   |
+| [0048][0048] | アクセスポイント `host` の書式検証（RV-17）                 | 基本設計 | accepted   |
+| [0049][0049] | `host` 書式検証で既定ポートを落とさない（RV-21）            | 基本設計 | accepted   |
+| [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -78,7 +87,10 @@
 
 ### 【要件定義】
 
-- PRD オープン論点（[requirements §8][prd]）の確定 — 成功指標の数値化タイミング・対応 PORTERS/API バージョン表記・npm/組織名最終確認 ほか
+- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-08-09 の棚卸しで残るのは 2 件**：
+  「成功指標の数値化タイミング」[stakeholder]／「v1 で CJS 出力まで出すか」[eng]。
+  （バージョン表記は [0042][0042]、サンドボックス R-17 は P1 のまま出荷、npm スコープ/組織は公開実績で決着。
+  「1 App トークンで複数 partition」は実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
@@ -95,12 +107,38 @@
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
+### 【accept 済み・実装待ち】
+
+**proposed は現在なし**（0049・0050 とも 2026-08-12 に decider が accept）。実装は ADR ごとに別 PR。
+
+- [0049][0049]（**案C**）`host` 書式検証で既定ポートを落とさない（RV-21）—
+  既定ポートを持たないスキーム（`porters-check://`）でパースし、`:443` も含め**どのポートも落とさない**。
+  [0048][0048] の**機構だけ**を差し替える改訂で、受け入れを広げるだけ＝semver は **patch**。
+  **0.7.0 の前に実装する**（この検証が世に出るのが 0.7.0 なので、先に入れれば「壊してから戻す」ことにならない）
+- [0050][0050]（**案A**）認証 API 経路にも HTTP ステータスを配線（RV-19）— [0044][0044] の `readResponse` を
+  `http/` へ切り出して共有し、判定順・写像はそのまま認証 2 経路にも適用。**新しい決定は持ち込まず適用範囲を広げるだけ**・
+  semver は **minor**。**0.7.0 のブロッカーではない**（間に合えば同梱・間に合わなければ次版）
+
+### 【accept 済み・実装済み】
+
+2026-08-09 / 2026-08-10 のレビュー（[docs/reviews][reviews]）から起票し、decider が全件 accept。
+**実装は ADR ごとに別 PR**（0044〜0046・0048 は 2026-08-12 に実装完了・0.7.0 で公開予定）。
+
+- [0044][0044]（案A）HTTP ステータスの扱い ／ [0045][0045]（案A）Write ルート `<Code>` の扱い
+  — **実装順序は 0044 → 0045**（判定順の土台が先）
+- [0046][0046]（案A）送信前ガードの例外契約 — semver は minor
+- [0047][0047]（案B）アクセスポイント・scheme 設定 — フェイク フェーズ6 の前提・semver は minor
+- [0048][0048]（案A ＋ 機構2）アクセスポイント `host` の書式検証 — semver は patch。
+  0047 の続き（`host` の意味を実行時にも強制する）。**機構2 は [0049][0049]（案C）で改訂が accept 済み**
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
 [prd]: ../design/requirements.md
+[reviews]: ../reviews/findings.md
+[lv-doc]: ../live-verification.md
 [0000-template-md]: 0000-template.md
 [0001]: 0001-record-architecture-decisions.md
 [0002]: 0002-ground-design-in-live-api-docs.md
@@ -143,3 +181,12 @@
 [0039]: 0039-commitlint-release-range.md
 [0040]: 0040-multitenancy-surface-impl.md
 [0041]: 0041-bulk-write-surface-impl.md
+[0042]: 0042-supported-version-policy.md
+[0043]: 0043-local-fake-server.md
+[0044]: 0044-http-status-handling.md
+[0045]: 0045-write-response-root-code.md
+[0046]: 0046-guard-error-contract.md
+[0047]: 0047-access-point-scheme.md
+[0048]: 0048-access-point-host-validation.md
+[0049]: 0049-host-port-roundtrip.md
+[0050]: 0050-auth-http-status-handling.md

@@ -4,6 +4,7 @@
 // resources add bespoke query/URL building (ADR-0021/0022). XML stays in xml/ — this only
 // wires parse + decode together.
 
+import type { AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
 import {
   decodeField,
@@ -16,6 +17,17 @@ import { parseResourcePage, type RawItem } from "../xml/parser";
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
 export type FieldCatalog = Record<string, DataType>;
+
+/**
+ * What every resource accessor is handed: how to send (requester), where to send (access point —
+ * ADR-0047), and the partition it is bound to. Partition Read takes `Omit<…, "partition">`: it
+ * discovers partitions, so it has none to bind.
+ */
+export type ResourceDeps = {
+  requester: Requester;
+  accessPoint: AccessPoint;
+  partition: number;
+};
 
 /**
  * "No custom fields": the intersection-identity default for the generic catalog params (ADR-0023).

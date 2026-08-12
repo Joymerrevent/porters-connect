@@ -9,7 +9,6 @@
 // raw strings. Multi-select Option read returns every selected alias as `string[]` (ADR-0017).
 // Image-typed custom fields (U_) are future work. The static Resume / input types derive from the catalog (ADR-0019).
 
-import type { Requester } from "../http/requester";
 import {
   createResource,
   type CreateInput,
@@ -17,6 +16,8 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type Resource,
+  type ResourceDeps,
+  type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
@@ -62,6 +63,18 @@ const REQUIRED_ON_CREATE = [
   "P_Candidate",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+/**
+ * Resume's names + standard catalog. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds Resume wire shapes from this very catalog, so the two cannot drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
+export const RESUME_DESCRIPTOR = {
+  name: "Resume",
+  path: "resume",
+  prefix: "Resume",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
+
 /** A decoded Resume (a Candidate's CV / profile): known `P_` fields, each requested field
  *  `value | null`. */
 export type Resume = ReadRecord<typeof FIELDS>;
@@ -82,20 +95,14 @@ export type ResumeResource<C extends FieldCatalog = EmptyCatalog> = Resource<
 >;
 
 export const createResumeResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: { requester: Requester; host: string; partition: number },
+  deps: ResourceDeps,
   custom?: C,
 ): ResumeResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createResource(
-    {
-      name: "Resume",
-      path: "resume",
-      prefix: "Resume",
-      fields,
-      requiredOnCreate: REQUIRED_ON_CREATE,
-    },
+    { ...RESUME_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );
 };

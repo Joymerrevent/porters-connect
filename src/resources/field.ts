@@ -4,7 +4,8 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { Requester } from "../http/requester";
+import { apiUrl, type AccessPoint } from "../http/access-point";
+import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
   decoderFor,
   paginate,
@@ -16,7 +17,11 @@ import {
 
 // Resource-type selector -> Value code (docs/reference resources-list). Master/Phase/Attachment
 // have no Value, so only the R/W data resources are selectable here.
-const RESOURCE_VALUE = {
+/**
+ * Field Read's `resource` selector -> Value code (docs/reference resources-list). Exported for
+ * in-repo dev tooling: the fake server maps the code back to a resource. Not published.
+ */
+export const RESOURCE_VALUE = {
   candidate: 1,
   job: 3,
   client: 5,
@@ -48,6 +53,19 @@ const FIELDS = {
   P_ResourceType: "Number",
 } as const satisfies FieldCatalog;
 
+/**
+ * Field's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
+ * builds Field Read responses from this very catalog, so the two cannot drift. The alias
+ * prefix is the resource name itself (`Field.P_Id` — docs/reference). Not re-exported from
+ * `src/index.ts`, so it stays out of the published API.
+ */
+export const FIELD_DESCRIPTOR = {
+  name: "Field",
+  path: "field",
+  prefix: "Field",
+  fields: FIELDS,
+} as const satisfies ResourceDescriptor;
+
 /** A decoded Field definition. `P_Required`: 0 = normal, 1 = required. */
 export type Field = ReadRecord<typeof FIELDS>;
 export type FieldPage = ResourcePage<typeof FIELDS>;
@@ -70,7 +88,7 @@ export type FieldResource = {
 };
 
 const buildUrl = (
-  host: string,
+  accessPoint: AccessPoint,
   partition: number,
   q: FieldSearchQuery,
 ): string => {
@@ -80,17 +98,18 @@ const buildUrl = (
   p.set("active", String(q.active ?? -1));
   if (q.count !== undefined) p.set("count", String(q.count));
   if (q.start !== undefined) p.set("start", String(q.start));
-  return `https://${host}/v1/field?${p.toString()}`;
+  return apiUrl(accessPoint, "field", p);
 };
 
-export const createFieldResource = (deps: {
-  requester: Requester;
-  host: string;
-  partition: number;
-}): FieldResource => {
+export const createFieldResource = (deps: ResourceDeps): FieldResource => {
   const decode = decoderFor(FIELDS);
-  const search = (query: FieldSearchQuery): Promise<FieldPage> =>
-    runRead(deps.requester, buildUrl(deps.host, deps.partition, query), decode);
+  // `async` for the exception contract (ADR-0046).
+  const search = async (query: FieldSearchQuery): Promise<FieldPage> =>
+    runRead(
+      deps.requester,
+      buildUrl(deps.accessPoint, deps.partition, query),
+      decode,
+    );
   const searchAll = (
     query: Omit<FieldSearchQuery, "count" | "start">,
   ): AsyncIterable<Field> =>
