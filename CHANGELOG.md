@@ -39,6 +39,19 @@
     （`context.operation: "write"` 付き）。Read（`<Code>`≠0）と同じ写像です。
   - **成功パスは不変**です（成功応答にルート `<Code>` は無く、あっても `0` なら従来どおり `<Item>` を読みます）。
   - エラー時にルート `<Code>` が返ること自体は**未確認の仮定**です（契約後に確認 — LV-11）。
+- **例外の届き方を reject に統一**（[ADR-0046][adr46]）。**`Promise` を返す公開メソッドは、いかなる理由でも
+  同期 throw しなくなりました**。設定ミス（`PortersConfigError`）も含め、すべて **reject** で届きます。
+  - これまで **`keywords` 100 字超・`itemstate` の制限違反・Attachment 10MB 超**は Promise を返す**前に**
+    同期 throw していたため、**`porters.candidate.search(q).catch(handler)` では捕まえられません**でした。
+    今後は `.catch()` でも捕まえられます。
+  - **ガードのロジックと実装位置は不変**です（送信前に弾く点・無駄な往復が起きない点は変わりません）。
+    変わったのは例外の届き方だけです。
+  - `await` ＋ try/catch で書いている場合は**影響ありません**。**同期 throw を前提にしたコード**
+    （`expect(() => …).toThrow(…)` など）は `rejects` へ修正が必要です。
+  - 対象は データ系（`search` / `get` / `create` / `update` / `createMany` / `updateMany`）・
+    Attachment（`search` / `get` / `create` / `update`）・マスタ Read（`search` / `current`）・`auth.*` の Promise 系。
+    **`Promise` を返さない API**（`new PortersClient(...)`・`defineFields`・`auth.authorizationUrl` /
+    `auth.revokeUrl`）は**同期 throw のまま**です。
 - 内部: `https://{host}/v1/...` を 10 箇所で組み立てていた URL 生成を **1 関数へ集約**（公開される挙動は不変）。
 
 ## [0.6.2] - 2026-07-19
@@ -175,6 +188,7 @@
 [guide]: docs/guide/error-handling.md
 [adr44]: docs/adr/0044-http-status-handling.md
 [adr45]: docs/adr/0045-write-response-root-code.md
+[adr46]: docs/adr/0046-guard-error-contract.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
