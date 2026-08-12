@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-13
+
+エラーの見え方をまとめて是正した版です。**PORTERS の応答ではない HTTP エラー**が分類されるようになり、
+**例外は常に reject で届き**、**アクセスポイントの設定ミスは接続前に落ちます**。公開 API の形（型・メソッド）は不変で、
+既存コードは原則そのまま動きます（同期 throw を前提にしたテストだけ修正が要ります）。
+
 ### Added
 
 - **アクセスポイントの scheme 設定**（[ADR-0047][adr47]）。`PortersClient` に **`scheme?: "https" | "http"`**（既定 `"https"`）を追加し、
@@ -215,7 +221,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.5.0...v0.6.0
