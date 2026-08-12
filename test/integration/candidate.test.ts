@@ -137,6 +137,22 @@ describe("error paths against the fake server", () => {
     });
   });
 
+  it("keeps the Result Code of a write rejected as a whole (ADR-0045)", async () => {
+    const { fake, porters } = setup();
+    // No <Item> comes back at all, so the reason is at the root. Without reading it the caller
+    // used to get "write returned no result item" with `category: "unknown"` (RV-14).
+    fake.control.failNext({ kind: "resultCode", code: 102 });
+
+    await expect(
+      porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" }),
+    ).rejects.toMatchObject({
+      name: "PortersResourceError",
+      code: 102,
+      category: "validation",
+      context: { resource: "Candidate", operation: "write" },
+    });
+  });
+
   it("classifies a gateway 5xx that never reached PORTERS (ADR-0044)", async () => {
     const { fake, porters } = setup();
     await porters.candidate.search(); // warm up auth, so the fault lands on the read
