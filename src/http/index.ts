@@ -7,4 +7,5 @@ export * from "./fetch-transport";
 export * from "./mock-transport";
 export * from "./throttle";
 export * from "./retry";
+export * from "./read-response";
 export * from "./requester";
