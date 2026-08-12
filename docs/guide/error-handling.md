@@ -163,6 +163,31 @@ try {
 > なお**実 PORTERS がどの status を返すかは未確認**です（契約後に確認 — [live-verification][lv] LV-9）。
 > 上表は「PORTERS 以外が返す HTTP エラーを安全側へ倒す」ための写像であり、確定した仕様ではありません。
 
+## アクセスポイントの書式（[ADR-0048][adr-0048]）
+
+`host` は**ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
+**接続を試みる前に** `PortersConfigError`（`category: "config"`）で拒否されます。
+
+```ts
+new PortersClient({ host: "xxxxx.example.com" }); // ✅
+new PortersClient({ host: "127.0.0.1:4010", scheme: "http" }); // ✅ ポートは host に含める
+new PortersClient({ host: "https://xxxxx.example.com" }); // ❌ PortersConfigError
+new PortersClient({ host: "" }); // ❌ （env 未設定を押し通した場合）
+new PortersClient({ host: "xxxxx.example.com/gw" }); // ❌ パス prefix は対象外（ADR-0047）
+```
+
+検証しない場合、これらは**例外にならず別のホスト名として解決可能な URL に化け**、
+App ID / App Secret がそこへ実際に送られる（または直しようのない設定ミスが `network` として
+延々リトライされる）ためです。**曖昧な設定で黙って別の宛先へ繋がない**のが本ライブラリの契約です。
+
+2 つだけ既知の制限があります（どちらもエラーの `hint` に出ます）。
+
+- **非 ASCII のホストは punycode 表記**で渡してください（`xn--...`）。
+- **既定ポート `:443` は書かない**でください（パーサが落とすため書式検証を通りません）。
+
+なお**パス prefix 付きのゲートウェイ**（`https://gw/porters/v1/...`）は [ADR-0047][adr-0047] で対象外と決めており、
+本検証はその決定を実行時にも明示するものです。
+
 ## category 一覧と対処方針
 
 | category     | 意味                                       | 主な原因 / 対処                                              |
@@ -195,6 +220,7 @@ try {
 | 登録最大件数超過                          | リソース `500`             | `validation` | 件数を減らす／200 件以下のバッチに分割                                     |
 | `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）       |
 | `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                     |
+| `new PortersClient(...)` がその場で落ちる | `host` / `scheme` の書式   | `config`     | `host` は**ホスト名（＋ポート）だけ**（下記）                              |
 | `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                     |
 | `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）        |
 
@@ -240,6 +266,8 @@ try {
 [adr-0006]: ../adr/0006-error-model.md
 [adr-0044]: ../adr/0044-http-status-handling.md
 [adr-0046]: ../adr/0046-guard-error-contract.md
+[adr-0047]: ../adr/0047-access-point-scheme.md
+[adr-0048]: ../adr/0048-access-point-host-validation.md
 [lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md

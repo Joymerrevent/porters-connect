@@ -26,7 +26,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | fixed |
 | RV-15 | 🟢     | エラーモデル / DX         | fixed |
 | RV-16 | 🟢     | ドキュメント              | fixed |
-| RV-17 | 🟡     | フェイルセーフ / 設定検証 | open  |
+| RV-17 | 🟡     | フェイルセーフ / 設定検証 | fixed |
 | RV-18 | 🟢     | ドキュメント / 計画       | fixed |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
@@ -222,13 +222,16 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   検証は `apiUrl` ではなく `PortersClient` の構築時が適切（1 回で済み、リクエスト経路を汚さない）。
   現行の正しい設定は影響を受けないが、**受け入れ入力を狭める＝公開契約の明確化**なので軽い ADR を 1 本推奨
   （既存の送信前ガード＝長さ・10MB と同じ「早く落とす」系列に置く）
-- **状態**: open
-- **処置**: [ADR-0048][adr48] を **accepted**（案A ＋ 機構2・decider 2026-08-11・ADR 反映は PR #141）。
+- **状態**: fixed
+- **処置**: [ADR-0048][adr48] を **accepted**（案A ＋ 機構2・decider 2026-08-11・ADR 反映は PR #141）ののち**実装**。
   確定した契約は「**`host` は「ホスト（＋ポート）」だけを表す**。スキーム・パス・userinfo・空白を含む値は
-  接続を試みる前に `PortersConfigError` で拒否する」。検証は `PortersClient` 構築時に 1 回・判定は
-  `new URL` ラウンドトリップ（パース成功 ＋ `url.host` 一致 ＋ `pathname === "/"`）・`scheme` も同じガード・
-  semver は **patch**。IDN は punycode 表記で渡す既知の制限を JSDoc と hint に明記する。
-  **実装は別 PR**（完了時に `fixed` へ）
+  接続を試みる前に `PortersConfigError` で拒否する」。`validateAccessPoint`（`src/http/access-point.ts`）を
+  `PortersClient` 構築時に 1 回だけ呼ぶ（`apiUrl` は文字列組立のまま・リクエスト経路に分岐なし）。
+  判定は `new URL` ラウンドトリップ（パース成功 ＋ `url.host` 一致 ＋ `pathname === "/"`）で、`scheme` も同じガード。
+  semver は **patch**。**既知の制限は 2 つとも hint に明記**した — IDN は punycode 表記が要る／
+  既定ポート `:443` はパーサが落とすため書式検証を通らない（後者は実装時に判明。ADR の想定外だが
+  弾かれても構築時に hint 付きで落ちるだけで安全側）。異常系 11 件・正常系 7 件をテストで pin し、
+  [エラーハンドリング ガイド][guide]に「アクセスポイントの書式」節を追加
 
 ## RV-18 🟢 ドキュメント / 計画（accepted 済み ADR-0044〜0046 の実装が roadmap に現れない）
 
