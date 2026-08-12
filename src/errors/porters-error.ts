@@ -8,9 +8,9 @@ export type ErrorCategory =
   | "validation"
   | "notFound"
   | "conflict"
-  // 予約（現状どの分類関数も produce しない）。PORTERS はレート超過時に判別可能なコードを
-  // 返さず接続を切るため、強制切断は PortersNetworkError（category "network"）として表面化する。
-  // 将来 429 相当の判別手段が得られたら配線するため型には残す（RV-3）。
+  // PORTERS 自身はレート超過時に判別可能なコードを返さず接続を切るため、強制切断は
+  // PortersNetworkError（category "network"）として表面化する。produce されるのは
+  // **HTTP 429 を観測できた場合だけ**（プロキシ経由など。ADR-0044・元は RV-3 の予約値）。
   | "rateLimit"
   | "transient"
   | "network"
@@ -33,6 +33,11 @@ export type PortersErrorOptions = {
   retryable?: boolean;
   /** Actionable hint (English by default). */
   hint?: string;
+  /**
+   * HTTP status of the response this error came from (ADR-0044). Set for every error raised while
+   * reading a response — including one carrying a PORTERS `<Code>` — and `undefined` for failures
+   * with no response at all (send-time guards, connection errors).
+   */
   httpStatus?: number;
   context?: PortersErrorContext;
   cause?: unknown;

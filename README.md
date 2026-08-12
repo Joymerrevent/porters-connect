@@ -328,13 +328,18 @@ try {
     e.code; // PORTERS のコード（無い場合 null）
     e.retryable; // 再試行可否
     e.hint; // 対処のヒント（あれば）
+    e.httpStatus; // 応答の HTTP ステータス（応答を伴わない失敗では undefined）
   }
 }
 ```
 
 - トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` を早期に throw。
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
-- レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します（`category` の `"rateLimit"` は将来の配線用に予約された値で、現状はどの分類も produce しません）。
+- レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します。
+- **PORTERS の応答でない HTTP エラー**（LB・プロキシ・メンテナンス画面の 4xx/5xx）も分類されます（[ADR-0044][adr44]）。
+  PORTERS の `<Code>` を持つ応答はそちらが優先され、無い場合だけ status から判定します
+  （5xx → `server`・429 → `rateLimit`・408 → `network`・401/403 → `permission`・その他 4xx → `config`）。
+  いずれも `code` は `null`、`httpStatus` にステータスが載ります。
 
 > 症状別の早見表と 2 系統（認証 / リソース）のコード対応表は [エラーハンドリング ガイド][error-handling]にまとめています。
 
@@ -403,6 +408,7 @@ try {
 [bulk-write]: ./docs/guide/bulk-write.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
+[adr44]: ./docs/adr/0044-http-status-handling.md
 [adr47]: ./docs/adr/0047-access-point-scheme.md
 [design]: ./docs/design/basic-design.md
 [ref]: ./docs/reference/README.md

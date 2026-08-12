@@ -16,6 +16,21 @@
 
 ### Changed
 
+- **HTTP ステータスをエラーモデルへ配線**（[ADR-0044][adr44]）。PORTERS の応答**ではない** HTTP エラー
+  （ロードバランサ・プロキシ・WAF・メンテナンス画面が返す 4xx/5xx）が `category: "unknown"` に落ちず、
+  分類されて表面化するようになりました。
+  - **判定順は envelope 優先**: PORTERS の `<Code>` / `<Error>` を持つ応答は従来どおりその分類を採用し、
+    `httpStatus` を添えます。envelope が無い場合だけ status から判定します
+    （5xx → `server`／429 → `rateLimit`／408 → `network`／401・403 → `permission`／その他 4xx → `config`／
+    上記以外 → `unknown`。いずれも `code` は `null`）。
+  - **`PortersError.httpStatus` が実際に載る**ようになりました（応答を伴う失敗のみ。送信前ガードや接続失敗では `undefined`）。
+  - **`category: "rateLimit"` が初めて produce されます**（HTTP 429 を観測できる環境＝プロキシ経由など。
+    PORTERS 直結のレート超過は従来どおり強制切断＝`network`）。
+  - retryable な 3 種（5xx / 429 / 408）は `PortersNetworkError` です。5xx は書き込みが適用されたか不明なため、
+    **非冪等な `create` は自動再送しません**（既存の冪等性ガードがそのまま効きます）。
+  - **200 以外の応答は、ボディが parse できても値を返しません**（プロキシの HTML エラーページが
+    「空ページ」として通り、利用者に「0 件」と見えるのを防ぐため）。
+  - 写像は**未確認の仮定**です（実 PORTERS がどの status を返すかは契約後に確認 — LV-9）。
 - 内部: `https://{host}/v1/...` を 10 箇所で組み立てていた URL 生成を **1 関数へ集約**（公開される挙動は不変）。
 
 ## [0.6.2] - 2026-07-19
@@ -150,6 +165,7 @@
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
 [guide]: docs/guide/error-handling.md
+[adr44]: docs/adr/0044-http-status-handling.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/

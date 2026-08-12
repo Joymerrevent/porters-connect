@@ -522,6 +522,207 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(sent).toHaveLength(1);
   });
 
+  it("keeps a PORTERS envelope error and stamps the status on it (ADR-0044)", async () => {
+    // HTTP 400 *and* a real `<Code>`: the envelope is the more specific answer, so it wins and the
+    // status rides along instead of replacing it.
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 400, body: "envelope" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    await expect(
+      r.request(base, () => {
+        throw new PortersResourceError("no perm", {
+          category: "permission",
+          code: 403,
+        });
+      }),
+    ).rejects.toMatchObject({
+      category: "permission",
+      code: 403,
+      httpStatus: 400,
+    });
+  });
+
+  it("stamps the status even on a 200 (every response-borne error carries it)", async () => {
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 200, body: "not xml" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    // No PORTERS code here (an unparseable body) — but a 200 means the status has nothing to add,
+    // so the parse failure is what surfaces.
+    await expect(
+      r.request(base, () => {
+        throw new PortersResourceError("unparseable resource response", {
+          category: "unknown",
+        });
+      }),
+    ).rejects.toMatchObject({
+      category: "unknown",
+      code: null,
+      httpStatus: 200,
+    });
+  });
+
+  it("classifies an error status whose body is not a PORTERS envelope", async () => {
+    // The load-balancer case: an HTML page behind a 503. Without the status this lands as
+    // "unparseable"/`unknown` and the caller cannot tell whether retrying is sane (RV-13).
+    const transport: Transport = {
+      send: () =>
+        Promise.resolve({ status: 503, body: "<html>maintenance</html>" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+      maxRetries: 0,
+    });
+    const unparseable = new PortersResourceError(
+      "unparseable resource response",
+      { category: "unknown" },
+    );
+
+    await expect(
+      r.request(base, () => {
+        throw unparseable;
+      }),
+    ).rejects.toMatchObject({
+      category: "server",
+      code: null,
+      httpStatus: 503,
+      retryable: true,
+      cause: unparseable, // what reading the body produced is kept, not discarded
+    });
+  });
+
+  it("refuses to hand back a parsed body from an error status", async () => {
+    // A proxy's error page parses *successfully* into an empty page, which would otherwise reach
+    // the caller as "no results" — the quiet failure this guards against (fail-safe).
+    const transport: Transport = {
+      send: () =>
+        Promise.resolve({ status: 502, body: "<html>bad gateway</html>" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+      maxRetries: 0,
+    });
+
+    await expect(r.request(base, () => "parsed anyway")).rejects.toMatchObject({
+      category: "server",
+      httpStatus: 502,
+    });
+  });
+
+  it("classifies an error status even when parse throws something foreign", async () => {
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 404, body: "nope" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+    const boom = new TypeError("boom");
+
+    await expect(
+      r.request(base, () => {
+        throw boom;
+      }),
+    ).rejects.toMatchObject({
+      name: "PortersConfigError",
+      category: "config",
+      httpStatus: 404,
+      cause: boom,
+    });
+  });
+
+  it("treats the whole 2xx range as success", async () => {
+    const statuses = [200, 299];
+    for (const status of statuses) {
+      const r = createRequester({
+        transport: { send: () => Promise.resolve({ status, body: "ok" }) },
+        auth: mockAuth([]),
+        throttle: noThrottle,
+        backoff: noBackoff,
+      });
+      expect(await r.request(base, (b) => b)).toBe("ok");
+    }
+
+    // 199 and 300 are not success — neither is handed back as data.
+    for (const status of [199, 300]) {
+      const r = createRequester({
+        transport: { send: () => Promise.resolve({ status, body: "ok" }) },
+        auth: mockAuth([]),
+        throttle: noThrottle,
+        backoff: noBackoff,
+      });
+      await expect(r.request(base, (b) => b)).rejects.toMatchObject({
+        category: "unknown",
+        httpStatus: status,
+      });
+    }
+  });
+
+  it("retries a retryable HTTP status and gives up after maxRetries", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 503, body: "" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+      maxRetries: 2,
+    });
+
+    await expect(r.request(base, (b) => b)).rejects.toMatchObject({
+      category: "server",
+      httpStatus: 503,
+    });
+    expect(n).toBe(3); // initial + 2 retries
+  });
+
+  it("does not replay a create after a 5xx (it may already have applied)", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 500, body: "" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    await expect(
+      r.request(post, (b) => b, { write: true, idempotent: false }),
+    ).rejects.toBeInstanceOf(PortersNetworkError);
+    expect(n).toBe(1); // the idempotency guard covers HTTP-level uncertainty too
+  });
+
   it("waits backoff(attempt-1) between transient retries", async () => {
     vi.useFakeTimers();
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");

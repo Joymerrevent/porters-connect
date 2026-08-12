@@ -22,7 +22,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-10 | 🟡     | アーキテクチャ / DX       | fixed |
 | RV-11 | 🟡     | 認証                      | fixed |
 | RV-12 | 🟢     | ドキュメント              | fixed |
-| RV-13 | 🟡     | エラーモデル / API 忠実性 | open  |
+| RV-13 | 🟡     | エラーモデル / API 忠実性 | fixed |
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | open  |
 | RV-15 | 🟢     | エラーモデル / DX         | open  |
 | RV-16 | 🟢     | ドキュメント              | fixed |
@@ -135,8 +135,15 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **根拠**: `src/http/requester.ts:105-106`（`const res = await o.transport.send(...); return parse(res.body);` — `res.status` 不使用）/ `src/http/fetch-transport.ts:27`（status は取得済み）/ `docs/reference/resource-api/README.md:78`「成功は HTTP 200 かつ `<Code>0`。エラーは HTTP 200 以外、または `<Code>` が 0 以外」/ `src/errors/porters-error.ts:36`（`httpStatus`）
 - **検出経緯**: [ADR-0043][adr43] フェイクサーバー phase 1 の実装中（フェイクが HTTP 400 を返す経路を作った際に判明）。フェイクの狙い＝「忠実度の強制関数」が実際に効いた例
 - **推奨**: `requester` で status を分類し `PortersError.httpStatus` に載せる（5xx→`server`・retryable / 429→`rateLimit`（現状どこも produce していない category）/ 4xx→`config` or `permission`）。ボディが PORTERS envelope ならそちらを優先。**挙動変更＝要 ADR**（エラー分類は [ADR-0006][adr6] の管轄）
-- **状態**: open
-- **処置**: [ADR-0044][adr44] を **accepted**（案A＝status を分類しつつ envelope を優先・decider 2026-08-09）。判定順・写像・`rateLimit` の解禁・LV-9 紐づけまで ADR で確定済み。**実装は別 PR**（完了時に `fixed` へ）
+- **状態**: fixed
+- **処置**: [ADR-0044][adr44] を **accepted**（案A＝status を分類しつつ envelope を優先・decider 2026-08-09）ののち**実装**。
+  `requester` が `res.status` を見るようになり、判定順は envelope 優先（PORTERS の `<Code>`/`<Error>` があればそれを採用し
+  `httpStatus` を添える）、envelope が無い非 2xx は `httpStatusCategory` で分類（5xx→`server` / 429→`rateLimit` /
+  408→`network` / 401・403→`permission` / その他 4xx→`config` / 未知→`unknown`・`code` は `null`）。
+  非 2xx は parse に成功しても値を返さない（プロキシの HTML が「空ページ」として通るため）。
+  retryable な 3 種は `PortersNetworkError` ＝非冪等な `create` は 5xx で自動再送しない。
+  これで `category: "rateLimit"`（RV-3 の予約値）が 429 経由で初めて produce される。
+  README・[エラーハンドリング ガイド][guide]に「非 PORTERS ボディの HTTP エラー」節を追加。写像は仮定なので LV-9 に紐づけ済み
 
 ## RV-14 🟡 エラーモデル / API 忠実性（Write のルート `<Code>` を読まない）
 

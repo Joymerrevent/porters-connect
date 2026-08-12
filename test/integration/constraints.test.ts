@@ -121,18 +121,21 @@ describe("per-minute request limits", () => {
     expect((await porters.candidate.search()).total).toBe(30);
   });
 
-  it("reports an HTTP 429 as an unclassified error today (RV-13)", async () => {
+  it("reports an HTTP 429 as a retryable rateLimit error (ADR-0044)", async () => {
     const { porters } = setup({
       rateLimit: { readPerMinute: 1, mode: "http429" },
     });
     await porters.candidate.search();
 
-    // The requester never looks at `res.status`, so a body-less 429 lands as "unparseable" with
-    // category `unknown` and no `httpStatus`. That is the gap findings RV-13 tracks; when it is
-    // fixed this expectation should become `rateLimit` / retryable.
+    // A body-less 429 carries no PORTERS envelope, so the status is the whole story: the requester
+    // classifies it, retries while it lasts, and surfaces it with the status attached. This is the
+    // one route by which `category: "rateLimit"` is produced at all (RV-3 / RV-13).
     await expect(porters.candidate.search()).rejects.toMatchObject({
-      category: "unknown",
-      httpStatus: undefined,
+      name: "PortersNetworkError",
+      category: "rateLimit",
+      retryable: true,
+      code: null,
+      httpStatus: 429,
     });
   });
 });
