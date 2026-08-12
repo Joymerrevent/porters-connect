@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-11
+- 最終更新: 2026-08-12
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -13,19 +13,14 @@
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                              | 根拠                       | semver           | 備考                                             |
-| --- | ----------------------------------------------------- | -------------------------- | ---------------- | ------------------------------------------------ |
-| 1   | **ADR-0044 実装** HTTP ステータスをエラーモデルへ配線 | [ADR-0044][adr44] ／ RV-13 | 未確定（要判断） | 判定順の土台。**2 より先に**                     |
-| 2   | **ADR-0045 実装** Write 応答のルート `<Code>`         | [ADR-0045][adr45] ／ RV-14 | 未確定（要判断） | LV-11 未確認のまま先回り実装する決定済み         |
-| 3   | **ADR-0046 実装** 送信前ガードを reject に統一        | [ADR-0046][adr46] ／ RV-15 | minor            | 独立して着手可                                   |
-| 4   | **ADR-0048 実装** `host` の書式検証                   | [ADR-0048][adr48] ／ RV-17 | patch            | 独立して着手可。3 と同 PR でもよい               |
-| 5   | **0.7.0 リリース**                                    | [release-runbook][rb]      | minor            | scheme（[ADR-0047][adr47]・実装済み）＋ 上記是正 |
-| 6   | **案A 第2層 MCP サーバー** の詳細設計 ADR             | [ADR-0033][adr33]          | —                | 戦略ゴール。パッケージ構成・ツール表面から       |
+| #   | やること                                  | 根拠                  | semver | 備考                                          |
+| --- | ----------------------------------------- | --------------------- | ------ | --------------------------------------------- |
+| 1   | **0.7.0 リリース**                        | [release-runbook][rb] | minor  | scheme（[ADR-0047][adr47]）＋ 下記 4 件の是正 |
+| 2   | **案A 第2層 MCP サーバー** の詳細設計 ADR | [ADR-0033][adr33]     | —      | 戦略ゴール。パッケージ構成・ツール表面から    |
 
-- 1〜4 は **ADR accepted 済み・実装のみ未着手**。流れは `ADR 起票 → 議論 → accepted → 実装 → docs → リリース` で、
-  いずれも**実装は別 PR**（ADR と実装を混ぜない）。完了したら [findings][findings] の該当 RV を `fixed` にする。
-- semver「未確定」の 2 件は ADR 本文に区分の記載が無い。**実装 PR で decider が判断**する（挙動変更を伴うため minor 想定）。
-- 6 は 1〜5 と独立。評価基盤（フェイクサーバー）が揃っているので、e2e の足場は追加不要。
+- **ADR-0044・0045・0046・0048 の実装は完了**（RV-13/14/15/17 はすべて `fixed`）。**accept 済み・実装待ちの ADR は無い**。
+- 1 は「[Unreleased] を確定させて出す」だけ。手順は [release-runbook][rb]（release ブランチで版 bump → main → Release 作成）。
+- 2 は 1 と独立。評価基盤（フェイクサーバー）が揃っているので、e2e の足場は追加不要。
 
 ### 随時・任意（急がない）
 
@@ -47,14 +42,14 @@
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                              |
-| ----------------------------- | -------------------------------------------- | --------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 6 件                           |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | **open 4 件** = RV-13/14/15/17          |
-| [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | 実装待ち 0044・0045・0046・0048         |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）           |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）        |
+| ファイル                      | 何の TODO か                                 | いまの状態                               |
+| ----------------------------- | -------------------------------------------- | ---------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件                            |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | **open 0 件**（RV-1〜18 すべて `fixed`） |
+| [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | 実装待ち **なし**                        |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）            |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）         |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -91,6 +86,10 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - XML parse/encode（Option・User/Reference・DateTime/Date を正規化）／datetime（ISO ⇄ PORTERS）
 - OAuth（`code_direct`・トークン ms 単位・キャッシュ＋自動リフレッシュ・差し替え可能ストア）＋ **公開 API `porters.auth.*`**（初回ブラウザ付与 `authorizationUrl`/`exchangeAuthorizationCode`・利用終了 `revokeUrl`/`clearTokens`・`ensureAuthenticated`/`getToken`・F-1 / [ADR-0034][adr34]）
 - エラーモデル（基底 `PortersError` ＋ 系統別 4 サブクラス ＋ `category` 11 種・未知は `unknown`）
+  - **HTTP ステータスも分類**（[ADR-0044][adr44]・envelope 優先／status 由来は `code: null` ＋ `httpStatus`。`rateLimit` を解禁）
+  - **Write のルート `<Code>`** を先読みしてリクエスト単位の失敗を保全（[ADR-0045][adr45]・仮定は LV-11）
+  - **例外は常に reject で届く**（[ADR-0046][adr46]・Promise を返す公開メソッドは同期 throw しない）
+  - **アクセスポイントの書式検証**（[ADR-0048][adr48]・構築時に `PortersConfigError`。誤設定で別ホストへ繋がない）
 
 ### リソース（MVP 完了 = [R-3][prd]）
 
@@ -117,7 +116,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - ADR 0001〜0048 accepted（0037 は 0039 で superseded・proposed は現在なし）（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・503 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜12・16・18 は `fixed`／**RV-13/14/15/17 は open**）
+- 品質ゲート green・543 tests／project-review プロセス＋台帳（[findings][findings]：**RV-1〜18 すべて `fixed`**）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
@@ -135,9 +134,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard を同梱）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
-- [ ] **次リリース 0.7.0** — changeset（scheme・minor）と [CHANGELOG][changelog] `[Unreleased]` は**記載済み**。
-      残るは release ブランチでの版 bump → main マージ → Release 作成。
-      上記「着手可能」1〜4 の是正を同梱するかは着手状況しだい
+- [ ] **次リリース 0.7.0** — changeset 4 件（scheme・[ADR-0044][adr44]・[ADR-0045][adr45]・[ADR-0046][adr46]＝minor ／
+      [ADR-0048][adr48]＝patch）と [CHANGELOG][changelog] `[Unreleased]` は**記載済み**。
+      残るは release ブランチでの版 bump → main マージ → Release 作成
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
