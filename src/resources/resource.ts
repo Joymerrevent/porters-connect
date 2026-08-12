@@ -224,7 +224,10 @@ export const createResource = <
 
   // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
   // only); a provided list is sent verbatim (ADR-0020).
-  const search = (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
+  // `async` for the exception contract, not for the body: URL building runs the typed-query
+  // guards (keyword length, itemstate), and a Promise-returning method must never throw
+  // synchronously — every failure reaches the caller as a rejection (ADR-0046).
+  const search = async (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
     runRead(
       deps.requester,
       readUrl({ ...query, field: query.field ?? defaultFields }),
@@ -247,7 +250,8 @@ export const createResource = <
   // create forces P_Id=-1 (non-idempotent: a retry would duplicate); update forces
   // the target id (idempotent: re-applying the same write is safe). Forcing P_Id
   // after the spread means a caller-supplied P_Id never overrides it.
-  const write = (item: WriteItem, idempotent: boolean): Promise<number> =>
+  // `async` so encoding failures reject rather than throw synchronously (ADR-0046).
+  const write = async (item: WriteItem, idempotent: boolean): Promise<number> =>
     deps.requester.request(
       {
         method: "POST",
@@ -279,7 +283,10 @@ export const createResource = <
     fields: fieldMap,
     partition: deps.partition,
   };
-  const createMany = (
+  // `async` for the exception contract: the arguments (URL build, per-item mapping) are evaluated
+  // before `runBulkWrite` is entered, so without it a failure there would throw synchronously
+  // instead of rejecting (ADR-0046).
+  const createMany = async (
     inputs: CreateInput<F, Req[number]>[],
   ): Promise<BulkWriteResult> =>
     runBulkWrite(
@@ -289,7 +296,7 @@ export const createResource = <
       false,
     );
 
-  const updateMany = (
+  const updateMany = async (
     items: { id: number; fields: UpdateInput<F> }[],
   ): Promise<BulkWriteResult> =>
     runBulkWrite(

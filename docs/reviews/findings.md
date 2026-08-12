@@ -24,7 +24,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-12 | 🟢     | ドキュメント              | fixed |
 | RV-13 | 🟡     | エラーモデル / API 忠実性 | fixed |
 | RV-14 | 🟡     | エラーモデル / API 忠実性 | fixed |
-| RV-15 | 🟢     | エラーモデル / DX         | open  |
+| RV-15 | 🟢     | エラーモデル / DX         | fixed |
 | RV-16 | 🟢     | ドキュメント              | fixed |
 | RV-17 | 🟡     | フェイルセーフ / 設定検証 | open  |
 | RV-18 | 🟢     | ドキュメント / 計画       | fixed |
@@ -174,8 +174,14 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 - **検出経緯**: [ADR-0043][adr43] フェーズ4 の制約テスト作成中（`expect(...).rejects` が効かず判明）
 - **推奨**: 公開メソッドを `async` にする／ガードを Promise 内へ移すなどで **常に reject** に統一する（薄い変更・挙動は
   「例外の届き方」のみ）。破壊的ではないが公開契約の明確化なので **ADR で一言決める**のが妥当
-- **状態**: open
-- **処置**: [ADR-0046][adr46] を **accepted**（案A＝公開メソッドを `async` 化して reject に統一・decider 2026-08-09）。「`Promise` を返す公開メソッドは同期 throw しない」を契約として確定。対象/対象外・`searchAll` は変更不要・semver は minor・退行防止の横断テストまで ADR で決定済み。**実装は別 PR**（完了時に `fixed` へ）
+- **状態**: fixed
+- **処置**: [ADR-0046][adr46] を **accepted**（案A＝公開メソッドを `async` 化して reject に統一・decider 2026-08-09）ののち**実装**。
+  データ系（`search` / `create` / `update` / `createMany` / `updateMany`）・Attachment（`search` / `create` / `update`）・
+  マスタ Read 4 種の `search`・`auth.getToken` を `async` 化した（**ガードのロジックも実装位置も不変**＝例外の届き方だけを変更）。
+  `get` / `current` / `exchangeAuthorizationCode` / `clearTokens` / `ensureAuthenticated` は元から async、
+  `searchAll` は async generator で呼び出し時点では何も起きない（変更せずテストで固定）。
+  `test/integration/exception-contract.test.ts` で公開サーフェス全体を歩き「同期 throw しない」を退行防止。
+  README・[エラーハンドリング ガイド][guide]に「例外の届き方」節を追加。semver は minor
 
 ## RV-16 🟢 ドキュメント（月次クォータを内蔵スロットルが守るかのような記述）
 

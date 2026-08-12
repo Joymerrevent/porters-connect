@@ -333,7 +333,10 @@ try {
 }
 ```
 
-- トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` を早期に throw。
+- トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` で早期に落とします。
+- **`Promise` を返す公開メソッドは同期 throw しません**（[ADR-0046][adr46]）。設定ミスも含め常に **reject** で届くので、
+  `porters.candidate.search(q).catch(handler)` でも捕まえられます（`string` を返す `auth.authorizationUrl` や
+  コンストラクタなど、Promise を返さない API は同期 throw のままです）。
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
 - レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します。
 - **PORTERS の応答でない HTTP エラー**（LB・プロキシ・メンテナンス画面の 4xx/5xx）も分類されます（[ADR-0044][adr44]）。
@@ -409,6 +412,7 @@ try {
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [adr44]: ./docs/adr/0044-http-status-handling.md
+[adr46]: ./docs/adr/0046-guard-error-contract.md
 [adr47]: ./docs/adr/0047-access-point-scheme.md
 [design]: ./docs/design/basic-design.md
 [ref]: ./docs/reference/README.md

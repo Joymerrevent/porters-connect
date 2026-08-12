@@ -11,15 +11,41 @@ PORTERS への問い合わせを増やさず**自己解決**できるよう、�
 
 すべての PORTERS 由来エラーは基底 `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
 
-| クラス                 | 系統                                        | `code` の空間     |
-| ---------------------- | ------------------------------------------- | ----------------- |
-| `PortersAuthError`     | OAuth / Token（認証 API）                   | 認証 `<Error>`    |
-| `PortersResourceError` | Resource API（Read / Write）                | リソース `<Code>` |
-| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429  | `null`            |
-| `PortersConfigError`   | 設定・使い方の誤り（同期 throw）／ HTTP 4xx | `null`            |
+| クラス                 | 系統                                       | `code` の空間     |
+| ---------------------- | ------------------------------------------ | ----------------- |
+| `PortersAuthError`     | OAuth / Token（認証 API）                  | 認証 `<Error>`    |
+| `PortersResourceError` | Resource API（Read / Write）               | リソース `<Code>` |
+| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429 | `null`            |
+| `PortersConfigError`   | 設定・使い方の誤り／ HTTP 4xx              | `null`            |
 
 > **2 系統は番号が重複し意味が違います**（例: `401` は認証では Refresh Token 失効、リソースでは
 > Access Token 期限切れ）。`instanceof` で系統を大別してから `code` を見てください。
+
+## 例外の届き方（[ADR-0046][adr-0046]）
+
+**`Promise` を返す公開メソッドは、いかなる理由でも同期 throw しません。**
+設定ミス（`PortersConfigError`）も含め、すべて **reject** で届きます。
+
+```ts
+// どちらの書き方でも捕まえられます
+try {
+  await porters.candidate.search({ keywords: ["…101 文字…"] });
+} catch (e) {
+  /* … */
+}
+
+porters.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
+  /* こちらも届く */
+});
+```
+
+送信前ガード（リクエスト長 ~15000 字・`keywords` 100 字・`itemstate` の制限・Attachment 10MB・
+一括書き込みの単一レコード超過）は**従来どおり送信前に働き**、無駄な往復は起きません。
+変わったのは**例外の届き方だけ**です。
+
+この契約の**例外は `Promise` を返さない API** です — `new PortersClient(...)`・`defineFields`・
+`auth.authorizationUrl` / `auth.revokeUrl`（`string` を返す）。reject する先が無いので、
+ここは**同期 throw が正しい**挙動です。
 
 横断的な対処分岐には `category`（11 種）を使います。`PortersError` は次を持ちます。
 
@@ -150,7 +176,7 @@ try {
 | `transient`  | 一時障害・トランザクション                 | 自動リトライ対象（再試行可）                                 |
 | `network`    | 接続・タイムアウト・レート切断             | 自動リトライ後も失敗なら時間をおく／回線・レートを確認       |
 | `server`     | PORTERS 内部エラー                         | 時間をおいて再試行／継続するなら PORTERS へ報告              |
-| `config`     | 設定・使い方の誤り（同期 throw）           | 呼び出し前の不正：宣言・オプション・サイズを修正             |
+| `config`     | 設定・使い方の誤り                         | 呼び出し前の不正：宣言・オプション・サイズを修正             |
 | `unknown`    | 未知（フェイルセーフ）                     | `code` と `hint` を確認／握り潰さず surface 済み             |
 
 ## 症状 → 原因 → 対処（早見表）
@@ -205,13 +231,15 @@ try {
 
 ## 関連
 
-- 設計判断: [ADR-0006（エラーモデル）][adr-0006] ／ [ADR-0044（HTTP ステータスの扱い）][adr-0044]
+- 設計判断: [ADR-0006（エラーモデル）][adr-0006] ／ [ADR-0044（HTTP ステータスの扱い）][adr-0044] ／
+  [ADR-0046（例外の届き方）][adr-0046]
 - 一次情報: [リソース Result Code][result-codes] ／ [認証エラーコード][auth-errors]
 - 認証フロー: [認証 API のフロー][auth-flow]
 - 契約後に確認する仮定: [live-verification][lv]
 
 [adr-0006]: ../adr/0006-error-model.md
 [adr-0044]: ../adr/0044-http-status-handling.md
+[adr-0046]: ../adr/0046-guard-error-contract.md
 [lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md

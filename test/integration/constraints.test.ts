@@ -80,16 +80,14 @@ describe("request length (~15000 characters)", () => {
     const { porters, resourceRequests } = setup();
     await porters.candidate.search();
 
-    // NB: this one **throws synchronously** — the query is encoded before the promise chain
-    // starts, so `search(...).catch(...)` would not catch it (findings RV-15).
-    expect(() =>
+    // The query is still encoded before anything is sent, but the failure arrives as a
+    // **rejection** — `search(...).catch(...)` catches it like any other (ADR-0046 / RV-15).
+    await expect(
       porters.candidate.search({ keywords: ["あ".repeat(101)] }),
-    ).toThrow(
-      expect.objectContaining({
-        name: "PortersConfigError",
-        category: "config",
-      }),
-    );
+    ).rejects.toMatchObject({
+      name: "PortersConfigError",
+      category: "config",
+    });
 
     expect(resourceRequests()).toHaveLength(1);
   });

@@ -156,8 +156,10 @@ export const createAttachmentResource = (
   deps: ResourceDeps,
 ): AttachmentResource => {
   // `field` omitted -> metadata default (no Content); `[]` -> API-native primary key only;
-  // a provided list is sent verbatim (ADR-0020).
-  const search = (query: AttachmentSearchQuery = {}): Promise<AttachmentPage> =>
+  // a provided list is sent verbatim (ADR-0020). `async` for the exception contract (ADR-0046).
+  const search = async (
+    query: AttachmentSearchQuery = {},
+  ): Promise<AttachmentPage> =>
     deps.requester.request(
       {
         method: "GET",
@@ -203,7 +205,9 @@ export const createAttachmentResource = (
     );
 
   // create forces Id=-1 (non-idempotent). All fields are required.
-  const create = (input: AttachmentCreate): Promise<number> => {
+  // `async` so the 10MB guard rejects instead of throwing synchronously (ADR-0046) — the guard
+  // itself is unchanged, and still runs before anything is sent.
+  const create = async (input: AttachmentCreate): Promise<number> => {
     guardContent(input.content);
     const inner =
       tag("Id", -1) +
@@ -217,7 +221,10 @@ export const createAttachmentResource = (
 
   // update targets the id (idempotent). Resource / ResourceId can't change; only the
   // provided fields are sent.
-  const update = (id: number, input: AttachmentUpdate): Promise<number> => {
+  const update = async (
+    id: number,
+    input: AttachmentUpdate,
+  ): Promise<number> => {
     guardContent(input.content);
     let inner = tag("Id", id);
     if (input.contentType !== undefined) {
