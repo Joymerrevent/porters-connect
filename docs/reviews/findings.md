@@ -304,13 +304,14 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   `<Code>0` を含んでおり**、(b) で書き換えが要るのは `src/xml/parser.test.ts:84` の 1 件だけ。
   影響が広いのはむしろ (a)（`parseResourcePage` のシグネチャ＋呼び出し 3 箇所＋未確認のルート名）
 - **状態**: open
-- **処置**: [ADR-0051][adr51] を **`proposed` で起票**（2026-08-13・**推奨は案B**＝`<Code>` の**存在**を
-  envelope の要件にする／Read のみ）。5 案（A: ルート名検証／B: `<Code>` 存在／C: 構造マーカー／
-  D: A+B／E: 現状維持）の比較、7 種のボディを現行コードに通した実測、**穴は Read だけ**である根拠
-  （Write は `<Item>` 0 件で throw・認証は `root.Authentication` 名指しで免疫）、
-  Option の封筒に `Total/Count/Start` が無いこと（[ADR-0022][adr22] 事実5）から
-  **`<Code>` が全 Read 形に共通する唯一のマーカー**である点、semver（minor）を ADR 側に記載。
-  **decider の決定待ち**
+- **処置**: [ADR-0051][adr51] を **accepted**（**案D**＝ルート要素名 ＋ `<Code>` の存在を Read の同定条件にする・
+  decider 2026-08-13）。5 案（A: ルート名検証／B: `<Code>` 存在／C: 構造マーカー／D: A+B／E: 現状維持）を比較し、
+  7 種のボディを現行コードに通した実測で**案A / 案B にはそれぞれ「通る」ケースが残る**ことを確認して案D に決定。
+  起票時に案A / 案D を退けた理由（「ルート名は未確認」）は誤りで、**取得済み原記事の Read 記事 17 本すべてが
+  応答のルート要素を実例付きで示し、全件がリソース名と一致**（Attachment・Option を含む）。
+  リソース名は Write リクエストのルートとして既に wire に載っており**新しい仮定は増えない**（LV 追加も不要）。
+  **穴は Read だけ**（Write は `<Item>` 0 件で throw・認証は `root.Authentication` 名指しで免疫）。
+  実装は accept 後・別 PR。**状態は実装完了時に `fixed` へ**
 
 ## RV-21 🟢 設定検証 / 後方互換（既定ポート `:443` 付きの `host` が弾かれる）
 
@@ -373,7 +374,6 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr49]: ../adr/0049-host-port-roundtrip.md
 [adr50]: ../adr/0050-auth-http-status-handling.md
 [adr51]: ../adr/0051-read-envelope-identification.md
-[adr22]: ../adr/0022-master-read-query-surface.md
 [rm]: ../roadmap.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md

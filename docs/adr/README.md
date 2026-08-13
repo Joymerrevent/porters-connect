@@ -80,7 +80,7 @@
 | [0048][0048] | アクセスポイント `host` の書式検証（RV-17）                 | 基本設計 | accepted   |
 | [0049][0049] | `host` 書式検証で既定ポートを落とさない（RV-21）            | 基本設計 | accepted   |
 | [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
-| [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | proposed   |
+| [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -108,13 +108,16 @@
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
-### 【議論中（proposed）】
+### 【accept 済み・実装待ち】
 
-- [0051][0051] Read 応答を PORTERS の envelope と同定する（RV-20）— **推奨は案B**（`<Code>` の**存在**を
-  envelope の要件にする／Read のみ）。[0044][0044] が塞いだ「HTTP 200 **以外**」の**対称形**で、
-  200 を返す中間装置（キャプティブポータル・SSO 画面・WAF）のボディが**正常な 0 件として通る**穴を塞ぐ。
-  ルート要素名の検証（案A / 案D）は、名前の正が reference の総称形しか無く**外れると全 Read が落ちる**ため、
-  [live-verification][lv-doc] LV-14 の確認後に段階的に足す。semver は **minor**
+**proposed は現在なし**（0051 は 2026-08-13 に decider が accept）。実装は ADR ごとに別 PR。
+
+- [0051][0051]（**案D**）Read 応答を PORTERS の envelope と同定する（RV-20）—
+  **ルート要素名が期待どおり ＋ `<Code>` がある**ことを Read の同定条件にする。
+  [0044][0044] が塞いだ「HTTP 200 **以外**」の**対称形**で、200 を返す中間装置（キャプティブポータル・
+  SSO 画面・WAF）のボディが**正常な 0 件として通る**穴を塞ぐ。ルート要素名は Read 記事 17 本すべてに
+  実例があり（Attachment・Option を含む）、Write リクエストで既に wire に載っている値＝**新しい仮定は増えない**。
+  semver は **minor**・書き換えが要る既存テストは 1 件
 
 ### 【accept 済み・実装済み】
 
