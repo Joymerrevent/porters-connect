@@ -16,6 +16,15 @@ const candidateXml = readFileSync(
   "utf8",
 );
 
+// ADR-0051: a Read answer is identified by its root element, so a canned reply has to be the
+// envelope of whatever resource the URL asked for — `/v1/candidate` -> `<Candidate>`. One body
+// no longer fits every accessor.
+const emptyPageFor = (url: string): string => {
+  const path = new URL(url).pathname.split("/").pop() ?? "";
+  const root = path.charAt(0).toUpperCase() + path.slice(1);
+  return `<${root} Total="0" Count="0" Start="0"><Code>0</Code></${root}>`;
+};
+
 const mockClient = (): PortersClient => {
   const transport: Transport = {
     send: () => Promise.resolve({ status: 200, body: candidateXml }),
@@ -74,7 +83,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
           ? "<Authentication><Code>C</Code><Error>0</Error></Authentication>"
           : req.url.includes("/v1/token")
             ? "<Authentication><AccessToken>A</AccessToken><AccessTokenExpiresIn>1800000</AccessTokenExpiresIn><RefreshToken>R</RefreshToken><RefreshTokenExpiresIn>7200000</RefreshTokenExpiresIn><Error>0</Error></Authentication>"
-            : `<Candidate Total="0" Count="0" Start="0"><Code>0</Code></Candidate>`;
+            : emptyPageFor(req.url);
         return Promise.resolve({ status: 200, body });
       },
     };
@@ -289,17 +298,14 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
 });
 
 describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
-  // An empty Read envelope; parseResourcePage is root-name-agnostic, so one body fits every
-  // accessor (data / attachment / master). `auth` injected -> no oauth dance, only resource calls.
+  // An empty Read envelope per accessor (data / attachment / master) — the root has to match the
+  // resource in the URL (ADR-0051). `auth` injected -> no oauth dance, only resource calls.
   const recording = (): { transport: Transport; calls: TransportRequest[] } => {
     const calls: TransportRequest[] = [];
     const transport: Transport = {
       send: (req) => {
         calls.push(req);
-        return Promise.resolve({
-          status: 200,
-          body: `<R Total="0" Count="0" Start="0"><Code>0</Code></R>`,
-        });
+        return Promise.resolve({ status: 200, body: emptyPageFor(req.url) });
       },
     };
     return { transport, calls };
