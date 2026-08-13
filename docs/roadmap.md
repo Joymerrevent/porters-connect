@@ -13,17 +13,19 @@
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                  | 根拠                       | semver | 備考                                           |
-| --- | ----------------------------------------- | -------------------------- | ------ | ---------------------------------------------- |
-| 1   | **案A 第2層 MCP サーバー** の詳細設計 ADR | [ADR-0033][adr33]          | —      | **戦略ゴール**。パッケージ構成・ツール表面から |
-| 2   | **RV-20 の是正 ADR** を起票               | [findings][findings] RV-20 | 未確定 | 0.7.0 が出たので着手できる。影響範囲が広い     |
+| #   | やること                                             | 根拠                       | semver | 備考                                              |
+| --- | ---------------------------------------------------- | -------------------------- | ------ | ------------------------------------------------- |
+| 1   | **[ADR-0051][adr51] の実装**（案D・Read 応答の同定） | [findings][findings] RV-20 | minor  | accepted 済み。実装 PR で RV-20 が `fixed` になる |
+| 2   | **案A 第2層 MCP サーバー** の詳細設計 ADR            | [ADR-0033][adr33]          | —      | **戦略ゴール**。パッケージ構成・ツール表面から    |
 
 - **0.7.0 を公開済み**（2026-08-13）。ADR-0044・0045・0046・0047・0048・0049・0050 の 7 本が世に出た
-  （RV-13/14/15/17/19/21 は `fixed`）。**accept 済みで実装待ちの ADR も、proposed の ADR も無い**。
-- 1 が本命（[ADR-0033][adr33] の主軸）。評価基盤（フェイクサーバー）が揃っているので、e2e の足場は追加不要。
-- 2 は **RV-20**（HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る）。決めるべきこと
-  （`<Code>` の不在を envelope でないと見なすか／ルート要素名を検証するか）が全 Read 経路・fixture・
-  既存テストの寛容な既定に触れるため、0.7.0 を出してから腰を据える整理にしていた。
+  （RV-13/14/15/17/19/21 は `fixed`）。
+- 1 は **RV-20**（HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る）の是正。
+  [ADR-0051][adr51] が **accepted**（**案D**＝ルート要素名 ＋ `<Code>` の存在を Read の同定条件にする・
+  decider 2026-08-13）。ルート名は Read 記事 17 本すべてに実例があり、Write リクエストで既に wire に
+  載っている値＝新しい仮定は増えない。配線は 6 箇所、**書き換えが要る既存テストは 1 件だけ**。
+- 2 が戦略の本命（[ADR-0033][adr33] の主軸）。評価基盤（フェイクサーバー）が揃っているので、e2e の足場は追加不要。
+  1 の決定を待たずに並行して進められる（触る場所が重ならない）。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
 
@@ -47,14 +49,14 @@
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                               |
-| ----------------------------- | -------------------------------------------- | ---------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件                            |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-20/22（RV-22 は契約待ち） |
-| [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | proposed なし／実装待ち **なし**         |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）            |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）         |
+| ファイル                      | 何の TODO か                                 | いまの状態                                                  |
+| ----------------------------- | -------------------------------------------- | ----------------------------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件                                               |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-20（[0051][adr51] 実装待ち）/ 22（契約待ち） |
+| [docs/adr][adr]               | 【accept 済み・実装待ち】＋論点バックログ    | proposed **なし**／実装待ち 1 件（[0051][adr51]）           |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）                               |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手                     |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）                            |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -121,9 +123,10 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0050 accepted（0037 は 0039 で superseded・proposed は現在なし）。**実装待ちは無し**（[索引][adr]）
+- ADR 0001〜0051 accepted（0037 は 0039 で superseded）・**proposed は無し**。
+  **実装待ちは [0051][adr51] のみ**（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・554 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜18 は `fixed`／
+- 品質ゲート green・554 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜19・21 は `fixed`／
   **RV-20/22 は open**＝実装の過程で判明した積み残し）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
@@ -244,6 +247,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr48]: adr/0048-access-point-host-validation.md
 [adr49]: adr/0049-host-port-roundtrip.md
 [adr50]: adr/0050-auth-http-status-handling.md
+[adr51]: adr/0051-read-envelope-identification.md
 [fake-plan]: design/fake-server-plan.md
 [fake-runbook]: fake-server-runbook.md
 [p7]: adr/0007-oauth-public-surface.md

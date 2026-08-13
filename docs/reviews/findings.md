@@ -298,8 +298,20 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   確認していて、200 側には同じ穴が残ると分かった
 - **推奨**: いずれか — (a) **ルート要素名を検証**する（期待するリソース名か `Authentication` か）、
   (b) **`<Code>` の不在を「envelope ではない」と見なす**（reference の「200 かつ `<Code>0`」に接地）。
-  (b) は現行 fixture・テストの寛容な既定を変えるため影響が広い。**挙動変更＝要 ADR**
+  **挙動変更＝要 ADR**
+  **訂正（ADR 起票時 2026-08-13）**: 「(b) は fixture・テストの寛容な既定を変えるため影響が広い」は誤り。
+  実測では**現行の Read リテラルは fixture・単体テスト・フェイクサーバー・README の mock 例まで全件が
+  `<Code>0` を含んでおり**、(b) で書き換えが要るのは `src/xml/parser.test.ts:84` の 1 件だけ。
+  影響が広いのはむしろ (a)（`parseResourcePage` のシグネチャ＋呼び出し 3 箇所＋未確認のルート名）
 - **状態**: open
+- **処置**: [ADR-0051][adr51] を **accepted**（**案D**＝ルート要素名 ＋ `<Code>` の存在を Read の同定条件にする・
+  decider 2026-08-13）。5 案（A: ルート名検証／B: `<Code>` 存在／C: 構造マーカー／D: A+B／E: 現状維持）を比較し、
+  7 種のボディを現行コードに通した実測で**案A / 案B にはそれぞれ「通る」ケースが残る**ことを確認して案D に決定。
+  起票時に案A / 案D を退けた理由（「ルート名は未確認」）は誤りで、**取得済み原記事の Read 記事 17 本すべてが
+  応答のルート要素を実例付きで示し、全件がリソース名と一致**（Attachment・Option を含む）。
+  リソース名は Write リクエストのルートとして既に wire に載っており**新しい仮定は増えない**（LV 追加も不要）。
+  **穴は Read だけ**（Write は `<Item>` 0 件で throw・認証は `root.Authentication` 名指しで免疫）。
+  実装は accept 後・別 PR。**状態は実装完了時に `fixed` へ**
 
 ## RV-21 🟢 設定検証 / 後方互換（既定ポート `:443` 付きの `host` が弾かれる）
 
@@ -361,6 +373,7 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 [adr48]: ../adr/0048-access-point-host-validation.md
 [adr49]: ../adr/0049-host-port-roundtrip.md
 [adr50]: ../adr/0050-auth-http-status-handling.md
+[adr51]: ../adr/0051-read-envelope-identification.md
 [rm]: ../roadmap.md
 [adr32]: ../adr/0032-monotonic-check-release-scope.md
 [adr33]: ../adr/0033-post-mvp-direction.md
