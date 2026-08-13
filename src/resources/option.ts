@@ -92,7 +92,7 @@ export const createOptionResource = (deps: ResourceDeps): OptionResource => {
       },
       (body) => {
         const out: Option[] = [];
-        flatten(parseResourcePage(body).items, out);
+        flatten(parseResourcePage(body, OPTION_DESCRIPTOR.name).items, out);
         return out;
       },
     );

@@ -230,6 +230,7 @@ export const createResource = <
   const search = async (query: SearchQuery<F> = {}): Promise<ResourcePage<F>> =>
     runRead(
       deps.requester,
+      config.name,
       readUrl({ ...query, field: query.field ?? defaultFields }),
       decode,
     );

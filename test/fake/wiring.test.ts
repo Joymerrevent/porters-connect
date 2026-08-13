@@ -74,7 +74,10 @@ describe("fake server wiring", () => {
   });
 
   it("reads the shared fixtures and decodes them through the library", () => {
-    const page = parseResourcePage(fixture("candidate/read-basic.xml"));
+    const page = parseResourcePage(
+      fixture("candidate/read-basic.xml"),
+      "Candidate",
+    );
     expect(page.total).toBe(2);
 
     const decode = decoderFor(CANDIDATE_DESCRIPTOR.fields);

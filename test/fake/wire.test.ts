@@ -110,7 +110,7 @@ describe("buildReadPageXml", () => {
       start: 4,
     });
 
-    expect(parseResourcePage(xml)).toEqual({
+    expect(parseResourcePage(xml, "Candidate")).toEqual({
       total: 7,
       count: 2,
       start: 4,
@@ -128,7 +128,7 @@ describe("buildReadPageXml", () => {
       masters,
     );
 
-    const decoded = decode(parseResourcePage(xml).items[0]);
+    const decoded = decode(parseResourcePage(xml, "Candidate").items[0]);
     expect(decoded.P_Owner).toEqual({
       P_Id: 5,
       P_Type: "0",
@@ -154,17 +154,18 @@ describe("buildReadPageXml", () => {
     );
 
     expect(xml).toContain("<OptionRoot>");
-    expect(decode(parseResourcePage(xml).items[0]).P_Phase).toEqual([
-      "Option.P_Applied",
-      "Option.P_Screening",
-    ]);
+    expect(
+      decode(parseResourcePage(xml, "Candidate").items[0]).P_Phase,
+    ).toEqual(["Option.P_Applied", "Option.P_Screening"]);
   });
 
   it("emits a requested-but-unset field as an empty element (decodes to null)", () => {
     const xml = page([{ P_Id: "10001" }], select("P_Id", "P_Mail"));
 
     expect(xml).toContain("<Person.P_Mail />");
-    expect(decode(parseResourcePage(xml).items[0]).P_Mail).toBeNull();
+    expect(
+      decode(parseResourcePage(xml, "Candidate").items[0]).P_Mail,
+    ).toBeNull();
   });
 
   it("escapes values so the parser sees them verbatim", () => {
@@ -173,7 +174,9 @@ describe("buildReadPageXml", () => {
       select("P_Name"),
     );
 
-    expect(decode(parseResourcePage(xml).items[0]).P_Name).toBe("A & B <C>");
+    expect(decode(parseResourcePage(xml, "Candidate").items[0]).P_Name).toBe(
+      "A & B <C>",
+    );
   });
 });
 
@@ -193,7 +196,7 @@ describe("buildWriteResultXml / error envelopes", () => {
   it("routes a Resource error envelope to the mapped PortersError", () => {
     const xml = buildResourceErrorXml("Candidate", 403, "No permission");
 
-    expect(() => parseResourcePage(xml)).toThrow(
+    expect(() => parseResourcePage(xml, "Candidate")).toThrow(
       expect.objectContaining({
         name: "PortersResourceError",
         code: 403,

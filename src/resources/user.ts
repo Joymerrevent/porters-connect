@@ -87,6 +87,7 @@ export const createUserResource = (deps: ResourceDeps): UserResource => {
   const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
     runRead(
       deps.requester,
+      USER_DESCRIPTOR.name,
       buildUrl(deps.accessPoint, deps.partition, query),
       decode,
     );
