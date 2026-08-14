@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PortersError, PortersNetworkError } from "../../src/errors/index";
 import type { TransportRequest } from "../../src/http/types";
-import { parseAuthentication, parseResourcePage } from "../../src/xml/parser";
+import {
+  parseAuthentication,
+  parseResourcePage,
+  parseWriteResult,
+} from "../../src/xml/parser";
 import { createFakeTransport } from "./fake-transport";
 import type { FakeTransport } from "./types";
 
@@ -49,11 +53,23 @@ const write = (token: string, body: string): TransportRequest => ({
   body,
 });
 
-// The Result Code the library would see, read through the library's own parser.
+// The Result Code the library would see, read through the library's own parser. Everything here
+// is on the Candidate path, so that is also the root the Read parser is told to expect (ADR-0051).
 const resultCode = (body: string): number => {
   try {
-    parseResourcePage(body);
+    parseResourcePage(body, "Candidate");
     return 0;
+  } catch (error) {
+    return error instanceof PortersError ? (error.code ?? -1) : -1;
+  }
+};
+
+// A Write answer is read by the Write parser: its success shape has no root `<Code>` at all
+// (write-format.md), only a per-Item one. A request-level failure does put `<Code>` at the root,
+// which parseWriteResult reads first (ADR-0045).
+const writeResultCode = (body: string): number => {
+  try {
+    return parseWriteResult(body)[0]?.code ?? -1;
   } catch (error) {
     return error instanceof PortersError ? (error.code ?? -1) : -1;
   }
@@ -192,7 +208,7 @@ describe("fake transport rate limits", () => {
     // The read cap is used up, but the write bucket is still open.
     const body =
       "<Candidate><Item><Person.P_Id>-1</Person.P_Id></Item></Candidate>";
-    expect(resultCode((await fake.send(write(token, body))).body)).toBe(0);
+    expect(writeResultCode((await fake.send(write(token, body))).body)).toBe(0);
     await expect(fake.send(read(token))).rejects.toThrow(PortersNetworkError);
   });
 

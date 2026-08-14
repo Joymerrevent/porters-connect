@@ -85,14 +85,19 @@ export const decoderFor = <F extends FieldCatalog>(
   };
 };
 
-/** GET a Read URL, parse the standard envelope (Total/Count/Start + Items), decode each item. */
+/**
+ * GET a Read URL, parse the standard envelope (Total/Count/Start + Items), decode each item.
+ * `resource` is the expected root element — the parser needs it to tell a PORTERS answer from
+ * whatever a middlebox put on a 200 (ADR-0051).
+ */
 export const runRead = <F extends FieldCatalog>(
   requester: Requester,
+  resource: string,
   url: string,
   decode: (item: RawItem) => ReadRecord<F>,
 ): Promise<ResourcePage<F>> =>
   requester.request({ method: "GET", url, headers: {} }, (body) => {
-    const page = parseResourcePage(body);
+    const page = parseResourcePage(body, resource);
     return {
       items: page.items.map(decode),
       total: page.total,

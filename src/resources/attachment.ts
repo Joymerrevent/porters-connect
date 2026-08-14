@@ -20,6 +20,10 @@ import {
 // (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
 const MAX_CONTENT_CHARS = 14_000_000;
 
+// Attachment has no ResourceDescriptor (bespoke accessor — ADR-0018), so its wire name lives
+// here: the Read response's root element and the Write error's resource context (ADR-0051).
+const ATTACHMENT_RESOURCE = "Attachment";
+
 /**
  * Every Attachment field name, in wire order. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds its Attachment table from this list rather than a copy that could drift.
@@ -170,7 +174,7 @@ export const createAttachmentResource = (
         headers: {},
       },
       (body) => {
-        const page = parseResourcePage(body);
+        const page = parseResourcePage(body, ATTACHMENT_RESOURCE);
         return {
           items: page.items.map(decodeAttachment),
           total: page.total,
@@ -200,7 +204,7 @@ export const createAttachmentResource = (
         headers: {},
         body: `<Attachment><Item>${inner}</Item></Attachment>`,
       },
-      (body) => firstWriteResultId(body, "attachment", "Attachment"),
+      (body) => firstWriteResultId(body, "attachment", ATTACHMENT_RESOURCE),
       { write: true, idempotent, unboundedBody: true },
     );
 

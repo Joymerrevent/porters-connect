@@ -76,7 +76,12 @@ export const createPartitionResource = (
   const search = async (
     query: PartitionSearchQuery = {},
   ): Promise<PartitionPage> =>
-    runRead(deps.requester, buildUrl(deps.accessPoint, query), decode);
+    runRead(
+      deps.requester,
+      PARTITION_DESCRIPTOR.name,
+      buildUrl(deps.accessPoint, query),
+      decode,
+    );
   const searchAll = (
     query: Omit<PartitionSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<Partition> =>
