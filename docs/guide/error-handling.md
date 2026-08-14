@@ -167,6 +167,33 @@ try {
 > なお**実 PORTERS がどの status を返すかは未確認**です（契約後に確認 — [live-verification][lv] LV-9）。
 > 上表は「PORTERS 以外が返す HTTP エラーを安全側へ倒す」ための写像であり、確定した仕様ではありません。
 
+## 「0 件」と「届いていない」の区別（[ADR-0051][adr-0051]）
+
+上の節が塞ぐのは **HTTP 200 以外**です。やっかいなのは **HTTP 200 を返す中間装置**——
+キャプティブポータル、SSO のログイン画面、200 で通知ページを返す WAF——で、
+ボディは「XML の形をした別物」になります。
+
+ライブラリは Read 応答を**ルート要素名と `<Code>` の両方**で同定します。reference の成功形
+（`<{Resource} …><Code>0</Code>`）はこの 2 つでできているため、**どちらかを欠くボディは PORTERS の応答ではない**と判断し、
+**0 件を返さずにエラーにします**。
+
+| 200 で返ってきたボディ                           | 表面化するもの                                             |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| HTML のログイン画面 / 通知ページ                 | `resource response root is <html>, expected <Candidate>`   |
+| 別リソースの正規 envelope（`<Job …>`）           | `resource response root is <Job>, expected <Candidate>`    |
+| ルートは正しいが `<Code>` が無い                 | `resource response has no <Code> (not a PORTERS envelope)` |
+| XML として読めない（JSON・空・プレーンテキスト） | `unparseable resource response`                            |
+
+いずれも `PortersResourceError`・`category: "unknown"`・`code: null`・`retryable: false`・`httpStatus: 200` で、
+**中間装置を疑う `hint`** が付きます。
+
+**なぜエラーにするのか**。これらを「0 件」として返すと、**データが無いのか届いていないのかを区別できません**。
+`get(id)` は `undefined` を返すので、「無ければ作る」という定石のコードが**重複レコードを作りにいきます**。
+読み取りの静かな失敗が、書き込みの実害になる——**止まる方が安全側**です。
+
+> **モックを手書きしている場合**（`createMockTransport`）は、**リソース名のルート要素と `<Code>`** を含めてください。
+> `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>…</Candidate>` のように、実際の応答と同じ形にします。
+
 ## アクセスポイントの書式（[ADR-0048][adr-0048] / [ADR-0049][adr-0049]）
 
 `host` は**ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
@@ -211,23 +238,24 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 
 ## 症状 → 原因 → 対処（早見表）
 
-| 症状                                      | 系統 / code                | category     | 対処                                                                       |
-| ----------------------------------------- | -------------------------- | ------------ | -------------------------------------------------------------------------- |
-| `PortersAuthError` が出て処理が止まる     | 認証 `401`                 | `auth`       | Refresh Token 失効。**初回ブラウザ `code` 付与**をその Company DB で再実施 |
-| 認証で `app_id` / `secret` 系のエラー     | 認証 `104` / `105`         | `auth`       | App ID / App Secret を確認（`.env`・ハードコード禁止）                     |
-| データ取得で権限エラー                    | リソース `403`             | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認             |
-| `partition` が見つからない                | リソース `404`             | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                             |
-| 作成・更新で値が弾かれる                  | リソース `100`〜`116`      | `validation` | パラメータ・書式・型・日時・Option を見直す                                |
-| 宣言したカスタム項目で `validation`       | リソース `100`             | `validation` | その partition に項目が実在するか `porters.field.search` で確認            |
-| `itemstate` / `version` 不正              | リソース `133` / `146`     | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                |
-| 重複・依存で作成/削除できない             | リソース `301`/`303`/`304` | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                     |
-| IP 制限 / アプリ権限不足                  | リソース `406` / `601`     | `permission` | IP アドレス申請／アプリ権限の申請                                          |
-| 登録最大件数超過                          | リソース `500`             | `validation` | 件数を減らす／200 件以下のバッチに分割                                     |
-| `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）       |
-| `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                     |
-| `new PortersClient(...)` がその場で落ちる | `host` / `scheme` の書式   | `config`     | `host` は**ホスト名（＋ポート）だけ**（下記）                              |
-| `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                     |
-| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）        |
+| 症状                                      | 系統 / code                | category     | 対処                                                                        |
+| ----------------------------------------- | -------------------------- | ------------ | --------------------------------------------------------------------------- |
+| `PortersAuthError` が出て処理が止まる     | 認証 `401`                 | `auth`       | Refresh Token 失効。**初回ブラウザ `code` 付与**をその Company DB で再実施  |
+| 認証で `app_id` / `secret` 系のエラー     | 認証 `104` / `105`         | `auth`       | App ID / App Secret を確認（`.env`・ハードコード禁止）                      |
+| データ取得で権限エラー                    | リソース `403`             | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認              |
+| `partition` が見つからない                | リソース `404`             | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                              |
+| 作成・更新で値が弾かれる                  | リソース `100`〜`116`      | `validation` | パラメータ・書式・型・日時・Option を見直す                                 |
+| 宣言したカスタム項目で `validation`       | リソース `100`             | `validation` | その partition に項目が実在するか `porters.field.search` で確認             |
+| `itemstate` / `version` 不正              | リソース `133` / `146`     | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                 |
+| 重複・依存で作成/削除できない             | リソース `301`/`303`/`304` | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                      |
+| IP 制限 / アプリ権限不足                  | リソース `406` / `601`     | `permission` | IP アドレス申請／アプリ権限の申請                                           |
+| 登録最大件数超過                          | リソース `500`             | `validation` | 件数を減らす／200 件以下のバッチに分割                                      |
+| `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）        |
+| `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                      |
+| `new PortersClient(...)` がその場で落ちる | `host` / `scheme` の書式   | `config`     | `host` は**ホスト名（＋ポート）だけ**（下記）                               |
+| `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                      |
+| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）         |
+| `resource response root is …` が出る      | —（200 ＋ 別物のボディ）   | `unknown`    | 中間装置が代わりに応答している。`host` と経路を確認（[ADR-0051][adr-0051]） |
 
 ## コード対応表（2 系統）
 
@@ -263,7 +291,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 ## 関連
 
 - 設計判断: [ADR-0006（エラーモデル）][adr-0006] ／ [ADR-0044（HTTP ステータスの扱い）][adr-0044] ／
-  [ADR-0046（例外の届き方）][adr-0046]
+  [ADR-0046（例外の届き方）][adr-0046] ／ [ADR-0051（Read 応答の同定）][adr-0051]
 - 一次情報: [リソース Result Code][result-codes] ／ [認証エラーコード][auth-errors]
 - 認証フロー: [認証 API のフロー][auth-flow]
 - 契約後に確認する仮定: [live-verification][lv]
@@ -275,6 +303,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 [adr-0048]: ../adr/0048-access-point-host-validation.md
 [adr-0049]: ../adr/0049-host-port-roundtrip.md
 [adr-0050]: ../adr/0050-auth-http-status-handling.md
+[adr-0051]: ../adr/0051-read-envelope-identification.md
 [lv]: ../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md

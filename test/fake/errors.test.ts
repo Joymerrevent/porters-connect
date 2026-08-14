@@ -29,9 +29,11 @@ const fixture = (path: string): string =>
   );
 
 // The error a body produces when the library parses it — the only thing a caller ever sees.
+// Every body here is a Candidate envelope, which is also what the parser is told to expect
+// (ADR-0051: the root element is part of the contract).
 const resourceFailure = (body: string): PortersError => {
   try {
-    parseResourcePage(body);
+    parseResourcePage(body, "Candidate");
     throw new Error("expected the envelope to fail");
   } catch (error) {
     if (error instanceof PortersError) return error;

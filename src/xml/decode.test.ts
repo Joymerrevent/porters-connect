@@ -13,7 +13,10 @@ const fixture = (path: string): string =>
   );
 
 describe("decodeField (ADR-0011)", () => {
-  const page = parseResourcePage(fixture("candidate/read-basic.xml"));
+  const page = parseResourcePage(
+    fixture("candidate/read-basic.xml"),
+    "Candidate",
+  );
   const first = page.items[0];
   const second = page.items[1];
 

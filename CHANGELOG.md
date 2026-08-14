@@ -5,6 +5,27 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-14
+
+**「0 件」と「届いていない」を区別できるようにした版**です。HTTP 200 を返す中間装置
+（キャプティブポータル・SSO のログイン画面・WAF の通知ページ）の応答が、これまで**正常な空ページ**として
+通っていました。公開 API の形（型・メソッド）は不変で、**正しい PORTERS 応答に対する挙動も変わりません**。
+
+### Fixed
+
+- **HTTP 200 で返る「PORTERS 以外の応答」を 0 件として扱わなくなりました**（[ADR-0051][adr51]）。
+  Read 応答は**ルート要素名（`<Candidate>` などリソース名）と `<Code>` の両方**で同定します。
+  どちらかを欠くボディは `PortersResourceError`（`category: "unknown"` ＋ `httpStatus: 200` ＋ 中間装置を疑う `hint`）で拒否します。
+  - 従来は**キャプティブポータル・SSO のログイン画面・WAF の通知ページ**（いずれも HTTP 200）が
+    `total: 0` の**正常な空ページ**として返っていました。`get(id)` は `undefined` を返すため、
+    **「無ければ作る」コードが重複レコードを作りにいく**状態でした（データが無いのか届いていないのかを区別できない）。
+  - メッセージは原因を名指しします — `resource response root is <html>, expected <Candidate>` ／
+    `resource response has no <Code> (not a PORTERS envelope)`。**観測したルート名**が載るので切り分けできます。
+  - **正しい PORTERS 応答に対する挙動は変わりません**（[エラーハンドリング ガイド][guide]に判定表を追加）。
+  - ⚠️ **`createMockTransport` でモックを手書きしている場合**は、ボディに**リソース名のルート要素と `<Code>`** が
+    必要です（例 `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>…</Candidate>`）。
+    実際の応答と同じ形にしていれば変更は不要です。
+
 ## [0.7.0] - 2026-08-13
 
 エラーの見え方をまとめて是正した版です。**PORTERS の応答ではない HTTP エラー**が分類されるようになり、
@@ -217,11 +238,13 @@
 [adr48]: docs/adr/0048-access-point-host-validation.md
 [adr49]: docs/adr/0049-host-port-roundtrip.md
 [adr50]: docs/adr/0050-auth-http-status-handling.md
+[adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1

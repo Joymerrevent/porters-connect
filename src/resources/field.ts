@@ -107,6 +107,7 @@ export const createFieldResource = (deps: ResourceDeps): FieldResource => {
   const search = async (query: FieldSearchQuery): Promise<FieldPage> =>
     runRead(
       deps.requester,
+      FIELD_DESCRIPTOR.name,
       buildUrl(deps.accessPoint, deps.partition, query),
       decode,
     );
