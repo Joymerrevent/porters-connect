@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-14
+
+**「0 件」と「届いていない」を区別できるようにした版**です。HTTP 200 を返す中間装置
+（キャプティブポータル・SSO のログイン画面・WAF の通知ページ）の応答が、これまで**正常な空ページ**として
+通っていました。公開 API の形（型・メソッド）は不変で、**正しい PORTERS 応答に対する挙動も変わりません**。
+
 ### Fixed
 
 - **HTTP 200 で返る「PORTERS 以外の応答」を 0 件として扱わなくなりました**（[ADR-0051][adr51]）。
@@ -237,7 +243,8 @@
 [oauth-guide]: docs/guide/oauth.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.0...v0.6.1
