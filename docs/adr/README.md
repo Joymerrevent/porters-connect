@@ -81,7 +81,7 @@
 | [0049][0049] | `host` 書式検証で既定ポートを落とさない（RV-21）            | 基本設計 | accepted   |
 | [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
 | [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
-| [0052][0052] | レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）   | プロセス | proposed   |
+| [0052][0052] | レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）   | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -96,7 +96,7 @@
 
 ### 【基本設計】（実装前に決める・依存の浅い順）
 
-- **ページング・検索条件の抽象化** — 公開クエリ（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開 API は ADR-0005 で確定済み）。詳細設計は [0038][0038]（accepted・F-2）で確定。実装は別 PR
+- **ページング・検索条件の抽象化** — 公開クエリ（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開 API は ADR-0005 で確定済み）。詳細設計は [0038][0038]（accepted・F-2）で確定し、**実装済み＝ 0.4.0 で公開**
 
 ### 【詳細設計】（実装フェーズで決める）
 
@@ -104,24 +104,28 @@
   HTTP トランスポート → [0009][0009]／リトライ・スロットリング → [0010][0010]／
   XML パース・シリアライズ内部 → [0011][0011]／トークンのキャッシュ・更新（ストア含む）→ [0012][0012]。
 - 内部 FieldType の粒度 → [0016][0016]（accepted・案B＝Data Type 整合。実装は #21 で反映済み）。
-- Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。コード反映は別 PR）。
-- Attachment リソースとファイル本体（Base64）→ [0018][0018]（accepted・専用アクセサ＋Base64 string＋10MB ガード。コード反映は別 PR）。
-- マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
+- Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。**実装済み**）。
+- Attachment リソースとファイル本体（Base64）→ [0018][0018]（accepted・専用アクセサ＋Base64 string＋10MB ガード。**実装済み**）。
+- マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。**実装済み**＝ P0 [R-3][prd] は充足）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
 ### 【議論中（proposed）】
 
-- [0052][0052] レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）— **推奨は案D**
-  （`docs/reviews/rv/NNNN-*.md` へ分割し、index は**状態を持たない**＝ ID・タイトル・リンクのみ／
-  状態の正は各ファイル 1 箇所）。台帳は develop 時点で **386 行 / 22 件**、1 件あたりも伸びており
-  （RV-17 は 37 行）、**1 件を読むのに全体を読む**構造になっている。分割自体より
-  **index をどう保つか**が論点で、状態を index にも書く案B は二重管理＝必ずズレる。
-  index を `findings.md` のまま残せば**参照元 24 ファイルのリンクは 1 本も壊れない**（アンカー参照 0 件を実測）。
-  実施は accept 後の別 PR で、**スキル（`SKILL.md` / `report-format.md`）の更新を同梱**する
+**proposed は現在なし**（0052 は 2026-08-16 に decider が accept）。
 
 ### 【accept 済み・実装待ち】
 
-**accept 済みで実装待ちの ADR は現在なし**（0051 は 2026-08-14 に実装完了・**0.8.0 で公開済み**）。
+実装は ADR ごとに別 PR。
+
+- [0052][0052]（**案C（改）**）レビュー指摘台帳の構成 — `docs/reviews/rv/NNNN-*.md` へ**1 件 1 ファイルに分割**し、
+  index（`findings.md`）は**状態を含む一覧を維持**、ズレは **`pnpm check:findings`** で弾く。
+  台帳は develop 時点で **386 行 / 22 件**、1 件あたりも伸びており（RV-17 は 37 行）、
+  **1 件を読むのに全体を読む**構造になっていた。決定の根拠は**本 index 自身の実測**で、
+  一覧テーブルは 51 本すべて健全だった一方、**散文で状態を言い換えた箇所は 5 件が陳腐化していた**
+  ＝「機械的に突合できる形なら生き残る／検査の無い散文は腐る」。
+  検査は既存 [`check:release`][ciscript] と同じ形にし、**CI の常時実行ブロック**に置く
+  （[0028][0028] のパスフィルタ配下だと docs-only 変更で走らないため）。
+  実施 PR には**スキル（`SKILL.md` / `report-format.md`）の更新を同梱**する
 
 ### 【accept 済み・実装済み】
 
@@ -201,3 +205,4 @@
 [0050]: 0050-auth-http-status-handling.md
 [0051]: 0051-read-envelope-identification.md
 [0052]: 0052-findings-register-layout.md
+[ciscript]: ../../scripts/check-release-invariants.mjs
