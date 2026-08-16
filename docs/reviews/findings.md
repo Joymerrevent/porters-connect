@@ -32,6 +32,14 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
 | RV-20 | 🟡     | フェイルセーフ / 忠実性   | fixed |
 | RV-21 | 🟢     | 設定検証 / 後方互換       | fixed |
 | RV-22 | 🟢     | リトライ / DX             | open  |
+| RV-23 | 🔴     | API 忠実性 / 型安全       | open  |
+| RV-24 | 🟡     | ドキュメント / DX         | open  |
+| RV-25 | 🟡     | フェイルセーフ / 設定検証 | open  |
+| RV-26 | 🟡     | API 忠実性                | open  |
+| RV-27 | 🟢     | ドキュメント / DX         | open  |
+| RV-28 | 🟢     | API 忠実性                | open  |
+| RV-29 | 🟢     | テスト厳密性 / プロセス   | open  |
+| RV-30 | 🟢     | 型安全 / 公開サーフェス   | open  |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -366,9 +374,136 @@ ID は不変・エントリは消さない。確定したら「状態」と「�
   なお PORTERS 直結では 429 は観測されない想定（強制切断）なので、**優先度は低い**（プロキシ経由の環境でのみ効く）
 - **状態**: open
 
+## RV-23 🔴 API 忠実性 / 型安全（Candidate の静的カタログが標準項目 4 件を欠く）
+
+- **概要**: Candidate の `FIELDS` カタログに、reference が定義する標準項目のうち
+  **`P_Memo`（メモ・MultilineText）／`P_Street`（住所詳細・MultilineText）／`P_Fax`（Telephone）／
+  `P_PhaseMemo`（フェーズメモ・MultilineText）の 4 件が無い**。[ADR-0019][adr19] は
+  「**カタログが single source of truth**」＝ Read 型も Write 入力型もカタログ導出なので、
+  欠落はそのまま**公開型の欠落**になる。`candidate.create({ P_Memo: "…" })` は型エラーになり、
+  既定 field 送信（[ADR-0020][adr20]）もカタログ由来のため **Read でも取りに行かない**。
+  同じ 4 種は **Client には全て載っており**（`src/resources/client.ts:30-38`）、リソース間で非一貫
+  ＝設計判断ではなく取りこぼし（ADR-0019 にも「標準項目の部分実装」方針は無い）
+- **根拠**: `src/resources/candidate.ts:20-39`（18 項目のカタログ）/
+  `docs/reference/resource-api/resources/candidate.md`（`Person.P_Memo` / `P_Street` / `P_Fax` / `P_PhaseMemo` の行）/
+  対比 `src/resources/client.ts:30-38`（`P_Memo`/`P_Street`/`P_Fax`/`P_PhaseMemo` あり）/
+  [ADR-0019][adr19]（カタログ＝真実源）・[ADR-0020][adr20]（既定 field はカタログ導出）
+- **検出経緯**: 2026-08-16 レビュー。stakeholder の「どこまで完成しているか」への回答として
+  **reference の全 `P_` alias と全カタログを機械的に突き合わせた**ところ検出。
+  Client / Job / Resume / Process の差分は `Reference` 型（Field Type 16 ＝ 参照表示専用で値を持たない）と
+  `P_Deleted` だけ＝正しい除外で、**Candidate だけが値のある標準項目を落としていた**
+- **推奨**: カタログに 4 件を追加する（Data Type は reference のとおり Telephone / MultilineText）。
+  型は自動追従するので変更は 1 箇所。semver は **minor**（公開型に項目が増える）。
+  併せて **RV-29**（reference ↔ カタログ突合の自動化）で再発を止める
+- **状態**: open
+
+## RV-24 🟡 ドキュメント / DX（`defineFields` の使い方がどこにも無い）
+
+- **概要**: カスタム項目宣言 DSL `defineFields`（R-16・[ADR-0023][adr23]）は `src/index.ts` が export する公開 API で、
+  PRD では P1「実装済み」と数えられている。しかし**使い方が README に 0 箇所・`docs/guide/` に 0 箇所**
+  （`error-handling.md` に例外契約の文脈で名前が出るだけ）。[ADR-0035][adr35] は
+  「**機能の存在は README で気づけること**」を Decision Driver に掲げ、README 短節＋ `docs/guide/<topic>.md` の型を定めたが、
+  **`defineFields` だけがその型から漏れている**。PORTERS の実テナントは必ずカスタム項目（`U_`/`A_`）を持つため、
+  **利用者が最初にぶつかる要求が最も見つけにくい**状態になっている
+- **根拠**: `grep -rn "defineFields" README.md docs/guide/` ＝ ヒットは `error-handling.md:46,254` のみ／
+  `src/index.ts:41`（export）/ [ADR-0023][adr23]（詳細設計）/ [ADR-0035][adr35]（README とガイドの役割分担）/
+  対比: oauth（F-1）・multi-tenancy（F-3）・bulk-write（F-4）は同じ型でガイドあり
+- **推奨**: `docs/guide/custom-fields.md` を新設（宣言 → client への受け渡し → 型がどう変わるか → Field Read で
+  テナントの項目を調べる手順 → 制限）。README「リソースと操作」付近に 3〜5 行の節＋ `>` ポインタ。
+  ADR-0035 の型に沿うだけなので新しい決定は不要（**ADR 不要**）
+- **状態**: open
+
+## RV-25 🟡 フェイルセーフ / 設定検証（`partition` 未設定で無言のうちに `partition=0` を送る）
+
+- **概要**: `PortersClientOptions.partition` は任意で、未指定なら `options.partition ?? 0` で
+  **ライブラリが発明した `0`** が全リクエストのクエリに載る。`partition` は Read / Write 共通の**必須パラメータ**で、
+  値は Partition Read で発見するもの＝ **`0` という値の意味は reference のどこにも無い**。
+  結果、設定漏れは「構築時の明確な設定エラー」ではなく「実行時の不透明なリソースエラー」に化ける。
+  [ADR-0048][adr48]（`host` を構築時に検証して繋ぐ前に落とす）で塞いだのと**同じ形の穴**が partition 側に残っている
+- **根拠**: `src/client.ts:209`（`buildScope(options.partition ?? 0)`）/
+  `docs/reference/resource-api/README.md`（Read パラメータ表：`partition` は必須 ●）/
+  `src/types/common.ts:5`（`PartitionId = number` ＝ 制約なし）/ [ADR-0048][adr48]・[ADR-0049][adr49]（設定検証の先例）。
+  `partition ?? 0` を pin するテストは無い（`grep` 実測）
+- **推奨**: `partition` の**必須化は誤り**（`tenant(id)` だけを使う構成では client 既定が不要）。
+  「**一度も partition が束ねられていない呼び出し**を `PortersConfigError` で落とす」か、
+  `0` に意味があるなら LV に登録して確定させる。**挙動変更＝要 ADR**（軽い 1 本）
+- **状態**: open
+
+## RV-26 🟡 API 忠実性（`P_Deleted` 未対応 ＝ 削除済みかを判別できない）
+
+- **概要**: F-2（[ADR-0038][adr38]）で `itemstate: "deleted" | "all"` を実装した。削除 API が無い PORTERS で
+  削除済みレコードを読む唯一の手段であり、`"all"` は生存と削除済みを**混ぜて**返す。
+  ところが削除状態を表す標準項目 **`P_Deleted`（0=未削除 / 1=削除済み）が全リソースのカタログに無い**ため、
+  返ってきたレコードの**どれが削除済みかを利用者が判別できない**＝機能が半分しか届いていない
+- **根拠**: `docs/reference/resource-api/resources/candidate.md`（`Person.P_Deleted` の行：
+  「Read 時の field Parameter としてのみ指定可能。Condition や Order に指定不可。Write 不可」）／
+  同項目は全データリソースの reference に存在／`src/resources/*.ts` のカタログに `P_Deleted` は無し（実測）／
+  `src/resources/query.ts:105-113`（`ItemState`）
+- **推奨**: `P_Deleted` をカタログに載せる。ただし reference の Field Type / Data Type 欄が「ー」で
+  **decode 形（`Number` 相当か文字列か）が未確定**、かつ condition / order / write 不可という
+  **他項目に無い制約**を型でどう表すか（読み取り専用マーク）が新しい論点＝**要 ADR ＋ LV 追加**
+- **状態**: open
+
+## RV-27 🟢 ドキュメント / DX（F-2 だけトピック ガイドが無い）
+
+- **概要**: [ADR-0035][adr35] の型（README 短節＋ `docs/guide/<topic>.md`）で F-1 → `oauth.md`、
+  F-3 → `multi-tenancy.md`、F-4 → `bulk-write.md` が用意されたが、**F-2（Read クエリ）だけガイドが無い**。
+  README の箇条書き（`README.md:189-198`）はあるものの、condition の Data Type 別演算子・
+  削除済み Read の制約（90 日 / 3 項目）・order の対象型といった**実際に手が止まる部分**は
+  [ADR-0038][adr38] を読むしかない（ADR は決定の記録であって使い方の説明ではない）
+- **根拠**: `ls docs/guide/`（4 本：bulk-write / error-handling / multi-tenancy / oauth）/
+  [ADR-0035][adr35]（「F-2〜F-4 も同じ型で足せる」）/ `README.md:189-198`
+- **推奨**: `docs/guide/read-query.md` を新設。RV-24 と同じ作業単位で片付く（**ADR 不要**）
+- **状態**: open
+
+## RV-28 🟢 API 忠実性 / フェイルセーフ（`count` の範囲を送信前に検証しない）
+
+- **概要**: 送信前ガードは `keywords`（100 字）・`itemstate` の condition 制限・リクエスト長（~15000 字）・
+  Attachment の 10MB と揃っているのに、**`count` の 1〜200 だけ検証されない**。
+  `count: 500` は送信され、不透明なサーバー応答に倒れる。ガードの対称性の穴（実害は小さいが、
+  「早く・明確に落とす」系列から 1 つだけ外れている）
+- **根拠**: `src/resources/resource.ts:183`（`if (q.count !== undefined) p.set("count", …)` ＝ 素通し）/
+  `src/resources/query.ts:237-249`（keywords は検証）/
+  `docs/reference/resource-api/README.md`（Read パラメータ表：`count` は 1〜200・既定 10）。
+  master 系（`user.ts:79` 等）も同様に素通し
+- **推奨**: `buildReadUrl` / 各 master の URL 組立で範囲外を `PortersConfigError` にする（hint 付き）。
+  既存ガードと同じ形なので**新しい決定は不要**（ADR 不要）
+- **状態**: open
+
+## RV-29 🟢 テスト厳密性 / プロセス（reference ↔ カタログの突合が自動化されていない）
+
+- **概要**: フェイクサーバーは `src` の descriptor を直接使うため**実装 ↔ フェイクのドリフトは構造的に起きない**が、
+  **reference（`docs/reference/.../resources/*.md`）↔ カタログ**を突き合わせる仕組みは無い。
+  その結果 RV-23（Candidate の標準 4 項目欠落）は **0.1.0 から 12 版・563 テストをすべて素通り**してきた
+  ＝ 人の目だけが防波堤になっている。今後リソースを増やすほど取りこぼしの機会は増える
+- **根拠**: `test/fake/resources.ts:12-20`（descriptor 共有＝ドリフト無し）/
+  RV-23（人手レビューで初めて検出）/ reference の各表は機械抽出された Markdown で**パース可能**
+- **推奨**: 「`Reference` 型（値を持たない）と `P_Deleted` を除く全 `P_` alias がカタログに存在する」ことを
+  検証するテストを追加する（reference の表をパースして突合）。人の記憶でなく仕組みで守る＝フェイルセーフ。
+  RV-23 の修正と同じ PR で入れるのが自然（**ADR 不要**）
+- **状態**: open
+
+## RV-30 🟢 型安全 / 公開サーフェス（公開ジェネリクスの制約型が未 export）
+
+- **概要**: `PortersClient<C extends DeclaredCatalogs>` と `TenantScope<C extends DeclaredCatalogs>` は公開型なのに、
+  制約の `DeclaredCatalogs` と、メンバ型に現れる `CustomFor` が **`src/index.ts` から export されていない**。
+  `dist/index.d.ts` には型定義自体は出力されるが export リストに無いため、利用者が
+  **クライアントを引数に取るヘルパーの型を名前で書けない**（`typeof porters` で回避はできる）
+- **根拠**: `src/index.ts:42-48`（export は `CustomDataType` / `DefinedFields` / `FieldBuilder` / `FieldDecls` / `FieldDef` のみ）/
+  `dist/index.d.ts:724`（`type DeclaredCatalogs`）・`:740`（`type CustomFor`）・`:904`（export リストに両者なし）/
+  `src/client.ts:46,93,110`（公開型の制約に使用）
+- **推奨**: `DeclaredCatalogs` / `CustomFor`（必要なら `CustomFieldResource`）を `src/index.ts` に追加する。
+  2 行の追加で、**追加のみ＝破壊的でない**（semver minor）
+- **状態**: open
+
 [adr6]: ../adr/0006-error-model.md
 [adr10]: ../adr/0010-retry-throttle.md
+[adr19]: ../adr/0019-static-resource-types.md
+[adr20]: ../adr/0020-read-field-default.md
+[adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [adr24]: ../adr/0024-mock-transport.md
+[adr35]: ../adr/0035-usage-documentation-structure.md
+[adr38]: ../adr/0038-read-query-surface-impl.md
 [adr43]: ../adr/0043-local-fake-server.md
 [adr44]: ../adr/0044-http-status-handling.md
 [adr45]: ../adr/0045-write-response-root-code.md
