@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-27
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.4.0
 
 > [[0005-public-api-shape]]（公開 API の形・R-5）が約束した検索クエリを実装に落とす**詳細設計**。
 > [[0033-post-mvp-direction]] 案F-2（v1 公開 API の積み残し）。**公開シェイプの骨子は ADR-0005 で確定済み**

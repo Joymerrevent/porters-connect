@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-14** の是正案。[ADR-0043][adr43] のフェイクサーバー実装中に、
 > リクエスト単位で失敗した Write の Result Code が失われることが判明した。

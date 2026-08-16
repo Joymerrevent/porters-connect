@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-20（accepted: 2026-06-21）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.2.1
 
 > 発端：0.2.0 は release PR マージ後に `git tag` → push（→`release.yml` が OIDC publish）、
 > さらに main→develop back-merge を**手動**で実施。当初像「マージ → 自動タグ → 自動 publish」

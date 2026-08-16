@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-13** の是正案。[ADR-0043][adr43] のフェイクサーバー実装中に、
 > 「PORTERS 以外が返す HTTP エラー」を通す経路が無いことが判明した。**挙動変更を伴うため実装前に決める**。

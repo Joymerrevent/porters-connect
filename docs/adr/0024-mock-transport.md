@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-18
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.1.0
 
 > [requirements][prd] R-17（評価用サンドボックス）の実装を確定する。注入可能な Transport の seam は
 > [ADR-0005][0005]（公開 API・R-12）／[ADR-0009][0009]（HTTP トランスポート）で決定済み。本 ADR は

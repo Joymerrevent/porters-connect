@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-13
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.8.0
 
 > [findings][findings] **RV-20** の是正案。[ADR-0044][adr44] は「**HTTP 200 以外**」を塞いだが、
 > **HTTP 200 を返す中間装置**（キャプティブポータル・SSO のログイン画面・200 で通知ページを返す WAF）の
