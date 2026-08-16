@@ -1,13 +1,17 @@
 # 53. ADR 索引を運用ドキュメントから分離し、実装状態を検査可能にする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-16
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> stakeholder 提案（2026-08-16）: 「**`docs/adr/README.md` は README と索引を分ける運用が良いのでは**」。
-> [ADR-0052][adr52] で `docs/reviews/` に同じ形（index ＋ 1 件 1 ファイル ＋ 検査）を決めた直後の提案で、
-> 論点は共通する。ただし**分割だけでは今回腐った部分は直らない**ため、本 ADR は「分離」に加えて
-> **腐った散文の廃止**と**実装状態の検査可能化**まで含めて決める。決定は decider が行う（自己 accept しない）。
+> **案1a ＋ 案2a ＋ 案3a で `accepted`（2026-08-16）**: `README.md` を運用（＋論点バックログ＋導線）に絞り、
+> **`index.md` を一覧テーブルだけの純粋なファイル**として新設する。腐りの中心だった**状態別 3 節は廃止**し、
+> 「実装済みか・どの版で出たか」は**索引の `実装` 列 ＋ ADR 本文の `- Implemented:`** という突合可能な形へ移す。
+> 検査は [ADR-0052][adr52] の `check:findings` と**1 本に統合**する。実施は本 ADR とは別 PR。
+>
+> 起票の発端は stakeholder 提案（2026-08-16）「**`docs/adr/README.md` は README と索引を分ける運用が良いのでは**」。
+> [ADR-0052][adr52] で `docs/reviews/` に同じ形を決めた直後の提案で論点は共通するが、
+> **分割だけでは今回腐った部分は直らない**ため、分離に加えて散文の廃止と実装状態の検査可能化までを本 ADR で決めた。
 
 ## Context and Problem Statement
 
@@ -77,9 +81,7 @@
 
 ## Decision Outcome
 
-> **未決（proposed）**。以下は起票者の推奨であり、決定は decider が行う。
-
-**推奨: 案1a ＋ 案2a ＋ 案3a**。
+**採用: 案1a ＋ 案2a ＋ 案3a**（decider 判断・2026-08-16。起票時の推奨どおり）。
 
 ```text
 docs/adr/
