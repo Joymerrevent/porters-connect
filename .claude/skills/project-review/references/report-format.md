@@ -7,6 +7,7 @@ docs/reviews/
 ├── README.md            # 運用の説明（初回のみ生成）
 ├── findings.md          # 指摘台帳の【索引】（全 run 横断・行は消さない）
 ├── rv/
+│   ├── 0000-template.md      # 雛形（コピーして使う・検査対象外）
 │   └── NNNN-kebab-title.md   # 指摘 1 件 = 1 ファイル（本体・ID 不変・消さない）
 └── YYYY-MM-DD-NN.md     # その run のスナップショット（NN=その日の連番・2 桁ゼロ埋め・同日も追記せず別ファイル）
 ```
@@ -25,6 +26,8 @@ docs/reviews/
 ### 本体 `docs/reviews/rv/NNNN-kebab-title.md`
 
 `NNNN` は RV-N の **4 桁ゼロ埋め**（ADR と同じ）。**メタは箇条書き・本文は見出し**。
+**雛形 `docs/reviews/rv/0000-template.md` をコピーして使う**（ADR の `0000-template.md` と同じ運用。
+`0000` は検査の対象外）。
 
 ```markdown
 # RV-23 🔴 Candidate の静的カタログが標準項目 4 件を欠く

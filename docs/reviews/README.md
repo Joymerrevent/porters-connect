@@ -5,6 +5,7 @@
 - [findings.md][findings] — 指摘台帳の**索引**（ID / 重要度 / 観点 / 状態 / 概要）。ここから各指摘へ辿ります。
 - [`rv/`][rv] — 指摘の**本体**。**1 件 1 ファイル**（`NNNN-kebab-title.md`・`NNNN` は RV-N の 4 桁ゼロ埋め）で、
   ID 不変・ファイルは消さず「状態」と「処置」を更新します（[ADR-0052][adr52]）。
+  新規は雛形 [`rv/0000-template.md`][tpl] をコピーして起こします（`0000` は検査対象外）。
 - `YYYY-MM-DD-NN.md` — 各回のスナップショット（その時点の写真）。`NN` はその日の run 連番（2 桁ゼロ埋め・`01` 始まり）。同日に複数回回しても追記せず連番で別ファイルにする。
 
 思想は [docs/live-verification.md][lv] と同じ（処置・履歴が追えること＝フェイルセーフ）。
@@ -16,5 +17,6 @@
 [findings]: findings.md
 [lv]: ../live-verification.md
 [rv]: rv
+[tpl]: rv/0000-template.md
 [adr52]: ../adr/0052-findings-register-layout.md
 [adr53]: ../adr/0053-adr-index-split.md

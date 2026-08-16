@@ -38,7 +38,8 @@ description: >-
 3. **多観点クロスレビュー** — 下記「観点」を順に当てる。各観点で、関係する実ファイルを読み、正典と突き合わせ、`file:line` と docs 参照付きで指摘を起こす。判断に迷う重さの仕様は ADR 化を推奨に含める。
 4. **レポート出力** — `references/report-format.md` の様式で:
    - **台帳を更新する**（[ADR-0052][adr52]・1 件 1 ファイル）:
-     - 新規指摘は `docs/reviews/rv/NNNN-kebab-title.md` を**新設**（`NNNN` は RV-N の 4 桁ゼロ埋め）。
+     - 新規指摘は **雛形 `docs/reviews/rv/0000-template.md` をコピー**して
+       `docs/reviews/rv/NNNN-kebab-title.md` を**新設**（`NNNN` は RV-N の 4 桁ゼロ埋め）。
      - 既存 open は**そのファイルの「状態」と「処置」を更新**（ファイルは消さない）。
      - **索引 `docs/reviews/findings.md` にも必ず 1 行**足す／直す。**`pnpm check:index` を通してから終える**
        （索引と本文のズレは CI で落ちる）。
