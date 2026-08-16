@@ -6,37 +6,53 @@
 ## 概要
 
 Candidate の `FIELDS` カタログに、reference が定義する標準項目のうち
-**`P_Memo`（メモ・MultilineText）／`P_Street`（住所詳細・MultilineText）／`P_Fax`（Telephone）／
-`P_PhaseMemo`（フェーズメモ・MultilineText）の 4 件が無い**。[ADR-0019][adr19] は
-「**カタログが single source of truth**」＝ Read 型も Write 入力型もカタログ導出なので、
-欠落はそのまま**公開型の欠落**になる。`candidate.create({ P_Memo: "…" })` は型エラーになり、
-既定 field 送信（[ADR-0020][adr20]）もカタログ由来のため **Read でも取りに行かない**。
-同じ 4 種は **Client には全て載っており**（`src/resources/client.ts:30-38`）、リソース間で非一貫
-＝設計判断ではなく取りこぼし（ADR-0019 にも「標準項目の部分実装」方針は無い）
+**`P_Memo`（メモ）／`P_Street`（住所詳細）／`P_Fax`／`P_PhaseMemo`（フェーズメモ）の 4 件が無い**。
+[ADR-0019][adr19] はカタログを single source of truth と定めているので、
+**欠落はそのまま公開型の欠落**になる。
 
 ## 根拠
 
-`src/resources/candidate.ts:20-39`（18 項目のカタログ）/
-`docs/reference/resource-api/resources/candidate.md`（`Person.P_Memo` / `P_Street` / `P_Fax` / `P_PhaseMemo` の行）/
-対比 `src/resources/client.ts:30-38`（`P_Memo`/`P_Street`/`P_Fax`/`P_PhaseMemo` あり）/
-[ADR-0019][adr19]（カタログ＝真実源）・[ADR-0020][adr20]（既定 field はカタログ導出）
+- `src/resources/candidate.ts:20-39` — 18 項目のカタログ（上記 4 件が無い）。
+- `docs/reference/resource-api/resources/candidate.md` —
+  `Person.P_Memo`（MultilineText）/ `P_Street`（MultilineText）/ `P_Fax`（Telephone）/
+  `P_PhaseMemo`（MultilineText）の各行が存在する。
+- 対比 `src/resources/client.ts:30-38` — **Client には同じ 4 種がすべて載っている**＝リソース間で非一貫。
+- [ADR-0019][adr19]（カタログ＝真実源）・[ADR-0020][adr20]（既定 field はカタログ導出）。
+- ADR-0019 に「標準項目の部分実装」という方針は無い＝設計判断ではなく**取りこぼし**。
+
+## 影響
+
+**実用ブロッカー級**。影響は Read / Write の両方向に出る。
+
+- `candidate.create({ P_Memo: "…" })` は**型エラー**になる（`CreateInput` がカタログ導出のため）。
+- 既定 field 送信（[ADR-0020][adr20]）もカタログ由来なので、**Read でも取りに行かない**。
+- 落ちている 4 件に**メモと住所詳細が含まれる**のが決定的で、
+  候補者のメモを型安全に扱えない ATS ラッパーは実用に耐えない。
+
+Candidate は MVP の筆頭リソース（[ADR-0003][adr3] の実装順で最初）であり、
+最も使われるリソースで最も基本的な項目が欠けている。
 
 ## 検出経緯
 
-2026-08-16 レビュー。stakeholder の「どこまで完成しているか」への回答として
-**reference の全 `P_` alias と全カタログを機械的に突き合わせた**ところ検出。
+[2026-08-16-01][run816]。stakeholder の「どこまで完成しているか」への回答として
+**reference の全 `P_` alias と全カタログを機械的に突き合わせた**ところ検出した。
 Client / Job / Resume / Process の差分は `Reference` 型（Field Type 16 ＝ 参照表示専用で値を持たない）と
-`P_Deleted` だけ＝正しい除外で、**Candidate だけが値のある標準項目を落としていた**
+`P_Deleted` だけ＝正しい除外で、**Candidate だけが値のある標準項目を落としていた**。
+
+この突合をしなければ人手では出なかった（0.1.0 から 12 版・563 テストを素通りしている）。
 
 ## 推奨
 
 カタログに 4 件を追加する（Data Type は reference のとおり Telephone / MultilineText）。
 型は自動追従するので変更は 1 箇所。semver は **minor**（公開型に項目が増える）。
-併せて **RV-29**（reference ↔ カタログ突合の自動化）で再発を止める
+併せて **[RV-29][rv29]**（reference ↔ カタログ突合の自動化）で再発を止める。
 
 ## 処置
 
 —
 
+[adr3]: ../../adr/0003-add-attachment-to-mvp.md
 [adr19]: ../../adr/0019-static-resource-types.md
 [adr20]: ../../adr/0020-read-field-default.md
+[rv29]: 0029-reference-catalog-check-missing.md
+[run816]: ../2026-08-16-01.md
