@@ -62,9 +62,8 @@ export const TARGETS = [
         meta: "状態",
         vocabulary: new Set(["open", "fixed", "wontfix", "deferred"]),
       },
+      { header: "概要", meta: null },
     ],
-    // 台帳がまだ分割されていない間は対象外（ADR-0052 の移行 PR で有効になる）
-    optional: true,
   },
 ];
 
