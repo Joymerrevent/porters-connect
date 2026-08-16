@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-29
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.6.0
 
 > [[0033-post-mvp-direction]] 案F-4（一括書き込み）の**詳細設計**。`CLAUDE.md`（「200 件超は 200 件ずつに分割」）と
 > reference（[write-format][wf]：1 リクエスト最大 200 件・作成と更新を混在可・per-item `Id`+`Code`・非アトミック）が

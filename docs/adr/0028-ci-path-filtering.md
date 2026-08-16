@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-20
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.2.1
 
 > 発端：docs 1 行の変更でも全 CI（`ci` フル・`test` マトリクス 20/22/24・CodeQL・
 > mutation/`stryker`・commitlint）が走る。docs-only に mutation/test/CodeQL は無駄。

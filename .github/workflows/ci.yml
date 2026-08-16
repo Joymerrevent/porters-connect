@@ -59,6 +59,12 @@ jobs:
       - name: Release invariants
         run: pnpm check:release
 
+      # 索引（docs/adr/index.md ほか）と各本文のメタ行の突合（ADR-0053 / ADR-0052）。
+      # 索引の更新は docs-only PR で起きるため、code フィルタ配下に置かず**常時実行**する
+      # （ここを間違えると検査が一度も走らない）。
+      - name: Doc index
+        run: pnpm check:index
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'

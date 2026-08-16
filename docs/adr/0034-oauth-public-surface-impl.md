@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.3.0
 
 > [[0007-oauth-public-surface]]（基本設計・SD-3/SD-6）が約束した公開 API `porters.auth.*` を実装に落とす**詳細設計**。
 > [[0033-post-mvp-direction]] 案F-1（v1 公開 API の積み残し）。**公開シェイプは ADR-0007 で確定済み**で再決定しない。

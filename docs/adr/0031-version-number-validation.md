@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-21（accepted: 2026-06-21）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.2.1
 - Extends: [ADR-0027][adr27]（リリース前ゲート・`check:release`）
 
 > 発端：「version 番号の打ち間違いを検知する仕組みはあるか？」。現状の `check:release` は
