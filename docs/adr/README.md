@@ -82,6 +82,7 @@
 | [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
 | [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
 | [0052][0052] | レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）   | プロセス | accepted   |
+| [0053][0053] | ADR 索引の分離と実装状態の列化                              | プロセス | accepted   |
 
 ## 論点バックログ（未起票）
 
@@ -111,11 +112,12 @@
 
 ### 【議論中（proposed）】
 
-**proposed は現在なし**（0052 は 2026-08-16 に decider が accept）。
+**proposed は現在なし**（0052・0053 とも 2026-08-16 に decider が accept）。
 
 ### 【accept 済み・実装待ち】
 
-実装は ADR ごとに別 PR。
+実装は ADR ごとに別 PR。**検査スクリプトは先に着手するほうを汎用形で作り**、後発は対象定義を足すだけにする
+（0052 / 0053 で 1 本に統合＝ 0053 軸3）。
 
 - [0052][0052]（**案C（改）**）レビュー指摘台帳の構成 — `docs/reviews/rv/NNNN-*.md` へ**1 件 1 ファイルに分割**し、
   index（`findings.md`）は**状態を含む一覧を維持**、ズレは **`pnpm check:findings`** で弾く。
@@ -126,6 +128,12 @@
   検査は既存 [`check:release`][ciscript] と同じ形にし、**CI の常時実行ブロック**に置く
   （[0028][0028] のパスフィルタ配下だと docs-only 変更で走らないため）。
   実施 PR には**スキル（`SKILL.md` / `report-format.md`）の更新を同梱**する
+- [0053][0053]（**案1a ＋ 案2a ＋ 案3a**）ADR 索引の分離と実装状態の列化 — 本ファイルを
+  **運用（＋論点バックログ＋導線）に絞り**、一覧テーブルは **`index.md` へ分離**する。
+  腐りの中心だった**状態別 3 節（【議論中】【accept 済み・実装待ち】【実装済み】）は廃止**し、
+  「実装済みか・どの版で出たか」は**索引の `実装` 列 ＋ ADR 本文の `- Implemented:`**（任意）へ移す。
+  検査は「記載漏れ」ではなく**食い違いのみ**を見る。backfill は [roadmap][rm] が版を記録している既知分だけ。
+  `[adr]` の既存リンク 5 本は**張り替え不要**（README が入口のまま）
 
 ### 【accept 済み・実装済み】
 
@@ -205,4 +213,6 @@
 [0050]: 0050-auth-http-status-handling.md
 [0051]: 0051-read-envelope-identification.md
 [0052]: 0052-findings-register-layout.md
+[0053]: 0053-adr-index-split.md
+[rm]: ../roadmap.md
 [ciscript]: ../../scripts/check-release-invariants.mjs
