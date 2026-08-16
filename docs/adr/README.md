@@ -82,6 +82,7 @@
 | [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
 | [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
 | [0052][0052] | レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）   | プロセス | accepted   |
+| [0053][0053] | ADR 索引の分離と実装状態の列化                              | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -111,7 +112,13 @@
 
 ### 【議論中（proposed）】
 
-**proposed は現在なし**（0052 は 2026-08-16 に decider が accept）。
+- [0053][0053] ADR 索引の分離と実装状態の列化 — **推奨は案1a ＋ 案2a ＋ 案3a**。
+  本ファイル（208 行）は変更頻度の違うものが同居しており、[0052][0052] の実測では
+  **一覧テーブルは 51 本すべて健全／状態を散文で言い換えた 3 節は 4 件が陳腐化**だった。
+  よって「`README.md` ＝ 運用 ＋ 論点バックログ ＋ 導線／`index.md` ＝ 一覧テーブルのみ」に分け、
+  **状態別 3 節は廃止**して「実装済みか・どの版で出たか」を**索引の列 ＋ ADR 本文の
+  `- Implemented:`** という突合可能な形に移す。検査は [0052][0052] の `check:findings` と
+  **1 本に統合**する（先に着手するほうを汎用形で作る）
 
 ### 【accept 済み・実装待ち】
 
@@ -205,4 +212,5 @@
 [0050]: 0050-auth-http-status-handling.md
 [0051]: 0051-read-envelope-identification.md
 [0052]: 0052-findings-register-layout.md
+[0053]: 0053-adr-index-split.md
 [ciscript]: ../../scripts/check-release-invariants.mjs
