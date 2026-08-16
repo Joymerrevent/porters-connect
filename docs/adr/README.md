@@ -81,6 +81,7 @@
 | [0049][0049] | `host` 書式検証で既定ポートを落とさない（RV-21）            | 基本設計 | accepted   |
 | [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
 | [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
+| [0052][0052] | レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）   | プロセス | proposed   |
 
 ## 論点バックログ（未起票）
 
@@ -108,16 +109,19 @@
 - マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
 - マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
 
+### 【議論中（proposed）】
+
+- [0052][0052] レビュー指摘台帳の構成（単一ファイル vs 1 件 1 ファイル）— **推奨は案D**
+  （`docs/reviews/rv/NNNN-*.md` へ分割し、index は**状態を持たない**＝ ID・タイトル・リンクのみ／
+  状態の正は各ファイル 1 箇所）。台帳は develop 時点で **386 行 / 22 件**、1 件あたりも伸びており
+  （RV-17 は 37 行）、**1 件を読むのに全体を読む**構造になっている。分割自体より
+  **index をどう保つか**が論点で、状態を index にも書く案B は二重管理＝必ずズレる。
+  index を `findings.md` のまま残せば**参照元 24 ファイルのリンクは 1 本も壊れない**（アンカー参照 0 件を実測）。
+  実施は accept 後の別 PR で、**スキル（`SKILL.md` / `report-format.md`）の更新を同梱**する
+
 ### 【accept 済み・実装待ち】
 
-**proposed は現在なし**（0051 は 2026-08-13 に decider が accept）。実装は ADR ごとに別 PR。
-
-- [0051][0051]（**案D**）Read 応答を PORTERS の envelope と同定する（RV-20）—
-  **ルート要素名が期待どおり ＋ `<Code>` がある**ことを Read の同定条件にする。
-  [0044][0044] が塞いだ「HTTP 200 **以外**」の**対称形**で、200 を返す中間装置（キャプティブポータル・
-  SSO 画面・WAF）のボディが**正常な 0 件として通る**穴を塞ぐ。ルート要素名は Read 記事 17 本すべてに
-  実例があり（Attachment・Option を含む）、Write リクエストで既に wire に載っている値＝**新しい仮定は増えない**。
-  semver は **minor**・書き換えが要る既存テストは 1 件
+**accept 済みで実装待ちの ADR は現在なし**（0051 は 2026-08-14 に実装完了・**0.8.0 で公開済み**）。
 
 ### 【accept 済み・実装済み】
 
@@ -196,3 +200,4 @@
 [0049]: 0049-host-port-roundtrip.md
 [0050]: 0050-auth-http-status-handling.md
 [0051]: 0051-read-envelope-identification.md
+[0052]: 0052-findings-register-layout.md
