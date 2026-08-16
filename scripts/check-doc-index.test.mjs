@@ -174,6 +174,30 @@ describe("checkTarget — 食い違いを検出する", () => {
   });
 });
 
+describe("checkTarget — 雛形の除外", () => {
+  // 雛形（0000-template.md）は索引に載らないので、skip に入れないと
+  // 「実ファイルがあるのに索引に行が無い」で CI が落ちる。
+  it("skip に入れた番号は 1 対 1 検査の対象外", () => {
+    const problems = checkTarget(
+      target({ pattern: /^(\d{4})-.+\.md$/, skip: new Set(["0000"]) }),
+      reader(
+        // 索引は空（区切り行だけ）＝実ファイルは全部「索引に行が無い」になるはず
+        "| # | タイトル |\n| - | -------- |",
+        "",
+      ),
+    );
+    expect(problems.some((p) => p.includes("0000"))).toBe(false);
+  });
+
+  it("skip していない番号は 1 対 1 検査に掛かる", () => {
+    const problems = checkTarget(
+      target({ pattern: /^(\d{4})-.+\.md$/, skip: new Set() }),
+      reader("| # | タイトル |\n| - | -------- |", ""),
+    );
+    expect(problems.some((p) => p.includes("0000"))).toBe(true);
+  });
+});
+
 describe("checkTarget — 対象が存在しないとき", () => {
   it("optional な対象はディレクトリが無くても通す（移行前の findings）", () => {
     const problems = checkTarget(

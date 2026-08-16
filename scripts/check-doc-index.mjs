@@ -52,7 +52,8 @@ export const TARGETS = [
     index: "docs/reviews/findings.md",
     dir: "docs/reviews/rv",
     pattern: /^(\d{4})-.+\.md$/,
-    skip: new Set(),
+    // 0000 は雛形（ADR の 0000-template.md と同じ扱い）＝索引に載らない
+    skip: new Set(["0000"]),
     idFromRow: (cell) => cell.match(/RV-(\d+)/)?.[1]?.padStart(4, "0"),
     columns: [
       { header: "重要度", meta: "重要度" },
@@ -62,9 +63,8 @@ export const TARGETS = [
         meta: "状態",
         vocabulary: new Set(["open", "fixed", "wontfix", "deferred"]),
       },
+      { header: "概要", meta: null },
     ],
-    // 台帳がまだ分割されていない間は対象外（ADR-0052 の移行 PR で有効になる）
-    optional: true,
   },
 ];
 
