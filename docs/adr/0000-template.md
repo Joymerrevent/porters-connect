@@ -3,6 +3,7 @@
 - Status: proposed
 - Date: YYYY-MM-DD
 - Deciders: <決めた人>
+- Implemented: X.Y.Z（**任意** — 実装が世に出た版。プロセス決定など実装の概念が無い ADR では**行ごと削除**する。索引 [`index.md`][index] の「実装」列と一致させること＝`pnpm check:index` が検査する。[ADR-0053][0053]）
 
 ## Context and Problem Statement
 
@@ -45,3 +46,6 @@
 ## More Information
 
 <関連 ADR / Issue / SPEC の節 / フォローアップ。後で superseded されたらここにリンクする。>
+
+[index]: index.md
+[0053]: 0053-adr-index-split.md
