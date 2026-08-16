@@ -71,6 +71,7 @@
     "changeset:publish": "pnpm build && changeset publish",
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
     "check:release": "node scripts/check-release-invariants.mjs",
+    "check:index": "node scripts/check-doc-index.mjs",
     "prepare": "simple-git-hooks"
   },
   "devDependencies": {
