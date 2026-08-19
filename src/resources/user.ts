@@ -8,6 +8,7 @@
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
+  appendPaging,
   decoderFor,
   paginate,
   runRead,
@@ -76,8 +77,7 @@ const buildUrl = (
   p.set("request_type", String(q.requestType ?? 1));
   p.set("user_type", String(q.userType ?? -1));
   if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
-  if (q.count !== undefined) p.set("count", String(q.count));
-  if (q.start !== undefined) p.set("start", String(q.start));
+  appendPaging(p, q.count, q.start);
   return apiUrl(accessPoint, "user", p);
 };
 

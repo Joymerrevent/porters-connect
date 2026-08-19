@@ -155,12 +155,12 @@ page.start; // 今回の開始インデックス
 
 不透明なサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
 
-| 条件                                                                 | 検査                                |
-| -------------------------------------------------------------------- | ----------------------------------- |
-| `keywords` が 100 文字超                                             | ✅                                  |
-| `itemstate` が `deleted` / `all` で許されない項目を condition に指定 | ✅                                  |
-| リクエスト全体が約 15000 文字超（**URL + body**）                    | ✅                                  |
-| `count` が 1〜200 の外                                               | ❌ 未対応（[findings RV-28][rv28]） |
+| 条件                                                                 | 検査 |
+| -------------------------------------------------------------------- | ---- |
+| `keywords` が 100 文字超                                             | ✅   |
+| `itemstate` が `deleted` / `all` で許されない項目を condition に指定 | ✅   |
+| リクエスト全体が約 15000 文字超（**URL + body**）                    | ✅   |
+| `count` が 1〜200 の外（整数でない場合も）                           | ✅   |
 
 ## 関連
 
@@ -175,4 +175,3 @@ page.start; // 今回の開始インデックス
 [prd]: ../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
 [rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md
-[rv28]: ../reviews/rv/0028-count-range-unvalidated.md

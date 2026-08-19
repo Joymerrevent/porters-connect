@@ -192,7 +192,7 @@ await porters.auth.exchangeAuthorizationCode(code);
 - `order`：並び順。`[{ 項目: "asc" | "desc" }]`（数値・日時・System 型のみ）。
 - `keywords`：テキスト項目のキーワード AND 検索（`string[]`・カンマ込み **100 文字まで**）。
 - `itemstate`：`"existing"`（既定）/ `"deleted"` / `"all"`。削除済みデータの取得。
-- `count`（1–200・既定 10）、`start`（0 始まり）。
+- `count`（1–200・既定 10）、`start`（0 始まり）。**範囲外の `count` は送信前に `PortersConfigError`** で落ちます。
 
 > **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは `itemstate: "deleted"` で読みます
 > （`condition` は `P_Id` / `P_UpdateDate` / `P_UpdatedBy` に限られ、更新日は 90 日以内）。

@@ -10,6 +10,7 @@ import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
+import { appendPaging } from "./read-core";
 import {
   buildWriteUrl,
   firstWriteResultId,
@@ -123,8 +124,7 @@ const buildAttachmentReadUrl = (
     const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
     if (conds.length > 0) p.set("condition", conds.join(","));
   }
-  if (q.count !== undefined) p.set("count", String(q.count));
-  if (q.start !== undefined) p.set("start", String(q.start));
+  appendPaging(p, q.count, q.start);
   return apiUrl(accessPoint, "attachment", p);
 };
 

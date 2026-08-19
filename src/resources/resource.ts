@@ -15,6 +15,7 @@ import {
 } from "../xml/encode";
 import { parseWriteResult } from "../xml/parser";
 import {
+  appendPaging,
   decoderFor,
   paginate,
   runRead,
@@ -180,8 +181,7 @@ export const buildReadUrl = <F extends FieldCatalog>(
   p.set("partition", String(partition));
   if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
   appendReadQuery(p, q, ctx);
-  if (q.count !== undefined) p.set("count", String(q.count));
-  if (q.start !== undefined) p.set("start", String(q.start));
+  appendPaging(p, q.count, q.start);
   return apiUrl(accessPoint, path, p);
 };
 
