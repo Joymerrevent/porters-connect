@@ -1,7 +1,7 @@
 # RV-30 🟢 公開ジェネリクスの制約型が未 export
 
 - 重要度: 🟢 ／ 観点: 型安全 / 公開サーフェス
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -44,6 +44,19 @@ const helper = (porters: PortersClient<DeclaredCatalogs>) => {
 
 ## 処置
 
-—
+`src/index.ts` に `DeclaredCatalogs` / `CustomFor` / `CustomFieldResource` の 3 型を追加で export した。
+`CustomFor<C, K>` は `K extends CustomFieldResource` を要求するので、
+**`CustomFor` を名前で書くには `CustomFieldResource` も要る**＝3 つセットで出した。
+
+追加のみで既存の export は変えていない（semver は **minor**）。
+
+## 検証
+
+- **利用者視点で書けることを確認した**。公開サーフェス経由で
+  `const withClient = <C extends DeclaredCatalogs>(porters: PortersClient<C>) => …` と
+  `type X = CustomFor<typeof fields, "candidate">` が型検査を通ることを
+  一時ファイルで確かめた（`tsc --noEmit -p test`）。
+- **ビルド成果物の export リストに 3 型が載る**ことを `dist/index.d.ts` で確認
+  （本 finding は「型定義は出力されるのに export リストに無い」状態だったので、そこを直接見た）。
 
 [run816]: ../2026-08-16-01.md
