@@ -37,13 +37,13 @@
 | [RV-20][rv20] | 🟡     | フェイルセーフ / API 忠実性 | fixed | HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る             |
 | [RV-21][rv21] | 🟢     | 設定検証 / 後方互換         | fixed | 既定ポート `:443` 付きの `host` が弾かれる                        |
 | [RV-22][rv22] | 🟢     | リトライ / DX               | open  | HTTP 429 の後、非冪等な `create` が自動再送されない               |
-| [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | open  | Candidate の静的カタログが標準項目 4 件を欠く                     |
+| [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed | Candidate の静的カタログが標準項目 4 件を欠く                     |
 | [RV-24][rv24] | 🟡     | ドキュメント / DX           | open  | `defineFields` の使い方がどこにも無い                             |
 | [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | open  | `partition` 未設定で無言のうちに `partition=0` を送る             |
 | [RV-26][rv26] | 🟡     | API 忠実性                  | open  | `P_Deleted` 未対応 ＝ 削除済みかを判別できない                    |
 | [RV-27][rv27] | 🟢     | ドキュメント / DX           | open  | F-2 だけトピック ガイドが無い                                     |
 | [RV-28][rv28] | 🟢     | API 忠実性 / フェイルセーフ | open  | `count` の範囲を送信前に検証しない                                |
-| [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | open  | reference ↔ カタログの突合が自動化されていない                    |
+| [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed | reference ↔ カタログの突合が自動化されていない                    |
 | [RV-30][rv30] | 🟢     | 型安全 / 公開サーフェス     | open  | 公開ジェネリクスの制約型が未 export                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。

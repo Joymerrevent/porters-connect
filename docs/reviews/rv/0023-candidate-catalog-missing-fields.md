@@ -1,7 +1,7 @@
 # RV-23 🔴 Candidate の静的カタログが標準項目 4 件を欠く
 
 - 重要度: 🔴 ／ 観点: API 忠実性 / 型安全
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -49,10 +49,33 @@ Client / Job / Resume / Process の差分は `Reference` 型（Field Type 16 ＝
 
 ## 処置
 
-—
+カタログに 4 件を追加した（`src/resources/candidate.ts`）— `P_PhaseMemo`（MultilineText）/
+`P_Memo`（MultilineText）/ `P_Fax`（Telephone）/ `P_Street`（MultilineText）。
+Data Type は reference のとおり。並び順は **Client と同じグルーピング**に揃えた
+（フェーズ系 → 氏名・メモ → 連絡先 → 住所）ので、2 つのカタログを見比べたときに差分が目で追える。
+
+[ADR-0019][adr19] のとおりカタログが真実源なので、`Candidate` / `CandidateCreateInput` /
+`CandidateUpdateInput` / `CandidateSearchQuery` は**自動で追従**する（型定義の変更はゼロ）。
+semver は **minor**（公開型に項目が増える）。
+
+併せて **[RV-29][rv29]** の突合テストを同じ PR で入れ、再発を仕組みで止めた。
+
+## 検証
+
+- `test/integration/reference-catalog.test.ts` が
+  **「値を持つ標準項目がすべてカタログにある」**ことを検証し、Candidate も通る。
+- **落ちることを確認済み**: `P_Memo` を外すと
+  `expected [ 'P_Memo' ] to deeply equal []` で失敗する＝本 finding をそのまま再現して検出する。
+- 既存 579 テストは無改修で緑。フェイクサーバーは descriptor を共有しているため
+  ([ADR-0043][adr43])、追加した 4 項目は**フェイク側にも自動で反映**され、
+  L1 結合テストの CRUD 往復でそのまま扱える。
+- `field` 省略時の既定 field が 4 つ増えるため Read URL が約 100 文字伸びるが、
+  送信前ガード（~15000 字・[RV-5][rv5]）に対しては十分小さい。
 
 [adr3]: ../../adr/0003-add-attachment-to-mvp.md
 [adr19]: ../../adr/0019-static-resource-types.md
 [adr20]: ../../adr/0020-read-field-default.md
+[adr43]: ../../adr/0043-local-fake-server.md
+[rv5]: 0005-request-size-guard-read-url.md
 [rv29]: 0029-reference-catalog-check-missing.md
 [run816]: ../2026-08-16-01.md
