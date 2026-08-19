@@ -1,7 +1,7 @@
 # RV-24 🟡 `defineFields` の使い方がどこにも無い
 
 - 重要度: 🟡 ／ 観点: ドキュメント / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -45,7 +45,25 @@ README「リソースと操作」付近に 3〜5 行の節 ＋ `>` でガイド�
 
 ## 処置
 
-—
+`docs/guide/custom-fields.md` を新設した（[ADR-0035][adr35] の型どおり）。
+README には「リソースと操作」の中に**カスタム項目の節**を足し、3 行の例と `>` でガイドへ誘導する。
+
+ガイドで扱ったのは、宣言の書き方／**宣言しないとどうなるか**（型が付かず `field` 省略時に
+取得もされない・エラーにはならない）／宣言できる 11 の Data Type と読み取り値の対応／
+**Field Read でテナントの項目を調べる手順**／`defineFields` が検証すること（alias の接頭辞・
+リソース名。同期 throw である理由も）／**値レベルの検証はしない**方針とその理由／
+複数テナントで項目構成が違う場合の使い分け（`tenant(id)` はカタログを共有する）。
+
+## 検証
+
+- **コード例が型検査を通ることを確認した**。ガイドの全スニペットを 1 ファイルに写して
+  `tsc --noEmit -p test` に掛け、エラーなしを確認（`U_score` が `number | null | undefined`、
+  `U_source` が `string[] | null | undefined` になることも型注釈で固定して確認）。
+  わざと型エラーを混ぜると検出されることも確かめ、**検査が空振りしていない**ことを担保した。
+- README・ガイドの相対リンク 63 本すべてが実在することを確認。
+- `pnpm lint:md` 緑（参照スタイル・markdownlint とも）。
+
+[ADR-0035][adr35] が掲げた「機能の存在は README で気づけること」を満たす状態になった。
 
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [adr35]: ../../adr/0035-usage-documentation-structure.md
