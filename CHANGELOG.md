@@ -5,6 +5,48 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-20
+
+**Candidate でメモ・住所詳細が扱えるようになった版**です。標準項目でありながらカタログから漏れていた
+4 項目を追加し、同じ取りこぼしが二度と起きないよう reference との突合を CI で検査するようにしました。
+併せて `defineFields` と Read クエリの**利用ガイドを新設**しています。
+
+### Added
+
+- **Candidate に標準 4 項目**（`P_Memo`（メモ）／`P_Street`（住所詳細）／`P_Fax`（FAX）／`P_PhaseMemo`（フェーズメモ））。
+  カタログが型の真実源（[ADR-0019][adr19]）なので、これまで **`Candidate` 型にも `CandidateCreateInput` /
+  `CandidateUpdateInput` にも現れず**、`candidate.create({ P_Memo: "…" })` は型エラーでした。
+  `field` 省略時の既定 field（[ADR-0020][adr20]）にも含まれないため **Read でも取得されません**でした。
+  同じ 4 種は Client には最初から載っており、リソース間で非一貫でした。
+  - `field` を省略した Read は**既定 field が 4 つ増えるぶん URL が長くなります**（Candidate で約 100 文字）。
+- **公開ジェネリクスの制約型を export**（`DeclaredCatalogs` / `CustomFor` / `CustomFieldResource`）。
+  `PortersClient<C>` / `TenantScope<C>` は公開型なのに制約側が非公開で、
+  クライアントを引数に取るヘルパーの型を**名前で書けません**でした（`typeof porters` での回避のみ）。
+  型の追加のみで、既存コードへの影響はありません。
+- **利用ガイドを 2 本新設**（[ADR-0035][adr35] の型）。
+  - [カスタム項目ガイド][custom-fields-guide] — `defineFields` の宣言、**宣言しないとどうなるか**
+    （型が付かず `field` 省略時に取得されない）、宣言できる 11 の Data Type、
+    Field Read でテナントの項目を調べる手順、複数テナントでの使い分け。
+  - [Read クエリ ガイド][read-query-guide] — `field` の 3 通りの意味、**Data Type ごとの演算子一覧**、
+    削除済み Read の制約（condition は 3 項目・90 日以内）、送信前に落ちるものの一覧。
+
+### Changed
+
+- **Read の `count` が範囲外なら送信前に落ちます**。`count` は PORTERS 上 **1〜200**（既定 10）ですが、
+  これまで範囲外の値をそのまま送っており、不透明なサーバー応答に倒れていました。
+  今後は `PortersConfigError`（`category: "config"` ＋ `searchAll()` を案内する `hint`）で**リクエストの前に**弾きます。
+  整数でない値（`1.5` など）も同様です。
+  - keywords の 100 文字・itemstate の condition 制限・リクエスト長 ~15000 字と同じ
+    「早く・明確に落とす」系列に揃いました。データ系・マスタ系・Attachment の**すべての Read 経路**に効きます。
+  - `count` を省略した場合の挙動は変わりません（API 既定に委ねます）。
+
+### Fixed
+
+- **reference と静的カタログの突合を CI で検査**するようになりました。値を持つ標準項目の取りこぼし・
+  カタログ側の幻の項目・Field Type → Data Type の取り違えを検出します。
+  上記 Candidate の欠落は **0.1.0 から 12 版・563 テストをすべて素通り**していたため、
+  人の目ではなく仕組みで守ります。
+
 ## [0.8.0] - 2026-08-14
 
 **「0 件」と「届いていない」を区別できるようにした版**です。HTTP 200 を返す中間装置
@@ -241,9 +283,15 @@
 [adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
 [oauth-guide]: docs/guide/oauth.md
+[adr19]: docs/adr/0019-static-resource-types.md
+[adr20]: docs/adr/0020-read-field-default.md
+[adr35]: docs/adr/0035-usage-documentation-structure.md
+[custom-fields-guide]: docs/guide/custom-fields.md
+[read-query-guide]: docs/guide/read-query.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.1...v0.6.2
