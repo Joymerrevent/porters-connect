@@ -46,6 +46,13 @@ export type {
   FieldDecls,
   FieldDef,
 } from "./fields";
+// Constraint types of the public generics (`PortersClient<C>` / `TenantScope<C>`). Exported so a
+// helper that takes a client can name its type instead of relying on `typeof porters` (RV-30).
+export type {
+  CustomFieldResource,
+  CustomFor,
+  DeclaredCatalogs,
+} from "./fields";
 
 // Typed Read query surface shared by data resources (ADR-0038 / F-2): condition / order /
 // keywords / itemstate. Per-resource `*SearchQuery` aliases below specialise `SearchQuery`.

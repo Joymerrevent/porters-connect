@@ -102,8 +102,16 @@ describe("parseReadQuery", () => {
   });
 
   it("caps count at the API maximum of 200", () => {
-    expect(parse({ count: 5000 }).count).toBe(200);
-    expect(parse({}).count).toBe(200);
+    // 上限超えはライブラリが送信前に弾くようになった（RV-28）ので、buildReadUrl は通らない。
+    // ここで見たいのは**サーバー側の**上限処理（ライブラリを使わないクライアントからは
+    // count=5000 が実際に届きうる）なので、URL を直接組んで parseReadQuery に渡す。
+    const raw = (count: string): number =>
+      parseReadQuery(
+        new URL(`https://fake.test/v1/candidate?partition=1&count=${count}`),
+        PREFIX,
+      ).count;
+    expect(raw("5000")).toBe(200);
+    expect(parse({}).count).toBe(200); // 未指定はライブラリのページ幅（200）
   });
 });
 
