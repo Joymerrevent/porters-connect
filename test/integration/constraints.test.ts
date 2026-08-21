@@ -25,7 +25,6 @@ const setup = (options: FakeTransportOptions = {}) => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport,
   });
   const resourceRequests = (): TransportRequest[] =>
@@ -36,10 +35,10 @@ const setup = (options: FakeTransportOptions = {}) => {
 describe("request length (~15000 characters)", () => {
   it("is caught by the library before anything is sent", async () => {
     const { porters, resourceRequests } = setup();
-    await porters.candidate.search(); // warm up auth so only the guarded call is in question
+    await porters.tenant(1).candidate.search(); // warm up auth so only the guarded call is in question
 
     await expect(
-      porters.candidate.search({
+      porters.tenant(1).candidate.search({
         condition: { P_Name: { part: "あ".repeat(MAX_REQUEST_LENGTH) } },
       }),
     ).rejects.toMatchObject({ name: "PortersConfigError", category: "config" });
@@ -65,7 +64,7 @@ describe("request length (~15000 characters)", () => {
     const { porters } = setup();
     const content = "A".repeat(MAX_REQUEST_LENGTH * 2);
 
-    const id = await porters.attachment.create({
+    const id = await porters.tenant(1).attachment.create({
       resource: 3,
       resourceId: 10001,
       contentType: "text/plain",
@@ -73,17 +72,17 @@ describe("request length (~15000 characters)", () => {
       content,
     });
 
-    expect((await porters.attachment.get(id))?.content).toBe(content);
+    expect((await porters.tenant(1).attachment.get(id))?.content).toBe(content);
   });
 
   it("guards the keyword length client-side too", async () => {
     const { porters, resourceRequests } = setup();
-    await porters.candidate.search();
+    await porters.tenant(1).candidate.search();
 
     // The query is still encoded before anything is sent, but the failure arrives as a
     // **rejection** — `search(...).catch(...)` catches it like any other (ADR-0046 / RV-15).
     await expect(
-      porters.candidate.search({ keywords: ["あ".repeat(101)] }),
+      porters.tenant(1).candidate.search({ keywords: ["あ".repeat(101)] }),
     ).rejects.toMatchObject({
       name: "PortersConfigError",
       category: "config",
@@ -97,10 +96,10 @@ describe("per-minute request limits", () => {
   it("surfaces a closed connection as a retryable network error", async () => {
     const { porters } = setup({ rateLimit: { readPerMinute: 1 } });
 
-    await porters.candidate.search(); // uses the single allowed read
+    await porters.tenant(1).candidate.search(); // uses the single allowed read
 
     // The requester retries a network failure (bounded backoff) and then gives up.
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersNetworkError",
       category: "network",
       retryable: true,
@@ -113,22 +112,24 @@ describe("per-minute request limits", () => {
     const { porters } = setup();
 
     for (let i = 0; i < 30; i += 1) {
-      await porters.candidate.create({ P_Owner: 5, P_Name: `候補者 ${i}` });
+      await porters
+        .tenant(1)
+        .candidate.create({ P_Owner: 5, P_Name: `候補者 ${i}` });
     }
 
-    expect((await porters.candidate.search()).total).toBe(30);
+    expect((await porters.tenant(1).candidate.search()).total).toBe(30);
   });
 
   it("reports an HTTP 429 as a retryable rateLimit error (ADR-0044)", async () => {
     const { porters } = setup({
       rateLimit: { readPerMinute: 1, mode: "http429" },
     });
-    await porters.candidate.search();
+    await porters.tenant(1).candidate.search();
 
     // A body-less 429 carries no PORTERS envelope, so the status is the whole story: the requester
     // classifies it, retries while it lasts, and surfaces it with the status attached. This is the
     // one route by which `category: "rateLimit"` is produced at all (RV-3 / RV-13).
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersNetworkError",
       category: "rateLimit",
       retryable: true,
@@ -144,9 +145,11 @@ describe("200 records per request", () => {
   it("never happens through createMany, which batches first", async () => {
     const { porters, resourceRequests } = setup();
 
-    await porters.candidate.createMany(
-      Array.from({ length: 250 }, () => ({ P_Owner: 5 })),
-    );
+    await porters
+      .tenant(1)
+      .candidate.createMany(
+        Array.from({ length: 250 }, () => ({ P_Owner: 5 })),
+      );
 
     const writes = resourceRequests().filter((r) => r.method === "POST");
     for (const w of writes) {

@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 
+import type { TenantScope } from "../../src/index";
 import { PortersClient } from "../../src/client";
 import { bytesToBase64 } from "../../src/util/base64";
 import { createFakeTransport } from "../fake/index";
@@ -14,7 +15,6 @@ const setup = () => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: fake,
   });
   return { fake, porters };
@@ -24,9 +24,9 @@ const CONTENT = bytesToBase64(new TextEncoder().encode("hello, PORTERS"));
 
 const attach = (
   porters: PortersClient,
-  overrides: Partial<Parameters<PortersClient["attachment"]["create"]>[0]> = {},
+  overrides: Partial<Parameters<TenantScope["attachment"]["create"]>[0]> = {},
 ): Promise<number> =>
-  porters.attachment.create({
+  porters.tenant(1).attachment.create({
     resource: 3,
     resourceId: 10001,
     contentType: "text/plain",
@@ -40,7 +40,7 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
 
     const id = await attach(porters);
-    const found = await porters.attachment.get(id);
+    const found = await porters.tenant(1).attachment.get(id);
 
     expect(found).toEqual({
       id,
@@ -56,7 +56,7 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
     await attach(porters);
 
-    const page = await porters.attachment.search();
+    const page = await porters.tenant(1).attachment.search();
 
     expect(page.total).toBe(1);
     expect(page.items[0]?.fileName).toBe("memo.txt");
@@ -68,9 +68,9 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
     const id = await attach(porters);
 
-    await porters.attachment.update(id, { fileName: "renamed.txt" });
+    await porters.tenant(1).attachment.update(id, { fileName: "renamed.txt" });
 
-    const found = await porters.attachment.get(id);
+    const found = await porters.tenant(1).attachment.get(id);
     expect(found?.fileName).toBe("renamed.txt");
     expect(found?.contentType).toBe("text/plain"); // untouched
     expect(found?.content).toBe(CONTENT); // untouched
@@ -84,12 +84,14 @@ describe("attachment round-trip", () => {
 
     const id = await attach(porters, { content: big });
 
-    expect((await porters.attachment.get(id))?.content).toBe(big);
+    expect((await porters.tenant(1).attachment.get(id))?.content).toBe(big);
   });
 
   it("keeps its own id sequence, separate from the data resources", async () => {
     const { fake, porters } = setup();
-    await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
 
     const id = await attach(porters);
 

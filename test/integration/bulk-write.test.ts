@@ -17,7 +17,6 @@ const setup = () => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: {
       send: (req) => {
         if (req.method === "POST" && req.url.includes("/v1/candidate")) {
@@ -41,7 +40,7 @@ describe("bulk write through the fake", () => {
       P_Name: `候補者 ${i}`,
     }));
 
-    const result = await porters.candidate.createMany(inputs);
+    const result = await porters.tenant(1).candidate.createMany(inputs);
 
     expect(writes.length).toBeGreaterThan(1);
     for (const w of writes) {
@@ -60,29 +59,38 @@ describe("bulk write through the fake", () => {
 
   it("hits the 200-record bound when the records are small enough", async () => {
     const { porters, writes } = setup();
-    const created = await porters.candidate.createMany(
-      Array.from({ length: 250 }, () => ({ P_Owner: 5 })),
-    );
+    const created = await porters
+      .tenant(1)
+      .candidate.createMany(
+        Array.from({ length: 250 }, () => ({ P_Owner: 5 })),
+      );
     writes.length = 0;
 
     // An id-only update serializes to ~45 chars, so 200 of them still fit the size cap: this is
     // the case where the *record count* is the binding limit, not the request length.
-    await porters.candidate.updateMany(
-      created.results.map((r) => ({ id: r.id, fields: {} })),
-    );
+    await porters
+      .tenant(1)
+      .candidate.updateMany(
+        created.results.map((r) => ({ id: r.id, fields: {} })),
+      );
 
     expect(writes.map((w) => itemCount(w.body))).toEqual([200, 50]);
   });
 
   it("updates 250 records and applies every one", async () => {
     const { fake, porters, writes } = setup();
-    const created = await porters.candidate.createMany(
-      Array.from({ length: 250 }, () => ({ P_Owner: 5, P_Name: "初期" })),
-    );
+    const created = await porters
+      .tenant(1)
+      .candidate.createMany(
+        Array.from({ length: 250 }, () => ({ P_Owner: 5, P_Name: "初期" })),
+      );
     writes.length = 0;
 
-    const result = await porters.candidate.updateMany(
-      created.results.map((r) => ({ id: r.id, fields: { P_Name: "更新後" } })),
+    const result = await porters.tenant(1).candidate.updateMany(
+      created.results.map((r) => ({
+        id: r.id,
+        fields: { P_Name: "更新後" },
+      })),
     );
 
     expect(result.hasFailures).toBe(false);
@@ -98,7 +106,7 @@ describe("bulk write through the fake", () => {
     // The 3rd record of the first (only) batch fails validation.
     fake.control.failNext({ kind: "writeItemCodes", codes: [0, 0, 133] });
 
-    const result = await porters.candidate.createMany(
+    const result = await porters.tenant(1).candidate.createMany(
       Array.from({ length: 3 }, (_, i) => ({
         P_Owner: 5,
         P_Name: `候補者 ${i}`,
@@ -118,7 +126,7 @@ describe("bulk write through the fake", () => {
     fake.control.failNext({ kind: "resultCode", code: 102 });
 
     await expect(
-      porters.candidate.createMany(
+      porters.tenant(1).candidate.createMany(
         Array.from({ length: 3 }, (_, i) => ({
           P_Owner: 5,
           P_Name: `候補者 ${i}`,
@@ -135,7 +143,7 @@ describe("bulk write through the fake", () => {
   it("empty input sends nothing", async () => {
     const { porters, writes } = setup();
 
-    const result = await porters.candidate.createMany([]);
+    const result = await porters.tenant(1).candidate.createMany([]);
 
     expect(writes).toHaveLength(0);
     expect(result.results).toEqual([]);
