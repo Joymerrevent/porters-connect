@@ -67,6 +67,7 @@
 | [0053][0053] | ADR 索引の分離と実装状態の列化                              | プロセス | accepted   | —     |
 | [0054][0054] | スナップショットと台帳の役割分担（内容重複の解消）          | プロセス | accepted   | —     |
 | [0055][0055] | `partition` が束ねられていない呼び出しの扱い（RV-25）       | 基本設計 | accepted   | —     |
+| [0056][0056] | `P_Deleted`（削除フラグ）の型付け（RV-26）                  | 詳細設計 | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -125,3 +126,4 @@
 [0053]: 0053-adr-index-split.md
 [0054]: 0054-snapshot-ledger-role-split.md
 [0055]: 0055-partition-binding-guard.md
+[0056]: 0056-deleted-flag-typing.md
