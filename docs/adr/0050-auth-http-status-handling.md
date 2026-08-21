@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-12
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-19** の是正案。[ADR-0044][adr44] で `requester` は `res.status` を見るようになったが、
 > **OAuth / Token の 2 経路は `transport.send` を直接呼んでおり status を捨てたまま**で、同じ穴が認証系にだけ残っている。

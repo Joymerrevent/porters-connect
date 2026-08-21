@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-17
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.1.0
 
 > [ADR-0004][0004]（型モデル・案H）と [ADR-0005][0005]（公開 API・SD-2 ビルダー）が決めた
 > 「標準 `P_` は静的型／カスタム `U_`・`A_` は利用者が宣言 → 型導出＋実行時検証」の**実装**を確定する。

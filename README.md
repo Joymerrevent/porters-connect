@@ -192,10 +192,40 @@ await porters.auth.exchangeAuthorizationCode(code);
 - `order`：並び順。`[{ 項目: "asc" | "desc" }]`（数値・日時・System 型のみ）。
 - `keywords`：テキスト項目のキーワード AND 検索（`string[]`・カンマ込み **100 文字まで**）。
 - `itemstate`：`"existing"`（既定）/ `"deleted"` / `"all"`。削除済みデータの取得。
-- `count`（1–200・既定 10）、`start`（0 始まり）。
+- `count`（1–200・既定 10）、`start`（0 始まり）。**範囲外の `count` は送信前に `PortersConfigError`** で落ちます。
 
 > **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは `itemstate: "deleted"` で読みます
 > （`condition` は `P_Id` / `P_UpdateDate` / `P_UpdatedBy` に限られ、更新日は 90 日以内）。
+>
+> `field` の 3 通りの意味（省略＝全項目 / `[]`＝主キーのみ / 明示）、Data Type ごとの演算子一覧、
+> 削除済み Read の制約、送信前に落ちる条件は [Read クエリ ガイド][read-query-guide] にまとめています。
+
+### カスタム項目（`U_` / `A_`）
+
+テナント固有のカスタム項目は `defineFields` で宣言すると、**読み書きの型に現れ**、Data Type どおりに変換されます。
+
+```ts
+import { PortersClient, defineFields } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number(), U_source: f.option() }),
+});
+const porters = new PortersClient({
+  host,
+  appId,
+  appSecret,
+  partition,
+  fields,
+});
+
+const one = await porters.candidate.get(10001);
+one?.U_score; // number | null | undefined
+```
+
+宣言しなくても読み書きはできますが（生の文字列として通ります）、**型が付かず、`field` 省略時に取得もされません**。
+
+> 宣言できる型の一覧、テナントの項目を Field Read で調べる方法、複数テナントでの扱いは
+> [カスタム項目 ガイド][custom-fields-guide] にまとめています。
 
 ### マスタ Read（読み取り専用）
 
@@ -407,6 +437,8 @@ try {
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [oauth-guide]: ./docs/guide/oauth.md
 [error-handling]: ./docs/guide/error-handling.md
+[custom-fields-guide]: ./docs/guide/custom-fields.md
+[read-query-guide]: ./docs/guide/read-query.md
 [multi-tenancy]: ./docs/guide/multi-tenancy.md
 [bulk-write]: ./docs/guide/bulk-write.md
 [sandbox]: ./examples/offline-sandbox.ts

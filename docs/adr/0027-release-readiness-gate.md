@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-20
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.2.1
 
 > 発端：0.2.0 で `SECURITY.md`・README の Node バッジが更新漏れ。さらに調査で、論点は
 > 「version 連動ドリフト」より広い **「リリース前に何を検査すべきか（publish 正当性・型解決ほか）」**

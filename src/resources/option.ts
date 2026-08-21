@@ -8,7 +8,12 @@
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
-import { decoderFor, type FieldCatalog, type ReadRecord } from "./read-core";
+import {
+  appendPaging,
+  decoderFor,
+  type FieldCatalog,
+  type ReadRecord,
+} from "./read-core";
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 
 const FIELDS = {
@@ -62,7 +67,7 @@ const buildUrl = (
   if (q.alias !== undefined) p.set("alias", q.alias);
   if (q.level !== undefined) p.set("level", String(q.level));
   if (q.enabled !== undefined) p.set("enabled", String(q.enabled));
-  if (q.count !== undefined) p.set("count", String(q.count));
+  appendPaging(p, q.count); // Option は start を持たない（ADR-0022 事実5）
   return apiUrl(accessPoint, "option", p);
 };
 

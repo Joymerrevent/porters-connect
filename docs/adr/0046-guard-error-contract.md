@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-15** の是正案。Promise を返す公開メソッドの一部が、
 > **Promise を返す前に同期 throw** する。[ADR-0024][adr24] が Transport 層で明示した原則と、公開リソース面がずれている。

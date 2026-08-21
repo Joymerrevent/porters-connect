@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-10
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-17** の是正案。`host` は検証されないまま URL に連結されるため、書式を誤ると
 > 例外ではなく**別ホスト宛の実リクエスト**になる。[ADR-0047][adr47] で `scheme` が独立し `host` の意味が

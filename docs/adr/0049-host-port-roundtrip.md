@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-12
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [findings][findings] **RV-21** の是正案。[ADR-0048][adr48] を実装したところ、機構2 のラウンドトリップが
 > **既定ポート付きの `host`（`a.test:443`）を通さない**ことが判明した。ADR-0048 自身の Decision Drivers

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-29
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.5.0
 
 > [[0008-multitenancy-partition]]（基本設計・案1 per-call ／ 案2 `tenant(id)` スコープ ／ 案3 テナント別 client）と
 > [[0021-master-read-resources]]（`partition(id)` → **`tenant(id)` へ改名**）が約束した**マルチテナント公開 API**を実装に落とす

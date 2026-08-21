@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-09
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.7.0
 
 > [ADR-0043][adr43] が「D-アクセスポイント/scheme」として内包していた論点を、独立の判断として切り出す
 > （フェイクサーバー実装計画の**フェーズ6**）。**公開サーフェスの追加とセキュリティ姿勢**を決めるため、実装前に単独で決める。

@@ -3,6 +3,9 @@
 このディレクトリは `@joymerrevent/porters-connect` の設計判断を、決めた理由ごと残す場所です。
 `docs/history/SPEC_v1.md` は**素案**であり、ここで議論・確定した内容が正となります。
 
+> **ADR の一覧は [索引（index.md）][index]** にあります。本ファイルは**運用ルールと未起票の論点**を置きます
+> （役割分担は [ADR-0053][0053]）。
+
 ## ADR とは
 
 「なぜその設計にしたか」を 1 判断 1 ファイルで残す軽量な記録です。
@@ -22,68 +25,23 @@
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options → Decision Outcome（+ Consequences）→ Pros and Cons of the Options → More Information。
 
+### 索引との付き合い方（[ADR-0053][0053]）
+
+- **ADR を起票したら [索引][index] にも 1 行足す**。ステータスを変えたら索引も直す。
+- **状態の正は各 ADR 本文**（`- Status:` と `- Implemented:`）で、索引はその写し。
+  ズレは **`pnpm check:index`** が検出して CI で落とす（人の注意でなく仕組みで守る）。
+- **`- Implemented: X.Y.Z`** は「その決定が世に出た版」。**任意**で、プロセス決定など実装の概念が無い ADR には書かない
+  （索引では `—`）。書いたら索引の「実装」列と一致させる。
+- **索引に散文を書かない**。「実装待ち」「議論中」といった状態の言い換えは、テーブルの列で表す。
+  かつて索引に置いていた状態別の節は、**4 件が陳腐化した実績**があるため廃止した（[ADR-0053][0053]）。
+
 ## フェーズ凡例
 
 各 ADR / バックログ項目に**フェーズ**を付ける：**プロセス**（進め方・メタ）／ **要件定義**（何を作るか・PRD 担当）／ **基本設計**（外部仕様・全体像：公開 API・型・エラー・認証・層責務）／ **詳細設計**（内部実装・実装フェーズで決める）。
 
-## 一覧
-
-| #            | タイトル                                                    | フェーズ | ステータス |
-| ------------ | ----------------------------------------------------------- | -------- | ---------- |
-| [0001][0001] | ADR で設計判断を記録する                                    | プロセス | accepted   |
-| [0002][0002] | v1 設計を実 PORTERS API ドキュメントに接地する              | プロセス | accepted   |
-| [0003][0003] | MVP の対象リソースに Attachment を加える                    | 要件定義 | accepted   |
-| [0004][0004] | リソース／フィールドの型モデル（P\_ ＋ U\_/A\_）            | 基本設計 | accepted   |
-| [0005][0005] | 公開 API の形（client・アクセサ・宣言 DSL・返り値/エラー）  | 基本設計 | accepted   |
-| [0006][0006] | エラーモデル（PortersError・category・リトライ可否）        | 基本設計 | accepted   |
-| [0007][0007] | OAuth 認証の公開 API（code/code_direct・トークン管理）      | 基本設計 | accepted   |
-| [0008][0008] | マルチテナント運用とパーティション選択                      | 基本設計 | accepted   |
-| [0009][0009] | HTTP トランスポート（既定 fetch・注入 seam）                | 詳細設計 | accepted   |
-| [0010][0010] | リトライ／スロットリングの機構                              | 詳細設計 | accepted   |
-| [0011][0011] | XML パース／シリアライズ内部                                | 詳細設計 | accepted   |
-| [0012][0012] | トークンのキャッシュ／更新機構（既定ストラテジ内部）        | 詳細設計 | accepted   |
-| [0013][0013] | コーディング規約（クラス/関数・関数スタイル・型定義）       | プロセス | accepted   |
-| [0014][0014] | テストカバレッジ方針（計測・閾値・CI 強制）                 | プロセス | accepted   |
-| [0015][0015] | ミューテーションテスト（Stryker）でテスト品質を測る         | プロセス | accepted   |
-| [0016][0016] | 内部 FieldType の粒度（Field Type か Data Type か）         | 詳細設計 | accepted   |
-| [0017][0017] | Option の読み取り値の表現（複数選択対応）                   | 詳細設計 | accepted   |
-| [0018][0018] | Attachment リソースとファイル本体（Base64）の扱い           | 詳細設計 | accepted   |
-| [0019][0019] | 静的リソース型の実装（カタログ導出の Read/Write 型・SD-3）  | 詳細設計 | accepted   |
-| [0020][0020] | Read の field 既定挙動（省略時はカタログ導出の既定 field）  | 詳細設計 | accepted   |
-| [0021][0021] | マスタ Read の公開サーフェス（Partition/User/Field/Option） | 詳細設計 | accepted   |
-| [0022][0022] | マスタ Read のクエリと current() を実 Read API に接地       | 詳細設計 | accepted   |
-| [0023][0023] | カスタム項目宣言 DSL（`defineFields`）の詳細設計（R-16）    | 詳細設計 | accepted   |
-| [0024][0024] | テスト/評価用の公開モックトランスポート（R-17/R-12）        | 詳細設計 | accepted   |
-| [0025][0025] | CI/CD リリース自動化戦略（changesets・git-flow 維持）       | プロセス | accepted   |
-| [0026][0026] | CHANGELOG 生成方式（手書き vs changesets）                  | プロセス | accepted   |
-| [0027][0027] | リリース前ゲート（整合性・公開正当性）                      | プロセス | accepted   |
-| [0028][0028] | CI のパスベース最適化（docs skip）                          | プロセス | accepted   |
-| [0029][0029] | リリースのタグ付け・back-merge 自動化                       | プロセス | accepted   |
-| [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                       | プロセス | accepted   |
-| [0031][0031] | リリース版番号の自動検証（semver・単調増加）                | プロセス | accepted   |
-| [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）  | プロセス | accepted   |
-| [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                      | 要件定義 | accepted   |
-| [0034][0034] | OAuth 公開 API porters.auth.\* の詳細設計（F-1）            | 詳細設計 | accepted   |
-| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）   | プロセス | accepted   |
-| [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）  | 詳細設計 | accepted   |
-| [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）  | プロセス | superseded |
-| [0038][0038] | Read クエリ condition/order/keywords/itemstate（F-2）       | 詳細設計 | accepted   |
-| [0039][0039] | commitlint scope 改訂：release 範囲限定＋PR タイトル lint   | プロセス | accepted   |
-| [0040][0040] | マルチテナント tenant(id) スコープ（F-3）                   | 詳細設計 | accepted   |
-| [0041][0041] | 一括書き込み createMany / updateMany（F-4）                 | 詳細設計 | accepted   |
-| [0042][0042] | 対応 PORTERS/API バージョン表記方針（v2 を契約の正）        | 要件定義 | accepted   |
-| [0043][0043] | ローカル フェイクサーバー（忠実度ポリシー・提供形態）       | 詳細設計 | accepted   |
-| [0044][0044] | HTTP ステータスをエラーモデルに配線する（RV-13）            | 詳細設計 | accepted   |
-| [0045][0045] | Write 応答のルート `<Code>` の扱い（RV-14）                 | 詳細設計 | accepted   |
-| [0046][0046] | 送信前ガードの例外契約（同期 throw か reject か・RV-15）    | 基本設計 | accepted   |
-| [0047][0047] | アクセスポイント / scheme 設定（http を許す条件）           | 基本設計 | accepted   |
-| [0048][0048] | アクセスポイント `host` の書式検証（RV-17）                 | 基本設計 | accepted   |
-| [0049][0049] | `host` 書式検証で既定ポートを落とさない（RV-21）            | 基本設計 | accepted   |
-| [0050][0050] | 認証 API 経路にも HTTP ステータスを配線（RV-19）            | 詳細設計 | accepted   |
-| [0051][0051] | Read 応答を PORTERS の envelope と同定する（RV-20）         | 詳細設計 | accepted   |
-
 ## 論点バックログ（未起票）
 
+**まだ ADR を起こしていない論点**だけを置く（起票済みのものは [索引][index] が正）。
 **番号は付けない**（起票時に採番）。前方参照はトピック名で行う。フェーズは上記凡例に従う。
 
 ### 【要件定義】
@@ -93,59 +51,25 @@
   （バージョン表記は [0042][0042]、サンドボックス R-17 は P1 のまま出荷、npm スコープ/組織は公開実績で決着。
   「1 App トークンで複数 partition」は実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
 
-### 【基本設計】（実装前に決める・依存の浅い順）
+### 【基本設計】
 
-- **ページング・検索条件の抽象化** — 公開クエリ（`field`/`condition`/`order`/`keywords`/`itemstate`/`start`/`count`）（公開 API は ADR-0005 で確定済み）。詳細設計は [0038][0038]（accepted・F-2）で確定。実装は別 PR
+- **未起票の論点はなし**（過去にここへ挙げていた「ページング・検索条件の抽象化」は [0038][0038] として起票・accepted・実装済み）。
 
-### 【詳細設計】（実装フェーズで決める）
+### 【詳細設計】
 
-- すべて起票済み（PoC 前に順次 accept。ステータスは上記一覧）：
-  HTTP トランスポート → [0009][0009]／リトライ・スロットリング → [0010][0010]／
-  XML パース・シリアライズ内部 → [0011][0011]／トークンのキャッシュ・更新（ストア含む）→ [0012][0012]。
-- 内部 FieldType の粒度 → [0016][0016]（accepted・案B＝Data Type 整合。実装は #21 で反映済み）。
-- Option の読み取り値の表現（複数選択の実害修正含む）→ [0017][0017]（accepted・案A＝常に string[]。コード反映は別 PR）。
-- Attachment リソースとファイル本体（Base64）→ [0018][0018]（accepted・専用アクセサ＋Base64 string＋10MB ガード。コード反映は別 PR）。
-- マスタ Read の公開サーフェス（Partition/User/Field/Option）→ [0021][0021]（accepted・単数形アクセサ＋スコープ関数を `tenant(id)` に改名＋`current()` 発見。コード反映は別 PR。唯一残った P0＝[R-3][prd]）。
-- マスタ Read のクエリと current() を実 Read API に接地 → [0022][0022]（accepted・ADR-0021 軸2/軸4 を amend。各マスタ bespoke クエリ・`get(id)` 不在・Option は `searchAll` なし・`current()` は User のみ）。
-
-### 【accept 済み・実装待ち】
-
-**proposed は現在なし**（0051 は 2026-08-13 に decider が accept）。実装は ADR ごとに別 PR。
-
-- [0051][0051]（**案D**）Read 応答を PORTERS の envelope と同定する（RV-20）—
-  **ルート要素名が期待どおり ＋ `<Code>` がある**ことを Read の同定条件にする。
-  [0044][0044] が塞いだ「HTTP 200 **以外**」の**対称形**で、200 を返す中間装置（キャプティブポータル・
-  SSO 画面・WAF）のボディが**正常な 0 件として通る**穴を塞ぐ。ルート要素名は Read 記事 17 本すべてに
-  実例があり（Attachment・Option を含む）、Write リクエストで既に wire に載っている値＝**新しい仮定は増えない**。
-  semver は **minor**・書き換えが要る既存テストは 1 件
-
-### 【accept 済み・実装済み】
-
-2026-08-09 / 2026-08-10 のレビュー（[docs/reviews][reviews]）から起票し、decider が全件 accept。
-**実装は ADR ごとに別 PR**（0044〜0050 は 2026-08-12 に実装完了・**0.7.0 で公開済み**）。
-**accept 済みで実装待ちの ADR は現在なし**。
-
-- [0044][0044]（案A）HTTP ステータスの扱い ／ [0045][0045]（案A）Write ルート `<Code>` の扱い
-  — **実装順序は 0044 → 0045**（判定順の土台が先）
-- [0046][0046]（案A）送信前ガードの例外契約 — semver は minor
-- [0047][0047]（案B）アクセスポイント・scheme 設定 — フェイク フェーズ6 の前提・semver は minor
-- [0048][0048]（案A ＋ 機構2）アクセスポイント `host` の書式検証 — semver は patch。
-  0047 の続き（`host` の意味を実行時にも強制する）。**機構2 は [0049][0049]（案C）で改訂**
-- [0049][0049]（案C）`host` 書式検証で既定ポートを落とさない（RV-21）— 既定ポートを持たないスキーム
-  （`porters-check://`）でパースし、`:443` も含め**どのポートも落とさない**・semver は patch
-- [0050][0050]（案A）認証 API 経路にも HTTP ステータスを配線（RV-19）— [0044][0044] の `readResponse` を
-  `http/` へ切り出して共有し、判定順・写像をそのまま認証 2 経路にも適用・semver は minor
+- **未起票の論点はなし**（HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／
+  トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／マスタ Read は
+  すべて起票済み。各々の状態は [索引][index] を参照）。
 
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
 
 [madr-markdown-any-decision-records]: https://adr.github.io/madr/
+[index]: index.md
 [prd]: ../design/requirements.md
-[reviews]: ../reviews/findings.md
 [lv-doc]: ../live-verification.md
 [0000-template-md]: 0000-template.md
-[0001]: 0001-record-architecture-decisions.md
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0003]: 0003-add-attachment-to-mvp.md
 [0004]: 0004-field-type-model.md
@@ -153,46 +77,6 @@
 [0006]: 0006-error-model.md
 [0007]: 0007-oauth-public-surface.md
 [0008]: 0008-multitenancy-partition.md
-[0009]: 0009-http-transport.md
-[0010]: 0010-retry-throttle.md
-[0011]: 0011-xml-parse-serialize.md
-[0012]: 0012-token-cache-refresh.md
-[0013]: 0013-coding-conventions-class-vs-function.md
-[0014]: 0014-test-coverage-policy.md
-[0015]: 0015-mutation-testing.md
-[0016]: 0016-field-type-granularity.md
-[0017]: 0017-option-read-shape.md
-[0018]: 0018-attachment-design.md
-[0019]: 0019-static-resource-types.md
-[0020]: 0020-read-field-default.md
-[0021]: 0021-master-read-resources.md
-[0022]: 0022-master-read-query-surface.md
-[0023]: 0023-custom-field-declaration-dsl.md
-[0024]: 0024-mock-transport.md
-[0025]: 0025-release-automation.md
-[0026]: 0026-changelog-format.md
-[0027]: 0027-release-readiness-gate.md
-[0028]: 0028-ci-path-filtering.md
-[0029]: 0029-release-tag-automation.md
-[0030]: 0030-backmerge-method.md
-[0031]: 0031-version-number-validation.md
-[0032]: 0032-monotonic-check-release-scope.md
-[0033]: 0033-post-mvp-direction.md
-[0034]: 0034-oauth-public-surface-impl.md
-[0035]: 0035-usage-documentation-structure.md
-[0036]: 0036-refresh-expiry-reacquire.md
-[0037]: 0037-commitlint-pr-scope.md
 [0038]: 0038-read-query-surface-impl.md
-[0039]: 0039-commitlint-release-range.md
-[0040]: 0040-multitenancy-surface-impl.md
-[0041]: 0041-bulk-write-surface-impl.md
 [0042]: 0042-supported-version-policy.md
-[0043]: 0043-local-fake-server.md
-[0044]: 0044-http-status-handling.md
-[0045]: 0045-write-response-root-code.md
-[0046]: 0046-guard-error-contract.md
-[0047]: 0047-access-point-scheme.md
-[0048]: 0048-access-point-host-validation.md
-[0049]: 0049-host-port-roundtrip.md
-[0050]: 0050-auth-http-status-handling.md
-[0051]: 0051-read-envelope-identification.md
+[0053]: 0053-adr-index-split.md

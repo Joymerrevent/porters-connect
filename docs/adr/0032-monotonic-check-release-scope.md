@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-06-22（accepted: 2026-06-22）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.2.1
 - Supersedes: [ADR-0031][adr31] の**単調増加検証(2)の実行範囲**（毎 PR → base=main の PR 限定）。形式検証(1)・baseline=git タグ・自前比較は不変。
 
 > 発端：project-review RV-9。ADR-0031 の単調増加検証が、git-flow の release→**手動** back-merge 窓で
