@@ -9,13 +9,13 @@ Process / Resume）に `createMany` / `updateMany` があります。
 
 ```ts
 // 新規をまとめて作成（各レコードの必須項目は単件 create と同じ）
-const created = await porters.candidate.createMany([
+const created = await t.candidate.createMany([
   { P_Owner: 1, P_Name: "山田 太郎" },
   { P_Owner: 1, P_Name: "鈴木 花子" },
 ]);
 
 // 既存を id 指定でまとめて更新
-const updated = await porters.candidate.updateMany([
+const updated = await t.candidate.updateMany([
   { id: 10001, fields: { P_Name: "山田 太郎" } },
   { id: 10002, fields: { P_Phase: ["Option.P_PersonPhase_Offer"] } },
 ]);
@@ -36,7 +36,7 @@ PORTERS は **1 リクエスト最大 200 件**、かつ**リクエスト全体�
 throw せず**、戻り値で返します。必ず `hasFailures` / `failed` を確認してください。
 
 ```ts
-const r = await porters.candidate.createMany(inputs);
+const r = await t.candidate.createMany(inputs);
 // r.results : 送信順の per-item 結果 [{ index, id, code, ok }]
 // r.failed  : ok === false の部分集合
 // r.hasFailures : failed.length > 0

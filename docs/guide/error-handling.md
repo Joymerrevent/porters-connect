@@ -29,12 +29,12 @@ PORTERS への問い合わせを増やさず**自己解決**できるよう、�
 ```ts
 // どちらの書き方でも捕まえられます
 try {
-  await porters.candidate.search({ keywords: ["…101 文字…"] });
+  await t.candidate.search({ keywords: ["…101 文字…"] });
 } catch (e) {
   /* … */
 }
 
-porters.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
+t.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
   /* こちらも届く */
 });
 ```
@@ -71,7 +71,7 @@ import {
 } from "@joymerrevent/porters-connect";
 
 try {
-  await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+  await t.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
 } catch (e) {
   if (!(e instanceof PortersError)) throw e; // PORTERS 由来でないものは再 throw
 
@@ -147,7 +147,7 @@ status からの分類は次のとおりです。
 
 ```ts
 try {
-  await porters.candidate.search();
+  await t.candidate.search();
 } catch (e) {
   if (!(e instanceof PortersError)) throw e;
   if (e.code === null && e.httpStatus !== undefined) {
@@ -245,7 +245,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 | データ取得で権限エラー                    | リソース `403`             | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認              |
 | `partition` が見つからない                | リソース `404`             | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                              |
 | 作成・更新で値が弾かれる                  | リソース `100`〜`116`      | `validation` | パラメータ・書式・型・日時・Option を見直す                                 |
-| 宣言したカスタム項目で `validation`       | リソース `100`             | `validation` | その partition に項目が実在するか `porters.field.search` で確認             |
+| 宣言したカスタム項目で `validation`       | リソース `100`             | `validation` | その partition に項目が実在するか `t.field.search` で確認                   |
 | `itemstate` / `version` 不正              | リソース `133` / `146`     | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                 |
 | 重複・依存で作成/削除できない             | リソース `301`/`303`/`304` | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                      |
 | IP 制限 / アプリ権限不足                  | リソース `406` / `601`     | `permission` | IP アドレス申請／アプリ権限の申請                                           |
