@@ -21,7 +21,6 @@ const setup = (options: FakeTransportOptions = {}) => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: fake,
   });
   return { fake, porters };
@@ -61,7 +60,7 @@ describe("user master", () => {
   it("lists users", async () => {
     const { porters } = setup();
 
-    const page = await porters.user.search();
+    const page = await porters.tenant(1).user.search();
 
     expect(page.items.map((u) => u.P_Name)).toEqual([
       "API アプリ",
@@ -74,7 +73,7 @@ describe("user master", () => {
   it("current() self-identifies as the App's own user", async () => {
     const { porters } = setup({ currentUserId: 5 });
 
-    const me = await porters.user.current();
+    const me = await porters.tenant(1).user.current();
 
     expect(me?.P_Id).toBe(5);
     expect(me?.P_Name).toBe("採用 花子");
@@ -84,18 +83,20 @@ describe("user master", () => {
     const { porters } = setup();
 
     // user_type 0 = system admins (P_Type=1), 1 = standard users (P_Type=0).
-    const admins = await porters.user.search({ userType: 0 });
+    const admins = await porters.tenant(1).user.search({ userType: 0 });
     expect(admins.items.map((u) => u.P_Id)).toEqual([9]);
 
-    const standard = await porters.user.search({ userType: 1 });
+    const standard = await porters.tenant(1).user.search({ userType: 1 });
     expect(standard.items.map((u) => u.P_Id)).toEqual([1, 5]);
   });
 
   it("sees the users a write referenced, even undeclared ones", async () => {
     const { porters } = setup({ users: [] });
-    await porters.candidate.create({ P_Owner: 77, P_Name: "山田 太郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 77, P_Name: "山田 太郎" });
 
-    const page = await porters.user.search();
+    const page = await porters.tenant(1).user.search();
 
     expect(page.items.map((u) => u.P_Id)).toContain(77);
   });
@@ -105,7 +106,9 @@ describe("field master", () => {
   it("introspects a resource's catalog", async () => {
     const { porters } = setup();
 
-    const page = await porters.field.search({ resource: "candidate" });
+    const page = await porters
+      .tenant(1)
+      .field.search({ resource: "candidate" });
 
     const byAlias = new Map(page.items.map((f) => [f.P_Alias, f]));
     expect(byAlias.get("Person.P_Name")?.P_Type).toBe(1); // SinglelineText
@@ -120,7 +123,7 @@ describe("field master", () => {
   it("reads a different resource's catalog", async () => {
     const { porters } = setup();
 
-    const page = await porters.field.search({ resource: "job" });
+    const page = await porters.tenant(1).field.search({ resource: "job" });
 
     expect(page.items.map((f) => f.P_Alias)).toContain("Job.P_Position");
     expect(page.items.every((f) => f.P_ResourceType === 3)).toBe(true);
@@ -130,7 +133,9 @@ describe("field master", () => {
     const { porters } = setup();
 
     const aliases = [];
-    for await (const f of porters.field.searchAll({ resource: "client" })) {
+    for await (const f of porters
+      .tenant(1)
+      .field.searchAll({ resource: "client" })) {
       aliases.push(f.P_Alias);
     }
 
@@ -157,7 +162,7 @@ describe("option master", () => {
   it("flattens the recursive tree depth-first, keeping the parent linkage", async () => {
     const { porters } = setup({ optionTree: TREE });
 
-    const options = await porters.option.search();
+    const options = await porters.tenant(1).option.search();
 
     expect(options.map((o) => o.P_Alias)).toEqual([
       "Option.P_Area",
@@ -176,13 +181,15 @@ describe("option master", () => {
   it("reads a subtree by alias, and limits the depth with level", async () => {
     const { porters } = setup({ optionTree: TREE });
 
-    const subtree = await porters.option.search({ alias: "Option.P_Kansai" });
+    const subtree = await porters
+      .tenant(1)
+      .option.search({ alias: "Option.P_Kansai" });
     expect(subtree.map((o) => o.P_Alias)).toEqual([
       "Option.P_Kansai",
       "Option.P_Osaka",
     ]);
 
-    const shallow = await porters.option.search({
+    const shallow = await porters.tenant(1).option.search({
       alias: "Option.P_Area",
       level: 1,
     });
@@ -195,12 +202,12 @@ describe("option master", () => {
 
   it("serves the aliases a write used when no tree is seeded", async () => {
     const { porters } = setup();
-    await porters.candidate.create({
+    await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Phase: ["Option.P_Applied"],
     });
 
-    const options = await porters.option.search();
+    const options = await porters.tenant(1).option.search();
 
     expect(options.map((o) => o.P_Alias)).toEqual(["Option.P_Applied"]);
   });

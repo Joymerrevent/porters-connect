@@ -25,7 +25,6 @@ const porters = new PortersClient({
   host: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
   appId: "demo",
   appSecret: "demo",
-  partition: 1,
   fields,
   // ↓ これを外せば本物の fetch で動く。認証（/v1/oauth, /v1/token）は自動応答される。
   transport: createMockTransport((req) => {
@@ -59,8 +58,12 @@ const porters = new PortersClient({
   }),
 });
 
+// partition（Company DB）は tenant で一度だけ束ねる（ADR-0055）。単一テナントでもこの形で、
+// 以降は `t` をクライアントのように使える。client 直下には auth と partition マスタだけが残る。
+const t = porters.tenant(1);
+
 // 1) 検索：型付きオブジェクトが返る（XML は外に出ない）。condition は Data Type ごとに型付き
-const page = await porters.candidate.search({
+const page = await t.candidate.search({
   condition: { P_Name: { part: "山田" } },
 });
 console.log("■ search:", page.total, "件");
@@ -77,11 +80,11 @@ for (const c of page.items) {
 }
 
 // 2) 取得
-const one = await porters.candidate.get(10001);
+const one = await t.candidate.get(10001);
 console.log("■ get(10001):", one?.P_Name, "/ score:", one?.U_score);
 
 // 3) 作成（採番された id が返る。P_Id は自動。カスタム項目も型付きで書ける）
-const newId = await porters.candidate.create({
+const newId = await t.candidate.create({
   P_Owner: 5, // User 項目は id
   P_Name: "新規 太郎",
   P_Reading: "しんき たろう",
@@ -91,7 +94,7 @@ const newId = await porters.candidate.create({
 console.log("■ create -> id:", newId);
 
 // 4) 添付ファイル（Content は Base64。バイト列の変換ヘルパー同梱）
-const attachmentId = await porters.attachment.create({
+const attachmentId = await t.attachment.create({
   resource: 1,
   resourceId: 10001,
   contentType: "text/plain",
@@ -103,7 +106,7 @@ console.log("■ attachment.create -> id:", attachmentId);
 // 5) 型付きエラー：未モックの job を呼ぶと、判別可能な PortersError が飛ぶ
 //    （createMockTransport のフェイルセーフ＝未モック箇所を黙殺せず明示）
 try {
-  await porters.job.search();
+  await t.job.search();
 } catch (e) {
   if (e instanceof PortersError) {
     console.log("■ typed error:", e.category, "-", e.message);

@@ -65,12 +65,6 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
-  /**
-   * Default partition (Company DB) for every call. For multi-tenant routing, bind a partition
-   * per call with {@link PortersClient.tenant} (ADR-0040 / F-3); for a fully separated per-partition
-   * token, construct a dedicated client per tenant instead (ADR-0008 案3).
-   */
-  partition?: PartitionId;
   /** Custom auth strategy; defaults to the transparent code_direct strategy. */
   auth?: TokenProvider;
   /** Token persistence; defaults to in-memory. */
@@ -87,8 +81,10 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
 
 /**
  * The partition-bound resource accessors returned by {@link PortersClient.tenant} (ADR-0040 / F-3).
- * Every accessor here routes to the bound tenant's partition. `auth` (App-level), the `partition`
- * master (discovery — partition-less), and `tenant` itself (no nesting) are deliberately absent.
+ * **This is the only way to reach a partition-scoped resource** (ADR-0055): PORTERS requires
+ * `partition` on every one of these calls, so the API makes you supply it exactly once, explicitly.
+ * `auth` (App-level), the `partition` master (discovery — partition-less), and `tenant` itself
+ * (no nesting) are deliberately absent: none of them takes a partition.
  */
 export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
@@ -103,35 +99,40 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
 };
 
 /**
- * Entry point of the library. Wires the default transport / auth / throttle /
- * requester and exposes namespaced resource accessors such as `candidate`
- * (ADR-0005).
+ * Entry point of the library. Wires the default transport / auth / throttle / requester and exposes
+ * the **App-level** surface: `auth`, the `partition` master (discovery), and {@link PortersClient.tenant}.
+ *
+ * Everything that PORTERS scopes to a partition (Company DB) lives behind `tenant(id)` — see
+ * {@link TenantScope}. The client holds no default partition (ADR-0055): a partition is bound
+ * explicitly, exactly once, so "unbound" is not a state this API can be in.
+ *
+ * @example
+ * const porters = new PortersClient({ host, appId, appSecret });
+ * await porters.auth.ensureAuthenticated();   // App-level
+ * const t = porters.tenant(123);              // bind the partition once
+ * const page = await t.candidate.search();
  */
 export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
-  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
-  readonly job: JobResource<CustomFor<C, "job">>;
-  readonly client: ClientResource<CustomFor<C, "client">>;
-  readonly process: ProcessResource<CustomFor<C, "process">>;
-  readonly resume: ResumeResource<CustomFor<C, "resume">>;
-  readonly attachment: AttachmentResource;
   /** OAuth surface: initial browser grant, token warm-up/inspection, local revoke (ADR-0007/0034). */
   readonly auth: AuthApi;
-  /** Master Read: accessible partitions (ADR-0021/0022). */
-  readonly partition: PartitionResource;
-  /** Master Read: users, plus `current()` self-identification (ADR-0021/0022). */
-  readonly user: UserResource;
-  /** Master Read: a resource's field catalog (ADR-0021/0022). */
-  readonly field: FieldResource;
-  /** Master Read: a tenant's choice (option) master (ADR-0021/0022). */
-  readonly option: OptionResource;
   /**
-   * Bind a tenant's partition (Company DB) once and route every call through it — the multi-tenant
-   * scope (ADR-0008 案2 / renamed in ADR-0021 / implemented in ADR-0040 F-3).
-   * `porters.tenant(123).candidate.search(...)` sends `partition=123` without repeating it, overriding
-   * the client-default `partition`. Returns the partition-bound accessors (data + attachment + master
-   * User/Field/Option); `auth` (App-level), the `partition` master (discovery — takes no partition),
-   * and `tenant` itself (no nesting) are intentionally omitted. For a fully separated per-partition
-   * token, construct a dedicated {@link PortersClient} per tenant instead (ADR-0008 案3).
+   * Master Read: the partitions this App can reach (ADR-0021/0022). Takes no `partition` itself —
+   * it is how you *discover* the ids to pass to {@link PortersClient.tenant}.
+   */
+  readonly partition: PartitionResource;
+  /**
+   * Bind a partition (Company DB) and get the accessors that route through it (ADR-0040 F-3).
+   * **Single-tenant apps use this too** — it is the only path to a partition-scoped resource
+   * (ADR-0055). Hold the scope once and use it like a client:
+   *
+   * ```ts
+   * const t = porters.tenant(123);
+   * await t.candidate.search();
+   * ```
+   *
+   * `auth` (App-level), the `partition` master (discovery — takes no partition), and `tenant`
+   * itself (no nesting) are intentionally absent from the returned scope. For a fully separated
+   * per-partition token, construct a dedicated {@link PortersClient} per tenant (ADR-0008 案3).
    */
   readonly tenant: (id: PartitionId) => TenantScope<C>;
   readonly #accessPoint: AccessPoint;
@@ -206,16 +207,6 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       };
     };
     this.tenant = buildScope;
-    const root = buildScope(options.partition ?? 0);
-    this.candidate = root.candidate;
-    this.job = root.job;
-    this.client = root.client;
-    this.process = root.process;
-    this.resume = root.resume;
-    this.attachment = root.attachment;
-    this.user = root.user;
-    this.field = root.field;
-    this.option = root.option;
     // Partition Read takes no `partition` param (it discovers them); App-level, not tenant-bound.
     this.partition = createPartitionResource({ requester, accessPoint });
   }

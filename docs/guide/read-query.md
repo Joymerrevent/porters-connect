@@ -7,7 +7,7 @@
 ## 全体像
 
 ```ts
-const page = await porters.candidate.search({
+const page = await t.candidate.search({
   field: ["Person.P_Id", "Person.P_Name"], // 取得する項目（省略可）
   condition: { P_Name: { part: "山田" } }, // 検索条件（複数項目は AND）
   order: [{ P_UpdateDate: "desc" }], // 並び順
@@ -22,7 +22,7 @@ const page = await porters.candidate.search({
 全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件刻みで yield します）。
 
 ```ts
-for await (const c of porters.candidate.searchAll({
+for await (const c of t.candidate.searchAll({
   condition: { P_Name: { part: "山田" } },
 })) {
   // …
@@ -43,7 +43,7 @@ for await (const c of porters.candidate.searchAll({
 alias は**接頭辞付き**で書きます（Candidate は `Person.`、他はリソース名）。
 
 ```ts
-await porters.candidate.search({ field: [] }); // total だけ見たい
+await t.candidate.search({ field: [] }); // total だけ見たい
 ```
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
@@ -64,7 +64,7 @@ await porters.candidate.search({ field: [] }); // total だけ見たい
 | `User` / `System[Reference]`                                      | `eq` / `or` / `and`                     | `number`（`or` / `and` は `number[]`） |
 
 ```ts
-await porters.candidate.search({
+await t.candidate.search({
   condition: {
     P_Name: { part: "山田" }, // テキストは部分一致
     P_UpdateDate: { ge: "2026-08-01T00:00:00Z" }, // ISO 8601（UTC）で渡す
@@ -81,7 +81,7 @@ await porters.candidate.search({
 上位階層の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
 
 ```ts
-await porters.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
+await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 ```
 
 ## `order` — 並び順
@@ -90,7 +90,7 @@ await porters.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 並べ替えられるのは**数値・日時・System 系**だけで、テキストや Option を指定すると型エラーになります。
 
 ```ts
-await porters.job.search({
+await t.job.search({
   order: [{ P_UpdateDate: "desc" }, { P_Id: "asc" }],
 });
 ```
@@ -100,7 +100,7 @@ await porters.job.search({
 テキスト項目を横断する **AND 検索**です（OR はできません）。
 
 ```ts
-await porters.candidate.search({ keywords: ["東京", "営業"] });
+await t.candidate.search({ keywords: ["東京", "営業"] });
 ```
 
 - **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` で落ちます。
@@ -118,7 +118,7 @@ await porters.candidate.search({ keywords: ["東京", "営業"] });
 | `"all"`      | 両方                         |
 
 ```ts
-await porters.candidate.search({
+await t.candidate.search({
   itemstate: "deleted",
   condition: { P_UpdateDate: { ge: "2026-07-01T00:00:00Z" } },
 });
@@ -142,7 +142,7 @@ await porters.candidate.search({
 オフセット式です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
 
 ```ts
-const page = await porters.candidate.search({ count: 200, start: 0 });
+const page = await t.candidate.search({ count: 200, start: 0 });
 page.total; // 条件に合う総件数
 page.count; // 今回返った件数
 page.start; // 今回の開始インデックス

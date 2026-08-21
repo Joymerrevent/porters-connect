@@ -97,7 +97,6 @@ describe("createMockTransport", () => {
       host: "sandbox.invalid",
       appId: "demo",
       appSecret: "demo",
-      partition: 1,
       transport: createMockTransport((r) =>
         r.url.includes("/v1/candidate")
           ? `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>` +
@@ -105,7 +104,7 @@ describe("createMockTransport", () => {
           : undefined,
       ),
     });
-    const page = await porters.candidate.search();
+    const page = await porters.tenant(1).candidate.search();
     expect(page.total).toBe(1);
     expect(page.items[0]?.P_Id).toBe(1);
     expect(page.items[0]?.P_Name).toBe("太郎");
@@ -116,10 +115,9 @@ describe("createMockTransport", () => {
       host: "sandbox.invalid",
       appId: "demo",
       appSecret: "demo",
-      partition: 1,
       transport: createMockTransport(() => undefined),
     });
-    await expect(porters.candidate.search()).rejects.toBeInstanceOf(
+    await expect(porters.tenant(1).candidate.search()).rejects.toBeInstanceOf(
       PortersError,
     );
   });

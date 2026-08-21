@@ -31,7 +31,6 @@ const mockClient = (): PortersClient => {
   };
   return new PortersClient({
     host: "example.test",
-    partition: 999,
     transport,
     auth: { getAccessToken: () => Promise.resolve("TKN") },
   });
@@ -39,10 +38,12 @@ const mockClient = (): PortersClient => {
 
 describe("PortersClient + candidate (E2E, mock transport)", () => {
   it("returns typed Candidate[] decoded from mock XML", async () => {
-    const page = await mockClient().candidate.search({
-      field: ["P_Id", "P_Name"],
-      count: 200,
-    });
+    const page = await mockClient()
+      .tenant(999)
+      .candidate.search({
+        field: ["P_Id", "P_Name"],
+        count: 200,
+      });
 
     expect(page.total).toBe(2);
     expect(page.items).toHaveLength(2);
@@ -59,7 +60,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
   });
 
   it("get(id) returns a single candidate", async () => {
-    const c = await mockClient().candidate.get(10001);
+    const c = await mockClient().tenant(999).candidate.get(10001);
     expect(c?.P_Id).toBe(10001);
   });
 
@@ -90,16 +91,15 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     return { transport, calls };
   };
 
-  it("threads host / appId / appSecret / partition into the wired requests", async () => {
+  it("threads host / appId / appSecret と tenant(id) の partition を配線する", async () => {
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({
       host: "wired.test",
       appId: "AID",
       appSecret: "SEC",
-      partition: 7,
       transport,
     });
-    await client.candidate.search();
+    await client.tenant(7).candidate.search(); // partition は tenant で束ねる（ADR-0055）
 
     const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
     const token = calls.find((c) => c.url.includes("/v1/token"));
@@ -120,10 +120,9 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
       host: "127.0.0.1:4010",
       scheme: "http",
       appId: "AID",
-      partition: 7,
       transport,
     });
-    await client.candidate.search();
+    await client.tenant(999).candidate.search();
     await client.partition.search();
 
     expect(calls.map((c) => c.url.split("?")[0])).toEqual([
@@ -169,7 +168,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
   it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({ host: "h.test", transport });
-    await client.candidate.search();
+    await client.tenant(999).candidate.search();
 
     const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
     const token = calls.find((c) => c.url.includes("/v1/token"));
@@ -190,12 +189,11 @@ describe("PortersClient + job (E2E, mock transport)", () => {
     };
     const client = new PortersClient({
       host: "example.test",
-      partition: 999,
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const page = await client.job.search();
+    const page = await client.tenant(999).job.search();
     expect(page.items[0]?.P_Id).toBe(55); // Id -> number
     expect(page.items[0]?.P_Client).toBe(500); // System[Reference] -> id, via the client
   });
@@ -215,12 +213,11 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
     };
     const client = new PortersClient({
       host: "example.test",
-      partition: 999,
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const one = await client.client.get(33);
+    const one = await client.tenant(999).client.get(33);
     expect(one?.P_Id).toBe(33); // Id -> number, via the wired Client accessor
     expect(calls[0]?.url).toContain("/v1/client?");
     expect(decodeURIComponent(calls[0]?.url ?? "")).toContain(
@@ -241,12 +238,11 @@ describe("PortersClient + process (E2E, mock transport)", () => {
     };
     const client = new PortersClient({
       host: "example.test",
-      partition: 999,
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const page = await client.process.search();
+    const page = await client.tenant(999).process.search();
     expect(page.items[0]?.P_Id).toBe(77); // Id -> number
     expect(page.items[0]?.P_Job).toBe(900); // System[Reference] -> id, via the client
   });
@@ -264,12 +260,11 @@ describe("PortersClient + resume (E2E, mock transport)", () => {
     };
     const client = new PortersClient({
       host: "example.test",
-      partition: 999,
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const page = await client.resume.search();
+    const page = await client.tenant(999).resume.search();
     expect(page.items[0]?.P_Id).toBe(88); // Id -> number
     expect(page.items[0]?.P_DateOfBirth).toBe("1990-01-02"); // Age -> date, via the client
   });
@@ -286,12 +281,11 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
     };
     const client = new PortersClient({
       host: "example.test",
-      partition: 999,
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const page = await client.attachment.search();
+    const page = await client.tenant(999).attachment.search();
     expect(page.items[0]?.id).toBe(11111); // Id -> number, via the wired accessor
     expect(page.items[0]?.fileName).toBe("cv.pdf");
   });
@@ -313,8 +307,7 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
 
   const tenantClient = (transport: Transport): PortersClient =>
     new PortersClient({
-      host: "t.test",
-      partition: 999, // client default
+      host: "t.test", // client default
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -326,10 +319,18 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     expect(rec.calls[0]?.url).not.toContain("partition=999");
   });
 
-  it("leaves bare (untenanted) accessors on the client-default partition", async () => {
-    const rec = recording();
-    await tenantClient(rec.transport).candidate.search();
-    expect(rec.calls[0]?.url).toContain("partition=999");
+  it("client 直下には partition スコープのアクセサを生やさない（型・ADR-0055）", () => {
+    // 「未束縛のまま呼ぶ」という状態自体を型で存在させない＝ガードではなく設計で防ぐ。
+    // client に残るのは partition を取らないものだけ。
+    expectTypeOf<PortersClient>().not.toHaveProperty("candidate");
+    expectTypeOf<PortersClient>().not.toHaveProperty("job");
+    expectTypeOf<PortersClient>().not.toHaveProperty("attachment");
+    expectTypeOf<PortersClient>().not.toHaveProperty("user");
+    expectTypeOf<PortersClient>().not.toHaveProperty("field");
+    expectTypeOf<PortersClient>().not.toHaveProperty("option");
+    expectTypeOf<PortersClient>().toHaveProperty("auth"); // App レベル
+    expectTypeOf<PortersClient>().toHaveProperty("partition"); // 発見用（partition を取らない）
+    expectTypeOf<PortersClient>().toHaveProperty("tenant");
   });
 
   it("binds the partition across data, attachment and master accessors", async () => {

@@ -16,7 +16,6 @@ const setup = () => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: fake,
   });
   return { fake, porters };
@@ -26,7 +25,7 @@ describe("data resources round-trip", () => {
   it("creates and reads a Job (its prefix is Job, and it references Client / Recruiter)", async () => {
     const { porters } = setup();
 
-    const id = await porters.job.create({
+    const id = await porters.tenant(1).job.create({
       P_Owner: 5,
       P_Client: 20001,
       P_Recruiter: 30001,
@@ -35,7 +34,7 @@ describe("data resources round-trip", () => {
       P_Position: "TypeScript エンジニア",
     });
 
-    const job = await porters.job.get(id);
+    const job = await porters.tenant(1).job.get(id);
     expect(job?.P_Id).toBe(id);
     expect(job?.P_Position).toBe("TypeScript エンジニア");
     // System[Reference] writes an id and reads back the referenced record's id (ID-only).
@@ -46,30 +45,32 @@ describe("data resources round-trip", () => {
   it("creates and updates a Client", async () => {
     const { porters } = setup();
 
-    const id = await porters.client.create({
+    const id = await porters.tenant(1).client.create({
       P_Owner: 5,
       P_Name: "株式会社ABC",
     });
-    await porters.client.update(id, { P_Name: "株式会社ABC（旧XYZ）" });
+    await porters
+      .tenant(1)
+      .client.update(id, { P_Name: "株式会社ABC（旧XYZ）" });
 
-    const client = await porters.client.get(id);
+    const client = await porters.tenant(1).client.get(id);
     expect(client?.P_Name).toBe("株式会社ABC（旧XYZ）");
   });
 
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
-    const candidateId = await porters.candidate.create({
+    const candidateId = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
     });
 
-    const resumeId = await porters.resume.create({
+    const resumeId = await porters.tenant(1).resume.create({
       P_Owner: 5,
       P_Candidate: candidateId,
       P_Name: "職務経歴書",
     });
 
-    const resume = await porters.resume.get(resumeId);
+    const resume = await porters.tenant(1).resume.get(resumeId);
     expect(resume?.P_Candidate).toBe(candidateId);
     expect(resume?.P_Name).toBe("職務経歴書");
   });
@@ -77,7 +78,7 @@ describe("data resources round-trip", () => {
   it("creates a Process tying the other resources together", async () => {
     const { porters } = setup();
 
-    const id = await porters.process.create({
+    const id = await porters.tenant(1).process.create({
       P_Owner: 5,
       P_Client: 20001,
       P_Recruiter: 30001,
@@ -86,7 +87,7 @@ describe("data resources round-trip", () => {
       P_Resume: 50001,
     });
 
-    const process = await porters.process.get(id);
+    const process = await porters.tenant(1).process.get(id);
     expect(process?.P_Job).toBe(40001);
     expect(process?.P_Candidate).toBe(10001);
   });
@@ -94,11 +95,11 @@ describe("data resources round-trip", () => {
   it("keeps each resource in its own table, with its own id sequence", async () => {
     const { fake, porters } = setup();
 
-    const candidateId = await porters.candidate.create({
+    const candidateId = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
     });
-    const clientId = await porters.client.create({
+    const clientId = await porters.tenant(1).client.create({
       P_Owner: 5,
       P_Name: "株式会社ABC",
     });
@@ -107,16 +108,20 @@ describe("data resources round-trip", () => {
     expect(clientId).toBe(10001); // separate table, separate sequence
     expect(fake.control.records("candidate")).toHaveLength(1);
     expect(fake.control.records("client")).toHaveLength(1);
-    expect(await porters.candidate.get(clientId)).toBeDefined();
-    expect(await porters.job.get(candidateId)).toBeUndefined(); // job table is empty
+    expect(await porters.tenant(1).candidate.get(clientId)).toBeDefined();
+    expect(await porters.tenant(1).job.get(candidateId)).toBeUndefined(); // job table is empty
   });
 
   it("searches per resource with typed conditions", async () => {
     const { porters } = setup();
-    await porters.client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
-    await porters.client.create({ P_Owner: 5, P_Name: "株式会社XYZ" });
+    await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+    await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社XYZ" });
 
-    const hits = await porters.client.search({
+    const hits = await porters.tenant(1).client.search({
       condition: { P_Name: { part: "XYZ" } },
     });
 

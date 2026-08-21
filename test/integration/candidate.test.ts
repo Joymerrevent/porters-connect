@@ -24,7 +24,6 @@ const setup = (options: FakeTransportOptions = {}) => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: fake,
   });
   return { fake, porters };
@@ -34,7 +33,7 @@ describe("candidate round-trip against the fake server", () => {
   it("creates, reads back every Data Type, and updates", async () => {
     const { porters } = setup();
 
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
       P_Mail: "taro@example.com",
@@ -43,7 +42,7 @@ describe("candidate round-trip against the fake server", () => {
     });
     expect(id).toBe(10001);
 
-    const created = await porters.candidate.get(id);
+    const created = await porters.tenant(1).candidate.get(id);
     expect(created?.P_Id).toBe(id);
     expect(created?.P_Name).toBe("山田 太郎"); // Text
     expect(created?.P_Owner as UserRef).toEqual(OWNER); // User: ID in, nested out
@@ -55,19 +54,27 @@ describe("candidate round-trip against the fake server", () => {
     );
     expect((created?.P_RegisteredBy as UserRef).P_Id).toBe(1);
 
-    await porters.candidate.update(id, { P_Name: "山田 太郎（更新）" });
-    const updated = await porters.candidate.get(id);
+    await porters
+      .tenant(1)
+      .candidate.update(id, { P_Name: "山田 太郎（更新）" });
+    const updated = await porters.tenant(1).candidate.get(id);
     expect(updated?.P_Name).toBe("山田 太郎（更新）");
     expect(updated?.P_Mail).toBe("taro@example.com"); // untouched field survives
   });
 
   it("searches with a typed condition, order and paging", async () => {
     const { porters } = setup();
-    await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
-    await porters.candidate.create({ P_Owner: 5, P_Name: "佐藤 次郎" });
-    await porters.candidate.create({ P_Owner: 5, P_Name: "山田 花子" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "佐藤 次郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 花子" });
 
-    const hits = await porters.candidate.search({
+    const hits = await porters.tenant(1).candidate.search({
       condition: { P_Name: { part: "山田" } },
       order: [{ P_Id: "desc" }],
     });
@@ -75,13 +82,16 @@ describe("candidate round-trip against the fake server", () => {
     expect(hits.count).toBe(2);
     expect(hits.items.map((c) => c.P_Name)).toEqual(["山田 花子", "山田 太郎"]);
 
-    const firstPage = await porters.candidate.search({ count: 1, start: 0 });
+    const firstPage = await porters
+      .tenant(1)
+      .candidate.search({ count: 1, start: 0 });
     expect(firstPage.total).toBe(3); // total ignores paging
     expect(firstPage.items).toHaveLength(1);
     expect(firstPage.start).toBe(0);
 
     const all = [];
-    for await (const c of porters.candidate.searchAll()) all.push(c.P_Id);
+    for await (const c of porters.tenant(1).candidate.searchAll())
+      all.push(c.P_Id);
     expect(all).toEqual([10001, 10002, 10003]);
   });
 
@@ -91,13 +101,14 @@ describe("candidate round-trip against the fake server", () => {
       host: "fake.test",
       appId: "app-id",
       appSecret: "app-secret",
-      partition: 1,
       transport: fake,
       fields: defineFields({ candidate: (f) => ({ U_score: f.number() }) }),
     });
 
-    const id = await porters.candidate.create({ P_Owner: 5, U_score: 42 });
-    const record = await porters.candidate.get(id);
+    const id = await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, U_score: 42 });
+    const record = await porters.tenant(1).candidate.get(id);
     expect(record?.U_score).toBe(42);
   });
 
@@ -105,7 +116,7 @@ describe("candidate round-trip against the fake server", () => {
     const { porters } = setup({
       seed: { candidate: [{ P_Name: "既存 太郎", P_Owner: "5" }] },
     });
-    const page = await porters.candidate.search();
+    const page = await porters.tenant(1).candidate.search();
     expect(page.total).toBe(1);
     expect(page.items[0]?.P_Name).toBe("既存 太郎");
   });
@@ -114,7 +125,7 @@ describe("candidate round-trip against the fake server", () => {
     const { fake, porters } = setup();
     fake.control.failNext({ kind: "writeItemCodes", codes: [0, 133] });
 
-    const result = await porters.candidate.createMany([
+    const result = await porters.tenant(1).candidate.createMany([
       { P_Owner: 5, P_Name: "一人目" },
       { P_Owner: 5, P_Name: "二人目" },
     ]);
@@ -130,7 +141,7 @@ describe("error paths against the fake server", () => {
     const { fake, porters } = setup();
     fake.control.failNext({ kind: "resultCode", code: 403 });
 
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersResourceError",
       category: "permission",
       code: 403,
@@ -144,7 +155,7 @@ describe("error paths against the fake server", () => {
     fake.control.failNext({ kind: "resultCode", code: 102 });
 
     await expect(
-      porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" }),
+      porters.tenant(1).candidate.create({ P_Owner: 5, P_Name: "山田 太郎" }),
     ).rejects.toMatchObject({
       name: "PortersResourceError",
       code: 102,
@@ -163,7 +174,7 @@ describe("error paths against the fake server", () => {
       4,
     );
 
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersNetworkError",
       category: "server",
       retryable: true,
@@ -179,7 +190,7 @@ describe("error paths against the fake server", () => {
     // One bad answer, then the gateway is healthy again — the caller never sees it.
     fake.control.failNext({ kind: "http", status: 503 });
 
-    await expect(porters.candidate.search()).resolves.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).resolves.toMatchObject({
       total: 0,
     });
     expect(fake.control.pendingFaults()).toHaveLength(0);
@@ -187,7 +198,7 @@ describe("error paths against the fake server", () => {
 
   it("classifies a gateway 5xx that never reached PORTERS (ADR-0044)", async () => {
     const { fake, porters } = setup();
-    await porters.candidate.search(); // warm up auth, so the fault lands on the read
+    await porters.tenant(1).candidate.search(); // warm up auth, so the fault lands on the read
 
     // What a load balancer / maintenance page actually returns: an error status and no envelope.
     // Queued for every attempt (initial + 3 retries) so the retry budget runs out.
@@ -196,7 +207,7 @@ describe("error paths against the fake server", () => {
       4,
     );
 
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersNetworkError",
       category: "server",
       retryable: true,
@@ -208,7 +219,7 @@ describe("error paths against the fake server", () => {
 
   it("keeps the Result Code when an error status does carry an envelope", async () => {
     const { fake, porters } = setup();
-    await porters.candidate.search();
+    await porters.tenant(1).candidate.search();
 
     fake.control.failNext({
       kind: "http",
@@ -217,7 +228,7 @@ describe("error paths against the fake server", () => {
     });
 
     // Both channels disagree in specificity; the envelope wins and the status rides along.
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersResourceError",
       category: "permission",
       code: 403,
@@ -227,12 +238,14 @@ describe("error paths against the fake server", () => {
 
   it("re-authenticates transparently when the Access Token expires", async () => {
     const { fake, porters } = setup();
-    await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
 
     // The library still believes its token is good for ~30 minutes; only the server knows.
     fake.control.expireAccessTokens();
 
-    const page = await porters.candidate.search();
+    const page = await porters.tenant(1).candidate.search();
     expect(page.total).toBe(1);
   });
 
@@ -242,11 +255,12 @@ describe("error paths against the fake server", () => {
       host: "fake.test",
       appId: "app-id",
       appSecret: "app-secret",
-      partition: 999,
       transport: fake,
     });
 
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    // 誤った partition を渡すのは利用者の選択で、404 はサーバーが答える（ADR-0055 合意事項 6）。
+    // ライブラリが値を捏造しないことが本決定の主題で、間違った値を弾くことではない。
+    await expect(porters.tenant(999).candidate.search()).rejects.toMatchObject({
       category: "notFound",
       code: 404,
     });
