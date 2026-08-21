@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-16
+- 最終更新: 2026-08-21
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -11,28 +11,27 @@
 
 ## ▶️ いま何をやるか
 
-**2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しし直した。品質ゲートは全 green（563 tests・
-カバレッジ 100/98.9/100/100）だが、**実装カバレッジと利用ドキュメントに穴**が見つかった（RV-23〜30）。
-下表はその処置を優先度順に並べたもの。完成度そのものは本書の「📊 完成度（実装カバレッジ）」節を参照。
+**2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しし、そこで見つかった 8 件のうち
+**6 件を 0.9.0 で解消**した。残る 2 件（RV-25 / RV-26）はいずれも挙動変更を伴うため ADR からになる。
+品質ゲートは全 green（608 tests・カバレッジ 100/98.87/100/100）。
+完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                                     | 根拠                     | semver | 備考                                                                    |
-| --- | ------------------------------------------------------------ | ------------------------ | ------ | ----------------------------------------------------------------------- |
-| 1   | **Candidate に標準 4 項目を追加**＋ reference 突合テスト     | RV-23 / RV-29            | minor  | 🔴 `P_Memo`/`P_Street`/`P_Fax`/`P_PhaseMemo`。カタログ 1 箇所＋再発防止 |
-| 2   | **`docs/guide/custom-fields.md` 新設**（＋ README に短い節） | RV-24・[ADR-0035][adr35] | —      | 🟡 `defineFields` は公開 API なのに使い方がどこにも無い                 |
-| 3   | **`docs/guide/read-query.md` 新設**                          | RV-27・[ADR-0035][adr35] | —      | 🟢 F-1/F-3/F-4 にはあるガイドが F-2 だけ無い。2 と同じ作業単位          |
-| 4   | `count`（1〜200）の送信前検証 ＋ 制約型 2 種を export        | RV-28 / RV-30            | minor  | 🟢 どちらも既存の形に合わせるだけ（新しい決定は不要）                   |
+| #   | やること                                       | 根拠  | semver | 備考                                                                       |
+| --- | ---------------------------------------------- | ----- | ------ | -------------------------------------------------------------------------- |
+| 1   | **RV-25 の ADR**: `partition` 未束縛の呼び出し | RV-25 | —      | 🟡 いまは無言で `partition=0` を送る。`host` は構築時検証するのに非対称    |
+| 2   | **RV-26 の ADR**: `P_Deleted` の型付け         | RV-26 | —      | 🟡 Read 専用・condition/order 不可＋ decode 形が未確定＝ **LV 追加**を伴う |
 
-- ADR が要るもの（**決定 → 実装の順**。[ADR 運用][adr]どおり proposed で起票して議論する）:
-  - **RV-25**: `partition` 未束縛の呼び出しをどう落とすか（いまは無言で `partition=0` を送る）
-  - **RV-26**: `P_Deleted` の型付け（Read 専用・condition/order 不可という他に無い制約＋ decode 形が未確定＝ LV 追加）
-  - **R-4 の Link / Image**（下記「随時・任意」）
+- 上記 2 件はいずれも**挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める。
+  **R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
-- **0.8.0 を公開済み**（2026-08-14）。[ADR-0051][adr51]（案D・Read 応答の同定）が世に出て、**RV-20 は `fixed`**。
-  ルート要素名 ＋ `<Code>` の両方で Read 応答を同定するようになり、200 を返す中間装置の応答が
-  「0 件」として通らなくなった。**未リリースの変更は無し**（`.changeset/` は空）。
+- **0.9.0 を公開済み**（2026-08-21）。**RV-23 / RV-24 / RV-27 / RV-28 / RV-29 / RV-30 の 6 件**が世に出た。
+  主題は **Candidate の取りこぼしの是正**（`P_Memo` / `P_Street` / `P_Fax` / `P_PhaseMemo` が公開型に無く、
+  候補者のメモが扱えなかった）で、再発防止として **reference ↔ カタログの突合を CI で検査**するようにした。
+  併せて `count` の範囲検査・制約型の export・**利用ガイド 2 本**（カスタム項目 / Read クエリ）を同梱。
+  **未リリースの変更は無し**（`.changeset/` は空）。
 
 ### 随時・任意（急がない）
 
@@ -57,14 +56,14 @@
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                                |
-| ----------------------------- | -------------------------------------------- | ----------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 4 件                             |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 9 件 = RV-22〜30（RV-22 は契約待ち） |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ち **なし**      |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）             |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手   |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）          |
+| ファイル                      | 何の TODO か                                 | いまの状態                                   |
+| ----------------------------- | -------------------------------------------- | -------------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件（いずれも ADR から）           |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 3 件 = RV-22（契約待ち）/ RV-25 / RV-26 |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ち **なし**         |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜13 が未確認（契約待ち）                |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手      |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）             |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -138,8 +137,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - データ R/W: Candidate / Job / Client / Process / Resume ＋ Attachment（Base64）
 - マスタ Read: Partition / User（`current()`）/ Field / Option
-- ※ **標準項目の網羅には穴がある** — Candidate のカタログが `P_Memo` / `P_Street` / `P_Fax` / `P_PhaseMemo` を
-  落としている（**RV-23** 🔴・上記「着手可能」1）。他 4 リソースは値を持つ標準項目をすべて実装済み
+- ※ **標準項目の網羅は 0.9.0 で充足**（RV-23 の 4 項目を追加）。以降は **reference ↔ カタログの突合を
+  CI が検査**するので、取りこぼし・型の取り違えは仕組みで防がれる（RV-29）
 
 ### 要件（[PRD §6][prd]）
 
@@ -159,10 +158,11 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0051 accepted（0037 は 0039 で superseded）・**proposed は無し・実装待ちも無し**（[索引][adr]）
+- ADR 0001〜0054 accepted（0037 は 0039 で superseded）・**proposed は無し・実装待ちも無し**（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・563 tests／project-review プロセス＋台帳（[findings][findings]：RV-1〜21 は `fixed`／
-  **open は RV-22〜30 の 9 件**＝ RV-22 は契約待ち、RV-23〜30 は 2026-08-16 レビューの新規指摘）
+- 品質ゲート green・**608 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 3 件**＝
+  RV-22（契約待ち）・RV-25・RV-26。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+  索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 
 ## 🔜 リリースに向けた残タスク
@@ -172,20 +172,23 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.8.0`**（npm latest・2026-08-14 にレジストリで確認）。**全 12 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.9.0`**（npm latest・2026-08-21 にレジストリで確認）。**全 13 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
       0.6.1 で fast-xml-parser `^5.10.1` 追従、0.6.2 で CI/CD ハードニング＝Actions の SHA ピン留め ＋ OpenSSF Scorecard、
       0.7.0 でエラーの見え方の是正 ＋ アクセスポイント設定＝ADR-0044〜0050 の 7 本、
-      **0.8.0 で「0 件」と「届いていない」の区別**＝[ADR-0051][adr51]（Read 応答の同定）を同梱）。
+      0.8.0 で「0 件」と「届いていない」の区別＝[ADR-0051][adr51]（Read 応答の同定）、
+      **0.9.0 で Candidate の標準 4 項目 ＋ reference 突合検査 ＋ 利用ガイド 2 本**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 - [x] **0.7.0 リリース**（2026-08-13）— changeset 6 件を消費して `0.6.2` → `0.7.0`。
       `v0.7.0` 自動タグ → back-merge → GitHub Release → OIDC publish まで完了
 - [x] **0.8.0 リリース**（2026-08-14）— changeset 1 件を消費して `0.7.0` → `0.8.0`。
       `v0.8.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き）まで完了
+- [x] **0.9.0 リリース**（2026-08-21）— changeset 2 件を消費して `0.8.0` → `0.9.0`。
+      `v0.9.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 366.6 kB）まで完了
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
@@ -221,7 +224,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.8.0 の**全 12 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.9.0 の**全 13 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
@@ -286,6 +289,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr49]: adr/0049-host-port-roundtrip.md
 [adr50]: adr/0050-auth-http-status-handling.md
 [adr51]: adr/0051-read-envelope-identification.md
+[adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md
 [fake-runbook]: fake-server-runbook.md
 [p7]: adr/0007-oauth-public-surface.md
@@ -293,7 +297,6 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [rv3]: reviews/2026-06-22-03.md
 [run]: reviews/2026-08-10-01.md
 [run816]: reviews/2026-08-16-01.md
-[adr35]: adr/0035-usage-documentation-structure.md
 [adr]: adr/README.md
 [findings]: reviews/findings.md
 [lv]: live-verification.md

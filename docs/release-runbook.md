@@ -49,7 +49,7 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.8.0**（npm latest・`v0.8.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-14）。0.2.0 以降この半自動フローで公開。
+- ✅ 最新公開: **0.9.0**（npm latest・`v0.9.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-21）。0.2.0 以降この半自動フローで公開（**全 13 版**）。
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
