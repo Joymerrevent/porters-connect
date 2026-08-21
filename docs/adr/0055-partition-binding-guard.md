@@ -1,13 +1,18 @@
 # 55. `partition` が束ねられていない呼び出しの扱い
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-21
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> [findings RV-25][rv25] の是正案。`partition` を渡さずに構築したクライアントが、
-> **ライブラリの発明した `0`** を全リクエストに載せている。`0` に意味が無いことは調査で確定したので、
-> 論点は「**`0` を廃したあと、未束縛の呼び出しをどこでどう落とすか**」に絞られる。
-> 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+> **案F で `accepted`（2026-08-21）**: **`PortersClient` から `partition` を外す**。
+> client 既定を廃止し、**partition スコープのリソースは `porters.tenant(id)` 経由でしか得られない**ようにする。
+> client 直下に残るのは partition を取らないもの（`auth` ＋ `partition` マスタ ＋ `tenant(id)` 自身）だけ。
+> **未設定という状態が存在しなくなる**＝ガードではなく設計で防ぐ。**破壊的変更**だが 1.0 前のいまが最も安い。
+> 実施は本 ADR とは別 PR。
+>
+> 起票元は [findings RV-25][rv25]。`partition` を渡さずに構築したクライアントが
+> **ライブラリの発明した `0`** を全リクエストに載せていた。`0` に意味が無いことは調査で確定している（下記）。
+> 起票時の推奨は案A（送信前ガード）だったが、**議論で案F が出て推奨を切り替えた**（経緯は Decision Outcome）。
 
 ## Context and Problem Statement
 
@@ -80,9 +85,12 @@ await porters.tenant(123).candidate.search(); // partition=123 で送られる
 
 ## Decision Outcome
 
-> **未決（proposed）**。以下は起票者の推奨であり、決定は decider が行う。
+**採用: 案F**（`PortersClient` から `partition` を外す・decider 判断・2026-08-21）。
 
-**推奨: 案F**（`PortersClient` から `partition` を外す）。
+> **経緯**: 起票時の推奨は案A（送信前ガード）だった。議論で decider から
+> 「`PortersClient` に `partition` を積むのをやめるのはどうか」という案が出て、
+> 起票時の 5 案が「`0` をどう始末するか」に寄っていた（**この選択肢が抜けていた**）ことが分かった。
+> 実装を確認して筋が良いと判断し、案F を追加して推奨を切り替えたうえで accept した。
 
 ```ts
 const porters = new PortersClient({ host, appId, appSecret });
@@ -206,7 +214,7 @@ await t.candidate.search();
 - Good: 何もしなくてよい。
 - Bad: ライブラリが正典に無い値を捏造し続ける。設定漏れがサーバー 404 に化け、原因が分からない。
 
-### 案F: `PortersClient` から `partition` を外す（推奨）
+### 案F: `PortersClient` から `partition` を外す（採用）
 
 - Good: **不正な状態が存在しなくなる**（ガードではなく設計で防ぐ）。公開型を複雑にせず型で守れる。
   partition の解決が 1 層。役割の説明が 1 文で済む。1.0 前なら移行コストが最も安い。
