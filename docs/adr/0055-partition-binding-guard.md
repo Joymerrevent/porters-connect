@@ -74,82 +74,119 @@ await porters.tenant(123).candidate.search(); // partition=123 で送られる
 - **案C: 構築時に必須化** — `partition` を必須オプションにする。
 - **案D: 現状維持** — `0` を送り続け、404 を利用者に解釈させる。
 - **案E: `0` の意味を実機で確認する**（[live-verification][lv] へ登録し、確定するまで保留）。
+- **案F: `PortersClient` から `partition` を外す** — client 既定を廃止し、
+  **partition スコープのリソースは `porters.tenant(id)` 経由でしか得られない**ようにする。
+  client 直下に残るのは partition を取らないもの（`auth` ＋ `partition` マスタ）だけ。
 
 ## Decision Outcome
 
 > **未決（proposed）**。以下は起票者の推奨であり、決定は decider が行う。
 
-**推奨: 案A**（送信前の実行時ガード）。
-
-変更は 3 点に収まる。
-
-1. `src/client.ts` の `?? 0` を**削除**し、未設定は `undefined` のまま保持する。
-2. 内部の `ResourceDeps.partition` を `number | undefined` にする。
-3. URL 組立時に `undefined` なら `PortersConfigError` を投げる（`category: "config"` ＋ hint）。
+**推奨: 案F**（`PortersClient` から `partition` を外す）。
 
 ```ts
-const porters = new PortersClient({ host, appId, appSecret }); // partition なし
-await porters.tenant(123).candidate.search(); // ✅ 通る（束ねている）
-await porters.candidate.search();
-// ❌ PortersConfigError: partition is not configured
-//    hint: Pass `partition` to PortersClient, or bind one per call with porters.tenant(id).
-```
+const porters = new PortersClient({ host, appId, appSecret });
 
-**公開オプションの型は変えない**（`partition?: PartitionId` のまま）。
+await porters.auth.ensureAuthenticated(); // App レベル（partition を取らない）
+await porters.partition.search(); // partition の発見（partition を取らない）
+
+const t = porters.tenant(123); // ここで束ねる
+await t.candidate.search();
+```
 
 理由:
 
-- **`tenant(id)` の経路は最初から影響を受けない**。`tenant(id)` は必ず実数を渡すので、
-  ガードは「未束縛のまま呼んだ」ときにだけ発火する＝**正しい使い方を壊さない**。
-- **既存の正しい設定も影響を受けない**。`partition` を渡している利用者には何も変わらない。
-- **既存ガードの系列に載る**。リクエスト長・keywords・itemstate・`count`（[RV-28][rv28]）・
-  Attachment 10MB と同じ「送信前に `PortersConfigError`」で、**利用者が学ぶ概念が増えない**。
-  呼び出し側は `async` なので reject で届く（[ADR-0046][adr46]）。
-- 案B（型で防ぐ）は**フェイルセーフとしては最も強い**（コンパイル時に気づける）が、
-  `PortersClient<C>` に partition の有無を表す型パラメータが増え、
-  `TenantScope` との関係も型で表現し直すことになる。**公開型の複雑さに見合わない**と判断した
-  — 守りたいのは「設定し忘れ」という一点で、それは実行時ガードで十分に早く捕まる。
-  将来 partition 未設定が常態になるなら再検討の価値はある。
-- 案C は上記のとおり `tenant(id)` 構成を壊す。案D は問題を放置する。
-- 案E（`0` の意味を実機確認）は**不要**。正典に記載が無く、由来が PoC のプレースホルダで、
-  404 という帰結も文書化されている。**確認を待つ理由が無い**（LV を増やす価値も無い）。
+- **不正な状態そのものが消える**。案A は「未設定という状態を許して、使われた瞬間に落とす」だが、
+  案F は**未設定という状態が存在しない**。`ResourceDeps.partition` は `number` のままでよく、
+  `undefined` の分岐も、ガードも、そのテストも要らない。
+  フェイルセーフの階層で言えば **案A は「送信前に落とす」・案F は「そもそも作れない」**で、後者が上位。
+- **公開型を複雑にせずに型で守れる**。案B（型パラメータで partition の有無を表す）と同じ効果を、
+  **既にある `tenant(id)` の形だけ**で得られる。新しい型パラメータは増えない。
+- **役割が綺麗に割れる**。実装を確認したところ `options.partition` の使用箇所は**1 箇所だけ**で、
+  `TenantScope` には**partition を要するリソースが既に全部揃っている**
+  （データ 5 種 ＋ Attachment ＋ マスタ user/field/option）。
+  client 直下に残るのは**partition を取らないもの**（`auth`・`partition` マスタ）だけになり、
+  「client ＝ App レベル ＋ tenant ファクトリ」「TenantScope ＝ partition スコープ」と説明が 1 文で済む。
+- **[ADR-0040][adr40] の 2 層解決が 1 層になる**。「スコープと client 既定のどちらが効いているか」を
+  利用者が考える必要がなくなる（`partition` の取り違え事故の芽も消える）。
+- **いま入れるのが最も安い**。0.x で、公開から日が浅く、1.0 の前。1.0 後に同じことをやると重い。
+
+### 破壊的変更であること（正直なコスト）
+
+単一テナントの利用者は書き換えが要る。
+
+```ts
+// 変更前
+const porters = new PortersClient({ host, appId, appSecret, partition: 123 });
+await porters.candidate.search();
+
+// 変更後
+const porters = new PortersClient({ host, appId, appSecret });
+const t = porters.tenant(123);
+await t.candidate.search();
+```
+
+ただし**スコープを一度持てば以降のエルゴノミクスは同じ**（`t.candidate` と `porters.candidate` は等価）。
+むしろ「partition は必ず明示する」ことが型で強制される。
+
+**`tenant(id)` という名前**は多テナント機能に見えるが、単一テナントの利用者も必ず通る道になる。
+改名（`for(id)` 等）も考えられるが、[ADR-0021][adr21] が `partition(id)` → `tenant(id)` に改名した経緯があり
+（`porters.partition` マスタと衝突するため）、再改名は churn を増やす。
+**`tenant` のまま、ドキュメントで「単一テナントでも使う」と明示**するのが妥当。
+
+### 案A を次善として残す
+
+破壊的変更を避けたい場合は **案A（送信前の実行時ガード）**が次善。
+`?? 0` を削除して `undefined` のまま持ち、URL 組立時に落とす。
+公開 API は変わらないが、**不正な状態は残り**、ガードとそのテストを保守し続けることになる。
+
+案B は公開型が複雑になるうえ、実行時に partition を決める構成（設定ファイル・環境変数）では
+結局 `undefined` を扱うので型だけでは閉じない。案C は `tenant(id)` 構成を壊す。案D は問題を放置する。
+案E（`0` の意味を実機確認）は**不要** — 正典に記載が無く、由来は PoC のプレースホルダで、
+404 という帰結も文書化されている。確認を待つ理由が無い。
 
 ### 実施時の合意事項（accept 後の別 PR）
 
-1. **`?? 0` の削除が本体**。未設定を `0` に化かさない。`ResourceDeps.partition` は `number | undefined`。
-2. **ガードは 1 箇所に置く**。`partition` を URL に載せるのは
-   `buildReadUrl` / `buildWriteUrl` / 各マスタの URL 組立なので、
-   **`appendPaging`（[RV-28][rv28]）と同じ発想で共有ヘルパー**にまとめ、そこで検査する。
-   後から Read/Write を足しても素通りしないこと。
-3. **Partition Read は対象外**。`partition` を取らない（[ADR-0022][adr22]・[LV-8][lv]）ので、
-   `ResourceDeps` から `partition` を省いた形のまま。ガードも掛けない。
-4. **メッセージは原因と対処を名指しする**。
-   `partition is not configured` ＋ hint「`PortersClient` に `partition` を渡すか、
-   `porters.tenant(id)` で束ねる」。**どちらの直し方もある**ことを示す（片方だけ書かない）。
-5. **テストで両経路を pin する** — `tenant(id)` 経由は通ること、未束縛の呼び出しは落ちること。
-   マスタ Read・Attachment・一括書き込みも含めて**全経路**を確認する。
-6. **`0` を明示的に渡した場合は素通しでよい**。利用者が `partition: 0` と書いたなら
-   それは利用者の選択で、404 はサーバーが答える。ライブラリが**捏造しない**ことが本 ADR の主題。
-7. **ドキュメント**: [マルチテナント ガイド][mt] に「client 既定と `tenant(id)` のどちらかが要る」ことを明記。
-   `PortersClientOptions.partition` の JSDoc も更新する。
-8. **semver は minor**（送信できていた呼び出しが例外になる＝観測可能な挙動の変化）。
+1. **`PortersClientOptions` から `partition` を削除**する。`?? 0` も当然消える。
+   `ResourceDeps.partition` は `number` のまま（`undefined` を持ち込まない）。
+2. **client 直下から partition スコープのアクセサを外す** — `candidate` / `job` / `client` /
+   `process` / `resume` / `attachment` / `user` / `field` / `option` は `tenant(id)` 経由のみ。
+   client に残すのは **`auth`（App レベル）と `partition` マスタ（発見用・partition を取らない）と
+   `tenant(id)` 自身**。
+3. **`tenant(id)` は改名しない**（上記の理由）。ただし**単一テナントでも使うもの**だと
+   [マルチテナント ガイド][mt] と README に明記する。ガイドの章立ても
+   「マルチテナント向け」から「**partition の束ね方**」へ寄せる。
+4. **移行手順を CHANGELOG に書く**。`partition: N` を渡していたコードは
+   `const t = porters.tenant(N)` に置き換える、という 1 対 1 の対応を示す。
+5. **テストで両方を pin する** — `tenant(id)` 経由で全リソースが使えること、
+   client 直下に partition スコープのアクセサが**生えていない**こと（型テスト）。
+6. **README・全ガイド・examples の書き換え**。`partition: 123` を渡す例が
+   README 2 箇所・マルチテナント ガイド・カスタム項目ガイドにあるので、全部揃える。
+7. **semver は major ではなく minor**（0.x のため。ただし CHANGELOG では
+   **破壊的変更**として最上部に明記し、移行手順を添える）。
+   1.0 前に入れることが本決定の前提の一つ。
 
 ### Consequences
 
-- Good: 設定漏れが**構築〜送信前**に、原因を名指しした `PortersConfigError` で分かる。
-  ライブラリが正典に無い値を作らなくなる。`host` の扱い（[ADR-0048][adr48]）と方針が揃う。
-- Bad: これまで `partition=0` で 404 を受けていたコードは**例外に変わる**（挙動変更・minor）。
-  実質的に壊れていたコードなので実害は無いはずだが、404 を握りつぶしていた実装は影響を受ける。
-- Neutral: 型では防げないまま（案B を採らない）。コンパイル時に気づきたくなったら
-  本 ADR を supersede して型パラメータを導入できる。
+- Good: **不正な状態（partition 未束縛）が型として存在しなくなる**。ライブラリが正典に無い値を作らない。
+  partition の解決が 1 層になり説明が単純になる。ガードとそのテストを保守しなくてよい。
+  「partition は必須」という PORTERS の事実が API の形に現れる。
+- Bad: **破壊的変更**。単一テナントの利用者は `porters.tenant(N)` を挟む書き換えが要る。
+  ドキュメント・examples の書き換え範囲も広い。
+  client を 1 つ持ち回る設計では、`TenantScope` と `PortersClient` の 2 つを持ち回ることになる場合がある
+  （`auth` と data の両方が要るコード）。
+- Neutral: [ADR-0040][adr40] の 2 層解決（スコープ → client 既定）は 1 層に縮む＝**部分的に supersede** する。
+  [ADR-0008][adr8] 案2 の「client 既定値も持てる」という記述も本決定で無効になる。
 
 ## Pros and Cons of the Options
 
-### 案A: 送信前の実行時ガード（推奨）
+### 案A: 送信前の実行時ガード（次善）
 
 - Good: 変更が 3 点に収まる。`tenant(id)` 構成も既存の正しい設定も壊さない。
-  既存ガードの系列に載るので利用者が学ぶ概念が増えない。
+  既存ガードの系列（リクエスト長・keywords・`count`）に載るので利用者が学ぶ概念が増えず、
+  呼び出し側は `async` なので reject で届く（[ADR-0046][adr46]）。**破壊的変更にならない**。
 - Bad: コンパイル時には気づけない（実行するまで分からない）。
+  **不正な状態（未束縛）は残る**ので、ガードとそのテストを保守し続けることになる。
 
 ### 案B: 型で防ぐ（未設定なら data アクセサを生やさない）
 
@@ -169,6 +206,13 @@ await porters.candidate.search();
 - Good: 何もしなくてよい。
 - Bad: ライブラリが正典に無い値を捏造し続ける。設定漏れがサーバー 404 に化け、原因が分からない。
 
+### 案F: `PortersClient` から `partition` を外す（推奨）
+
+- Good: **不正な状態が存在しなくなる**（ガードではなく設計で防ぐ）。公開型を複雑にせず型で守れる。
+  partition の解決が 1 層。役割の説明が 1 文で済む。1.0 前なら移行コストが最も安い。
+- Bad: **破壊的変更**。単一テナントでも `tenant(id)` を挟む。ドキュメント・examples の書き換えが広い。
+  `auth` と data の両方が要るコードは 2 つのオブジェクトを持ち回ることがある。
+
 ### 案E: `0` の意味を実機で確認（LV 登録）
 
 - Good: 仮定を実測で潰す、という本プロジェクトの作法には沿う。
@@ -186,6 +230,8 @@ await porters.candidate.search();
 - Partition Read が `partition` を取らないこと: [ADR-0022][adr22]・[LV-8][lv]。
 
 [adr5]: 0005-public-api-shape.md
+[adr8]: 0008-multitenancy-partition.md
+[adr21]: 0021-master-read-resources.md
 [adr22]: 0022-master-read-query-surface.md
 [adr40]: 0040-multitenancy-surface-impl.md
 [adr46]: 0046-guard-error-contract.md
