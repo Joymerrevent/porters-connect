@@ -1,4 +1,4 @@
-# 56. `P_Deleted`（削除フラグ）の型付け
+# 56. `P_Deleted`（削除フラグ）の扱い
 
 - Status: proposed
 - Date: 2026-08-21
@@ -8,197 +8,201 @@
 > **削除状態を表す `P_Deleted` がカタログに無い**ため、`"all"` で読んだときに
 > どれが削除済みかを利用者が判別できない。
 > 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+>
+> **起票時の推奨（新しい Data Type `System[Deleted]` の導入）は撤回した**。
+> [ADR-0016][adr16] 案B に違反しており、そもそも選択肢として不成立だった（下記「撤回した案」）。
 
 ## Context and Problem Statement
 
 **PORTERS に削除 API は無い**。`itemstate` は削除済みレコードを読む唯一の手段で、
 `"all"` は**生存と削除済みを混ぜて**返す（[ADR-0038][adr38]）。
-ところが削除状態を表す標準項目 **`P_Deleted` が全リソースのカタログに無い**ため、
-**返ってきたレコードのどれが削除済みかが分からない**。削除済みを読む手段だけがあって、
+ところが削除状態を表す **`P_Deleted` がカタログに無い**ため、
+**返ってきたレコードのどれが削除済みかが分からない**。読む手段だけがあって、
 **結果を解釈する手段が無い**状態になっている。
 
-### `P_Deleted` は「他の項目に無い制約」を持つ
+### PORTERS は `P_Deleted` に Data Type を与えていない
 
-reference（各リソースの項目表）の備考が、この項目だけ 3 つの制約を課している。
+原記事（[Field Type & Data Type List][fdt-src]）を確認した。**Data Type は PORTERS が定義する列挙**で、
+`SinglelineText` / `MultilineText` / `Number` / `Date` / `Option` / `Age` / `URL` / `Mail` /
+`System[Id]` / `System[DateTime]` / `System[Reference]` / `System[Department]` / `DateTime` /
+`Telephone` / `User` / `Image` / `Link` の 17 種。**`Deleted` に相当する値は無い**。
+`P_Deleted` は **System Field List にも載っていない**。
 
-- 値は **0：削除されていないレコード / 1：削除済みのレコード**
-- **Read 時の field Parameter としてのみ指定可能**。**Condition や Order に指定することはできない**
-- **Write 時の指定はできない**
-- （2018/04/10 より利用可能）
+各リソースの項目表でも `P_Deleted` は **Field Type 欄・Data Type 欄とも「ー」**である。
 
-全データリソース（Candidate / Job / Client / Process / Resume）に同じ形で存在する。
+### ここが制約になる
 
-### なぜカタログにそのまま足せないか
+[ADR-0016][adr16] は **案B（PORTERS Data Type に整合）**で accepted 済みで、こう定めている。
 
-[ADR-0019][adr19] のカタログは **alias → Data Type** の対応で、
-**能力（書ける / 並べ替えられる / 条件に使える）はすべて Data Type から導出**される。
+> Data Type は **PORTERS 自身が定義する「値の形」**であり、**独自の粒度を発明せず忠実**。
+> （中略）**PORTERS がしない区別は発明しない**。**型ラベルは Data Type に一致**させる。
 
-- 書けるか: `WritableDataType`（`System[Id]` / `System[DateTime]` を除外）
-- 並べ替えられるか: `OrderableDataType`（数値・日時・System のみ）
-- 条件に使えるか: `ConditionFor<D>`（Data Type ごとの演算子オブジェクト）
+そして [ADR-0019][adr19] のカタログは **alias → Data Type** の対応で、
+**公開型（Read 型・Write 入力型）も能力（書ける / 並べ替えられる / 条件に使える）も
+すべてそこから導出**される。
 
-`P_Deleted` の制約は**この項目固有**であり、Data Type（reference の Field Type 欄は「ー」）から
-は導けない。**`Number` として足すと condition / order が型で許されてしまい**、
-実際には PORTERS が拒否する組み合わせを型が通してしまう。
+つまり **カタログに載せるには Data Type が要り、PORTERS はそれを与えていない**。
+ここが本 ADR の核心。
 
-### 実測: 型機構は「知らない Data Type」を自動で締め出す
+### 「ー」には 2 種類ある
 
-`ConditionFor<D>` は分岐の末尾が **`never`** で、`OrderableKeys<F>` は
-`F[K] extends OrderableDataType` で絞り込む。つまり **DataType に新しい値を足すと、
-condition と order は何もしなくても型エラーになる**（`src/resources/query.ts:62-76, 93-95` を確認）。
-Write だけは `WritableDataType` の `Exclude` に 1 行足す必要がある。
+Data Type が「ー」の項目は 2 系統あり、**理由が違う**。
+
+|                              | Data Type | 理由                                                         | いまの扱い                  |
+| ---------------------------- | --------- | ------------------------------------------------------------ | --------------------------- |
+| `Reference`（Field Type 16） | ー        | 「**当該項目自体にデータを持つことはありません**」（原記事） | カタログ外（正しい）        |
+| `P_Deleted`                  | ー        | **値は持つ**（0/1）が、PORTERS が型を割り当てていない        | カタログ外（本 ADR の論点） |
+
+現在の突合テスト（[RV-29][rv29]）は両者をまとめて `NOT_IN_CATALOG` で除外している。
+`Reference` は正しい除外だが、`P_Deleted` は**値を持つのに除外されている**点が違う。
 
 ## Decision Drivers
 
 - **機能を半分で終わらせない** — 削除済みを読めるなら、どれが削除済みかも分かるべき
+- **PORTERS が定義しないものを発明しない**（[ADR-0016][adr16] 案B）。**Data Type の捏造は不可**
 - **型が実挙動を正確に表す**（[ADR-0005][adr5] SD-3）。PORTERS が拒否する組み合わせを型が通さない
-- **カタログの単純さを保つ**（[ADR-0019][adr19]：alias → Data Type の 1 対 1）
-- **仮定を仮定として扱う**（[ADR-0002][adr2]）。未確認の wire 形は [live-verification][lv] に登録する
-- **フェイルセーフ**: 値の意味を取り違えるくらいなら、生の値に近い形で渡す
+- **カタログの形を軽々に変えない**（[ADR-0019][adr19]：alias → Data Type が全型導出の土台）
+- **1 項目のために土台を作り直さない**（費用対効果）
+
+## 撤回した案: 新しい Data Type の導入
+
+起票時は **`System[Deleted]` という Data Type を足す**案を推奨していた。
+既存の型機構（`ConditionFor` の `never` フォールバック・`OrderableKeys` の絞り込み）が
+そのまま condition / order を禁じるため、実装が軽いという理由だった。
+
+**これは [ADR-0016][adr16] 案B に正面から違反する。** PORTERS の Data Type 列挙に
+`Deleted` は無く、`System[…]` の 4 種にも含まれない。`System[…]` という命名を借りることで
+**PORTERS が定義した型に見せてしまう**害もある。名前を `DeletedFlag` 等に変えても、
+**PORTERS が与えていない Data Type を発明する**という一点は変わらないので、改名では直らない。
+
+> **同じ誤りを [ADR-0055][adr55] の直後に犯した**。あちらの核心は「ライブラリが正典に無い値を
+> 捏造してはいけない（`partition=0` はその違反）」だった。記録として残す。
 
 ## Considered Options
 
-### 軸1: カタログへの載せ方
-
-- **案1a: 新しい Data Type `System[Deleted]` を導入**する。既存の能力導出機構
-  （`ConditionFor` / `OrderableKeys` / `WritableDataType`）が**そのまま制約を表現**する。
-- **案1b: カタログを「alias → { type, 能力マーク }」に拡張**し、項目ごとに read-only 等を持たせる。
-- **案1c: カタログに載せず、専用の口を作る**（例: `search({ withDeletedFlag: true })` が別枠で返す）。
-- **案1d: `Number` として載せる**。condition / order は型で許されるが、実行時は PORTERS が拒否する。
-
-### 軸2: 読み取り値の形
-
-- **案2a: `number`**（`0` / `1` をそのまま）。
-- **案2b: `boolean`**（`"1"` → `true`）。
-
-### 軸3: 実装するか、契約後まで待つか
-
-- **案3a: いま実装し、未確認の wire 形は LV に登録**する。
-- **案3b: 契約取得まで保留**（LV だけ登録して実装しない）。
+- **案A: 型付けせず、2 回呼ぶ運用を文書化する** — `itemstate: "deleted"` と `"existing"` を
+  別々に呼べば、**どちらの呼び出しで返ったか**で削除状態が分かる。カタログは触らない。
+- **案B: カタログの形を拡張する** — `alias → Data Type` を `alias → { dataType, capabilities }` に変え、
+  **Data Type を持たない項目**と**項目ごとの能力**（read-only 等）を表現できるようにする。
+  [ADR-0019][adr19] の改訂を伴う。
+- **案C: カタログ外の専用サーフェス** — 例 `search({ withDeletedFlag: true })` が
+  型付きレコードとは別枠で削除状態を返す。
+- **案D: `Number` として載せる** — PORTERS が割り当てていない Data Type を**こちらで決める**。
+- **案E: 現状維持（wontfix）** — 何もしない。
 
 ## Decision Outcome
 
 > **未決（proposed）**。以下は起票者の推奨であり、決定は decider が行う。
 
-**推奨: 案1a ＋ 案2a ＋ 案3a**。
+**推奨: 案A**（型付けせず、2 回呼ぶ運用を文書化する）。
 
-`DataType` に **`System[Deleted]`** を追加し、値は **`number`** で読み、
-**wire 形の未確認部分は LV-14 として登録**する。
+```ts
+// 削除済みだけ
+const deleted = await t.candidate.search({ itemstate: "deleted" });
+// 生存だけ
+const existing = await t.candidate.search({ itemstate: "existing" });
+```
+
+**どちらの呼び出しで返ったかが削除状態そのもの**なので、`P_Deleted` が無くても判別できる。
+失うのは「1 往復で両方を取れる」ことだけで、機能としては回復する。
 
 理由:
 
-- **案1a**: [ADR-0019][adr19] の「能力は Data Type から導出する」という設計を**変えずに**、
-  `P_Deleted` 固有の制約を表現できる。実測のとおり **condition と order は自動的に型エラー**になり、
-  Write は `WritableDataType` の `Exclude` に 1 行足すだけ。`System[…]` という命名も
-  「システムが管理し、利用者は書けない」という既存の含意（`System[Id]` / `System[DateTime]`）と揃う。
-  - 案1b はカタログの形自体を変えるため [ADR-0019][adr19] の改訂が要り、
-    **1 項目のために全リソースの型導出を作り直す**ことになる。
-  - 案1c は「カタログが標準項目の真実源」（[RV-23][rv23] / [RV-29][rv29] で守った性質）を崩す。
-    突合テストの対象外にもなり、**同じ取りこぼしを再び作る**。
-  - 案1d は**型が嘘をつく**（PORTERS が拒否する組み合わせを型が通す）。[ADR-0005][adr5] SD-3 に反する。
-- **案2a（`number`）**: `boolean` のほうが DX は良いが、**未知の値を静かに潰す**。
-  `"1"` 以外を `false` にすると、**素性の分からない値が「削除されていない」として通る** —
-  これは本 finding が塞ごうとしている「区別できない」問題と同じ形の失敗になる。
-  reference は 0/1 と明記しているが、それは**未確認の仮定**（下記 LV）であり、
-  仮定が外れたときに**気づける形**で持つほうがフェイルセーフ。
-  `boolean` へ寄せるのは LV で wire 形が確定してからでも遅くない（追加は非破壊）。
-- **案3a**: reference が**値の意味・使える場所・使えない場所を明記**しており、
-  型付けに必要な情報は揃っている。未確認なのは wire 形の細部だけで、
-  **契約を待つ理由にならない**（待つと機能が半分のまま残る）。
+- **PORTERS が Data Type を与えていない以上、カタログに載せる正当な方法が無い**。
+  載せるには (a) Data Type を発明する（[ADR-0016][adr16] 違反）か
+  (b) カタログの形を変える（[ADR-0019][adr19] 改訂）しかない。
+  (a) は不可。(b) は**全リソースの型導出の土台を 1 項目のために作り直す**ことになり、費用対効果が悪い。
+- **回避策が本物**。二度呼びは「削除済みかどうか」を**確実に**与える（推測ではない）。
+  型を足さずに機能が回復するなら、土台を触る理由は弱い。
+- **`itemstate: "all"` の位置づけがはっきりする**。1 往復で済ませたいときの選択肢であり、
+  **混ざった結果を区別する必要があるなら 2 回呼ぶ**、と文書で示せばよい。
+- 案C は「カタログ＝標準項目の真実源」（[RV-23][rv23] / [RV-29][rv29] で守った性質）の外に
+  項目を置くことになり、公開 API も増える。案D は**型が嘘をつく**
+  （PORTERS が拒否する condition / order を型が通す）。
+  案E は回避策すら示さないので、利用者は自力で気づくしかない。
 
-### 新しく登録する LV
+### 再検討の条件（いつ案B に進むか）
 
-**LV-14: `P_Deleted` の wire 形と出現条件**。確認すべきは 3 点。
+本決定は「**いまは土台を変えない**」であって、「永久に型付けしない」ではない。
+次のいずれかが起きたら [ADR-0019][adr19] の改訂として再検討する。
 
-1. `field` に明示したとき、応答に `<Person.P_Deleted>0</Person.P_Deleted>` の形で入るか
-   （他の値型と同じ素の文字列か、入れ子か）。
-2. **`itemstate` を省略（`existing`）したときも取得できるか**、`deleted` / `all` のときだけか。
-3. 値が **`0` / `1` 以外を取りうるか**（reference は 2 値と明記だが実測で確かめる）。
+- **同種の項目が増えたとき** — 「値を持つが PORTERS が Data Type を与えていない」項目が
+  `P_Deleted` 以外にも現れたら、1 項目のための例外ではなくなる。
+- **2 回呼ぶ運用で困る事例が出たとき** — 大量データで往復コストが問題になる、
+  2 回の呼び出しの間の変更（レース）が実害になる、など。
+- **契約後に wire 形が確定し、`P_Deleted` の扱いが軽くなったとき**。
 
 ### 実施時の合意事項（accept 後の別 PR）
 
-1. **`DataType` に `System[Deleted]` を追加**（`src/xml/decode.ts`）。
-   `DecodedValue` に `number` の分岐を足す（`System[Id]` / `Number` と同じ扱い）。
-2. **`WritableDataType` の `Exclude` に加える**（`src/xml/encode.ts`）。Write 入力型に出さない。
-3. **condition / order は何もしない** — `ConditionFor` の `never` と `OrderableKeys` の絞り込みで
-   自動的に型エラーになる。**そのことをテストで pin する**（将来の改変で漏れないように）。
-4. **5 リソースのカタログに `P_Deleted` を追加**する。
-   [RV-29][rv29] の突合テストの除外リスト（`NOT_IN_CATALOG`）から `ー` を外し、
-   **`P_Deleted` を「あるべき項目」として検査**する側へ移す。
-5. **`defineFields` の対象外**。カスタム項目に `System[…]` は宣言させない（[ADR-0023][adr23] D3 のまま）。
-6. **フェイクサーバーに反映**する（descriptor 由来なので自動だが、
-   `itemstate` の応答で `P_Deleted` が正しく変わることを L1 で確認する）。
-7. **[Read クエリ ガイド][rq]の注記を更新**。現在「どれが削除済みかは判別できない（RV-26）」と
-   書いてあるので、判別できるようになったことと **`condition` / `order` には使えない**ことを書く。
-8. **LV-14 を登録**し、`VERIFY(live)` を decode 側に置く。
-9. **semver は minor**（公開型に項目が増える。既存コードへの影響なし）。
+1. **[Read クエリ ガイド][rq]の注記を書き換える**。現在「どれが削除済みかは判別できない（RV-26）」と
+   書いてあるので、**2 回呼ぶ運用を正式な手順として示す**（コード例つき）。
+   `"all"` は「1 往復で済ませたいが区別が要らない」場合の選択肢だと位置づける。
+2. **`itemstate` の JSDoc にも同じ趣旨を 1〜2 行**入れる（`src/resources/query.ts`）。
+3. **突合テストのコメントを更新**（`test/integration/reference-catalog.test.ts`）。
+   `NOT_IN_CATALOG` の `ー` について「RV-26 の論点で、決まるまでは対象外」と書いてあるので、
+   **本 ADR で「PORTERS が Data Type を与えていないため載せない」と決まった**ことと、
+   `Reference` とは除外理由が違うことを書き分ける。
+4. **LV は追加しない**。実装が `P_Deleted` に依存しないので、確認すべき仮定が無い。
+   再検討する段になったら wire 形（出現条件・値域）を確認する、と本 ADR に残すに留める。
+5. **コード変更なし**（ドキュメントとコメントのみ）。semver 影響なし。
 
 ### Consequences
 
-- Good: `itemstate: "all"` の結果を**利用者が解釈できる**ようになる（機能が半分で終わらない）。
-  PORTERS が拒否する組み合わせ（condition / order / write）が**型で防がれる**。
-  カタログが標準項目の真実源であるという性質を保てる（突合テストの対象に入る）。
-- Bad: `DataType` に 1 つ値が増える（内部型だが、`CustomDataType` との差が広がる）。
-  **wire 形が未確認のまま実装**する（LV-14）。外れたら decode の分岐を直すことになる。
-- Neutral: 値が `number` なので `deleted === 1` と書くことになる。
-  `boolean` に寄せたくなったら LV-14 の確定後に非破壊で足せる。
+- Good: PORTERS が定義しない型を発明せずに済む（[ADR-0016][adr16] を守る）。
+  カタログの形（[ADR-0019][adr19]）に手を入れない。**利用者は削除状態を確実に判別できる**ようになる。
+- Bad: **1 往復では区別できない**まま（2 回呼ぶ必要がある）。
+  型付きレコードに削除状態が現れないので、**ドキュメントを読まないと回避策に気づけない**。
+  `itemstate: "all"` の使いどころが狭い。
+- Neutral: [RV-26][rv26] は「型付けしない」という決定で閉じる（`wontfix` ではなく
+  **決定にもとづく `fixed`** ＝ ドキュメントで機能を回復させる）。土台の改訂は将来へ残す。
 
 ## Pros and Cons of the Options
 
-### 案1a: 新しい Data Type（推奨）
+### 案A: 型付けせず 2 回呼ぶ運用を文書化（推奨）
 
-- Good: 既存の能力導出機構がそのまま効く（condition / order は**自動で**型エラー）。
-  カタログの形も [ADR-0019][adr19] のまま。`System[…]` の命名も含意と揃う。
-- Bad: `DataType` に「1 項目のためだけの値」が増える。
+- Good: Data Type を発明しない。カタログの形を変えない。**機能は回復する**。コード変更ゼロ。
+- Bad: 1 往復にはできない。型に現れないのでドキュメント依存。
 
-### 案1b: カタログに能力マークを持たせる
+### 案B: カタログの形を拡張（`alias → { dataType, capabilities }`）
 
-- Good: 項目ごとの制約を一般的に表現できる（将来ほかにも出てきたら効く）。
-- Bad: [ADR-0019][adr19] の改訂が要り、全リソースの型導出を作り直す。**1 項目には過剰**。
+- Good: 「値を持つが Data Type が無い項目」と「項目ごとの能力」を**一般的に**表現できる。
+  型付きレコードに `P_Deleted` が現れ、condition / order も型で禁じられる。
+- Bad: [ADR-0019][adr19] の改訂＝**全リソースの型導出を作り直す**。1 項目には過剰。
+  カタログの単純さ（alias → Data Type）という長所を失う。
 
-### 案1c: カタログに載せず専用の口
+### 案C: カタログ外の専用サーフェス
 
-- Good: カタログを汚さない。
-- Bad: 「カタログ＝標準項目の真実源」を崩し、[RV-29][rv29] の突合テストの外に出る＝
-  **同じ取りこぼしを再び作る**。公開 API も一つ増える。
+- Good: カタログを触らない。
+- Bad: 「カタログ＝標準項目の真実源」の外に項目を置く（[RV-29][rv29] の突合対象からも外れる）。
+  公開 API が増え、`search` と使い分けが要る。
 
-### 案1d: `Number` として載せる
+### 案D: `Number` として載せる
 
-- Good: 変更が最小（カタログに 1 行）。
-- Bad: **型が嘘をつく** — PORTERS が拒否する condition / order を型が通す。
+- Good: 変更が最小（カタログに 1 行）。型付きレコードに現れる。
+- Bad: **PORTERS が割り当てていない Data Type をこちらで決める**（[ADR-0016][adr16] 違反）。
+  さらに condition / order が型で許され、**PORTERS が拒否する組み合わせを型が通す**。
 
-### 案2a: `number`（推奨）
+### 案E: 現状維持（wontfix）
 
-- Good: 未知の値を潰さない。仮定が外れたときに気づける。
-- Bad: `deleted === 1` は `deleted === true` より読みにくい。
-
-### 案2b: `boolean`
-
-- Good: DX が良い。
-- Bad: `"1"` 以外を静かに `false` にする＝**素性の分からない値が「削除されていない」として通る**。
-  本 finding が塞ごうとしている失敗と同じ形。
-
-### 案3b: 契約取得まで保留
-
-- Good: 仮定の上に実装しない。
-- Bad: 型付けに必要な情報（値の意味・使える場所）は reference に揃っており、**待つ理由が弱い**。
-  その間 `itemstate` は半分の機能のまま。
+- Good: 何もしなくてよい。
+- Bad: 回避策すら示さないので、`itemstate: "all"` を使った利用者は自力で気づくしかない。
 
 ## More Information
 
 - 起票元: [findings RV-26][rv26]。
+- Data Type が PORTERS の用語であり、ライブラリがそれに整合させる決定: [ADR-0016][adr16] 案B。
+  一次情報は [Field Type & Data Type List][fdt-src]（`tmp/porters-docs/txt/115008017407-…` に取得済み）。
+- カタログが型導出の土台であること: [ADR-0019][adr19]。標準項目の真実源であること:
+  [RV-23][rv23]（欠落）・[RV-29][rv29]（突合の自動化）。
 - `itemstate` の実装: [ADR-0038][adr38]（F-2）。削除 API が無いこと自体は `CLAUDE.md` の前提。
-- カタログが能力の導出元であること: [ADR-0019][adr19]・[ADR-0016][adr16]（Data Type の粒度）。
-- カタログが標準項目の真実源であること: [RV-23][rv23]（欠落）・[RV-29][rv29]（突合の自動化）。
-- 仮定の扱い: [ADR-0002][adr2]（実 API ドキュメントへの接地）・[live-verification][lv]。
+- 同じ「捏造しない」原則を扱った直近の決定: [ADR-0055][adr55]（`partition=0` の廃止）。
 
-[adr2]: 0002-ground-design-in-live-api-docs.md
 [adr5]: 0005-public-api-shape.md
 [adr16]: 0016-field-type-granularity.md
 [adr19]: 0019-static-resource-types.md
-[adr23]: 0023-custom-field-declaration-dsl.md
 [adr38]: 0038-read-query-surface-impl.md
-[lv]: ../live-verification.md
+[adr55]: 0055-partition-binding-guard.md
+[fdt-src]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List
 [rq]: ../guide/read-query.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md
 [rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md
