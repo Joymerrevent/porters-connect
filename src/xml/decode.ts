@@ -41,14 +41,17 @@ export type FieldValue = string | number | string[] | UserRef | null;
 // Per-Data-Type decoded value (the non-null shape). A read value is `DecodedValue<D> | null`
 // (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
 // (ADR-0019): id/number/reference -> number, User -> UserRef, Option -> string[], rest -> string.
-export type DecodedValue<D extends DataType> = D extends
-  "System[Id]" | "Number" | "System[Reference]"
-  ? number
-  : D extends "User"
-    ? UserRef
-    : D extends "Option"
-      ? string[]
-      : string;
+// `null` = PORTERS assigns the field no Data Type (`P_Deleted` — ADR-0056). With no Data Type
+// there is no basis for a conversion, so the raw string stands (e.g. `"0"` / `"1"`).
+export type DecodedValue<D extends DataType | null> = D extends null
+  ? string
+  : D extends "System[Id]" | "Number" | "System[Reference]"
+    ? number
+    : D extends "User"
+      ? UserRef
+      : D extends "Option"
+        ? string[]
+        : string;
 
 // alias タグは接頭辞付き想定（例 `User.P_Id`）だが、接頭辞無しにも両対応（ADR-0011）。
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパーを decodeField より前に定義する。
@@ -108,13 +111,19 @@ const decodeReference = (raw: unknown): number | null => {
   return null;
 };
 
-/** Decode one field's raw node by its Data Type. */
-export const decodeField = (type: DataType, raw: unknown): FieldValue => {
+/** Decode one field's raw node by its Data Type (`null` = PORTERS assigns none — ADR-0056). */
+export const decodeField = (
+  type: DataType | null,
+  raw: unknown,
+): FieldValue => {
   // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
   // `=== undefined` / `=== null` are defense-in-depth — every switch branch below
   // also maps them to null, so dropping either is an equivalent mutant.
   // Stryker disable next-line ConditionalExpression: see above (undefined/null are redundant with the switch)
   if (raw === "" || raw === undefined || raw === null) return null;
+  // 型が無い項目（catalog の `null`＝ADR-0056）は変換の基準も無いので生の文字列で通す。
+  // カタログ外の U_/A_ alias に対する `decoderFor` の passthrough と同じ扱い。
+  if (type === null) return asString(raw) ?? null;
   switch (type) {
     case "System[Id]":
     case "Number": {

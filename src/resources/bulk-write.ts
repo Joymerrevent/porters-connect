@@ -115,7 +115,7 @@ export const runBulkWrite = async (
   target: {
     name: string;
     prefix: string;
-    fields: ReadonlyMap<string, DataType>;
+    fields: ReadonlyMap<string, DataType | null>;
     url: string;
     partition: number;
   },

@@ -59,8 +59,12 @@ type ReferenceCondition = {
   and?: number[];
 };
 
-/** The condition-operator object a field of Data Type `D` accepts. */
-type ConditionFor<D extends DataType> = D extends "System[Id]"
+/**
+ * The condition-operator object a field of Data Type `D` accepts. A field PORTERS gives no Data
+ * Type (`null` — ADR-0056) falls through to the closing `never`, which is exactly right: the
+ * reference says such a field cannot appear in `condition` at all.
+ */
+type ConditionFor<D extends DataType | null> = D extends "System[Id]"
   ? IdCondition
   : D extends "Number"
     ? NumberCondition
@@ -150,16 +154,17 @@ const DELETED_CONDITION_FIELDS = new Set([
 /** Output context for prefixing aliases and resolving each field's Data Type. */
 type QueryContext = {
   prefix: string;
-  fields: ReadonlyMap<string, DataType>;
+  fields: ReadonlyMap<string, DataType | null>;
 };
 
 /**
  * Serialise one condition value by the field's Data Type: dates ISO -> PORTERS, arrays (Option
- * aliases / id sets) colon-joined, everything else stringified. Unknown alias (no Data Type) ->
- * raw scalar, mirroring read/write passthrough.
+ * aliases / id sets) colon-joined, everything else stringified. No Data Type — an unknown alias
+ * (`undefined`) or a field PORTERS types none (`null` — ADR-0056) -> raw scalar, mirroring
+ * read/write passthrough. Reaching the `null` case needs a cast: `ConditionFor<null>` is `never`.
  */
 const serializeConditionValue = (
-  type: DataType | undefined,
+  type: DataType | null | undefined,
   value: unknown,
 ): string => {
   if (Array.isArray(value)) return value.map(String).join(":");

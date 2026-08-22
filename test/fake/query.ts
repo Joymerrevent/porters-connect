@@ -36,6 +36,11 @@ const NUMERIC_TYPES = new Set<DataType>([
   "System[Reference]",
 ]);
 
+// A field with no Data Type — unknown alias (`undefined`) or one PORTERS types none
+// (`null` — ADR-0056) — compares as text, like every other non-numeric field.
+const isNumeric = (type: DataType | null | undefined): boolean =>
+  type !== undefined && type !== null && NUMERIC_TYPES.has(type);
+
 // Split on top-level commas only: a `field` entry may carry a parenthesised sub-selection
 // (`Person.P_Owner(User.P_Id,User.P_Name)`) whose commas are not separators.
 const splitTopLevel = (value: string): string[] => {
@@ -141,11 +146,11 @@ const compare = (left: string, right: string, numeric: boolean): number => {
 const matchCondition = (
   record: FakeRecord,
   condition: ParsedCondition,
-  type: DataType | undefined,
+  type: DataType | null | undefined,
 ): boolean => {
   const value = record[condition.alias];
   if (value === undefined) return false;
-  const numeric = type !== undefined && NUMERIC_TYPES.has(type);
+  const numeric = isNumeric(type);
   const selected = asList(value);
   // `or` / `and` take colon-joined sets (Option aliases, or ids for Link/User/Reference).
   const wanted = condition.value.split(":");
@@ -188,7 +193,7 @@ const matchKeywords = (record: FakeRecord, keywords: string[]): boolean =>
 export const runReadQuery = (
   records: FakeRecord[],
   query: ReadQuery,
-  fields: Readonly<Record<string, DataType>>,
+  fields: Readonly<Record<string, DataType | null>>,
 ): { items: FakeRecord[]; total: number } => {
   // There is no delete API, so nothing is ever in the "deleted" state: `deleted` reads empty and
   // `all` equals `existing` (docs/reference: itemstate exists only to reach deleted records).
@@ -204,7 +209,7 @@ export const runReadQuery = (
       const left = a[alias];
       const right = b[alias];
       if (left === undefined || right === undefined) continue;
-      const numeric = NUMERIC_TYPES.has(fields[alias]);
+      const numeric = isNumeric(fields[alias]);
       const diff = compare(asList(left)[0], asList(right)[0], numeric);
       if (diff !== 0) return direction === "asc" ? diff : -diff;
     }

@@ -79,7 +79,7 @@ const intParam = (url: URL, key: string, fallback: number): number => {
 };
 
 const selectionOf = (
-  fields: Readonly<Record<string, DataType>>,
+  fields: Readonly<Record<string, DataType | null>>,
 ): FieldSelection[] => Object.keys(fields).map((alias) => ({ alias, sub: [] }));
 
 const page = (
@@ -170,8 +170,12 @@ export const readField: MasterReadHandler = (url, ctx) => {
       ),
     };
   }
-  const records = Object.entries(descriptor.fields).map(
-    ([alias, type], index) => ({
+  const records = Object.entries(descriptor.fields)
+    // A Field row carries a Field Type value. A field PORTERS assigns no Data Type (`ー` -> `null`,
+    // ADR-0056) has no Field Type either — the reference's `P_Deleted` row is `ー` in both columns —
+    // so it gets no row here. Inventing a Value for it would be exactly the fabrication ADR-0056 refuses.
+    .filter((entry): entry is [string, DataType] => entry[1] !== null)
+    .map(([alias, type], index) => ({
       P_Id: String(index + 1),
       P_Name: alias,
       // The alias as it travels on the wire, i.e. what you would put in `field=`.
@@ -182,8 +186,7 @@ export const readField: MasterReadHandler = (url, ctx) => {
       P_ResourceType: String(value),
       // Option-typed fields point at their option group; the fake names the field's own alias.
       ...(type === "Option" ? { P_ReferTo: [`Option.${alias}`] } : {}),
-    }),
-  );
+    }));
   // `P_ReferTo` nests without an `<OptionRoot>` wrapper here (ADR-0022 fact 6).
   return page(FIELD_DESCRIPTOR, ctx, records, url, "bare");
 };
