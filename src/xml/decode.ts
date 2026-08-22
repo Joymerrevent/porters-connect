@@ -123,6 +123,9 @@ export const decodeField = (
   if (raw === "" || raw === undefined || raw === null) return null;
   // 型が無い項目（catalog の `null`＝ADR-0056）は変換の基準も無いので生の文字列で通す。
   // カタログ外の U_/A_ alias に対する `decoderFor` の passthrough と同じ扱い。
+  // VERIFY(live): `P_Deleted` が実際に `<Person.P_Deleted>0</…>` の平文で返るか、
+  // itemstate 省略時にも返るか、値が 0/1 以外を取りうるかは未確認。
+  // docs/live-verification.md（LV-14）。外れたらこの分岐を直す。
   if (type === null) return asString(raw) ?? null;
   switch (type) {
     case "System[Id]":
