@@ -95,6 +95,30 @@ describe("candidate round-trip against the fake server", () => {
     expect(all).toEqual([10001, 10002, 10003]);
   });
 
+  it("reads the delete flag as a raw string, by itemstate (ADR-0056)", async () => {
+    const { porters } = setup();
+    const id = await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+
+    // 既定（existing）でも取れる。値は "0"／"1" の**文字列**で、number でも boolean でもない
+    // ＝ Data Type が無い以上、変換の基準もこちらには無い。
+    // VERIFY(live): 応答での出現条件と値域は未確認 — docs/live-verification.md（LV-14）。
+    const alive = await porters.tenant(1).candidate.get(id);
+    expect(alive?.P_Deleted).toBe("0");
+
+    // itemstate=all は生存と削除済みを混ぜて返すので、判別はこのフラグでしかできない。
+    const all = await porters.tenant(1).candidate.search({ itemstate: "all" });
+    expect(all.items.map((c) => c.P_Deleted)).toEqual(["0"]);
+
+    // フェイクには削除済みが存在しない（PORTERS に削除 API が無いのと同じ理由で store も
+    // 削除を持たない）ので、"1" が返る経路は実機でしか踏めない。
+    const deleted = await porters
+      .tenant(1)
+      .candidate.search({ itemstate: "deleted" });
+    expect(deleted.items).toEqual([]);
+  });
+
   it("round-trips a declared custom field (defineFields)", async () => {
     const fake = createFakeTransport({ users: [OWNER] });
     const porters = new PortersClient({

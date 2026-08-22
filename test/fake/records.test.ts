@@ -43,7 +43,22 @@ describe("createRecord", () => {
       P_UpdateDate: "2026/01/02 03:04:05",
       P_RegisteredBy: "9",
       P_UpdatedBy: "9",
+      P_Deleted: "0", // 生存（この store に削除は無い）— ADR-0056
     });
+  });
+
+  it("ignores a caller-supplied delete flag (Write 不可 — ADR-0056)", () => {
+    const { store, context } = setup();
+
+    // 型では書けない項目なので、ここに来るのはキャスト経由だけ。それでも通さない。
+    const record = createRecord(
+      store,
+      CANDIDATE,
+      { P_Id: "-1", P_Deleted: "1" },
+      context,
+    );
+
+    expect(record.P_Deleted).toBe("0");
   });
 
   it("ignores a caller-supplied Write-restricted timestamp", () => {

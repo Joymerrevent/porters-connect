@@ -4,6 +4,7 @@
 //   the primary key (`P_Id` / `Id`)         -> the store's sequence (`-1` means "create")
 //   `P_RegistrationDate` / `P_UpdateDate`   -> stamped here; `System[DateTime]` is Write-restricted
 //   `P_RegisteredBy` / `P_UpdatedBy`        -> auto-assigned when the caller omits them
+//   `P_Deleted`                             -> always `"0"`; Write-restricted (ADR-0056)
 //
 // The library's Write types already exclude the write-restricted ones (ADR-0019), so this is the
 // second line of defence: a value cast through a custom field must not slip past either. A
@@ -22,6 +23,7 @@ const REGISTRATION_DATE = "P_RegistrationDate";
 const UPDATE_DATE = "P_UpdateDate";
 const REGISTERED_BY = "P_RegisteredBy";
 const UPDATED_BY = "P_UpdatedBy";
+const DELETED = "P_Deleted";
 
 /** The store table of a resource. */
 export const tableOf = (resource: FakeResource): FakeTable => ({
@@ -32,7 +34,8 @@ export const tableOf = (resource: FakeResource): FakeTable => ({
 const nowPorters = (ctx: RecordContext): string =>
   isoToPortersDateTime(new Date(ctx.now()).toISOString());
 
-// Drop what the server owns: the primary key and every `System[DateTime]` field.
+// Drop what the server owns: the primary key, every `System[DateTime]` field, and the delete flag
+// (reference: 「Write時の指定はできません」).
 const callerFields = (
   resource: FakeResource,
   fields: FakeRecord,
@@ -40,6 +43,7 @@ const callerFields = (
   const out: FakeRecord = {};
   for (const [alias, value] of Object.entries(fields)) {
     if (alias === resource.idAlias) continue;
+    if (alias === DELETED) continue;
     if (resource.descriptor.fields[alias] === "System[DateTime]") continue;
     out[alias] = value;
   }
@@ -57,6 +61,9 @@ const stamp = (
   if (creating) {
     if (has(REGISTRATION_DATE)) record[REGISTRATION_DATE] = nowPorters(ctx);
     if (has(REGISTERED_BY)) record[REGISTERED_BY] ??= author;
+    // 削除状態は PORTERS が持つ値（ADR-0056）。この store に削除は無い（PORTERS に削除 API が
+    // 無いのと同じ理由）ので、値は常に "0"＝生存。"1" は実機でしか作れない。
+    if (has(DELETED)) record[DELETED] = "0";
   }
   if (has(UPDATE_DATE)) record[UPDATE_DATE] = nowPorters(ctx);
   if (has(UPDATED_BY)) record[UPDATED_BY] = author;

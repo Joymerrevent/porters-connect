@@ -158,4 +158,13 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("System[Reference]", { Client: "oops" })).toBeNull(); // nested not a record
     expect(decodeField("System[Reference]", "scalar")).toBeNull(); // raw not a record
   });
+
+  it("no Data Type (null) -> the raw string, unconverted (ADR-0056)", () => {
+    // PORTERS がこの項目に型を与えていない＝変換の基準が無い。"0" を 0 や false にするのは
+    // こちらで決めること＝発明になるので、文字列のまま返す。
+    expect(decodeField(null, "0")).toBe("0");
+    expect(decodeField(null, "1")).toBe("1");
+    expect(decodeField(null, "")).toBeNull(); // 空は他の型と同じく null
+    expect(decodeField(null, { Nested: "x" })).toBeNull(); // 非文字列は null（passthrough と同じ）
+  });
 });

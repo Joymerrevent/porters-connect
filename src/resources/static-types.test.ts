@@ -4,6 +4,7 @@ import type { UserRef } from "../xml/decode";
 import type {
   Candidate,
   CandidateCreateInput,
+  CandidateSearchQuery,
   CandidateUpdateInput,
 } from "./candidate";
 import type { ProcessCreateInput } from "./process";
@@ -71,5 +72,36 @@ describe("SD-3 static resource types (ADR-0019)", () => {
     expectTypeOf<CandidateUpdateInput>().not.toHaveProperty(
       "P_RegistrationDate",
     );
+  });
+});
+
+// PORTERS はこの項目を「Read の field でのみ指定可・Condition/Order 不可・Write 不可」と定める。
+// カタログに `null`（＝ Data Type が無い）と書くだけで、その 3 つが導出型に現れることを固定する。
+// 追加のガード実装は無いので、ここが壊れたら制約そのものが消えている（ADR-0056）。
+describe("型を持たない項目（P_Deleted）の制約 — ADR-0056", () => {
+  it('Read には出る。値は生の文字列（"0" / "1"）', () => {
+    expectTypeOf<Candidate>()
+      .toHaveProperty("P_Deleted")
+      .toEqualTypeOf<string | null | undefined>();
+  });
+
+  it("condition には出せない（ConditionFor が never に落ちる）", () => {
+    expectTypeOf<
+      NonNullable<CandidateSearchQuery["condition"]>
+    >().toHaveProperty("P_Deleted");
+    expectTypeOf<
+      NonNullable<CandidateSearchQuery["condition"]>["P_Deleted"]
+    >().toEqualTypeOf<undefined>();
+  });
+
+  it("order には出せない（OrderableKeys から外れる）", () => {
+    expectTypeOf<
+      NonNullable<CandidateSearchQuery["order"]>[number]
+    >().not.toHaveProperty("P_Deleted");
+  });
+
+  it("create / update の入力に出ない（WritableKeys から外れる）", () => {
+    expectTypeOf<CandidateCreateInput>().not.toHaveProperty("P_Deleted");
+    expectTypeOf<CandidateUpdateInput>().not.toHaveProperty("P_Deleted");
   });
 });
