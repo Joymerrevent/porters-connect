@@ -1,0 +1,19 @@
+# pnpm の設定ファイル。pnpm 10 以降、auth と registry 以外の設定は .npmrc ではなく
+# ここ（または ~/.config/pnpm/config.yaml）から読まれる。単一パッケージのため
+# packages: は置かない＝このリポジトリ自身が唯一のパッケージ。
+
+# サプライチェーン対策の熟成期間（分）。10080 分 = 7 日。公開から 7 日未満の版は
+# 解決候補から外し、レジストリから悪性リリースが発見・削除されるまでの時間を稼ぐ。
+#
+# .github/dependabot.yml の cooldown と対になっている。あちらは「更新 PR を作らない」
+# 入口の防御で、こちらは「解決時に選ばない」出口の防御。手元の `pnpm add` /
+# `pnpm update` は Dependabot を通らないので、片方だけでは素通りする経路が残る。
+# 日数を変えるときは両方を揃えること（片方だけ緩めると、Dependabot が出した PR の
+# ロックファイル更新を pnpm が拒否して噛み合わなくなる）。
+#
+# CI の `pnpm install --frozen-lockfile` は解決自体が走らないため影響を受けない。
+minimumReleaseAge: 10080
+
+# minimumReleaseAgeStrict は minimumReleaseAge を明示すると既定 true。
+# 範囲内に条件を満たす版が 1 つも無いとき、黙って新しすぎる版を入れるのではなく
+# 解決を失敗させる＝壊れたときに安全側へ倒れる。既定のままにしておく。

@@ -219,6 +219,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
 - [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
+- [x] **依存更新の熟成期間（cooldown）7 日**＝公開直後の版は取り込まない。入口は Dependabot `cooldown`（npm は minor/patch 7 日・major 14 日／Actions は 7 日）、出口は pnpm `minimumReleaseAge: 10080`（手元の `pnpm add` / `pnpm update` も守る）。悪性リリースは概ね数時間〜数日で発見・削除されるため**防御の本体は「時間」**。**cooldown は version updates のみに効き security updates は素通り**＝待っても脆弱性の穴は開かない＝フェイルセーフ
 
 ### WS-D. リリース自動化（[ADR-0025][adr25]〜[0032][adr32]）
 
