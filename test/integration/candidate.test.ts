@@ -108,13 +108,17 @@ describe("candidate round-trip against the fake server", () => {
     });
     const t = porters.tenant(1);
 
-    // 既定（existing）は削除済みを見せない。値は "0"／"1" の**文字列**で、number でも
-    // boolean でもない＝ Data Type が無い以上、変換の基準もこちらには無い。
+    // itemstate 省略（＝ API の既定）は削除済みを見せない。値は "0"／"1" の**文字列**で、
+    // number でも boolean でもない＝ Data Type が無い以上、変換の基準もこちらには無い。
     // VERIFY(live): 応答での出現条件と値域は未確認 — docs/live-verification.md（LV-14）。
-    const existing = await t.candidate.search();
-    expect(existing.items.map((c) => [c.P_Name, c.P_Deleted])).toEqual([
+    const omitted = await t.candidate.search();
+    expect(omitted.items.map((c) => [c.P_Name, c.P_Deleted])).toEqual([
       ["生存 太郎", "0"],
     ]);
+
+    // 明示の existing も同じ結果（違うのは URL に載るかどうかだけ — ADR-0057）。
+    const existing = await t.candidate.search({ itemstate: "existing" });
+    expect(existing.items).toEqual(omitted.items);
 
     // deleted は削除済みだけ。
     const deleted = await t.candidate.search({ itemstate: "deleted" });
@@ -128,6 +132,30 @@ describe("candidate round-trip against the fake server", () => {
       ["生存 太郎", "0"],
       ["削除 次郎", "1"],
     ]);
+  });
+
+  it("puts an explicit itemstate=existing on the wire (ADR-0057)", async () => {
+    // 省略と `existing` は結果が同じなので、URL を見ないと区別が付かない。ここだけ transport を
+    // 覗いて「明示指定が実際に送られている」ことを固定する（省略時は載らないことも）。
+    const fake = createFakeTransport({ users: [OWNER] });
+    const urls: string[] = [];
+    const porters = new PortersClient({
+      host: "fake.test",
+      appId: "app-id",
+      appSecret: "app-secret",
+      transport: {
+        send: (req) => {
+          if (req.url.includes("/v1/candidate")) urls.push(req.url);
+          return fake.send(req);
+        },
+      },
+    });
+
+    await porters.tenant(1).candidate.search({ itemstate: "existing" });
+    await porters.tenant(1).candidate.search();
+
+    expect(urls[0]).toContain("itemstate=existing");
+    expect(urls[1]).not.toContain("itemstate");
   });
 
   it("write can never delete: created records are always alive (ADR-0056)", async () => {

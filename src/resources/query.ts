@@ -109,10 +109,15 @@ export type Order<F extends FieldCatalog> = Array<
 // --- itemstate (reference: 削除済みデータ取得) ---
 
 /**
- * Which delete state to read. Omitting (or `existing`) reads live data; `deleted`/`all` read deleted
- * records — the only way to read deleted data, since there is no delete API. When `deleted`/`all`,
- * condition is restricted to `P_Id` / `P_UpdateDate` / `P_UpdatedBy` and PORTERS auto-adds a
- * "updated within 90 days" filter (`P_UpdateDate` = the delete time, `P_UpdatedBy` = the last editor).
+ * Which delete state to read. `existing` reads live data, `deleted`/`all` read deleted records —
+ * the only way to read deleted data, since there is no delete API. When `deleted`/`all`, condition
+ * is restricted to `P_Id` / `P_UpdateDate` / `P_UpdatedBy` and PORTERS auto-adds a "updated within
+ * 90 days" filter (`P_UpdateDate` = the delete time, `P_UpdatedBy` = the last editor).
+ *
+ * **Omitting the field is not the same as passing `existing`** (ADR-0057). Omitting defers to the
+ * API's own default (today: `existing`); passing `existing` states that you want live records only,
+ * and is sent as such. Both read live data now, but only the explicit form keeps doing so if PORTERS
+ * ever changes that default. Use `itemstate: "existing"` when live-only actually matters to you.
  */
 export type ItemState = "existing" | "deleted" | "all";
 
@@ -252,8 +257,12 @@ export const appendReadQuery = <F extends FieldCatalog>(
     }
     p.set("keywords", kw);
   }
-  // `existing` is the API default — omit it to keep URLs minimal (and stable vs. pre-F-2 reads).
-  if (q.itemstate !== undefined && q.itemstate !== "existing") {
-    p.set("itemstate", q.itemstate);
-  }
+  // An explicit itemstate is sent as given — including `existing` (ADR-0057). Only omission defers
+  // to the API default, because omitting and asking for `existing` are different things to say: if
+  // PORTERS ever changed that default, a caller who wrote `existing` would otherwise start receiving
+  // deleted records with nothing raised. Collapsing the two would throw away what the caller told us.
+  // VERIFY(live): `itemstate=existing` has never been sent to the real API. The reference lists it as
+  // a value, but if it is rejected the whole call fails with Result Code 133 — see LV-15 in
+  // docs/live-verification.md.
+  if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
 };

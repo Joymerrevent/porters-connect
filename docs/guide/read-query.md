@@ -12,7 +12,7 @@ const page = await t.candidate.search({
   condition: { P_Name: { part: "山田" } }, // 検索条件（複数項目は AND）
   order: [{ P_UpdateDate: "desc" }], // 並び順
   keywords: ["東京", "営業"], // キーワード AND 検索
-  itemstate: "existing", // 削除状態（既定）
+  itemstate: "existing", // 削除状態（省略可。省略との違いは後述）
   count: 50, // 1〜200・既定 10
   start: 0, // 0 始まり
 });
@@ -111,11 +111,12 @@ await t.candidate.search({ keywords: ["東京", "営業"] });
 **PORTERS に削除 API はありません**。`delete()` を提供しないのはそのためで、
 削除済みレコードを読む唯一の手段がこの `itemstate` です。
 
-| 値           | 意味                         |
-| ------------ | ---------------------------- |
-| `"existing"` | 生存レコードのみ（**既定**） |
-| `"deleted"`  | 削除済みのみ                 |
-| `"all"`      | 両方                         |
+| 指定         | 意味                                 | 送信                 |
+| ------------ | ------------------------------------ | -------------------- |
+| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
+| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
+| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
+| `"all"`      | 両方                                 | `itemstate=all`      |
 
 ```ts
 await t.candidate.search({
@@ -123,6 +124,12 @@ await t.candidate.search({
   condition: { P_UpdateDate: { ge: "2026-07-01T00:00:00Z" } },
 });
 ```
+
+> **省略と `"existing"` は違います**（[ADR-0057][adr57]）。いまはどちらも生存レコードのみが返るので
+> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」**という
+> 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
+> `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
+> 省略せず `itemstate: "existing"` と書いてください。
 
 **`deleted` / `all` のときは制約が 2 つ**あります。どちらも送信前に検査します。
 
@@ -181,7 +188,8 @@ page.start; // 今回の開始インデックス
 ## 関連
 
 - 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）／
-  [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）
+  [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）／
+  [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 
@@ -189,6 +197,7 @@ page.start; // 今回の開始インデックス
 [adr20]: ../adr/0020-read-field-default.md
 [adr38]: ../adr/0038-read-query-surface-impl.md
 [adr56]: ../adr/0056-deleted-flag-typing.md
+[adr57]: ../adr/0057-itemstate-existing-explicit.md
 [custom-fields]: custom-fields.md
 [lv]: ../live-verification.md
 [prd]: ../design/requirements.md
