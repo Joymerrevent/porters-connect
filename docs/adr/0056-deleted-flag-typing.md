@@ -1,13 +1,17 @@
 # 56. `P_Deleted`（削除フラグ）の扱い
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-21
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [findings RV-26][rv26] の是正案。F-2（[ADR-0038][adr38]）で `itemstate: "deleted" | "all"` を実装したが、
 > **削除状態を表す `P_Deleted` がカタログに無い**ため、`"all"` で読んだときに
 > どれが削除済みかを利用者が判別できない。
-> 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+>
+> **案B で `accepted`（2026-08-22）**: `FieldCatalog` の値を `DataType | null` に広げ、
+> `P_Deleted: null` として**「PORTERS が Data Type を与えていない」という正典の事実を記録**する。
+> `null` は新しい Data Type ではない。導出が `keyof F` で回っているため、
+> condition / order / write の禁止は**追加実装なしで**型に現れる。実施は本 ADR とは別 PR。
 >
 > **推奨は 2 度変わっている**（議論の経緯として残す）。
 > 起票時の「新しい Data Type `System[Deleted]` を導入する」案は **[ADR-0016][adr16] 案B に違反**しており
@@ -96,9 +100,8 @@ Data Type が「ー」の項目は 2 系統あり、**理由が違う**。
 
 ## Decision Outcome
 
-> **未決（proposed）**。以下は起票者の推奨であり、決定は decider が行う。
-
-**推奨: 案B**（`FieldCatalog` の値を `DataType | null` に広げ、`P_Deleted: null` と記録する）。
+**採用: 案B**（`FieldCatalog` の値を `DataType | null` に広げ、`P_Deleted: null` と記録する。
+decider 判断・2026-08-22）。
 
 ```ts
 export type FieldCatalog = Record<string, DataType | null>;
@@ -116,6 +119,36 @@ const FIELDS = {
 **正典に書いてある事実**を、そのまま記録するための不在マーカーである。
 [ADR-0016][adr16] 案B が禁じたのは「PORTERS がしない区別を発明すること」で、
 **PORTERS がしている区別（型がある / ない）を写すこと**はむしろその趣旨に沿う。
+
+### なぜ `DataType` 自体に `null` を入れないのか
+
+議論で「`DataType` に `null` を含めては」という案が出た。編集量は少なくなる
+（`Map<string, DataType>` の 8 箇所を直さずに済む）が、**採らない**。決め手は 1 点。
+
+```ts
+export type WritableDataType = Exclude<
+  DataType,
+  "System[Id]" | "System[DateTime]"
+>;
+```
+
+`WritableDataType` は **`DataType` からの派生**なので、`DataType` に `null` を入れると
+`Exclude` はそれを除かず **`null` が `WritableDataType` に残る**。型検査で確認した。
+
+| `null` の置き場所                         | `null extends WritableDataType` |
+| ----------------------------------------- | ------------------------------- |
+| `DataType` 自体に含める                   | **true（書けてしまう）**        |
+| `FieldCatalog` の値（`DataType \| null`） | **false（書けない）**           |
+
+つまり `DataType` に入れると **`P_Deleted` が Write 入力型に現れる** —
+reference が「Write 時の指定はできません」と明記している項目が書ける状態になり、
+**本 ADR が守ろうとしている 3 つの制約のうち 1 つが逆に壊れる**。
+`Exclude` に `| null` を足せば直るが、**既定が危険側で明示的に塞ぐ必要がある**構造になる。
+カタログ側に置けば**既定で安全側**（除外される）。フェイルセーフの向きが逆になる。
+
+意味の面でも、`DataType` は [ADR-0016][adr16] が定めた**正典の写し**（17 種）である。
+`null` を中に入れると「PORTERS の Data Type 一覧に『型なし』という型がある」と言うことになる。
+**不在は「対応表」の側に置く** — カタログが「この alias に PORTERS は型を割り当てていない」と記録する形が正しい。
 
 ### 型機構がそのまま制約を表現する（実測）
 
