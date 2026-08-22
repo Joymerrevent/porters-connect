@@ -21,6 +21,13 @@
 - [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
 - [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
+- [ ] **準備中に見つけた欠陥・手順の穴は、このリリース PR に含める**（後回しにしない）。
+      後追い PR（§5）に入れてよいのは「**公開が成功して初めて真になる事実**」だけ。
+
+> **どちらに入れるかの判断軸**（0.10.0 で取り違えた実績あり）。
+> **リリース PR** — CHANGELOG（**利用者向け・tarball に同梱**）、準備中に判明した欠陥や手順の穴。
+> **後追い PR** — 最新公開版・パッケージサイズなど、**publish が終わるまで書けない**もの。
+> publish は最後まで確定しない工程（失敗しうる）なので、先に書くと main に嘘が残る。
 
 ## 2. main へマージ（タグは自動）
 
@@ -47,9 +54,23 @@
 - 前提（初回のみ）: npmjs.com の該当パッケージ → **Settings → Trusted Publisher** に GitHub Actions（org `Joymerrevent` ／ repo `porters-connect` ／ workflow `release.yml`）を登録済みであること。
 - 失敗時の定番: `E404`（scoped）は npm < 11.5.1 が原因 → ワークフローは `npm@latest` に更新してから publish している。
 
+## 5. 公開の記録（後追い PR・develop へ）
+
+**publish が終わってから**、実測した事実をドキュメントに反映する（`docs/` のみ・`src/` は触らない）。
+
+- [ ] 本書「現在の状況」の**最新公開版**と累計版数
+- [ ] [roadmap][rm] の公開済み行・リリース記録（`npm view … dist.fileCount dist.unpackedSize` で実測したサイズ）
+- [ ] ブランチ経由で PR（**直 push しない**）。過去の例: 0.6.2 / 0.7.0 / 0.8.0 / 0.9.0 / 0.10.0 とも別 PR
+- ⚠️ **ここに入れてよいのは「公開が成功して初めて真になる事実」だけ**（§1 の判断軸を参照）。
+
 ## 現在の状況
 
-- ✅ 最新公開: **0.9.0**（npm latest・`v0.9.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-21）。0.2.0 以降この半自動フローで公開（**全 13 版**）。
+- ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
+- ⚠️ **`pnpm changeset:version` が現在動きません**（0.10.0 は版 bump と changeset 削除を手で実施）。
+  `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0` にも効き、
+  同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が v4 以降で削除されているため。
+  CHANGELOG は元から手書き（`changelog: false`・[ADR-0026][adr26]）なので**リリースはブロックされない**が、
+  §1 のこの手順だけ手作業になる。恒久対応は `@changesets/cli` を v3 へ（`read-yaml-file` が依存から消える）。
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
@@ -62,5 +83,6 @@
 [prd]: design/requirements.md
 [rm]: roadmap.md
 [adr25]: adr/0025-release-automation.md
+[adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
 [cl]: ../CHANGELOG.md
