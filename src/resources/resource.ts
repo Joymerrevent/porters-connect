@@ -175,7 +175,7 @@ export const buildReadUrl = <F extends FieldCatalog>(
   partition: number,
   path: string,
   q: SearchQuery<F>,
-  ctx: { prefix: string; fields: ReadonlyMap<string, DataType> },
+  ctx: { prefix: string; fields: ReadonlyMap<string, DataType | null> },
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -205,7 +205,9 @@ export const createResource = <
   deps: ResourceDeps,
 ): Resource<F, Req[number]> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
-  const fieldMap = new Map<string, DataType>(Object.entries(config.fields));
+  const fieldMap = new Map<string, DataType | null>(
+    Object.entries(config.fields),
+  );
   const decode = decoderFor(config.fields);
   // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
   const defaultFields = defaultFieldList(config.prefix, config.fields);

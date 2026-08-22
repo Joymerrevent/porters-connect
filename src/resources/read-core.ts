@@ -17,7 +17,14 @@ import { parseResourcePage, type RawItem } from "../xml/parser";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
-export type FieldCatalog = Record<string, DataType>;
+//
+// `null` means **PORTERS assigns this field no Data Type** — the reference's own `ー` (ADR-0056).
+// It is not "unset" / "unknown" / "to be decided", and it is not a new Data Type: it records an
+// absence the reference states. Today that is `P_Deleted` (Read-`field`-only: PORTERS rejects it in
+// condition / order / Write). Because every derivation runs off `keyof F`, `null` falls out of
+// `WritableKeys` / `OrderableKeys` and lands on `ConditionFor`'s `never` — the three restrictions
+// hold in the type system with no extra code.
+export type FieldCatalog = Record<string, DataType | null>;
 
 /**
  * What every resource accessor is handed: how to send (requester), where to send (access point —
@@ -63,24 +70,28 @@ const bareAlias = (key: string): string =>
 // Stryker restore StringLiteral
 
 /**
- * Build a catalog-driven item decoder: known `P_` fields decode by their Data Type, unknown
- * `U_`/`A_` aliases pass through (raw string, or null when nested). `bareAlias` strips the
- * `{prefix}.` so `Person.P_Name` and `P_Name` both hit the catalog.
+ * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
+ * no Data Type -> raw string), unknown `U_`/`A_` aliases pass through (raw string, or null when
+ * nested). `bareAlias` strips the `{prefix}.` so `Person.P_Name` and `P_Name` both hit the catalog.
  */
 export const decoderFor = <F extends FieldCatalog>(
   fields: F,
 ): ((item: RawItem) => ReadRecord<F>) => {
-  const fieldMap = new Map<string, DataType>(Object.entries(fields));
+  const fieldMap = new Map<string, DataType | null>(Object.entries(fields));
   return (item) => {
     const out: Record<string, FieldValue> = {};
     for (const [key, raw] of Object.entries(item)) {
       const alias = bareAlias(key);
+      // Catalog values are `DataType | null`, never undefined — so `undefined` here means
+      // "not in the catalog" and only that. A catalogued `null` goes through `decodeField`,
+      // which passes the raw string on (ADR-0056).
       const type = fieldMap.get(alias);
-      out[alias] = type
-        ? decodeField(type, raw)
-        : typeof raw === "string"
-          ? raw
-          : null;
+      out[alias] =
+        type === undefined
+          ? typeof raw === "string"
+            ? raw
+            : null
+          : decodeField(type, raw);
     }
     return out as ReadRecord<F>;
   };

@@ -10,6 +10,8 @@ import { appendPaging, decoderFor, type FieldCatalog } from "./read-core";
 const FIELDS = {
   P_Id: "System[Id]",
   P_Name: "SinglelineText",
+  // カタログにあるが PORTERS が Data Type を与えていない項目（ADR-0056）。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 describe("read-core — decoderFor", () => {
@@ -29,6 +31,14 @@ describe("read-core — decoderFor", () => {
     >;
     expect(rec.U_x).toBe("raw");
     expect(rec.U_obj).toBeNull();
+  });
+
+  it("catalogued but Data-Type-less (null) fields keep the raw string (ADR-0056)", () => {
+    const rec = decoderFor(FIELDS)({ "X.P_Deleted": "1" }) as Record<
+      string,
+      FieldValue | undefined
+    >;
+    expect(rec.P_Deleted).toBe("1");
   });
 });
 

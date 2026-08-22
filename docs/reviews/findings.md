@@ -40,7 +40,7 @@
 | [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed | Candidate の静的カタログが標準項目 4 件を欠く                     |
 | [RV-24][rv24] | 🟡     | ドキュメント / DX           | fixed | `defineFields` の使い方がどこにも無い                             |
 | [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | fixed | `partition` 未設定で無言のうちに `partition=0` を送る             |
-| [RV-26][rv26] | 🟡     | API 忠実性                  | open  | `P_Deleted` 未対応 ＝ 削除済みかを判別できない                    |
+| [RV-26][rv26] | 🟡     | API 忠実性                  | fixed | `P_Deleted` 未対応 ＝ 削除済みかを判別できない                    |
 | [RV-27][rv27] | 🟢     | ドキュメント / DX           | fixed | F-2 だけトピック ガイドが無い                                     |
 | [RV-28][rv28] | 🟢     | API 忠実性 / フェイルセーフ | fixed | `count` の範囲を送信前に検証しない                                |
 | [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed | reference ↔ カタログの突合が自動化されていない                    |

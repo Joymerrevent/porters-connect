@@ -133,9 +133,25 @@ await t.candidate.search({
 
 ここで言う `P_UpdateDate` は**削除された日時**、`P_UpdatedBy` は**最後に編集した人**です。
 
-> **どれが削除済みかは現時点では判別できません。** 削除状態を表す標準項目 `P_Deleted` が
-> まだカタログに載っていないためです（[findings RV-26][rv26]）。`"all"` は生存と削除済みを
-> 混ぜて返すので、当面は `"deleted"` と `"existing"` を分けて呼ぶのが確実です。
+### `P_Deleted` — どれが削除済みか
+
+`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します。
+
+```ts
+const page = await t.candidate.search({ itemstate: "all" });
+const deleted = page.items.filter((c) => c.P_Deleted === "1");
+```
+
+- **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
+  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
+  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します（[ADR-0056][adr56]）。
+- **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、
+  試みるとコンパイルエラーになります。**Write もできません**（`create` / `update` の入力に現れません）。
+- `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
+  `"{Prefix}.P_Deleted"`（例 `"Person.P_Deleted"`）を明示してください。
+
+> 応答での出現条件と値域は**実機で未確認**です（[live-verification][lv] LV-14）。
+> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
 
 ## `count` / `start` — ページング
 
@@ -164,14 +180,16 @@ page.start; // 今回の開始インデックス
 
 ## 関連
 
-- 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）
+- 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）／
+  [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 
 [adr5]: ../adr/0005-public-api-shape.md
 [adr20]: ../adr/0020-read-field-default.md
 [adr38]: ../adr/0038-read-query-surface-impl.md
+[adr56]: ../adr/0056-deleted-flag-typing.md
 [custom-fields]: custom-fields.md
+[lv]: ../live-verification.md
 [prd]: ../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
-[rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md

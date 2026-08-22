@@ -191,9 +191,12 @@ curl -s -G "${A[@]}" "$BASE/v1/candidate" -d partition=1 \
 curl -s -G "${A[@]}" "$BASE/v1/candidate" -d partition=1 \
   --data-urlencode "field=Person.P_Id,Person.P_Name" --data-urlencode "keywords=佐藤"
 
-# itemstate=deleted は常に 0 件（削除 API が無い＝削除済みレコードは存在しない）
+# itemstate=deleted は「削除済みとして seed したレコード」だけを返す。
+# リクエスト経由では何も削除できない（PORTERS も削除は画面側＝API の外）ので、
+# 削除済みを試したいときは seed に P_Deleted: "1" を入れて起動する。
+# all で読むと生存と混ざるため、判別は Person.P_Deleted（"0" / "1"）で行う（ADR-0056）。
 curl -s -G "${A[@]}" "$BASE/v1/candidate" -d partition=1 \
-  --data-urlencode "field=Person.P_Id" -d itemstate=deleted
+  --data-urlencode "field=Person.P_Id,Person.P_Deleted" -d itemstate=all
 ```
 
 `condition` の演算子: `full`（完全一致）/ `part`（部分一致）/ `eq` `gt` `ge` `le` `lt`（比較）/

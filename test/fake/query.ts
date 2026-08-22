@@ -6,6 +6,7 @@
 // substring match, ordering a plain value comparison. That is the "業務面は浅い" half of ADR-0043.
 
 import type { DataType } from "../../src/xml/decode";
+import { DELETED } from "./records";
 import type { FieldSelection } from "./wire";
 import type { FakeRecord, FakeValue } from "./types";
 
@@ -35,6 +36,11 @@ const NUMERIC_TYPES = new Set<DataType>([
   "User",
   "System[Reference]",
 ]);
+
+// A field with no Data Type — unknown alias (`undefined`) or one PORTERS types none
+// (`null` — ADR-0056) — compares as text, like every other non-numeric field.
+const isNumeric = (type: DataType | null | undefined): boolean =>
+  type !== undefined && type !== null && NUMERIC_TYPES.has(type);
 
 // Split on top-level commas only: a `field` entry may carry a parenthesised sub-selection
 // (`Person.P_Owner(User.P_Id,User.P_Name)`) whose commas are not separators.
@@ -141,11 +147,11 @@ const compare = (left: string, right: string, numeric: boolean): number => {
 const matchCondition = (
   record: FakeRecord,
   condition: ParsedCondition,
-  type: DataType | undefined,
+  type: DataType | null | undefined,
 ): boolean => {
   const value = record[condition.alias];
   if (value === undefined) return false;
-  const numeric = type !== undefined && NUMERIC_TYPES.has(type);
+  const numeric = isNumeric(type);
   const selected = asList(value);
   // `or` / `and` take colon-joined sets (Option aliases, or ids for Link/User/Reference).
   const wanted = condition.value.split(":");
@@ -173,6 +179,18 @@ const matchCondition = (
   }
 };
 
+/**
+ * itemstate: which delete state to read (reference: 削除済みデータ取得). `existing` — the API default
+ * — hides deleted records, `deleted` shows only them, `all` shows both (and `P_Deleted` is then the
+ * only way to tell which is which — ADR-0056). A resource without the field (Attachment) has no
+ * delete state, so it reads as alive.
+ */
+const matchItemState = (record: FakeRecord, itemstate: string): boolean => {
+  if (itemstate === "all") return true;
+  const deleted = record[DELETED] === "1";
+  return itemstate === "deleted" ? deleted : !deleted;
+};
+
 // Keyword search is an AND over the record's text values (reference: OR is not supported).
 const matchKeywords = (record: FakeRecord, keywords: string[]): boolean =>
   keywords.every((keyword) =>
@@ -188,23 +206,22 @@ const matchKeywords = (record: FakeRecord, keywords: string[]): boolean =>
 export const runReadQuery = (
   records: FakeRecord[],
   query: ReadQuery,
-  fields: Readonly<Record<string, DataType>>,
+  fields: Readonly<Record<string, DataType | null>>,
 ): { items: FakeRecord[]; total: number } => {
-  // There is no delete API, so nothing is ever in the "deleted" state: `deleted` reads empty and
-  // `all` equals `existing` (docs/reference: itemstate exists only to reach deleted records).
-  if (query.itemstate === "deleted") return { items: [], total: 0 };
   const matched = records.filter(
     (record) =>
+      matchItemState(record, query.itemstate) &&
       query.conditions.every((c) =>
         matchCondition(record, c, fields[c.alias]),
-      ) && matchKeywords(record, query.keywords),
+      ) &&
+      matchKeywords(record, query.keywords),
   );
   const sorted = [...matched].sort((a, b) => {
     for (const { alias, direction } of query.order) {
       const left = a[alias];
       const right = b[alias];
       if (left === undefined || right === undefined) continue;
-      const numeric = NUMERIC_TYPES.has(fields[alias]);
+      const numeric = isNumeric(fields[alias]);
       const diff = compare(asList(left)[0], asList(right)[0], numeric);
       if (diff !== 0) return direction === "asc" ? diff : -diff;
     }

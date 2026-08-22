@@ -150,7 +150,7 @@ const referenceInner = (id: string): string =>
 
 const fieldInner = (
   masters: FakeMasters,
-  type: DataType | undefined,
+  type: DataType | null | undefined,
   value: FakeValue,
   sub: string[],
   optionShape: OptionShape,
@@ -174,7 +174,7 @@ const fieldInner = (
 /** How to render a record's fields: the alias prefix, the catalog, and the Option nesting. */
 export type ItemShape = {
   prefix: string;
-  fields: Readonly<Record<string, DataType>>;
+  fields: Readonly<Record<string, DataType | null>>;
   masters: FakeMasters;
   /** Default `root`. */
   optionShape?: OptionShape;
@@ -202,8 +202,13 @@ export const buildItemXml = (
       // asks for a User-typed field as `alias(User.P_Id,…)`, and nothing else nests like that.
       const declaredUser =
         sub.length > 0 && sub.every((name) => name.startsWith("User."));
+      // The heuristic is for aliases the catalog does not know. A catalogued `null` (PORTERS
+      // assigns no Data Type — ADR-0056) is known and stays `null`: a raw scalar on the wire.
+      const catalogued = shape.fields[alias];
       const type =
-        shape.fields[alias] ?? (declaredUser ? ("User" as const) : undefined);
+        catalogued === undefined && declaredUser
+          ? ("User" as const)
+          : catalogued;
       return element(
         tag,
         fieldInner(

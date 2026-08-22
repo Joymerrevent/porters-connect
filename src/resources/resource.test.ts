@@ -16,6 +16,9 @@ const FIELDS = {
   P_When: "DateTime",
   P_Phase: "Option",
   P_Name: "SinglelineText",
+  // PORTERS が Data Type を与えていない項目（ADR-0056）。Read の field には出るが
+  // condition / order / Write には出ない — 導出型がそれを自動で満たす。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 const CONFIG = {
@@ -148,9 +151,10 @@ describe("createResource — Read", () => {
 
 describe("createResource — default field (ADR-0020)", () => {
   // The default field set the factory derives from CONFIG's catalog: every alias prefixed,
-  // the User field expanded to its 4 readable sub-fields, the rest plain.
+  // the User field expanded to its 4 readable sub-fields, the rest plain — including the
+  // Data-Type-less `P_Deleted`, which is a Read-`field` field like any other (ADR-0056).
   const DEFAULT_FIELD =
-    "field=W.P_Id,W.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail),W.P_When,W.P_Phase,W.P_Name";
+    "field=W.P_Id,W.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail),W.P_When,W.P_Phase,W.P_Name,W.P_Deleted";
 
   it("search() with no field sends the catalog default (User expanded)", async () => {
     const calls: Call[] = [];
