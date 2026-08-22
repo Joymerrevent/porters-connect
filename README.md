@@ -58,15 +58,14 @@ const porters = new PortersClient({
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
-  partition: 123, // 既定 Partition（Company DB）Id
 });
 
-// 複数 partition を 1 つの App で扱う SaaS は porters.tenant(id) で束ねる
+// partition（Company DB）は tenant で一度だけ束ねる。**単一テナントでもこの形**
+// 以降は `t` をクライアントのように使う（client 直下には auth と partition マスタだけ）
 const t = porters.tenant(456);
-await t.candidate.search({ condition: { P_Name: { part: "鈴木" } } }); // partition=456
 
 // 検索（最大 200 件/ページ）。condition は項目の Data Type ごとに型付き
-const page = await porters.candidate.search({
+const page = await t.candidate.search({
   condition: { P_Name: { part: "山田" } }, // テキストは part（部分一致）/ full（完全一致）
   order: [{ P_UpdateDate: "desc" }], // 並び順（数値・日時・System のみ）
   count: 50,
@@ -74,18 +73,21 @@ const page = await porters.candidate.search({
 console.log(page.total, page.items.length);
 
 // 1 件取得
-const one = await porters.candidate.get(10001);
+const one = await t.candidate.get(10001);
 console.log(one?.P_Name);
 
 // 全件を自動ページング（200 件刻み）
-for await (const c of porters.candidate.searchAll({
+for await (const c of t.candidate.searchAll({
   condition: { P_Prefecture: { full: "東京都" } },
 })) {
   // c は 1 件ずつ
 }
 ```
 
-> 複数 partition を 1 つの App で扱う（マルチテナント SaaS）場合の `porters.tenant(id)` スコープ・テナント別 client・partition 発見は [マルチテナント ガイド][multi-tenancy] にまとめています。
+> **`partition` はクライアントに持たせません**（ADR-0055）。PORTERS は partition スコープの全リクエストで
+> `partition` を要求するので、`tenant(id)` で**明示的に一度だけ**束ねる形にしています。
+> 複数 partition を 1 つの App で扱う場合・テナント別 client・partition の発見は
+> [マルチテナント ガイド][multi-tenancy] にまとめています。
 >
 > 認証情報やホスト名は**コミットしない**でください。`.env.example` を参考に `.env` で渡します。
 
@@ -103,7 +105,6 @@ const porters = new PortersClient({
   host: "sandbox.invalid",
   appId: "demo",
   appSecret: "demo",
-  partition: 1,
   transport: createMockTransport((req) =>
     req.url.includes("/v1/candidate")
       ? `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><Person.P_Id>1</Person.P_Id><Person.P_Name>山田 太郎</Person.P_Name></Item></Candidate>`
@@ -111,7 +112,7 @@ const porters = new PortersClient({
   ), // 未モックのリクエストは明示エラー（フェイルセーフ）
 });
 
-const page = await porters.candidate.search();
+const page = await t.candidate.search();
 console.log(page.items[0]?.P_Name); // 山田 太郎
 ```
 
@@ -141,7 +142,7 @@ const tokenStore: TokenStore = {
     /* 破棄 */
   },
 };
-new PortersClient({ host, appId, appSecret, partition, tokenStore });
+new PortersClient({ host, appId, appSecret, tokenStore });
 ```
 
 `transport`（HTTP 注入）や `auth`（独自 `TokenProvider`）も差し替え可能です。
@@ -166,14 +167,14 @@ await porters.auth.exchangeAuthorizationCode(code);
 
 すべてのデータ系リソースは同じ形のアクセサを持ちます。
 
-| アクセサ             | リソース     | メソッド                                             |
-| -------------------- | ------------ | ---------------------------------------------------- |
-| `porters.candidate`  | 個人連絡先   | `search` / `searchAll` / `get` / `create` / `update` |
-| `porters.job`        | JOB          | `search` / `searchAll` / `get` / `create` / `update` |
-| `porters.client`     | 企業         | `search` / `searchAll` / `get` / `create` / `update` |
-| `porters.process`    | 選考プロセス | `search` / `searchAll` / `get` / `create` / `update` |
-| `porters.resume`     | レジュメ     | `search` / `searchAll` / `get` / `create` / `update` |
-| `porters.attachment` | 添付ファイル | `search` / `get` / `create` / `update`               |
+| アクセサ       | リソース     | メソッド                                             |
+| -------------- | ------------ | ---------------------------------------------------- |
+| `t.candidate`  | 個人連絡先   | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.job`        | JOB          | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.client`     | 企業         | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.process`    | 選考プロセス | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.resume`     | レジュメ     | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.attachment` | 添付ファイル | `search` / `get` / `create` / `update`               |
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。
 - `searchAll(query?)` → `AsyncIterable`（200 件刻みで全件 yield）。
@@ -214,11 +215,10 @@ const porters = new PortersClient({
   host,
   appId,
   appSecret,
-  partition,
   fields,
 });
 
-const one = await porters.candidate.get(10001);
+const one = await t.candidate.get(10001);
 one?.U_score; // number | null | undefined
 ```
 
@@ -234,25 +234,25 @@ one?.U_score; // number | null | undefined
 | アクセサ            | リソース          | メソッド                           | 主なクエリ                                |
 | ------------------- | ----------------- | ---------------------------------- | ----------------------------------------- |
 | `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1=アクセス可能一覧・既定） |
-| `porters.user`      | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`      |
-| `porters.field`     | Field（項目定義） | `search` / `searchAll`             | `resource`（必須）/ `active`              |
-| `porters.option`    | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`             |
+| `t.user`            | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`      |
+| `t.field`           | Field（項目定義） | `search` / `searchAll`             | `resource`（必須）/ `active`              |
+| `t.option`          | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`             |
 
 ```ts
 // アクセス可能な Partition（Company DB）を発見
 const partitions = await porters.partition.search();
 
 // 現在の API ユーザー（code_direct ではアプリ自身の User）＝自己同定
-const me = await porters.user.current();
+const me = await t.user.current();
 
 // Job リソースの項目定義（U_/A_ カスタム項目を含む）を取得
-const fields = await porters.field.search({ resource: "job" });
+const fields = await t.field.search({ resource: "job" });
 
 // 選択肢マスタをフラットな配列で取得（親子は P_ParentId で復元）
-const options = await porters.option.search({ alias: "Option.P_Gender" });
+const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 
-- `porters.option.search()` は入れ子の選択肢ツリーを**深さ優先でフラット化**して返します（全ノード・`P_ParentId`/`P_Order` で階層復元可）。`start` が無いため `searchAll` はありません。
+- `t.option.search()` は入れ子の選択肢ツリーを**深さ優先でフラット化**して返します（全ノード・`P_ParentId`/`P_Order` で階層復元可）。`start` が無いため `searchAll` はありません。
 - `porters.partition.current()` は提供しません（`request_type=0` は既定の `code_direct` 認証では 403 になるため）。一覧は `search()`（既定 `requestType: 1`）で取得します。
 
 ## 読み取り値の表現
@@ -272,7 +272,7 @@ PORTERS の Field Type に応じてデコードされます。
 | 空・未設定                                          | `null`                                          |
 
 ```ts
-const c = await porters.candidate.get(10001);
+const c = await t.candidate.get(10001);
 c?.P_Id; // number
 c?.P_Name; // string | null
 c?.P_RegistrationDate; // "2026-01-02T03:04:05Z" | null
@@ -295,17 +295,17 @@ c?.P_Owner; // { P_Id, P_Name, ... } | null
 
 ```ts
 // 作成（新規）
-const newId = await porters.candidate.create({
+const newId = await t.candidate.create({
   P_Owner: 5, // User 項目は id
   P_Name: "鈴木 一郎",
   P_Reading: "すずき いちろう",
 });
 
 // 更新
-await porters.candidate.update(newId, { P_Mail: "ichiro@example.com" });
+await t.candidate.update(newId, { P_Mail: "ichiro@example.com" });
 
 // 選考プロセス（関連 id を指定）
-await porters.process.create({
+await t.process.create({
   P_Owner: 1,
   P_Client: 100,
   P_Recruiter: 200,
@@ -315,7 +315,7 @@ await porters.process.create({
 });
 
 // 一括作成／更新（200 件＋サイズで自動分割・部分成功を返す）
-const bulk = await porters.candidate.createMany([
+const bulk = await t.candidate.createMany([
   { P_Owner: 5, P_Name: "山田 太郎" },
   { P_Owner: 5, P_Name: "鈴木 花子" },
 ]);
@@ -331,7 +331,7 @@ if (bulk.hasFailures) console.warn(bulk.failed); // per-item は throw せず結
 ```ts
 import { bytesToBase64 } from "@joymerrevent/porters-connect";
 
-const id = await porters.attachment.create({
+const id = await t.attachment.create({
   resource: 17, // 関連リソース種別コード（Resource List 参照）
   resourceId: 10001, // 関連レコードの id
   contentType: "application/pdf",
@@ -351,7 +351,7 @@ const id = await porters.attachment.create({
 import { PortersError } from "@joymerrevent/porters-connect";
 
 try {
-  await porters.candidate.get(1);
+  await t.candidate.get(1);
 } catch (e) {
   if (e instanceof PortersError) {
     e.category; // "auth" | "permission" | "notFound" | "conflict" | "network" | ...
@@ -365,7 +365,7 @@ try {
 
 - トークン失効は内側で自動回復します。設定ミスは `PortersConfigError` で早期に落とします。
 - **`Promise` を返す公開メソッドは同期 throw しません**（[ADR-0046][adr46]）。設定ミスも含め常に **reject** で届くので、
-  `porters.candidate.search(q).catch(handler)` でも捕まえられます（`string` を返す `auth.authorizationUrl` や
+  `t.candidate.search(q).catch(handler)` でも捕まえられます（`string` を返す `auth.authorizationUrl` や
   コンストラクタなど、Promise を返さない API は同期 throw のままです）。
 - 一時エラー・ネットワークは内蔵リトライ。非冪等な `create` はネットワーク不確実時に握り潰さず表面化します。
 - レート制限超過時、PORTERS は判別可能なコードを返さず接続を切るため、`PortersNetworkError`（category `"network"`）として表面化します。

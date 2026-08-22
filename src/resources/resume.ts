@@ -54,6 +54,9 @@ const FIELDS = {
   P_ExpectSalary: "Number",
   P_DesiredHourlyRate: "Number",
   P_HourlyRate: "Number",
+  // 削除状態（"0" / "1"）。PORTERS が Data Type を与えていない項目＝`null`（ADR-0056。
+  // 詳細は candidate.ts のコメント）。Read の field でのみ指定でき、型もそう振る舞う。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 // Required on create per docs/reference (resources/resume.md「新規必須」列): P_Owner / P_Candidate

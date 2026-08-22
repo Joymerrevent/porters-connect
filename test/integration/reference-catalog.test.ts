@@ -27,7 +27,9 @@ import type { DataType } from "../../src/xml/decode";
 
 // Field Type（reference の表記）→ Data Type（ライブラリ内部の粒度）。ADR-0016 の対応表。
 // Option の 3 サブタイプは Option に、Currency は Number に畳む（PORTERS 自身の Data Type と同じ）。
-const DATA_TYPE_OF: Record<string, DataType> = {
+// `ー` は「PORTERS が Data Type を与えていない」＝ `null`（ADR-0056）。新しい型ではなく不在の記録。
+const DATA_TYPE_OF: Record<string, DataType | null> = {
+  ー: null,
   "System[Id]": "System[Id]",
   "System[DateTime]": "System[DateTime]",
   "System[Reference]": "System[Reference]",
@@ -48,10 +50,11 @@ const DATA_TYPE_OF: Record<string, DataType> = {
 };
 
 // カタログに載せない Field Type。
-// - `Reference`（Field Type 16）は「参照表示専用。項目自体は値を持たない」（docs/reference の型一覧）。
-// - `ー` は Field Type が定義されていない行＝ `P_Deleted`（Read の field でのみ指定可・Write 不可）。
-//   `P_Deleted` を扱うかどうかは RV-26 の論点で、決まるまでは対象外。
-const NOT_IN_CATALOG = new Set(["Reference", "ー"]);
+// - `Reference`（Field Type 16）は「**当該項目自体にデータを持つことはありません**」（docs/reference の
+//   型一覧）＝値が無いので読む対象にならない。除外の理由は「値を持たない」ことであって「型が無い」ことではない。
+// - `ー`（＝ `P_Deleted`）は**除外しない**。型は無いが**値は持つ**（0/1）ので、`null` として
+//   カタログに載せる（ADR-0056）。この 2 つを一緒くたにしていたのが RV-26 の原因。
+const NOT_IN_CATALOG = new Set(["Reference"]);
 
 type RefField = { alias: string; fieldType: string };
 
@@ -88,7 +91,7 @@ describe.each(TARGETS)(
       descriptor.prefix,
     );
     const valued = fields.filter((f) => !NOT_IN_CATALOG.has(f.fieldType));
-    const catalog = descriptor.fields as Record<string, DataType>;
+    const catalog = descriptor.fields as Record<string, DataType | null>;
 
     it("reference の表を読めている（前提の自己チェック）", () => {
       // 表の形が変わって 0 件になったら、以下の検査が素通りしてしまうので先に固定する。
@@ -109,7 +112,7 @@ describe.each(TARGETS)(
       expect(phantom).toEqual([]);
     });
 
-    it("Field Type → Data Type の対応が一致する", () => {
+    it("Field Type → Data Type の対応が一致する（`ー` → null を含む）", () => {
       const mismatched = valued
         .filter((f) => f.alias in catalog)
         .map((f) => ({
@@ -119,6 +122,12 @@ describe.each(TARGETS)(
         }))
         .filter((x) => x.reference !== x.catalog);
       expect(mismatched).toEqual([]);
+    });
+
+    it("削除フラグは型を持たない項目としてカタログにある（RV-26 / ADR-0056）", () => {
+      // 「型が無い」ことの記録が消える／`Number` 等に化けるのを防ぐ。値は持つので除外もしない。
+      expect("P_Deleted" in catalog).toBe(true);
+      expect(catalog.P_Deleted).toBeNull();
     });
   },
 );

@@ -168,6 +168,46 @@ grep -rn "VERIFY(live)" src test
 - **確認結果**: —
 - **関連**: PRD §8 から移送（2026-08-09）。旧記載は「PoC / ポーターズ確認」
 
+## LV-14 `P_Deleted` の wire 形と出現条件
+
+- **現在の対応 / 仮定**: `<Person.P_Deleted>0</Person.P_Deleted>` の**平文スカラー**で返る前提。
+  カタログには **`P_Deleted: null`**（＝ PORTERS が Data Type を与えていない）と載せ、
+  decode は**生の文字列**（`"0"` / `"1"`）のまま返す（[ADR-0056][a56]）。
+  `field` 省略時の既定リストに入るので、**itemstate に関わらず毎回要求**している
+- **不確実な理由**: reference は値の意味（0＝生存 / 1＝削除済み）と
+  「Read の field でのみ指定可・Write 不可」だけを書き、**応答 XML の実例を載せていない**。
+  Field Type / Data Type 欄がともに「ー」＝ネストの有無を決める型情報が無いので、
+  平文である保証は取れていない
+- **コード箇所**: `src/xml/decode.ts`（`decodeField` の `type === null` 分岐）／
+  各カタログの `P_Deleted: null`（`src/resources/{candidate,job,client,process,resume}.ts`）
+- **確認方法**: 実機で 3 点。
+  1. `field` に `{Prefix}.P_Deleted` を含めた Read の応答 XML — 平文スカラーか、何かにネストするか
+  2. **`itemstate` 省略（＝ `existing`）でも返るか**、`deleted` / `all` のときだけ返るか
+  3. 値が **`0` / `1` 以外**を取りうるか（空・未設定を含む）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 起票は [findings RV-26][findings]。ネストしていた場合は decode の分岐だけを直す
+  （型は `null` のままでよい＝カタログの形は変わらない）。値域が 2 値でなかった場合も同じ
+
+## LV-15 `itemstate=existing` を明示送信して受け付けられるか
+
+- **現在の対応 / 仮定**: **受け付けられる前提**。[ADR-0057][a57]（案A）で、利用者が
+  `itemstate: "existing"` と**明示指定したときは省略せず送る**ようにした
+  （省略＝`undefined` のときだけサーバーの既定に委ねる）
+- **不確実な理由**: reference の Read パラメータ表は `existing`（既定）/ `deleted` / `all` の 3 値を
+  **値として明記**しているので仮定とまでは言えない。ただし **`existing` を明示送信した実績はゼロ**で、
+  「既定を説明しているだけで、送るのは `deleted` / `all` のみ」という読み方も文面上は否定できない。
+  外れたときの形が重く、**`existing` を明示指定した Read が全部 Result Code 133
+  （itemstate 値が無効）で落ちる**
+- **コード箇所**: `src/resources/query.ts`（`appendReadQuery` の itemstate 分岐）
+- **確認方法**: `itemstate=existing` を付けた Read を実機に投げ、**HTTP 200 ＋ ルート `<Code>0`** が返り、
+  かつ**結果が `itemstate` 無しの Read と一致する**ことを確認する。133 が返るなら案A を撤回して
+  [ADR-0038][a38] SD-4 の省略へ戻す（新しい ADR で [ADR-0057][a57] を supersede する）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 削除済み読み取りの系列＝ LV-14（`P_Deleted` の wire 形）。
+  この 2 つは**同じスモークでまとめて確認できる**
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -186,3 +226,6 @@ grep -rn "VERIFY(live)" src test
 [a40]: adr/0040-multitenancy-surface-impl.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md
+[a38]: adr/0038-read-query-surface-impl.md
+[a56]: adr/0056-deleted-flag-typing.md
+[a57]: adr/0057-itemstate-existing-explicit.md

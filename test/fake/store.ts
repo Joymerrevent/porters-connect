@@ -2,8 +2,13 @@
 // Deliberately stateful — that is what separates the fake from `createMockTransport` (a stateless
 // stub, N1): `create -> read -> update` has to round-trip (ADR-0043).
 //
-// PORTERS has no delete API, so this store has no delete either — the constraint is honoured by
-// construction rather than by a rule someone has to remember (fail-safe).
+// PORTERS has no delete *operation*, so this store has no delete either — the constraint is
+// honoured by construction rather than by a rule someone has to remember (fail-safe).
+//
+// That is not the same as "no deleted records exist". Real records are deleted in the PORTERS UI,
+// outside the API, and `itemstate` exists to read them; the fake reaches that state through a seed
+// (`records.ts`), never through a request. Treating the two as one thing is what made `itemstate`
+// untestable before ADR-0056.
 //
 // Records only: what a *field* means (server-owned timestamps, User / Option expansion) is decided
 // one layer up, in `records.ts` and `wire.ts`, where the Data-Type catalog is in hand.

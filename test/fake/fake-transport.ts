@@ -21,7 +21,12 @@ import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";
 import { parseReadQuery, runReadQuery } from "./query";
 import { createRateLimiter } from "./rate-limit";
-import { createRecord, updateRecord, type RecordContext } from "./records";
+import {
+  createRecord,
+  seedRecord,
+  updateRecord,
+  type RecordContext,
+} from "./records";
 import {
   FAKE_DATA_DESCRIPTORS,
   FAKE_RESOURCES,
@@ -142,7 +147,7 @@ export const createFakeTransport = (
         );
       }
       for (const record of records) {
-        createRecord(store, descriptor, record, context);
+        seedRecord(store, descriptor, record, context);
       }
     }
   };

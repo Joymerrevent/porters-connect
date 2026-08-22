@@ -81,7 +81,9 @@ describe("custom fields — PortersClient generic typing", () => {
     const porters = new PortersClient({ host: "h.test", fields });
     expect(porters).toBeInstanceOf(PortersClient); // construct OK + uses the value
 
-    type Rec = NonNullable<Awaited<ReturnType<typeof porters.candidate.get>>>;
+    type Rec = NonNullable<
+      Awaited<ReturnType<ReturnType<typeof porters.tenant>["candidate"]["get"]>>
+    >;
     expectTypeOf<Rec>()
       .toHaveProperty("U_score")
       .toEqualTypeOf<number | null | undefined>();
@@ -92,7 +94,9 @@ describe("custom fields — PortersClient generic typing", () => {
       .toHaveProperty("P_Name")
       .toEqualTypeOf<string | null | undefined>(); // standard fields still present
 
-    type Create = Parameters<typeof porters.candidate.create>[0];
+    type Create = Parameters<
+      ReturnType<typeof porters.tenant>["candidate"]["create"]
+    >[0];
     expectTypeOf<Create>()
       .toHaveProperty("U_score")
       .toEqualTypeOf<number | null | undefined>(); // custom = optional on create
@@ -102,7 +106,9 @@ describe("custom fields — PortersClient generic typing", () => {
   it("leaves a client without `fields` unchanged (no custom keys)", () => {
     const plain = new PortersClient({ host: "h.test" });
     expect(plain).toBeInstanceOf(PortersClient);
-    type Rec = NonNullable<Awaited<ReturnType<typeof plain.candidate.get>>>;
+    type Rec = NonNullable<
+      Awaited<ReturnType<ReturnType<typeof plain.tenant>["candidate"]["get"]>>
+    >;
     expectTypeOf<Rec>().not.toHaveProperty("U_score");
   });
 });

@@ -11,6 +11,18 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # サプライチェーン対策の熟成期間。公開直後の版は PR にせず、レジストリから
+    # 悪性リリースが発見・削除されるまでの時間を稼ぐ（防御の本体は「時間」）。
+    # cooldown が効くのは version updates だけで、security updates は素通りする＝
+    # 「新しいだけの更新は待つ／穴が空いたら即塞ぐ」。待つことで穴は開かない。
+    # pnpm-workspace.yaml の minimumReleaseAge と日数を揃えること（下記参照）。
+    cooldown:
+      default-days: 7
+      # major はランタイム要件や破壊的変更を伴い、追従コストも切り戻しコストも
+      # 大きい。エコシステム側の様子見が済んでから受ける。
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
     groups:
       dev-dependencies:
         dependency-type: "development"
@@ -32,6 +44,12 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    # npm 側と同じ熟成期間。アクションは SHA ピンで参照しているが、ピンを付け替える
+    # のは Dependabot 自身なので、タグが指す先をすげ替える攻撃には SHA ピンだけでは
+    # 足りない。github-actions エコシステムは semver 別の指定に非対応のため
+    # default-days のみ（major も 7 日で受ける）。
+    cooldown:
+      default-days: 7
     # 複数アクションの更新を 1 つの PR にまとめてノイズを減らす。
     # ただし major はランタイム変更（Node バージョン）や入力の破壊的変更を伴うため
     # グループから外して個別 PR で受ける（npm 側と同方針）。まとめると「1 件だけ

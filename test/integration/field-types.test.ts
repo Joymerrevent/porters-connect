@@ -35,7 +35,6 @@ const setup = () => {
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: fake,
     fields,
   });
@@ -46,7 +45,7 @@ describe("field type round-trips", () => {
   it("carries every standard Data Type through create -> read", async () => {
     const { porters } = setup();
 
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5, // User -> ID in, nested out
       P_Name: "山田 太郎", // SinglelineText
       P_Mail: "taro@example.com", // Mail
@@ -60,7 +59,7 @@ describe("field type round-trips", () => {
       U_recruiter: 7, // User (declared custom)
     });
 
-    const c = await porters.candidate.get(id);
+    const c = await porters.tenant(1).candidate.get(id);
 
     expect(c?.P_Id).toBe(id); // System[Id] -> number
     expect(c?.P_Name).toBe("山田 太郎");
@@ -83,51 +82,53 @@ describe("field type round-trips", () => {
   it("round-trips a multi-select Option, including replacing the selection", async () => {
     const { porters } = setup();
 
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       U_tags: ["Option.P_Java", "Option.P_TypeScript", "Option.P_Go"],
     });
-    expect((await porters.candidate.get(id))?.U_tags).toEqual([
+    expect((await porters.tenant(1).candidate.get(id))?.U_tags).toEqual([
       "Option.P_Java",
       "Option.P_TypeScript",
       "Option.P_Go",
     ]);
 
     // An update replaces the whole selection (PORTERS writes the set, not a delta).
-    await porters.candidate.update(id, { U_tags: ["Option.P_Rust"] });
-    expect((await porters.candidate.get(id))?.U_tags).toEqual([
+    await porters.tenant(1).candidate.update(id, { U_tags: ["Option.P_Rust"] });
+    expect((await porters.tenant(1).candidate.get(id))?.U_tags).toEqual([
       "Option.P_Rust",
     ]);
   });
 
   it("round-trips System[Reference] as the referenced record's id", async () => {
     const { porters } = setup();
-    const candidateId = await porters.candidate.create({
+    const candidateId = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
     });
 
-    const resumeId = await porters.resume.create({
+    const resumeId = await porters.tenant(1).resume.create({
       P_Owner: 5,
       P_Candidate: candidateId, // System[Reference] -> ID in, nested id out
       P_Name: "職務経歴書",
     });
 
-    expect((await porters.resume.get(resumeId))?.P_Candidate).toBe(candidateId);
+    expect((await porters.tenant(1).resume.get(resumeId))?.P_Candidate).toBe(
+      candidateId,
+    );
   });
 
   it("distinguishes an unset field (null) from a cleared one", async () => {
     const { porters } = setup();
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
       P_Mail: "taro@example.com",
     });
 
     // `null` omits the field (leaves it unchanged); `""` clears it.
-    await porters.candidate.update(id, { P_Name: null, P_Mail: "" });
+    await porters.tenant(1).candidate.update(id, { P_Name: null, P_Mail: "" });
 
-    const c = await porters.candidate.get(id);
+    const c = await porters.tenant(1).candidate.get(id);
     expect(c?.P_Name).toBe("山田 太郎"); // untouched
     expect(c?.P_Mail).toBeNull(); // cleared -> empty element -> null
     expect(c?.P_Reading).toBeNull(); // never set
@@ -135,14 +136,14 @@ describe("field type round-trips", () => {
 
   it("filters on every condition family the query surface exposes", async () => {
     const { porters } = setup();
-    await porters.candidate.create({
+    await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
       P_PhaseDate: "2026-01-02T03:04:05Z",
       U_score: 10,
       U_tags: ["Option.P_Java"],
     });
-    await porters.candidate.create({
+    await porters.tenant(1).candidate.create({
       P_Owner: 7,
       P_Name: "佐藤 次郎",
       P_PhaseDate: "2026-06-01T00:00:00Z",
@@ -150,22 +151,22 @@ describe("field type round-trips", () => {
       U_tags: ["Option.P_Go"],
     });
 
-    const byUser = await porters.candidate.search({
+    const byUser = await porters.tenant(1).candidate.search({
       condition: { P_Owner: { eq: 7 } },
     });
     expect(byUser.items.map((c) => c.P_Name)).toEqual(["佐藤 次郎"]);
 
-    const byNumber = await porters.candidate.search({
+    const byNumber = await porters.tenant(1).candidate.search({
       condition: { U_score: { ge: 50 } },
     });
     expect(byNumber.total).toBe(1);
 
-    const byDate = await porters.candidate.search({
+    const byDate = await porters.tenant(1).candidate.search({
       condition: { P_PhaseDate: { lt: "2026-03-01T00:00:00Z" } },
     });
     expect(byDate.items.map((c) => c.P_Name)).toEqual(["山田 太郎"]);
 
-    const byOption = await porters.candidate.search({
+    const byOption = await porters.tenant(1).candidate.search({
       condition: { U_tags: { or: ["Option.P_Java", "Option.P_Rust"] } },
     });
     expect(byOption.items.map((c) => c.P_Name)).toEqual(["山田 太郎"]);

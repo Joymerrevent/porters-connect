@@ -2,9 +2,16 @@
 
 import { describe, expect, it } from "vitest";
 
+import { PortersConfigError } from "../../src/errors";
+import { ATTACHMENT_DESCRIPTOR } from "./resources";
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import type { FakeResource } from "./resources";
-import { createRecord, updateRecord, type RecordContext } from "./records";
+import {
+  createRecord,
+  seedRecord,
+  updateRecord,
+  type RecordContext,
+} from "./records";
 import { createFakeStore } from "./store";
 
 const CANDIDATE: FakeResource = {
@@ -43,7 +50,22 @@ describe("createRecord", () => {
       P_UpdateDate: "2026/01/02 03:04:05",
       P_RegisteredBy: "9",
       P_UpdatedBy: "9",
+      P_Deleted: "0", // 生存（この store に削除は無い）— ADR-0056
     });
+  });
+
+  it("ignores a caller-supplied delete flag (Write 不可 — ADR-0056)", () => {
+    const { store, context } = setup();
+
+    // 型では書けない項目なので、ここに来るのはキャスト経由だけ。それでも通さない。
+    const record = createRecord(
+      store,
+      CANDIDATE,
+      { P_Id: "-1", P_Deleted: "1" },
+      context,
+    );
+
+    expect(record.P_Deleted).toBe("0");
   });
 
   it("ignores a caller-supplied Write-restricted timestamp", () => {
@@ -71,6 +93,48 @@ describe("createRecord", () => {
 
     expect(record.P_RegisteredBy).toBe("42");
     expect(record.P_UpdatedBy).toBe("9");
+  });
+});
+
+describe("seedRecord — 削除済みは API の外から入る（ADR-0056）", () => {
+  it("seed だけが削除済みのレコードを置ける", () => {
+    const { store, context } = setup();
+
+    const alive = seedRecord(store, CANDIDATE, { P_Name: "生存" }, context);
+    const dead = seedRecord(
+      store,
+      CANDIDATE,
+      { P_Name: "削除", P_Deleted: "1" },
+      context,
+    );
+
+    expect(alive.P_Deleted).toBe("0"); // 省略時は生存
+    expect(dead.P_Deleted).toBe("1");
+  });
+
+  it("「0」「1」以外は fixture の誤りとして弾く（黙って生存扱いにしない）", () => {
+    const { store, context } = setup();
+
+    expect(() =>
+      seedRecord(store, CANDIDATE, { P_Deleted: "true" }, context),
+    ).toThrow(PortersConfigError);
+  });
+
+  it("削除フラグを持たないリソース（Attachment）には何も設定しない", () => {
+    const { store, context } = setup();
+    const attachment: FakeResource = {
+      descriptor: ATTACHMENT_DESCRIPTOR,
+      idAlias: "Id",
+    };
+
+    const record = seedRecord(
+      store,
+      attachment,
+      { FileName: "a.pdf", P_Deleted: "1" },
+      context,
+    );
+
+    expect(record.P_Deleted).toBeUndefined();
   });
 });
 

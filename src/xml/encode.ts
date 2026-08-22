@@ -31,12 +31,15 @@ export type WritableDataType = Exclude<
 
 // Per-Data-Type write value (mirror of `encodeField`): User / System[Reference] / Number take a
 // number, Option an alias array, the rest a scalar string. Drives the static Write type (ADR-0019).
-export type WriteValueOf<D extends DataType> = D extends
-  "User" | "System[Reference]" | "Number"
-  ? number
-  : D extends "Option"
-    ? string[]
-    : string;
+// A field PORTERS gives no Data Type (`null` — ADR-0056) has no write value at all: it is already
+// out of `WritableKeys`, and `never` keeps it that way if it is ever reached directly.
+export type WriteValueOf<D extends DataType | null> = D extends null
+  ? never
+  : D extends "User" | "System[Reference]" | "Number"
+    ? number
+    : D extends "Option"
+      ? string[]
+      : string;
 
 // Element-content escaping. Only `& < >` are significant in PCDATA; we never emit
 // attributes, so quotes are left as-is.
@@ -84,11 +87,13 @@ export const encodeField = (
   }
 };
 
-// One `<Item>…</Item>` body. Unknown aliases (custom U_/A_, no catalog entry) fall
-// back to Text — symmetric with decode's raw-string passthrough (fail-safe).
+// One `<Item>…</Item>` body. Aliases without a Data Type fall back to Text — symmetric with
+// decode's raw-string passthrough (fail-safe). Two ways to get there: a custom U_/A_ alias with no
+// catalog entry (`undefined`), or a catalogued field PORTERS gives no Data Type (`null` — ADR-0056).
+// The latter only arrives via a cast: the static Write input excludes it, as PORTERS does.
 const encodeItem = (
   prefix: string,
-  fields: ReadonlyMap<string, DataType>,
+  fields: ReadonlyMap<string, DataType | null>,
   item: WriteItem,
 ): string => {
   const parts: string[] = [];
@@ -96,7 +101,10 @@ const encodeItem = (
     // null / undefined -> omit (leave unchanged); "" is kept (clears a Text field).
     if (value === null || value === undefined) continue;
     const type = fields.get(alias);
-    const inner = type === undefined ? scalar(value) : encodeField(type, value);
+    const inner =
+      type === undefined || type === null
+        ? scalar(value)
+        : encodeField(type, value);
     parts.push(`<${prefix}.${alias}>${inner}</${prefix}.${alias}>`);
   }
   return parts.join("");
@@ -108,7 +116,7 @@ const encodeItem = (
  */
 export const encodeWriteItem = (
   prefix: string,
-  fields: ReadonlyMap<string, DataType>,
+  fields: ReadonlyMap<string, DataType | null>,
   item: WriteItem,
 ): string => `<Item>${encodeItem(prefix, fields, item)}</Item>`;
 
@@ -116,7 +124,7 @@ export const encodeWriteItem = (
 export const buildWriteXml = (config: {
   resource: string;
   prefix: string;
-  fields: ReadonlyMap<string, DataType>;
+  fields: ReadonlyMap<string, DataType | null>;
   items: WriteItem[];
 }): string => {
   const items = config.items

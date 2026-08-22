@@ -7,12 +7,12 @@
 ## 全体像
 
 ```ts
-const page = await porters.candidate.search({
+const page = await t.candidate.search({
   field: ["Person.P_Id", "Person.P_Name"], // 取得する項目（省略可）
   condition: { P_Name: { part: "山田" } }, // 検索条件（複数項目は AND）
   order: [{ P_UpdateDate: "desc" }], // 並び順
   keywords: ["東京", "営業"], // キーワード AND 検索
-  itemstate: "existing", // 削除状態（既定）
+  itemstate: "existing", // 削除状態（省略可。省略との違いは後述）
   count: 50, // 1〜200・既定 10
   start: 0, // 0 始まり
 });
@@ -22,7 +22,7 @@ const page = await porters.candidate.search({
 全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件刻みで yield します）。
 
 ```ts
-for await (const c of porters.candidate.searchAll({
+for await (const c of t.candidate.searchAll({
   condition: { P_Name: { part: "山田" } },
 })) {
   // …
@@ -43,7 +43,7 @@ for await (const c of porters.candidate.searchAll({
 alias は**接頭辞付き**で書きます（Candidate は `Person.`、他はリソース名）。
 
 ```ts
-await porters.candidate.search({ field: [] }); // total だけ見たい
+await t.candidate.search({ field: [] }); // total だけ見たい
 ```
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
@@ -64,7 +64,7 @@ await porters.candidate.search({ field: [] }); // total だけ見たい
 | `User` / `System[Reference]`                                      | `eq` / `or` / `and`                     | `number`（`or` / `and` は `number[]`） |
 
 ```ts
-await porters.candidate.search({
+await t.candidate.search({
   condition: {
     P_Name: { part: "山田" }, // テキストは部分一致
     P_UpdateDate: { ge: "2026-08-01T00:00:00Z" }, // ISO 8601（UTC）で渡す
@@ -81,7 +81,7 @@ await porters.candidate.search({
 上位階層の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
 
 ```ts
-await porters.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
+await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 ```
 
 ## `order` — 並び順
@@ -90,7 +90,7 @@ await porters.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 並べ替えられるのは**数値・日時・System 系**だけで、テキストや Option を指定すると型エラーになります。
 
 ```ts
-await porters.job.search({
+await t.job.search({
   order: [{ P_UpdateDate: "desc" }, { P_Id: "asc" }],
 });
 ```
@@ -100,7 +100,7 @@ await porters.job.search({
 テキスト項目を横断する **AND 検索**です（OR はできません）。
 
 ```ts
-await porters.candidate.search({ keywords: ["東京", "営業"] });
+await t.candidate.search({ keywords: ["東京", "営業"] });
 ```
 
 - **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` で落ちます。
@@ -111,18 +111,25 @@ await porters.candidate.search({ keywords: ["東京", "営業"] });
 **PORTERS に削除 API はありません**。`delete()` を提供しないのはそのためで、
 削除済みレコードを読む唯一の手段がこの `itemstate` です。
 
-| 値           | 意味                         |
-| ------------ | ---------------------------- |
-| `"existing"` | 生存レコードのみ（**既定**） |
-| `"deleted"`  | 削除済みのみ                 |
-| `"all"`      | 両方                         |
+| 指定         | 意味                                 | 送信                 |
+| ------------ | ------------------------------------ | -------------------- |
+| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
+| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
+| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
+| `"all"`      | 両方                                 | `itemstate=all`      |
 
 ```ts
-await porters.candidate.search({
+await t.candidate.search({
   itemstate: "deleted",
   condition: { P_UpdateDate: { ge: "2026-07-01T00:00:00Z" } },
 });
 ```
+
+> **省略と `"existing"` は違います**（[ADR-0057][adr57]）。いまはどちらも生存レコードのみが返るので
+> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」**という
+> 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
+> `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
+> 省略せず `itemstate: "existing"` と書いてください。
 
 **`deleted` / `all` のときは制約が 2 つ**あります。どちらも送信前に検査します。
 
@@ -133,16 +140,32 @@ await porters.candidate.search({
 
 ここで言う `P_UpdateDate` は**削除された日時**、`P_UpdatedBy` は**最後に編集した人**です。
 
-> **どれが削除済みかは現時点では判別できません。** 削除状態を表す標準項目 `P_Deleted` が
-> まだカタログに載っていないためです（[findings RV-26][rv26]）。`"all"` は生存と削除済みを
-> 混ぜて返すので、当面は `"deleted"` と `"existing"` を分けて呼ぶのが確実です。
+### `P_Deleted` — どれが削除済みか
+
+`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します。
+
+```ts
+const page = await t.candidate.search({ itemstate: "all" });
+const deleted = page.items.filter((c) => c.P_Deleted === "1");
+```
+
+- **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
+  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
+  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します（[ADR-0056][adr56]）。
+- **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、
+  試みるとコンパイルエラーになります。**Write もできません**（`create` / `update` の入力に現れません）。
+- `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
+  `"{Prefix}.P_Deleted"`（例 `"Person.P_Deleted"`）を明示してください。
+
+> 応答での出現条件と値域は**実機で未確認**です（[live-verification][lv] LV-14）。
+> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
 
 ## `count` / `start` — ページング
 
 オフセット式です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
 
 ```ts
-const page = await porters.candidate.search({ count: 200, start: 0 });
+const page = await t.candidate.search({ count: 200, start: 0 });
 page.total; // 条件に合う総件数
 page.count; // 今回返った件数
 page.start; // 今回の開始インデックス
@@ -164,14 +187,18 @@ page.start; // 今回の開始インデックス
 
 ## 関連
 
-- 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）
+- 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）／
+  [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）／
+  [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 
 [adr5]: ../adr/0005-public-api-shape.md
 [adr20]: ../adr/0020-read-field-default.md
 [adr38]: ../adr/0038-read-query-surface-impl.md
+[adr56]: ../adr/0056-deleted-flag-typing.md
+[adr57]: ../adr/0057-itemstate-existing-explicit.md
 [custom-fields]: custom-fields.md
+[lv]: ../live-verification.md
 [prd]: ../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
-[rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md

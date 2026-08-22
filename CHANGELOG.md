@@ -5,6 +5,71 @@
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-22
+
+**partition の束ね方を 1 つに絞り、削除済みレコードを判別できるようにした版**です。
+`PortersClient` から `partition` を外した**破壊的変更**を含みます（移行は下記）。
+併せて、削除済みを読めるのに**どれが削除済みか分からなかった**穴を塞ぎました。
+
+### Added
+
+- **削除フラグ `P_Deleted`**（[ADR-0056][adr56]）。データ系 5 リソース（Candidate / Job / Client /
+  Process / Resume）の公開型に加わり、`itemstate: "all"` の結果から削除済みを**判別できる**ようになりました。
+
+  ```ts
+  const page = await t.candidate.search({ itemstate: "all" });
+  const deleted = page.items.filter((c) => c.P_Deleted === "1");
+  ```
+
+  - **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
+    PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
+    変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します。
+  - **`condition` にも `order` にも指定できず、Write もできません**（PORTERS の制約）。
+    いずれも型で表現されているので、書くとコンパイルエラーになります。
+  - `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
+    `"Person.P_Deleted"` のように接頭辞付きで明示してください。
+  - 削除 API が無い PORTERS では「削除済みを読む」こと自体が運用手段（同期・監査・復元の判断材料）ですが、
+    これまでは**読めるのに解釈できない**状態でした。
+  - 応答での出現条件と値域は**実機で未確認**です（[live-verification][lv] LV-14）。
+
+### Changed
+
+- **（破壊的）`PortersClient` から `partition` を外しました**（[ADR-0055][adr55]）。
+  partition（Company DB）スコープのリソースは **`porters.tenant(id)` 経由でのみ**取得します。
+  **単一テナントでも同じ形**です。
+
+  ```diff
+  - const porters = new PortersClient({ host, appId, appSecret, partition: 123 });
+  - await porters.candidate.search();
+  + const porters = new PortersClient({ host, appId, appSecret });
+  + const t = porters.tenant(123);
+  + await t.candidate.search();
+  ```
+
+  - 影響するのは `candidate` / `job` / `client` / `process` / `resume` / `attachment` /
+    `user` / `field` / `option` の 9 アクセサ。`t` は以降クライアントのように使えるので、
+    **呼び出し側の書き味は変わりません**。
+  - **App レベルのものは `porters` 側に残ります**（いずれも `partition` を取りません）—
+    `porters.auth.*`（OAuth）と `porters.partition.search()`（partition の発見）。
+  - 理由: `partition` 未設定のクライアントは**`partition=0`** を全リクエストに載せていました。
+    `0` は PORTERS のドキュメントに存在しない値で、由来は最初の PoC の穴埋めです。実際には
+    Result Code **404** を招くため、**設定漏れが「サーバーが 404 を返す」形に化け**ていました。
+    `tenant(id)` を唯一の経路にすることで、**「partition を束ね忘れたクライアント」という状態が
+    型として存在しなくなります**。実行時ガードを足すのではなく、設計で防ぐ形にしました。
+  - **pre-1.0 のため minor**。誤った partition を渡すこと自体は妨げません（404 はサーバーが答えます）。
+
+### Fixed
+
+- **`itemstate: "existing"` を明示指定したとき、省略せずそのまま送る**ようになりました
+  （[ADR-0057][adr57]）。**返るデータは変わりません** — 変わるのは送信 URL だけです。
+  - これまでは `existing` が API の既定であることを理由に、明示指定でも param を省いていました。
+    しかし**省略（「既定に委ねる」）と明示（「生存レコードのみが欲しい」）は別の意思表示**です。
+    いま結果が同じなのは PORTERS の既定が `existing` だからで、**もし将来この既定が変われば、
+    生存のみを求めたコードに削除済みが混ざり始めます**（例外も Result Code も出ないので気づけません）。
+  - 生存のみであることが業務上重要なら、省略せず `itemstate: "existing"` と書いてください。
+    省略した場合はこれまでどおり API の既定に従います。
+  - `itemstate=existing` の実機送信実績はまだありません（[live-verification][lv] LV-15）。
+
 ## [0.9.0] - 2026-08-20
 
 **Candidate でメモ・住所詳細が扱えるようになった版**です。標準項目でありながらカタログから漏れていた
@@ -288,9 +353,14 @@
 [adr35]: docs/adr/0035-usage-documentation-structure.md
 [custom-fields-guide]: docs/guide/custom-fields.md
 [read-query-guide]: docs/guide/read-query.md
+[adr55]: docs/adr/0055-partition-binding-guard.md
+[adr56]: docs/adr/0056-deleted-flag-typing.md
+[adr57]: docs/adr/0057-itemstate-existing-explicit.md
+[lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.6.2...v0.7.0

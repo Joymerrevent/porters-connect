@@ -40,6 +40,11 @@ const FIELDS = {
   P_City: "SinglelineText",
   P_Street: "MultilineText",
   P_Zipcode: "SinglelineText",
+  // 削除状態（"0" 生存 / "1" 削除済み）。PORTERS はこの項目に Data Type を与えていない
+  // （reference の Field Type / Data Type とも「ー」）ので `null`＝型が無いことを記録する（ADR-0056）。
+  // 「未設定」でも「不明」でもない。null は condition / order / Write の型から自動的に外れる＝
+  // reference の「Read の field でのみ指定可」がそのまま型で守られる。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 // Required on create per docs/reference (resources/candidate.md「新規必須」列): P_Owner。

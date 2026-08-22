@@ -172,9 +172,24 @@ describe("runReadQuery", () => {
     expect(paged.total).toBe(3);
   });
 
-  it("returns nothing for itemstate=deleted — there is no delete API", () => {
-    expect(run({ itemstate: "deleted" })).toEqual({ items: [], total: 0 });
-    expect(ids({ itemstate: "all" })).toHaveLength(3);
+  it("filters by itemstate — existing hides deleted, deleted shows only them (ADR-0056)", () => {
+    // 上の 3 件はフラグを持たない＝生存扱い。削除済みを 1 件だけ足して 3 状態を見る。
+    const withDeleted = [...records, { P_Id: "10004", P_Deleted: "1" }];
+    const state = (itemstate: "existing" | "deleted" | "all"): string[] =>
+      runReadQuery(withDeleted, parse({ itemstate }), FIELDS).items.map((r) =>
+        String(r.P_Id),
+      );
+
+    expect(state("existing")).toEqual(["10001", "10002", "10003"]);
+    expect(state("deleted")).toEqual(["10004"]);
+    expect(state("all")).toEqual(["10001", "10002", "10003", "10004"]);
+    // itemstate 省略は existing と同じ（API の既定）。
+    expect(ids({})).toEqual(["10001", "10002", "10003"]);
+  });
+
+  it("counts total after the itemstate filter, not before", () => {
+    const withDeleted = [...records, { P_Id: "10004", P_Deleted: "1" }];
+    expect(runReadQuery(withDeleted, parse({}), FIELDS).total).toBe(3);
   });
 
   it("does not match a record that lacks the field", () => {

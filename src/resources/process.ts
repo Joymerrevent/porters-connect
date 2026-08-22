@@ -43,6 +43,9 @@ const FIELDS = {
   P_CloseReason: "Option",
   P_ExpectedSalesAmount: "Number",
   P_ExpectedClosingDate: "Date",
+  // 削除状態（"0" / "1"）。PORTERS が Data Type を与えていない項目＝`null`（ADR-0056。
+  // 詳細は candidate.ts のコメント）。Read の field でのみ指定でき、型もそう振る舞う。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 // Required on create per docs/reference (resources/process.md「新規必須」列): P_Owner と関連 5 項目

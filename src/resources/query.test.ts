@@ -171,10 +171,15 @@ describe("appendReadQuery — keywords", () => {
 });
 
 describe("appendReadQuery — itemstate", () => {
-  it("sets deleted / all but omits existing and undefined", () => {
+  it("sends every explicit itemstate — including existing (ADR-0057)", () => {
     expect(encode({ itemstate: "deleted" }).get("itemstate")).toBe("deleted");
     expect(encode({ itemstate: "all" }).get("itemstate")).toBe("all");
-    expect(encode({ itemstate: "existing" }).get("itemstate")).toBeNull();
+    // 明示指定は畳まない。省略と `existing` は別の意思表示で、PORTERS が既定を変えた日に
+    // 「生存のみが欲しい」と言った利用者が黙って削除済みを受け取らないようにするため。
+    expect(encode({ itemstate: "existing" }).get("itemstate")).toBe("existing");
+  });
+
+  it("omits itemstate only when the caller omits it (defer to the API default)", () => {
     expect(encode({}).get("itemstate")).toBeNull();
   });
 

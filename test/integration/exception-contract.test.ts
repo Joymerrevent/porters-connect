@@ -1,6 +1,6 @@
 // The public exception contract (ADR-0046): **a Promise-returning public method never throws
 // synchronously.** Every failure — misconfiguration included — reaches the caller as a rejection,
-// so `porters.candidate.search(q).catch(handler)` works as written.
+// so `porters.tenant(1).candidate.search(q).catch(handler)` works as written.
 //
 // This is the cross-cutting guard the ADR asks for. It walks the whole Promise-returning surface
 // rather than the methods that happen to guard something today, because the regression it protects
@@ -20,7 +20,6 @@ const setup = () =>
     host: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     scopes: ["candidate_r"],
     transport: createMockTransport(() => undefined, { auth: false }),
   });
@@ -33,38 +32,47 @@ const OVER_100_CHARS = "あ".repeat(101);
 const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
   // Data resources — one factory (createResource) serves candidate / job / client / process /
   // resume, so exercising Candidate covers the shape for all five.
-  ["candidate.search", () => porters.candidate.search()],
+  ["candidate.search", () => porters.tenant(1).candidate.search()],
   // …and the two typed-query guards, which run while the URL is built (the RV-15 originals).
   [
     "candidate.search (keywords guard)",
-    () => porters.candidate.search({ keywords: [OVER_100_CHARS] }),
+    () => porters.tenant(1).candidate.search({ keywords: [OVER_100_CHARS] }),
   ],
   [
     "candidate.search (itemstate guard)",
     () =>
-      porters.candidate.search({
+      porters.tenant(1).candidate.search({
         itemstate: "deleted",
         condition: { P_Name: { part: "x" } },
       }),
   ],
-  ["candidate.get", () => porters.candidate.get(1)],
-  ["candidate.create", () => porters.candidate.create({ P_Owner: 5 })],
-  ["candidate.update", () => porters.candidate.update(1, { P_Name: "x" })],
+  ["candidate.get", () => porters.tenant(1).candidate.get(1)],
+  [
+    "candidate.create",
+    () => porters.tenant(1).candidate.create({ P_Owner: 5 }),
+  ],
+  [
+    "candidate.update",
+    () => porters.tenant(1).candidate.update(1, { P_Name: "x" }),
+  ],
   [
     "candidate.createMany",
-    () => porters.candidate.createMany([{ P_Owner: 5 }]),
+    () => porters.tenant(1).candidate.createMany([{ P_Owner: 5 }]),
   ],
   [
     "candidate.updateMany",
-    () => porters.candidate.updateMany([{ id: 1, fields: { P_Name: "x" } }]),
+    () =>
+      porters
+        .tenant(1)
+        .candidate.updateMany([{ id: 1, fields: { P_Name: "x" } }]),
   ],
   // Attachment (bespoke accessor, its own 10MB guard)
-  ["attachment.search", () => porters.attachment.search()],
-  ["attachment.get", () => porters.attachment.get(1)],
+  ["attachment.search", () => porters.tenant(1).attachment.search()],
+  ["attachment.get", () => porters.tenant(1).attachment.get(1)],
   [
     "attachment.create (10MB guard)",
     () =>
-      porters.attachment.create({
+      porters.tenant(1).attachment.create({
         resource: 3,
         resourceId: 1,
         contentType: "text/plain",
@@ -74,14 +82,17 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
   ],
   [
     "attachment.update (10MB guard)",
-    () => porters.attachment.update(1, { content: OVER_10MB }),
+    () => porters.tenant(1).attachment.update(1, { content: OVER_10MB }),
   ],
   // Master Read
   ["partition.search", () => porters.partition.search()],
-  ["user.search", () => porters.user.search()],
-  ["user.current", () => porters.user.current()],
-  ["field.search", () => porters.field.search({ resource: "candidate" })],
-  ["option.search", () => porters.option.search()],
+  ["user.search", () => porters.tenant(1).user.search()],
+  ["user.current", () => porters.tenant(1).user.current()],
+  [
+    "field.search",
+    () => porters.tenant(1).field.search({ resource: "candidate" }),
+  ],
+  ["option.search", () => porters.tenant(1).option.search()],
   // OAuth surface (the string-returning authorizationUrl / revokeUrl are deliberately absent —
   // they return no Promise, so synchronous throwing is correct there).
   [
@@ -115,8 +126,9 @@ describe("public exception contract (ADR-0046)", () => {
     let caught: unknown;
 
     // The exact shape RV-15 could not support: no `await`, no try/catch — just `.catch`.
-    await porters.candidate
-      .search({ keywords: [OVER_100_CHARS] })
+    await porters
+      .tenant(1)
+      .candidate.search({ keywords: [OVER_100_CHARS] })
       .catch((e: unknown) => {
         caught = e;
       });
@@ -135,7 +147,9 @@ describe("public exception contract (ADR-0046)", () => {
     // ADR-0046 — pinned here so it stays true (the ADR asks for confirmation, not a change).
     let iterable: AsyncIterable<unknown> | undefined;
     expect(() => {
-      iterable = porters.candidate.searchAll({ keywords: [OVER_100_CHARS] });
+      iterable = porters
+        .tenant(1)
+        .candidate.searchAll({ keywords: [OVER_100_CHARS] });
     }).not.toThrow();
 
     await expect(

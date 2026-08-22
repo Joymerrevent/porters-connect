@@ -25,15 +25,15 @@ const porters = new PortersClient({
 });
 ```
 
-これで `porters.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
+これで `t.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
 
 ```ts
-const one = await porters.candidate.get(10001);
+const one = await t.candidate.get(10001);
 one?.U_score; // number | null | undefined
 one?.U_source; // string[] | null | undefined（Option は選択された alias の配列）
 
-await porters.candidate.update(10001, { U_score: 80 }); // 型チェックされる
-await porters.candidate.update(10001, { U_score: "80" }); // ← 型エラー
+await t.candidate.update(10001, { U_score: 80 }); // 型チェックされる
+await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 ```
 
 ## 宣言しないとどうなるか
@@ -83,7 +83,7 @@ await porters.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 どんなカスタム項目があるかは **Field Read** で分かります。宣言を書く前の下調べに使ってください。
 
 ```ts
-const fields = await porters.field.searchAll({ resource: "candidate" });
+const fields = await t.field.searchAll({ resource: "candidate" });
 
 for await (const f of fields) {
   console.log(f.P_Alias, f.P_Name, f.P_Type); // 例: U_score, 適性スコア, 3

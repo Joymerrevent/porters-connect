@@ -57,6 +57,9 @@ const FIELDS = {
   P_CapitalText: "SinglelineText",
   P_EmploymentType: "Option",
   P_ExpectedAgeReason: "Option",
+  // 削除状態（"0" / "1"）。PORTERS が Data Type を与えていない項目＝`null`（ADR-0056。
+  // 詳細は candidate.ts のコメント）。Read の field でのみ指定でき、型もそう振る舞う。
+  P_Deleted: null,
 } as const satisfies FieldCatalog;
 
 // Required on create per docs/reference (resources/job.md「新規必須」列): P_Owner / P_Client /

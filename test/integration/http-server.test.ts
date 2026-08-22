@@ -32,7 +32,6 @@ const serve = async (
     host: "fake.test", // unchanged app config — only the transport points elsewhere
     appId: "app-id",
     appSecret: "app-secret",
-    partition: 1,
     transport: server.transport(),
   });
   return { server, porters };
@@ -47,13 +46,13 @@ describe("the fake over HTTP", () => {
   it("runs OAuth and a full round-trip across a real socket", async () => {
     const { porters } = await serve();
 
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
       P_Phase: ["Option.P_Applied"],
       P_PhaseDate: "2026-01-02T03:04:05Z",
     });
-    const created = await porters.candidate.get(id);
+    const created = await porters.tenant(1).candidate.get(id);
 
     expect(id).toBe(10001);
     expect(created?.P_Name).toBe("山田 太郎");
@@ -61,8 +60,10 @@ describe("the fake over HTTP", () => {
     expect(created?.P_PhaseDate).toBe("2026-01-02T03:04:05Z");
     expect(created?.P_Owner as UserRef).toEqual(OWNER);
 
-    await porters.candidate.update(id, { P_Name: "山田 太郎（更新）" });
-    const page = await porters.candidate.search({
+    await porters
+      .tenant(1)
+      .candidate.update(id, { P_Name: "山田 太郎（更新）" });
+    const page = await porters.tenant(1).candidate.search({
       condition: { P_Name: { part: "更新" } },
     });
     expect(page.total).toBe(1);
@@ -74,18 +75,18 @@ describe("the fake over HTTP", () => {
       seed: { candidate: [{ P_Name: "既存 太郎", P_Owner: "5" }] },
     });
 
-    expect((await porters.candidate.search()).total).toBe(1);
+    expect((await porters.tenant(1).candidate.search()).total).toBe(1);
     expect((await porters.partition.search()).items.map((p) => p.P_Id)).toEqual(
       [1, 42],
     );
-    expect((await porters.user.current())?.P_Id).toBe(1);
+    expect((await porters.tenant(1).user.current())?.P_Id).toBe(1);
   });
 
   it("keeps fault injection working through the adapter", async () => {
     const { server, porters } = await serve();
     server.control.failNext({ kind: "resultCode", code: 403 });
 
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersResourceError",
       category: "permission",
       code: 403,
@@ -94,20 +95,22 @@ describe("the fake over HTTP", () => {
 
   it("re-authenticates over HTTP when the Access Token expires", async () => {
     const { server, porters } = await serve();
-    await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+    await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
 
     server.control.expireAccessTokens();
 
-    expect((await porters.candidate.search()).total).toBe(1);
+    expect((await porters.tenant(1).candidate.search()).total).toBe(1);
   });
 
   it("really drops the connection when a rate limit is exceeded", async () => {
     const { porters } = await serve({ rateLimit: { readPerMinute: 1 } });
-    await porters.candidate.search();
+    await porters.tenant(1).candidate.search();
 
     // The socket is destroyed, so this is a genuine network failure — same shape the in-process
     // fake produces, but produced by the wire this time.
-    await expect(porters.candidate.search()).rejects.toMatchObject({
+    await expect(porters.tenant(1).candidate.search()).rejects.toMatchObject({
       name: "PortersNetworkError",
       category: "network",
       retryable: true,
@@ -167,14 +170,13 @@ describe("an unmodified app, pointed at the fake by configuration alone", () => 
       scheme: "http",
       appId: "app-id",
       appSecret: "app-secret",
-      partition: 1,
     });
 
-    const id = await porters.candidate.create({
+    const id = await porters.tenant(1).candidate.create({
       P_Owner: 5,
       P_Name: "山田 太郎",
     });
-    const created = await porters.candidate.get(id);
+    const created = await porters.tenant(1).candidate.get(id);
 
     expect(created?.P_Name).toBe("山田 太郎");
     expect(created?.P_Owner as UserRef).toEqual(OWNER);
