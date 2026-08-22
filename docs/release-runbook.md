@@ -71,8 +71,8 @@
 
 - ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
 - ✅ **`pnpm changeset:version` は復旧済み**（`@changesets/cli` v3 へ更新・2026-08-23）。
-  0.10.0 で落ちていた原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存
-  `read-yaml-file@1.1.0` にも効き、同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が
+  原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
+  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が
   v4 以降で削除されていたこと。v3 では `read-yaml-file` が依存から消えたので衝突しない
   （override をスコープで緩める案は不採用＝脆弱な版を意図的に呼び戻すことになるため）。
   なお **changesets v3 は Node `^22.11 || ^24 || >=26`** を要求する。`.node-version` は 22 なので
@@ -80,6 +80,26 @@
   （install 自体は通る＝ test マトリクスの Node 20 ジョブは影響なし）。
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
+
+### `changeset:version` が壊れていた期間（2026-08-23 に判明）
+
+**「changesets を上げたら壊れた」のではなく、導入初日から一度も動いていなかった。**
+override が先、changesets の導入が翌日という順序だったため、最初から噛み合っていなかった。
+
+| 日付       | 出来事                                                            |
+| ---------- | ----------------------------------------------------------------- |
+| 2026-06-19 | PR #53 で脆弱性対応として `js-yaml: ">=4.2.0"` の override を追加 |
+| 2026-06-20 | PR #64 で changesets を導入 ← **この時点ですでに壊れていた**      |
+| 2026-08-22 | 0.10.0 のリリース作業で発覚                                       |
+| 2026-08-23 | `@changesets/cli` を v3 へ上げて解消                              |
+
+ロックファイルを遡ると、changesets 導入初日から `read-yaml-file` 配下は `js-yaml@4.2.0` に
+差し替わっている（`safeLoad` は v4.0.0 で削除済）。以降 5.2.1 → 5.2.3 と上がった。
+このリポジトリの `@changesets/cli` は **2.31.0 → 2.31.1 しか動いていない＝版上げは原因ではない**。
+
+**教訓**: [roadmap][rm] の 0.7.0〜0.9.0 は「changeset N 件を消費して」と記録しているが、
+上の事実と矛盾する（実際は手作業だったとみられる）。**ツールが緑を返したことを確認せずに
+記録を書くと、こういう嘘が残る**＝記録は実行結果に基づいて書く。
 
 ## 関連
 
