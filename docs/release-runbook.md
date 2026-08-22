@@ -21,6 +21,13 @@
 - [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
 - [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
+- [ ] **準備中に見つけた欠陥・手順の穴は、このリリース PR に含める**（後回しにしない）。
+      後追い PR（§5）に入れてよいのは「**公開が成功して初めて真になる事実**」だけ。
+
+> **どちらに入れるかの判断軸**（0.10.0 で取り違えた実績あり）。
+> **リリース PR** — CHANGELOG（**利用者向け・tarball に同梱**）、準備中に判明した欠陥や手順の穴。
+> **後追い PR** — 最新公開版・パッケージサイズなど、**publish が終わるまで書けない**もの。
+> publish は最後まで確定しない工程（失敗しうる）なので、先に書くと main に嘘が残る。
 
 ## 2. main へマージ（タグは自動）
 
@@ -46,6 +53,15 @@
 - ⚠️ **公開した版は上書き不可**。修正は必ず新バージョンで（`unpublish` は厳しく制限・非推奨）。
 - 前提（初回のみ）: npmjs.com の該当パッケージ → **Settings → Trusted Publisher** に GitHub Actions（org `Joymerrevent` ／ repo `porters-connect` ／ workflow `release.yml`）を登録済みであること。
 - 失敗時の定番: `E404`（scoped）は npm < 11.5.1 が原因 → ワークフローは `npm@latest` に更新してから publish している。
+
+## 5. 公開の記録（後追い PR・develop へ）
+
+**publish が終わってから**、実測した事実をドキュメントに反映する（`docs/` のみ・`src/` は触らない）。
+
+- [ ] 本書「現在の状況」の**最新公開版**と累計版数
+- [ ] [roadmap][rm] の公開済み行・リリース記録（`npm view … dist.fileCount dist.unpackedSize` で実測したサイズ）
+- [ ] ブランチ経由で PR（**直 push しない**）。過去の例: 0.6.2 / 0.7.0 / 0.8.0 / 0.9.0 / 0.10.0 とも別 PR
+- ⚠️ **ここに入れてよいのは「公開が成功して初めて真になる事実」だけ**（§1 の判断軸を参照）。
 
 ## 現在の状況
 
