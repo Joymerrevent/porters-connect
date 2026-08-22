@@ -17,8 +17,12 @@
 
 - [ ] 各変更 PR に `pnpm changeset`（`.changeset/*.md`）が入っていること（変更の記録）
 - [ ] `release/X.Y.Z` ブランチを切る
-- [ ] **CHANGELOG を手書き**（ADR-0026・案B）: `.changeset/*.md` の要約を `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD` に転記（Added/Changed/Fixed/Security）。空の `[Unreleased]` 再設置・末尾の compare リンク更新
+- [ ] **CHANGELOG を手書き**（[ADR-0026][adr26]・案B）: `.changeset/*.md` の要約を `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD` に転記（Added/Changed/Fixed/Security）。空の `[Unreleased]` 再設置・末尾の compare リンク更新
 - [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
+  - ⚠️ **`.changeset/*.md` が 1 枚も無いと exit 1 で落ちる**（changesets v3 の仕様変更。v2 は黙って exit 0）。
+    版を上げたいのに changeset が無い＝**記録漏れ**なので、changeset を書いてからやり直す
+    （手で `version` を書き換えて回避しない）。開発ツール限定の変更など**意図的に版を上げない**場合は、
+    そもそもこの手順に来ない。
 - [ ] コミット（version＋CHANGELOG）
 - [ ] 全ゲート green: `pnpm run typecheck` / `pnpm run lint` / `pnpm run format:check` / `pnpm test` / `pnpm run build`
 - [ ] **準備中に見つけた欠陥・手順の穴は、このリリース PR に含める**（後回しにしない）。
@@ -66,11 +70,14 @@
 ## 現在の状況
 
 - ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
-- ⚠️ **`pnpm changeset:version` が現在動きません**（0.10.0 は版 bump と changeset 削除を手で実施）。
-  `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0` にも効き、
-  同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が v4 以降で削除されているため。
-  CHANGELOG は元から手書き（`changelog: false`・[ADR-0026][adr26]）なので**リリースはブロックされない**が、
-  §1 のこの手順だけ手作業になる。恒久対応は `@changesets/cli` を v3 へ（`read-yaml-file` が依存から消える）。
+- ✅ **`pnpm changeset:version` は復旧済み**（`@changesets/cli` v3 へ更新・2026-08-23）。
+  0.10.0 で落ちていた原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存
+  `read-yaml-file@1.1.0` にも効き、同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が
+  v4 以降で削除されていたこと。v3 では `read-yaml-file` が依存から消えたので衝突しない
+  （override をスコープで緩める案は不採用＝脆弱な版を意図的に呼び戻すことになるため）。
+  なお **changesets v3 は Node `^22.11 || ^24 || >=26`** を要求する。`.node-version` は 22 なので
+  通常の開発・CI では問題ないが、**Node 20 では `changeset` コマンドが動かない**
+  （install 自体は通る＝ test マトリクスの Node 20 ジョブは影響なし）。
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
