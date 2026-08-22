@@ -1,6 +1,6 @@
 # 57. `itemstate: "existing"` を明示指定されたときに送るか
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-22
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,11 @@
 > `existing` は API の既定なので param を省略すると決めたが、**利用者が明示的に `existing` と
 > 書いたときも省いている**。PORTERS が将来この既定を変えたら、**明示指定した利用者が
 > 黙って削除済み混じりのデータを受け取る**。
-> 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+>
+> **案A で `accepted`（2026-08-22）**: **明示指定は送り、省略時は送らない**。
+> `undefined`（既定に委ねる）と `"existing"`（生存のみを要求する）は**別の意思表示**なので、
+> wire でも区別する。公開型・戻り値・エラーは変わらず、変わるのは送信 URL だけ。
+> **[LV-15][lv] を登録する**（`itemstate=existing` の明示送信は実機実績が無い）。実施は本 ADR とは別 PR。
 
 ## Context and Problem Statement
 
@@ -96,7 +100,12 @@ if (q.itemstate !== undefined && q.itemstate !== "existing") {
 
 ## Decision Outcome
 
-**未決定（proposed）。推奨は案A。**
+**採用: 案A**（明示指定は送り、省略時は送らない。decider 判断・2026-08-22）。
+
+```ts
+// 明示された itemstate はそのまま送る。省略（undefined）だけがサーバーの既定に委ねる。
+if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
+```
 
 `undefined` と `"existing"` が**別の意思表示**である以上、wire でも区別するのが素直で、
 [ADR-0038][adr38] SD-4 が畳んだのは（当時の理由に照らしても）得るものが小さい。
@@ -123,9 +132,10 @@ if (q.itemstate !== undefined && q.itemstate !== "existing") {
    （結果は同じだが、既定が変わったときに意味が分かれる）を注記する。
 6. **semver は patch**。公開型・戻り値・例外は変わらず、変わるのは送信 URL だけ。
    ただし **CHANGELOG には理由を書く**（「なぜ 1 文字も結果が変わらない変更を入れたか」が後から分かるように）。
-7. **LV を足すかは decider の判断**。reference は `existing` を**値として明記**しているので仮定ではないが、
-   **明示送信の実績は無い**（Result Code 133 は「itemstate 値が無効」）。契約後の最初のスモークで
-   確かめる項目として LV に載せるなら **LV-15** を採番する。
+7. **[LV-15][lv] を登録する**（decider 判断で登録と決定）。reference は `existing` を**値として明記**して
+   いるので仮定とまでは言えないが、**明示送信の実績はゼロ**で、外れたときの形が
+   「`existing` を明示指定した Read が**全部** Result Code 133 で落ちる」と重い。
+   `appendReadQuery` に `VERIFY(live)` を置き、契約後の最初のスモークで確かめる。
 
 ### Consequences
 
@@ -133,7 +143,7 @@ if (q.itemstate !== undefined && q.itemstate !== "existing") {
   生存のみを受け取り続ける（安全側に倒れる）。省略と明示の**区別が wire まで通る**。
   サーバー側の既定への依存が、依存してよい場所（省略時）だけに閉じる。
 - Bad: **`itemstate=existing` を実機に送った実績が無い**。reference に値として載っているので
-  拒否されるとは考えにくいが、ゼロではない（Result Code 133）。
+  拒否されるとは考えにくいが、ゼロではない（Result Code 133）→ **[LV-15][lv]** で追う。
   明示指定している Read の URL が 18 文字伸びる。
 - Neutral: **現行 PORTERS では結果は 1 件も変わらない**。この変更の価値は将来の仕様変更に対する
   保険であって、いま何かが直るわけではない。
@@ -182,6 +192,7 @@ if (q.itemstate !== undefined && q.itemstate !== "existing") {
 [adr38]: 0038-read-query-surface-impl.md
 [adr56]: 0056-deleted-flag-typing.md
 [codes]: ../reference/resource-api/result-codes.md
+[lv]: ../live-verification.md
 [rapi]: ../reference/resource-api/README.md
 [rq]: ../guide/read-query.md
 [rv1]: ../reviews/rv/0001-read-field-default-missing.md
