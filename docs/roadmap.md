@@ -14,7 +14,7 @@
 **2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しした 8 件は**全件を解消**した
 （6 件を 0.9.0 で、残る RV-25 / RV-26 を ADR-0055 / ADR-0056 経由で 0.9.0 以降に）。
 次の論点は議論中に見つかった **RV-31**（reference 展開の取りこぼし）で、これも要 ADR。
-品質ゲートは全 green（621 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
+品質ゲートは全 green（626 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
 
 ### 着手可能（ブロック無し・上から順に）
 
@@ -160,7 +160,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - ADR 0001〜0056 accepted（0037 は 0039 で superseded）・**proposed は無し・実装待ちも無し**（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**621 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
+- 品質ゲート green・**626 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
   RV-22（契約待ち）・RV-31。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）

@@ -89,7 +89,12 @@ export type FakeTransportOptions = {
   now?: () => number;
   /** Partition ids the fake accepts; anything else answers Result Code 404. Default `[1]`. */
   partitions?: number[];
-  /** Records to pre-load, keyed by URL path segment (e.g. `candidate`). Ids are assigned here. */
+  /**
+   * Records to pre-load, keyed by URL path segment (e.g. `candidate`). Ids are assigned here.
+   * A seed is the only way to place a record in the **deleted** state (`P_Deleted: "1"`) — no
+   * request path deletes anything, just as PORTERS deletes only in its UI. Seed one to exercise
+   * `itemstate: "deleted" | "all"` (ADR-0056).
+   */
   seed?: Record<string, FakeRecord[]>;
   /** Users returned when expanding `User`-typed fields, and read by `/v1/user`. */
   users?: FakeUser[];

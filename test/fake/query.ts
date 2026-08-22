@@ -6,6 +6,7 @@
 // substring match, ordering a plain value comparison. That is the "業務面は浅い" half of ADR-0043.
 
 import type { DataType } from "../../src/xml/decode";
+import { DELETED } from "./records";
 import type { FieldSelection } from "./wire";
 import type { FakeRecord, FakeValue } from "./types";
 
@@ -178,6 +179,18 @@ const matchCondition = (
   }
 };
 
+/**
+ * itemstate: which delete state to read (reference: 削除済みデータ取得). `existing` — the API default
+ * — hides deleted records, `deleted` shows only them, `all` shows both (and `P_Deleted` is then the
+ * only way to tell which is which — ADR-0056). A resource without the field (Attachment) has no
+ * delete state, so it reads as alive.
+ */
+const matchItemState = (record: FakeRecord, itemstate: string): boolean => {
+  if (itemstate === "all") return true;
+  const deleted = record[DELETED] === "1";
+  return itemstate === "deleted" ? deleted : !deleted;
+};
+
 // Keyword search is an AND over the record's text values (reference: OR is not supported).
 const matchKeywords = (record: FakeRecord, keywords: string[]): boolean =>
   keywords.every((keyword) =>
@@ -195,14 +208,13 @@ export const runReadQuery = (
   query: ReadQuery,
   fields: Readonly<Record<string, DataType | null>>,
 ): { items: FakeRecord[]; total: number } => {
-  // There is no delete API, so nothing is ever in the "deleted" state: `deleted` reads empty and
-  // `all` equals `existing` (docs/reference: itemstate exists only to reach deleted records).
-  if (query.itemstate === "deleted") return { items: [], total: 0 };
   const matched = records.filter(
     (record) =>
+      matchItemState(record, query.itemstate) &&
       query.conditions.every((c) =>
         matchCondition(record, c, fields[c.alias]),
-      ) && matchKeywords(record, query.keywords),
+      ) &&
+      matchKeywords(record, query.keywords),
   );
   const sorted = [...matched].sort((a, b) => {
     for (const { alias, direction } of query.order) {
