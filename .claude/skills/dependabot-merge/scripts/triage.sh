@@ -38,9 +38,6 @@ PRS=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
 
 if [ -z "$PRS" ]; then
   echo "open な dependabot PR はありません。"
-  echo
-  echo "※ 直近で閉じられた PR がないかも確認してください（cooldown による自動クローズ）:"
-  echo "   gh api \"repos/$REPO/pulls?state=closed&per_page=20\" -q '.[] | select(.user.login==\"dependabot[bot]\" and .merged_at==null) | \"#\\(.number) \\(.title)\"'"
   exit 0
 fi
 

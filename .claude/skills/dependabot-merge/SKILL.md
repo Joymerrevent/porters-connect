@@ -37,9 +37,11 @@ description: >-
 bash .claude/skills/dependabot-merge/scripts/triage.sh
 ```
 
-このスクリプトが集めるもの — open な dependabot PR、head SHA、mergeable 状態、**head SHA に対する** CI の結果、変更ファイル、PR 本文から抜いた「パッケージ → 更新先バージョン」、npm 上の公開日。
+このスクリプトが集めるもの — open な dependabot PR、head SHA、mergeable 状態、**head SHA に対する** CI の結果、変更ファイル、PR 本文から抜いた「パッケージ → 更新先バージョン」、公開日（npm / GitHub Actions で参照先が違う）。
 
 出力は判定の材料であって判定そのものではない。次のステップで意味づけする。
+
+**open な PR がゼロなら、そう報告して終わる。** 閉じられた PR を調べに行かない — 閉じられた PR はマージできないので行動につながらず、頼まれていない仕事になる。特定の PR が見当たらなくて探している場合だけ、下の「つまずいたときの読み方」を見る。
 
 ### 2. cooldown を突き合わせる
 
@@ -52,6 +54,8 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 これが出ていたら**それは失敗ではなく、サプライチェーン対策が意図どおり働いた形**。閉じられた PR を無理に復活させない。「いつ熟成するか」を計算して伝え、その日以降の定期実行で再作成されるのを待つ。
 
 自分でも確かめる — スクリプトが出す公開日と今日の差を、その更新の semver ステップに対応する日数と比べる。`patch`/`minor` なら 7 日、`major` なら 14 日（npm の場合）。**足りていなければ、CI が緑でもマージしない。**
+
+日数は**時刻まで見て切り捨てる**。「8/16 公開・8/22 現在」は日付の引き算だと 7 日だが、実際に 6 日 10 時間なら **6 日**と数える。安全側に倒すためだが、「日付上は足りているのになぜ」と見えるので、境界が近いときは**あと何時間で熟成するか**まで伝える。
 
 ### 3. 分類して順番を決める
 
@@ -108,7 +112,14 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 - **`Base branch was modified`** — branch protection が base の鮮度を要求している。§5 の update-branch から。
 - **`head ref does not exist`（422）** — ブランチが消えている。PR が閉じられた可能性が高いので、まず `git fetch --prune` と PR の state を確認する。
 - **`gh pr view` / `gh pr checks` が分類器にブロックされる** — マージ操作の文脈でブロックされることがある。`gh api` と `git log` に切り替えれば同じ情報が取れる（実際に起きた）。
-- **dependabot が PR を閉じた** — §2 のとおり。異常ではない。
+- **あったはずの PR が見当たらない** — dependabot が自分で閉じた可能性が高い（§2）。閉じられた PR を探すのはこの場合だけでよい:
+
+  ```bash
+  gh api "repos/{owner}/{repo}/pulls?state=closed&per_page=20" \
+    -q '.[] | select(.user.login=="dependabot[bot]" and .merged_at==null) | "#\(.number) \(.title)"'
+  ```
+
+  見つかったら PR のコメントで理由を確認し、cooldown が理由なら**いつ熟成するか**を計算して伝える。閉じられた PR は復活させない。
 
 ## やらないこと
 
