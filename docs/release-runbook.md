@@ -49,7 +49,12 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.9.0**（npm latest・`v0.9.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-21）。0.2.0 以降この半自動フローで公開（**全 13 版**）。
+- ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
+- ⚠️ **`pnpm changeset:version` が現在動きません**（0.10.0 は版 bump と changeset 削除を手で実施）。
+  `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0` にも効き、
+  同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が v4 以降で削除されているため。
+  CHANGELOG は元から手書き（`changelog: false`・[ADR-0026][adr26]）なので**リリースはブロックされない**が、
+  §1 のこの手順だけ手作業になる。恒久対応は `@changesets/cli` を v3 へ（`read-yaml-file` が依存から消える）。
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
@@ -62,5 +67,6 @@
 [prd]: design/requirements.md
 [rm]: roadmap.md
 [adr25]: adr/0025-release-automation.md
+[adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
 [cl]: ../CHANGELOG.md
