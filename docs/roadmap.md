@@ -23,15 +23,18 @@
 
 - **RV-31 は挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める。
   **R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
-- ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・`@changesets/cli` を v3 へ）。落ちていたのは
-  `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
-  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ v3 の API（`yaml.safeLoad`）が v4 以降で
-  削除されていたため。v3 では `read-yaml-file` が依存から消えたので衝突しない。
-  **override をスコープで緩める案は採らなかった** — `>=4.2.0` という指定は js-yaml v3 全体が対象の
+- ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**）。
+  落ちていたのは `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
+  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
+  **js-yaml v4** 以降で削除されていたため。**changesets v3** では `read-yaml-file` が依存から消えるので衝突しない。
+  **override をスコープで緩める案は採らなかった** — `>=4.2.0` という指定は **js-yaml v3** 全体が対象の
   advisory を示唆するため、脆弱な版を意図的に呼び戻すことになる。
   仕様変更 2 点は [runbook][rb] に記載（**changeset が 0 枚だと exit 1**／**Node 22.11+ が必要**）。
   **時系列は「版上げで壊れた」ではなく「導入初日から動いていなかった」**（override が 2026-06-19・
   changesets 導入が 2026-06-20）＝下記リリース記録の注記を参照。
+  📌 **紛らわしいので注意**: 上には無関係な「v3」が 2 つ出てくる。**js-yaml v3** は古く脆弱な版
+  （`safeLoad` を持つ・戻してはいけない側）、**changesets v3** は最新版（上げた側）。
+  今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
 - **0.10.0 を公開済み**（2026-08-22）。**破壊的変更**（`partition` は `tenant(id)` 経由のみ・[ADR-0055][adr55]）を含む。
@@ -205,8 +208,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] **0.10.0 リリース**（2026-08-22）— changeset 3 件を消費して `0.9.0` → `0.10.0`。
       `v0.10.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 377.7 kB）まで完了。
       **`pnpm changeset:version` が動かず**、版 bump と changeset 削除は手で実施（後日復旧・[runbook][rb]「現在の状況」）
-- [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を v3 へ。`read-yaml-file` が依存から消え、
-      `js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も v4 へ追従
+- [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
+      依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
+      `@changesets/config@4.0.0` へ追従
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）

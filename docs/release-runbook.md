@@ -70,14 +70,25 @@
 ## 現在の状況
 
 - ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
-- ✅ **`pnpm changeset:version` は復旧済み**（`@changesets/cli` v3 へ更新・2026-08-23）。
+- ✅ **`pnpm changeset:version` は復旧済み**（**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**・2026-08-23）。
   原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
-  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ js-yaml v3 の API（`yaml.safeLoad`）が
-  v4 以降で削除されていたこと。v3 では `read-yaml-file` が依存から消えたので衝突しない
+  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
+  **js-yaml v4** 以降で削除されていたこと。**changesets v3** では `read-yaml-file` が依存から消えるので衝突しない
   （override をスコープで緩める案は不採用＝脆弱な版を意図的に呼び戻すことになるため）。
   なお **changesets v3 は Node `^22.11 || ^24 || >=26`** を要求する。`.node-version` は 22 なので
   通常の開発・CI では問題ないが、**Node 20 では `changeset` コマンドが動かない**
   （install 自体は通る＝ test マトリクスの Node 20 ジョブは影響なし）。
+
+> 📌 **「v3」が 2 つ出てくるので注意**（読み違えやすい）。
+>
+> | 表記              | 何                | 位置づけ                                              |
+> | ----------------- | ----------------- | ----------------------------------------------------- |
+> | **js-yaml v3**    | YAML パーサ       | **古い・脆弱**。`safeLoad` を持つ。戻してはいけない側 |
+> | **changesets v3** | `@changesets/cli` | **最新**。2.31.1 から上げた側                         |
+>
+> 今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
+> js-yaml は override どおり v5 系のまま。
+
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
 - ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
 
@@ -91,7 +102,7 @@ override が先、changesets の導入が翌日という順序だったため、
 | 2026-06-19 | PR #53 で脆弱性対応として `js-yaml: ">=4.2.0"` の override を追加 |
 | 2026-06-20 | PR #64 で changesets を導入 ← **この時点ですでに壊れていた**      |
 | 2026-08-22 | 0.10.0 のリリース作業で発覚                                       |
-| 2026-08-23 | `@changesets/cli` を v3 へ上げて解消                              |
+| 2026-08-23 | `@changesets/cli` を 2.31.1 → 3.0.0 へ上げて解消                  |
 
 ロックファイルを遡ると、changesets 導入初日から `read-yaml-file` 配下は `js-yaml@4.2.0` に
 差し替わっている（`safeLoad` は v4.0.0 で削除済）。以降 5.2.1 → 5.2.3 と上がった。
@@ -101,12 +112,12 @@ override が先、changesets の導入が翌日という順序だったため、
 上の事実と矛盾する（実際は手作業だったとみられる）。**ツールが緑を返したことを確認せずに
 記録を書くと、こういう嘘が残る**＝記録は実行結果に基づいて書く。
 
-#### なぜ v3 化を選んだか（採らなかった案の記録）
+#### なぜ changesets の版上げを選んだか（採らなかった案の記録）
 
-有力な代替として **`read-yaml-file` を js-yaml v4 対応版へ override する案**があった。
-`read-yaml-file@2.1.0` は v1.1.0 とエクスポートが完全に同一（`module.exports` / `.default` / `.sync`・CJS のまま）で、
+有力な代替として **`read-yaml-file` を js-yaml v4 対応版（2.1.0）へ override する案**があった。
+`read-yaml-file@2.1.0` は 1.1.0 とエクスポートが完全に同一（`module.exports` / `.default` / `.sync`・CJS のまま）で、
 差分は `yaml.safeLoad` → `yaml.load` の 1 行だけ。実機で `changeset version` が通ることも確認済みで、
-**lockfile 差分は 31 行**（v3 化は 643 行）・changesets は v2 のまま・Node 20 も維持できる。
+**lockfile 差分は 31 行**（changesets の版上げは 643 行）・changesets は 2.31.1 のまま・Node 20 も維持できる。
 
 ```json
 "overrides": { "js-yaml": ">=4.2.0", "read-yaml-file": ">=2.1.0 <3" }
@@ -117,10 +128,10 @@ override が先、changesets の導入が翌日という順序だったため、
 **override が宣言 semver を踏み越える**構造は障害の原因そのものだった。いま動くのは API がたまたま
 同一だからであって、semver が保証したことではない。壊れ方で比べると差が出る：
 
-| 案                      | 失敗モード                                                                |
-| ----------------------- | ------------------------------------------------------------------------- |
-| override 追加（不採用） | install は通り、**リリース当日に `TypeError`** で落ちる＝遅く静かに壊れる |
-| v3 化（採用）           | override 不要＝解決器が宣言範囲を検査し、**非互換なら install が落ちる**  |
+| 案                          | 失敗モード                                                                |
+| --------------------------- | ------------------------------------------------------------------------- |
+| override 追加（不採用）     | install は通り、**リリース当日に `TypeError`** で落ちる＝遅く静かに壊れる |
+| changesets の版上げ（採用） | override 不要＝解決器が宣言範囲を検査し、**非互換なら install が落ちる**  |
 
 「壊れたときに安全側へ倒れる」で選ぶなら後者。代償は「Node 20 で `changeset` が動かない」だけで、
 `.node-version` は 22・`release.yml` も同ファイル参照のため実害はない。
