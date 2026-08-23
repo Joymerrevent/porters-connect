@@ -69,6 +69,7 @@
 | [0055][0055] | `partition` が束ねられていない呼び出しの扱い（RV-25）            | 基本設計 | accepted   | —     |
 | [0056][0056] | `P_Deleted`（削除フラグ）の扱い（RV-26）                         | 詳細設計 | accepted   | —     |
 | [0057][0057] | `itemstate: "existing"` の明示指定を送るか（0038 SD-4 の amend） | 詳細設計 | accepted   | —     |
+| [0058][0058] | `System[Reference]` を展開して読むときの扱い（RV-31）            | 基本設計 | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -129,3 +130,4 @@
 [0055]: 0055-partition-binding-guard.md
 [0056]: 0056-deleted-flag-typing.md
 [0057]: 0057-itemstate-existing-explicit.md
+[0058]: 0058-reference-expansion-read.md

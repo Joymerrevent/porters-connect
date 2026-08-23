@@ -12,17 +12,19 @@
 ## ▶️ いま何をやるか
 
 **2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しした 8 件は**全件を解消**し、
-**0.10.0 まで世に出た**。次の論点は **RV-31**（reference 展開の取りこぼし）で、要 ADR。
+**0.10.0 まで世に出た**。次の論点 **RV-31**（reference 展開の取りこぼし）は
+**[ADR-0058][adr58] を `proposed` で起票済み**（2026-08-23）＝**決定待ち**。
 品質ゲートは全 green（628 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                     | 根拠  | semver | 備考                                                                        |
-| --- | -------------------------------------------- | ----- | ------ | --------------------------------------------------------------------------- |
-| 1   | **RV-31 の ADR**: reference 展開の取りこぼし | RV-31 | —      | 🟡 展開形を要求しても ID 以外を捨てる。挙動・型のどちらを変えるにせよ要 ADR |
+| #   | やること                                        | 根拠              | semver | 備考                                                                   |
+| --- | ----------------------------------------------- | ----------------- | ------ | ---------------------------------------------------------------------- |
+| 1   | **[ADR-0058][adr58] の決定**（議論 → accepted） | RV-31             | —      | 4 案（現状維持＋文書化 / 送信前に弾く / 型を広げる / 型付き `expand`） |
+| 2   | ADR-0058 の実施（accept 後・**別 PR**）         | [ADR-0058][adr58] | minor  | 採用案しだい。実装範囲は ADR の各案の「実装スケッチ」を参照            |
 
-- **RV-31 は挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める。
-  **R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
+- **RV-31 は挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める
+  （起票まで完了・**accept は decider が行う**）。**R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
 - ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**）。
   落ちていたのは `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
@@ -65,14 +67,14 @@
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                              |
-| ----------------------------- | -------------------------------------------- | --------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 1 件（ADR 1）                  |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-31    |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ち **なし**    |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜15 が未確認（契約待ち）           |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）        |
+| ファイル                      | 何の TODO か                                 | いまの状態                               |
+| ----------------------------- | -------------------------------------------- | ---------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件（0058 の決定 → 実施）      |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-31     |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **1 件**（0058）／実装待ち なし |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜15 が未確認（契約待ち）            |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）         |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -167,7 +169,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0057 accepted（0037 は 0039 で superseded）・**proposed は無し・実装待ちも無し**（[索引][adr]）
+- ADR 0001〜0057 accepted（0037 は 0039 で superseded）＋ **0058 proposed**（決定待ち）・実装待ちは無し（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・**628 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
   RV-22（契約待ち）・RV-31。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
@@ -324,6 +326,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr55]: adr/0055-partition-binding-guard.md
 [adr56]: adr/0056-deleted-flag-typing.md
 [adr57]: adr/0057-itemstate-existing-explicit.md
+[adr58]: adr/0058-reference-expansion-read.md
 [adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md
 [fake-runbook]: fake-server-runbook.md
