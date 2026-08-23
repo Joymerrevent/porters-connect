@@ -173,6 +173,15 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
   RV-22（契約待ち）・RV-31。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
+- **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。
+  - `project-review` — 多観点クロスレビュー（上記の findings 台帳を更新するプロセス本体）
+  - `dependabot-merge` — 依存更新 PR の検証とマージ。**cooldown（熟成期間）の突き合わせ**・
+    CI を head SHA で見る・**base の鮮度と 1 件ずつのマージ順**を固定する。2026-08-22 に
+    #173/#174/#175 を処理したときの判断を写した（#173 が cooldown で自動クローズされた件を含む）。
+    **2026-08-23 に #188 で §1〜§5 を通し検証済み**。同じ更新（fast-xml-parser 5.11.0）で
+    **cooldown の両側**を観測できた — 6 日 10 時間では dependabot が自動クローズ（#173）、
+    7 日でマージ可（#188）。未検証で残るのは `update-branch` と複数 PR の順序決めで、
+    どちらも「次に複数たまったとき」に確認する
 
 ## 🔜 リリースに向けた残タスク
 
