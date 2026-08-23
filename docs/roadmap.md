@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-22
+- 最終更新: 2026-08-23
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -17,19 +17,24 @@
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                        | 根拠  | semver | 備考                                                                        |
-| --- | ----------------------------------------------- | ----- | ------ | --------------------------------------------------------------------------- |
-| 1   | **`changeset:version` を直す**（changesets v3） | 下記  | —      | 開発ツールのみ。0.10.0 は手作業で回避した＝**次のリリースまでに直す**       |
-| 2   | **RV-31 の ADR**: reference 展開の取りこぼし    | RV-31 | —      | 🟡 展開形を要求しても ID 以外を捨てる。挙動・型のどちらを変えるにせよ要 ADR |
+| #   | やること                                     | 根拠  | semver | 備考                                                                        |
+| --- | -------------------------------------------- | ----- | ------ | --------------------------------------------------------------------------- |
+| 1   | **RV-31 の ADR**: reference 展開の取りこぼし | RV-31 | —      | 🟡 展開形を要求しても ID 以外を捨てる。挙動・型のどちらを変えるにせよ要 ADR |
 
 - **RV-31 は挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める。
   **R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
-- **`pnpm changeset:version` が動かない**（0.10.0 で判明）。`pnpm.overrides` の `js-yaml: ">=4.2.0"` が
-  changesets の推移依存 `read-yaml-file@1.1.0` にも効き、同パッケージが呼ぶ v3 の API（`yaml.safeLoad`）が
-  v4 以降で削除されているため。**リリースはブロックされない**（CHANGELOG は手書き＝このコマンドの仕事は
-  版 bump と changeset 削除の 2 つだけ）が、毎回手作業になるので直す。
-  **override をスコープで緩める案は採らない** — `>=4.2.0` という指定は v3 全体が対象の advisory を示唆するため、
-  脆弱な版を意図的に呼び戻すことになる。`@changesets/cli` を v3 へ上げれば `read-yaml-file` が依存から消える。
+- ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**）。
+  落ちていたのは `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
+  （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
+  **js-yaml v4** 以降で削除されていたため。**changesets v3** では `read-yaml-file` が依存から消えるので衝突しない。
+  **override をスコープで緩める案は採らなかった** — `>=4.2.0` という指定は **js-yaml v3** 全体が対象の
+  advisory を示唆するため、脆弱な版を意図的に呼び戻すことになる。
+  仕様変更 2 点は [runbook][rb] に記載（**changeset が 0 枚だと exit 1**／**Node 22.11+ が必要**）。
+  **時系列は「版上げで壊れた」ではなく「導入初日から動いていなかった」**（override が 2026-06-19・
+  changesets 導入が 2026-06-20）＝下記リリース記録の注記を参照。
+  📌 **紛らわしいので注意**: 上には無関係な「v3」が 2 つ出てくる。**js-yaml v3** は古く脆弱な版
+  （`safeLoad` を持つ・戻してはいけない側）、**changesets v3** は最新版（上げた側）。
+  今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
 - **0.10.0 を公開済み**（2026-08-22）。**破壊的変更**（`partition` は `tenant(id)` 経由のみ・[ADR-0055][adr55]）を含む。
@@ -62,7 +67,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 
 | ファイル                      | 何の TODO か                                 | いまの状態                              |
 | ----------------------------- | -------------------------------------------- | --------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件（ツール修正 1・ADR 1）    |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 1 件（ADR 1）                  |
 | [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-31    |
 | [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ち **なし**    |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜15 が未確認（契約待ち）           |
@@ -188,6 +193,12 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **0.10.0 で partition を `tenant(id)` 経由のみに（破壊的）＋ `P_Deleted` で削除済みを判別**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
+
+> ⚠️ **下記 0.7.0〜0.9.0 の「changeset N 件を消費して」は `pnpm changeset:version` の実行結果ではない**
+> （2026-08-23 に判明）。同コマンドは changesets 導入初日（2026-06-20）から一度も動いていなかったため、
+> 版 bump と changeset 削除は実際には手作業だったと見られる。件数そのものは正しい。
+> 経緯は [runbook][rb]「現在の状況」の時系列。
+
 - [x] **0.7.0 リリース**（2026-08-13）— changeset 6 件を消費して `0.6.2` → `0.7.0`。
       `v0.7.0` 自動タグ → back-merge → GitHub Release → OIDC publish まで完了
 - [x] **0.8.0 リリース**（2026-08-14）— changeset 1 件を消費して `0.7.0` → `0.8.0`。
@@ -196,7 +207,10 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       `v0.9.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 366.6 kB）まで完了
 - [x] **0.10.0 リリース**（2026-08-22）— changeset 3 件を消費して `0.9.0` → `0.10.0`。
       `v0.10.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 377.7 kB）まで完了。
-      **`pnpm changeset:version` が動かず**、版 bump と changeset 削除は手で実施（[runbook][rb]「現在の状況」）
+      **`pnpm changeset:version` が動かず**、版 bump と changeset 削除は手で実施（後日復旧・[runbook][rb]「現在の状況」）
+- [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
+      依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
+      `@changesets/config@4.0.0` へ追従
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
 
 ## 🧱 基盤構築（完了）
