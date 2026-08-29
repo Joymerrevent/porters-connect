@@ -15,6 +15,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -22,6 +23,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CANDIDATE_DESCRIPTOR } from "./candidate";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -71,11 +73,18 @@ const REQUIRED_ON_CREATE = [
  * (ADR-0043) builds Resume wire shapes from this very catalog, so the two cannot drift.
  * Not re-exported from `src/index.ts`, so it stays out of the published API.
  */
+// Expandable reference fields (ADR-0058). Candidate's alias prefix is `Person`, not the resource
+// name — the descriptor carries it so callers never write it.
+const REFERENCES = {
+  P_Candidate: CANDIDATE_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 export const RESUME_DESCRIPTOR = {
   name: "Resume",
   path: "resume",
   prefix: "Resume",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Resume (a Candidate's CV / profile): known `P_` fields, each requested field

@@ -13,6 +13,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -20,6 +21,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CLIENT_DESCRIPTOR } from "./client";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -75,11 +77,19 @@ const REQUIRED_ON_CREATE = [
  * (ADR-0043) builds Job wire shapes from this very catalog, so the two cannot drift.
  * Not re-exported from `src/index.ts`, so it stays out of the published API.
  */
+// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
+// implemented resource, so there is no catalog to decode its fields with. It still reads as the
+// referenced id, like every un-expanded reference.
+const REFERENCES = {
+  P_Client: CLIENT_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 export const JOB_DESCRIPTOR = {
   name: "Job",
   path: "job",
   prefix: "Job",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */

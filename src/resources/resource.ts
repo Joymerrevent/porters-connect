@@ -28,6 +28,7 @@ import {
 } from "./read-core";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
+import type { ReferenceMap } from "./expand";
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
@@ -45,6 +46,14 @@ export type { Condition, ItemState, Order, SearchQuery } from "./query";
 // Bulk write result (ADR-0041 / F-4). Defined in bulk-write.ts; re-exported so resource modules and
 // the public barrel keep importing the bulk types from "./resource".
 export type { BulkWriteResult, BulkWriteResultItem } from "./bulk-write";
+// Reference expansion (ADR-0058). Defined in expand.ts; re-exported for the same reason.
+export type {
+  EmptyReferences,
+  Expand,
+  ExpandedReadRecord,
+  ReferenceMap,
+  ReferenceTarget,
+} from "./expand";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).
@@ -73,7 +82,10 @@ export type UpdateInput<F extends FieldCatalog> = {
  * the fake server (ADR-0043) — derives wire shapes from the *same* catalog instead of a copy
  * that could drift. Not part of the published API: `src/index.ts` is curated.
  */
-export type ResourceDescriptor<F extends FieldCatalog = FieldCatalog> = {
+export type ResourceDescriptor<
+  F extends FieldCatalog = FieldCatalog,
+  R extends ReferenceMap = ReferenceMap,
+> = {
   /** Root element + Write resource name, e.g. `"Candidate"`. */
   name: string;
   /** URL path segment, e.g. `"candidate"`. */
@@ -82,6 +94,13 @@ export type ResourceDescriptor<F extends FieldCatalog = FieldCatalog> = {
   prefix: string;
   /** Data-Type catalog (`as const`): bare alias -> Data Type. */
   fields: F;
+  /**
+   * Expandable `System[Reference]` fields (ADR-0058): bare alias -> the referenced resource's
+   * descriptor. The catalog only records that a field *is* a reference, never what it points at,
+   * so the link lives here — that is also where Candidate's `Person` alias prefix is absorbed.
+   * Omitted, or an alias left out, means the field reads as the referenced id and nothing else.
+   */
+  references?: R;
 };
 
 /** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */

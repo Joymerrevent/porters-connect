@@ -16,6 +16,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -23,6 +24,10 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CANDIDATE_DESCRIPTOR } from "./candidate";
+import { CLIENT_DESCRIPTOR } from "./client";
+import { JOB_DESCRIPTOR } from "./job";
+import { RESUME_DESCRIPTOR } from "./resume";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -65,11 +70,22 @@ const REQUIRED_ON_CREATE = [
  * (ADR-0043) builds Process wire shapes from this very catalog, so the two cannot drift.
  * Not re-exported from `src/index.ts`, so it stays out of the published API.
  */
+// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
+// implemented resource, so there is no catalog to decode its fields with — it still reads as the
+// referenced id. Candidate's alias prefix is `Person`, which the descriptor carries.
+const REFERENCES = {
+  P_Client: CLIENT_DESCRIPTOR,
+  P_Job: JOB_DESCRIPTOR,
+  P_Candidate: CANDIDATE_DESCRIPTOR,
+  P_Resume: RESUME_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 export const PROCESS_DESCRIPTOR = {
   name: "Process",
   path: "process",
   prefix: "Process",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
