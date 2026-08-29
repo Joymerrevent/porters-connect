@@ -8,7 +8,7 @@
 import { PortersConfigError } from "../errors";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType } from "../xml/decode";
-import type { FieldCatalog } from "./read-core";
+import type { FieldCatalog, ReadFieldAlias } from "./read-core";
 
 // --- condition: per-Data-Type operator objects (reference: Read - Condition) ---
 
@@ -125,12 +125,13 @@ export type ItemState = "existing" | "deleted" | "all";
 
 export type SearchQuery<F extends FieldCatalog = FieldCatalog> = {
   /**
-   * Output fields as prefixed aliases (e.g. `Person.P_Name`). **Omit** to fetch every catalogued
+   * Output fields as **bare aliases** (e.g. `P_Name`) — the same vocabulary as `condition` and
+   * `order`; the library adds the resource's prefix (ADR-0059). **Omit** to fetch every catalogued
    * field by default (ADR-0020): PORTERS returns only the primary key for a fieldless request, so
    * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
-   * API-native "primary key only" response (e.g. counting). A non-empty list is sent verbatim.
+   * API-native "primary key only" response (e.g. counting).
    */
-  field?: string[];
+  field?: ReadFieldAlias<F>[];
   /** Typed AND-conditions; each field's operators derive from its Data Type (ADR-0038). */
   condition?: Condition<F>;
   /** Sort order; orderable Data Types only (Number/Date/DateTime/Age/System). */

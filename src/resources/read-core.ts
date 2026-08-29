@@ -88,17 +88,33 @@ const readFieldEntry = (
     : `${prefix}.${alias}`;
 
 /**
- * The default Read `field` list, derived from the catalog (ADR-0020, 案A+2a). PORTERS returns only
- * `{Resource}.P_Id` for a fieldless request, so a typed-record read would otherwise drop every
- * known field despite the type promising them. Every catalog alias is sent, User expanded and
- * System[Reference] left ID-only (`()` omitted) so the wire shape matches decode.ts. The API-native
- * "primary key only" stays reachable via `field: []` (透明化 — see `SearchQuery.field`).
+ * What a Read `field` entry may name (ADR-0059): a catalogued alias — every standard `P_` field
+ * plus the custom fields declared with `defineFields` (ADR-0023) — or an undeclared tenant custom
+ * field, admitted by the `U_`/`A_` naming rule `defineFields` already enforces at runtime.
+ *
+ * Aliases are **bare**: the resource's prefix (`Person.` for Candidate) is a constant the
+ * descriptor knows, so the library adds it. That makes `condition` / `order` / `field` one
+ * vocabulary and turns a typo (`P_Nmae`) or a hand-written prefix into a compile error instead of
+ * a request that quietly returns nothing.
  */
-export const defaultReadFields = (
+export type ReadFieldAlias<F extends FieldCatalog> =
+  (keyof F & string) | `U_${string}` | `A_${string}`;
+
+/**
+ * Map caller-supplied bare aliases onto the wire form, the same assembly the default list uses.
+ * A prefix that slipped through a cast is stripped first (`Person.P_Name` -> `P_Name`), mirroring
+ * `bareAlias` on the response side: the types say bare, the runtime still understands the old
+ * prefixed form rather than sending `Person.Person.P_Name`. That asymmetry is deliberate.
+ */
+export const qualifyReadFields = (
   prefix: string,
   fields: ReadonlyMap<string, DataType | null>,
+  aliases: readonly string[],
 ): string[] =>
-  [...fields].map(([alias, type]) => readFieldEntry(prefix, alias, type));
+  aliases.map((entry) => {
+    const alias = bareAlias(entry);
+    return readFieldEntry(prefix, alias, fields.get(alias));
+  });
 
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =

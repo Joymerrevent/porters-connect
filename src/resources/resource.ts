@@ -17,10 +17,11 @@ import { parseWriteResult } from "../xml/parser";
 import {
   appendPaging,
   decoderFor,
-  defaultReadFields,
   paginate,
+  qualifyReadFields,
   runRead,
   type FieldCatalog,
+  type ReadFieldAlias,
   type ReadRecord,
   type ResourceDeps,
   type ResourcePage,
@@ -33,6 +34,7 @@ import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 export type {
   EmptyCatalog,
   FieldCatalog,
+  ReadFieldAlias,
   ReadRecord,
   ResourceDeps,
   ResourcePage,
@@ -152,8 +154,9 @@ export const firstWriteResultId = (
  * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
  * at the configured access point (ADR-0047).
  * `ctx` (alias prefix + Data-Type map) drives the typed query encoding (ADR-0038): condition/order
- * prefixing, date ISO -> PORTERS, and the keyword/itemstate guards. Attachment is bespoke (no prefix
- * / no catalog) and builds its own loose URL — see attachment.ts.
+ * prefixing, date ISO -> PORTERS, and the keyword/itemstate guards. It also prefixes the bare
+ * `field` aliases (ADR-0059). Attachment is bespoke (no prefix / no catalog) and builds its own
+ * loose URL — see attachment.ts.
  */
 export const buildReadUrl = <F extends FieldCatalog>(
   accessPoint: AccessPoint,
@@ -164,7 +167,12 @@ export const buildReadUrl = <F extends FieldCatalog>(
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
-  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
+  if (q.field && q.field.length > 0) {
+    p.set(
+      "field",
+      qualifyReadFields(ctx.prefix, ctx.fields, q.field).join(","),
+    );
+  }
   appendReadQuery(p, q, ctx);
   appendPaging(p, q.count, q.start);
   return apiUrl(accessPoint, path, p);
@@ -194,8 +202,12 @@ export const createResource = <
     Object.entries(config.fields),
   );
   const decode = decoderFor(config.fields);
-  // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
-  const defaultFields = defaultReadFields(config.prefix, fieldMap);
+  // The default field set sent when a caller omits `field` (ADR-0020, 案A+2a): every catalogued
+  // alias. PORTERS returns only `{Resource}.P_Id` for a fieldless request, so a typed-record read
+  // would otherwise drop every known field despite the type promising them. These are bare aliases
+  // like a caller's own list — `buildReadUrl` prefixes both through the same assembly (ADR-0059).
+  // The API-native "primary key only" stays reachable via `field: []` (透明化).
+  const defaultFields = Object.keys(config.fields) as ReadFieldAlias<F>[];
 
   const readUrl = (q: SearchQuery<F>): string =>
     buildReadUrl(deps.accessPoint, deps.partition, config.path, q, {
@@ -210,7 +222,7 @@ export const createResource = <
     firstWriteResultId(body, config.path, config.name);
 
   // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
-  // only); a provided list is sent verbatim (ADR-0020).
+  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059).
   // `async` for the exception contract, not for the body: URL building runs the typed-query
   // guards (keyword length, itemstate), and a Promise-returning method must never throw
   // synchronously — every failure reaches the caller as a rejection (ADR-0046).

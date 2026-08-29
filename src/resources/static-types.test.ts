@@ -105,3 +105,26 @@ describe("型を持たない項目（P_Deleted）の制約 — ADR-0056", () => 
     expectTypeOf<CandidateUpdateInput>().not.toHaveProperty("P_Deleted");
   });
 });
+
+// `field` は接頭辞なしの型付き alias で受ける（ADR-0059）。綴り間違い・接頭辞付き・展開文字列が
+// **コンパイル時に**止まることが決定の中身なので、型の側で固定する。実行時テストでは捕まえられない。
+describe("Read の field は接頭辞なしの型付き alias — ADR-0059", () => {
+  type Field = NonNullable<CandidateSearchQuery["field"]>[number];
+
+  it("カタログ済みの標準項目を素の alias で受ける", () => {
+    expectTypeOf<"P_Name">().toExtend<Field>();
+    expectTypeOf<"P_Deleted">().toExtend<Field>(); // 型を持たない項目も field には出せる
+  });
+
+  it("未宣言のカスタム項目は U_/A_ の命名規則で受ける", () => {
+    expectTypeOf<"U_memo">().toExtend<Field>();
+    expectTypeOf<"A_flag">().toExtend<Field>();
+  });
+
+  it("綴り間違い・接頭辞付き・展開文字列は型として書けない", () => {
+    expectTypeOf<"P_Nmae">().not.toExtend<Field>();
+    expectTypeOf<"Person.P_Name">().not.toExtend<Field>();
+    expectTypeOf<"Candidate.P_Name">().not.toExtend<Field>(); // 接頭辞の罠そのものが消える
+    expectTypeOf<"Job.P_Client(Client.P_Id)">().not.toExtend<Field>(); // ADR-0058 と噛み合う
+  });
+});
