@@ -17,6 +17,7 @@ import { parseWriteResult } from "../xml/parser";
 import {
   appendPaging,
   decoderFor,
+  defaultReadFields,
   paginate,
   runRead,
   type FieldCatalog,
@@ -118,22 +119,6 @@ export type Resource<F extends FieldCatalog, Req extends keyof F> = {
   ): Promise<BulkWriteResult>;
 };
 
-// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
-const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
-
-// Default Read `field` list derived from the catalog (ADR-0020, 案A+2a). PORTERS returns only
-// `{Resource}.P_Id` for a fieldless request, so a typed-record read would otherwise drop every
-// known field despite the type promising them. We send every catalog alias as `{prefix}.{alias}`,
-// expanding User to its 4 readable sub-fields and leaving System[Reference] ID-only (`()` omitted)
-// so the wire shape matches decode.ts. The API-native "primary key only" stays reachable via
-// `field: []` (透明化 — see SearchQuery.field).
-const defaultFieldList = (prefix: string, fields: FieldCatalog): string[] =>
-  Object.entries(fields).map(([alias, type]) =>
-    type === "User"
-      ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
-      : `${prefix}.${alias}`,
-  );
-
 /**
  * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a
  * resource error (mapped, not swallowed); a missing result Item is unparseable. Shared by
@@ -210,7 +195,7 @@ export const createResource = <
   );
   const decode = decoderFor(config.fields);
   // Computed once: the default field set sent when a caller omits `field` (ADR-0020).
-  const defaultFields = defaultFieldList(config.prefix, config.fields);
+  const defaultFields = defaultReadFields(config.prefix, fieldMap);
 
   const readUrl = (q: SearchQuery<F>): string =>
     buildReadUrl(deps.accessPoint, deps.partition, config.path, q, {

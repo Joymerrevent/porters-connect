@@ -69,6 +69,37 @@ const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
 // Stryker restore StringLiteral
 
+// --- Read `field` assembly (ADR-0020) -------------------------------------------------------
+
+// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
+const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
+
+// One `field=` entry for a bare alias. PORTERS wants `{prefix}.{alias}`; a User-typed field is
+// expanded to its 4 readable sub-fields so the wire shape matches `decodeUser` — asking for it
+// without `()` would return an id, and the typed record promises a `UserRef`. An alias the catalog
+// does not know (a tenant `U_`/`A_` field) is prefixed and left alone.
+const readFieldEntry = (
+  prefix: string,
+  alias: string,
+  type: DataType | null | undefined,
+): string =>
+  type === "User"
+    ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
+    : `${prefix}.${alias}`;
+
+/**
+ * The default Read `field` list, derived from the catalog (ADR-0020, 案A+2a). PORTERS returns only
+ * `{Resource}.P_Id` for a fieldless request, so a typed-record read would otherwise drop every
+ * known field despite the type promising them. Every catalog alias is sent, User expanded and
+ * System[Reference] left ID-only (`()` omitted) so the wire shape matches decode.ts. The API-native
+ * "primary key only" stays reachable via `field: []` (透明化 — see `SearchQuery.field`).
+ */
+export const defaultReadFields = (
+  prefix: string,
+  fields: ReadonlyMap<string, DataType | null>,
+): string[] =>
+  [...fields].map(([alias, type]) => readFieldEntry(prefix, alias, type));
+
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
  * no Data Type -> raw string), unknown `U_`/`A_` aliases pass through (raw string, or null when
