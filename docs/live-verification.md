@@ -213,15 +213,17 @@ grep -rn "VERIFY(live)" src test
 
 ## LV-16 Candidate 参照を展開するときの alias 接頭辞
 
-- **現在の対応 / 仮定**: **`Person.`** を送る前提。[ADR-0058][a58]（案D）で `System[Reference]` の
-  展開（`expand`）を実装するとき、`Process.P_Candidate` / `Resume.P_Candidate` の `()` の中は
-  `Person.P_Id` / `Person.P_Name` … と組み立てる（参照先の alias 接頭辞は descriptor が持つ）
+- **現在の対応 / 仮定**: **`Person.`** を送る。[ADR-0058][a58]（案D）の `expand` は
+  `Process.P_Candidate` / `Resume.P_Candidate` の `()` の中を
+  `Person.P_Id` / `Person.P_Name` … と組み立てる（参照先の alias 接頭辞は descriptor が持つ）。
+  **実装済み**（0.11.0 予定）で、フェイクサーバーも同じ形で応答する
 - **不確実な理由**: reference の例は `field=Job.P_Client(Client.P_Id,Client.P_Name)` ＝
   **接頭辞がリソース名と一致するケースしか示していない**。Candidate は alias 接頭辞が `Person` で
   リソース名と食い違う唯一の例。Field Type 記事が Write について
   「`Person.P_Id` の値のみを指定することができます」と書くので **Read の `()` も `Person.` と推定**しているが、
   Read 側の明示例は無い
-- **コード箇所**: `src/resources/resource.ts`（`expand` の field 組み立て）・`src/resources/candidate.ts`（`prefix: "Person"`）
+- **コード箇所**: `src/resources/expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
+  `src/resources/candidate.ts`（`prefix: "Person"`）・参照先の登録は各リソースの `REFERENCES`
 - **確認方法**: Process Read に `field=Process.P_Candidate(Person.P_Id,Person.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
   `(Candidate.P_Id,…)` を試し、通ったほうを採る（descriptor の参照先接頭辞を直すだけで済む）

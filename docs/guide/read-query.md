@@ -1,4 +1,4 @@
-# Read クエリ（field / condition / order / keywords / itemstate）
+# Read クエリ（field / expand / condition / order / keywords / itemstate）
 
 データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
 **演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります
@@ -66,6 +66,60 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（�
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
 > 型が `値 | null | undefined` になっているのはこのためです。
+
+## `expand` — 参照先の項目も読む
+
+`P_Client` や `P_Candidate` のような**参照型**（`System[Reference]`）の項目は、
+既定では**参照先の ID** しか返りません。`expand` を書くと、参照先の項目そのものが返ります
+（[ADR-0058][adr58]）。
+
+```ts
+const page = await t.job.search({
+  expand: { P_Client: ["P_Id", "P_Name"] },
+});
+
+page.items[0]?.P_Client; // { P_Id: number | null; P_Name: string | null } | null
+```
+
+書かなければ従来どおりです。**`expand` を書いた項目だけ**型が変わるので、
+参照を ID として使っているコードは何も影響を受けません。
+
+```ts
+const plain = await t.job.search();
+plain.items[0]?.P_Client; // number | null
+```
+
+- **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく素の alias で指定し、
+  ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
+  Candidate を参照するときの `Person.` もライブラリが付けます。
+- `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
+- 1 往復で済みます。参照先を別途 `client.get(id)` で引く必要はありません。
+
+```ts
+const p = await t.process.get(id, {
+  expand: { P_Client: ["P_Name"], P_Candidate: ["P_Name", "P_Mail"] },
+});
+p?.P_Job; // 展開しなかった参照は ID のまま
+```
+
+**展開できる項目は決まっています**。参照先のリソースをライブラリが実装している必要があるためで、
+書けないものは型エラーになります。
+
+| リソース  | 展開できる                                        | 展開できない  |
+| --------- | ------------------------------------------------- | ------------- |
+| `job`     | `P_Client`                                        | `P_Recruiter` |
+| `process` | `P_Client` / `P_Job` / `P_Candidate` / `P_Resume` | `P_Recruiter` |
+| `resume`  | `P_Candidate`                                     | —             |
+
+- **Recruiter は未実装リソース**なので参照先のカタログがありません（従来どおり ID として読めます）。
+- **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
+  （[ADR-0023][adr23] で宣言できるようになるまでの穴）。
+- `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
+  （型エラー。cast で通しても送信前に `PortersConfigError` で止まり、`expand` を案内します）。
+
+> 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です
+> （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装なので、
+> 外れた場合に直すのは要求側の文字列だけです。
 
 ## `condition` — 検索条件
 
@@ -207,6 +261,7 @@ page.start; // 今回の開始インデックス
 
 - 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）／
   [ADR-0059][adr59]（`field` を接頭辞なしの型付き alias で受ける）／
+  [ADR-0058][adr58]（`expand` で参照先の項目を読む）／
   [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）／
   [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
@@ -217,7 +272,9 @@ page.start; // 今回の開始インデックス
 [adr38]: ../adr/0038-read-query-surface-impl.md
 [adr56]: ../adr/0056-deleted-flag-typing.md
 [adr57]: ../adr/0057-itemstate-existing-explicit.md
+[adr58]: ../adr/0058-reference-expansion-read.md
 [adr59]: ../adr/0059-read-field-bare-alias.md
+[adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
 [lv]: ../live-verification.md
 [prd]: ../design/requirements.md
