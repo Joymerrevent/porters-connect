@@ -51,10 +51,13 @@ Recruiter.U_[Name]  （Recruiter - Field List）
 2. **Candidate の罠**。接頭辞は**リソース名ではない** — Candidate だけ `Person.`（`candidate.ts:64`）。
    `Candidate.P_Name` と書くと外れる。ガイドの `P_Deleted` の項も
    「自分で `field` を渡すときは `"{Prefix}.P_Deleted"`（例 `"Person.P_Deleted"`）を明示してください」と補っている。
-3. **綴り間違いが黙って通る**。`field: ["Person.P_Nmae"]` は型でも実行時でも素通りし、
-   **返ってこないキーが `undefined` になるだけ**。エラーも警告も出ない。
-   [RV-1][rv1]（`field` 省略時に主キーしか返らない）・[RV-31][rv31]（展開が捨てられる）と**同じ
-   「要求したものが黙って返らない」系統**で、しかもこれは利用者のタイプミスなので頻度が高い。
+3. **綴り間違いを手前で止められない**。`field: ["Person.P_Nmae"]` は型（`string[]`）でも
+   送信前ガードでも素通りし、そのまま PORTERS へ出ていく。フェイクでは**黙って落ちる**
+   （該当キーが `undefined` になるだけ — `test/fake/query.ts` の field 解決）。
+   実 PORTERS が無効な alias を無視するのか Result Code を返すのかは**未確認**だが、
+   どちらにせよ**書いた時点では気づけない**。[RV-1][rv1]（`field` 省略時に主キーしか返らない）・
+   [RV-31][rv31]（展開が捨てられる）と**同じ「要求したものが黙って返らない」系統**で、
+   しかもこれは利用者のタイプミスなので頻度が高い。
 
 応答側は既に接頭辞に依存していない（`bareAlias` が `{prefix}.` を剥がす — `read-core.ts:68`）。
 **接頭辞を要求しているのは要求側だけ**。
@@ -74,13 +77,74 @@ Recruiter.U_[Name]  （Recruiter - Field List）
 - **案C**: **bare のみ**受ける（型は `string[]` のまま）
 - **案D**: **型付き bare** — カタログの alias（`keyof F`）＋ 未宣言カスタム用のテンプレートリテラル型（推奨）
 
+### 4 案での書き味
+
+同じ Read（Candidate の ID・氏名・宣言済みカスタム項目 `U_score` を、氏名の部分一致で引く）を各案で書くと次のようになる。
+**送信される URL は 4 案とも同じ**で、変わるのは**利用者が書く形**と**どこで間違いに気づけるか**だけ。
+
+```text
+field=Person.P_Id,Person.P_Name,Person.U_score&condition=Person.P_Name:part=山田
+```
+
+**案A（現状）** — `field` だけ接頭辞付きで、`condition` は bare。同じクエリの中で語彙が 2 つ。
+
+```ts
+await t.candidate.search({
+  field: ["Person.P_Id", "Person.P_Name", "Person.U_score"],
+  condition: { P_Name: { part: "山田" } },
+});
+```
+
+**案B（両対応）** — どちらでも通る。既存コードは壊れないが、書き方が 2 通りに割れる。
+
+```ts
+await t.candidate.search({ field: ["P_Id", "P_Name", "U_score"] }); // OK
+await t.candidate.search({ field: ["Person.P_Id", "Person.P_Name"] }); // これも OK
+```
+
+**案C（bare のみ・型は `string[]`）** — 語彙は 1 つになるが、検査は入らない。
+
+```ts
+await t.candidate.search({ field: ["P_Id", "P_Name", "U_score"] }); // 正しい書き方
+await t.candidate.search({ field: ["P_Nmae"] }); // ← 通ってしまう（型は string[]）
+await t.candidate.search({ field: ["Person.P_Id"] }); // ← 剥がして正しい形で送る（実行時）
+```
+
+**案D（型付き bare・推奨）** — 正しい書き方は案C と同じで、**間違いがコンパイル時に止まる**。
+
+```ts
+await t.candidate.search({
+  field: ["P_Id", "P_Name", "U_score"], // U_score は defineFields 宣言済み ⇒ keyof F で検査
+  condition: { P_Name: { part: "山田" } }, // field と同じ語彙になった
+});
+
+await t.candidate.search({ field: [] }); // 主キーのみ（意味は変わらない）
+await t.candidate.search({ field: ["U_memo"] }); // 未宣言カスタムも OK（`U_${string}`）
+await t.candidate.search({ field: ["P_Deleted"] }); // ガイドの "Person.P_Deleted" が短くなる
+
+await t.candidate.search({ field: ["P_Nmae"] }); // ← コンパイルエラー（綴り間違い）
+await t.candidate.search({ field: ["Person.P_Name"] }); // ← コンパイルエラー（接頭辞は書かない）
+await t.candidate.search({ field: ["Candidate.P_Name"] }); // ← コンパイルエラー（罠そのものが消える）
+await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパイルエラー（ADR-0058 と噛み合う）
+```
+
+| 書いたもの                         | 案A                  | 案B          | 案C          | 案D          |
+| ---------------------------------- | -------------------- | ------------ | ------------ | ------------ |
+| 綴り間違い `"P_Nmae"`              | 素通し               | 素通し       | 素通し       | **型エラー** |
+| 接頭辞違い `"Candidate.P_Name"`    | 素通し（誤って送る） | 剥がして正す | 剥がして正す | **型エラー** |
+| 展開 `"Job.P_Client(Client.P_Id)"` | 素通し ※             | 素通し ※     | 素通し ※     | **型エラー** |
+| 未宣言カスタム `"U_memo"`          | 書ける               | 書ける       | 書ける       | 書ける       |
+
+※ [ADR-0058][adr58] が accepted なら、いずれも**実行時**に `PortersConfigError` で止まる。
+案D はそれを**コンパイル時**へ前倒しする（0058 のガードは cast 経由の防御として残る）。
+
 ## Decision Outcome
 
 推奨: **案D**（型付き bare）。実行時は**接頭辞付きが来たら剥がして受ける**（応答側の `bareAlias` と対称の寛容さ）。
 
 理由は 3 つ。
 
-1. **上の 3 つのコストのうち「綴り間違いが黙って通る」を消せるのは案D だけ**。案B / 案C は接頭辞の手入力を
+1. **上の 3 つのコストのうち「綴り間違いを手前で止められない」を消せるのは案D だけ**。案B / 案C は接頭辞の手入力を
    やめさせるが、`"P_Nmae"` は依然として通る。本プロジェクトが [RV-1][rv1] / [RV-31][rv31] で
    「要求したものが黙って返らない」を潰してきた基準に照らすと、そこを残す理由が無い。
 2. **新しい語彙を作らない**。`keyof F` は既に全導出の土台（`ReadRecord` / `Condition` / `Order` / Write 入力）。
@@ -115,7 +179,7 @@ Recruiter.U_[Name]  （Recruiter - Field List）
 ### 案A: 現状維持
 
 - Good: 何もしなくてよい。既存利用者に影響ゼロ。
-- Bad: 3 つのコスト（情報ゼロの入力・`Person.` 罠・綴り間違いが黙って通る）がすべて残る。
+- Bad: 3 つのコスト（情報ゼロの入力・`Person.` 罠・綴り間違いを手前で止められない）がすべて残る。
 - Bad: `expand` を bare で足すと（[0058][adr58]）、**同じクエリ内で 2 つの語彙**が並ぶ。
 
 ### 案B: 両対応（bare も接頭辞付きも受ける）
