@@ -15,6 +15,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -22,6 +23,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CANDIDATE_DESCRIPTOR } from "./candidate";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -66,6 +68,12 @@ const REQUIRED_ON_CREATE = [
   "P_Candidate",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+// Expandable reference fields (ADR-0058). Candidate's alias prefix is `Person`, not the resource
+// name — the descriptor carries it so callers never write it.
+const REFERENCES = {
+  P_Candidate: CANDIDATE_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 /**
  * Resume's names + standard catalog. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds Resume wire shapes from this very catalog, so the two cannot drift.
@@ -76,13 +84,14 @@ export const RESUME_DESCRIPTOR = {
   path: "resume",
   prefix: "Resume",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Resume (a Candidate's CV / profile): known `P_` fields, each requested field
  *  `value | null`. */
 export type Resume = ReadRecord<typeof FIELDS>;
 export type ResumePage = ResourcePage<typeof FIELDS>;
-export type ResumeSearchQuery = SearchQuery<typeof FIELDS>;
+export type ResumeSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ResumeCreateInput = CreateInput<
@@ -94,7 +103,8 @@ export type ResumeUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Resume accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
 export type ResumeResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof REQUIRED_ON_CREATE)[number],
+  typeof REFERENCES
 >;
 
 export const createResumeResource = <C extends FieldCatalog = EmptyCatalog>(

@@ -13,6 +13,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -20,6 +21,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CLIENT_DESCRIPTOR } from "./client";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -70,6 +72,13 @@ const REQUIRED_ON_CREATE = [
   "P_Recruiter",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
+// implemented resource, so there is no catalog to decode its fields with. It still reads as the
+// referenced id, like every un-expanded reference.
+const REFERENCES = {
+  P_Client: CLIENT_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 /**
  * Job's names + standard catalog. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds Job wire shapes from this very catalog, so the two cannot drift.
@@ -80,12 +89,13 @@ export const JOB_DESCRIPTOR = {
   path: "job",
   prefix: "Job",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */
 export type Job = ReadRecord<typeof FIELDS>;
 export type JobPage = ResourcePage<typeof FIELDS>;
-export type JobSearchQuery = SearchQuery<typeof FIELDS>;
+export type JobSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type JobCreateInput = CreateInput<
@@ -97,7 +107,8 @@ export type JobUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Job accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
 export type JobResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof REQUIRED_ON_CREATE)[number],
+  typeof REFERENCES
 >;
 
 export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(

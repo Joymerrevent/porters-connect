@@ -62,7 +62,8 @@ describe("createUserResource", () => {
     await res(calls).search({
       requestType: 1,
       userType: 0,
-      field: ["User.P_Name"],
+      // Bare alias in, `User.` prefix added by the library (ADR-0059).
+      field: ["P_Name"],
       count: 5,
       start: 2,
     });

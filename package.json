@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.3",
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^3.0.0",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^10.0.1",
