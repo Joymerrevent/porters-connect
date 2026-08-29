@@ -46,6 +46,7 @@ import {
   buildResourceErrorXml,
   buildWriteResultXml,
   parseWriteBody,
+  type ReferenceResolver,
 } from "./wire";
 
 /** The API prefix every PORTERS endpoint sits under. */
@@ -239,6 +240,22 @@ export const createFakeTransport = (
     return undefined;
   };
 
+  // An expanded `System[Reference]` (ADR-0058) is answered from the referenced resource's own
+  // bucket: `field=Process.P_Candidate(Person.P_Id,…)` reads the Candidate that Process points at.
+  // A missing record still yields the right shape (empty elements), because PORTERS answers an
+  // unset field that way rather than dropping it.
+  const referenceResolver =
+    (resource: FakeResource): ReferenceResolver =>
+    (alias, id) => {
+      const target = resource.descriptor.references?.[alias];
+      if (target === undefined) return undefined;
+      return {
+        target,
+        record:
+          store.find({ path: target.path, idAlias: "P_Id" }, Number(id)) ?? {},
+      };
+    };
+
   const handleRead = (url: URL, resource: FakeResource): TransportResponse => {
     const query = parseReadQuery(url, resource.descriptor.prefix);
     const { items, total } = runReadQuery(
@@ -254,6 +271,7 @@ export const createFakeTransport = (
           prefix: resource.descriptor.prefix,
           fields: resource.descriptor.fields,
           masters,
+          reference: referenceResolver(resource),
         },
         records: items,
         selection: query.selection,
