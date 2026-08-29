@@ -184,7 +184,8 @@ await porters.auth.exchangeAuthorizationCode(code);
 
 **検索クエリ**（`query`）の主なキー（すべて型安全。**項目の Data Type が許す演算子だけ**を受けます）：
 
-- `field`：取得する項目（接頭辞付き alias の配列。例 `["Person.P_Id", "Person.P_Name"]`）。
+- `field`：取得する項目（**接頭辞なし**の alias の配列。例 `["P_Id", "P_Name"]`。接頭辞はライブラリが付けます）。
+  綴り間違いや接頭辞付きは**コンパイルエラー**になります。
   **省略するとカタログ上の全項目を既定取得**します（PORTERS は field 未指定だと主キーのみ返すため、
   ライブラリが既定 field を補います）。`field: []`（空配列）を渡すと API 仕様どおり**主キーのみ**を返します（件数取得など）。
 - `condition`：検索条件。`{ 項目: { 演算子: 値 } }` 形式（複数項目は AND）。演算子は Data Type ごとに

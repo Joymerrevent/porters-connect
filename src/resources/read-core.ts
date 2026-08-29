@@ -69,6 +69,53 @@ const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
 // Stryker restore StringLiteral
 
+// --- Read `field` assembly (ADR-0020) -------------------------------------------------------
+
+// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
+const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
+
+// One `field=` entry for a bare alias. PORTERS wants `{prefix}.{alias}`; a User-typed field is
+// expanded to its 4 readable sub-fields so the wire shape matches `decodeUser` — asking for it
+// without `()` would return an id, and the typed record promises a `UserRef`. An alias the catalog
+// does not know (a tenant `U_`/`A_` field) is prefixed and left alone.
+const readFieldEntry = (
+  prefix: string,
+  alias: string,
+  type: DataType | null | undefined,
+): string =>
+  type === "User"
+    ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
+    : `${prefix}.${alias}`;
+
+/**
+ * What a Read `field` entry may name (ADR-0059): a catalogued alias — every standard `P_` field
+ * plus the custom fields declared with `defineFields` (ADR-0023) — or an undeclared tenant custom
+ * field, admitted by the `U_`/`A_` naming rule `defineFields` already enforces at runtime.
+ *
+ * Aliases are **bare**: the resource's prefix (`Person.` for Candidate) is a constant the
+ * descriptor knows, so the library adds it. That makes `condition` / `order` / `field` one
+ * vocabulary and turns a typo (`P_Nmae`) or a hand-written prefix into a compile error instead of
+ * a request that quietly returns nothing.
+ */
+export type ReadFieldAlias<F extends FieldCatalog> =
+  (keyof F & string) | `U_${string}` | `A_${string}`;
+
+/**
+ * Map caller-supplied bare aliases onto the wire form, the same assembly the default list uses.
+ * A prefix that slipped through a cast is stripped first (`Person.P_Name` -> `P_Name`), mirroring
+ * `bareAlias` on the response side: the types say bare, the runtime still understands the old
+ * prefixed form rather than sending `Person.Person.P_Name`. That asymmetry is deliberate.
+ */
+export const qualifyReadFields = (
+  prefix: string,
+  fields: ReadonlyMap<string, DataType | null>,
+  aliases: readonly string[],
+): string[] =>
+  aliases.map((entry) => {
+    const alias = bareAlias(entry);
+    return readFieldEntry(prefix, alias, fields.get(alias));
+  });
+
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
  * no Data Type -> raw string), unknown `U_`/`A_` aliases pass through (raw string, or null when

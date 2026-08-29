@@ -11,11 +11,14 @@ import {
   appendPaging,
   decoderFor,
   paginate,
+  qualifyReadFields,
   runRead,
   type FieldCatalog,
+  type ReadFieldAlias,
   type ReadRecord,
   type ResourcePage,
 } from "./read-core";
+import type { DataType } from "../xml/decode";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -47,8 +50,11 @@ export type UserSearchQuery = {
   requestType?: 0 | 1;
   /** -1 = any (default), 0 = system admins, 1 = standard users. */
   userType?: -1 | 0 | 1;
-  /** Output fields (prefixed aliases). Omit to get the 4 core fields (this catalog). */
-  field?: string[];
+  /**
+   * Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix (ADR-0059).
+   * Omit to get the 4 core fields (this catalog).
+   */
+  field?: ReadFieldAlias<typeof FIELDS>[];
   count?: number;
   start?: number;
 };
@@ -67,6 +73,9 @@ export type UserResource = {
   current(): Promise<User | undefined>;
 };
 
+// The catalog as a runtime lookup, for prefixing the caller's bare `field` aliases (ADR-0059).
+const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
+
 const buildUrl = (
   accessPoint: AccessPoint,
   partition: number,
@@ -76,7 +85,12 @@ const buildUrl = (
   p.set("partition", String(partition));
   p.set("request_type", String(q.requestType ?? 1));
   p.set("user_type", String(q.userType ?? -1));
-  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
+  if (q.field && q.field.length > 0) {
+    p.set(
+      "field",
+      qualifyReadFields(USER_DESCRIPTOR.prefix, FIELD_MAP, q.field).join(","),
+    );
+  }
   appendPaging(p, q.count, q.start);
   return apiUrl(accessPoint, "user", p);
 };

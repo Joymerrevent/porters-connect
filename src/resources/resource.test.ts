@@ -4,7 +4,11 @@ import { PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { FieldValue } from "../xml/decode";
-import { createResource, type FieldCatalog } from "./resource";
+import {
+  createResource,
+  type FieldCatalog,
+  type SearchQuery,
+} from "./resource";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
 // live in candidate/job tests). One field per Data Type is enough — per-type
@@ -75,7 +79,7 @@ describe("createResource — Read", () => {
     expect(calls[0].req.method).toBe("GET");
     expect(url).toContain("https://h.test/v1/widget?");
     expect(url).toContain("partition=12");
-    expect(url).toContain("field=P_Id%2CP_Name");
+    expect(url).toContain("field=W.P_Id%2CW.P_Name");
     expect(decodeURIComponent(url)).toContain("condition=W.P_Id:eq=1");
     expect(url).toContain("count=50");
     expect(url).toContain("start=100");
@@ -168,9 +172,9 @@ describe("createResource — default field (ADR-0020)", () => {
     expect(calls[0].req.url).not.toContain("field=");
   });
 
-  it("a provided field list is sent verbatim (no default injected)", async () => {
+  it("a provided field list is prefixed, and no default is injected", async () => {
     const calls: Call[] = [];
-    await res(calls).search({ field: ["W.P_Name"] });
+    await res(calls).search({ field: ["P_Name"] });
     const url = decodeURIComponent(calls[0].req.url);
     expect(url).toContain("field=W.P_Name");
     expect(url).not.toContain("W.P_Owner"); // default not mixed in
@@ -180,6 +184,48 @@ describe("createResource — default field (ADR-0020)", () => {
     const calls: Call[] = [];
     await res(calls).get(7);
     expect(decodeURIComponent(calls[0].req.url)).toContain(DEFAULT_FIELD);
+  });
+});
+
+describe("createResource — bare field aliases (ADR-0059)", () => {
+  const fieldParam = async (
+    field: SearchQuery<typeof FIELDS>["field"],
+  ): Promise<string> => {
+    const calls: Call[] = [];
+    await res(calls).search({ field });
+    return (
+      decodeURIComponent(calls[0].req.url).match(/field=([^&]*)/)?.[1] ?? ""
+    );
+  };
+
+  it("prefixes a caller's bare aliases with the resource prefix", async () => {
+    expect(await fieldParam(["P_Id", "P_Name"])).toBe("W.P_Id,W.P_Name");
+  });
+
+  it("expands a User-typed alias like the default list does", async () => {
+    // Without `()` PORTERS returns an id, but the typed record promises a UserRef — so an
+    // explicitly requested User field is assembled exactly as the default one is.
+    expect(await fieldParam(["P_Owner"])).toBe(
+      "W.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
+    );
+  });
+
+  it("passes an undeclared custom U_/A_ alias through, prefixed", async () => {
+    expect(await fieldParam(["U_memo", "A_flag"])).toBe("W.U_memo,W.A_flag");
+  });
+
+  it("strips a prefix that arrived through a cast instead of doubling it", async () => {
+    // The types say bare; the runtime still understands the old prefixed form (ADR-0059) —
+    // mirroring `bareAlias` on the response side, so a cast never sends `W.W.P_Name`.
+    const cast = ["W.P_Name"] as unknown as SearchQuery<typeof FIELDS>["field"];
+    expect(await fieldParam(cast)).toBe("W.P_Name");
+  });
+
+  it("corrects a wrong prefix rather than sending it (the Candidate `Person.` trap)", async () => {
+    const cast = ["Widget.P_Name"] as unknown as SearchQuery<
+      typeof FIELDS
+    >["field"];
+    expect(await fieldParam(cast)).toBe("W.P_Name");
   });
 });
 

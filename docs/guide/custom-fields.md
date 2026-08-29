@@ -53,6 +53,10 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 3 つ目が実務では効きます。宣言していないカスタム項目は、`field` を明示しない限り
 **そもそも取得されません**。
 
+なお `field` に書くだけなら宣言は要りません（`U_` / `A_` で始まる名前は未宣言でも通ります）。
+ただし**宣言していないと `U_` 以降の綴りは検査されない**ので、
+取得漏れを型で防ぎたいものはここで宣言してください（[ADR-0059][adr59]）。
+
 ## 宣言できる型
 
 ビルダー `f` のメソッドが、そのまま Data Type に対応します。
@@ -134,7 +138,7 @@ const clientFor = (partition: number, fields: DefinedFields) =>
 
 - 決定: [ADR-0023][adr23]（宣言 DSL の詳細設計）／[ADR-0004][adr4]（型モデル）
 - 型の由来: [ADR-0016][adr16]（Data Type の粒度）／[ADR-0017][adr17]（Option は常に `string[]`）
-- 既定 field: [ADR-0020][adr20]
+- 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
 
 [adr4]: ../adr/0004-field-type-model.md
@@ -143,6 +147,7 @@ const clientFor = (partition: number, fields: DefinedFields) =>
 [adr20]: ../adr/0020-read-field-default.md
 [adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [adr46]: ../adr/0046-guard-error-contract.md
+[adr59]: ../adr/0059-read-field-bare-alias.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenancy.md
 [prd]: ../design/requirements.md
