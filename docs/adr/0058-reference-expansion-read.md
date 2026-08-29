@@ -134,6 +134,30 @@ plain.items[0]?.P_Client; // number | null（変わらない）
 `ReadRecord` に流れ込む — `client.ts:90`）。[ADR-0005][adr5] SD-3「`field` の選択で戻り型を変えない」は
 **そのまま維持**する — 型が変わるのは `field` 文字列ではなく **`expand` という別の入口**だけ。
 
+### 送信形と重複の扱い
+
+**`field` に参照項目を別途書かない**。PORTERS の `field` は展開を**1 エントリ**で表すので
+（reference: `field=Job.P_Client(Client.P_Id,Client.P_Name)`）、`expand` は
+**`Job.P_Client(…)` というエントリそのものを作る**。上のスケッチが送る URL は次のとおり。
+
+```text
+field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
+```
+
+- **外側**は自リソースの接頭辞（`Job.P_Client`）、**`()` の中は参照先リソースの接頭辞付き** alias（`Client.P_Id`）。
+  `User` 型で既にライブラリが出している `{prefix}.{alias}(User.P_Id,…)` と同じ構文（`resource.ts:130`）。
+- `expand` の値は**素の alias**（`P_Id`）にする。`condition` / `order` が bare キーを受けて
+  エンコーダが接頭辞を付ける（`query.ts` の `${ctx.prefix}.${alias}`）のと揃える。
+  **参照先の接頭辞は利用者に書かせない** — descriptor から引く。
+  `field` だけが接頭辞付きの生文字列を取る例外だが、そこは型の付かない逃げ道なので踏襲しない。
+- **重複は作らない**。`field` を省略すると既定 field に `Job.P_Client`（`()` 無し）が入るため、
+  `expand` が指した項目は**素のエントリを展開形で置き換える**。利用者が `field` に自分で
+  `Job.P_Client` を書いた場合も同じ。同じ alias を `()` 有り・無しで 2 回送ったときどちらが勝つかは
+  正典に記述が無く未確認なので、**そもそも送らない**（安全側）。
+- **参照先が Candidate のときだけ `()` の中身が未確定** — `Process.P_Candidate(Person.P_Id,…)` か
+  `(Candidate.P_Id,…)` か。Candidate の alias 接頭辞は `Person`（`candidate.ts:64`）で、
+  Field Type 記事も Write は `Person.P_Id` と書くので **`Person.`** と推定する。LV で確かめる。
+
 ### Consequences
 
 - Good: **PORTERS の能力がライブラリから使える**。参照先の項目が 1 往復で取れる。
