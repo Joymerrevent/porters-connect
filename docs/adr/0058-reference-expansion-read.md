@@ -115,6 +115,10 @@ reference が例まで載せている正規の機能で、**これを恒久的�
 そこに書かれた展開はライブラリが型でも値でも表現できない。**弾いて `expand` を指す**（エラーの `hint` に書く）ことで、
 「黙って捨てる」も「能力が無い」も両方消える。
 
+> `field` を接頭辞なしの型付き alias にする [ADR-0059][adr59]（本 ADR の議論から派生・独立に決められる）が
+> accepted なら、`"Job.P_Client(Client.P_Id)"` のような展開文字列は**型として書けなくなる**。
+> そのとき本 ADR のガードは cast 経由に対する**実行時の防御**として残る（多層＝フェイルセーフ）。
+
 ### 公開 API のスケッチ（実施 ADR で詰める）
 
 ```ts
@@ -259,3 +263,4 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
 [adr46]: 0046-guard-error-contract.md
 [adr55]: 0055-partition-binding-guard.md
 [adr56]: 0056-deleted-flag-typing.md
+[adr59]: 0059-read-field-bare-alias.md
