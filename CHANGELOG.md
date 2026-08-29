@@ -5,6 +5,85 @@
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-30
+
+**参照先の項目を 1 往復で読めるようにし、`field` の語彙をクエリ全体と揃えた版**です。
+どちらも「**要求したものが黙って返らない**」を潰す変更で、`field` に接頭辞を書かなくなる
+**破壊的変更**を含みます（移行は接頭辞を消すだけ）。
+
+### Added
+
+- **参照型の展開 `expand`**（[ADR-0058][adr58]）。`System[Reference]` の項目（`Job.P_Client` など）から
+  **参照先の項目そのもの**を取得できるようになりました。これまでは参照先の **ID だけ**を取り出し、
+  入れ子で返ってきた残りを**黙って捨てて**いました。
+
+  ```ts
+  const page = await t.job.search({ expand: { P_Client: ["P_Id", "P_Name"] } });
+  page.items[0]?.P_Client; // { P_Id: number | null; P_Name: string | null } | null
+
+  const plain = await t.job.search();
+  plain.items[0]?.P_Client; // number | null（従来どおり）
+  ```
+
+  - **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じ素の alias で指定すると、
+    ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
+    Candidate を参照するときの `Person.` も同様です。
+  - **`expand` を書いた項目だけ**戻り型が変わります。基底の型は `number | null` のままなので、
+    **参照を ID として使っているコードは無変更**です。展開しなかった参照も ID のまま返ります。
+  - `search` / `searchAll` / `get(id, { expand })` で使えます。`get` は第 2 引数が増えただけで、
+    既存の `get(id)` はそのままです。
+  - 展開した alias は**素のエントリを置き換えて**送られます。同じ alias を `()` 有り・無しで 2 回送ったとき
+    どちらが優先されるかは PORTERS のドキュメントに記述が無いため、**そもそも送りません**。
+  - 展開できるのは**参照先をライブラリが実装している項目**だけです。`P_Recruiter`（Recruiter は未実装）と
+    カスタム項目（`U_`/`A_`）の参照型は対象外で、**従来どおり ID として読めます**。書くと型エラーです。
+  - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くと、送信前に
+    `PortersConfigError` で止まり `expand` を案内します。
+  - `()` の中に付ける参照先の接頭辞と入れ子の形は**実機で未確認**です
+    （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装です。
+
+- **型の export**: `Expand` / `ExpandedReadRecord` / `ReferenceMap` / `ResourcePageOf` /
+  `ReferenceRecord` / `ReadFieldAlias`。`FieldValue` に `ReferenceRecord`（展開された参照の値）が加わります。
+
+### Changed
+
+- **（破壊的）Read の `field` は接頭辞なしの alias で書きます**（[ADR-0059][adr59]）。
+  接頭辞はリソースごとの定数なので、**ライブラリが付けます**。
+
+  ```diff
+  - field: ["Person.P_Id", "Person.P_Name"]
+  + field: ["P_Id", "P_Name"]
+  ```
+
+  - 移行は**接頭辞を消すだけ**です。送られる URL は従来と同じで、変わるのは書き方と、
+    **どこで間違いに気づけるか**だけです。
+  - `condition` / `order` / `expand` はもともと素の alias を受けていたため、
+    **同じクエリの中で語彙が 2 つあった**状態が解消されます。
+  - **間違いがコンパイルエラーになります** — 綴り間違い（`P_Nmae`）・接頭辞付き（`Person.P_Name`）・
+    リソース名との取り違え（`Candidate.P_Name`。Candidate の接頭辞は `Person` です）・展開文字列。
+    これまでは型（`string[]`）でも送信前ガードでも素通りし、**PORTERS 側で黙って無視される**だけでした。
+  - **未宣言のカスタム項目は引き続き書けます**（`U_` / `A_` で始まる名前）。ただし `U_` 以降の綴りは
+    検査できないので、よく使うものは `defineFields` で宣言してください（宣言すれば綴りも検査されます）。
+  - 実行時は接頭辞付きが来ても**剥がして受けます**（応答側と対称の寛容さ）。cast 経由の古い形も壊れません。
+  - 対象は `SearchQuery.field`（データ 5 リソース）と `UserSearchQuery.field`（マスタ User）。
+    **Attachment は元から接頭辞なし**なので変更ありません。`field: []`（主キーのみ）と
+    省略時の既定 field（[ADR-0020][adr20]）の意味も変わりません。
+  - **pre-1.0 のため minor**（[ADR-0055][adr55] と同じ扱い）。
+
+- **明示した `field` も既定 field と同じ組み立てを通る**ようになりました。`User` 型の項目を
+  `field` で明示すると **4 サブ項目に展開**されます（`Job.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)`）。
+  これまでは `()` 無しで送られ、PORTERS が ID を返すため、**型が `UserRef` を約束するのに実体は `null`**
+  になっていました。
+
+### Fixed
+
+- **参照 ID の読み取りが、リソース名と alias 接頭辞の食い違いで `null` に落ちていました**。
+  入れ子の**包みタグはリソース名**なのに**中の alias は接頭辞付き**で、この 2 つが異なる Candidate
+  （`<Candidate>` に `Person.P_Id`）では従来の照合が外れていました。**素の alias で照合**するようにしたので、
+  どちらの表記でも読めます。
+  - 影響していたのは `Process.P_Candidate` / `Resume.P_Candidate`（Candidate を参照する項目）です。
+    包みタグの実際の値は**実機で未確認**（[live-verification][lv] LV-10）で、フェイクサーバーは
+    これまで中立な包みを返していたため、テストでは露出していませんでした。
+
 ## [0.10.0] - 2026-08-22
 
 **partition の束ね方を 1 つに絞り、削除済みレコードを判別できるようにした版**です。
@@ -356,10 +435,13 @@
 [adr55]: docs/adr/0055-partition-binding-guard.md
 [adr56]: docs/adr/0056-deleted-flag-typing.md
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
+[adr58]: docs/adr/0058-reference-expansion-read.md
+[adr59]: docs/adr/0059-read-field-bare-alias.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.7.0...v0.8.0
