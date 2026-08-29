@@ -1,6 +1,6 @@
 # 59. Read の `field` を接頭辞なしの alias で受ける
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-29
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,11 @@
 > `condition` / `order` は**素の alias**（`P_Name`）を受けてエンコーダが接頭辞を付けるのに、
 > **`field` だけが接頭辞付きの生文字列**（`Person.P_Name`）を要求している。
 > 接頭辞は**リソースごとの定数**なので利用者が書いても情報は増えず、罠と綴り間違いだけが残る。
-> 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+>
+> **案D で `accepted`（2026-08-29）**: `field` は**接頭辞なしの型付き alias**で受ける
+> （カタログの `keyof F` ＋ 未宣言カスタム用のテンプレートリテラル型）。接頭辞はライブラリが付け、
+> **綴り間違い・接頭辞付き・展開文字列はコンパイル時に止まる**。実行時は接頭辞付きが来たら剥がして受ける。
+> **公開 API の破壊的変更**を含む（移行は接頭辞を消すだけ・0.x なので minor）。実施は本 ADR とは別 PR。
 
 ## Context and Problem Statement
 
@@ -75,7 +79,7 @@ Recruiter.U_[Name]  （Recruiter - Field List）
 - **案A**: 現状維持（接頭辞付きの生文字列）
 - **案B**: **両対応** — bare も接頭辞付きも受ける（型は `string[]` のまま）
 - **案C**: **bare のみ**受ける（型は `string[]` のまま）
-- **案D**: **型付き bare** — カタログの alias（`keyof F`）＋ 未宣言カスタム用のテンプレートリテラル型（推奨）
+- **案D**: **型付き bare** — カタログの alias（`keyof F`）＋ 未宣言カスタム用のテンプレートリテラル型（採用）
 
 ### 4 案での書き味
 
@@ -110,7 +114,7 @@ await t.candidate.search({ field: ["P_Nmae"] }); // ← 通ってしまう（型
 await t.candidate.search({ field: ["Person.P_Id"] }); // ← 剥がして正しい形で送る（実行時）
 ```
 
-**案D（型付き bare・推奨）** — 正しい書き方は案C と同じで、**間違いがコンパイル時に止まる**。
+**案D（型付き bare・採用）** — 正しい書き方は案C と同じで、**間違いがコンパイル時に止まる**。
 
 ```ts
 await t.candidate.search({
@@ -140,7 +144,8 @@ await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパ�
 
 ## Decision Outcome
 
-推奨: **案D**（型付き bare）。実行時は**接頭辞付きが来たら剥がして受ける**（応答側の `bareAlias` と対称の寛容さ）。
+**採用: 案D**（型付き bare。decider 判断・2026-08-29）。
+実行時は**接頭辞付きが来たら剥がして受ける**（応答側の `bareAlias` と対称の寛容さ）。
 
 理由は 3 つ。
 
@@ -194,7 +199,7 @@ await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパ�
 - Good: 語彙が 1 つに定まる。実装は最小（送信時に接頭辞を付けるだけ）。
 - Bad: 破壊的なのに**得るものが案D より少ない**（綴り間違いは通る）。同じ破壊を払うなら案D。
 
-### 案D: 型付き bare（推奨）
+### 案D: 型付き bare（採用）
 
 - Good / Bad: [Decision Outcome][do] のとおり。
 - 実装スケッチ:
