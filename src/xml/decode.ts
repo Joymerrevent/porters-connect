@@ -35,8 +35,16 @@ export type UserRef = {
   P_Mail: string | null;
 };
 
+/**
+ * An **expanded** `System[Reference]` value: the referenced record's requested fields, decoded by
+ * the referenced resource's own catalog (ADR-0058). Only a read that asked for the expansion
+ * (`expand`) produces one — without it a reference decodes to the referenced id (`number`).
+ */
+export type ReferenceRecord = { [alias: string]: FieldValue };
+
 // `string[]` is the Option read value (a set of selected aliases — ADR-0017).
-export type FieldValue = string | number | string[] | UserRef | null;
+export type FieldValue =
+  string | number | string[] | UserRef | ReferenceRecord | null;
 
 // Per-Data-Type decoded value (the non-null shape). A read value is `DecodedValue<D> | null`
 // (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
@@ -164,4 +172,42 @@ export const decodeField = (
     case "System[Reference]":
       return decodeReference(raw);
   }
+};
+
+// A tag's bare alias: `Client.P_Name` -> `P_Name`. The nested tags of an expanded reference carry
+// the *referenced* resource's prefix, which the caller never asked for by name — strip it so the
+// keys match the referenced catalog. Mirrors `bareAlias` in resources/read-core.ts.
+// Stryker disable StringLiteral: for a dotless tag both branches yield the tag itself
+const bareTag = (key: string): string =>
+  key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
+// Stryker restore StringLiteral
+
+/**
+ * Decode an **expanded** `System[Reference]` node (`field=Job.P_Client(Client.P_Id,Client.P_Name)`)
+ * into the referenced record, using the referenced resource's catalog (ADR-0058).
+ *
+ * `types` is handed in rather than looked up: `xml/` must not depend on `resources/` (RV-8), and
+ * this is also what keeps the decode **tag-independent** — the wrapper element is the referenced
+ * resource (`<Client>`), which we neither know nor need here. That matters because the literal tag
+ * is unconfirmed against the live API (LV-10); reading the first record-valued child means an
+ * unexpected tag costs nothing. An alias outside the catalog decodes as a raw string, exactly as
+ * an unknown alias does on the top-level record.
+ */
+export const decodeReferenceRecord = (
+  raw: unknown,
+  types: ReadonlyMap<string, DataType | null>,
+): ReferenceRecord | null => {
+  const outer = asRecord(raw);
+  if (!outer) return null;
+  for (const value of Object.values(outer)) {
+    const inner = asRecord(value);
+    if (!inner) continue;
+    const out: ReferenceRecord = {};
+    for (const [key, child] of Object.entries(inner)) {
+      const alias = bareTag(key);
+      out[alias] = decodeField(types.get(alias) ?? null, child);
+    }
+    return out;
+  }
+  return null;
 };
