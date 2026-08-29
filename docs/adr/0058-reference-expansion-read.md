@@ -1,6 +1,6 @@
 # 58. `System[Reference]` を展開して読むときの扱い
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,12 @@
 > **上位 Resource の項目を入れ子で返す**。ライブラリはその入れ子から **ID だけを取り出して残りを捨てる**ため、
 > 利用者が `Job.P_Client(Client.P_Id,Client.P_Name)` と**明示的に要求しても `Client.P_Name` は返らない**。
 > 例外も型エラーも出ないので、気づく手がかりが無い。
-> 決定は decider が行う（自己 accept しない）。実施は accept 後の別 PR。
+>
+> **案D で `accepted`（2026-08-29）**: **型付きの `expand` オプション**で展開を返せるようにし、
+> **型の付かない raw `field` に書かれた展開はガードで弾いて `expand` へ誘導する**。
+> 軸は **PORTERS ができることをライブラリが落とさない**こと — 黙って捨てるのをやめるだけでなく、
+> **要求されたものを返せるようにする**。**[LV-16][lv16] を登録する**（Candidate 参照を展開するときの
+> alias 接頭辞が未確認）。実施は本 ADR とは別 PR。
 
 ## Context and Problem Statement
 
@@ -90,11 +95,12 @@
 - **案A**: 現状維持 ＋ 文書化（[Read クエリ ガイド][rq]に「`System[Reference]` は ID のみ返る」と明記）
 - **案B**: 展開要求を**送信前に弾く**（`PortersConfigError`）
 - **案C**: 返ってきた入れ子を**そのまま返す**（読み取り型を `number | 参照レコード` に広げる）
-- **案D**: **型付きの `expand` オプション**を足す（推奨。生の `field` に書かれた展開は案B のガードで `expand` へ誘導）
+- **案D**: **型付きの `expand` オプション**を足す（採用。生の `field` に書かれた展開は案B のガードで `expand` へ誘導）
 
 ## Decision Outcome
 
-推奨: **案D**（型付きの `expand` オプション）＋ **raw `field` に書かれた展開は弾く**（案B のガードを案D の内側に置く）。
+**採用: 案D**（型付きの `expand` オプション）＋ **raw `field` に書かれた展開は弾く**
+（案B のガードを案D の内側に置く。decider 判断・2026-08-29）。
 
 判断の軸は **PORTERS ができることをライブラリが落とさない**こと。`System[Reference]` の展開は
 reference が例まで載せている正規の機能で、**これを恒久的に使えなくする案（案A / 案B 単独）は
@@ -220,7 +226,7 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
   （日付が ISO に正規化されない・Option が配列にならない）。**忠実に見えて忠実でない**中間状態になる。
 - Bad: 「`field` の内容で実行時の形が変わるのに、型は union で固定」という**表現力の谷**が残る。
 
-### 案D: 型付きの `expand` オプション（推奨）
+### 案D: 型付きの `expand` オプション（採用）
 
 - Good / Bad: [Decision Outcome][do] のとおり。要点は **PORTERS の能力を型安全に届けられる唯一の案**である一方、
   **4 案で一番大きい**こと。
@@ -236,10 +242,10 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
 - 関連する決定: [ADR-0020][adr20]（既定 field ＝ `User` は展開・`System[Reference]` は ID のみ）／
   [ADR-0005][adr5] SD-3（`field` 選択で戻り型を変えない「簡易」）／[ADR-0011][adr11]（decode の入れ子形）／
   [ADR-0016][adr16]（Data Type の忠実性）／[ADR-0046][adr46]（ガードは reject）。
-- **LV の扱い**: 案D（案C も）を採るなら [LV-10][lv] が**展開時の入れ子タグ**の確認としてそのまま効き、
-  加えて**要求側の接頭辞**（Candidate 参照を `Person.` と書くか `Candidate.` と書くか）を確かめる LV を 1 件追加する。
-  どちらも decode をタグ非依存に書けば**実装のブロッカーにはならない**（外れたら要求文字列を直す範囲）。
-  案A / 案B 単独なら新しい実機前提は増えない。
+- **LV の扱い**（案D 採用に伴い確定）: [LV-10][lv] が**展開時の入れ子タグ**の確認としてそのまま効き、
+  加えて**要求側の接頭辞**（Candidate 参照を `Person.` と書くか `Candidate.` と書くか）を
+  **[LV-16][lv16] として登録する**。どちらも decode をタグ非依存に書けば**実装のブロッカーにはならない**
+  （外れたら要求文字列を直す範囲）。実施時に `VERIFY(live)` を置く。
 - 射程外（本 ADR では決めない）: `User` 型の `()` に 4 項目以外を書いたときの扱い、
   `Link` / `Image` 型（[R-4][prd] の積み残し・カスタム項目経由でしか現れない）。
 - 実施は accept 後の**別 PR**（ADR と実装は分ける）。
@@ -254,6 +260,7 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
 [run816]: ../reviews/2026-08-16-01.md
 [rq]: ../guide/read-query.md
 [lv]: ../live-verification.md
+[lv16]: ../live-verification.md#lv-16-candidate-参照を展開するときの-alias-接頭辞
 [prd]: ../design/requirements.md
 [adr5]: 0005-public-api-shape.md
 [adr11]: 0011-xml-parse-serialize.md
