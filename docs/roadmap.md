@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-23
+- 最終更新: 2026-08-29
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -12,17 +12,23 @@
 ## ▶️ いま何をやるか
 
 **2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しした 8 件は**全件を解消**し、
-**0.10.0 まで世に出た**。次の論点は **RV-31**（reference 展開の取りこぼし）で、要 ADR。
+**0.10.0 まで世に出た**。次の論点 **RV-31**（reference 展開の取りこぼし）は
+**[ADR-0058][adr58] が accepted**（2026-08-29・**案D＝型付き `expand`**）。
+その議論から派生した **[ADR-0059][adr59]**（`field` を接頭辞なしの型付き alias で受ける）も
+**accepted**（2026-08-29・**案D**）。**残るのは実装**で、2 本は互いに独立に実施できる。
 品質ゲートは全 green（628 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること                                     | 根拠  | semver | 備考                                                                        |
-| --- | -------------------------------------------- | ----- | ------ | --------------------------------------------------------------------------- |
-| 1   | **RV-31 の ADR**: reference 展開の取りこぼし | RV-31 | —      | 🟡 展開形を要求しても ID 以外を捨てる。挙動・型のどちらを変えるにせよ要 ADR |
+| #   | やること                            | 根拠          | semver | 備考                                                                                                                 |
+| --- | ----------------------------------- | ------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1   | **[ADR-0058][adr58] の実施**（案D） | RV-31         | minor  | 型付き `expand`（参照先を descriptor に持たせる → decode → 型導出 → フェイク → ガイド）＋ raw `field` の展開はガード |
+| 2   | **[ADR-0059][adr59] の実施**（案D） | 0058 から派生 | minor  | `field` を型付き bare に。**公開 API の破壊的変更**（移行は接頭辞を消すだけ）                                        |
 
-- **RV-31 は挙動を変える**ので、[ADR 運用][adr]どおり **proposed で起票 → 議論 → accepted → 実装**の順で進める。
+- 2 本とも **[ADR 運用][adr]どおり proposed → 議論 → accepted** を通過済み。**実装は ADR とは別 PR**。
+  順序は **0059 → 0058 が楽**（`field` が型付き bare になれば、0058 のガードは cast 経由の防御だけで済む）。
   **R-4 の Link / Image** も要 ADR（下記「随時・任意」）。
+- **[LV-16][lv] を登録済み**（Candidate 参照を展開するときの alias 接頭辞）。0058 の実施時に `VERIFY(live)` を置く。
 - ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**）。
   落ちていたのは `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
@@ -57,7 +63,7 @@
 
 | 待ちの種類   | 中身                                                                                                                                      |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **契約待ち** | ライブ検証 **LV-1〜15**（[live-verification][lv]）。リリースのブロッカーではない                                                          |
+| **契約待ち** | ライブ検証 **LV-1〜16**（[live-verification][lv]）。リリースのブロッカーではない                                                          |
 | **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09）                                       |
 | **判断待ち** | ① **次の主軸**（下記「🧭 方針」— 案B 全リソース網羅を先行するなら [ADR-0033][adr33] の改訂が要る）／② PRD [§8][prd] オープン論点 **2 件** |
 
@@ -65,14 +71,14 @@
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                              |
-| ----------------------------- | -------------------------------------------- | --------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 1 件（ADR 1）                  |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-31    |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ち **なし**    |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜15 が未確認（契約待ち）           |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）        |
+| ファイル                      | 何の TODO か                                 | いまの状態                                          |
+| ----------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能 2 件（0058 / 0059 の実施）                 |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-31                |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／**実装待ち 2 件**（0058 / 0059） |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜16 が未確認（契約待ち）                       |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手             |
+| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）                    |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -167,7 +173,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0057 accepted（0037 は 0039 で superseded）・**proposed は無し・実装待ちも無し**（[索引][adr]）
+- ADR 0001〜0059 accepted（0037 は 0039 で superseded）・**proposed は無し**／**実装待ちは 0058 / 0059**（[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・**628 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
   RV-22（契約待ち）・RV-31。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
@@ -278,7 +284,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ## 🔌 ライブ検証（契約環境が必要・契約後タスク）
 
-実 PORTERS 契約が無いと確定できない仮定は [live-verification][lv]（**LV-1〜15**）に集約。リリースのブロッカーではないが、
+実 PORTERS 契約が無いと確定できない仮定は [live-verification][lv]（**LV-1〜16**）に集約。リリースのブロッカーではないが、
 契約取得後に実機で確定し、必要なら fixture を実データへ差し替える。
 LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反時の HTTP 応答・System[Reference] の入れ子・Write 失敗時の Result Code・Field Read の表記）。
 
@@ -324,6 +330,8 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr55]: adr/0055-partition-binding-guard.md
 [adr56]: adr/0056-deleted-flag-typing.md
 [adr57]: adr/0057-itemstate-existing-explicit.md
+[adr58]: adr/0058-reference-expansion-read.md
+[adr59]: adr/0059-read-field-bare-alias.md
 [adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md
 [fake-runbook]: fake-server-runbook.md

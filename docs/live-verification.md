@@ -26,6 +26,9 @@ grep -rn "VERIFY(live)" src test
 | LV-11 | Write 失敗時の Result Code（対象なし/200 件超）     | 未確認 |
 | LV-12 | Field Read の P_Alias 表記と System 系の Field Type | 未確認 |
 | LV-13 | 1 App トークンで複数 partition を叩けるか           | 未確認 |
+| LV-14 | `P_Deleted` の wire 形と出現条件                    | 未確認 |
+| LV-15 | `itemstate=existing` を明示送信して受け付けられるか | 未確認 |
+| LV-16 | Candidate 参照を展開するときの alias 接頭辞         | 未確認 |
 
 ---
 
@@ -208,6 +211,25 @@ grep -rn "VERIFY(live)" src test
 - **関連**: 削除済み読み取りの系列＝ LV-14（`P_Deleted` の wire 形）。
   この 2 つは**同じスモークでまとめて確認できる**
 
+## LV-16 Candidate 参照を展開するときの alias 接頭辞
+
+- **現在の対応 / 仮定**: **`Person.`** を送る前提。[ADR-0058][a58]（案D）で `System[Reference]` の
+  展開（`expand`）を実装するとき、`Process.P_Candidate` / `Resume.P_Candidate` の `()` の中は
+  `Person.P_Id` / `Person.P_Name` … と組み立てる（参照先の alias 接頭辞は descriptor が持つ）
+- **不確実な理由**: reference の例は `field=Job.P_Client(Client.P_Id,Client.P_Name)` ＝
+  **接頭辞がリソース名と一致するケースしか示していない**。Candidate は alias 接頭辞が `Person` で
+  リソース名と食い違う唯一の例。Field Type 記事が Write について
+  「`Person.P_Id` の値のみを指定することができます」と書くので **Read の `()` も `Person.` と推定**しているが、
+  Read 側の明示例は無い
+- **コード箇所**: `src/resources/resource.ts`（`expand` の field 組み立て）・`src/resources/candidate.ts`（`prefix: "Person"`）
+- **確認方法**: Process Read に `field=Process.P_Candidate(Person.P_Id,Person.P_Name)` を投げ、
+  **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
+  `(Candidate.P_Id,…)` を試し、通ったほうを採る（descriptor の参照先接頭辞を直すだけで済む）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 展開の**応答側**は LV-10（入れ子タグ）。decode はタグ名に依存しない実装なので、
+  **外れても直すのは要求文字列だけ**。この 2 つは同じスモークでまとめて確認できる
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -229,3 +251,4 @@ grep -rn "VERIFY(live)" src test
 [a38]: adr/0038-read-query-surface-impl.md
 [a56]: adr/0056-deleted-flag-typing.md
 [a57]: adr/0057-itemstate-existing-explicit.md
+[a58]: adr/0058-reference-expansion-read.md
