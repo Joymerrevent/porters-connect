@@ -65,11 +65,6 @@ const REQUIRED_ON_CREATE = [
   "P_Resume",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
-/**
- * Process's names + standard catalog. Exported for in-repo dev tooling — the fake server
- * (ADR-0043) builds Process wire shapes from this very catalog, so the two cannot drift.
- * Not re-exported from `src/index.ts`, so it stays out of the published API.
- */
 // Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
 // implemented resource, so there is no catalog to decode its fields with — it still reads as the
 // referenced id. Candidate's alias prefix is `Person`, which the descriptor carries.
@@ -80,6 +75,11 @@ const REFERENCES = {
   P_Resume: RESUME_DESCRIPTOR,
 } as const satisfies ReferenceMap;
 
+/**
+ * Process's names + standard catalog. Exported for in-repo dev tooling — the fake server
+ * (ADR-0043) builds Process wire shapes from this very catalog, so the two cannot drift.
+ * Not re-exported from `src/index.ts`, so it stays out of the published API.
+ */
 export const PROCESS_DESCRIPTOR = {
   name: "Process",
   path: "process",
@@ -92,7 +92,7 @@ export const PROCESS_DESCRIPTOR = {
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
 export type ProcessPage = ResourcePage<typeof FIELDS>;
-export type ProcessSearchQuery = SearchQuery<typeof FIELDS>;
+export type ProcessSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ProcessCreateInput = CreateInput<
@@ -104,7 +104,8 @@ export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Process accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
 export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof REQUIRED_ON_CREATE)[number],
+  typeof REFERENCES
 >;
 
 export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(

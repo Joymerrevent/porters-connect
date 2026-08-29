@@ -66,6 +66,14 @@ export type {
 } from "./resources";
 // Bulk write result from createMany / updateMany (ADR-0041 / F-4).
 export type { BulkWriteResult, BulkWriteResultItem } from "./resources";
+// Reference expansion (ADR-0058): `expand` reads the referenced record's fields, not just its id.
+// `ExpandedReadRecord` / `ResourcePageOf` name what a read with `expand` resolves to.
+export type {
+  Expand,
+  ExpandedReadRecord,
+  ReferenceMap,
+  ResourcePageOf,
+} from "./resources";
 
 export type {
   Candidate,

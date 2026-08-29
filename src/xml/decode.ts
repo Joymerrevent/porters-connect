@@ -61,6 +61,13 @@ export type DecodedValue<D extends DataType | null> = D extends null
         ? string[]
         : string;
 
+// A tag's bare alias: `Client.P_Name` -> `P_Name`. Nested reference tags carry the *referenced*
+// resource's prefix, which nothing here knows. Mirrors `bareAlias` in resources/read-core.ts.
+// Stryker disable StringLiteral: for a dotless tag both branches yield the tag itself
+const bareTag = (key: string): string =>
+  key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
+// Stryker restore StringLiteral
+
 // alias タグは接頭辞付き想定（例 `User.P_Id`）だが、接頭辞無しにも両対応（ADR-0011）。
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパーを decodeField より前に定義する。
 const pickPrefixed = (
@@ -108,13 +115,20 @@ const decodeReference = (raw: unknown): number | null => {
   const outer = asRecord(raw);
   if (!outer) return null;
   // The nested resource is the first record-valued child (skip attributes / siblings,
-  // which decodeUser avoids via a fixed key — here the tag varies). Read that record's
-  // own `{Tag}.P_Id` (prefix-less also accepted), not just any key ending in P_Id.
-  for (const [tag, value] of Object.entries(outer)) {
+  // which decodeUser avoids via a fixed key — here the tag varies). Read that record's own
+  // `P_Id` by its **bare** alias: the wrapper tag is the referenced resource's name while its
+  // aliases carry that resource's *prefix*, and the two differ (Candidate is `<Candidate>` with
+  // `Person.P_Id` — LV-10 / LV-16). Matching on the bare alias needs neither to be known here,
+  // and still reads only that record's id rather than any key that happens to end in P_Id.
+  for (const value of Object.values(outer)) {
     const inner = asRecord(value);
     if (!inner) continue;
-    const id = asString(inner[`${tag}.P_Id`]) ?? asString(inner.P_Id);
-    return id === undefined ? null : Number(id);
+    for (const [key, child] of Object.entries(inner)) {
+      if (bareTag(key) !== "P_Id") continue;
+      const id = asString(child);
+      return id === undefined ? null : Number(id);
+    }
+    return null;
   }
   return null;
 };
@@ -173,14 +187,6 @@ export const decodeField = (
       return decodeReference(raw);
   }
 };
-
-// A tag's bare alias: `Client.P_Name` -> `P_Name`. The nested tags of an expanded reference carry
-// the *referenced* resource's prefix, which the caller never asked for by name — strip it so the
-// keys match the referenced catalog. Mirrors `bareAlias` in resources/read-core.ts.
-// Stryker disable StringLiteral: for a dotless tag both branches yield the tag itself
-const bareTag = (key: string): string =>
-  key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
-// Stryker restore StringLiteral
 
 /**
  * Decode an **expanded** `System[Reference]` node (`field=Job.P_Client(Client.P_Id,Client.P_Name)`)
