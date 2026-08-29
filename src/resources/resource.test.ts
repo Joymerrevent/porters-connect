@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersResourceError } from "../errors";
+import { PortersConfigError, PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { FieldValue } from "../xml/decode";
 import {
   createResource,
+  type Expand,
   type FieldCatalog,
+  type ResourceDescriptor,
   type SearchQuery,
 } from "./resource";
 
@@ -226,6 +228,179 @@ describe("createResource — bare field aliases (ADR-0059)", () => {
       typeof FIELDS
     >["field"];
     expect(await fieldParam(cast)).toBe("W.P_Name");
+  });
+});
+
+// A resource with an expandable reference: `P_Part` points at PART, whose alias prefix (`Pt`)
+// differs from its name — the Candidate `Person` case that makes carrying the prefix worthwhile.
+const PART_FIELDS = {
+  P_Id: "System[Id]",
+  P_Name: "SinglelineText",
+  P_Made: "Date",
+} as const satisfies FieldCatalog;
+
+const PART_DESCRIPTOR = {
+  name: "Part",
+  path: "part",
+  prefix: "Pt",
+  fields: PART_FIELDS,
+} as const satisfies ResourceDescriptor;
+
+const GADGET_FIELDS = {
+  P_Id: "System[Id]",
+  P_Part: "System[Reference]",
+  P_Vendor: "System[Reference]", // no target registered: reads as the referenced id
+  P_Name: "SinglelineText",
+} as const satisfies FieldCatalog;
+
+const GADGET_CONFIG = {
+  name: "Gadget",
+  path: "gadget",
+  prefix: "G",
+  fields: GADGET_FIELDS,
+  references: { P_Part: PART_DESCRIPTOR },
+  requiredOnCreate: [],
+} as const;
+
+// One Gadget whose P_Part came back expanded (the wrapper tag is the referenced resource).
+const EXPANDED = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Id>1</G.P_Id><G.P_Part><Part><Pt.P_Id>77</Pt.P_Id><Pt.P_Name>bolt</Pt.P_Name><Pt.P_Made>2026/01/02</Pt.P_Made></Part></G.P_Part></Item></Gadget>`;
+
+const gadget = (calls: Call[], ...bodies: string[]) =>
+  createResource(GADGET_CONFIG, {
+    requester: stub(bodies.length > 0 ? bodies : [EXPANDED], calls),
+    accessPoint: { host: "h.test" },
+    partition: 12,
+  });
+
+const fieldOf = (calls: Call[]): string =>
+  decodeURIComponent(calls[0].req.url).match(/field=([^&]*)/)?.[1] ?? "";
+
+describe("createResource — expand (ADR-0058)", () => {
+  it("sends the expansion as one field entry, prefixed with the *referenced* resource", async () => {
+    const calls: Call[] = [];
+    await gadget(calls).search({
+      field: ["P_Id", "P_Part"],
+      expand: { P_Part: ["P_Id", "P_Name"] },
+    });
+    expect(fieldOf(calls)).toBe("G.P_Id,G.P_Part(Pt.P_Id,Pt.P_Name)");
+  });
+
+  it("replaces the plain entry in place — the same alias is never sent twice", async () => {
+    const calls: Call[] = [];
+    // `field` omitted -> the catalog default, which already contains the plain `G.P_Part`.
+    await gadget(calls).search({ expand: { P_Part: ["P_Id"] } });
+    const field = fieldOf(calls);
+    expect(field).toBe("G.P_Id,G.P_Part(Pt.P_Id),G.P_Vendor,G.P_Name");
+    expect(field).not.toContain("G.P_Part,"); // no un-expanded duplicate
+  });
+
+  it("appends the entry when the caller's own field list left the alias out", async () => {
+    const calls: Call[] = [];
+    await gadget(calls).search({
+      field: ["P_Id"],
+      expand: { P_Part: ["P_Id"] },
+    });
+    expect(fieldOf(calls)).toBe("G.P_Id,G.P_Part(Pt.P_Id)");
+  });
+
+  it("decodes the nested record by the *referenced* resource's Data Types", async () => {
+    const page = await gadget([]).search({
+      expand: { P_Part: ["P_Id", "P_Name", "P_Made"] },
+    });
+    expect(page.items[0]?.P_Part).toEqual({
+      P_Id: 77, // System[Id] -> number
+      P_Name: "bolt", // SinglelineText -> string
+      P_Made: "2026-01-02", // Date -> ISO, per the referenced catalog (not Gadget's)
+    });
+  });
+
+  it("leaves an un-expanded reference as the referenced id", async () => {
+    const body = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Part><Part><Pt.P_Id>77</Pt.P_Id></Part></G.P_Part></Item></Gadget>`;
+    const page = await gadget([], body).search();
+    expect(page.items[0]?.P_Part).toBe(77);
+  });
+
+  it("ignores an empty selection: nothing to select is the ID-only form we already send", async () => {
+    const calls: Call[] = [];
+    await gadget(calls).search({
+      field: ["P_Id", "P_Part"],
+      expand: { P_Part: [] },
+    });
+    expect(fieldOf(calls)).toBe("G.P_Id,G.P_Part");
+  });
+
+  it("ignores a reference with no registered target (Recruiter's case)", async () => {
+    const calls: Call[] = [];
+    // Not writable through the type — that is the point: an unregistered target cannot be asked
+    // for. The runtime still has to cope, since a cast can reach it.
+    const cast = { P_Vendor: ["P_Id"] } as unknown as Expand<
+      (typeof GADGET_CONFIG)["references"]
+    >;
+    await gadget(calls).search({ field: ["P_Id", "P_Vendor"], expand: cast });
+    expect(fieldOf(calls)).toBe("G.P_Id,G.P_Vendor");
+  });
+
+  it("get(id) expands too", async () => {
+    const calls: Call[] = [];
+    // PORTERS returns only what was selected, so the body carries just the narrowed field.
+    const narrowed = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
+    const one = await gadget(calls, narrowed).get(1, {
+      expand: { P_Part: ["P_Name"] },
+    });
+    expect(fieldOf(calls)).toContain("G.P_Part(Pt.P_Name)");
+    expect(one?.P_Part).toEqual({ P_Name: "bolt" });
+  });
+
+  it("searchAll expands on every page", async () => {
+    const calls: Call[] = [];
+    const items = await collect(
+      gadget(calls).searchAll({ expand: { P_Part: ["P_Name"] } }),
+    );
+    expect(fieldOf(calls)).toContain("G.P_Part(Pt.P_Name)");
+    expect(items[0]?.P_Part).toHaveProperty("P_Name", "bolt");
+  });
+});
+
+describe("createResource — raw field expansions are rejected (ADR-0058)", () => {
+  // `field` only accepts bare aliases (ADR-0059), so this needs a cast — the guard is the layer
+  // underneath that type. Without it the request would go out and the nested answer be discarded.
+  const raw = <T>(entry: string): T => [entry] as unknown as T;
+
+  it("rejects an expansion written into field, pointing at expand", async () => {
+    const calls: Call[] = [];
+    await expect(
+      gadget(calls).search({ field: raw("G.P_Part(Pt.P_Id)") }),
+    ).rejects.toMatchObject({
+      name: "PortersConfigError",
+      category: "config",
+    });
+    expect(calls).toHaveLength(0); // never sent
+  });
+
+  it("names expand in the hint", async () => {
+    const error: unknown = await gadget([])
+      .search({ field: raw("G.P_Part(Pt.P_Id)") })
+      .catch((e: unknown) => e);
+    expect((error as PortersConfigError).hint).toContain("expand: { P_Part:");
+  });
+
+  it("rejects rather than throwing synchronously (ADR-0046)", async () => {
+    let promise: Promise<unknown> | undefined;
+    expect(() => {
+      promise = gadget([]).search({ field: raw("G.P_Part(Pt.P_Id)") });
+    }).not.toThrow();
+    await expect(promise).rejects.toBeInstanceOf(PortersConfigError);
+  });
+
+  it("leaves the library's own User expansion and uncatalogued aliases alone", async () => {
+    // A User field's `()` is what the library itself emits, and an alias outside the catalog
+    // (an Image custom field's `(FileName,…)`) is not ours to judge — both pass through.
+    const user: Call[] = [];
+    await res(user).search({ field: raw("W.P_Owner(User.P_Id)") });
+    expect(user).toHaveLength(1);
+    const custom: Call[] = [];
+    await res(custom).search({ field: raw("W.U_photo(FileName,ContentType)") });
+    expect(custom).toHaveLength(1);
   });
 });
 

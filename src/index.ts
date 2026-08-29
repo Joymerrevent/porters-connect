@@ -66,6 +66,14 @@ export type {
 } from "./resources";
 // Bulk write result from createMany / updateMany (ADR-0041 / F-4).
 export type { BulkWriteResult, BulkWriteResultItem } from "./resources";
+// Reference expansion (ADR-0058): `expand` reads the referenced record's fields, not just its id.
+// `ExpandedReadRecord` / `ResourcePageOf` name what a read with `expand` resolves to.
+export type {
+  Expand,
+  ExpandedReadRecord,
+  ReferenceMap,
+  ResourcePageOf,
+} from "./resources";
 
 export type {
   Candidate,
@@ -138,7 +146,8 @@ export type {
 } from "./resources";
 export type { Option, OptionResource, OptionSearchQuery } from "./resources";
 
-export type { FieldValue, UserRef } from "./xml";
+// `ReferenceRecord` is an expanded `System[Reference]` value (`expand` — ADR-0058).
+export type { FieldValue, ReferenceRecord, UserRef } from "./xml";
 
 // Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).
 export { base64ToBytes, bytesToBase64 } from "./util/base64";

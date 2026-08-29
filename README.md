@@ -178,7 +178,7 @@ await porters.auth.exchangeAuthorizationCode(code);
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。
 - `searchAll(query?)` → `AsyncIterable`（200 件刻みで全件 yield）。
-- `get(id)` → 1 件 or `undefined`。
+- `get(id, options?)` → 1 件 or `undefined`（`options.expand` で参照先の項目も読めます）。
 - `create(input)` → 採番された **id（number）**。
 - `update(id, input)` → その **id**。
 
@@ -188,6 +188,8 @@ await porters.auth.exchangeAuthorizationCode(code);
   綴り間違いや接頭辞付きは**コンパイルエラー**になります。
   **省略するとカタログ上の全項目を既定取得**します（PORTERS は field 未指定だと主キーのみ返すため、
   ライブラリが既定 field を補います）。`field: []`（空配列）を渡すと API 仕様どおり**主キーのみ**を返します（件数取得など）。
+- `expand`：参照型（`System[Reference]`）の項目について、**参照先の項目も読む**（`{ P_Client: ["P_Id", "P_Name"] }`）。
+  書かなければ従来どおり**参照先の ID**が返り、**書いた項目だけ**戻り型が参照レコードに変わります。1 往復で済みます。
 - `condition`：検索条件。`{ 項目: { 演算子: 値 } }` 形式（複数項目は AND）。演算子は Data Type ごとに
   `eq`/`gt`/`ge`/`le`/`lt`（数値・日時・Id）、`part`/`full`（テキスト）、`or`/`and`（Option・参照/ユーザー型は ID）。
   **日時の値は ISO 8601（UTC `…Z`）**で渡すと PORTERS 形式へ自動変換します。
@@ -199,8 +201,9 @@ await porters.auth.exchangeAuthorizationCode(code);
 > **削除 API はありません**（PORTERS 仕様）。`delete()` メソッドは提供しません。削除済みは `itemstate: "deleted"` で読みます
 > （`condition` は `P_Id` / `P_UpdateDate` / `P_UpdatedBy` に限られ、更新日は 90 日以内）。
 >
-> `field` の 3 通りの意味（省略＝全項目 / `[]`＝主キーのみ / 明示）、Data Type ごとの演算子一覧、
-> 削除済み Read の制約、送信前に落ちる条件は [Read クエリ ガイド][read-query-guide] にまとめています。
+> `field` の 3 通りの意味（省略＝全項目 / `[]`＝主キーのみ / 明示）、`expand` で展開できる項目、
+> Data Type ごとの演算子一覧、削除済み Read の制約、送信前に落ちる条件は
+> [Read クエリ ガイド][read-query-guide] にまとめています。
 
 ### カスタム項目（`U_` / `A_`）
 
