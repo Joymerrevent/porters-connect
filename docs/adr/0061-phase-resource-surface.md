@@ -79,7 +79,11 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 
 **論点2: 必須の `resource` をどう受けるか**
 
-- 案2a: **`t.phase.of(resource)` でスコープを束ねる**（`tenant(id)` と同じ形。以降 `search` / `create` は resource 不要）。（推奨）
+> **決着済み — stakeholder 判断で案2a（2026-08-30）。**
+> 「Phase だけアクセサが 1 段深い」ことより、**Read と Write で語彙が割れないこと**を採った
+> （案2b だと `resource` は名前・`Resource` は数値になる＝論点5 と噛み合わない）。
+
+- 案2a: **`t.phase.of(resource)` でスコープを束ねる**（`tenant(id)` と同じ形。以降 `search` / `create` は resource 不要）。**（採用）**
 - 案2b: **クエリの必須フィールド**にする（`t.phase.search({ resource: 5, … })`）。
 - 案2c: リソース別アクセサ（`t.candidate.phases` のように上位リソースにぶら下げる）。
 
@@ -141,7 +145,7 @@ const PHASE_FIELDS = {
 // search / searchAll / get / create / update / condition / order / ページングも自前
 ```
 
-#### 論点2 — 必須の `resource` をどう受けるか（**利用者から見て一番違う**）
+#### 論点2 — 必須の `resource` をどう受けるか（**案2a で決定**）
 
 ```ts
 // 案2a（推奨）: resource を 1 度だけ束ねる。以降のシグネチャは他リソースと同じ
@@ -309,16 +313,16 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ## Decision Outcome
 
-> **論点5 は決定済み（案5b・stakeholder 判断 2026-08-30）。** 残る**論点1〜4 は推奨のまま**で
-> （案1a ＋ 案2a ＋ 案3a ＋ 案4a）、本 ADR は `proposed`。4 つが決まった時点で
-> 本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
+> **決定済み: 論点2 = 案2a ／ 論点5 = 案5b**（stakeholder 判断 2026-08-30）。
+> 残る**論点1 / 3 / 4 は推奨のまま**（案1a ＋ 案3a ＋ 案4a）で、本 ADR は `proposed`。
+> 3 つが決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
 
 推奨の理由（Decision Drivers に照らす）:
 
 - **案1a（`prefix: ""` を正式に受ける）**: decode は既に対応済みで、直すのは `readFieldEntry` の 1 箇所。
   bespoke（案1b）にすると 17 項目のカタログ・`condition` / `order` / ページングを**全部書き直す**ことになり、
   Attachment のときと違って重複が大きい。案1c は**正典のサンプルと食い違う**ので採らない。
-- **案2a（`of(resource)` で束ねる）**: `resource` は「どのリソースのフェーズ履歴か」という**文脈**であって
+- **案2a（`of(resource)` で束ねる・決定済み）**: `resource` は「どのリソースのフェーズ履歴か」という**文脈**であって
   検索条件ではない。`tenant(id)` で partition を 1 回だけ明示させたのと**同じ形**にすれば、
   束ねた 1 箇所を読めば対象が分かり、`search` / `searchAll` / `create` / `update` で**繰り返さずに済む**
   （[[0055-partition-binding-guard]] と同じ考え方）。
@@ -364,7 +368,7 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 - Good: 既存コードを一切変えずに済む。
 - Bad: **正典のサンプルと食い違う**。動かない可能性が高く、動いても根拠が無い。
 
-### 案2a: `t.phase.of(resource)`（推奨）
+### 案2a: `t.phase.of(resource)`（採用）
 
 - Good: 対象を**束ねた 1 箇所**で読める。`search` / `create` で繰り返さない。`tenant(id)` と同じ形。
   Write の `Resource` も束ねた値で埋められる（案5b の名前が Phase 全体で一貫する）。
