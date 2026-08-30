@@ -22,6 +22,7 @@ import {
   type UpdateInput,
 } from "./resource";
 import { CLIENT_DESCRIPTOR } from "./client";
+import { RECRUITER_DESCRIPTOR } from "./recruiter";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -72,11 +73,10 @@ const REQUIRED_ON_CREATE = [
   "P_Recruiter",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
-// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
-// implemented resource, so there is no catalog to decode its fields with. It still reads as the
-// referenced id, like every un-expanded reference.
+// Expandable reference fields (ADR-0058) — both System[Reference] fields Job carries.
 const REFERENCES = {
   P_Client: CLIENT_DESCRIPTOR,
+  P_Recruiter: RECRUITER_DESCRIPTOR,
 } as const satisfies ReferenceMap;
 
 /**

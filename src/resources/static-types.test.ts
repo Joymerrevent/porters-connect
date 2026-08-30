@@ -152,9 +152,10 @@ describe("expand — 参照先の項目を読む（ADR-0058）", () => {
 
   it("参照先が登録されている項目だけ expand に書ける", () => {
     expectTypeOf<JobExpand>().toHaveProperty("P_Client");
-    // P_Recruiter も System[Reference] だが、Recruiter は未実装＝参照先カタログが無い。
-    // 「持っていない情報を発明しない」が型に出ている。
-    expectTypeOf<JobExpand>().not.toHaveProperty("P_Recruiter");
+    // Recruiter の実装（ADR-0060 D1）でカタログが揃い、P_Recruiter も展開できるようになった。
+    expectTypeOf<JobExpand>().toHaveProperty("P_Recruiter");
+    // System[Reference] でない項目は書けない＝「参照先カタログがあるものだけ」が型に出ている。
+    expectTypeOf<JobExpand>().not.toHaveProperty("P_Position");
   });
 
   it("参照先の素の alias だけを受ける（接頭辞も未知の alias も書けない）", () => {
