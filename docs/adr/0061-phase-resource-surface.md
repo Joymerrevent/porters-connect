@@ -1,11 +1,13 @@
 # 61. Phase の公開サーフェス（接頭辞なし・resource 必須・System[Department]）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-30
 - Deciders: jun.shiromoto (Joymerrevent)
 
+> **stakeholder 判断で `accepted`（2026-08-31）。** 5 つの論点をすべて決めた —
+> **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**（論点2〜5 は 2026-08-30、論点1 は 2026-08-31）。
 > [[0060-full-resource-coverage-direction]] が **D1 の最後の 1 本**として「Phase は専用 ADR で設計してから」と
-> 分岐させた論点。実装は accepted 後の**別 PR**。
+> 分岐させた論点。実装は**別 PR**。
 
 ## Context and Problem Statement
 
@@ -73,7 +75,12 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 
 **論点1: 接頭辞と alias の形をどう扱うか**
 
-- 案1a: **`prefix: ""` を汎用 factory が正式に受ける**（`readFieldEntry` が空接頭辞なら素の alias を送る）。（推奨）
+> **決定 — stakeholder 判断で案1a（2026-08-31）。**
+> **共有コード 9 箇所**に手を入れることを承知のうえで採った（当初「1 箇所」と書いたのは誤りで訂正済み）。
+> 決め手は、9 箇所とも**決め打ちを descriptor から取る形に変えるだけ**で新しい概念が増えず、
+> **12 リソース分の既存テストが回帰を捕まえる**こと。案1b の重複はテストを増やしても検出できない。
+
+- 案1a: **`prefix: ""` を汎用 factory が正式に受ける**（＋ 主キー alias も descriptor から取る）。**（採用）**
 - 案1b: **Attachment と同じ bespoke 実装**にする（`createResource` を使わず Phase 専用に書く）。
 - 案1c: 内部だけ `Phase.` を付けて送る（＝ Read 記事の本文どおり）。
 
@@ -137,7 +144,7 @@ Phase の項目は正典どおり `Id`（System[Id]）/ `Resource`（Number）/ 
 `Date`（DateTime）/ `Memo`（MultilineText）/ `Owner`（User）/ `OwnerDepartment`（System[Department]）。
 **`Id` / `Resource` / `ResourceId` は新規・更新とも `●`**（必須）。
 
-#### 論点1 — 接頭辞（利用者の書き方は変わらず、変わるのは送信形と実装コスト）
+#### 論点1 — 接頭辞（**案1a で決定**。利用者の書き方は変わらず、変わるのは送信形と実装コスト）
 
 ```text
 案1a / 案1b が送るもの:  field=Id,Date,Memo        ← 正典のサンプルと一致
@@ -312,15 +319,18 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ## Decision Outcome
 
-> **決定済み: 論点2 = 案2a ／ 論点3 = 案3a ／ 論点4 = 案4a ／ 論点5 = 案5b**（stakeholder 判断 2026-08-30）。
-> 残るは**論点1 のみ**（推奨 案1a）で、本 ADR は `proposed`。
-> それが決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
+採用: **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**（論点2〜5 は 2026-08-30、論点1 は 2026-08-31 に決定）。
 
-推奨の理由（Decision Drivers に照らす）:
+採用の理由（Decision Drivers に照らす）:
 
-- **案1a（`prefix: ""` を正式に受ける）**: decode は既に対応済みで、直すのは `readFieldEntry` の 1 箇所。
-  bespoke（案1b）にすると 17 項目のカタログ・`condition` / `order` / ページングを**全部書き直す**ことになり、
-  Attachment のときと違って重複が大きい。案1c は**正典のサンプルと食い違う**ので採らない。
+- **案1a（`prefix: ""` を正式に受ける・決定済み）**: 当初「直すのは 1 箇所」と書いたが**誤りで、実測 9 箇所**
+  （接頭辞の連結 4 ＋ 主キー alias の決め打ち 5。上記「既存実装との噛み合わせ」）。
+  それでも 1 つずつは**決め打ちを descriptor から取る形に変えるだけ**で新しい概念が増えず、
+  **12 リソース分の既存テスト（762）が回帰を捕まえる**。主キー alias のパラメータ化は
+  フェイクサーバーが既に `idAlias` でやっている形に揃う。
+  bespoke（案1b）にすると 17 項目のカタログ・`condition` / `order` / ページング・Write を**全部書き直す**ことになり、
+  カタログの二重持ちは [RV-23][rv23]（標準項目の取りこぼしが 12 版すり抜けた）と同じ形のドリフト源になる
+  ＝**テストを増やしても検出できない**。案1c は**正典のサンプルと食い違う**ので採らない。
 - **案2a（`of(resource)` で束ねる・決定済み）**: **安全性と語彙の一貫性は案2b と同じ**
   （当初それを決め手にしたのは誤りで、撤回済み）。決め手は**逸脱の置き場所**。
   Phase は `resource` を要求する以上どの案でも他 12 種と完全には揃わないが、
@@ -351,7 +361,7 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ## Pros and Cons of the Options
 
-### 案1a: `prefix: ""` を汎用 factory が受ける（推奨）
+### 案1a: `prefix: ""` を汎用 factory が受ける（採用）
 
 - Good: 変更が 1 箇所。カタログ・クエリ・ページングを再利用できる。decode は既に対応済み。
 - Bad: 汎用側に Phase 専用の分岐が 1 つ増える。
@@ -422,7 +432,6 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
   案5b を採るなら、`of()` は名前・`P_Resource` は数値という非対称が残る＝**別途起票して揃えるか決める**。
 - **残る論点は D3 の `Link` / `Image`**（R-4）と D2（マスタ項目の拡張）で、どちらも別 ADR。
 
-[adr-readme]: README.md
 [write-constraints]: ../guide/write-constraints.md
 [write-format]: ../reference/resource-api/write-format.md
 [resource-list]: ../reference/resource-api/resources-list.md
