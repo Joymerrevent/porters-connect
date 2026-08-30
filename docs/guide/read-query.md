@@ -116,12 +116,12 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 | `sales`       | `P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume` |
 | `process`     | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume`                |
 | `resume`      | `P_Candidate`                                                                    |
+| `phase`       | —（参照型の項目を持ちません）                                                    |
 
 - **`Activity.P_ResourceId` は展開できません**。参照先が `P_Resource`（Resource List の数値 ID）で
   実行時に決まるため、どのカタログで読むかを型では決められないからです。ID として読めるので、
   `P_Resource` を見て対応するアクセサから取得してください。
-- **未実装リソースへの参照は展開できません**（参照先のカタログが無いため。従来どおり ID として読めます）。
-  実装済みのリソースは [README のリソース表][readme-resources] を参照してください。
+- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で束ねます。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
   （[ADR-0023][adr23] で宣言できるようになるまでの穴）。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
@@ -286,7 +286,6 @@ page.start; // 今回の開始インデックス
 [adr59]: ../adr/0059-read-field-bare-alias.md
 [adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
-[readme-resources]: ../../README.md#リソースと操作
 [lv]: ../live-verification.md
 [prd]: ../design/requirements.md
 [rapi]: ../reference/resource-api/README.md

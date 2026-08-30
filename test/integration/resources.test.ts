@@ -181,6 +181,28 @@ describe("data resources round-trip", () => {
     expect(sales?.P_Client).toBeNull(); // unset reference reads as null
   });
 
+  it("records a Phase against a Client through of(name)", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+    const phases = porters.tenant(1).phase.of("client");
+
+    // `Resource` and `Id` are supplied by the accessor / library — only ResourceId is ours.
+    const id = await phases.create({
+      ResourceId: clientId,
+      Memo: "初回接触",
+      Date: "2026-08-30T03:04:05Z",
+    });
+
+    const entry = await phases.get(id);
+    expect(entry?.Id).toBe(id);
+    expect(entry?.Resource).toBe(5); // Resource List: Client
+    expect(entry?.ResourceId).toBe(clientId);
+    expect(entry?.Memo).toBe("初回接触");
+    expect(entry?.Date).toBe("2026-08-30T03:04:05Z"); // DateTime round-trips as ISO
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({

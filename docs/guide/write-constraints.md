@@ -73,6 +73,7 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 | `sales`       | `P_Owner` のみ（参照 6 項目は条件付き＝上記）                                 |
 | `process`     | `P_Owner` / `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
 | `resume`      | `P_Owner` / `P_Candidate`                                                     |
+| `phase`       | `ResourceId` のみ（`Id` はライブラリが、`Resource` は `of(...)` が埋める）    |
 
 > **`contract` に `P_Owner` はありません**。他の全リソースが所有者を必須にしているので目を引きますが、
 > PORTERS が公表している項目一覧に存在しないためです（無い項目を足していません）。
