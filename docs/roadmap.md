@@ -118,7 +118,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                 | いまの状態                               |
 | ----------------------------- | -------------------------------------------- | ---------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能＝[ADR-0060][adr60] D1 の 1 本目 |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 1 件 = RV-22（契約待ち）            |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-32     |
 | [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ちは 0060・0061 |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜16 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
@@ -233,8 +233,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - ADR 0001〜0061 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**665 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 1 件**＝
-  RV-22（契約待ち）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+- 品質ゲート green・**762 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
+  RV-22（契約待ち）と RV-32（`searchAll` のクエリ書き換え）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 - **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。
