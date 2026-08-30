@@ -92,12 +92,20 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 
 **論点3: `System[Department]` をどう型に足すか**
 
-- 案3a: **`DataType` に `System[Department]` を足し、`UserRef` と同形の `DepartmentRef` を返す**。（推奨）
+> **決定 — stakeholder 判断で案3a（2026-08-30）。**
+> 応答形は正典のサンプルで確定しており（`User` と同じ入れ子）、生文字列で返すと
+> **他の参照型と一貫しない**。実装時に `WritableDataType` への波及を確認すること（下記の注意）。
+
+- 案3a: **`DataType` に `System[Department]` を足し、`UserRef` と同形の `DepartmentRef` を返す**。**（採用）**
 - 案3b: 生文字列のまま返す（型を足さない）。
 
 **論点4: Write の最新フェーズ条件**
 
-- 案4a: **型では止めず、PORTERS に委ねる**（[書き込みの制約ガイド][write-constraints]に明記）。（推奨）
+> **決定 — stakeholder 判断で案4a（2026-08-30）。**
+> 条件は**サーバー側の状態**（現在の最新フェーズ）に依存するので、手前で判定するには追加の Read が要り、
+> しかもレースが残って結局サーバーが正になる。Sales の `※`（条件付き必須）と同じ判断。
+
+- 案4a: **型では止めず、PORTERS に委ねる**（[書き込みの制約ガイド][write-constraints]に明記）。**（採用）**
 - 案4b: クライアント側で最新フェーズを読んでから検証する。
 
 **論点5: `resource` の値を何で表すか**（論点2 とは独立。stakeholder 提起 2026-08-30）
@@ -234,7 +242,7 @@ await t.phase.get(10014, { resource: "client" }); // 案2b: 第 2 引数が必�
 await t.candidate.get(10001); // 参考: 他リソースは第 2 引数が省略可
 ```
 
-#### 論点3 — `System[Department]` の読み取り値
+#### 論点3 — `System[Department]` の読み取り値（**案3a で決定**）
 
 ```ts
 const page = await t.phase
@@ -242,7 +250,7 @@ const page = await t.phase
   .search({ field: ["Owner", "OwnerDepartment"] });
 const p = page.items[0];
 
-// 案3a（推奨）: User と同形の参照レコードになる
+// 案3a（採用）: User と同形の参照レコードになる
 p?.Owner; // UserRef | null       → { P_Id: 78, P_Type: …, P_Name: …, P_Mail: … }
 p?.OwnerDepartment; // DepartmentRef | null → { P_Id: 1001, P_Name: "所属なし" }
 
@@ -254,10 +262,10 @@ p?.OwnerDepartment; // string | null
 > **自動で入り**、Write 値が既定の `string` になる。書けるのか・書けるなら `Department.P_Id`（`number`）なのかは
 > 正典で未確認なので、**union を広げるときに派生型まで見る**（[[0056-deleted-flag-typing]] の教訓）。
 
-#### 論点4 — Write の最新フェーズ条件
+#### 論点4 — Write の最新フェーズ条件（**案4a で決定**）
 
 ```ts
-// 案4a（推奨）: そのまま送り、PORTERS の判定を型付きエラーで受ける
+// 案4a（採用）: そのまま送り、PORTERS の判定を型付きエラーで受ける
 try {
   await t.phase.of("client").create({
     ResourceId: 20001,
@@ -304,9 +312,9 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ## Decision Outcome
 
-> **決定済み: 論点2 = 案2a ／ 論点5 = 案5b**（stakeholder 判断 2026-08-30）。
-> 残る**論点1 / 3 / 4 は推奨のまま**（案1a ＋ 案3a ＋ 案4a）で、本 ADR は `proposed`。
-> 3 つが決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
+> **決定済み: 論点2 = 案2a ／ 論点3 = 案3a ／ 論点4 = 案4a ／ 論点5 = 案5b**（stakeholder 判断 2026-08-30）。
+> 残るは**論点1 のみ**（推奨 案1a）で、本 ADR は `proposed`。
+> それが決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
 
 推奨の理由（Decision Drivers に照らす）:
 
@@ -319,9 +327,9 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
   案2a は逸脱が**アクセサ 1 箇所**に閉じ、`search` / `searchAll` / `get` / `create` / `update` の呼び方は
   他と同一のまま（`get(id)` が第 2 引数なしで書ける）。案2b は逸脱が**全メソッドの引数**へ散る。
   束ねる形は [[0055-partition-binding-guard]]（`tenant(id)`）と同じ考え方で、**既に使っている語彙**でもある。
-- **案3a（`DepartmentRef`）**: 応答形が確定しており、`User` の実装をそのまま写せる。
+- **案3a（`DepartmentRef`・決定済み）**: 応答形が確定しており、`User` の実装をそのまま写せる。
   **D3 のデータ型 14/17 → 15/17** が同時に進む（残りは `Link` / `Image`）。
-- **案4a（委ねる）**: 最新フェーズ条件は**サーバー側の状態**に依存するので、手前で判定するには追加の Read が要る。
+- **案4a（委ねる・決定済み）**: 最新フェーズ条件は**サーバー側の状態**に依存するので、手前で判定するには追加の Read が要る。
   厳しくしすぎると正当な呼び出しを弾く（Sales の `※` と同じ判断）。
 - **案5b（名前で受ける・決定済み）**: 数値 ID は **1/3/5/…/25/27 と飛んでいて覚えられず**、欠番（`6`）も取り違え
   （`9` と `11`）も型では止まらない。名前なら**アクセサ名と同じ語彙**になり、綴り間違いがコンパイル時に止まる。
@@ -378,13 +386,13 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ### 案3a / 案3b（`System[Department]`）
 
-- 案3a Good: 応答形が確定しており `User` と同形。D3 が進む。／ Bad: `DataType` union が 1 つ増える
+- 案3a **（採用）** Good: 応答形が確定しており `User` と同形。D3 が進む。／ Bad: `DataType` union が 1 つ増える
   （派生型 `WritableDataType` 等への波及を確認する必要がある — [[0056-deleted-flag-typing]] の教訓）。
 - 案3b Good: 変更ゼロ。／ Bad: 入れ子を生文字列で返すことになり、**他の参照型と一貫しない**。
 
 ### 案4a / 案4b（Write の条件）
 
-- 案4a Good: 正当な呼び出しを弾かない。実装が薄い。／ Bad: 失敗はサーバー応答まで分からない。
+- 案4a **（採用）** Good: 正当な呼び出しを弾かない。実装が薄い。／ Bad: 失敗はサーバー応答まで分からない。
 - 案4b Good: 手前で気づける。／ Bad: 追加の往復。レースがあり、結局サーバーが正。
 
 ### 案5a / 案5b / 案5c（`resource` の値）
