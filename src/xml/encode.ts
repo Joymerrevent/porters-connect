@@ -3,6 +3,7 @@
 // `<Field><OptionAlias/></Field>`, and DateTime/Date go ISO -> PORTERS. This is the
 // mirror of decode.ts; it builds the request body so XML stays out of resources/.
 
+import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType } from "./decode";
 
@@ -105,7 +106,8 @@ const encodeItem = (
       type === undefined || type === null
         ? scalar(value)
         : encodeField(type, value);
-    parts.push(`<${prefix}.${alias}>${inner}</${prefix}.${alias}>`);
+    const tag = qualify(prefix, alias);
+    parts.push(`<${tag}>${inner}</${tag}>`);
   }
   return parts.join("");
 };
