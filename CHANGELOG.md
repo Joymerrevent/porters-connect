@@ -26,6 +26,9 @@
 
 - **Contact リソース**（コンタクト）の Read / Write。**Recruiter と項目構成が同一**ですが、
   PORTERS が役割で分けている別リソースなので、テーブルもカタログも独立しています。
+- **Opportunity リソース**（商談管理）の Read / Write。`P_Client` / `P_Recruiter` の両方を
+  `expand` できます。**このリソースだけ `P_Deleted` がありません** — PORTERS が公表していないため、
+  こちらも持たせていません（無いものを足さない）。
 
 ### Changed
 

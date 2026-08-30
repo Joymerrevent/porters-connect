@@ -102,6 +102,34 @@ describe("data resources round-trip", () => {
     expect(fake.control.records("recruiter")).toHaveLength(0);
   });
 
+  it("creates an Opportunity against a Client + Recruiter", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+    const recruiterId = await porters
+      .tenant(1)
+      .recruiter.create({
+        P_Owner: 5,
+        P_Client: clientId,
+        P_Name: "採用 太郎",
+      });
+
+    const id = await porters.tenant(1).opportunity.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Recruiter: recruiterId,
+      P_Position: "TypeScript エンジニア",
+    });
+
+    const opportunity = await porters.tenant(1).opportunity.get(id, {
+      expand: { P_Recruiter: ["P_Name"] },
+    });
+    expect(opportunity?.P_Position).toBe("TypeScript エンジニア");
+    expect(opportunity?.P_Client).toBe(clientId); // not expanded -> id
+    expect(opportunity?.P_Recruiter).toEqual({ P_Name: "採用 太郎" });
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({

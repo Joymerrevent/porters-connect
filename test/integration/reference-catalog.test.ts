@@ -22,6 +22,7 @@ import { CLIENT_DESCRIPTOR } from "../../src/resources/client";
 import { JOB_DESCRIPTOR } from "../../src/resources/job";
 import { PROCESS_DESCRIPTOR } from "../../src/resources/process";
 import { CONTACT_DESCRIPTOR } from "../../src/resources/contact";
+import { OPPORTUNITY_DESCRIPTOR } from "../../src/resources/opportunity";
 import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
 import type { ResourceDescriptor } from "../../src/resources/resource";
@@ -83,6 +84,7 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: CLIENT_DESCRIPTOR, doc: "client" },
   { descriptor: RECRUITER_DESCRIPTOR, doc: "recruiter" },
   { descriptor: CONTACT_DESCRIPTOR, doc: "contact" },
+  { descriptor: OPPORTUNITY_DESCRIPTOR, doc: "opportunity" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
 ];
@@ -128,10 +130,14 @@ describe.each(TARGETS)(
       expect(mismatched).toEqual([]);
     });
 
-    it("削除フラグは型を持たない項目としてカタログにある（RV-26 / ADR-0056）", () => {
-      // 「型が無い」ことの記録が消える／`Number` 等に化けるのを防ぐ。値は持つので除外もしない。
-      expect("P_Deleted" in catalog).toBe(true);
-      expect(catalog.P_Deleted).toBeNull();
+    it("削除フラグの有無が reference と一致する（RV-26 / ADR-0056）", () => {
+      // 持っているなら「型が無い」ことの記録が消える／`Number` 等に化けるのを防ぐ
+      // （値は持つので除外もしない）。持っていないなら**こちらも持たない** — Opportunity は
+      // PORTERS が P_Deleted を公表していない唯一のデータ系リソースで、揃えたくなる誘惑がある。
+      // 無いものを足すのは「持っていない情報を発明する」ことなので、両方向で固定する。
+      const inReference = fields.some((f) => f.alias === "P_Deleted");
+      expect("P_Deleted" in catalog).toBe(inReference);
+      if (inReference) expect(catalog.P_Deleted).toBeNull();
     });
   },
 );
