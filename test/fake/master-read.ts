@@ -66,6 +66,7 @@ const FIELD_TYPE_VALUE: Record<DataType, number> = {
   "System[Id]": 11,
   "System[DateTime]": 11,
   "System[Reference]": 11,
+  "System[Department]": 11,
   DateTime: 12,
   Telephone: 15,
   User: 17,

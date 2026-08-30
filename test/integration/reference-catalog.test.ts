@@ -39,6 +39,7 @@ const DATA_TYPE_OF: Record<string, DataType | null> = {
   "System[Id]": "System[Id]",
   "System[DateTime]": "System[DateTime]",
   "System[Reference]": "System[Reference]",
+  "System[Department]": "System[Department]",
   User: "User",
   "Option[Checkbox]": "Option",
   "Option[Dropdown]": "Option",

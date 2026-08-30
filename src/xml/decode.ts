@@ -25,7 +25,18 @@ export type DataType =
   | "URL"
   | "User"
   | "Option"
-  | "System[Reference]";
+  | "System[Reference]"
+  | "System[Department]";
+
+/**
+ * A referenced Department (`System[Department]` — ADR-0061 案3a). Read is nested exactly like
+ * `User`: `<OwnerDepartment><Department><Department.P_Id>…`. Only the two fields PORTERS shows in
+ * its sample are modelled — inventing more would be guessing.
+ */
+export type DepartmentRef = {
+  P_Id: number | null;
+  P_Name: string | null;
+};
 
 /** A referenced User (Read is nested; Write is `User.P_Id` only). */
 export type UserRef = {
@@ -44,7 +55,7 @@ export type ReferenceRecord = { [alias: string]: FieldValue };
 
 // `string[]` is the Option read value (a set of selected aliases — ADR-0017).
 export type FieldValue =
-  string | number | string[] | UserRef | ReferenceRecord | null;
+  string | number | string[] | UserRef | DepartmentRef | ReferenceRecord | null;
 
 // Per-Data-Type decoded value (the non-null shape). A read value is `DecodedValue<D> | null`
 // (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
@@ -57,9 +68,11 @@ export type DecodedValue<D extends DataType | null> = D extends null
     ? number
     : D extends "User"
       ? UserRef
-      : D extends "Option"
-        ? string[]
-        : string;
+      : D extends "System[Department]"
+        ? DepartmentRef
+        : D extends "Option"
+          ? string[]
+          : string;
 
 // A tag's bare alias: `Client.P_Name` -> `P_Name`. Nested reference tags carry the *referenced*
 // resource's prefix, which nothing here knows. Mirrors `bareAlias` in resources/read-core.ts.
@@ -87,6 +100,19 @@ const decodeUser = (raw: unknown): UserRef | null => {
     P_Type: pickPrefixed(user, "User", "P_Type") ?? null,
     P_Name: pickPrefixed(user, "User", "P_Name") ?? null,
     P_Mail: pickPrefixed(user, "User", "P_Mail") ?? null,
+  };
+};
+
+// System[Department] mirrors User: `<Field><Department><Department.P_Id>…</Department></Field>`
+// (ADR-0061 — the shape comes from PORTERS' own 2019-12-10 sample, not a guess).
+const decodeDepartment = (raw: unknown): DepartmentRef | null => {
+  const outer = asRecord(raw);
+  const dept = outer ? asRecord(outer.Department) : undefined;
+  if (!dept) return null;
+  const id = pickPrefixed(dept, "Department", "P_Id");
+  return {
+    P_Id: id === undefined ? null : Number(id),
+    P_Name: pickPrefixed(dept, "Department", "P_Name") ?? null,
   };
 };
 
@@ -181,6 +207,8 @@ export const decodeField = (
     }
     case "User":
       return decodeUser(raw);
+    case "System[Department]":
+      return decodeDepartment(raw);
     case "Option":
       return decodeOption(raw);
     case "System[Reference]":

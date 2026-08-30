@@ -7,6 +7,7 @@ import {
   decodeField,
   decodeReferenceRecord,
   type DataType,
+  type DepartmentRef,
   type UserRef,
 } from "./decode";
 import { parseResourcePage } from "./parser";
@@ -123,6 +124,27 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("User", { nope: 1 })).toBeNull();
   });
 
+  it("System[Department]: nested like User, prefixed or bare (ADR-0061)", () => {
+    // PORTERS' own sample: <OwnerDepartment><Department><Department.P_Id>1001</…>
+    const prefixed = decodeField("System[Department]", {
+      Department: {
+        "Department.P_Id": "1001",
+        "Department.P_Name": "所属なし",
+      },
+    }) as DepartmentRef;
+    expect(prefixed.P_Id).toBe(1001);
+    expect(prefixed.P_Name).toBe("所属なし");
+
+    const bare = decodeField("System[Department]", {
+      Department: { P_Id: "7", P_Name: "営業部" },
+    }) as DepartmentRef;
+    expect(bare.P_Id).toBe(7);
+    expect(bare.P_Name).toBe("営業部");
+
+    expect(decodeField("System[Department]", { nope: 1 })).toBeNull();
+    expect(decodeField("System[Department]", "scalar")).toBeNull();
+  });
+
   it("decodes defensively: non-string -> null; missing nested -> null", () => {
     expect(decodeField("System[Id]", { a: 1 })).toBeNull();
     expect(decodeField("Number", { a: 1 })).toBeNull();
@@ -130,6 +152,10 @@ describe("decodeField (ADR-0011)", () => {
     expect(decodeField("Date", { a: 1 })).toBeNull();
     const owner = decodeField("User", { User: { P_Name: "n" } }) as UserRef;
     expect(owner.P_Id).toBeNull();
+    const dept = decodeField("System[Department]", {
+      Department: { P_Name: "営業部" },
+    }) as DepartmentRef;
+    expect(dept.P_Id).toBeNull();
     expect(decodeField("Option", { OptionRoot: {} })).toBeNull();
   });
 

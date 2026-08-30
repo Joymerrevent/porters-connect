@@ -25,9 +25,12 @@ export type WriteItem = Record<string, WriteValue>;
 // Data Types a user may write. `System[Id]` is library-supplied (`P_Id=-1`/target id) and
 // `System[DateTime]` (registration/update) is Write-restricted by PORTERS — both are excluded
 // from the static Write input so they cannot be set (ADR-0016 promise, realized in ADR-0019).
+// `System[Department]` も除外する: PORTERS は Phase / User でこの型を**読み**に出すだけで、
+// 書けるのか・書けるとしてどの形（`Department.P_Id`？）かを公表していない。推測した形を送るより
+// **書けないことにしておく**ほうが安全側（ADR-0061 案3a の注意）。VERIFY(live): 契約後に確認する。
 export type WritableDataType = Exclude<
   DataType,
-  "System[Id]" | "System[DateTime]"
+  "System[Id]" | "System[DateTime]" | "System[Department]"
 >;
 
 // Per-Data-Type write value (mirror of `encodeField`): User / System[Reference] / Number take a
@@ -75,10 +78,13 @@ export const encodeField = (
       return scalar(isoToPortersDate(String(value)));
     // System[Id] / Number / User & System[Reference] (ID-only) / string Data Types all
     // serialize as a scalar (the string types stay distinct labels per ADR-0016).
+    // System[Department] は静的な Write 入力から外してあるので、ここに来るのは cast 経由のみ
+    // （System[DateTime] と同じ扱い）。到達したときは User と同じくスカラとして書き出す。
     case "System[Id]":
     case "Number":
     case "User":
     case "System[Reference]":
+    case "System[Department]":
     case "SinglelineText":
     case "MultilineText":
     case "Mail":

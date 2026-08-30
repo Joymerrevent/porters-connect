@@ -195,7 +195,12 @@ export type {
 export type { Option, OptionResource, OptionSearchQuery } from "./resources";
 
 // `ReferenceRecord` is an expanded `System[Reference]` value (`expand` — ADR-0058).
-export type { FieldValue, ReferenceRecord, UserRef } from "./xml";
+export type {
+  DepartmentRef,
+  FieldValue,
+  ReferenceRecord,
+  UserRef,
+} from "./xml";
 
 // Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).
 export { base64ToBytes, bytesToBase64 } from "./util/base64";
