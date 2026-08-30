@@ -177,11 +177,12 @@ await porters.auth.exchangeAuthorizationCode(code);
 | `t.opportunity` | 商談管理       | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.activity`    | アクティビティ | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.contract`    | 契約           | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.sales`       | 成約・売上     | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.process`     | 選考プロセス   | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.resume`      | レジュメ       | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.attachment`  | 添付ファイル   | `search` / `get` / `create` / `update`               |
 
-> **未対応のリソース**: Sales / Phase は順次追加中です
+> **未対応のリソース**: Phase のみです（接頭辞なし・専用の設計が要るため最後に回しています）。
 > （方針は [ADR-0060][adr-0060]・進捗は [ロードマップ][roadmap]）。
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。
@@ -189,6 +190,9 @@ await porters.auth.exchangeAuthorizationCode(code);
 - `get(id, options?)` → 1 件 or `undefined`（`options.expand` で参照先の項目も読めます）。
 - `create(input)` → 採番された **id（number）**。
 - `update(id, input)` → その **id**。
+
+> **書き込みの制約**（新規必須の項目・条件付き必須・Phase 更新の作法・送信前に弾かれるもの）は
+> [書き込みの制約ガイド][write-constraints]にまとめています。
 
 **検索クエリ**（`query`）の主なキー（すべて型安全。**項目の Data Type が許す演算子だけ**を受けます）：
 
@@ -453,6 +457,7 @@ try {
 [read-query-guide]: ./docs/guide/read-query.md
 [multi-tenancy]: ./docs/guide/multi-tenancy.md
 [bulk-write]: ./docs/guide/bulk-write.md
+[write-constraints]: ./docs/guide/write-constraints.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [adr-0060]: ./docs/adr/0060-full-resource-coverage-direction.md

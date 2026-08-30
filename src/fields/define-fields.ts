@@ -52,6 +52,7 @@ export type CustomFieldResource =
   | "opportunity"
   | "activity"
   | "contract"
+  | "sales"
   | "process"
   | "resume";
 
@@ -135,6 +136,7 @@ const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
   "opportunity",
   "activity",
   "contract",
+  "sales",
   "process",
   "resume",
 ];

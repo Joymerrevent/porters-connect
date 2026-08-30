@@ -37,6 +37,14 @@
   `expand` できます。**このリソースだけ `P_Deleted` がありません** — PORTERS が公表していないため、
   こちらも持たせていません（無いものを足さない）。
 
+- **Sales リソース**（成約・売上）の Read / Write。**参照 6 項目すべてを `expand` できます**
+  （Client / Recruiter / Job / Contract / Candidate / Resume）。
+  `create` の必須は **`P_Owner` のみ**です — 参照 6 項目はリファレンスで `※`（条件付き必須）とされ、
+  実際は依存の連鎖（`P_Job` → `P_Recruiter` → `P_Client` ← `P_Contract`）なので、
+  **ライブラリは手前で弾かず PORTERS の判定に委ねます**（詳細は新しい[書き込みの制約ガイド][write-constraints]）。
+- **書き込みの制約ガイド**を追加しました。**ライブラリが送信前に弾くもの**と
+  **PORTERS に委ねるもの**の境界、リソースごとの新規必須項目の一覧をまとめています。
+
 ### Changed
 
 - **`Job.P_Recruiter` / `Process.P_Recruiter` を `expand` できる**ようになりました。
@@ -475,6 +483,7 @@
 [adr58]: docs/adr/0058-reference-expansion-read.md
 [adr59]: docs/adr/0059-read-field-bare-alias.md
 [adr60]: docs/adr/0060-full-resource-coverage-direction.md
+[write-constraints]: docs/guide/write-constraints.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/

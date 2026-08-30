@@ -100,6 +100,14 @@ export type {
   ClientSearchQuery,
 } from "./resources";
 export type {
+  Sales,
+  SalesCreateInput,
+  SalesUpdateInput,
+  SalesPage,
+  SalesResource,
+  SalesSearchQuery,
+} from "./resources";
+export type {
   Contract,
   ContractCreateInput,
   ContractUpdateInput,
