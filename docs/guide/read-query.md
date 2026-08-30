@@ -115,6 +115,9 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 | `process`     | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
 | `resume`      | `P_Candidate`                                                     |
 
+- **`Activity.P_ResourceId` は展開できません**。参照先が `P_Resource`（Resource List の数値 ID）で
+  実行時に決まるため、どのカタログで読むかを型では決められないからです。ID として読めるので、
+  `P_Resource` を見て対応するアクセサから取得してください。
 - **未実装リソースへの参照は展開できません**（参照先のカタログが無いため。従来どおり ID として読めます）。
   実装済みのリソースは [README のリソース表][readme-resources] を参照してください。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません

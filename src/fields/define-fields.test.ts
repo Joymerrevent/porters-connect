@@ -87,10 +87,12 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
       recruiter: (f) => ({ U_a: f.number() }),
       contact: (f) => ({ U_a: f.number() }),
       opportunity: (f) => ({ U_a: f.number() }),
+      activity: (f) => ({ U_a: f.number() }),
       process: (f) => ({ U_a: f.number() }),
       resume: (f) => ({ U_a: f.number() }),
     });
     expect(Object.keys(declared).sort()).toEqual([
+      "activity",
       "candidate",
       "client",
       "contact",

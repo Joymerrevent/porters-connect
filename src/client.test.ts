@@ -306,6 +306,33 @@ describe("PortersClient + opportunity (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + activity (E2E, mock transport)", () => {
+  it("exposes an activity accessor; routes to /v1/activity", async () => {
+    const xml =
+      `<Activity Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Activity.P_Id>99</Activity.P_Id>` +
+      `<Activity.P_Resource>5</Activity.P_Resource>` +
+      `</Item></Activity>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).activity.search();
+    expect(page.items[0]?.P_Id).toBe(99);
+    expect(page.items[0]?.P_Resource).toBe(5); // Resource List: Client
+    expect(calls[0]?.url).toContain("/v1/activity?");
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =
