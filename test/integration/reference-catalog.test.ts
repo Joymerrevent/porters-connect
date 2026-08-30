@@ -21,6 +21,7 @@ import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { CLIENT_DESCRIPTOR } from "../../src/resources/client";
 import { JOB_DESCRIPTOR } from "../../src/resources/job";
 import { PROCESS_DESCRIPTOR } from "../../src/resources/process";
+import { CONTACT_DESCRIPTOR } from "../../src/resources/contact";
 import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
 import type { ResourceDescriptor } from "../../src/resources/resource";
@@ -81,6 +82,7 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: JOB_DESCRIPTOR, doc: "job" },
   { descriptor: CLIENT_DESCRIPTOR, doc: "client" },
   { descriptor: RECRUITER_DESCRIPTOR, doc: "recruiter" },
+  { descriptor: CONTACT_DESCRIPTOR, doc: "contact" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
 ];

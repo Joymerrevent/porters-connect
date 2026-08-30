@@ -120,10 +120,10 @@ describe("the fake over HTTP", () => {
   it("answers an unimplemented route with a loud 501", async () => {
     const { server } = await serve();
 
-    const response = await fetch(`${server.url}/v1/contact?partition=1`);
+    const response = await fetch(`${server.url}/v1/phase?partition=1`);
 
     expect(response.status).toBe(501);
-    expect(await response.text()).toContain("no route for GET /v1/contact");
+    expect(await response.text()).toContain("no route for GET /v1/phase");
   });
 
   it("rejects a verb PORTERS does not use", async () => {

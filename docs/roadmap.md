@@ -24,7 +24,10 @@
       （Phase を除く）は同じ手数で見積もってよい。**横展開でぶつかったのは既存テストの前提**のほう
       （「Recruiter は未実装」を書いたテストが 4 件・型テストが 1 件）＝新リソースごとに同じ棚卸しが要る。
       副産物として **`Job.P_Recruiter` / `Process.P_Recruiter` が `expand` 可能**になった（参照先カタログが揃ったため）
-- [ ] 2. **Contact**（Recruiter と項目構成が同一）→ 3. **Opportunity**（12 項目・最小）→ 4. **Activity**（`P_Resource` ＋ `P_ResourceId` の可変参照が論点）→ 5. **Contract**（40 項目）→ 6. **Sales**（`System[Reference]` 6 項目＝`expand` の効きどころ）
+- [x] **2. Contact** ＝ **実装済み・未リリース**。Recruiter と**項目構成が完全に同一**だったので、
+      カタログを写して prefix / path を変えるだけで済んだ。共通化はしていない（別リソースである事実を
+      2 つのカタログで保つ）が、「同一であること」自体をテストに書いて将来の乖離を検出できるようにした。
+- [ ] 3. **Opportunity**（12 項目・最小。**`P_Deleted` を持たない**＝突合テストの前提を 1 つ緩める必要あり）→ 4. **Activity**（`P_Resource` ＋ `P_ResourceId` の可変参照が論点）→ 5. **Contract**（**`P_Owner` が無い**・40 項目）→ 6. **Sales**（参照 6 項目の必須が `※`＝条件付き。要判断）
 - [ ] 7. **Phase** は**最後**。接頭辞なし（`Id` / `Resource` / `ResourceId`）・`System[Department]`・
       Write の特殊制約（最新フェーズ条件）で汎用 factory の前提から外れる＝**専用 ADR で設計してから**
 - [ ] **分岐して起票する ADR**: ① Phase の公開サーフェス ② `Link` / `Image` ＋ `defineFields` builder
