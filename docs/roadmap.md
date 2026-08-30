@@ -40,7 +40,13 @@
       **`P_Owner` を持たない唯一のデータ系リソース**なので `create` の必須は `P_Client` だけ。
       `Currency` の 3 項目は **Data Type が `Number`**（Field Type と Data Type は別の軸）なので
       **新しいデータ型は不要**だった＝ D3 の 14/17 は動かない。
-- [ ] 6. **Sales**（参照 6 項目の必須が `※`＝条件付き。要判断）
+- [x] **6. Sales** ＝ **実装済み・未リリース**。**参照 6 項目すべてが `expand` 可能**。
+      **`create` の必須は `P_Owner` のみ**にした — 参照 6 項目は reference で `●` でなく **`※`（条件付き必須）**で、
+      実体は依存の連鎖（`P_Job` → `P_Recruiter` → `P_Client` ← `P_Contract`）。フラットな必須リストでは表せず、
+      一律必須にすると**サーバーが受ける呼び出しを手前で弾く**＝危険側に倒れる。
+      **この判断は ADR にしていない**（既存の「手前で厳しくしすぎない」方針の適用に留まるため）。
+      形式化したい場合は要起票 — 公開型 `SalesCreateInput` の形に効く判断ではある。
+      併せて **`docs/guide/write-constraints.md` を新設**（D5）。
 - [ ] 7. **Phase** は**最後**。接頭辞なし（`Id` / `Resource` / `ResourceId`）・`System[Department]`・
       Write の特殊制約（最新フェーズ条件）で汎用 factory の前提から外れる＝**専用 ADR で設計してから**
 - [ ] **分岐して起票する ADR**: ① Phase の公開サーフェス ② `Link` / `Image` ＋ `defineFields` builder

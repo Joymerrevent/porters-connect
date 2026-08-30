@@ -48,6 +48,7 @@ describe("fake server wiring", () => {
       "process",
       "recruiter",
       "resume",
+      "sales",
       "user",
     ]);
     for (const [path, resource] of FAKE_RESOURCES) {

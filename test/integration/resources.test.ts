@@ -166,6 +166,21 @@ describe("data resources round-trip", () => {
     expect(contract?.P_Client).toBe(clientId);
   });
 
+  it("creates a Sales with only P_Owner — the six references are conditional", async () => {
+    const { porters } = setup();
+
+    // PORTERS validates the dependency chain server-side; the library does not pre-judge it
+    // (docs/guide/write-constraints.md). A minimal Sales is accepted here.
+    const id = await porters.tenant(1).sales.create({
+      P_Owner: 5,
+      P_SalesAmount: 1200000,
+    });
+
+    const sales = await porters.tenant(1).sales.get(id);
+    expect(sales?.P_SalesAmount).toBe(1200000); // Currency -> Number
+    expect(sales?.P_Client).toBeNull(); // unset reference reads as null
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({

@@ -89,6 +89,7 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
       opportunity: (f) => ({ U_a: f.number() }),
       activity: (f) => ({ U_a: f.number() }),
       contract: (f) => ({ U_a: f.number() }),
+      sales: (f) => ({ U_a: f.number() }),
       process: (f) => ({ U_a: f.number() }),
       resume: (f) => ({ U_a: f.number() }),
     });
@@ -103,6 +104,7 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
       "process",
       "recruiter",
       "resume",
+      "sales",
     ]);
   });
 

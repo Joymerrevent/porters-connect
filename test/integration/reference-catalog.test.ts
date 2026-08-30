@@ -27,6 +27,7 @@ import { CONTRACT_DESCRIPTOR } from "../../src/resources/contract";
 import { OPPORTUNITY_DESCRIPTOR } from "../../src/resources/opportunity";
 import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
+import { SALES_DESCRIPTOR } from "../../src/resources/sales";
 import type { ResourceDescriptor } from "../../src/resources/resource";
 import type { DataType } from "../../src/xml/decode";
 
@@ -89,6 +90,7 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: OPPORTUNITY_DESCRIPTOR, doc: "opportunity" },
   { descriptor: ACTIVITY_DESCRIPTOR, doc: "activity" },
   { descriptor: CONTRACT_DESCRIPTOR, doc: "contract" },
+  { descriptor: SALES_DESCRIPTOR, doc: "sales" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
 ];
