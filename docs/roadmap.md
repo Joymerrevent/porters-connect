@@ -12,21 +12,19 @@
 ## ▶️ いま何をやるか
 
 **2026-08-16 の全面レビュー**（[2026-08-16-01][run816]）で棚卸しした 8 件は**全件を解消**し、
-**0.10.0 まで世に出た**。次の論点だった **RV-31**（reference 展開の取りこぼし）も
-**[ADR-0058][adr58]（案D＝型付き `expand`）で解消**し、その議論から派生した
-**[ADR-0059][adr59]**（`field` を接頭辞なしの型付き alias で受ける）も実施済み。
-**2 本とも未リリース**なので、次は**リリース**（`.changeset/` に 2 枚）。
-品質ゲートは全 green（665 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
+次の論点だった **RV-31**（reference 展開の取りこぼし）も **[ADR-0058][adr58]（案D＝型付き `expand`）で解消**、
+その議論から派生した **[ADR-0059][adr59]**（`field` を接頭辞なしの型付き alias で受ける）も実施し、
+**2 本とも 0.11.0 で世に出た**。**着手可能な作業は無く**、次の主軸は下記「🧭 方針」の判断待ち。
+品質ゲートは全 green（690 tests）。完成度は本書の「📊 完成度（実装カバレッジ）」節を参照。
 
 ### 着手可能（ブロック無し・上から順に）
 
-| #   | やること              | 根拠        | semver | 備考                                                                     |
-| --- | --------------------- | ----------- | ------ | ------------------------------------------------------------------------ |
-| 1   | **0.11.0 のリリース** | 0058 / 0059 | minor  | changeset 2 枚を消費。手順は [release-runbook][rb]（**破壊的変更あり**） |
+**いま着手可能な作業は無い**（未リリースの変更も、実装待ちの ADR も無い）。
+次に何をやるかは「🧭 方針」の**判断待ち**（次の主軸）を先に決める。
 
-- ✅ **[ADR-0059][adr59] 実施済み**（未リリース）。`field` は接頭辞なしの型付き alias になり、
+- ✅ **[ADR-0059][adr59] 実施済み・0.11.0 で公開**。`field` は接頭辞なしの型付き alias になり、
   綴り間違い・接頭辞付き・展開文字列がコンパイル時に止まる。**公開 API の破壊的変更**を含む。
-- ✅ **[ADR-0058][adr58] 実施済み**（未リリース・**RV-31 は fixed**）。型付き `expand` で
+- ✅ **[ADR-0058][adr58] 実施済み・0.11.0 で公開**（**RV-31 は fixed**）。型付き `expand` で
   参照先の項目が 1 往復で取れる。raw `field` の展開は送信前に弾いて `expand` へ誘導する
   （0059 で型でも書けないので**多層防御**）。
 - **R-4 の Link / Image** は要 ADR（下記「随時・任意」）。
@@ -46,11 +44,12 @@
   今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
-- **0.10.0 を公開済み**（2026-08-22）。**破壊的変更**（`partition` は `tenant(id)` 経由のみ・[ADR-0055][adr55]）を含む。
-  併せて **`P_Deleted` で削除済みを判別できる**ようになり（[ADR-0056][adr56]・RV-26）、
-  `itemstate` の明示指定がそのまま送られるようになった（[ADR-0057][adr57]）。
-  **未リリースの変更あり**（`.changeset/` に 2 枚＝[ADR-0059][adr59] の `field` 接頭辞なし化と
-  [ADR-0058][adr58] の `expand`）。
+- **0.11.0 を公開済み**（2026-08-30）。**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
+  併せて **`expand` で参照先の項目が 1 往復で取れる**ようになった（[ADR-0058][adr58]・RV-31）。
+  ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
+  **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
+  `itemstate` の明示指定をそのまま送るようにした（[ADR-0057][adr57]）。
+  **未リリースの変更は無し**（`.changeset/` は空）。
 
 ### 随時・任意（急がない）
 
@@ -200,8 +199,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.10.0`**（npm latest・2026-08-22 にレジストリで確認）。**全 14 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.11.0`**（npm latest・2026-08-30 にレジストリで確認）。**全 15 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -209,7 +208,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.7.0 でエラーの見え方の是正 ＋ アクセスポイント設定＝ADR-0044〜0050 の 7 本、
       0.8.0 で「0 件」と「届いていない」の区別＝[ADR-0051][adr51]（Read 応答の同定）、
       0.9.0 で Candidate の標準 4 項目 ＋ reference 突合検査 ＋ 利用ガイド 2 本、
-      **0.10.0 で partition を `tenant(id)` 経由のみに（破壊的）＋ `P_Deleted` で削除済みを判別**）。
+      0.10.0 で partition を `tenant(id)` 経由のみに（破壊的）＋ `P_Deleted` で削除済みを判別、
+      **0.11.0 で参照先の展開 `expand`（RV-31）＋ `field` を接頭辞なしの型付き alias に（破壊的）**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -227,6 +227,11 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] **0.10.0 リリース**（2026-08-22）— changeset 3 件を消費して `0.9.0` → `0.10.0`。
       `v0.10.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 377.7 kB）まで完了。
       **`pnpm changeset:version` が動かず**、版 bump と changeset 削除は手で実施（後日復旧・[runbook][rb]「現在の状況」）
+- [x] **0.11.0 リリース**（2026-08-30）— changeset 2 件を消費して `0.10.0` → `0.11.0`。
+      `v0.11.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・7 files / 430.0 kB）まで完了。
+      **`changeset:version` が実際に動いた最初のリリース**（下記の修復以降で初）。
+      準備中に co-located UT の取りこぼし 2 件（`resources/expand.ts` / `auth/token-exchange.ts`）を
+      見つけてリリース PR に含めた（[runbook][rb] §1 の判断軸どおり）
 - [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
       依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
       `@changesets/config@4.0.0` へ追従
