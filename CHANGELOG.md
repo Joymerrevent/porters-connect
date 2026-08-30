@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-31
+
+**PORTERS の全リソースに対応した版**です。データ系は 6/13 から **13/13** になり、
+マスタ Read 4 種と合わせて**残らず触れる**ようになりました（[ADR-0060][adr60]）。
+破壊的変更はありません — 既存のアクセサと型はそのままで、増えたぶんだけ足されています。
+
 ### Added
 
 - **Recruiter リソース**（企業担当者）の Read / Write。他のデータ系リソースと同じアクセサです。
@@ -509,7 +515,8 @@
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...v0.9.0
