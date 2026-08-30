@@ -100,6 +100,14 @@ export type {
   ClientSearchQuery,
 } from "./resources";
 export type {
+  Recruiter,
+  RecruiterCreateInput,
+  RecruiterUpdateInput,
+  RecruiterPage,
+  RecruiterResource,
+  RecruiterSearchQuery,
+} from "./resources";
+export type {
   Process,
   ProcessCreateInput,
   ProcessUpdateInput,

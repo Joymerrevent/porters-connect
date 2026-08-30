@@ -226,6 +226,33 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + recruiter (E2E, mock transport)", () => {
+  it("exposes a recruiter accessor; decodes its P_Client reference to an id", async () => {
+    const recruiterXml =
+      `<Recruiter Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Recruiter.P_Id>55</Recruiter.P_Id>` +
+      `<Recruiter.P_Client><Client><Client.P_Id>33</Client.P_Id></Client></Recruiter.P_Client>` +
+      `</Item></Recruiter>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: recruiterXml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).recruiter.search();
+    expect(page.items[0]?.P_Id).toBe(55); // Id -> number
+    expect(page.items[0]?.P_Client).toBe(33); // System[Reference] -> id, via the client
+    expect(calls[0]?.url).toContain("/v1/recruiter?");
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

@@ -57,6 +57,31 @@ describe("data resources round-trip", () => {
     expect(client?.P_Name).toBe("株式会社ABC（旧XYZ）");
   });
 
+  it("creates a Recruiter against a Client and expands the reference", async () => {
+    const { porters } = setup();
+    const clientId = await porters.tenant(1).client.create({
+      P_Owner: 5,
+      P_Name: "株式会社ABC",
+    });
+
+    const id = await porters.tenant(1).recruiter.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "採用 太郎",
+      P_Division: "人事部",
+    });
+
+    const plain = await porters.tenant(1).recruiter.get(id);
+    expect(plain?.P_Name).toBe("採用 太郎");
+    expect(plain?.P_Client).toBe(clientId); // un-expanded reference reads as the id
+
+    // ADR-0058: expanding P_Client reaches the Client catalog in one round trip.
+    const expanded = await porters
+      .tenant(1)
+      .recruiter.get(id, { expand: { P_Client: ["P_Name"] } });
+    expect(expanded?.P_Client).toEqual({ P_Name: "株式会社ABC" });
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({
