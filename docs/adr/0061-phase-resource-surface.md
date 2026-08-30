@@ -79,12 +79,14 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 
 **論点2: 必須の `resource` をどう受けるか**
 
-> **決着済み — stakeholder 判断で案2a（2026-08-30）。**
-> 「Phase だけアクセサが 1 段深い」ことより、**Read と Write で語彙が割れないこと**を採った
-> （案2b だと `resource` は名前・`Resource` は数値になる＝論点5 と噛み合わない）。
+> **再オープン（2026-08-30）。** 一度 案2a で決めかけたが、根拠にした「案2b だと Write で語彙が割れる」が
+> **誤りだった**ため差し戻した。案2b でも `resource` を**リテラル名で受けて**ライブラリが `Resource` に写せばよく、
+> **その仕組みは案2a にも要る**（束ねた値を入れるには、どのみち write 入力から `Resource` を外す）＝差にならない。
+> **安全性・語彙の一貫性はどちらも同じ**で、残る差は下記のエルゴノミクスだけ。
 
-- 案2a: **`t.phase.of(resource)` でスコープを束ねる**（`tenant(id)` と同じ形。以降 `search` / `create` は resource 不要）。**（採用）**
-- 案2b: **クエリの必須フィールド**にする（`t.phase.search({ resource: 5, … })`）。
+- 案2a: **`t.phase.of(resource)` でスコープを束ねる**（`tenant(id)` と同じ形。以降 `search` / `create` は resource 不要）。
+- 案2b: **クエリの必須フィールド**にする（`t.phase.search({ resource: "client", … })`）。
+  Read も Write も**リテラル名**で受け、`Resource` への写像はライブラリが持つ（論点5 と揃う）。
 - 案2c: リソース別アクセサ（`t.candidate.phases` のように上位リソースにぶら下げる）。
 
 **論点3: `System[Department]` をどう型に足すか**
@@ -120,7 +122,8 @@ Phase / Attachment には値が無い＝ `resource` の候補にならない。
 
 ### 各案での書き味
 
-題材はどの案でも同じ — **Client（Resource List の `5`）の ID `20001` に紐づくフェーズ履歴を、日付の新しい順に読む**。
+題材はどの案でも同じ — **Client の ID `20001` に紐づくフェーズ履歴を、日付の新しい順に読む**。
+`resource` は**論点5 の決定（案5b）どおり名前**で書く（論点5 の節だけは、比較のため数値のままにしてある）。
 Phase の項目は正典どおり `Id`（System[Id]）/ `Resource`（Number）/ `ResourceId`（Number）/ `Phase`（Option）/
 `Date`（DateTime）/ `Memo`（MultilineText）/ `Owner`（User）/ `OwnerDepartment`（System[Department]）。
 **`Id` / `Resource` / `ResourceId` は新規・更新とも `●`**（必須）。
@@ -145,11 +148,11 @@ const PHASE_FIELDS = {
 // search / searchAll / get / create / update / condition / order / ページングも自前
 ```
 
-#### 論点2 — 必須の `resource` をどう受けるか（**案2a で決定**）
+#### 論点2 — 必須の `resource` をどう受けるか（**未決**）
 
 ```ts
 // 案2a（推奨）: resource を 1 度だけ束ねる。以降のシグネチャは他リソースと同じ
-const phases = t.phase.of(5); // 5 = Resource List の Client
+const phases = t.phase.of("client");
 const page = await phases.search({
   condition: { ResourceId: { eq: 20001 } },
   order: [{ Date: "desc" }],
@@ -163,24 +166,24 @@ for await (const p of phases.searchAll({
 ```
 
 ```ts
-// 案2b: アクセサの形は他と同じ。resource はクエリの必須フィールド
+// 案2b: アクセサの形は他と同じ。resource はクエリの必須フィールド（名前で受ける）
 const page = await t.phase.search({
-  resource: 5, // 省略はコンパイルエラー
+  resource: "client", // 省略はコンパイルエラー
   condition: { ResourceId: { eq: 20001 } },
   order: [{ Date: "desc" }],
 });
 await t.phase.searchAll({
-  resource: 5,
+  resource: "client",
   condition: { ResourceId: { eq: 20001 } },
 }); // 毎回書く
 
 // 対象が呼び出しごとに散る（案2a なら of() の 1 箇所を読めば分かる）
 const client = await t.phase.search({
-  resource: 5,
+  resource: "client",
   condition: { ResourceId: { eq: 20001 } },
 });
 const job = await t.phase.search({
-  resource: 3,
+  resource: "job",
   condition: { ResourceId: { eq: 20001 } },
 });
 ```
@@ -200,54 +203,41 @@ await t.candidate.phases({ order: [{ Date: "desc" }] }); // 同じものを 13 �
 （`searchAll` に渡したクエリを反復中に書き換えれば次ページから変わる、という挙動は
 `condition` / `order` でも同じで**既存 12 種にも今からある性質**＝案の比較材料にはならない。）
 
-**Write では案5b との噛み合わせに差が出る。** `Resource` は Phase の**カタログ項目**（Number）で、
-新規・更新とも `●`。案2a は束ねた値で埋められるので、名前が Phase 全体で一貫する。
-案2b / 案2c は Read が名前・Write が数値になり、**同じリソースの中で語彙が割れる**。
+**Write でも語彙は割れない（どの案でも）。** `Resource` は Phase の**カタログ項目**（Number・新規/更新とも `●`）
+だが、**どの案でも write 入力からは外してライブラリが埋める**ことになる
+（案2a は束ねた値から、案2b / 案2c は渡された名前から）。利用者が数値を書く場面は無い。
 
 ```ts
-// 案2a ＋ 案5b: 名前は of() の 1 箇所だけ。Resource はそこから埋まる
+// 案2a ＋ 案5b: 名前は of() の 1 箇所だけ
 await t.phase
   .of("client")
   .create({ ResourceId: 20001, Date: "2026-08-30T00:00:00Z" });
 
-// 案2b ＋ 案5b: Read は名前、Write は数値（カタログ項目なので型が Number のまま）
-await t.phase.search({
-  resource: "client",
-  condition: { ResourceId: { eq: 20001 } },
-});
+// 案2b ＋ 案5b: 名前を毎回書く。数値には戻らない
 await t.phase.create({
-  Resource: 5,
+  resource: "client", // カタログ項目 `Resource` ではなく、名前を受けるメタ項目
   ResourceId: 20001,
   Date: "2026-08-30T00:00:00Z",
 });
-//                     ^^^^^^^^^^^ ここだけ数値に戻る
 ```
 
-揃えるなら「カタログ項目 1 つの書き込み値の型を差し替える」仕組みが要る
-（`Activity.P_Resource` と同じ機構＝本 ADR の対象外）。なお `Id` は他リソースの `P_Id` と同じく
-ライブラリが供給するので、どの案でも書かない。
+なお `Id` も他リソースの `P_Id` と同じくライブラリが供給するので、どの案でも書かない。
+
+**残る差はエルゴノミクスだけ。** ひとつ具体的なのは `get` で、Phase Read は `resource` を要求するため
+**案2b では第 2 引数が必須になる**（他 12 種は省略可）。つまり**どちらの案でも「他と完全に同じ形」にはならず**、
+逸脱をアクセサの深さに置くか（案2a）、メソッドの引数に置くか（案2b）の違いになる。
 
 ```ts
-// 案2a
-await t.phase.of(5).create({
-  ResourceId: 20001,
-  Phase: ["Opt_Contacted"],
-  Date: "2026-08-30T00:00:00Z",
-});
-// 案2b
-await t.phase.create({
-  Resource: 5,
-  ResourceId: 20001,
-  Phase: ["Opt_Contacted"],
-  Date: "2026-08-30T00:00:00Z",
-});
+await t.phase.of("client").get(10014); // 案2a: 他 12 種と同じ呼び方
+await t.phase.get(10014, { resource: "client" }); // 案2b: 第 2 引数が必須になる
+await t.candidate.get(10001); // 参考: 他リソースは第 2 引数が省略可
 ```
 
 #### 論点3 — `System[Department]` の読み取り値
 
 ```ts
 const page = await t.phase
-  .of(5)
+  .of("client")
   .search({ field: ["Owner", "OwnerDepartment"] });
 const p = page.items[0];
 
@@ -268,7 +258,7 @@ p?.OwnerDepartment; // string | null
 ```ts
 // 案4a（推奨）: そのまま送り、PORTERS の判定を型付きエラーで受ける
 try {
-  await t.phase.of(5).create({
+  await t.phase.of("client").create({
     ResourceId: 20001,
     Phase: ["Opt_Contacted"],
     Date: "2020-01-01T00:00:00Z",
@@ -279,7 +269,7 @@ try {
 
 // 案4b: 送信前に最新を読んで判定する（+1 往復。読んだ後に他者が更新するレースは残る）
 const latest = await t.phase
-  .of(5)
+  .of("client")
   .search({ condition: { ResourceId: { eq: 20001 }, Recent: { eq: 1 } } });
 ```
 
@@ -291,7 +281,7 @@ await t.phase.of(5).search({ condition: { ResourceId: { eq: 20001 } } });
 await t.phase.of(6); // ← 6 は欠番。型では止まらず、実行時に 400
 await t.phase.of(9); // Recruiter のつもりで 11（Sales）と取り違えても気づけない
 
-// 案5b（推奨）: アクセサ名と同じ語彙で書く。数値への写像はライブラリが持つ
+// 案5b（採用）: アクセサ名と同じ語彙で書く。数値への写像はライブラリが持つ
 await t.phase.of("client").search({ condition: { ResourceId: { eq: 20001 } } });
 await t.phase.of("recruiter");
 await t.phase.of("clinet"); // ← コンパイルエラー（綴り間違い）
@@ -313,22 +303,20 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 
 ## Decision Outcome
 
-> **決定済み: 論点2 = 案2a ／ 論点5 = 案5b**（stakeholder 判断 2026-08-30）。
+> **決定済み: 論点5 = 案5b**（stakeholder 判断 2026-08-30）。**論点2 は再オープン**（下記）。
 > 残る**論点1 / 3 / 4 は推奨のまま**（案1a ＋ 案3a ＋ 案4a）で、本 ADR は `proposed`。
-> 3 つが決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
+> すべて決まった時点で本節全体を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
 
 推奨の理由（Decision Drivers に照らす）:
 
 - **案1a（`prefix: ""` を正式に受ける）**: decode は既に対応済みで、直すのは `readFieldEntry` の 1 箇所。
   bespoke（案1b）にすると 17 項目のカタログ・`condition` / `order` / ページングを**全部書き直す**ことになり、
   Attachment のときと違って重複が大きい。案1c は**正典のサンプルと食い違う**ので採らない。
-- **案2a（`of(resource)` で束ねる・決定済み）**: `resource` は「どのリソースのフェーズ履歴か」という**文脈**であって
-  検索条件ではない。`tenant(id)` で partition を 1 回だけ明示させたのと**同じ形**にすれば、
-  束ねた 1 箇所を読めば対象が分かり、`search` / `searchAll` / `create` / `update` で**繰り返さずに済む**
-  （[[0055-partition-binding-guard]] と同じ考え方）。
-  **安全性は決め手にならない** — 案2b でも `resource` を必須フィールドにすれば指定漏れは型で止まる。
-  差は**一貫性（案2b: アクセサの形が他 12 種と同じ）と反復の少なさ（案2a）**のトレードオフ、
-  および下記の Write 側の食い違い。
+- **論点2 は未決**。当初 案2a を推したが、根拠にした「案2b は Write で語彙が割れる」は**誤り**だった
+  （案2b でも `resource` をリテラル名で受ければよく、write 入力から `Resource` を外す仕組みは
+  **案2a にも要る**＝差にならない）。**安全性も語彙の一貫性も両案で同じ**。
+  残る差は**逸脱をどこに置くか**だけ — 案2a はアクセサが 1 段深く、案2b は `get` の第 2 引数が必須になる。
+  どちらも「他 12 種と完全に同じ」にはならないので、**好みの問題として決める**。
 - **案3a（`DepartmentRef`）**: 応答形が確定しており、`User` の実装をそのまま写せる。
   **D3 のデータ型 14/17 → 15/17** が同時に進む（残りは `Link` / `Image`）。
 - **案4a（委ねる）**: 最新フェーズ条件は**サーバー側の状態**に依存するので、手前で判定するには追加の Read が要る。
@@ -368,18 +356,18 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 - Good: 既存コードを一切変えずに済む。
 - Bad: **正典のサンプルと食い違う**。動かない可能性が高く、動いても根拠が無い。
 
-### 案2a: `t.phase.of(resource)`（採用）
+### 案2a: `t.phase.of(resource)`
 
-- Good: 対象を**束ねた 1 箇所**で読める。`search` / `create` で繰り返さない。`tenant(id)` と同じ形。
-  Write の `Resource` も束ねた値で埋められる（案5b の名前が Phase 全体で一貫する）。
-- Bad: **Phase だけアクセサが 1 段深い**＝他 12 種と形が違う（学習コスト）。
+- Good: 対象を**束ねた 1 箇所**で読める。`search` / `searchAll` / `get` / `create` / `update` の
+  **呼び方は他 12 種と同一**（`get(id)` が第 2 引数なしで書ける）。`tenant(id)` と同じ形。
+- Bad: **Phase だけアクセサが 1 段深い**（`t.phase.of(...)`）＝そこだけ形が違う（学習コスト）。
 
 ### 案2b: クエリの必須フィールド
 
-- Good: **アクセサの形が他 12 種と完全に同じ**＝ Phase だけ覚えることが無い。指定漏れは型で止まる。
-- Bad: `search` / `searchAll` / `create` / `update` の**すべてで書く**。
-  Read の `resource`（案5b なら名前）と Write の `Resource`（カタログ項目・数値）が
-  **Phase の中で食い違う**（案2a なら束ねた 1 箇所で吸収できる）。
+- Good: **アクセサの形が他 12 種と同じ**（`t.phase.search(...)` で始まる）＝ 1 段深い形を覚えない。
+  指定漏れは型で止まり、名前で受ければ語彙も揃う。
+- Bad: `search` / `searchAll` / `get` / `create` / `update` の**すべてで書く**。
+  **`get` は第 2 引数が必須になる**（他 12 種は省略可）＝結局ここで形が揃わない。
 
 ### 案2c: 上位リソースにぶら下げる
 
