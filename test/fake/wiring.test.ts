@@ -33,6 +33,7 @@ describe("fake server wiring", () => {
 
   it("serves every implemented resource, each keyed on its own primary key", () => {
     expect([...FAKE_RESOURCES.keys()].sort()).toEqual([
+      "activity",
       "attachment",
       "candidate",
       "client",

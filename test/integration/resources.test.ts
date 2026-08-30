@@ -128,6 +128,26 @@ describe("data resources round-trip", () => {
     expect(opportunity?.P_Recruiter).toEqual({ P_Name: "採用 太郎" });
   });
 
+  it("creates an Activity pointing at a Candidate through P_Resource / P_ResourceId", async () => {
+    const { porters } = setup();
+    const candidateId = await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+
+    const id = await porters.tenant(1).activity.create({
+      P_Owner: 5,
+      P_Title: "一次面談",
+      P_Resource: 1, // Resource List: Candidate
+      P_ResourceId: candidateId,
+    });
+
+    const activity = await porters.tenant(1).activity.get(id);
+    expect(activity?.P_Title).toBe("一次面談");
+    // The pair is what identifies the target; the library does not resolve it for you.
+    expect(activity?.P_Resource).toBe(1);
+    expect(activity?.P_ResourceId).toBe(candidateId);
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({

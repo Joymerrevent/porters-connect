@@ -24,6 +24,7 @@ import {
   createPartitionResource,
   createProcessResource,
   createContactResource,
+  createActivityResource,
   createOpportunityResource,
   createRecruiterResource,
   createResumeResource,
@@ -39,6 +40,7 @@ import type {
   PartitionResource,
   ProcessResource,
   ContactResource,
+  ActivityResource,
   OpportunityResource,
   RecruiterResource,
   ResumeResource,
@@ -99,6 +101,7 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly recruiter: RecruiterResource<CustomFor<C, "recruiter">>;
   readonly contact: ContactResource<CustomFor<C, "contact">>;
   readonly opportunity: OpportunityResource<CustomFor<C, "opportunity">>;
+  readonly activity: ActivityResource<CustomFor<C, "activity">>;
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
@@ -210,6 +213,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         recruiter: createRecruiterResource(deps, customFor("recruiter")),
         contact: createContactResource(deps, customFor("contact")),
         opportunity: createOpportunityResource(deps, customFor("opportunity")),
+        activity: createActivityResource(deps, customFor("activity")),
         process: createProcessResource(deps, customFor("process")),
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentResource(deps),

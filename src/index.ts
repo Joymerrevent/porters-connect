@@ -100,6 +100,14 @@ export type {
   ClientSearchQuery,
 } from "./resources";
 export type {
+  Activity,
+  ActivityCreateInput,
+  ActivityUpdateInput,
+  ActivityPage,
+  ActivityResource,
+  ActivitySearchQuery,
+} from "./resources";
+export type {
   Opportunity,
   OpportunityCreateInput,
   OpportunityUpdateInput,

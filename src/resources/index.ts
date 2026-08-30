@@ -25,6 +25,7 @@ export * from "./client";
 export * from "./recruiter";
 export * from "./contact";
 export * from "./opportunity";
+export * from "./activity";
 export * from "./process";
 export * from "./resume";
 export * from "./attachment";

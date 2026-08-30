@@ -26,6 +26,9 @@
 
 - **Contact リソース**（コンタクト）の Read / Write。**Recruiter と項目構成が同一**ですが、
   PORTERS が役割で分けている別リソースなので、テーブルもカタログも独立しています。
+- **Activity リソース**（アクティビティ）の Read / Write。`P_Resource`（Resource List の数値 ID）と
+  `P_ResourceId` の組で**任意の上位リソースに紐づきます**。参照先が実行時に決まるため
+  `P_ResourceId` は `expand` の対象外で、**参照先の ID として読めます**（どのリソースを指していても同じ）。
 - **Opportunity リソース**（商談管理）の Read / Write。`P_Client` / `P_Recruiter` の両方を
   `expand` できます。**このリソースだけ `P_Deleted` がありません** — PORTERS が公表していないため、
   こちらも持たせていません（無いものを足さない）。
