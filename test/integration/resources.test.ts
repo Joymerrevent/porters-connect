@@ -107,13 +107,11 @@ describe("data resources round-trip", () => {
     const clientId = await porters
       .tenant(1)
       .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
-    const recruiterId = await porters
-      .tenant(1)
-      .recruiter.create({
-        P_Owner: 5,
-        P_Client: clientId,
-        P_Name: "採用 太郎",
-      });
+    const recruiterId = await porters.tenant(1).recruiter.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "採用 太郎",
+    });
 
     const id = await porters.tenant(1).opportunity.create({
       P_Owner: 5,
