@@ -10,6 +10,7 @@
 
 import { XMLParser } from "fast-xml-parser";
 
+import type { ReferenceTarget } from "../../src/resources/expand";
 import type { DataType } from "../../src/xml/decode";
 import { asArray, asRecord, asString } from "../../src/xml/raw";
 import type { FakeMasters } from "./masters";
@@ -141,11 +142,21 @@ const optionInner = (
   return element("OptionRoot", children);
 };
 
-// `System[Reference]` reads back as a nested record whose own `P_Id` is the referenced id. The
-// referenced *resource* name is not in the Data-Type catalog, so the fake emits a neutral wrapper —
-// `decodeReference` reads the first record-valued child's `P_Id`, which this satisfies.
-// VERIFY(live): the real tag is the referenced resource (e.g. `<Candidate>`); see LV-10.
-const referenceInner = (id: string): string =>
+/**
+ * Resolve an expanded `System[Reference]`: which resource the alias points at, and the stored
+ * record with that id (an empty record when there is none — PORTERS would answer with empty
+ * elements, not by dropping the field).
+ */
+export type ReferenceResolver = (
+  alias: string,
+  id: string,
+) => { target: ReferenceTarget; record: FakeRecord } | undefined;
+
+// An un-expanded `System[Reference]`: the nested record holds only the referenced id, under a
+// neutral wrapper — without a sub-selection nothing on the wire says which resource it is.
+// VERIFY(live): the real tag is the referenced resource (e.g. `<Candidate>`); see LV-10 —
+// `decodeReference` matches on the bare alias, so either shape decodes.
+const referenceIdOnly = (id: string): string =>
   element("Reference", element("P_Id", escapeXml(id)));
 
 const fieldInner = (
@@ -154,6 +165,8 @@ const fieldInner = (
   value: FakeValue,
   sub: string[],
   optionShape: OptionShape,
+  alias: string,
+  reference?: ReferenceResolver,
 ): string => {
   if (Array.isArray(value)) return optionInner(masters, value, optionShape);
   switch (type) {
@@ -162,8 +175,37 @@ const fieldInner = (
       return optionInner(masters, [value], optionShape);
     case "User":
       return userInner(masters, value, sub);
-    case "System[Reference]":
-      return referenceInner(value);
+    case "System[Reference]": {
+      // Expanded (ADR-0058), the shape is the real one: `<{Resource}><{Prefix}.{alias}>…`, where
+      // the wrapper is the resource *name* while its children carry that resource's alias
+      // *prefix*. The two differ for Candidate (`<Candidate><Person.P_Id>`), which is exactly the
+      // case worth serving. Recursing keeps the referenced values Data-Type-shaped in turn.
+      const resolved = sub.length > 0 ? reference?.(alias, value) : undefined;
+      if (resolved === undefined) return referenceIdOnly(value);
+      const { target, record } = resolved;
+      const children = sub
+        .map((name) => {
+          const bare = name.slice(name.lastIndexOf(".") + 1);
+          const tag = qualify(target.prefix, bare);
+          const referenced = record[bare];
+          // A requested-but-unset field comes back as an empty element, like any other.
+          return referenced === undefined
+            ? element(tag, "")
+            : element(
+                tag,
+                fieldInner(
+                  masters,
+                  target.fields[bare],
+                  referenced,
+                  [],
+                  "root",
+                  bare,
+                ),
+              );
+        })
+        .join("");
+      return element(target.name, children);
+    }
     default:
       // Ids, numbers, text and the date/time types are already in wire format (the library
       // normalised ISO -> PORTERS on write); custom `U_`/`A_` aliases pass through likewise.
@@ -178,6 +220,8 @@ export type ItemShape = {
   masters: FakeMasters;
   /** Default `root`. */
   optionShape?: OptionShape;
+  /** How to resolve an expanded `System[Reference]` (ADR-0058); absent = never expand. */
+  reference?: ReferenceResolver;
 };
 
 /**
@@ -217,6 +261,8 @@ export const buildItemXml = (
           value,
           sub,
           shape.optionShape ?? "root",
+          alias,
+          shape.reference,
         ),
       );
     })

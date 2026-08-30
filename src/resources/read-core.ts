@@ -9,6 +9,7 @@ import type { AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
 import {
   decodeField,
+  decodeReferenceRecord,
   type DataType,
   type DecodedValue,
   type FieldValue,
@@ -55,33 +56,105 @@ export type ReadRecord<F extends FieldCatalog> = {
   [K in keyof F]?: DecodedValue<F[K]> | null;
 };
 
-export type ResourcePage<F extends FieldCatalog> = {
-  items: ReadRecord<F>[];
+/**
+ * A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
+ * the item decoder produced. Parametrised by the *record* rather than the catalog because a read
+ * that expands references returns a wider record than the catalog alone describes (ADR-0058).
+ */
+export type ResourcePageOf<T> = {
+  items: T[];
   total: number;
   count: number;
   start: number;
 };
 
+export type ResourcePage<F extends FieldCatalog> = ResourcePageOf<
+  ReadRecord<F>
+>;
+
+/**
+ * A tag or entry's bare alias: `Person.P_Name` -> `P_Name`. Both sides of a Read use it — the
+ * response, whose tags are prefixed, and the request, where a prefix that slipped through a cast
+ * is stripped rather than doubled (ADR-0059).
+ */
 // `includes(".")` -> `includes("")` is an equivalent mutant: for a dotless key,
 // slice(indexOf(".") + 1) is slice(0), which equals the key — same as the else.
 // Stryker disable StringLiteral
-const bareAlias = (key: string): string =>
+export const bareAlias = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
 // Stryker restore StringLiteral
+
+// --- Read `field` assembly (ADR-0020) -------------------------------------------------------
+
+// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
+const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
+
+// One `field=` entry for a bare alias. PORTERS wants `{prefix}.{alias}`; a User-typed field is
+// expanded to its 4 readable sub-fields so the wire shape matches `decodeUser` — asking for it
+// without `()` would return an id, and the typed record promises a `UserRef`. An alias the catalog
+// does not know (a tenant `U_`/`A_` field) is prefixed and left alone.
+const readFieldEntry = (
+  prefix: string,
+  alias: string,
+  type: DataType | null | undefined,
+): string =>
+  type === "User"
+    ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
+    : `${prefix}.${alias}`;
+
+/**
+ * What a Read `field` entry may name (ADR-0059): a catalogued alias — every standard `P_` field
+ * plus the custom fields declared with `defineFields` (ADR-0023) — or an undeclared tenant custom
+ * field, admitted by the `U_`/`A_` naming rule `defineFields` already enforces at runtime.
+ *
+ * Aliases are **bare**: the resource's prefix (`Person.` for Candidate) is a constant the
+ * descriptor knows, so the library adds it. That makes `condition` / `order` / `field` one
+ * vocabulary and turns a typo (`P_Nmae`) or a hand-written prefix into a compile error instead of
+ * a request that quietly returns nothing.
+ */
+export type ReadFieldAlias<F extends FieldCatalog> =
+  (keyof F & string) | `U_${string}` | `A_${string}`;
+
+/**
+ * Map caller-supplied bare aliases onto the wire form, the same assembly the default list uses.
+ * A prefix that slipped through a cast is stripped first (`Person.P_Name` -> `P_Name`), mirroring
+ * `bareAlias` on the response side: the types say bare, the runtime still understands the old
+ * prefixed form rather than sending `Person.Person.P_Name`. That asymmetry is deliberate.
+ */
+export const qualifyReadFields = (
+  prefix: string,
+  fields: ReadonlyMap<string, DataType | null>,
+  aliases: readonly string[],
+): string[] =>
+  aliases.map((entry) => {
+    const alias = bareAlias(entry);
+    return readFieldEntry(prefix, alias, fields.get(alias));
+  });
 
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
  * no Data Type -> raw string), unknown `U_`/`A_` aliases pass through (raw string, or null when
  * nested). `bareAlias` strips the `{prefix}.` so `Person.P_Name` and `P_Name` both hit the catalog.
+ *
+ * `expansions` names the aliases this read expanded (ADR-0058) and hands over the *referenced*
+ * resource's catalog for each. Those fields decode to the referenced record instead of its id —
+ * the only place the Data Type alone is not enough, because the catalog knows a field is a
+ * reference but not what it refers to.
  */
 export const decoderFor = <F extends FieldCatalog>(
   fields: F,
+  expansions?: ReadonlyMap<string, ReadonlyMap<string, DataType | null>>,
 ): ((item: RawItem) => ReadRecord<F>) => {
   const fieldMap = new Map<string, DataType | null>(Object.entries(fields));
   return (item) => {
     const out: Record<string, FieldValue> = {};
     for (const [key, raw] of Object.entries(item)) {
       const alias = bareAlias(key);
+      const expanded = expansions?.get(alias);
+      if (expanded !== undefined) {
+        out[alias] = decodeReferenceRecord(raw, expanded);
+        continue;
+      }
       // Catalog values are `DataType | null`, never undefined — so `undefined` here means
       // "not in the catalog" and only that. A catalogued `null` goes through `decodeField`,
       // which passes the raw string on (ADR-0056).
@@ -102,12 +175,12 @@ export const decoderFor = <F extends FieldCatalog>(
  * `resource` is the expected root element — the parser needs it to tell a PORTERS answer from
  * whatever a middlebox put on a 200 (ADR-0051).
  */
-export const runRead = <F extends FieldCatalog>(
+export const runRead = <T>(
   requester: Requester,
   resource: string,
   url: string,
-  decode: (item: RawItem) => ReadRecord<F>,
-): Promise<ResourcePage<F>> =>
+  decode: (item: RawItem) => T,
+): Promise<ResourcePageOf<T>> =>
   requester.request({ method: "GET", url, headers: {} }, (body) => {
     const page = parseResourcePage(body, resource);
     return {
