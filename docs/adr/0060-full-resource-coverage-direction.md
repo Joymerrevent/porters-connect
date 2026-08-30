@@ -1,11 +1,12 @@
 # 60. 次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変える（ADR-0033 の supersede）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-08-30
 - Deciders: jun.shiromoto (Joymerrevent)
 
-> [[0033-post-mvp-direction]]（案F 先行 → 案A 主軸／案B は機会的）の**決定を差し替える**ための起票。
-> accepted になったら 0033 を `superseded by 0060` にする。実装は accepted 後の**別 PR**。
+> **stakeholder 判断（案4＝1 リソース＝1 PR でインクリメンタル／完了条件は D1〜D5 すべて）で `accepted`
+> （2026-08-30）。** [[0033-post-mvp-direction]]（案F 先行 → 案A 主軸／案B は機会的）を**本 ADR が supersede** する。
+> 各リソースの詳細設計（特に Phase）と R-4（`Link` / `Image`）は、実装前に個別 ADR へ分岐する。実装は**別 PR**。
 
 ## Context and Problem Statement
 
@@ -82,15 +83,16 @@ stakeholder は「**ライブラリの完成＝全リソースにアクセスで
 - 案1: **0033 を維持**（案A＝MCP を主軸／案B は MCP 越しの需要に応じて機会的）
 - 案2: **主軸を変え、「網羅を全部 → その後まとめてドキュメント」の 2 フェーズ**で進める
 - 案3: **主軸を変え、「ドキュメント先行 → その後網羅」**で進める
-- 案4: **主軸を変え、「リソース 1 種＝1 PR（実装＋テスト＋reference 突合＋ドキュメント）」でインクリメンタルに進める**（推奨）
+- 案4: **主軸を変え、「リソース 1 種＝1 PR（実装＋テスト＋reference 突合＋ドキュメント）」でインクリメンタルに進める**（採用）
 - 案5: **網羅と MCP を並行**して進める
 
 ## Decision Outcome
 
-> **推奨: 案4**。本 ADR は `proposed` で、**決定は stakeholder 判断後**に本節を「採用」へ更新する
-> （[ADR README の運用ルール][adr-readme]）。
+採用: **案4**（次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変え、**リソース 1 種＝1 PR**
+＝実装・テスト・reference 突合・ドキュメントを同じ PR で出す）。**完了条件は下記 D1〜D5 のすべて**。
+案A（第2層 MCP）は**後続**へ回す（取り下げではなく順序の変更）。
 
-推奨の理由（Decision Drivers に照らす）:
+理由（Decision Drivers に照らす）:
 
 - **フェイルセーフ（いつ止めても出荷可能）**: 1 リソース＝1 PR なら、7 種のうち 3 種まで進んだ時点で
   需要が MCP へ動いても、**そこまでが完成品として世に出ている**。案2 は「全部終わるまでドキュメントが無い」、
@@ -161,7 +163,7 @@ D3 の `Link` / `Image` は [PRD R-4][prd] の積み残しで、**カスタム�
 - Bad: **今のドキュメントは 0035 の型を満たしている**（ガイド 6 本・RV-24/27 は fixed）ので、
   先行させる緊急度が低い。リソースを増やすたびに書き直す二度手間になる。
 
-### 案4: 1 リソース＝1 PR でインクリメンタル（推奨）
+### 案4: 1 リソース＝1 PR でインクリメンタル（採用）
 
 - Good: 常に出荷可能（フェイルセーフ）。ドキュメントが遅れない。1 PR が小さくレビューしやすい。
   1 本目（Recruiter）が**残り 6 本の見積もりのものさし**になる。
@@ -175,18 +177,18 @@ D3 の `Link` / `Image` は [PRD R-4][prd] の積み残しで、**カスタム�
 
 ## More Information
 
-- **supersede 対象**: [[0033-post-mvp-direction]]（accepted 2026-06-22）。accepted 後に 0033 へ
-  `superseded by 0060` を記す。案C（フェイクサーバー）・案D（`defineFields`）・案E（バージョン表記）の
-  評価は 0033 のまま引き継ぐ。
+- **supersede 対象**: [[0033-post-mvp-direction]]（accepted 2026-06-22）。0033 は
+  `superseded by 0060` にし、決定当時の記録として残置する（accepted ADR は書き換えない）。
+  案C（フェイクサーバー）・案D（`defineFields`）・案E（バージョン表記）の評価は 0033 のまま引き継ぐ。
 - **現在地の出典**: [roadmap][roadmap]「📊 完成度」／[reference の resources-list][resources-list] ＋
   各リソースの項目表（[resources/][resources]）／[field-data-types][field-types]／
   `src/resources/*.ts` の `FIELDS` カタログ／`src/xml/decode.ts` の `DataType`。
 - **関連**: [[0035-usage-documentation-structure]]（ドキュメントの型）／[[0058-reference-expansion-read]]（Sales で効く）／
   [[0023-custom-field-declaration-dsl]]（`Link` / `Image` の露出先）／[[0004-field-type-model]]・[[0016-field-type-granularity]]（型の粒度）。
 - **台帳**: [findings][findings] の open は [RV-22][rv22] のみ（契約待ち）＝本 ADR の妨げにならない。
-- **roadmap の (d) 行が陳腐化している**件は決定ではなく事実の記載ミスなので、**本 ADR とは別の docs PR** で直す。
-- accepted 後の反映先: [roadmap][roadmap]（「🧭 方針」「いま何をやるか」）・`CLAUDE.md`（MVP / フェーズ記述）・
-  [索引][index]。実装は**さらに別 PR**（ADR と実装は分ける）。
+- accepted 後の反映先: [索引][index]・[roadmap][roadmap]（「🧭 方針」「いま何をやるか」「📊 完成度」。
+  陳腐化していた (d) 行の訂正もここで入れる）・`CLAUDE.md`（リソースのフェーズ記述）。
+  **実装は別 PR**（ADR と実装は分ける）。
 
 [roadmap]: ../roadmap.md
 [prd]: ../design/requirements.md
