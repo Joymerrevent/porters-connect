@@ -15,7 +15,8 @@ Contract / Sales の 6 種を追加した（12/13）。**残るは Phase だけ*
 専用 ADR に分岐させていた。
 
 正典（Field List / Read / Write / 2019-12-10 の機能拡張記事）を読み直した結果、**想定より論点が多い**。
-Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれをどう公開 API に落とすかを決める。
+Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれをどう公開 API に落とすかを決める
+（＋ `resource` の値の表し方＝論点5 を stakeholder 提起で追加）。
 
 ### 実測（正典で確認したこと）
 
@@ -90,6 +91,24 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 
 - 案4a: **型では止めず、PORTERS に委ねる**（[書き込みの制約ガイド][write-constraints]に明記）。（推奨）
 - 案4b: クライアント側で最新フェーズを読んでから検証する。
+
+**論点5: `resource` の値を何で表すか**（論点2 とは独立。stakeholder 提起 2026-08-30）
+
+- 案5a: **数値 ID のまま**受ける（`of(5)`）。Resource List の値をそのまま渡す。
+- 案5b: **リソース名の文字列リテラル union**（`of("client")`）。数値への写像はライブラリが持つ。（推奨）
+- 案5c: **名前 ＋ 数値の両方**を受ける（`ResourceName | number`）。将来 PORTERS が値を増やしたときの逃げ道つき。
+
+Resource List（[出典][resource-list]・updated_at 2023-08-21）が値を与えているのは **11 リソースで、全部が実装済み**:
+
+| 値  | リソース  | 値  | リソース  | 値  | リソース    |
+| --- | --------- | --- | --------- | --- | ----------- |
+| 1   | Candidate | 9   | Recruiter | 19  | Activity    |
+| 3   | Job       | 11  | Sales     | 25  | Opportunity |
+| 5   | Client    | 13  | Contract  | 27  | Contact     |
+| 7   | Process   | 17  | Resume    |     |             |
+
+**値が飛んでいる**（1/3/5/7/9/11/13/17/19/25/27）ので、数値は覚えられず毎回リストを引くことになる。
+Phase / Attachment には値が無い＝ `resource` の候補にならない。
 
 ### 各案での書き味
 
@@ -227,9 +246,37 @@ const latest = await t.phase
   .search({ condition: { ResourceId: { eq: 20001 }, Recent: { eq: 1 } } });
 ```
 
+#### 論点5 — `resource` の値を何で表すか
+
+```ts
+// 案5a: 数値 ID。5 が何かは Resource List を引かないと分からない
+await t.phase.of(5).search({ condition: { ResourceId: { eq: 20001 } } });
+await t.phase.of(6); // ← 6 は欠番。型では止まらず、実行時に 400
+await t.phase.of(9); // Recruiter のつもりで 11（Sales）と取り違えても気づけない
+
+// 案5b（推奨）: アクセサ名と同じ語彙で書く。数値への写像はライブラリが持つ
+await t.phase.of("client").search({ condition: { ResourceId: { eq: 20001 } } });
+await t.phase.of("recruiter");
+await t.phase.of("clinet"); // ← コンパイルエラー（綴り間違い）
+await t.phase.of("phase"); // ← コンパイルエラー（Resource List に値が無い）
+
+// 案5c: 名前を既定にしつつ数値も通す
+await t.phase.of("client"); // 通常はこちら
+await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たずに書ける
+```
+
+**名前は `t.client` / `t.recruiter` というアクセサ名と同じ**にでき、descriptor の `path` から**導出**できる
+（`ResourceName = "candidate" | "job" | "client" | …`）。手書きの対応表を別に持たないので、
+リソースを足したときに片方だけ更新される事故が起きない。
+
+> **`Activity.P_Resource` も同じ問題を抱えている**（未リリース分。すでに `Number` として実装済み）。
+> あちらは**メソッド引数ではなくカタログ上の項目**なので、名前で受けるなら別の仕組みが要る
+> （項目単位で書き込み値の型を差し替える）。**本 ADR では Phase だけを決め、Activity は別途**にする。
+> 揃えないなら「`of()` は名前・`P_Resource` は数値」という非対称が残る＝ここは明示的に選ぶ。
+
 ## Decision Outcome
 
-> **推奨: 案1a ＋ 案2a ＋ 案3a ＋ 案4a**。本 ADR は `proposed` で、**決定は stakeholder 判断後**に
+> **推奨: 案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**。本 ADR は `proposed` で、**決定は stakeholder 判断後**に
 > 本節を「採用」へ更新する（[ADR README の運用ルール][adr-readme]）。
 
 推奨の理由（Decision Drivers に照らす）:
@@ -245,13 +292,21 @@ const latest = await t.phase
   **D3 のデータ型 14/17 → 15/17** が同時に進む（残りは `Link` / `Image`）。
 - **案4a（委ねる）**: 最新フェーズ条件は**サーバー側の状態**に依存するので、手前で判定するには追加の Read が要る。
   厳しくしすぎると正当な呼び出しを弾く（Sales の `※` と同じ判断）。
+- **案5b（名前で受ける）**: 数値 ID は **1/3/5/…/25/27 と飛んでいて覚えられず**、欠番（`6`）も取り違え
+  （`9` と `11`）も型では止まらない。名前なら**アクセサ名と同じ語彙**になり、綴り間違いがコンパイル時に止まる。
+  写像は **descriptor の `path` から導出**でき、手書きの対応表を持たないので更新漏れが構造的に起きない。
+  **値を持つ 11 リソースは全部実装済み**なので、名前だけで穴が空かない。
+  案5c（数値も通す）は逃げ道になるが、**同じものを 2 通りで書ける**状態は
+  [[0059-read-field-bare-alias]] が案B として退けた形なので採らない
+  — PORTERS が値を増やしたら、そのリソースを足す版で union も広げる（同じリリースで済む）。
 
 ### Consequences
 
 - Good: Phase が汎用 factory に載り、D1 が **13/13** で完了する。`System[Department]` で D3 も進む（15/17）。
-  `resource` の指定漏れがコンパイルエラーになる。
+  `resource` は**指定漏れも綴り間違いもコンパイルエラー**になり、数値 ID を覚える必要が無くなる。
 - Bad: 公開 API に **`of(resource)` という Phase だけの形**が増える（学習コスト）。
   `readFieldEntry` に空接頭辞の分岐が入る（他 12 種には無関係な条件が 1 つ増える）。
+  リソース名 → 数値の写像を**ライブラリが持つ**（PORTERS が値を増やしたら union も広げる）。
 - Neutral: reference ↔ カタログ突合（D4）は **`| {Prefix}.P_` 前提の行パーサ**なので、Phase 用に緩める必要がある。
   Phase はカスタム項目を持たないので `CustomFieldResource` には**加えない**。
 
@@ -298,6 +353,16 @@ const latest = await t.phase
 - 案4a Good: 正当な呼び出しを弾かない。実装が薄い。／ Bad: 失敗はサーバー応答まで分からない。
 - 案4b Good: 手前で気づける。／ Bad: 追加の往復。レースがあり、結局サーバーが正。
 
+### 案5a / 案5b / 案5c（`resource` の値）
+
+- 案5a Good: 正典の値をそのまま渡す＝写像を持たない。／ Bad: **飛び番で覚えられない**。
+  欠番も取り違えも型では止まらない。読んだときに何のフェーズか分からない。
+- 案5b Good: **アクセサ名と同じ語彙**。綴り間違いがコンパイル時に止まる。descriptor の `path` から
+  導出でき、対応表の更新漏れが構造的に起きない。／ Bad: ライブラリが写像を持つ。
+  PORTERS が値を増やしたら union を広げる版が要る。
+- 案5c Good: 案5b の利点＋将来の値を版を待たずに書ける逃げ道。／ Bad: **同じものを 2 通りで書ける**
+  （[[0059-read-field-bare-alias]] が案B として退けた形）。逃げ道が要る場面は現時点で存在しない。
+
 ## More Information
 
 - 出典: [Phase Field List][field-list]（接頭辞なしの 17 項目）／[Phase Read][read]（`resource` 必須・
@@ -308,13 +373,16 @@ const latest = await t.phase
   [[0055-partition-binding-guard]]（束ねて必須を消す形）／[[0016-field-type-granularity]]（Data Type の粒度）／
   [[0056-deleted-flag-typing]]（union を広げるときの注意）。
 - accepted 後: **別 PR** で実装（`src/resources/phase.ts` ＋ co-located UT ／ `readFieldEntry` の空接頭辞対応 ／
-  `DataType` に `System[Department]` ＋ `DepartmentRef` ／ 突合テストの行パーサ ／ README・ガイド）。
-  完了すれば **D1 が 13/13**、D3 が 15/17 になる。
+  `DataType` に `System[Department]` ＋ `DepartmentRef` ／ `ResourceName` と数値の写像 ／ 突合テストの行パーサ ／
+  README・ガイド）。完了すれば **D1 が 13/13**、D3 が 15/17 になる。
+- **`Activity.P_Resource` を名前で受けるか**は本 ADR の対象外（カタログ項目なので機構が別）。
+  案5b を採るなら、`of()` は名前・`P_Resource` は数値という非対称が残る＝**別途起票して揃えるか決める**。
 - **残る論点は D3 の `Link` / `Image`**（R-4）と D2（マスタ項目の拡張）で、どちらも別 ADR。
 
 [adr-readme]: README.md
 [write-constraints]: ../guide/write-constraints.md
 [write-format]: ../reference/resource-api/write-format.md
+[resource-list]: ../reference/resource-api/resources-list.md
 [field-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List
 [read]: https://hrbcapi.porters.jp/hc/ja/articles/115012161288-Phase-Read
 [write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161268-Phase-Write
