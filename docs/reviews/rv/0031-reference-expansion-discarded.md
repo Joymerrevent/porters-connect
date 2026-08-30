@@ -1,7 +1,7 @@
 # RV-31 🟡 System[Reference] を展開して要求しても ID 以外が捨てられる
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / 型安全
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -65,7 +65,32 @@ PORTERS は入れ子を返し、**ライブラリがそれを捨てる**。
 
 ## 処置
 
-—
+[ADR-0058][adr58] を **accepted**（**案D**）ののち実装。起票時の推奨 3 案のうち **(a) を採り、
+(b) をその内側に置いた**。軸は **PORTERS ができることをライブラリが落とさない**こと —
+黙って捨てるのをやめるだけでなく、**要求されたものを返せるようにする**。
+
+- **型付きの `expand` オプション**を追加した。`expand: { P_Client: ["P_Id", "P_Name"] }` と書くと
+  `field=Job.P_Client(Client.P_Id,Client.P_Name)` を送り、入れ子の応答を
+  **参照先リソースのカタログで decode** して返す。参照先の接頭辞はライブラリが付ける
+  （Candidate は `Person` — descriptor が持つ）。
+- **戻り型は `expand` を書いたときだけ変わる**。推奨 (a) が重いとされたのは
+  「`field` の内容で戻り型が変わる」点だったが、**型が変わる入口を `field` 文字列ではなく
+  `expand` という別の引数にした**ことで [ADR-0005][adr5] SD-3（`field` の選択で戻り型を変えない）を
+  維持したまま解けた。基底の型は `number | null` のままなので、
+  **展開を使わない利用者に narrowing の税がかからない**。
+- **raw `field` に書かれた展開は弾く**（推奨 (b)）。ただし単独ではなく `expand` への誘導として。
+  `field` は [ADR-0059][adr59] で型付き bare alias になったので、展開文字列は**そもそも型で書けない**。
+  このガードはその下の層＝cast 経由に対する多層防御。
+- 併せて `decodeReference` を **bare alias 一致**に直した。入れ子の包みタグはリソース名なのに
+  中の alias は接頭辞付きで、Candidate（`<Candidate>` に `Person.P_Id`）では
+  従来の `{Tag}.P_Id` 照合が外れて `null` に落ちていた。
+
+**カスタム `U_`/`A_` の参照項目は対象外**（カタログに無いので `expand` に載せられない）。
+`defineFields` が参照型を宣言できるようになるまで残る穴で、ガイドに明記した（[ADR-0023][adr23]）。
+**Recruiter 参照も対象外** — 未実装リソースでカタログが無く、持っていない情報は発明しない。
+どちらも従来どおり参照 ID として読める。
+
+要求側の接頭辞（Candidate 参照を `Person.` と書くか）は **[LV-16][lv]** で契約後に確認する。
 
 [adr19]: ../../adr/0019-static-resource-types.md
 [adr20]: ../../adr/0020-read-field-default.md
@@ -74,3 +99,8 @@ PORTERS は入れ子を返し、**ライブラリがそれを捨てる**。
 [rapi]: ../../reference/resource-api/README.md
 [rq]: ../../guide/read-query.md
 [rv1]: 0001-read-field-default-missing.md
+[adr5]: ../../adr/0005-public-api-shape.md
+[adr23]: ../../adr/0023-custom-field-declaration-dsl.md
+[adr58]: ../../adr/0058-reference-expansion-read.md
+[adr59]: ../../adr/0059-read-field-bare-alias.md
+[lv]: ../../live-verification.md

@@ -8,7 +8,8 @@
 import { PortersConfigError } from "../errors";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType } from "../xml/decode";
-import type { FieldCatalog } from "./read-core";
+import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
+import type { FieldCatalog, ReadFieldAlias } from "./read-core";
 
 // --- condition: per-Data-Type operator objects (reference: Read - Condition) ---
 
@@ -123,14 +124,34 @@ export type ItemState = "existing" | "deleted" | "all";
 
 // --- the public query shape (moved here from resource.ts; data resources parametrise over their catalog) ---
 
-export type SearchQuery<F extends FieldCatalog = FieldCatalog> = {
+export type SearchQuery<
+  F extends FieldCatalog = FieldCatalog,
+  R extends ReferenceMap = EmptyReferences,
+> = {
   /**
-   * Output fields as prefixed aliases (e.g. `Person.P_Name`). **Omit** to fetch every catalogued
+   * Output fields as **bare aliases** (e.g. `P_Name`) — the same vocabulary as `condition` and
+   * `order`; the library adds the resource's prefix (ADR-0059). **Omit** to fetch every catalogued
    * field by default (ADR-0020): PORTERS returns only the primary key for a fieldless request, so
    * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
-   * API-native "primary key only" response (e.g. counting). A non-empty list is sent verbatim.
+   * API-native "primary key only" response (e.g. counting).
    */
-  field?: string[];
+  field?: ReadFieldAlias<F>[];
+  /**
+   * Read the *fields* of a referenced record, not just its id (ADR-0058): map an expandable
+   * `System[Reference]` field to the bare aliases you want from the resource it points at. The
+   * referenced prefix is supplied by the library, and the expanded fields come back decoded by
+   * that resource's own Data Types.
+   *
+   * ```ts
+   * const page = await t.job.search({ expand: { P_Client: ["P_Id", "P_Name"] } });
+   * page.items[0]?.P_Client; // { P_Id: number | null; P_Name: string | null } | null
+   * ```
+   *
+   * A field left out of `expand` still reads as the referenced id — expanding one relation costs
+   * nothing on the others. An expanded alias replaces its plain `field` entry, so nothing is
+   * requested twice.
+   */
+  expand?: Expand<R>;
   /** Typed AND-conditions; each field's operators derive from its Data Type (ADR-0038). */
   condition?: Condition<F>;
   /** Sort order; orderable Data Types only (Number/Date/DateTime/Age/System). */

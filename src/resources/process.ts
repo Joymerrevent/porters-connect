@@ -16,6 +16,7 @@ import {
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
+  type ReferenceMap,
   type Resource,
   type ResourceDeps,
   type ResourceDescriptor,
@@ -23,6 +24,10 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./resource";
+import { CANDIDATE_DESCRIPTOR } from "./candidate";
+import { CLIENT_DESCRIPTOR } from "./client";
+import { JOB_DESCRIPTOR } from "./job";
+import { RESUME_DESCRIPTOR } from "./resume";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -60,6 +65,16 @@ const REQUIRED_ON_CREATE = [
   "P_Resume",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
+// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
+// implemented resource, so there is no catalog to decode its fields with — it still reads as the
+// referenced id. Candidate's alias prefix is `Person`, which the descriptor carries.
+const REFERENCES = {
+  P_Client: CLIENT_DESCRIPTOR,
+  P_Job: JOB_DESCRIPTOR,
+  P_Candidate: CANDIDATE_DESCRIPTOR,
+  P_Resume: RESUME_DESCRIPTOR,
+} as const satisfies ReferenceMap;
+
 /**
  * Process's names + standard catalog. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds Process wire shapes from this very catalog, so the two cannot drift.
@@ -70,13 +85,14 @@ export const PROCESS_DESCRIPTOR = {
   path: "process",
   prefix: "Process",
   fields: FIELDS,
+  references: REFERENCES,
 } as const satisfies ResourceDescriptor;
 
 /** A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
 export type ProcessPage = ResourcePage<typeof FIELDS>;
-export type ProcessSearchQuery = SearchQuery<typeof FIELDS>;
+export type ProcessSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ProcessCreateInput = CreateInput<
@@ -88,7 +104,8 @@ export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Process accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
 export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof REQUIRED_ON_CREATE)[number],
+  typeof REFERENCES
 >;
 
 export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
