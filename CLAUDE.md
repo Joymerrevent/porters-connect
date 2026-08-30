@@ -56,8 +56,14 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
 - マスタ系：Partition / User / Field / Option
 - データ系：Client / Recruiter / Contact / Job / Candidate / Resume / Process / Activity / Contract / Sales / Opportunity / Phase / Attachment
 
-MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume → Attachment**。残りは v0.2 以降。
+MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume → Attachment**（**実装済み**）。
 （Attachment を MVP に追加：`docs/adr/0003-add-attachment-to-mvp.md`）
+
+**MVP 外の残り 7 種**（Recruiter / Contact / Activity / Contract / Sales / Opportunity / Phase）は
+**現在の主軸**＝「全リソース網羅 ＋ ドキュメント充実」（`docs/adr/0060-full-resource-coverage-direction.md`。
+ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装・テスト・reference 突合・ドキュメントを同じ PR）。
+着手順と完了条件 D1〜D5 は `docs/roadmap.md` が入口。
+**Phase だけは alias 接頭辞が無く**（`Id` / `Resource` / `ResourceId`）汎用 factory の前提から外れる＝専用 ADR で設計する。
 
 ---
 

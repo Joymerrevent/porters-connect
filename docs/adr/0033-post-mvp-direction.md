@@ -1,9 +1,15 @@
 # 33. ポスト MVP の次の注力領域（v0.2 以降）
 
-- Status: accepted
+- Status: superseded by [[0060-full-resource-coverage-direction]]
 - Date: 2026-06-22
 - Deciders: jun.shiromoto (Joymerrevent)
 
+> **Superseded by [[0060-full-resource-coverage-direction]]（2026-08-30）**: 本 ADR の先行フェーズ（案F）は
+> F-1〜F-4 まで完了したが、**次の主軸**は案A（第2層 MCP）ではなく **案B ＋ ドキュメント（全リソース網羅）**へ
+> 変更した。0060 は「網羅」の完了条件を D1〜D5 で定義し、**リソース 1 種＝1 PR** で進める。
+> 案A は取り下げではなく**後続へ移動**（第1層が広いほど MCP が露出できるツールも広い＝順序の問題）。
+> 案C / 案D / 案E の評価は 0060 が引き継ぐ。以下は決定当時の記録として残置（accepted ADR は書き換えない）。
+>
 > 案F（v1 公開 API の積み残し）先行 → 案A（第2層 MCP）主軸で `accepted`（2026-06-22）。
 > 案F の各群（F-1〜F-4）は実装前に個別 ADR（詳細設計）へ分岐する。横断監査の証拠は `docs/reviews/2026-06-22-03.md`。
 
