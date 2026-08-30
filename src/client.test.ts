@@ -281,6 +281,31 @@ describe("PortersClient + contact (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + opportunity (E2E, mock transport)", () => {
+  it("exposes an opportunity accessor; routes to /v1/opportunity", async () => {
+    const xml =
+      `<Opportunity Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Opportunity.P_Id>88</Opportunity.P_Id>` +
+      `</Item></Opportunity>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).opportunity.search();
+    expect(page.items[0]?.P_Id).toBe(88);
+    expect(calls[0]?.url).toContain("/v1/opportunity?");
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

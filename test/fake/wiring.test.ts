@@ -40,6 +40,7 @@ describe("fake server wiring", () => {
       // masters (read-only)
       "field",
       "job",
+      "opportunity",
       "option",
       "partition",
       "process",

@@ -18,6 +18,7 @@ import {
   JOB_DESCRIPTOR,
   PROCESS_DESCRIPTOR,
   CONTACT_DESCRIPTOR,
+  OPPORTUNITY_DESCRIPTOR,
   RECRUITER_DESCRIPTOR,
   RESUME_DESCRIPTOR,
 } from "../../src/resources/index";
@@ -87,6 +88,7 @@ export const FAKE_RESOURCES: ReadonlyMap<string, FakeResource> = new Map([
   dataResource(CLIENT_DESCRIPTOR),
   dataResource(RECRUITER_DESCRIPTOR),
   dataResource(CONTACT_DESCRIPTOR),
+  dataResource(OPPORTUNITY_DESCRIPTOR),
   dataResource(PROCESS_DESCRIPTOR),
   dataResource(RESUME_DESCRIPTOR),
   [

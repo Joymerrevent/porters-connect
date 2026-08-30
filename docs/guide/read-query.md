@@ -105,14 +105,15 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 **展開できる項目は決まっています**。参照先のリソースをライブラリが実装している必要があるためで、
 書けないものは型エラーになります。
 
-| リソース    | 展開できる                                                        |
-| ----------- | ----------------------------------------------------------------- |
-| `job`       | `P_Client` / `P_Recruiter`                                        |
-| `client`    | —（参照型の項目を持ちません）                                     |
-| `recruiter` | `P_Client`                                                        |
-| `contact`   | `P_Client`                                                        |
-| `process`   | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
-| `resume`    | `P_Candidate`                                                     |
+| リソース      | 展開できる                                                        |
+| ------------- | ----------------------------------------------------------------- |
+| `job`         | `P_Client` / `P_Recruiter`                                        |
+| `client`      | —（参照型の項目を持ちません）                                     |
+| `recruiter`   | `P_Client`                                                        |
+| `contact`     | `P_Client`                                                        |
+| `opportunity` | `P_Client` / `P_Recruiter`                                        |
+| `process`     | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
+| `resume`      | `P_Candidate`                                                     |
 
 - **未実装リソースへの参照は展開できません**（参照先のカタログが無いため。従来どおり ID として読めます）。
   実装済みのリソースは [README のリソース表][readme-resources] を参照してください。
