@@ -342,13 +342,14 @@ describe("error paths against the fake server", () => {
     });
   });
 
-  it("fails loud on a resource outside the MVP", async () => {
+  it("fails loud on a resource the library does not implement yet", async () => {
     const { fake } = setup();
-    // Recruiter et al. are v0.2+ in the library too; the fake must say so rather than answer empty.
+    // Contact et al. are still unimplemented (ADR-0060 D1); the fake must say so
+    // rather than answer empty.
     await expect(
       fake.send({
         method: "GET",
-        url: "https://fake.test/v1/recruiter?partition=1",
+        url: "https://fake.test/v1/contact?partition=1",
         headers: {},
       }),
     ).rejects.toMatchObject({

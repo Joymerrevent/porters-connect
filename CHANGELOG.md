@@ -5,6 +5,30 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Recruiter リソース**（企業担当者）の Read / Write。他のデータ系リソースと同じアクセサです。
+  次の主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）の 1 本目で、
+  未対応は Contact / Activity / Contract / Sales / Opportunity / Phase の 6 種になりました。
+
+  ```ts
+  const id = await t.recruiter.create({
+    P_Owner: 5,
+    P_Client: 20001, // 新規必須（所属する企業）
+    P_Name: "採用 太郎",
+  });
+  const r = await t.recruiter.get(id, { expand: { P_Client: ["P_Name"] } });
+  ```
+
+  - カスタム項目（`U_` / `A_`）も `defineFields({ recruiter: … })` で宣言できます。
+  - `P_MobileMail` の Data Type は **`Telephone`** です（Candidate は `Mail`）。
+    リソース間で食い違いますが、PORTERS の Field List 記事どおりに写しています。
+
+### Changed
+
+- **`Job.P_Recruiter` / `Process.P_Recruiter` を `expand` できる**ようになりました。
+  参照先の Recruiter カタログが揃ったためです。展開しなければ従来どおり ID が返ります（挙動は不変）。
+
 ## [0.11.0] - 2026-08-30
 
 **参照先の項目を 1 往復で読めるようにし、`field` の語彙をクエリ全体と揃えた版**です。
@@ -437,6 +461,7 @@
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
 [adr58]: docs/adr/0058-reference-expansion-read.md
 [adr59]: docs/adr/0059-read-field-bare-alias.md
+[adr60]: docs/adr/0060-full-resource-coverage-direction.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/

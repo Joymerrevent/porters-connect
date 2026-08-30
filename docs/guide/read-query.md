@@ -105,13 +105,16 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 **展開できる項目は決まっています**。参照先のリソースをライブラリが実装している必要があるためで、
 書けないものは型エラーになります。
 
-| リソース  | 展開できる                                        | 展開できない  |
-| --------- | ------------------------------------------------- | ------------- |
-| `job`     | `P_Client`                                        | `P_Recruiter` |
-| `process` | `P_Client` / `P_Job` / `P_Candidate` / `P_Resume` | `P_Recruiter` |
-| `resume`  | `P_Candidate`                                     | —             |
+| リソース    | 展開できる                                                        |
+| ----------- | ----------------------------------------------------------------- |
+| `job`       | `P_Client` / `P_Recruiter`                                        |
+| `client`    | —（参照型の項目を持ちません）                                     |
+| `recruiter` | `P_Client`                                                        |
+| `process`   | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
+| `resume`    | `P_Candidate`                                                     |
 
-- **Recruiter は未実装リソース**なので参照先のカタログがありません（従来どおり ID として読めます）。
+- **未実装リソースへの参照は展開できません**（参照先のカタログが無いため。従来どおり ID として読めます）。
+  実装済みのリソースは [README のリソース表][readme-resources] を参照してください。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
   （[ADR-0023][adr23] で宣言できるようになるまでの穴）。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
@@ -276,6 +279,7 @@ page.start; // 今回の開始インデックス
 [adr59]: ../adr/0059-read-field-bare-alias.md
 [adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
+[readme-resources]: ../../README.md#リソースと操作
 [lv]: ../live-verification.md
 [prd]: ../design/requirements.md
 [rapi]: ../reference/resource-api/README.md

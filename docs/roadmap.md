@@ -18,11 +18,12 @@
 
 ### 着手可能（ブロック無し・上から順に）
 
-- [ ] **1. Recruiter の R/W**（[ADR-0060][adr60] D1 の 1 本目）。Client と同形で descriptor パターンに素直に載る。
-      **横展開が本当に効くかをここで測る**＝残り 6 本の見積もりのものさしになる。
-      1 PR に含めるもの: `src/resources/recruiter.ts` ＋ co-located UT ／ `TenantScope` へのアクセサ追加 ／
-      `test/fake/` の追従 ／ reference ↔ カタログ突合の対象に追加（D4）／ README のリソース表と
-      `docs/guide` への反映（D5・[ADR-0035][adr35] の型）
+- [x] **1. Recruiter の R/W**（[ADR-0060][adr60] D1 の 1 本目）＝ **実装済み・未リリース**。
+      **横展開のものさしとして機能した** — 実装は `src/resources/recruiter.ts` **114 行**（Client の 89 行 ＋ 参照 1 本）で、
+      新しい抽象は 1 つも要らなかった。**descriptor パターンは効く**と確認できたので、残り 5 種
+      （Phase を除く）は同じ手数で見積もってよい。**横展開でぶつかったのは既存テストの前提**のほう
+      （「Recruiter は未実装」を書いたテストが 4 件・型テストが 1 件）＝新リソースごとに同じ棚卸しが要る。
+      副産物として **`Job.P_Recruiter` / `Process.P_Recruiter` が `expand` 可能**になった（参照先カタログが揃ったため）
 - [ ] 2. **Contact**（Recruiter と項目構成が同一）→ 3. **Opportunity**（12 項目・最小）→ 4. **Activity**（`P_Resource` ＋ `P_ResourceId` の可変参照が論点）→ 5. **Contract**（40 項目）→ 6. **Sales**（`System[Reference]` 6 項目＝`expand` の効きどころ）
 - [ ] 7. **Phase** は**最後**。接頭辞なし（`Id` / `Resource` / `ResourceId`）・`System[Department]`・
       Write の特殊制約（最新フェーズ条件）で汎用 factory の前提から外れる＝**専用 ADR で設計してから**

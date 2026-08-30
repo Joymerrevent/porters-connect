@@ -172,9 +172,13 @@ await porters.auth.exchangeAuthorizationCode(code);
 | `t.candidate`  | 個人連絡先   | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.job`        | JOB          | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.client`     | 企業         | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.recruiter`  | 企業担当者   | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.process`    | 選考プロセス | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.resume`     | レジュメ     | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.attachment` | 添付ファイル | `search` / `get` / `create` / `update`               |
+
+> **未対応のリソース**: Contact / Activity / Contract / Sales / Opportunity / Phase は順次追加中です
+> （方針は [ADR-0060][adr-0060]・進捗は [ロードマップ][roadmap]）。
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。
 - `searchAll(query?)` → `AsyncIterable`（200 件刻みで全件 yield）。
@@ -447,6 +451,8 @@ try {
 [bulk-write]: ./docs/guide/bulk-write.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
+[adr-0060]: ./docs/adr/0060-full-resource-coverage-direction.md
+[roadmap]: ./docs/roadmap.md
 [adr44]: ./docs/adr/0044-http-status-handling.md
 [adr46]: ./docs/adr/0046-guard-error-contract.md
 [adr47]: ./docs/adr/0047-access-point-scheme.md
