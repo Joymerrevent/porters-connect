@@ -359,7 +359,8 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 ### 案1b: bespoke 実装（Attachment と同じ）
 
 - Good: 汎用側に一切触らない。
-- Bad: 17 項目のカタログと Read クエリ一式を二重に持つ。**ドリフトの温床**（RV-23 と同じ形の事故）。
+- Bad: 17 項目のカタログと Read クエリ一式を二重に持つ。**ドリフトの温床**（[RV-23][rv23] と同じ形の事故）。
+  Phase は Attachment と違い**フルのクエリ面**（`condition` / `order` / ページング）を持つので、重複量が大きい。
 
 ### 案1c: 内部で `Phase.` を付ける
 
@@ -425,6 +426,7 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
 [write-constraints]: ../guide/write-constraints.md
 [write-format]: ../reference/resource-api/write-format.md
 [resource-list]: ../reference/resource-api/resources-list.md
+[rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md
 [field-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List
 [read]: https://hrbcapi.porters.jp/hc/ja/articles/115012161288-Phase-Read
 [write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161268-Phase-Write
