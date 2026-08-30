@@ -99,8 +99,15 @@ export type ResourceDescriptor<
   name: string;
   /** URL path segment, e.g. `"candidate"`. */
   path: string;
-  /** Field alias prefix, e.g. `"Person"`. */
+  /** Field alias prefix, e.g. `"Person"`. Empty for a resource whose aliases are bare (Phase). */
   prefix: string;
+  /**
+   * Primary-key alias. `P_Id` for every resource whose aliases carry the `P_` convention;
+   * **Phase names it `Id`** (ADR-0061). Read (`get`) and Write (`create` / `update`) both address
+   * the record through it, so it is a fact about the resource, not a constant of the factory.
+   * The fake server has always modelled this as `idAlias` — the library catches up here.
+   */
+  idAlias?: string;
   /** Data-Type catalog (`as const`): bare alias -> Data Type. */
   fields: F;
   /**
@@ -255,6 +262,8 @@ export const createResource = <
     Object.entries(config.fields),
   );
   const references: ReferenceMap = config.references ?? {};
+  // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
+  const idAlias = config.idAlias ?? "P_Id";
   const decode = decoderFor(config.fields);
   // The default field set sent when a caller omits `field` (ADR-0020, 案A+2a): every catalogued
   // alias. PORTERS returns only `{Resource}.P_Id` for a fieldless request, so a typed-record read
@@ -313,9 +322,10 @@ export const createResource = <
     id: number,
     options: { expand?: E } = {},
   ): Promise<ExpandedReadRecord<F, R, E> | undefined> => {
-    // Every catalog carries `P_Id` (System[Id]); the generic `F` can't prove it statically, so
-    // build the condition at runtime and let the encoder prefix it (`{prefix}.P_Id:eq=id`).
-    const condition = { P_Id: { eq: id } } as unknown as Condition<F>;
+    // Every catalog carries a primary key (System[Id]); the generic `F` can't prove it
+    // statically, so build the condition at runtime and let the encoder qualify it
+    // (`{prefix}.{idAlias}:eq=id`, or just `{idAlias}` when there is no prefix).
+    const condition = { [idAlias]: { eq: id } } as unknown as Condition<F>;
     const page = await search<E>({
       condition,
       count: 1,
@@ -346,10 +356,10 @@ export const createResource = <
     );
 
   const create = (input: CreateInput<F, Req[number]>): Promise<number> =>
-    write({ ...input, P_Id: -1 }, false);
+    write({ ...input, [idAlias]: -1 }, false);
 
   const update = (id: number, input: UpdateInput<F>): Promise<number> =>
-    write({ ...input, P_Id: id }, true);
+    write({ ...input, [idAlias]: id }, true);
 
   // Bulk write (ADR-0041): map each input to a WriteItem with its P_Id (create = -1, update = id) —
   // mirroring single write — and hand the array to the batching executor. createMany is
@@ -369,7 +379,7 @@ export const createResource = <
     runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      inputs.map((input) => ({ ...input, P_Id: -1 })),
+      inputs.map((input) => ({ ...input, [idAlias]: -1 })),
       false,
     );
 
@@ -379,7 +389,7 @@ export const createResource = <
     runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      items.map(({ id, fields }) => ({ ...fields, P_Id: id })),
+      items.map(({ id, fields }) => ({ ...fields, [idAlias]: id })),
       true,
     );
 
