@@ -91,6 +91,142 @@ Phase は他の 12 種と**4 つの軸で違う**。本 ADR はそれぞれを�
 - 案4a: **型では止めず、PORTERS に委ねる**（[書き込みの制約ガイド][write-constraints]に明記）。（推奨）
 - 案4b: クライアント側で最新フェーズを読んでから検証する。
 
+### 各案での書き味
+
+題材はどの案でも同じ — **Client（Resource List の `5`）の ID `20001` に紐づくフェーズ履歴を、日付の新しい順に読む**。
+Phase の項目は正典どおり `Id`（System[Id]）/ `Resource`（Number）/ `ResourceId`（Number）/ `Phase`（Option）/
+`Date`（DateTime）/ `Memo`（MultilineText）/ `Owner`（User）/ `OwnerDepartment`（System[Department]）。
+**`Id` / `Resource` / `ResourceId` は新規・更新とも `●`**（必須）。
+
+#### 論点1 — 接頭辞（利用者の書き方は変わらず、変わるのは送信形と実装コスト）
+
+```text
+案1a / 案1b が送るもの:  field=Id,Date,Memo        ← 正典のサンプルと一致
+案1c が送るもの:         field=Phase.Id,Phase.Date ← サンプルにも応答にも無い形
+```
+
+案1a は descriptor に `prefix: ""` を置き、`readFieldEntry` が空接頭辞なら `.` を付けない、という 1 箇所の分岐で済む。
+案1b は同じ利用者向けの形を得るために、**17 項目のカタログとクエリ一式を Phase 専用に書き直す**（下記は
+案1b で二重持ちになる部分）。
+
+```ts
+// 案1b: 汎用 factory を使わないので、この手の定義を Phase だけもう一度書くことになる
+const PHASE_FIELDS = {
+  Id: "System[Id]",
+  Resource: "Number" /* …17 項目… */,
+} as const;
+// search / searchAll / get / create / update / condition / order / ページングも自前
+```
+
+#### 論点2 — 必須の `resource` をどう受けるか（**利用者から見て一番違う**）
+
+```ts
+// 案2a（推奨）: resource を 1 度だけ束ねる。以降のシグネチャは他リソースと同じ
+const phases = t.phase.of(5); // 5 = Resource List の Client
+const page = await phases.search({
+  condition: { ResourceId: { eq: 20001 } },
+  order: [{ Date: "desc" }],
+});
+for await (const p of phases.searchAll({
+  condition: { ResourceId: { eq: 20001 } },
+})) {
+  p.Memo; // string | null | undefined
+}
+// resource を書き忘れる形が存在しない（`t.phase.search(...)` は型として無い）
+```
+
+```ts
+// 案2b: アクセサの形は他と同じ。resource はクエリの必須フィールド
+const page = await t.phase.search({
+  resource: 5, // 省略はコンパイルエラー
+  condition: { ResourceId: { eq: 20001 } },
+  order: [{ Date: "desc" }],
+});
+await t.phase.searchAll({
+  resource: 5,
+  condition: { ResourceId: { eq: 20001 } },
+}); // 毎回書く
+
+// 取り違えは型では止まらない（どちらも resource は埋まっている）
+const client = await t.phase.search({
+  resource: 5,
+  condition: { ResourceId: { eq: 20001 } },
+});
+const job = await t.phase.search({
+  resource: 3,
+  condition: { ResourceId: { eq: 20001 } },
+});
+```
+
+```ts
+// 案2c: 上位リソース側に生やす
+await t.client.phases({ condition: { ResourceId: { eq: 20001 } } });
+await t.candidate.phases({ order: [{ Date: "desc" }] }); // 同じものを 13 リソース分そろえる
+```
+
+> **どの案でも残る細部**: Read は `resourceId` と `id` を**専用のクエリ引数**でも受ける
+> （正典いわく、複数指定の or 検索は `condition` を使う）。上の例は `condition` で書いているが、
+> 単一指定を専用引数に載せるかは**実装時に詰める**（送信形が変わるだけで、公開 API の形は 3 案とも同じ）。
+
+**Write でも差が出る。** 案2a は束ねた `resource` を `Resource` に充てられる（`ResourceId` は毎回指定）。
+案2b / 案2c は `Resource` を毎回書く。なお `Id` は他リソースの `P_Id` と同じくライブラリが供給する。
+
+```ts
+// 案2a
+await t.phase.of(5).create({
+  ResourceId: 20001,
+  Phase: ["Opt_Contacted"],
+  Date: "2026-08-30T00:00:00Z",
+});
+// 案2b
+await t.phase.create({
+  Resource: 5,
+  ResourceId: 20001,
+  Phase: ["Opt_Contacted"],
+  Date: "2026-08-30T00:00:00Z",
+});
+```
+
+#### 論点3 — `System[Department]` の読み取り値
+
+```ts
+const page = await t.phase
+  .of(5)
+  .search({ field: ["Owner", "OwnerDepartment"] });
+const p = page.items[0];
+
+// 案3a（推奨）: User と同形の参照レコードになる
+p?.Owner; // UserRef | null       → { P_Id: 78, P_Type: …, P_Name: …, P_Mail: … }
+p?.OwnerDepartment; // DepartmentRef | null → { P_Id: 1001, P_Name: "所属なし" }
+
+// 案3b: 入れ子が文字列に潰れる。User だけ型が付く非対称が残る
+p?.OwnerDepartment; // string | null
+```
+
+> **案3a の注意**: `DataType` に足すと `WritableDataType`（`System[Id]` / `System[DateTime]` だけを除外）に
+> **自動で入り**、Write 値が既定の `string` になる。書けるのか・書けるなら `Department.P_Id`（`number`）なのかは
+> 正典で未確認なので、**union を広げるときに派生型まで見る**（[[0056-deleted-flag-typing]] の教訓）。
+
+#### 論点4 — Write の最新フェーズ条件
+
+```ts
+// 案4a（推奨）: そのまま送り、PORTERS の判定を型付きエラーで受ける
+try {
+  await t.phase.of(5).create({
+    ResourceId: 20001,
+    Phase: ["Opt_Contacted"],
+    Date: "2020-01-01T00:00:00Z",
+  });
+} catch (e) {
+  // 最新フェーズより古い日付 → PortersResourceError（Result Code つき）
+}
+
+// 案4b: 送信前に最新を読んで判定する（+1 往復。読んだ後に他者が更新するレースは残る）
+const latest = await t.phase
+  .of(5)
+  .search({ condition: { ResourceId: { eq: 20001 }, Recent: { eq: 1 } } });
+```
+
 ## Decision Outcome
 
 > **推奨: 案1a ＋ 案2a ＋ 案3a ＋ 案4a**。本 ADR は `proposed` で、**決定は stakeholder 判断後**に
