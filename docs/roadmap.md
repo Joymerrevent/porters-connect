@@ -47,11 +47,17 @@
       **この判断は ADR にしていない**（既存の「手前で厳しくしすぎない」方針の適用に留まるため）。
       形式化したい場合は要起票 — 公開型 `SalesCreateInput` の形に効く判断ではある。
       併せて **`docs/guide/write-constraints.md` を新設**（D5）。
-- [ ] 7. **Phase** は**最後**。接頭辞なし（`Id` / `Resource` / `ResourceId`）・`System[Department]`・
-      Write の特殊制約（最新フェーズ条件）で汎用 factory の前提から外れる＝**専用 ADR で設計してから**
-- [ ] **分岐して起票する ADR**: ① Phase の公開サーフェス ② `Link` / `Image` ＋ `defineFields` builder
-      （＝ R-4 の積み残し・D3）③ マスタ項目の拡張（`System[Department]` の decode 形）
-      ④ Activity の可変参照（必要なら）
+- [ ] **7. Phase の実装** — 設計は [ADR-0061][adr61] で **accepted**（2026-08-31）なので**着手可能**。
+      決定は **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**:
+      `prefix: ""` を汎用 factory が受ける（＋ 主キー alias も descriptor から取る＝**共有コード 9 箇所**）／
+      `t.phase.of("client")` で `resource` を束ねる／`System[Department]` に `DepartmentRef` を足す／
+      Write の最新フェーズ条件は PORTERS に委ねる／`resource` は**リテラル名**で受ける。
+      完了すれば **D1 が 13/13**、D3 が 14/17 → **15/17**。
+- [ ] **分岐して起票する ADR**: ① ~~Phase の公開サーフェス~~ → [ADR-0061][adr61] で accepted ／
+      ② `Link` / `Image` ＋ `defineFields` builder（＝ R-4 の積み残し・D3）／
+      ③ マスタ項目の拡張（`System[Department]` の decode 形は 0061 で確定したので残りは項目の追加）／
+      ④ **`Activity.P_Resource` を名前で受けるか**（0061 の案5b で `of()` は名前になったため、
+      カタログ項目側との非対称をどうするか）
 
 #### 直近の経緯（着手前に踏まえておくこと）
 
@@ -113,7 +119,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ----------------------------- | -------------------------------------------- | ---------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能＝[ADR-0060][adr60] D1 の 1 本目 |
 | [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 1 件 = RV-22（契約待ち）            |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／**実装待ちは 0060**   |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ちは 0060・0061 |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜16 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
 | [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）         |
@@ -224,8 +230,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0060 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
-  **実装待ちは [ADR-0060][adr60]**（主軸そのもの。[索引][adr]）
+- ADR 0001〜0061 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
+  **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・**665 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 1 件**＝
   RV-22（契約待ち）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
@@ -391,6 +397,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr58]: adr/0058-reference-expansion-read.md
 [adr59]: adr/0059-read-field-bare-alias.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
+[adr61]: adr/0061-phase-resource-surface.md
 [adr35]: adr/0035-usage-documentation-structure.md
 [adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md
