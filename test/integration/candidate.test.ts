@@ -342,14 +342,14 @@ describe("error paths against the fake server", () => {
     });
   });
 
-  it("fails loud on a resource the library does not implement yet", async () => {
+  it("fails loud on a route it does not serve", async () => {
     const { fake } = setup();
-    // Phase is the last resource still unimplemented (ADR-0060 D1 — it needs its own ADR);
-    // the fake must say so rather than answer empty.
+    // Every PORTERS resource is implemented now (ADR-0060 D1 = 13/13), so this is a name that
+    // does not exist at all. The fake must say so rather than answer empty.
     await expect(
       fake.send({
         method: "GET",
-        url: "https://fake.test/v1/phase?partition=1",
+        url: "https://fake.test/v1/nonesuch?partition=1",
         headers: {},
       }),
     ).rejects.toMatchObject({

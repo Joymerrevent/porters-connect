@@ -26,6 +26,7 @@ import {
   createContactResource,
   createActivityResource,
   createContractResource,
+  createPhaseAccessor,
   createSalesResource,
   createOpportunityResource,
   createRecruiterResource,
@@ -44,6 +45,7 @@ import type {
   ContactResource,
   ActivityResource,
   ContractResource,
+  PhaseAccessor,
   SalesResource,
   OpportunityResource,
   RecruiterResource,
@@ -108,6 +110,11 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly activity: ActivityResource<CustomFor<C, "activity">>;
   readonly contract: ContractResource<CustomFor<C, "contract">>;
   readonly sales: SalesResource<CustomFor<C, "sales">>;
+  /**
+   * Phase history, reached through the resource it belongs to: `t.phase.of("client")`.
+   * PORTERS requires that `resource` on every Phase call, so it is bound once (ADR-0061 案2a).
+   */
+  readonly phase: PhaseAccessor;
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
@@ -222,6 +229,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         activity: createActivityResource(deps, customFor("activity")),
         contract: createContractResource(deps, customFor("contract")),
         sales: createSalesResource(deps, customFor("sales")),
+        phase: createPhaseAccessor(deps),
         process: createProcessResource(deps, customFor("process")),
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentResource(deps),

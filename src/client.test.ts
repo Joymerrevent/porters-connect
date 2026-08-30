@@ -360,6 +360,33 @@ describe("PortersClient + contract (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + phase (E2E, mock transport)", () => {
+  it("exposes a phase accessor bound through of(name)", async () => {
+    const xml =
+      `<Phase Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Id>10014</Id><Resource>5</Resource><ResourceId>20001</ResourceId>` +
+      `</Item></Phase>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).phase.of("client").search();
+    expect(page.items[0]?.Id).toBe(10014); // bare `Id`, no prefix
+    expect(page.items[0]?.ResourceId).toBe(20001);
+    expect(calls[0]?.url).toContain("/v1/phase?");
+    expect(calls[0]?.url).toContain("resource=5"); // the binding travels as its own param
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

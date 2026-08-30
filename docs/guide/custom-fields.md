@@ -76,7 +76,7 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 | `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`） |
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
-`contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系と Attachment はカスタム項目を持たないため受け付けません
+`contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
 （[ADR-0023][adr23] D6）。リソースが増えるとここも増えます（[ADR-0060][adr60]）。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。

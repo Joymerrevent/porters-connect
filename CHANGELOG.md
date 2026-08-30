@@ -45,6 +45,27 @@
 - **書き込みの制約ガイド**を追加しました。**ライブラリが送信前に弾くもの**と
   **PORTERS に委ねるもの**の境界、リソースごとの新規必須項目の一覧をまとめています。
 
+- **Phase リソース**（フェーズ履歴）の Read / Write。**これで PORTERS の全リソースに対応**しました
+  （マスタ Read 4 種 ＋ データ系 13 種）。Phase だけは**対象リソースを束ねてから**使います
+  （[ADR-0061][adr61]）。
+
+  ```ts
+  const phases = t.phase.of("client"); // 対象は名前で指定（`of(5)` ではない）
+  await phases.search({ condition: { ResourceId: { eq: 20001 } } });
+  await phases.create({ ResourceId: 20001, Memo: "初回接触" });
+  ```
+
+  - **どのリソースのフェーズ履歴かを PORTERS が必ず要求する**ので、`of(...)` で 1 度だけ指定します。
+    以降は他のリソースと同じ書き方で、指定漏れは**型として起こりえません**。
+  - 名前はアクセサと同じ綴りです。綴り間違いや、PORTERS が ID を持たないリソース（`"phase"` など）は
+    **コンパイルエラー**になります。
+  - Phase の項目は**接頭辞も `P_` も付きません**（`Id` / `Resource` / `Date` / `Memo` …）。
+    主キーも `Id` です。カスタム項目と削除フラグは持ちません。
+
+- **データ型 `System[Department]`** に対応しました（`Phase.OwnerDepartment` ほか）。
+  `User` と同じ形の `DepartmentRef`（`P_Id` / `P_Name`）で読めます。
+  **書き込みは提供しません** — PORTERS が書ける形を公表していないため、推測した形を送りません。
+
 ### Changed
 
 - **`Job.P_Recruiter` / `Process.P_Recruiter` を `expand` できる**ようになりました。
@@ -483,6 +504,7 @@
 [adr58]: docs/adr/0058-reference-expansion-read.md
 [adr59]: docs/adr/0059-read-field-bare-alias.md
 [adr60]: docs/adr/0060-full-resource-coverage-direction.md
+[adr61]: docs/adr/0061-phase-resource-surface.md
 [write-constraints]: docs/guide/write-constraints.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/

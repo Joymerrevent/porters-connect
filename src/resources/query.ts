@@ -6,6 +6,7 @@
 // XML/value formatting stays in xml/; this owns only the Read query string.
 
 import { PortersConfigError } from "../errors";
+import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType } from "../xml/decode";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
@@ -226,7 +227,7 @@ const encodeCondition = (
     for (const [suffix, value] of Object.entries(ops)) {
       if (value === undefined) continue;
       parts.push(
-        `${ctx.prefix}.${alias}:${suffix}=${serializeConditionValue(type, value)}`,
+        `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value)}`,
       );
     }
   }
@@ -241,7 +242,7 @@ const encodeOrder = (order: Order<FieldCatalog>, ctx: QueryContext): string => {
     const dirs = spec as Record<string, "asc" | "desc" | undefined>;
     for (const [alias, dir] of Object.entries(dirs)) {
       if (dir === undefined) continue;
-      parts.push(`${ctx.prefix}.${alias}:${dir}`);
+      parts.push(`${qualify(ctx.prefix, alias)}:${dir}`);
     }
   }
   return parts.join(",");

@@ -5,6 +5,7 @@
 // wires parse + decode together.
 
 import { PortersConfigError } from "../errors";
+import { qualify } from "../util/alias";
 import type { AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
 import {
@@ -99,8 +100,8 @@ const readFieldEntry = (
   type: DataType | null | undefined,
 ): string =>
   type === "User"
-    ? `${prefix}.${alias}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
-    : `${prefix}.${alias}`;
+    ? `${qualify(prefix, alias)}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
+    : qualify(prefix, alias);
 
 /**
  * What a Read `field` entry may name (ADR-0059): a catalogued alias — every standard `P_` field

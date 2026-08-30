@@ -182,8 +182,25 @@ await porters.auth.exchangeAuthorizationCode(code);
 | `t.resume`      | レジュメ       | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.attachment`  | 添付ファイル   | `search` / `get` / `create` / `update`               |
 
-> **未対応のリソース**: Phase のみです（接頭辞なし・専用の設計が要るため最後に回しています）。
-> （方針は [ADR-0060][adr-0060]・進捗は [ロードマップ][roadmap]）。
+**これで PORTERS の全リソースに対応しました**（マスタ Read 4 種 ＋ データ系 13 種）。
+方針は [ADR-0060][adr-0060]、進捗は [ロードマップ][roadmap]。
+
+**Phase だけは対象リソースを束ねてから**使います。どのリソースのフェーズ履歴かを PORTERS が必ず要求するので、
+`of(...)` で 1 度だけ指定すると、以降は他のリソースと同じ書き方になります（[ADR-0061][adr-0061]）。
+
+```ts
+const phases = t.phase.of("client"); // 対象は名前で指定（`of(5)` ではない）
+await phases.search({ condition: { ResourceId: { eq: 20001 } } });
+await phases.create({ ResourceId: 20001, Memo: "初回接触" });
+```
+
+| アクセサ                 | リソース     | メソッド                                             |
+| ------------------------ | ------------ | ---------------------------------------------------- |
+| `t.phase.of(リソース名)` | フェーズ履歴 | `search` / `searchAll` / `get` / `create` / `update` |
+
+指定できる名前はアクセサと同じ綴りです（`"candidate"` / `"job"` / `"client"` / `"recruiter"` /
+`"contact"` / `"opportunity"` / `"activity"` / `"contract"` / `"sales"` / `"process"` / `"resume"`）。
+綴り間違いや、PORTERS が ID を持たないリソース（`"phase"` など）は**コンパイルエラー**になります。
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。
 - `searchAll(query?)` → `AsyncIterable`（200 件刻みで全件 yield）。
@@ -461,6 +478,7 @@ try {
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [adr-0060]: ./docs/adr/0060-full-resource-coverage-direction.md
+[adr-0061]: ./docs/adr/0061-phase-resource-surface.md
 [roadmap]: ./docs/roadmap.md
 [adr44]: ./docs/adr/0044-http-status-handling.md
 [adr46]: ./docs/adr/0046-guard-error-contract.md
