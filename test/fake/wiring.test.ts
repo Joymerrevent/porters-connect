@@ -38,6 +38,7 @@ describe("fake server wiring", () => {
       "candidate",
       "client",
       "contact",
+      "contract",
       // masters (read-only)
       "field",
       "job",

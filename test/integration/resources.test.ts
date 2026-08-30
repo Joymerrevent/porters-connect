@@ -148,6 +148,24 @@ describe("data resources round-trip", () => {
     expect(activity?.P_ResourceId).toBe(candidateId);
   });
 
+  it("creates a Contract against a Client (no owner field on this resource)", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+
+    const id = await porters.tenant(1).contract.create({
+      P_Client: clientId,
+      P_Name: "基本契約",
+      P_ContingentFee: 500000, // Currency -> Number
+    });
+
+    const contract = await porters.tenant(1).contract.get(id);
+    expect(contract?.P_Name).toBe("基本契約");
+    expect(contract?.P_ContingentFee).toBe(500000);
+    expect(contract?.P_Client).toBe(clientId);
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({
