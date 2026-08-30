@@ -45,6 +45,7 @@ describe("fake server wiring", () => {
       "opportunity",
       "option",
       "partition",
+      "phase",
       "process",
       "recruiter",
       "resume",

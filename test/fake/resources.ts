@@ -20,6 +20,7 @@ import {
   CONTACT_DESCRIPTOR,
   ACTIVITY_DESCRIPTOR,
   CONTRACT_DESCRIPTOR,
+  PHASE_DESCRIPTOR,
   SALES_DESCRIPTOR,
   OPPORTUNITY_DESCRIPTOR,
   RECRUITER_DESCRIPTOR,
@@ -74,7 +75,8 @@ export const ATTACHMENT_DESCRIPTOR: ResourceDescriptor = {
 
 const dataResource = (
   descriptor: ResourceDescriptor,
-): [string, FakeResource] => [descriptor.path, { descriptor, idAlias: "P_Id" }];
+  idAlias = "P_Id",
+): [string, FakeResource] => [descriptor.path, { descriptor, idAlias }];
 
 const masterResource = (
   descriptor: ResourceDescriptor,
@@ -95,6 +97,8 @@ export const FAKE_RESOURCES: ReadonlyMap<string, FakeResource> = new Map([
   dataResource(ACTIVITY_DESCRIPTOR),
   dataResource(CONTRACT_DESCRIPTOR),
   dataResource(SALES_DESCRIPTOR),
+  // Phase names its primary key `Id` and carries no alias prefix (ADR-0061).
+  dataResource(PHASE_DESCRIPTOR, "Id"),
   dataResource(PROCESS_DESCRIPTOR),
   dataResource(RESUME_DESCRIPTOR),
   [

@@ -29,6 +29,7 @@ grep -rn "VERIFY(live)" src test
 | LV-14 | `P_Deleted` の wire 形と出現条件                    | 未確認 |
 | LV-15 | `itemstate=existing` を明示送信して受け付けられるか | 未確認 |
 | LV-16 | Candidate 参照を展開するときの alias 接頭辞         | 未確認 |
+| LV-17 | Phase の User 項目を `()` 付きで要求できるか        | 未確認 |
 
 ---
 
@@ -232,6 +233,25 @@ grep -rn "VERIFY(live)" src test
 - **関連**: 展開の**応答側**は LV-10（入れ子タグ）。decode はタグ名に依存しない実装なので、
   **外れても直すのは要求文字列だけ**。この 2 つは同じスモークでまとめて確認できる
 
+## LV-17 Phase の User 項目を `()` 付きで要求できるか
+
+- **現在の対応 / 仮定**: **`()` 付きで送る**。`User` 型の項目は汎用 factory が
+  `Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)` と組み立てるので、Phase も 13 リソース中の
+  1 つとして同じ形になる（[ADR-0061][a61] 案1a ＝ 汎用 factory に載せた結果）
+- **不確実な理由**: PORTERS の Phase Read サンプルは **`field=Id,RegisteredBy,RegistrationDate,
+UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を並べており、
+  この resource について `()` 付きの例が無い。応答の形（`<Owner><User><User.P_Id>…`）は
+  どちらの要求でも同じなので、**要求が受け付けられるかだけが未確認**
+- **コード箇所**: `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）・
+  `src/resources/phase.ts`（`VERIFY(live)` 済み）
+- **確認方法**: Phase Read に `resource=5&field=Owner(User.P_Id,User.P_Name)` を投げ、
+  **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
+  `field=Owner` と素で送る形に切り替える（`readFieldEntry` に Phase 用の分岐を足すだけで済む）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: `System[Department]` の 3 項目は素の alias で要求している（サンプルと同じ形）。
+  応答形は 2019-12-10 の機能拡張記事のサンプルで確定しているので、そちらは LV 対象外
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -254,3 +274,4 @@ grep -rn "VERIFY(live)" src test
 [a56]: adr/0056-deleted-flag-typing.md
 [a57]: adr/0057-itemstate-existing-explicit.md
 [a58]: adr/0058-reference-expansion-read.md
+[a61]: adr/0061-phase-resource-surface.md

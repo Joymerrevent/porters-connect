@@ -11,6 +11,7 @@ import {
   buildWriteXml,
   type WritableDataType,
   type WriteItem,
+  type WriteValue,
   type WriteValueOf,
 } from "../xml/encode";
 import { parseWriteResult, type RawItem } from "../xml/parser";
@@ -119,15 +120,27 @@ export type ResourceDescriptor<
   references?: R;
 };
 
+/**
+ * Values a resource always contributes to its own requests, independent of the caller: a fixed
+ * Read query parameter and/or a field written on every record. Phase is the only user today —
+ * `of(resource)` binds which upper resource's history it addresses, and PORTERS wants that as
+ * `resource=` on Read and as the `Resource` field on Write (ADR-0061 案2a).
+ */
+export type ResourceBindings = {
+  readParams?: Readonly<Record<string, string>>;
+  writeDefaults?: Readonly<Record<string, WriteValue>>;
+};
+
 /** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */
 export type ResourceConfig<
   F extends FieldCatalog,
   Req extends readonly (keyof F)[],
   R extends ReferenceMap = EmptyReferences,
-> = ResourceDescriptor<F, R> & {
-  /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
-  requiredOnCreate: Req;
-};
+> = ResourceDescriptor<F, R> &
+  ResourceBindings & {
+    /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
+    requiredOnCreate: Req;
+  };
 
 // Every Read method takes the same shape: the query's `expand` is captured as `E` (a `const` type
 // parameter, so the alias lists stay literal) and the record type widens accordingly (ADR-0058).
@@ -217,10 +230,18 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
     prefix: string;
     fields: ReadonlyMap<string, DataType | null>;
     references?: ReferenceMap;
+    /**
+     * Fixed query parameters this resource always sends. **Phase requires `resource=`** — the
+     * upper resource whose history is being read — and it is a parameter of its own, not a
+     * `condition` (ADR-0061 / Phase Read). Set once by the accessor, never by the caller.
+     */
+    params?: Readonly<Record<string, string>>;
   },
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
+  for (const [key, value] of Object.entries(ctx.params ?? {}))
+    p.set(key, value);
   if (q.field && q.field.length > 0) {
     // The typed `Expand<R>` is what constrains callers; the assembly below is purely structural,
     // like `encodeCondition` over the loose catalog.
@@ -277,6 +298,7 @@ export const createResource = <
       prefix: config.prefix,
       fields: fieldMap,
       references,
+      params: config.readParams,
     });
 
   const writeUrl = (): string =>
@@ -338,6 +360,13 @@ export const createResource = <
   // the target id (idempotent: re-applying the same write is safe). Forcing P_Id
   // after the spread means a caller-supplied P_Id never overrides it.
   // `async` so encoding failures reject rather than throw synchronously (ADR-0046).
+  // Fields the resource itself contributes to every record (Phase's `Resource` — ADR-0061).
+  // Spread first so a caller can never shadow the binding they did not choose.
+  const withDefaults = (item: WriteItem): WriteItem => ({
+    ...config.writeDefaults,
+    ...item,
+  });
+
   const write = async (item: WriteItem, idempotent: boolean): Promise<number> =>
     deps.requester.request(
       {
@@ -356,10 +385,10 @@ export const createResource = <
     );
 
   const create = (input: CreateInput<F, Req[number]>): Promise<number> =>
-    write({ ...input, [idAlias]: -1 }, false);
+    write(withDefaults({ ...input, [idAlias]: -1 }), false);
 
   const update = (id: number, input: UpdateInput<F>): Promise<number> =>
-    write({ ...input, [idAlias]: id }, true);
+    write(withDefaults({ ...input, [idAlias]: id }), true);
 
   // Bulk write (ADR-0041): map each input to a WriteItem with its P_Id (create = -1, update = id) —
   // mirroring single write — and hand the array to the batching executor. createMany is
@@ -379,7 +408,7 @@ export const createResource = <
     runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      inputs.map((input) => ({ ...input, [idAlias]: -1 })),
+      inputs.map((input) => withDefaults({ ...input, [idAlias]: -1 })),
       false,
     );
 
@@ -389,7 +418,7 @@ export const createResource = <
     runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      items.map(({ id, fields }) => ({ ...fields, [idAlias]: id })),
+      items.map(({ id, fields }) => withDefaults({ ...fields, [idAlias]: id })),
       true,
     );
 

@@ -100,6 +100,17 @@ export type {
   ClientSearchQuery,
 } from "./resources";
 export type {
+  Phase,
+  PhaseCreateInput,
+  PhaseUpdateInput,
+  PhasePage,
+  PhaseResource,
+  PhaseAccessor,
+  PhaseSearchQuery,
+} from "./resources";
+/** The resource names `t.phase.of(...)` accepts (ADR-0061 案5b). */
+export type { ResourceName } from "./resources";
+export type {
   Sales,
   SalesCreateInput,
   SalesUpdateInput,
