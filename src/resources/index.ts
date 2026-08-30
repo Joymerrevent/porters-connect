@@ -22,6 +22,7 @@ export type { BulkWriteResult, BulkWriteResultItem } from "./resource";
 export * from "./candidate";
 export * from "./job";
 export * from "./client";
+export * from "./recruiter";
 export * from "./process";
 export * from "./resume";
 export * from "./attachment";
