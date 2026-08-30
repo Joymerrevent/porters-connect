@@ -112,6 +112,7 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 | `recruiter`   | `P_Client`                                                        |
 | `contact`     | `P_Client`                                                        |
 | `opportunity` | `P_Client` / `P_Recruiter`                                        |
+| `contract`    | `P_Client`                                                        |
 | `process`     | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
 | `resume`      | `P_Candidate`                                                     |
 

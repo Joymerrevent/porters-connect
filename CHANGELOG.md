@@ -26,6 +26,10 @@
 
 - **Contact リソース**（コンタクト）の Read / Write。**Recruiter と項目構成が同一**ですが、
   PORTERS が役割で分けている別リソースなので、テーブルもカタログも独立しています。
+- **Contract リソース**（契約）の Read / Write。**このリソースだけ `P_Owner` がありません**（PORTERS が
+  公表していないため）。`create` に必要なのは `P_Client` だけです。`Currency` の項目
+  （`P_AdvancePayment` / `P_ContingentFee` / `P_ContractorFee`）は **Data Type が `Number`** なので
+  数値として読み書きします。
 - **Activity リソース**（アクティビティ）の Read / Write。`P_Resource`（Resource List の数値 ID）と
   `P_ResourceId` の組で**任意の上位リソースに紐づきます**。参照先が実行時に決まるため
   `P_ResourceId` は `expand` の対象外で、**参照先の ID として読めます**（どのリソースを指していても同じ）。

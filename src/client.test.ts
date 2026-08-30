@@ -333,6 +333,33 @@ describe("PortersClient + activity (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + contract (E2E, mock transport)", () => {
+  it("exposes a contract accessor; routes to /v1/contract", async () => {
+    const xml =
+      `<Contract Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Contract.P_Id>101</Contract.P_Id>` +
+      `<Contract.P_ContingentFee>500000</Contract.P_ContingentFee>` +
+      `</Item></Contract>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).contract.search();
+    expect(page.items[0]?.P_Id).toBe(101);
+    expect(page.items[0]?.P_ContingentFee).toBe(500000); // Currency reads as a number
+    expect(calls[0]?.url).toContain("/v1/contract?");
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

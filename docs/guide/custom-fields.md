@@ -76,7 +76,7 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 | `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`） |
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
-`contact` / `opportunity` / `activity` / `process` / `resume`）です。マスタ系と Attachment はカスタム項目を持たないため受け付けません
+`contact` / `opportunity` / `activity` / `contract` / `process` / `resume`）です。マスタ系と Attachment はカスタム項目を持たないため受け付けません
 （[ADR-0023][adr23] D6）。リソースが増えるとここも増えます（[ADR-0060][adr60]）。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
@@ -104,7 +104,7 @@ for await (const f of fields) {
 違反すると `PortersConfigError` を投げます。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）は同梱済みなので宣言の対象外です。
-- **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `process` / `resume` のみ。
+- **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `process` / `resume` のみ。
 
 ```ts
 defineFields({ candidate: (f) => ({ score: f.number() }) });
