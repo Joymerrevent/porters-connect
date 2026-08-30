@@ -71,6 +71,7 @@
 | [0057][0057] | `itemstate: "existing"` の明示指定を送るか（0038 SD-4 の amend） | 詳細設計 | accepted   | —     |
 | [0058][0058] | `System[Reference]` を展開して読むときの扱い（RV-31）            | 基本設計 | accepted   | —     |
 | [0059][0059] | Read の `field` を接頭辞なしの alias で受ける                    | 基本設計 | accepted   | —     |
+| [0060][0060] | 次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変える         | 要件定義 | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -133,3 +134,4 @@
 [0057]: 0057-itemstate-existing-explicit.md
 [0058]: 0058-reference-expansion-read.md
 [0059]: 0059-read-field-bare-alias.md
+[0060]: 0060-full-resource-coverage-direction.md
