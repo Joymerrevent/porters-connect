@@ -110,6 +110,7 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 | `job`       | `P_Client` / `P_Recruiter`                                        |
 | `client`    | —（参照型の項目を持ちません）                                     |
 | `recruiter` | `P_Client`                                                        |
+| `contact`   | `P_Client`                                                        |
 | `process`   | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
 | `resume`    | `P_Candidate`                                                     |
 

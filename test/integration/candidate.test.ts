@@ -344,12 +344,12 @@ describe("error paths against the fake server", () => {
 
   it("fails loud on a resource the library does not implement yet", async () => {
     const { fake } = setup();
-    // Contact et al. are still unimplemented (ADR-0060 D1); the fake must say so
-    // rather than answer empty.
+    // Phase is the last resource still unimplemented (ADR-0060 D1 — it needs its own ADR);
+    // the fake must say so rather than answer empty.
     await expect(
       fake.send({
         method: "GET",
-        url: "https://fake.test/v1/contact?partition=1",
+        url: "https://fake.test/v1/phase?partition=1",
         headers: {},
       }),
     ).rejects.toMatchObject({

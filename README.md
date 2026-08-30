@@ -173,11 +173,12 @@ await porters.auth.exchangeAuthorizationCode(code);
 | `t.job`        | JOB          | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.client`     | 企業         | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.recruiter`  | 企業担当者   | `search` / `searchAll` / `get` / `create` / `update` |
+| `t.contact`    | コンタクト   | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.process`    | 選考プロセス | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.resume`     | レジュメ     | `search` / `searchAll` / `get` / `create` / `update` |
 | `t.attachment` | 添付ファイル | `search` / `get` / `create` / `update`               |
 
-> **未対応のリソース**: Contact / Activity / Contract / Sales / Opportunity / Phase は順次追加中です
+> **未対応のリソース**: Activity / Contract / Sales / Opportunity / Phase は順次追加中です
 > （方針は [ADR-0060][adr-0060]・進捗は [ロードマップ][roadmap]）。
 
 - `search(query?)` → `{ items, total, count, start }`（オフセット式ページング）。

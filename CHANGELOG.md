@@ -24,6 +24,9 @@
   - `P_MobileMail` の Data Type は **`Telephone`** です（Candidate は `Mail`）。
     リソース間で食い違いますが、PORTERS の Field List 記事どおりに写しています。
 
+- **Contact リソース**（コンタクト）の Read / Write。**Recruiter と項目構成が同一**ですが、
+  PORTERS が役割で分けている別リソースなので、テーブルもカタログも独立しています。
+
 ### Changed
 
 - **`Job.P_Recruiter` / `Process.P_Recruiter` を `expand` できる**ようになりました。

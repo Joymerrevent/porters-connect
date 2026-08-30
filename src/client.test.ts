@@ -253,6 +253,34 @@ describe("PortersClient + recruiter (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + contact (E2E, mock transport)", () => {
+  it("exposes a contact accessor; routes to /v1/contact", async () => {
+    const contactXml =
+      `<Contact Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Contact.P_Id>66</Contact.P_Id>` +
+      `<Contact.P_Name>問合 花子</Contact.P_Name>` +
+      `</Item></Contact>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: contactXml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).contact.search();
+    expect(page.items[0]?.P_Id).toBe(66);
+    expect(page.items[0]?.P_Name).toBe("問合 花子");
+    // Contact and Recruiter share a field list; the prefix/path is what keeps them apart.
+    expect(calls[0]?.url).toContain("/v1/contact?");
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

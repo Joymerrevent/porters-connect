@@ -82,6 +82,26 @@ describe("data resources round-trip", () => {
     expect(expanded?.P_Client).toEqual({ P_Name: "株式会社ABC" });
   });
 
+  it("creates a Contact against a Client (same shape as Recruiter, own table)", async () => {
+    const { fake, porters } = setup();
+    const clientId = await porters.tenant(1).client.create({
+      P_Owner: 5,
+      P_Name: "株式会社ABC",
+    });
+
+    const id = await porters.tenant(1).contact.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "問合 花子",
+    });
+
+    const contact = await porters.tenant(1).contact.get(id);
+    expect(contact?.P_Name).toBe("問合 花子");
+    expect(contact?.P_Client).toBe(clientId);
+    // Identical field list, but a separate table — a Contact is not findable as a Recruiter.
+    expect(fake.control.records("recruiter")).toHaveLength(0);
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({
