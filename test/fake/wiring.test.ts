@@ -31,18 +31,25 @@ describe("fake server wiring", () => {
     expect(CANDIDATE_DESCRIPTOR.fields.P_Owner).toBe("User");
   });
 
-  it("serves every MVP resource, each keyed on its own primary key", () => {
+  it("serves every implemented resource, each keyed on its own primary key", () => {
     expect([...FAKE_RESOURCES.keys()].sort()).toEqual([
+      "activity",
       "attachment",
       "candidate",
       "client",
+      "contact",
+      "contract",
       // masters (read-only)
       "field",
       "job",
+      "opportunity",
       "option",
       "partition",
+      "phase",
       "process",
+      "recruiter",
       "resume",
+      "sales",
       "user",
     ]);
     for (const [path, resource] of FAKE_RESOURCES) {

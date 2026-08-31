@@ -76,8 +76,40 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
     ).toThrow(PortersConfigError);
   });
 
+  it("accepts every implemented data resource as a key", () => {
+    // The runtime list and the `CustomFieldResource` union have to stay in step: a resource
+    // that types fine but throws at runtime would be the worst of both (ADR-0060 D1 adds one
+    // per PR, so this is the guard that says "wire both sides").
+    const declared = defineFields({
+      candidate: (f) => ({ U_a: f.number() }),
+      job: (f) => ({ U_a: f.number() }),
+      client: (f) => ({ U_a: f.number() }),
+      recruiter: (f) => ({ U_a: f.number() }),
+      contact: (f) => ({ U_a: f.number() }),
+      opportunity: (f) => ({ U_a: f.number() }),
+      activity: (f) => ({ U_a: f.number() }),
+      contract: (f) => ({ U_a: f.number() }),
+      sales: (f) => ({ U_a: f.number() }),
+      process: (f) => ({ U_a: f.number() }),
+      resume: (f) => ({ U_a: f.number() }),
+    });
+    expect(Object.keys(declared).sort()).toEqual([
+      "activity",
+      "candidate",
+      "client",
+      "contact",
+      "contract",
+      "job",
+      "opportunity",
+      "process",
+      "recruiter",
+      "resume",
+      "sales",
+    ]);
+  });
+
   it("rejects an unknown resource key (e.g. a typo) at runtime", () => {
-    // The typed surface only allows the 5 data resources; this guards untyped/dynamic callers.
+    // The typed surface only allows the implemented data resources; this guards untyped callers.
     const bad = {
       candiate: (f: { number: () => { dataType: "Number" } }) => ({
         U_x: f.number(),

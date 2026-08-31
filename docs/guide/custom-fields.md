@@ -75,8 +75,9 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 | `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                       |
 | `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`） |
 
-宣言できる**リソースはデータ系 5 種**（`candidate` / `job` / `client` / `process` / `resume`）です。
-マスタ系と Attachment はカスタム項目を持たないため受け付けません（[ADR-0023][adr23] D6）。
+宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
+`contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
+（[ADR-0023][adr23] D6）。リソースが増えるとここも増えます（[ADR-0060][adr60]）。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
 > システムが管理する標準項目の領分なので、ビルダーに用意していません。
@@ -103,7 +104,7 @@ for await (const f of fields) {
 違反すると `PortersConfigError` を投げます。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）は同梱済みなので宣言の対象外です。
-- **リソース名が既知であること** — `candidate` / `job` / `client` / `process` / `resume` のみ。
+- **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume` のみ。
 
 ```ts
 defineFields({ candidate: (f) => ({ score: f.number() }) });
@@ -148,6 +149,7 @@ const clientFor = (partition: number, fields: DefinedFields) =>
 [adr23]: ../adr/0023-custom-field-declaration-dsl.md
 [adr46]: ../adr/0046-guard-error-contract.md
 [adr59]: ../adr/0059-read-field-bare-alias.md
+[adr60]: ../adr/0060-full-resource-coverage-direction.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenancy.md
 [prd]: ../design/requirements.md

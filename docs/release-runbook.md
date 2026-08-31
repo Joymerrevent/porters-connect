@@ -69,7 +69,10 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.10.0**（npm latest・`v0.10.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・2026-08-22）。0.2.0 以降この半自動フローで公開（**全 14 版**）。
+- ✅ 最新公開: **0.11.0**（npm latest・`v0.11.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  7 files / 430.0 kB・2026-08-30）。0.2.0 以降この半自動フローで公開（**全 15 版**）。
+  **0.11.0 は `pnpm changeset:version` が実際に動いた最初のリリース**（下記の復旧以降で初。
+  0.7.0〜0.10.0 の版 bump は手作業だった）。
 - ✅ **`pnpm changeset:version` は復旧済み**（**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**・2026-08-23）。
   原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が

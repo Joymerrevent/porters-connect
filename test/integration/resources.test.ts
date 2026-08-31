@@ -57,6 +57,152 @@ describe("data resources round-trip", () => {
     expect(client?.P_Name).toBe("株式会社ABC（旧XYZ）");
   });
 
+  it("creates a Recruiter against a Client and expands the reference", async () => {
+    const { porters } = setup();
+    const clientId = await porters.tenant(1).client.create({
+      P_Owner: 5,
+      P_Name: "株式会社ABC",
+    });
+
+    const id = await porters.tenant(1).recruiter.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "採用 太郎",
+      P_Division: "人事部",
+    });
+
+    const plain = await porters.tenant(1).recruiter.get(id);
+    expect(plain?.P_Name).toBe("採用 太郎");
+    expect(plain?.P_Client).toBe(clientId); // un-expanded reference reads as the id
+
+    // ADR-0058: expanding P_Client reaches the Client catalog in one round trip.
+    const expanded = await porters
+      .tenant(1)
+      .recruiter.get(id, { expand: { P_Client: ["P_Name"] } });
+    expect(expanded?.P_Client).toEqual({ P_Name: "株式会社ABC" });
+  });
+
+  it("creates a Contact against a Client (same shape as Recruiter, own table)", async () => {
+    const { fake, porters } = setup();
+    const clientId = await porters.tenant(1).client.create({
+      P_Owner: 5,
+      P_Name: "株式会社ABC",
+    });
+
+    const id = await porters.tenant(1).contact.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "問合 花子",
+    });
+
+    const contact = await porters.tenant(1).contact.get(id);
+    expect(contact?.P_Name).toBe("問合 花子");
+    expect(contact?.P_Client).toBe(clientId);
+    // Identical field list, but a separate table — a Contact is not findable as a Recruiter.
+    expect(fake.control.records("recruiter")).toHaveLength(0);
+  });
+
+  it("creates an Opportunity against a Client + Recruiter", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+    const recruiterId = await porters.tenant(1).recruiter.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Name: "採用 太郎",
+    });
+
+    const id = await porters.tenant(1).opportunity.create({
+      P_Owner: 5,
+      P_Client: clientId,
+      P_Recruiter: recruiterId,
+      P_Position: "TypeScript エンジニア",
+    });
+
+    const opportunity = await porters.tenant(1).opportunity.get(id, {
+      expand: { P_Recruiter: ["P_Name"] },
+    });
+    expect(opportunity?.P_Position).toBe("TypeScript エンジニア");
+    expect(opportunity?.P_Client).toBe(clientId); // not expanded -> id
+    expect(opportunity?.P_Recruiter).toEqual({ P_Name: "採用 太郎" });
+  });
+
+  it("creates an Activity pointing at a Candidate through P_Resource / P_ResourceId", async () => {
+    const { porters } = setup();
+    const candidateId = await porters
+      .tenant(1)
+      .candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+
+    const id = await porters.tenant(1).activity.create({
+      P_Owner: 5,
+      P_Title: "一次面談",
+      P_Resource: 1, // Resource List: Candidate
+      P_ResourceId: candidateId,
+    });
+
+    const activity = await porters.tenant(1).activity.get(id);
+    expect(activity?.P_Title).toBe("一次面談");
+    // The pair is what identifies the target; the library does not resolve it for you.
+    expect(activity?.P_Resource).toBe(1);
+    expect(activity?.P_ResourceId).toBe(candidateId);
+  });
+
+  it("creates a Contract against a Client (no owner field on this resource)", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+
+    const id = await porters.tenant(1).contract.create({
+      P_Client: clientId,
+      P_Name: "基本契約",
+      P_ContingentFee: 500000, // Currency -> Number
+    });
+
+    const contract = await porters.tenant(1).contract.get(id);
+    expect(contract?.P_Name).toBe("基本契約");
+    expect(contract?.P_ContingentFee).toBe(500000);
+    expect(contract?.P_Client).toBe(clientId);
+  });
+
+  it("creates a Sales with only P_Owner — the six references are conditional", async () => {
+    const { porters } = setup();
+
+    // PORTERS validates the dependency chain server-side; the library does not pre-judge it
+    // (docs/guide/write-constraints.md). A minimal Sales is accepted here.
+    const id = await porters.tenant(1).sales.create({
+      P_Owner: 5,
+      P_SalesAmount: 1200000,
+    });
+
+    const sales = await porters.tenant(1).sales.get(id);
+    expect(sales?.P_SalesAmount).toBe(1200000); // Currency -> Number
+    expect(sales?.P_Client).toBeNull(); // unset reference reads as null
+  });
+
+  it("records a Phase against a Client through of(name)", async () => {
+    const { porters } = setup();
+    const clientId = await porters
+      .tenant(1)
+      .client.create({ P_Owner: 5, P_Name: "株式会社ABC" });
+    const phases = porters.tenant(1).phase.of("client");
+
+    // `Resource` and `Id` are supplied by the accessor / library — only ResourceId is ours.
+    const id = await phases.create({
+      ResourceId: clientId,
+      Memo: "初回接触",
+      Date: "2026-08-30T03:04:05Z",
+    });
+
+    const entry = await phases.get(id);
+    expect(entry?.Id).toBe(id);
+    expect(entry?.Resource).toBe(5); // Resource List: Client
+    expect(entry?.ResourceId).toBe(clientId);
+    expect(entry?.Memo).toBe("初回接触");
+    expect(entry?.Date).toBe("2026-08-30T03:04:05Z"); // DateTime round-trips as ISO
+  });
+
   it("creates a Resume against a Candidate", async () => {
     const { porters } = setup();
     const candidateId = await porters.tenant(1).candidate.create({

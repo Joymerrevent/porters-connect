@@ -105,13 +105,23 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 **展開できる項目は決まっています**。参照先のリソースをライブラリが実装している必要があるためで、
 書けないものは型エラーになります。
 
-| リソース  | 展開できる                                        | 展開できない  |
-| --------- | ------------------------------------------------- | ------------- |
-| `job`     | `P_Client`                                        | `P_Recruiter` |
-| `process` | `P_Client` / `P_Job` / `P_Candidate` / `P_Resume` | `P_Recruiter` |
-| `resume`  | `P_Candidate`                                     | —             |
+| リソース      | 展開できる                                                                       |
+| ------------- | -------------------------------------------------------------------------------- |
+| `job`         | `P_Client` / `P_Recruiter`                                                       |
+| `client`      | —（参照型の項目を持ちません）                                                    |
+| `recruiter`   | `P_Client`                                                                       |
+| `contact`     | `P_Client`                                                                       |
+| `opportunity` | `P_Client` / `P_Recruiter`                                                       |
+| `contract`    | `P_Client`                                                                       |
+| `sales`       | `P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume` |
+| `process`     | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume`                |
+| `resume`      | `P_Candidate`                                                                    |
+| `phase`       | —（参照型の項目を持ちません）                                                    |
 
-- **Recruiter は未実装リソース**なので参照先のカタログがありません（従来どおり ID として読めます）。
+- **`Activity.P_ResourceId` は展開できません**。参照先が `P_Resource`（Resource List の数値 ID）で
+  実行時に決まるため、どのカタログで読むかを型では決められないからです。ID として読めるので、
+  `P_Resource` を見て対応するアクセサから取得してください。
+- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で束ねます。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
   （[ADR-0023][adr23] で宣言できるようになるまでの穴）。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません

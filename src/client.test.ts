@@ -226,6 +226,167 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
   });
 });
 
+describe("PortersClient + recruiter (E2E, mock transport)", () => {
+  it("exposes a recruiter accessor; decodes its P_Client reference to an id", async () => {
+    const recruiterXml =
+      `<Recruiter Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Recruiter.P_Id>55</Recruiter.P_Id>` +
+      `<Recruiter.P_Client><Client><Client.P_Id>33</Client.P_Id></Client></Recruiter.P_Client>` +
+      `</Item></Recruiter>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: recruiterXml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).recruiter.search();
+    expect(page.items[0]?.P_Id).toBe(55); // Id -> number
+    expect(page.items[0]?.P_Client).toBe(33); // System[Reference] -> id, via the client
+    expect(calls[0]?.url).toContain("/v1/recruiter?");
+  });
+});
+
+describe("PortersClient + contact (E2E, mock transport)", () => {
+  it("exposes a contact accessor; routes to /v1/contact", async () => {
+    const contactXml =
+      `<Contact Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Contact.P_Id>66</Contact.P_Id>` +
+      `<Contact.P_Name>問合 花子</Contact.P_Name>` +
+      `</Item></Contact>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: contactXml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).contact.search();
+    expect(page.items[0]?.P_Id).toBe(66);
+    expect(page.items[0]?.P_Name).toBe("問合 花子");
+    // Contact and Recruiter share a field list; the prefix/path is what keeps them apart.
+    expect(calls[0]?.url).toContain("/v1/contact?");
+  });
+});
+
+describe("PortersClient + opportunity (E2E, mock transport)", () => {
+  it("exposes an opportunity accessor; routes to /v1/opportunity", async () => {
+    const xml =
+      `<Opportunity Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Opportunity.P_Id>88</Opportunity.P_Id>` +
+      `</Item></Opportunity>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).opportunity.search();
+    expect(page.items[0]?.P_Id).toBe(88);
+    expect(calls[0]?.url).toContain("/v1/opportunity?");
+  });
+});
+
+describe("PortersClient + activity (E2E, mock transport)", () => {
+  it("exposes an activity accessor; routes to /v1/activity", async () => {
+    const xml =
+      `<Activity Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Activity.P_Id>99</Activity.P_Id>` +
+      `<Activity.P_Resource>5</Activity.P_Resource>` +
+      `</Item></Activity>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).activity.search();
+    expect(page.items[0]?.P_Id).toBe(99);
+    expect(page.items[0]?.P_Resource).toBe(5); // Resource List: Client
+    expect(calls[0]?.url).toContain("/v1/activity?");
+  });
+});
+
+describe("PortersClient + contract (E2E, mock transport)", () => {
+  it("exposes a contract accessor; routes to /v1/contract", async () => {
+    const xml =
+      `<Contract Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Contract.P_Id>101</Contract.P_Id>` +
+      `<Contract.P_ContingentFee>500000</Contract.P_ContingentFee>` +
+      `</Item></Contract>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).contract.search();
+    expect(page.items[0]?.P_Id).toBe(101);
+    expect(page.items[0]?.P_ContingentFee).toBe(500000); // Currency reads as a number
+    expect(calls[0]?.url).toContain("/v1/contract?");
+  });
+});
+
+describe("PortersClient + phase (E2E, mock transport)", () => {
+  it("exposes a phase accessor bound through of(name)", async () => {
+    const xml =
+      `<Phase Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<Id>10014</Id><Resource>5</Resource><ResourceId>20001</ResourceId>` +
+      `</Item></Phase>`;
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        return Promise.resolve({ status: 200, body: xml });
+      },
+    };
+    const client = new PortersClient({
+      host: "example.test",
+      transport,
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+    const page = await client.tenant(999).phase.of("client").search();
+    expect(page.items[0]?.Id).toBe(10014); // bare `Id`, no prefix
+    expect(page.items[0]?.ResourceId).toBe(20001);
+    expect(calls[0]?.url).toContain("/v1/phase?");
+    expect(calls[0]?.url).toContain("resource=5"); // the binding travels as its own param
+  });
+});
+
 describe("PortersClient + process (E2E, mock transport)", () => {
   it("exposes a process accessor; decodes a System[Reference] to an id", async () => {
     const processXml =

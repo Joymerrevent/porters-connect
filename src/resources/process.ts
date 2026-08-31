@@ -27,6 +27,7 @@ import {
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 import { CLIENT_DESCRIPTOR } from "./client";
 import { JOB_DESCRIPTOR } from "./job";
+import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
 
 const FIELDS = {
@@ -65,11 +66,11 @@ const REQUIRED_ON_CREATE = [
   "P_Resume",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
-// Expandable reference fields (ADR-0058). `P_Recruiter` is left out: Recruiter is not an
-// implemented resource, so there is no catalog to decode its fields with — it still reads as the
-// referenced id. Candidate's alias prefix is `Person`, which the descriptor carries.
+// Expandable reference fields (ADR-0058) — every System[Reference] Process carries.
+// Candidate's alias prefix is `Person`, which the descriptor carries.
 const REFERENCES = {
   P_Client: CLIENT_DESCRIPTOR,
+  P_Recruiter: RECRUITER_DESCRIPTOR,
   P_Job: JOB_DESCRIPTOR,
   P_Candidate: CANDIDATE_DESCRIPTOR,
   P_Resume: RESUME_DESCRIPTOR,

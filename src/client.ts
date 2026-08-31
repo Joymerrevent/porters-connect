@@ -23,6 +23,13 @@ import {
   createOptionResource,
   createPartitionResource,
   createProcessResource,
+  createContactResource,
+  createActivityResource,
+  createContractResource,
+  createPhaseAccessor,
+  createSalesResource,
+  createOpportunityResource,
+  createRecruiterResource,
   createResumeResource,
   createUserResource,
 } from "./resources";
@@ -35,6 +42,13 @@ import type {
   OptionResource,
   PartitionResource,
   ProcessResource,
+  ContactResource,
+  ActivityResource,
+  ContractResource,
+  PhaseAccessor,
+  SalesResource,
+  OpportunityResource,
+  RecruiterResource,
   ResumeResource,
   UserResource,
 } from "./resources";
@@ -90,6 +104,17 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
   readonly job: JobResource<CustomFor<C, "job">>;
   readonly client: ClientResource<CustomFor<C, "client">>;
+  readonly recruiter: RecruiterResource<CustomFor<C, "recruiter">>;
+  readonly contact: ContactResource<CustomFor<C, "contact">>;
+  readonly opportunity: OpportunityResource<CustomFor<C, "opportunity">>;
+  readonly activity: ActivityResource<CustomFor<C, "activity">>;
+  readonly contract: ContractResource<CustomFor<C, "contract">>;
+  readonly sales: SalesResource<CustomFor<C, "sales">>;
+  /**
+   * Phase history, reached through the resource it belongs to: `t.phase.of("client")`.
+   * PORTERS requires that `resource` on every Phase call, so it is bound once (ADR-0061 案2a).
+   */
+  readonly phase: PhaseAccessor;
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
@@ -198,6 +223,13 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         candidate: createCandidateResource(deps, customFor("candidate")),
         job: createJobResource(deps, customFor("job")),
         client: createClientResource(deps, customFor("client")),
+        recruiter: createRecruiterResource(deps, customFor("recruiter")),
+        contact: createContactResource(deps, customFor("contact")),
+        opportunity: createOpportunityResource(deps, customFor("opportunity")),
+        activity: createActivityResource(deps, customFor("activity")),
+        contract: createContractResource(deps, customFor("contract")),
+        sales: createSalesResource(deps, customFor("sales")),
+        phase: createPhaseAccessor(deps),
         process: createProcessResource(deps, customFor("process")),
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentResource(deps),

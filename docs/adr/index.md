@@ -44,7 +44,7 @@
 | [0030][0030] | back-merge 方式の改訂（ADR-0029 案F）                            | プロセス | accepted   | —     |
 | [0031][0031] | リリース版番号の自動検証（semver・単調増加）                     | プロセス | accepted   | 0.2.1 |
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）       | プロセス | accepted   | 0.2.1 |
-| [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                           | 要件定義 | accepted   | —     |
+| [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                           | 要件定義 | superseded | —     |
 | [0034][0034] | OAuth 公開 API porters.auth.\* の詳細設計（F-1）                 | 詳細設計 | accepted   | 0.3.0 |
 | [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）        | プロセス | accepted   | —     |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）       | 詳細設計 | accepted   | —     |
@@ -71,6 +71,8 @@
 | [0057][0057] | `itemstate: "existing"` の明示指定を送るか（0038 SD-4 の amend） | 詳細設計 | accepted   | —     |
 | [0058][0058] | `System[Reference]` を展開して読むときの扱い（RV-31）            | 基本設計 | accepted   | —     |
 | [0059][0059] | Read の `field` を接頭辞なしの alias で受ける                    | 基本設計 | accepted   | —     |
+| [0060][0060] | 次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変える         | 要件定義 | accepted   | —     |
+| [0061][0061] | Phase の公開サーフェス（接頭辞なし・resource 必須）              | 詳細設計 | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -133,3 +135,5 @@
 [0057]: 0057-itemstate-existing-explicit.md
 [0058]: 0058-reference-expansion-read.md
 [0059]: 0059-read-field-bare-alias.md
+[0060]: 0060-full-resource-coverage-direction.md
+[0061]: 0061-phase-resource-surface.md

@@ -20,8 +20,15 @@ import { describe, expect, it } from "vitest";
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { CLIENT_DESCRIPTOR } from "../../src/resources/client";
 import { JOB_DESCRIPTOR } from "../../src/resources/job";
+import { PHASE_DESCRIPTOR } from "../../src/resources/phase";
 import { PROCESS_DESCRIPTOR } from "../../src/resources/process";
+import { ACTIVITY_DESCRIPTOR } from "../../src/resources/activity";
+import { CONTACT_DESCRIPTOR } from "../../src/resources/contact";
+import { CONTRACT_DESCRIPTOR } from "../../src/resources/contract";
+import { OPPORTUNITY_DESCRIPTOR } from "../../src/resources/opportunity";
+import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
+import { SALES_DESCRIPTOR } from "../../src/resources/sales";
 import type { ResourceDescriptor } from "../../src/resources/resource";
 import type { DataType } from "../../src/xml/decode";
 
@@ -33,6 +40,7 @@ const DATA_TYPE_OF: Record<string, DataType | null> = {
   "System[Id]": "System[Id]",
   "System[DateTime]": "System[DateTime]",
   "System[Reference]": "System[Reference]",
+  "System[Department]": "System[Department]",
   User: "User",
   "Option[Checkbox]": "Option",
   "Option[Dropdown]": "Option",
@@ -58,16 +66,22 @@ const NOT_IN_CATALOG = new Set(["Reference"]);
 
 type RefField = { alias: string; fieldType: string };
 
-/** reference の項目表から `{Prefix}.P_Xxx` の行を拾う（alias と Field Type 列だけ使う）。 */
+// 接頭辞なしのリソース（Phase）は alias が素（`| Id | …`）。見出し行 `| Alias` と罫線 `| ---` を除く。
+const BARE_ALIAS_ROW = /^\| ([A-Za-z][A-Za-z0-9_]*) +\|/;
+
+/** reference の項目表から項目行を拾う（alias と Field Type 列だけ使う）。 */
 const readReferenceFields = (path: string, prefix: string): RefField[] => {
   const rows: RefField[] = [];
   for (const line of readFileSync(path, "utf8").split("\n")) {
-    if (!line.startsWith(`| ${prefix}.P_`)) continue;
+    if (prefix === "") {
+      const m = BARE_ALIAS_ROW.exec(line);
+      if (!m || m[1] === "Alias") continue;
+    } else if (!line.startsWith(`| ${prefix}.P_`)) continue;
     const cells = line
       .split("|")
       .slice(1, -1)
       .map((c) => c.trim());
-    const alias = cells[0]?.slice(prefix.length + 1);
+    const alias = prefix === "" ? cells[0] : cells[0]?.slice(prefix.length + 1);
     const fieldType = cells[2];
     if (alias === undefined || fieldType === undefined) continue;
     rows.push({ alias, fieldType });
@@ -79,6 +93,13 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: CANDIDATE_DESCRIPTOR, doc: "candidate" },
   { descriptor: JOB_DESCRIPTOR, doc: "job" },
   { descriptor: CLIENT_DESCRIPTOR, doc: "client" },
+  { descriptor: RECRUITER_DESCRIPTOR, doc: "recruiter" },
+  { descriptor: CONTACT_DESCRIPTOR, doc: "contact" },
+  { descriptor: OPPORTUNITY_DESCRIPTOR, doc: "opportunity" },
+  { descriptor: ACTIVITY_DESCRIPTOR, doc: "activity" },
+  { descriptor: CONTRACT_DESCRIPTOR, doc: "contract" },
+  { descriptor: SALES_DESCRIPTOR, doc: "sales" },
+  { descriptor: PHASE_DESCRIPTOR, doc: "phase" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
 ];
@@ -124,10 +145,14 @@ describe.each(TARGETS)(
       expect(mismatched).toEqual([]);
     });
 
-    it("削除フラグは型を持たない項目としてカタログにある（RV-26 / ADR-0056）", () => {
-      // 「型が無い」ことの記録が消える／`Number` 等に化けるのを防ぐ。値は持つので除外もしない。
-      expect("P_Deleted" in catalog).toBe(true);
-      expect(catalog.P_Deleted).toBeNull();
+    it("削除フラグの有無が reference と一致する（RV-26 / ADR-0056）", () => {
+      // 持っているなら「型が無い」ことの記録が消える／`Number` 等に化けるのを防ぐ
+      // （値は持つので除外もしない）。持っていないなら**こちらも持たない** — Opportunity は
+      // PORTERS が P_Deleted を公表していない唯一のデータ系リソースで、揃えたくなる誘惑がある。
+      // 無いものを足すのは「持っていない情報を発明する」ことなので、両方向で固定する。
+      const inReference = fields.some((f) => f.alias === "P_Deleted");
+      expect("P_Deleted" in catalog).toBe(inReference);
+      if (inReference) expect(catalog.P_Deleted).toBeNull();
     });
   },
 );

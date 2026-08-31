@@ -5,6 +5,78 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-31
+
+**PORTERS の全リソースに対応した版**です。データ系は 6/13 から **13/13** になり、
+マスタ Read 4 種と合わせて**残らず触れる**ようになりました（[ADR-0060][adr60]）。
+破壊的変更はありません — 既存のアクセサと型はそのままで、増えたぶんだけ足されています。
+
+### Added
+
+- **Recruiter リソース**（企業担当者）の Read / Write。他のデータ系リソースと同じアクセサです。
+  次の主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）の 1 本目で、
+  未対応は Contact / Activity / Contract / Sales / Opportunity / Phase の 6 種になりました。
+
+  ```ts
+  const id = await t.recruiter.create({
+    P_Owner: 5,
+    P_Client: 20001, // 新規必須（所属する企業）
+    P_Name: "採用 太郎",
+  });
+  const r = await t.recruiter.get(id, { expand: { P_Client: ["P_Name"] } });
+  ```
+
+  - カスタム項目（`U_` / `A_`）も `defineFields({ recruiter: … })` で宣言できます。
+  - `P_MobileMail` の Data Type は **`Telephone`** です（Candidate は `Mail`）。
+    リソース間で食い違いますが、PORTERS の Field List 記事どおりに写しています。
+
+- **Contact リソース**（コンタクト）の Read / Write。**Recruiter と項目構成が同一**ですが、
+  PORTERS が役割で分けている別リソースなので、テーブルもカタログも独立しています。
+- **Contract リソース**（契約）の Read / Write。**このリソースだけ `P_Owner` がありません**（PORTERS が
+  公表していないため）。`create` に必要なのは `P_Client` だけです。`Currency` の項目
+  （`P_AdvancePayment` / `P_ContingentFee` / `P_ContractorFee`）は **Data Type が `Number`** なので
+  数値として読み書きします。
+- **Activity リソース**（アクティビティ）の Read / Write。`P_Resource`（Resource List の数値 ID）と
+  `P_ResourceId` の組で**任意の上位リソースに紐づきます**。参照先が実行時に決まるため
+  `P_ResourceId` は `expand` の対象外で、**参照先の ID として読めます**（どのリソースを指していても同じ）。
+- **Opportunity リソース**（商談管理）の Read / Write。`P_Client` / `P_Recruiter` の両方を
+  `expand` できます。**このリソースだけ `P_Deleted` がありません** — PORTERS が公表していないため、
+  こちらも持たせていません（無いものを足さない）。
+
+- **Sales リソース**（成約・売上）の Read / Write。**参照 6 項目すべてを `expand` できます**
+  （Client / Recruiter / Job / Contract / Candidate / Resume）。
+  `create` の必須は **`P_Owner` のみ**です — 参照 6 項目はリファレンスで `※`（条件付き必須）とされ、
+  実際は依存の連鎖（`P_Job` → `P_Recruiter` → `P_Client` ← `P_Contract`）なので、
+  **ライブラリは手前で弾かず PORTERS の判定に委ねます**（詳細は新しい[書き込みの制約ガイド][write-constraints]）。
+- **書き込みの制約ガイド**を追加しました。**ライブラリが送信前に弾くもの**と
+  **PORTERS に委ねるもの**の境界、リソースごとの新規必須項目の一覧をまとめています。
+
+- **Phase リソース**（フェーズ履歴）の Read / Write。**これで PORTERS の全リソースに対応**しました
+  （マスタ Read 4 種 ＋ データ系 13 種）。Phase だけは**対象リソースを束ねてから**使います
+  （[ADR-0061][adr61]）。
+
+  ```ts
+  const phases = t.phase.of("client"); // 対象は名前で指定（`of(5)` ではない）
+  await phases.search({ condition: { ResourceId: { eq: 20001 } } });
+  await phases.create({ ResourceId: 20001, Memo: "初回接触" });
+  ```
+
+  - **どのリソースのフェーズ履歴かを PORTERS が必ず要求する**ので、`of(...)` で 1 度だけ指定します。
+    以降は他のリソースと同じ書き方で、指定漏れは**型として起こりえません**。
+  - 名前はアクセサと同じ綴りです。綴り間違いや、PORTERS が ID を持たないリソース（`"phase"` など）は
+    **コンパイルエラー**になります。
+  - Phase の項目は**接頭辞も `P_` も付きません**（`Id` / `Resource` / `Date` / `Memo` …）。
+    主キーも `Id` です。カスタム項目と削除フラグは持ちません。
+
+- **データ型 `System[Department]`** に対応しました（`Phase.OwnerDepartment` ほか）。
+  `User` と同じ形の `DepartmentRef`（`P_Id` / `P_Name`）で読めます。
+  **書き込みは提供しません** — PORTERS が書ける形を公表していないため、推測した形を送りません。
+
+### Changed
+
+- **`Job.P_Recruiter` / `Process.P_Recruiter` を `expand` できる**ようになりました。
+  参照先の Recruiter カタログが揃ったためです。展開しなければ従来どおり ID が返ります（挙動は不変）。
+
 ## [0.11.0] - 2026-08-30
 
 **参照先の項目を 1 往復で読めるようにし、`field` の語彙をクエリ全体と揃えた版**です。
@@ -437,10 +509,14 @@
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
 [adr58]: docs/adr/0058-reference-expansion-read.md
 [adr59]: docs/adr/0059-read-field-bare-alias.md
+[adr60]: docs/adr/0060-full-resource-coverage-direction.md
+[adr61]: docs/adr/0061-phase-resource-surface.md
+[write-constraints]: docs/guide/write-constraints.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.8.0...v0.9.0

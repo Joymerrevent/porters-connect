@@ -89,8 +89,8 @@ describe("fake transport routing", () => {
 
   it("refuses to seed a resource it cannot serve", () => {
     expect(() =>
-      createFakeTransport({ seed: { recruiter: [{ P_Name: "x" }] } }),
-    ).toThrow(/cannot seed unknown resource "recruiter"/);
+      createFakeTransport({ seed: { nonesuch: [{ Memo: "x" }] } }),
+    ).toThrow(/cannot seed unknown resource "nonesuch"/);
   });
 });
 
