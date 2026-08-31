@@ -46,7 +46,7 @@
 | [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed | reference ↔ カタログの突合が自動化されていない                    |
 | [RV-30][rv30] | 🟢     | 型安全 / 公開サーフェス     | fixed | 公開ジェネリクスの制約型が未 export                               |
 | [RV-31][rv31] | 🟡     | API 忠実性 / 型安全         | fixed | System[Reference] を展開して要求しても ID 以外が捨てられる        |
-| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | open  | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
+| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | fixed | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
 | [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ   | open  | back-merge が develop の保護ルールをバイパスして通る              |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。

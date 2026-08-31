@@ -1,7 +1,7 @@
 # RV-32 🟢 `searchAll` に渡したクエリを反復中に書き換えると、次ページ以降の要求が変わる
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -90,6 +90,34 @@ rejection として届く。これを `searchAll` の**呼び出し時点**へ�
 
 どの案を採るにせよ、**マスタ Read（`field` / `partition` / `user`）も同じ形**なので、
 直すならまとめて揃える。
+
+## 処置
+
+**(a) を実施**（2026-08-31）。挙動の決定を持ち込まないので ADR は起こしていない
+（JSDoc が既に約束していた「渡したクエリの全件」に実装を合わせただけ）。
+
+- **`read-core` に 2 つ足した**。`readUrlOf` は**ページングを含まない `URLSearchParams`** を受け取り、
+  その複製に `count` / `start` だけを足して URL にする。`paginateOnce` は `paginate` と同じ walk だが、
+  **ページ取得器を generator の中で 1 度だけ組む**。
+- 各リソースの URL 組み立てを**「クエリ → ページング抜きの params」**に切り出した
+  （`resource.ts` の `buildReadParams` ／ `field` / `partition` / `user` の `buildParams`）。
+  `buildReadUrl` は `buildReadParams` ＋ `readUrlOf` の 1 ページ版として残してある。
+- `searchAll` が保持するのは**直列化した params と decoder**であって、呼び出し側のオブジェクトではない。
+  よって**入れ子の書き換え**（`q.condition.P_Name.part = …`）も後続ページに届かない
+  ＝ 案(c) の落とし穴を踏まない。
+- **エラーのタイミングは変えていない**。直列化は generator の中＝最初のページを取る直前に走るので、
+  送信前ガードの失敗は従来どおり**最初の反復の rejection** として届く（[ADR-0046][adr46]）。
+  この 2 点（1 度しか組まない／`searchAll(...)` を呼んだ時点では走らない）は
+  `read-core.test.ts` で固定した。
+- 副次的に、**ページごとの再直列化と decoder 生成が消えた**（2 ページ目以降がわずかに軽い）。
+
+対象は data 系の全リソース（`resource.ts`）とマスタ 3 種。`attachment` / `option` は
+`searchAll` を持たないため対象外。書き換えが後続ページに届かないことは 4 箇所すべてで
+テストを足して固定した（789 tests・coverage は perFile 100%）。
+
+> 起票時の行番号は 0.12.0 時点で既にずれていた（`resource.ts:310` → 341 ／
+> `read-core.ts:236-249` → 237-249）。本処置で該当箇所は書き換わったので、
+> 現在地は `searchAll` / `paginateOnce` の名前で辿ること。
 
 [adr46]: ../../adr/0046-guard-error-contract.md
 [adr61]: ../../adr/0061-phase-resource-surface.md
