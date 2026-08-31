@@ -73,6 +73,7 @@
 | [0059][0059] | Read の `field` を接頭辞なしの alias で受ける                    | 基本設計 | accepted   | —     |
 | [0060][0060] | 次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変える         | 要件定義 | accepted   | —     |
 | [0061][0061] | Phase の公開サーフェス（接頭辞なし・resource 必須）              | 詳細設計 | accepted   | —     |
+| [0063][0063] | 冪等性ガードを「送信済みで結果が不明」に限定する                 | 詳細設計 | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -137,3 +138,4 @@
 [0059]: 0059-read-field-bare-alias.md
 [0060]: 0060-full-resource-coverage-direction.md
 [0061]: 0061-phase-resource-surface.md
+[0063]: 0063-idempotency-guard-scope.md
