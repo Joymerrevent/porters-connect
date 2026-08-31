@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import { createUserResource } from "./user";
+import { createUserResource, type UserSearchQuery } from "./user";
 
 // Fixture from the canonical User Read sample (115012160288).
 const TWO =
@@ -100,5 +100,29 @@ describe("createUserResource", () => {
     expect(items.map((u) => u.P_Id)).toEqual([1, 2, 3]);
     expect(calls[0].req.url).toContain("count=200");
     expect(calls[1].req.url).toContain("start=2");
+  });
+
+  it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
+    const calls: Call[] = [];
+    const r = createUserResource({
+      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      accessPoint: { host: "h.test" },
+      partition: 12,
+    });
+    const query: Omit<UserSearchQuery, "count" | "start"> = {
+      userType: 1,
+      field: ["P_Name"],
+    };
+    for await (const item of r.searchAll(query)) {
+      expect(item.P_Id).toBeGreaterThan(0);
+      query.userType = 0;
+      query.field?.push("P_Type"); // 入れ子（配列）だけの書き換えも効かない
+    }
+    expect(calls).toHaveLength(2);
+    for (const c of calls) {
+      const p = new URL(c.req.url).searchParams;
+      expect(p.get("user_type")).toBe("1");
+      expect(p.get("field")).toBe("User.P_Name");
+    }
   });
 });

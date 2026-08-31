@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import { createPartitionResource } from "./partition";
+import {
+  createPartitionResource,
+  type PartitionSearchQuery,
+} from "./partition";
 
 // Fixture from the canonical Partition Read sample (115012006227).
 const ONE =
@@ -72,5 +75,23 @@ describe("createPartitionResource", () => {
     expect(calls[0].req.url).toContain("count=200");
     expect(calls[0].req.url).toContain("start=0");
     expect(calls[1].req.url).toContain("start=2");
+  });
+
+  it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
+    const calls: Call[] = [];
+    const r = createPartitionResource({
+      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      accessPoint: { host: "h.test" },
+    });
+    const query: Omit<PartitionSearchQuery, "count" | "start"> = {
+      requestType: 1,
+    };
+    for await (const item of r.searchAll(query)) {
+      expect(item.P_Id).toBeGreaterThan(0);
+      query.requestType = 0;
+    }
+    expect(calls).toHaveLength(2);
+    for (const c of calls)
+      expect(new URL(c.req.url).searchParams.get("request_type")).toBe("1");
   });
 });
