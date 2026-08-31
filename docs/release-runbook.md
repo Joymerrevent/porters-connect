@@ -69,10 +69,15 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.11.0**（npm latest・`v0.11.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  7 files / 430.0 kB・2026-08-30）。0.2.0 以降この半自動フローで公開（**全 15 版**）。
-  **0.11.0 は `pnpm changeset:version` が実際に動いた最初のリリース**（下記の復旧以降で初。
-  0.7.0〜0.10.0 の版 bump は手作業だった）。
+- ✅ 最新公開: **0.12.0**（npm latest・`v0.12.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  7 files / 553.4 kB・2026-08-31）。0.2.0 以降この半自動フローで公開（**全 16 版**）。
+  changeset **7 枚**を消費した通常リリースで、`pnpm changeset:version` は問題なく動いた
+  （復旧後 2 回目。0.7.0〜0.10.0 の版 bump は手作業だった）。
+- ⚠️ **back-merge が保護ルールをバイパスして通る**（0.12.0 で判明）。本書 §2 の
+  `git checkout develop && git merge origin/main && git push` は、`develop` の
+  「Changes must be made through a pull request」「Required status check」を**bypass した**という
+  警告つきで成功する（管理者権限のため）。**手順としてはこれで通るが、保護を素通りしている**。
+  PR 経由に変えるか、back-merge を明示的に例外扱いするかは未決 — [findings][findings] に起票する。
 - ✅ **`pnpm changeset:version` は復旧済み**（**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**・2026-08-23）。
   原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
@@ -153,3 +158,4 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
 [cl]: ../CHANGELOG.md
+[findings]: reviews/findings.md

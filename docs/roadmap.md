@@ -83,7 +83,10 @@
   今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
 - **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
   429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
-- **0.11.0 を公開済み**（2026-08-30）。**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
+- **0.12.0 を公開済み**（2026-08-31）。**PORTERS の全リソースに対応**した版（データ系 6/13 → 13/13）で、
+  **破壊的変更は無い**。追加は Recruiter / Contact / Opportunity / Activity / Contract / Sales / Phase の 7 種と
+  データ型 `System[Department]`（[ADR-0060][adr60] D1 完了・[ADR-0061][adr61]）。
+- ひとつ前の 0.11.0（2026-08-30）は**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
   併せて **`expand` で参照先の項目が 1 往復で取れる**ようになった（[ADR-0058][adr58]・RV-31）。
   ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
   **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
@@ -118,7 +121,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                 | いまの状態                               |
 | ----------------------------- | -------------------------------------------- | ---------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能＝[ADR-0060][adr60] D1 の 1 本目 |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-32     |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 3 件 = RV-22 / RV-32 / RV-33        |
 | [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ちは 0060・0061 |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜17 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
@@ -234,8 +237,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - ADR 0001〜0061 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**762 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
-  RV-22（契約待ち）と RV-32（`searchAll` のクエリ書き換え）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+- 品質ゲート green・**762 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 3 件**＝
+  RV-22（契約待ち）・RV-32（`searchAll` のクエリ書き換え）・RV-33（back-merge の保護バイパス）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 - **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。
@@ -255,8 +258,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.11.0`**（npm latest・2026-08-30 にレジストリで確認）。**全 15 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.12.0`**（npm latest・2026-08-31 にレジストリで確認）。**全 16 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -288,6 +291,11 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **`changeset:version` が実際に動いた最初のリリース**（下記の修復以降で初）。
       準備中に co-located UT の取りこぼし 2 件（`resources/expand.ts` / `auth/token-exchange.ts`）を
       見つけてリリース PR に含めた（[runbook][rb] §1 の判断軸どおり）
+- [x] **0.12.0 リリース**（2026-08-31）— changeset **7 件**を消費して `0.11.0` → `0.12.0`。
+      `v0.12.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・**7 files / 553.4 kB**）まで完了。
+      **ADR-0060 の D1（全リソース網羅）が世に出た版**。`changeset:version` は問題なく動いた（修復後 2 回目）。
+      準備中の欠陥は無かったが、**back-merge が `develop` の保護ルールをバイパスして通る**ことが
+      push 応答から判明し、[RV-33][findings] として起票した
 - [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
       依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
       `@changesets/config@4.0.0` へ追従
