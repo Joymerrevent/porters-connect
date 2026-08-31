@@ -110,7 +110,9 @@ describe("createFieldResource", () => {
     }
     expect(calls).toHaveLength(2);
     for (const c of calls) {
-      const p = new URL(c.req.url).searchParams;
+      const url = new URL(c.req.url);
+      expect(url.pathname).toBe("/v1/field");
+      const p = url.searchParams;
       expect(p.get("resource")).toBe(String(RESOURCE_VALUE.job));
       expect(p.get("active")).toBe("1");
     }

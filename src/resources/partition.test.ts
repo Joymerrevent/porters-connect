@@ -91,7 +91,10 @@ describe("createPartitionResource", () => {
       query.requestType = 0;
     }
     expect(calls).toHaveLength(2);
-    for (const c of calls)
-      expect(new URL(c.req.url).searchParams.get("request_type")).toBe("1");
+    for (const c of calls) {
+      const url = new URL(c.req.url);
+      expect(url.pathname).toBe("/v1/partition");
+      expect(url.searchParams.get("request_type")).toBe("1");
+    }
   });
 });

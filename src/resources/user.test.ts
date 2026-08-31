@@ -111,18 +111,20 @@ describe("createUserResource", () => {
     });
     const query: Omit<UserSearchQuery, "count" | "start"> = {
       userType: 1,
-      field: ["P_Name"],
+      field: ["P_Name", "P_Type"],
     };
     for await (const item of r.searchAll(query)) {
       expect(item.P_Id).toBeGreaterThan(0);
       query.userType = 0;
-      query.field?.push("P_Type"); // 入れ子（配列）だけの書き換えも効かない
+      query.field?.push("P_Id"); // 入れ子（配列）だけの書き換えも効かない
     }
     expect(calls).toHaveLength(2);
     for (const c of calls) {
-      const p = new URL(c.req.url).searchParams;
+      const url = new URL(c.req.url);
+      expect(url.pathname).toBe("/v1/user"); // ページごとの URL でも宛先は同じ
+      const p = url.searchParams;
       expect(p.get("user_type")).toBe("1");
-      expect(p.get("field")).toBe("User.P_Name");
+      expect(p.get("field")).toBe("User.P_Name,User.P_Type");
     }
   });
 });
