@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import { createFieldResource } from "./field";
+import {
+  createFieldResource,
+  RESOURCE_VALUE,
+  type FieldSearchQuery,
+} from "./field";
 
 // Fixture from the canonical Field Read sample (115012160308): two Job fields — one with an
 // empty P_ReferTo, one whose P_ReferTo nests the referenced option group alias.
@@ -86,5 +90,31 @@ describe("createFieldResource", () => {
     expect(items.map((f) => f.P_Id)).toEqual([1, 2, 3]);
     expect(calls[0].req.url).toContain("count=200");
     expect(calls[1].req.url).toContain("start=2");
+  });
+
+  it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
+    const calls: Call[] = [];
+    const r = createFieldResource({
+      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      accessPoint: { host: "h.test" },
+      partition: 12,
+    });
+    const query: Omit<FieldSearchQuery, "count" | "start"> = {
+      resource: "job",
+      active: 1,
+    };
+    for await (const item of r.searchAll(query)) {
+      expect(item.P_Id).toBeGreaterThan(0);
+      query.resource = "candidate";
+      query.active = 0;
+    }
+    expect(calls).toHaveLength(2);
+    for (const c of calls) {
+      const url = new URL(c.req.url);
+      expect(url.pathname).toBe("/v1/field");
+      const p = url.searchParams;
+      expect(p.get("resource")).toBe(String(RESOURCE_VALUE.job));
+      expect(p.get("active")).toBe("1");
+    }
   });
 });

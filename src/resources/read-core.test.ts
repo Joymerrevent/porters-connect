@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError } from "../errors";
 
 import type { FieldValue } from "../xml/decode";
-import { appendPaging, decoderFor, type FieldCatalog } from "./read-core";
+import {
+  appendPaging,
+  decoderFor,
+  paginateOnce,
+  type FieldCatalog,
+} from "./read-core";
 
 // runRead / paginate are exercised through resource.test.ts and the master tests; here we pin
 // the shared decoder directly, including bareAlias on both prefixed and prefix-less keys.
@@ -81,5 +86,35 @@ describe("read-core — appendPaging（count のガード・RV-28）", () => {
       expect(err.category).toBe("config");
       expect(err.hint).toMatch(/searchAll/);
     }
+  });
+});
+
+describe("read-core — paginateOnce", () => {
+  const drain = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
+    const out: T[] = [];
+    for await (const x of it) out.push(x);
+    return out;
+  };
+
+  it("prepares the fetcher once, and only when the first page is asked for (RV-32)", async () => {
+    let prepared = 0;
+    const pages = [
+      { items: [1, 2], total: 3 },
+      { items: [3], total: 3 },
+    ];
+    const walk = paginateOnce<number>(() => {
+      prepared += 1;
+      return () => Promise.resolve(pages.shift() ?? { items: [], total: 3 });
+    });
+    expect(prepared).toBe(0); // 呼んだだけでは走らない（ジェネレータ）
+    expect(await drain(walk)).toEqual([1, 2, 3]);
+    expect(prepared).toBe(1); // 2 ページ取っても直列化は 1 回
+  });
+
+  it("surfaces a prepare failure as a rejected iteration, not a synchronous throw (ADR-0046)", async () => {
+    const walk = paginateOnce<number>(() => {
+      throw new PortersConfigError("bad query", { category: "config" });
+    });
+    await expect(drain(walk)).rejects.toBeInstanceOf(PortersConfigError);
   });
 });
