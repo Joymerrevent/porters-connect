@@ -5,6 +5,34 @@
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-03
+
+**フェイルセーフの修正 2 件**です。どちらも「黙って壊れる／安全側に倒しすぎている」場面を直したもので、
+**公開 API・型に変更はありません**（既存コードはそのまま動きます）。
+
+### Fixed
+
+- **`searchAll` が「渡したクエリの全件」を必ず返すようになりました**（[RV-32][rv32]）。
+  これまではクエリ オブジェクトへの参照を保持してページごとに読み直していたため、`for await` の反復中に
+  呼び出し側がそのオブジェクトを書き換えると、**同じ 1 回の `searchAll` の途中で検索条件が変わって**いました
+  （例外も警告も出ないまま「全件取ったつもりが途中から別条件の全件」になる）。
+
+  クエリは**最初のページを取る直前に 1 度だけ直列化**し、以降は `count` / `start` だけを差し替えます。
+  入れ子（`q.condition.P_Name.part` など）の書き換えも後続ページに影響しません。クエリ ガード
+  （`keywords` の長さ・`itemstate` の condition 制限など）の失敗が届くタイミングは従来どおりです。
+  対象は全データ系リソースと `field` / `partition` / `user`。
+
+- **適用されていないと分かっている失敗では、`create` / `createMany` が自動リトライされるようになりました**
+  （[ADR-0063][adr63] / [RV-22][rv22]）。非冪等な書き込みを不確定な失敗で再送しない方針（二重登録を作らない）は
+  変わりません。変えたのは「不確定」の判定で、これまでは `PortersNetworkError` かどうかだけを見ていたため、
+  **リクエストが一度も出ていない失敗**まで「適用されたかもしれない」扱いになっていました。
+
+  - **トークン取得に失敗した場合** — 送信前なので再送しても二重登録は起きません。
+  - **HTTP 429** — 処理される前に拒否された応答なので、同じく対象になります
+    （実 PORTERS はレート超過で切断する想定なので、効くのはプロキシ経由の環境です）。
+
+  **送信後の timeout / 切断 / 5xx では、従来どおり再送しません**（適用されたかどうか分からないため）。
+
 ## [0.12.0] - 2026-08-31
 
 **PORTERS の全リソースに対応した版**です。データ系は 6/13 から **13/13** になり、
@@ -511,11 +539,15 @@
 [adr59]: docs/adr/0059-read-field-bare-alias.md
 [adr60]: docs/adr/0060-full-resource-coverage-direction.md
 [adr61]: docs/adr/0061-phase-resource-surface.md
+[adr63]: docs/adr/0063-idempotency-guard-scope.md
+[rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
+[rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
 [write-constraints]: docs/guide/write-constraints.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.9.0...v0.10.0
