@@ -145,6 +145,64 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(n).toBe(1); // sent once, not retried
   });
 
+  // ADR-0063: the guard asks "may this write have applied?", not "is this a network error?".
+  // A token fetch that fails never put the request on the wire, so a replay cannot duplicate.
+  it("retries create after a token fetch failure (the request never left)", async () => {
+    let tokens = 0;
+    let sends = 0;
+    const auth: TokenProvider = {
+      getAccessToken: () => {
+        tokens += 1;
+        return tokens === 1
+          ? Promise.reject(networkErr())
+          : Promise.resolve("TKN");
+      },
+    };
+    const transport: Transport = {
+      send: () => {
+        sends += 1;
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth,
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    expect(
+      await r.request(post, (b) => b, { write: true, idempotent: false }),
+    ).toBe("ok");
+    expect(tokens).toBe(2);
+    expect(sends).toBe(1); // 送信は 1 回だけ＝二重登録の余地は無い
+  });
+
+  // 429 は「処理される前に拒否された」ので、これも適用されていないと分かっている失敗
+  // （VERIFY(live) LV-9: 実 PORTERS は切断する想定で、429 は中間装置由来）。
+  it("retries create after a 429 (refused before it was processed)", async () => {
+    let sends = 0;
+    const transport: Transport = {
+      send: () => {
+        sends += 1;
+        return Promise.resolve(
+          sends === 1 ? { status: 429, body: "" } : { status: 200, body: "ok" },
+        );
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+
+    expect(
+      await r.request(post, (b) => b, { write: true, idempotent: false }),
+    ).toBe("ok");
+    expect(sends).toBe(2); // 429 -> バックオフして再送 -> 成功
+  });
+
   it("gives up after maxRetries on persistent transient errors", async () => {
     let n = 0;
     const transport: Transport = {

@@ -1,6 +1,7 @@
 // Request pipeline (ADR-0009/0010/0012): throttle -> auth header -> transport,
 // with reactive token refresh (401/402) and bounded backoff retry. The
-// idempotency guard keeps non-idempotent writes (create) from double-applying.
+// idempotency guard keeps non-idempotent writes (create) from double-applying —
+// it fires only when the write was actually sent and its outcome is unknown (ADR-0063).
 // The response is read through both error channels — HTTP status and PORTERS
 // envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
@@ -100,11 +101,16 @@ export const createRequester = (o: RequesterOptions): Requester => {
 
     for (;;) {
       await o.throttle.take(write);
+      // Whether *this* attempt reached the wire. The idempotency guard needs "the write may have
+      // applied", not "the error is a network one" (ADR-0063): a token fetch that fails never put
+      // the request on the wire, so replaying it cannot duplicate anything.
+      let sent = false;
       try {
         const token = await o.auth.getAccessToken(
           forceRefresh ? { forceRefresh: true } : undefined,
         );
         forceRefresh = false;
+        sent = true;
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);
       } catch (e) {
@@ -115,8 +121,21 @@ export const createRequester = (o: RequesterOptions): Requester => {
           forceRefresh = true;
           continue;
         }
-        // idempotency guard: non-idempotent write + network-uncertain -> surface.
-        if (e instanceof PortersNetworkError && write && !idempotent) throw e;
+        // idempotency guard (ADR-0010 / ADR-0063): stop a non-idempotent write only when it was
+        // sent *and* the outcome is unknown. Two failures are known not to have applied:
+        //   - `sent === false` — the request never left (token fetch / pre-send failure).
+        //   - `rateLimit` — HTTP 429 means it was refused before being processed.
+        // VERIFY(live): that a 429 is always a pre-processing refusal is unconfirmed — PORTERS is
+        // expected to drop the connection instead, so 429 comes from an intermediary. See
+        // docs/live-verification.md (LV-9).
+        const mayHaveApplied = sent && e.category !== "rateLimit";
+        if (
+          mayHaveApplied &&
+          e instanceof PortersNetworkError &&
+          write &&
+          !idempotent
+        )
+          throw e;
         // transient (9/302) / network -> bounded backoff.
         if (e.retryable && attempt < maxRetries) {
           attempt += 1;
