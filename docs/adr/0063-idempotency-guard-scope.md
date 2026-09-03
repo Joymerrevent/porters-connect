@@ -1,7 +1,7 @@
 # 63. 冪等性ガードを「送信済みで結果が不明」に限定する
 
-- Status: proposed
-- Date: 2026-08-31
+- Status: accepted
+- Date: 2026-08-31（accepted: 2026-09-03）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0010][adr10] の冪等性ガード（非冪等な `create` を不確定失敗で再送しない）は、実装上
@@ -50,7 +50,7 @@ if (e instanceof PortersNetworkError && write && !idempotent) throw e;
 
 ## Decision Outcome
 
-**決定（stakeholder・2026-08-31）：案A。2 つとも今直す。**
+**決定（accepted・2026-09-03）：案A。2 つとも今直す。**
 
 ガードの条件を「**送信済み ＋ 結果が不明**」に限定する。具体的には requester のループで
 

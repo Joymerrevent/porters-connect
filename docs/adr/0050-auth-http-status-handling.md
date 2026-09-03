@@ -111,6 +111,8 @@ Resource API 固有の話ではない。**同じ問いに 2 つの答えを持�
   これは fetch 失敗（既存の `PortersNetworkError`）でも同じく起きている**既存の保守的さ**で、本 ADR が作る問題ではないが、
   発生頻度は上がる。ガードの粒度そのものは [findings][findings] **RV-22** と同じ論点なので、
   **そちらで一緒に見直す**のが筋（本 ADR では触らない）。
+  **［2026-09-03 追記］** ここで送った宿題は [ADR-0063][adr63] で決着した（ガードを「送信済み ＋ 結果が不明」に
+  限定する＝トークン取得の失敗は再送対象になる）。本 ADR の決定は不変。
 
 ## Pros and Cons of the Options
 
@@ -152,5 +154,6 @@ Resource API 固有の話ではない。**同じ問いに 2 つの答えを持�
 [adr10]: 0010-retry-throttle.md
 [adr34]: 0034-oauth-public-surface-impl.md
 [adr44]: 0044-http-status-handling.md
+[adr63]: 0063-idempotency-guard-scope.md
 [adr49]: 0049-host-port-roundtrip.md
 [adr46]: 0046-guard-error-contract.md
