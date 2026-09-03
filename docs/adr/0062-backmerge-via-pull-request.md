@@ -1,7 +1,7 @@
 # 62. back-merge も PR を通す（ADR-0030 の実行方式を改訂）
 
-- Status: proposed
-- Date: 2026-08-31
+- Status: accepted
+- Date: 2026-08-31（accepted: 2026-09-03）
 - Deciders: jun.shiromoto (Joymerrevent)
 - Supersedes: [ADR-0030][adr30] の**実行方式**のみ（back-merge を手動で行うこと自体は不変）
 
@@ -51,7 +51,7 @@ remote: - Required status check "stryker" is in progress.
 
 ## Decision Outcome
 
-**決定（stakeholder・2026-08-31）：案A（back-merge も PR にする）。**
+**決定（accepted・2026-09-03）：案A（back-merge も PR にする）。**
 
 保護を迂回しない唯一の案で、追加のシークレットも設定移行も要らない。増えるのは
 **リリース 1 回につきマージ 1 回分の手間**だけで、[ADR-0030][adr30] が「back-merge は低頻度・低リスク」

@@ -73,7 +73,7 @@
 | [0059][0059] | Read の `field` を接頭辞なしの alias で受ける                    | 基本設計 | accepted   | —     |
 | [0060][0060] | 次の主軸を「全リソース網羅 ＋ ドキュメント充実」に変える         | 要件定義 | accepted   | —     |
 | [0061][0061] | Phase の公開サーフェス（接頭辞なし・resource 必須）              | 詳細設計 | accepted   | —     |
-| [0062][0062] | back-merge も PR を通す（ADR-0030 の実行方式を改訂）             | プロセス | proposed   | —     |
+| [0062][0062] | back-merge も PR を通す（ADR-0030 の実行方式を改訂）             | プロセス | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
