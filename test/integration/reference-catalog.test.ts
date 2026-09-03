@@ -10,14 +10,20 @@
 //   2) カタログにある項目が、すべて reference に存在する（綴り間違い・幻の項目の検出）
 //   3) Field Type → Data Type の対応が一致する（型を取り違えていないか）
 //
-// 対象はデータ系 5 種のみ。マスタ系（User ほか）は拡張項目の read 可否・decode 形が未確認で
-// 意図的に 4 項目へ絞っており（docs/live-verification.md）、Attachment は接頭辞なしの bespoke
-// なので、いずれも「カタログ＝reference の全項目」という前提が成り立たない。
+// 対象はデータ系 12 種 ＋ マスタ 4 種（ADR-0060 D2 で拡張）。マスタは 2 通りに分かれる:
+//   - **User** は reference が Field Type 列を持つので、データ系とまったく同じ検査に載せる。
+//   - **Field / Option / Partition** は reference（＝ Read 記事の出力表）に**型の列が無い**ので、
+//     項目の有無だけを両方向で検査する。型の対応は突き合わせる相手がいない。
+// Attachment だけは接頭辞なしの bespoke で「カタログ＝reference の全項目」が成り立たないため対象外。
 
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
+import { FIELD_DESCRIPTOR } from "../../src/resources/field";
+import { OPTION_DESCRIPTOR } from "../../src/resources/option";
+import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
+import { USER_DESCRIPTOR } from "../../src/resources/user";
 import { CLIENT_DESCRIPTOR } from "../../src/resources/client";
 import { JOB_DESCRIPTOR } from "../../src/resources/job";
 import { PHASE_DESCRIPTOR } from "../../src/resources/phase";
@@ -102,7 +108,21 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: PHASE_DESCRIPTOR, doc: "phase" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
+  // マスタで唯一 Field Type 列を持つ（出典が Field List 記事なので型が載っている）。
+  { descriptor: USER_DESCRIPTOR, doc: "user" },
 ];
+
+// 型の列を持たないマスタ（出典が Read 記事の出力表＝ Tag と Definition しかない）。
+// 有無だけを両方向で検査する。
+const TYPELESS_MASTERS: { descriptor: ResourceDescriptor; doc: string }[] = [
+  { descriptor: FIELD_DESCRIPTOR, doc: "field" },
+  { descriptor: OPTION_DESCRIPTOR, doc: "option" },
+  { descriptor: PARTITION_DESCRIPTOR, doc: "partition" },
+];
+
+// reference の表で「列に値が無い」ことを表す記号（全角ダッシュ）。カタログに載らない `ー`
+// （＝ PORTERS が Data Type を与えていない・ADR-0056）とは別の文字なので、取り違えない。
+const EMPTY_CELL = "—";
 
 describe.each(TARGETS)(
   "reference ↔ カタログ: $descriptor.name",
@@ -156,6 +176,58 @@ describe.each(TARGETS)(
     });
   },
 );
+
+describe.each(TYPELESS_MASTERS)(
+  "reference ↔ カタログ（型の列なし）: $descriptor.name",
+  ({ descriptor, doc }) => {
+    const path = `docs/reference/resource-api/resources/${doc}.md`;
+    const fields = readReferenceFields(path, descriptor.prefix);
+    const catalog = descriptor.fields as Record<string, DataType | null>;
+
+    it("reference の表を読めている（前提の自己チェック）", () => {
+      expect(fields.length).toBeGreaterThan(2);
+    });
+
+    it("型の列が無いことを確かめる（載ったら通常の突合へ移す）", () => {
+      // ここが崩れたら reference に型が載ったということ。TARGETS へ移して型も突き合わせる。
+      const typed = fields.filter((f) => f.fieldType !== EMPTY_CELL);
+      expect(typed).toEqual([]);
+    });
+
+    it("reference の項目がすべてカタログにある（取りこぼしの検出）", () => {
+      const missing = fields
+        .map((f) => f.alias)
+        .filter((alias) => !(alias in catalog));
+      expect(missing).toEqual([]);
+    });
+
+    it("カタログの項目がすべて reference にある（幻の項目の検出）", () => {
+      const known = new Set(fields.map((f) => f.alias));
+      const phantom = Object.keys(catalog).filter((a) => !known.has(a));
+      expect(phantom).toEqual([]);
+    });
+  },
+);
+
+describe("接頭辞を持たない行の扱い（Option の Items）", () => {
+  it("Items だけが接頭辞なしの行で、カタログには載せない", () => {
+    // `Items` は**入れ子の Item コレクション**＝値ではなく構造。ライブラリは木を深さ優先で
+    // 平坦化し、親子は `P_ParentId` で辿れるようにしている（ADR-0021 軸3・案3a）ので、
+    // カタログの項目として持たないのが正しい。ここで固定するのは「見落として落ちたのではなく、
+    // 理由があって載せていない」ことと、**他に接頭辞なしの行が増えたら気づく**ようにするため。
+    const rows = readFileSync(
+      "docs/reference/resource-api/resources/option.md",
+      "utf8",
+    )
+      .split("\n")
+      .filter((line) => /^\| [A-Za-z]/.test(line))
+      .map((line) => line.split("|")[1]?.trim())
+      .filter((alias): alias is string => alias !== undefined)
+      .filter((alias) => alias !== "Alias" && !alias.startsWith("Option."));
+    expect(rows).toEqual(["Items"]);
+    expect("Items" in OPTION_DESCRIPTOR.fields).toBe(false);
+  });
+});
 
 describe("突合の前提", () => {
   it("reference のすべての Field Type を解釈できる（未知の型を見逃さない）", () => {
