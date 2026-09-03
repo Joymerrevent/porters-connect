@@ -80,7 +80,9 @@
   **契約待ちだったのは 429 の側だけ**で、[ADR-0050][adr50] が RV-22 へ送っていた
   「トークン取得の失敗＝リクエスト未送信でも `create` を再送しない」は**契約なしで今日起きる**経路だった。
   429 の「常に処理前の拒否」という仮定は LV-9 に紐づくので `VERIFY(live)` をコードに残してある。
-- **0.12.0 を公開済み**（2026-08-31）。**PORTERS の全リソースに対応**した版（データ系 6/13 → 13/13）で、
+- **0.12.1 を公開済み**（2026-09-03）。**フェイルセーフの修正 2 件**（RV-32 の `searchAll` ／
+  RV-22 の冪等性ガード）だけの patch で、公開 API・型は不変。**未リリースの変更は無し**（`.changeset/` は空）。
+- ひとつ前の 0.12.0（2026-08-31）は **PORTERS の全リソースに対応**した版（データ系 6/13 → 13/13）で、
   **破壊的変更は無い**。追加は Recruiter / Contact / Opportunity / Activity / Contract / Sales / Phase の 7 種と
   データ型 `System[Department]`（[ADR-0060][adr60] D1 完了・[ADR-0061][adr61]）。
 - ひとつ前の 0.11.0（2026-08-30）は**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
@@ -88,7 +90,6 @@
   ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
   **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
   `itemstate` の明示指定をそのまま送るようにした（[ADR-0057][adr57]）。
-  **未リリースの変更**は RV-32 / RV-22 の修正 2 件（`.changeset/` に 2 枚）。
 
 ### 随時・任意（急がない）
 
@@ -232,7 +233,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・**791 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 0 件**。
-  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（どちらも未リリース）、
+  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（0.12.1 で公開済み）、
   **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
   台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
@@ -287,6 +288,11 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **`changeset:version` が実際に動いた最初のリリース**（下記の修復以降で初）。
       準備中に co-located UT の取りこぼし 2 件（`resources/expand.ts` / `auth/token-exchange.ts`）を
       見つけてリリース PR に含めた（[runbook][rb] §1 の判断軸どおり）
+- [x] **0.12.1 リリース**（2026-09-03）— changeset **2 件**を消費して `0.12.0` → `0.12.1`。
+      `v0.12.1` 自動タグ → **back-merge PR（#216・新手順の初回適用）** → GitHub Release → OIDC publish
+      （provenance 付き・**7 files / 563.5 kB**）まで完了。RV-32 / RV-22 の修正が世に出た版で、
+      **台帳の open は 0 件**になった。back-merge は PR 経由でも**必須チェック約 84 秒**で通り、
+      bypass 警告は出なくなった（[ADR-0062][adr62] の狙いどおり）
 - [x] **0.12.0 リリース**（2026-08-31）— changeset **7 件**を消費して `0.11.0` → `0.12.0`。
       `v0.12.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・**7 files / 553.4 kB**）まで完了。
       **ADR-0060 の D1（全リソース網羅）が世に出た版**。`changeset:version` は問題なく動いた（修復後 2 回目）。
