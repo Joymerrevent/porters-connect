@@ -30,6 +30,7 @@ grep -rn "VERIFY(live)" src test
 | LV-15 | `itemstate=existing` を明示送信して受け付けられるか | 未確認 |
 | LV-16 | Candidate 参照を展開するときの alias 接頭辞         | 未確認 |
 | LV-17 | Phase の User 項目を `()` 付きで要求できるか        | 未確認 |
+| LV-18 | User Read で拡張 13 項目を field に並べられるか     | 未確認 |
 
 ---
 
@@ -252,6 +253,26 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: `System[Department]` の 3 項目は素の alias で要求している（サンプルと同じ形）。
   応答形は 2019-12-10 の機能拡張記事のサンプルで確定しているので、そちらは LV 対象外
 
+## LV-18 User Read で拡張 13 項目を `field` に並べられるか
+
+- **現在の対応 / 仮定**: **並べて送る**。User のカタログは reference の全 17 項目を持ち、`field` 省略時は
+  [ADR-0020][a20] どおり**カタログ全項目**を要求する（[ADR-0060][a60] D2）。`User` 型の 2 項目
+  （`P_RegisteredBy` / `P_UpdatedBy`）は汎用の組み立てにより `()` 付きになる
+- **不確実な理由**: 記事は「`field` に指定できる Field は User - Field List を参照」とし、**本 Parameter は
+  HRBC Connect API 3.12.31 以降に利用可能**と但し書きする。指定できること自体は書かれているが、
+  **17 項目すべてを 1 度に並べた例は無い**。加えて `User` 型項目の `()` 形は [LV-17][lv17] と同じ未確認点
+  （あちらは Phase・こちらは User Read）。なお 13 項目は「Resource API での Read 時に**参照取得**できない」
+  とされるもので、これは `Job.P_Owner(User.P_Telephone)` のような**参照経由**の話＝ User Read 自体の制約ではない
+- **コード箇所**: `src/resources/user.ts`（`DEFAULT_FIELDS` ＝ カタログ全項目）・
+  `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）
+- **確認方法**: `GET /v1/user?partition=…&request_type=1&field=<17 項目>` を投げ、**HTTP 200 ＋ ルート
+  `<Code>0`** と各項目の値が返ることを確認する。特定の項目で落ちるなら、その項目だけカタログから外すのではなく
+  **`DEFAULT_FIELDS` から外して `field` 明示時のみ送る**か、reference の記述を疑って出典を当たり直す
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: [LV-17][lv17]（`()` 形の可否）／`P_Department` は `System[Department]` で、
+  応答形は 2019-12-10 の機能拡張記事のサンプルで確定（LV 対象外）
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -275,3 +296,6 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a57]: adr/0057-itemstate-existing-explicit.md
 [a58]: adr/0058-reference-expansion-read.md
 [a61]: adr/0061-phase-resource-surface.md
+[a20]: adr/0020-read-field-default.md
+[a60]: adr/0060-full-resource-coverage-direction.md
+[lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
