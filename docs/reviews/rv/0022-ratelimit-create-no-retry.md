@@ -1,7 +1,7 @@
 # RV-22 🟢 HTTP 429 の後、非冪等な `create` が自動再送されない
 
 - 重要度: 🟢 ／ 観点: リトライ / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -40,8 +40,31 @@ requester の冪等性ガード（「非冪等な write ＋ network 不確実 �
 
 ## 処置
 
-—
+**実施**（2026-09-03・[ADR-0063][adr63] accepted・案A）。**起票時より範囲が広い**まま片付けた。
+
+- **ガードの条件を「送信済み ＋ 結果が不明」に限定**した。requester のループに
+  「この試行が実際に送られたか」を持ち、`sent && e.category !== "rateLimit"` のときだけ
+  非冪等な write の再送を止める（`src/http/requester.ts`）。`classify.ts` は変更なし
+  ＝ [ADR-0044][adr44] の status→category 写像は不変。
+- **429 だけでなく、送信前の失敗も対象になった**。[ADR-0050][adr50] の Consequences が
+  「ガードの粒度は RV-22 と同じ論点なので**そちらで一緒に見直す**」として送ってきた宿題で、
+  **トークン取得に失敗した場合はリクエストが一度も出ていない**のに再送しなかった。
+  起票時の本文は 429 の話だけを書いていたが、**こちらは契約の有無に関係なく今日起きる**経路。
+- **[ADR-0010][adr10] の決定は変えていない**。「非冪等な write を不確定失敗で再送しない」は維持で、
+  変えたのは「不確定」の判定方法だけ。ADR-0010 の決定文（「応答が返らない失敗（timeout/切断）では
+  自動再試行しない」）に**実装を合わせた**形になる。
+- **429 の解釈は未確認のまま**。「常に処理前の拒否」という仮定は [live-verification][lv] **LV-9** に紐づく
+  ので、`VERIFY(live)` をコードに残した。実 PORTERS が切断で返すなら、効くのはプロキシ経由の環境だけ
+  という評価も変わらない。
+- テストは 2 本追加（トークン取得失敗後の `create` 再送／429 後の `create` 再送）。
+  **回帰の芯＝送信後の timeout・切断・5xx で再送しないこと**は既存テストが押さえている。
+  `requester.ts` の mutation score は 100%。
+
+> 起票時の行番号は陳腐化していた（`requester.ts:147` → 本処置の直前で 119）。
+> 現在地は `mayHaveApplied` の名前で辿ること。
 
 [adr10]: ../../adr/0010-retry-throttle.md
 [adr44]: ../../adr/0044-http-status-handling.md
+[adr50]: ../../adr/0050-auth-http-status-handling.md
+[adr63]: ../../adr/0063-idempotency-guard-scope.md
 [lv]: ../../live-verification.md

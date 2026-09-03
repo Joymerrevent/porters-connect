@@ -36,7 +36,7 @@
 | [RV-19][rv19] | 🟡     | エラーモデル / 認証         | fixed | 認証 API 経路が HTTP ステータスを見ない                           |
 | [RV-20][rv20] | 🟡     | フェイルセーフ / API 忠実性 | fixed | HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る             |
 | [RV-21][rv21] | 🟢     | 設定検証 / 後方互換         | fixed | 既定ポート `:443` 付きの `host` が弾かれる                        |
-| [RV-22][rv22] | 🟢     | リトライ / DX               | open  | HTTP 429 の後、非冪等な `create` が自動再送されない               |
+| [RV-22][rv22] | 🟢     | リトライ / DX               | fixed | HTTP 429 の後、非冪等な `create` が自動再送されない               |
 | [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed | Candidate の静的カタログが標準項目 4 件を欠く                     |
 | [RV-24][rv24] | 🟡     | ドキュメント / DX           | fixed | `defineFields` の使い方がどこにも無い                             |
 | [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | fixed | `partition` 未設定で無言のうちに `partition=0` を送る             |
