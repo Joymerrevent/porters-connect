@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-31
+- 最終更新: 2026-09-03
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -23,9 +23,6 @@
 
 ### 判断待ち（決めれば着手できる）
 
-- [ ] **RV-33 の処置** — back-merge が `develop` の保護ルールをバイパスして通る。
-      3 択（(a) back-merge も PR にする＝推奨 ／ (b) 例外として明文化 ／ (c) 保護側で許可）。
-      **次に release を切る前に決めておきたい**（毎回踏むため）。[RV-33][findings]
 - [ ] **Sales の `create` 必須を ADR にするか** — 参照 6 項目を必須にしない判断は既存方針の適用に留めたが、
       公開型 `SalesCreateInput` の形に効く。形式化するなら要起票
 - [ ] PRD [§8][prd] オープン論点 **2 件**（成功指標の数値化タイミング ／ v1 で CJS 出力まで出すか）
@@ -108,7 +105,7 @@
 | ------------ | --------------------------------------------------------------------------------------------------- |
 | **契約待ち** | ライブ検証 **LV-1〜17**（[live-verification][lv]）。リリースのブロッカーではない                    |
 | **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09） |
-| **判断待ち** | 上記「判断待ち」節を参照（RV-33 の処置・Sales の必須を ADR にするか・PRD [§8][prd] の 2 件）        |
+| **判断待ち** | 上記「判断待ち」節を参照（Sales の必須を ADR にするか・PRD [§8][prd] の 2 件）                      |
 
 ### TODO の見取り図（どこを見れば何が分かるか）
 
@@ -117,8 +114,8 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                       | いまの状態                              |
 | ----------------------------- | -------------------------------------------------- | --------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 1 件（D2）                     |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | open 1 件 = RV-33                       |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | proposed **なし**／**実装待ちも なし**  |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件**                        |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | 0062 / 0063 は accepted＋実装済み       |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜17 が未確認（契約待ち）           |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
 | [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）        |
@@ -230,12 +227,14 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0063 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
+- ADR 0001〜0063 accepted（0037 は 0039 で・**0033 は 0060 で** superseded／**0030 の実行方式は
+  [ADR-0062][adr62] で** superseded＝手動であること自体は不変）／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**791 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 1 件**＝
-  RV-33（back-merge の保護バイパス）。**RV-32（`searchAll` のクエリ書き換え）**と
-  **RV-22（送信前に弾かれた write を再送しない）は fixed**（どちらも未リリース）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+- 品質ゲート green・**791 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 0 件**。
+  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（どちらも未リリース）、
+  **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
+  台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 - **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。
@@ -292,7 +291,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       `v0.12.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・**7 files / 553.4 kB**）まで完了。
       **ADR-0060 の D1（全リソース網羅）が世に出た版**。`changeset:version` は問題なく動いた（修復後 2 回目）。
       準備中の欠陥は無かったが、**back-merge が `develop` の保護ルールをバイパスして通る**ことが
-      push 応答から判明し、[RV-33][findings] として起票した
+      push 応答から判明し、[RV-33][findings] として起票 → **[ADR-0062][adr62] で PR 経由に変更**
+      （0.13.0 から [runbook][rb] §2 の新手順を使う）
 - [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
       依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
       `@changesets/config@4.0.0` へ追従
@@ -404,6 +404,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr59]: adr/0059-read-field-bare-alias.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr61]: adr/0061-phase-resource-surface.md
+[adr62]: adr/0062-backmerge-via-pull-request.md
 [adr63]: adr/0063-idempotency-guard-scope.md
 [adr35]: adr/0035-usage-documentation-structure.md
 [adr52]: adr/0052-findings-register-layout.md
