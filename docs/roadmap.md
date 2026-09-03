@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-30
+- 最終更新: 2026-09-03
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -11,53 +11,48 @@
 
 ## ▶️ いま何をやるか
 
-**次の主軸が決まった**（2026-08-30・[ADR-0060][adr60]）。**「全リソース網羅 ＋ ドキュメント充実」**へ舵を切り、
-[ADR-0033][adr33]（案A＝第2層 MCP 主軸）は **supersede** した。進め方は **リソース 1 種＝1 PR**
-（実装・テスト・reference 突合・ドキュメントを同じ PR で出す）。完了条件は **D1〜D5**（下記「📊 完成度」）。
-品質ゲートは全 green（**782 tests**・coverage は perFile 100%）。
+**主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1 / D4 が完了**し、**0.12.0 で公開済み**
+（2026-08-31・データ系 13/13）。残るのは D2（マスタ項目）と D3（`Link` / `Image`）。
+品質ゲートは全 green（**791 tests**・coverage は perFile 100%）。
 
-### 着手可能（ブロック無し・上から順に）
+### 着手可能（ブロック無し）
 
-- [x] **1. Recruiter の R/W**（[ADR-0060][adr60] D1 の 1 本目）＝ **実装済み・未リリース**。
-      **横展開のものさしとして機能した** — 実装は `src/resources/recruiter.ts` **114 行**（Client の 89 行 ＋ 参照 1 本）で、
-      新しい抽象は 1 つも要らなかった。**descriptor パターンは効く**と確認できたので、残り 5 種
-      （Phase を除く）は同じ手数で見積もってよい。**横展開でぶつかったのは既存テストの前提**のほう
-      （「Recruiter は未実装」を書いたテストが 4 件・型テストが 1 件）＝新リソースごとに同じ棚卸しが要る。
-      副産物として **`Job.P_Recruiter` / `Process.P_Recruiter` が `expand` 可能**になった（参照先カタログが揃ったため）
-- [x] **2. Contact** ＝ **実装済み・未リリース**。Recruiter と**項目構成が完全に同一**だったので、
-      カタログを写して prefix / path を変えるだけで済んだ。共通化はしていない（別リソースである事実を
-      2 つのカタログで保つ）が、「同一であること」自体をテストに書いて将来の乖離を検出できるようにした。
-- [x] **3. Opportunity** ＝ **実装済み・未リリース**。12 項目で最小。
-      **`P_Deleted` を持たない唯一のデータ系リソース**（PORTERS が公表していない）なので、
-      突合テストの前提を「必ずある」から「**reference と有無が一致する**」へ両方向の検査に変えた
-      ＝揃えたくなって無いものを足す事故を仕組みで防ぐ。
-- [x] **4. Activity** ＝ **実装済み・未リリース**。`P_Resource`（Resource List の数値 ID）と
-      `P_ResourceId` の組で任意の上位リソースに紐づく。**参照先が実行時に決まる**ので
-      `expand` の対象にはできず（どのカタログで読むか型で決められない）、参照先 ID として読む形にした。
-      **ADR は不要だった** — 既存の「参照先カタログが無いものは ID のまま」と同じ扱いに収まり、
-      新しい決定を要さなかった（ADR-0060 が「要 ADR の可能性」としていた論点はここで解消）。
-- [x] **5. Contract** ＝ **実装済み・未リリース**。39 項目で最大。
-      **`P_Owner` を持たない唯一のデータ系リソース**なので `create` の必須は `P_Client` だけ。
-      `Currency` の 3 項目は **Data Type が `Number`**（Field Type と Data Type は別の軸）なので
-      **新しいデータ型は不要**だった＝ D3 の 14/17 は動かない。
-- [x] **6. Sales** ＝ **実装済み・未リリース**。**参照 6 項目すべてが `expand` 可能**。
-      **`create` の必須は `P_Owner` のみ**にした — 参照 6 項目は reference で `●` でなく **`※`（条件付き必須）**で、
-      実体は依存の連鎖（`P_Job` → `P_Recruiter` → `P_Client` ← `P_Contract`）。フラットな必須リストでは表せず、
-      一律必須にすると**サーバーが受ける呼び出しを手前で弾く**＝危険側に倒れる。
-      **この判断は ADR にしていない**（既存の「手前で厳しくしすぎない」方針の適用に留まるため）。
-      形式化したい場合は要起票 — 公開型 `SalesCreateInput` の形に効く判断ではある。
-      併せて **`docs/guide/write-constraints.md` を新設**（D5）。
-- [x] **7. Phase の実装** ＝ **実装済み・未リリース**。設計は [ADR-0061][adr61]（accepted 2026-08-31）。
-      決定は **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**:
-      `prefix: ""` を汎用 factory が受ける（＋ 主キー alias も descriptor から取る＝**共有コード 9 箇所**）／
-      `t.phase.of("client")` で `resource` を束ねる／`System[Department]` に `DepartmentRef` を足す／
-      Write の最新フェーズ条件は PORTERS に委ねる／`resource` は**リテラル名**で受ける。
-      完了すれば **D1 が 13/13**、D3 が 14/17 → **15/17**。
-- [ ] **分岐して起票する ADR**: ① ~~Phase の公開サーフェス~~ → [ADR-0061][adr61] で accepted ／
-      ② `Link` / `Image` ＋ `defineFields` builder（＝ R-4 の積み残し・D3）／
-      ③ マスタ項目の拡張（`System[Department]` の decode 形は 0061 で確定したので残りは項目の追加）／
-      ④ **`Activity.P_Resource` を名前で受けるか**（0061 の案5b で `of()` は名前になったため、
-      カタログ項目側との非対称をどうするか）
+- [ ] **D2: マスタ Read の標準項目を埋める** — User 4/17・Field 9/10（`P_ResourceType` 欠）・
+      Option 6/7（`Items` 欠）。`System[Department]` の decode 形は [ADR-0061][adr61] で確定済みなので、
+      残りは項目を足すだけ＝**ADR 不要の見込み**。突合テストの対象をマスタへ広げるかは実装時に判断する
+
+### 判断待ち（決めれば着手できる）
+
+- [ ] **Sales の `create` 必須を ADR にするか** — 参照 6 項目を必須にしない判断は既存方針の適用に留めたが、
+      公開型 `SalesCreateInput` の形に効く。形式化するなら要起票
+- [ ] PRD [§8][prd] オープン論点 **2 件**（成功指標の数値化タイミング ／ v1 で CJS 出力まで出すか）
+
+### 要 ADR（起票から）
+
+- [ ] **D3: `Link` / `Image`**（R-4 の積み残し）— **カスタム項目経由でしか現れない**ので、
+      `DataType` に足すだけでは誰も宣言できない。**`defineFields` の builder への露出まで 1 本の ADR**で扱う。
+      これが入れば D3 が 17/17
+- [ ] **`Activity.P_Resource` を名前で受けるか** — [ADR-0061][adr61] の案5b で `t.phase.of()` は名前になったが、
+      あちらは**カタログ項目**なので機構が別（項目単位で書き込み値の型を差し替える）。
+      揃えないなら「`of()` は名前・`P_Resource` は数値」の非対称が残る
+- [ ] **案A: 第2層 MCP サーバー** — [ADR-0060][adr60] が「後続」と位置づけたもの。
+      D2 / D3 が片付いてから、パッケージ構成・ツール粒度・認証受け渡しを詰める
+
+### D1 の記録（7 リソース・0.12.0 で公開）
+
+**descriptor パターンの横展開は効いた** — 6 種は 1 種あたり 100〜130 行で、新しい抽象は 0。
+**毎回ぶつかったのは既存テストの前提**のほうで、「未実装リソース」を指すテストの付け替えが 7 回続いた
+（最後は実在しない名前へ）。リソースごとに分かった事実:
+
+| リソース    | 分かったこと                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| Recruiter   | 横展開のものさし。副産物で `Job` / `Process` の `P_Recruiter` が `expand` 可能に               |
+| Contact     | Recruiter と**項目構成が完全に同一**。共通化せず、同一であること自体をテストで固定             |
+| Opportunity | **`P_Deleted` を持たない唯一**。突合を「reference と有無が一致する」両方向の検査に変えた       |
+| Activity    | `P_Resource` ＋ `P_ResourceId` の可変参照。**ADR は不要**（既存の扱いに収まった）              |
+| Contract    | **`P_Owner` を持たない唯一**。`Currency` は Data Type が `Number` ＝新しい型は不要             |
+| Sales       | 参照 6 項目の必須が `※`（条件付き）＝手前で弾かない。`write-constraints.md` を新設             |
+| Phase       | 4 軸で別物（[ADR-0061][adr61]）。共有コード 9 箇所 ＋ 受け口 2 つを足して汎用 factory に載せた |
 
 #### 直近の経緯（着手前に踏まえておくこと）
 
@@ -81,24 +76,25 @@
   📌 **紛らわしいので注意**: 上には無関係な「v3」が 2 つ出てくる。**js-yaml v3** は古く脆弱な版
   （`safeLoad` を持つ・戻してはいけない側）、**changesets v3** は最新版（上げた側）。
   今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
-- **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
-  429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
-- **0.11.0 を公開済み**（2026-08-30）。**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
+- ✅ **RV-22 は fixed**（2026-09-03・[ADR-0063][adr63]＝冪等性ガードを「送信済み ＋ 結果が不明」に限定）。
+  **契約待ちだったのは 429 の側だけ**で、[ADR-0050][adr50] が RV-22 へ送っていた
+  「トークン取得の失敗＝リクエスト未送信でも `create` を再送しない」は**契約なしで今日起きる**経路だった。
+  429 の「常に処理前の拒否」という仮定は LV-9 に紐づくので `VERIFY(live)` をコードに残してある。
+- **0.12.0 を公開済み**（2026-08-31）。**PORTERS の全リソースに対応**した版（データ系 6/13 → 13/13）で、
+  **破壊的変更は無い**。追加は Recruiter / Contact / Opportunity / Activity / Contract / Sales / Phase の 7 種と
+  データ型 `System[Department]`（[ADR-0060][adr60] D1 完了・[ADR-0061][adr61]）。
+- ひとつ前の 0.11.0（2026-08-30）は**破壊的変更**（Read の `field` は接頭辞なし・[ADR-0059][adr59]）を含む。
   併せて **`expand` で参照先の項目が 1 往復で取れる**ようになった（[ADR-0058][adr58]・RV-31）。
   ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
   **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
   `itemstate` の明示指定をそのまま送るようにした（[ADR-0057][adr57]）。
-  **未リリースの変更は無し**（`.changeset/` は空）。
+  **未リリースの変更**は RV-32 / RV-22 の修正 2 件（`.changeset/` に 2 枚）。
 
 ### 随時・任意（急がない）
 
-- ✅ **R-4 の積み残し（Link / Image 型の正規化）は「随時」から外れた** — [ADR-0060][adr60] の **D3**
-  （データ型 17/17）に取り込まれ、主軸の完了条件になった。以下は経緯として残す。
-  [PRD R-4][prd] で **v1 未対応・deferred** と明記。**訂正（2026-08-16）**: 旧記載は「カスタム項目側の
-  Image 対応は案D＝別物」としていたが、reference 実測で**標準 `P_` 項目に Link / Image を使うリソースは
-  18 本中 0 件**と判明した。この 2 型は**カスタム項目（`U_`/`A_`）経由でしか現れない**＝ R-4 と案D の
-  Image 対応は**同一層の同一作業**。`DataType` に足すだけでは誰も宣言できないので、
-  **`defineFields` の builder への露出まで 1 本の ADR で**扱う
+- **R-4（Link / Image）は「随時」から外れ、D3 の完了条件**になった（上記「要 ADR」を参照）。
+  経緯: [PRD R-4][prd] は v1 未対応・deferred と明記。reference 実測で**標準 `P_` 項目に Link / Image を使う
+  リソースは 18 本中 0 件**と判明し、この 2 型は**カスタム項目（`U_`/`A_`）経由でしか現れない**と分かった。
 - [ ] 案D `defineFields` 深掘りの**残り**（値レベルの実行時検証・テナント実在チェック・Field Read からの宣言生成。[ADR-0023][adr23]）。
       値検証は**契約前に厳しくしすぎない**（サーバーが受けるものを手前で落とすと安全側でなく危険側に倒れる）＝ opt-in 前提
 - [ ] （任意）README 英語版（日本語ファースト → 英語）
@@ -109,20 +105,20 @@
 | ------------ | --------------------------------------------------------------------------------------------------- |
 | **契約待ち** | ライブ検証 **LV-1〜17**（[live-verification][lv]）。リリースのブロッカーではない                    |
 | **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09） |
-| **判断待ち** | PRD [§8][prd] オープン論点 **2 件**（次の主軸は [ADR-0060][adr60] で決着）                          |
+| **判断待ち** | 上記「判断待ち」節を参照（Sales の必須を ADR にするか・PRD [§8][prd] の 2 件）                      |
 
 ### TODO の見取り図（どこを見れば何が分かるか）
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                 | いまの状態                               |
-| ----------------------------- | -------------------------------------------- | ---------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 随時 / 待ち） | 着手可能＝[ADR-0060][adr60] D1 の 1 本目 |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）               | open 2 件 = RV-22（契約待ち）/ RV-32     |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ    | proposed **なし**／実装待ちは 0060・0061 |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）         | LV-1〜17 が未確認（契約待ち）            |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト   | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
-| [release-runbook][rb]         | リリース手順のチェックリスト                 | 毎回使う手順書（常時 unchecked）         |
+| ファイル                      | 何の TODO か                                       | いまの状態                              |
+| ----------------------------- | -------------------------------------------------- | --------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 1 件（D2）                     |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件**                        |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | 0062 / 0063 は accepted＋実装済み       |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜17 が未確認（契約待ち）           |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
+| [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）        |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -231,11 +227,14 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0061 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
+- ADR 0001〜0063 accepted（0037 は 0039 で・**0033 は 0060 で** superseded／**0030 の実行方式は
+  [ADR-0062][adr62] で** superseded＝手動であること自体は不変）／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**762 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
-  RV-22（契約待ち）と RV-32（`searchAll` のクエリ書き換え）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+- 品質ゲート green・**791 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 0 件**。
+  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（どちらも未リリース）、
+  **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
+  台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 - **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。
@@ -255,8 +254,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.11.0`**（npm latest・2026-08-30 にレジストリで確認）。**全 15 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.12.0`**（npm latest・2026-08-31 にレジストリで確認）。**全 16 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -288,6 +287,12 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **`changeset:version` が実際に動いた最初のリリース**（下記の修復以降で初）。
       準備中に co-located UT の取りこぼし 2 件（`resources/expand.ts` / `auth/token-exchange.ts`）を
       見つけてリリース PR に含めた（[runbook][rb] §1 の判断軸どおり）
+- [x] **0.12.0 リリース**（2026-08-31）— changeset **7 件**を消費して `0.11.0` → `0.12.0`。
+      `v0.12.0` 自動タグ → back-merge → GitHub Release → OIDC publish（provenance 付き・**7 files / 553.4 kB**）まで完了。
+      **ADR-0060 の D1（全リソース網羅）が世に出た版**。`changeset:version` は問題なく動いた（修復後 2 回目）。
+      準備中の欠陥は無かったが、**back-merge が `develop` の保護ルールをバイパスして通る**ことが
+      push 応答から判明し、[RV-33][findings] として起票 → **[ADR-0062][adr62] で PR 経由に変更**
+      （0.13.0 から [runbook][rb] §2 の新手順を使う）
 - [x] **`changeset:version` の修復**（2026-08-23）— `@changesets/cli` を **2.31.1 → 3.0.0** へ。`read-yaml-file` が
       依存から消え、`js-yaml` override との衝突が解消。`.changeset/config.json` の `$schema` も
       `@changesets/config@4.0.0` へ追従
@@ -399,6 +404,8 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr59]: adr/0059-read-field-bare-alias.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr61]: adr/0061-phase-resource-surface.md
+[adr62]: adr/0062-backmerge-via-pull-request.md
+[adr63]: adr/0063-idempotency-guard-scope.md
 [adr35]: adr/0035-usage-documentation-structure.md
 [adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md

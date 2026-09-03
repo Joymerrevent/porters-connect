@@ -445,6 +445,38 @@ describe("createResource — searchAll", () => {
     expect(items).toEqual([]);
     expect(calls).toHaveLength(1); // empty page halts the walk defensively
   });
+
+  it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
+    const calls: Call[] = [];
+    const r = createResource(CONFIG, {
+      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      accessPoint: { host: "h.test" },
+      partition: 12,
+    });
+    // 入れ子の値だけを書き換える経路も見る（浅いコピーでは塞がらない側 — RV-32 案(c)）。
+    const name = { part: "yamada" };
+    const query: SearchQuery<typeof FIELDS> = { condition: { P_Name: name } };
+    let seen = 0;
+    for await (const item of r.searchAll(query)) {
+      seen += 1;
+      expect(item.P_Id).toBeGreaterThan(0);
+      name.part = "sato"; // 入れ子だけの書き換え
+      query.condition = { P_Name: { part: "suzuki" } }; // top-level の差し替え
+    }
+    expect(seen).toBe(3);
+    expect(calls).toHaveLength(2);
+    for (const c of calls) {
+      const condition = new URL(c.req.url).searchParams.get("condition");
+      expect(condition).toBe("W.P_Name:part=yamada");
+    }
+  });
+
+  it("surfaces a query-guard failure on the first iteration, not when searchAll is called (ADR-0046)", async () => {
+    const calls: Call[] = [];
+    const walk = res(calls).searchAll({ keywords: ["x".repeat(101)] });
+    await expect(collect(walk)).rejects.toBeInstanceOf(PortersConfigError);
+    expect(calls).toHaveLength(0); // never sent
+  });
 });
 
 describe("createResource — Write", () => {

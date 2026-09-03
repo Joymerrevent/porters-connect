@@ -4,12 +4,11 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
-  appendPaging,
   decoderFor,
-  paginate,
+  paginateOnce,
+  readUrlOf,
   runRead,
   type FieldCatalog,
   type ReadRecord,
@@ -88,32 +87,46 @@ export type FieldResource = {
   ): AsyncIterable<Field>;
 };
 
-const buildUrl = (
-  accessPoint: AccessPoint,
+// Paging is left out on purpose: `count` / `start` are the only per-page difference, so
+// `searchAll` serialises the caller's query once and `readUrlOf` adds the rest (RV-32).
+const buildParams = (
   partition: number,
-  q: FieldSearchQuery,
-): string => {
+  q: Omit<FieldSearchQuery, "count" | "start">,
+): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
   p.set("resource", String(RESOURCE_VALUE[q.resource]));
   p.set("active", String(q.active ?? -1));
-  appendPaging(p, q.count, q.start);
-  return apiUrl(accessPoint, "field", p);
+  return p;
 };
 
 export const createFieldResource = (deps: ResourceDeps): FieldResource => {
   const decode = decoderFor(FIELDS);
   // `async` for the exception contract (ADR-0046).
-  const search = async (query: FieldSearchQuery): Promise<FieldPage> =>
-    runRead(
-      deps.requester,
-      FIELD_DESCRIPTOR.name,
-      buildUrl(deps.accessPoint, deps.partition, query),
-      decode,
+  const readUrl = (q: FieldSearchQuery): string =>
+    readUrlOf(
+      deps.accessPoint,
+      "field",
+      buildParams(deps.partition, q),
+      q.count,
+      q.start,
     );
+  const search = async (query: FieldSearchQuery): Promise<FieldPage> =>
+    runRead(deps.requester, FIELD_DESCRIPTOR.name, readUrl(query), decode);
+  // The query is read once, at the first page — mutating it mid-iteration cannot change a later
+  // page (RV-32). Same shape as the data resources' `searchAll`.
   const searchAll = (
     query: Omit<FieldSearchQuery, "count" | "start">,
   ): AsyncIterable<Field> =>
-    paginate((count, start) => search({ ...query, count, start }));
+    paginateOnce(() => {
+      const base = buildParams(deps.partition, query);
+      return (count, start) =>
+        runRead(
+          deps.requester,
+          FIELD_DESCRIPTOR.name,
+          readUrlOf(deps.accessPoint, "field", base, count, start),
+          decode,
+        );
+    });
   return { search, searchAll };
 };

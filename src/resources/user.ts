@@ -5,13 +5,12 @@
 // the API has no id filter. Extended HR fields (department/telephone/dates/…) are deferred —
 // their read availability/decode shape is unconfirmed (see docs/live-verification.md).
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
-  appendPaging,
   decoderFor,
-  paginate,
+  paginateOnce,
   qualifyReadFields,
+  readUrlOf,
   runRead,
   type FieldCatalog,
   type ReadFieldAlias,
@@ -76,11 +75,11 @@ export type UserResource = {
 // The catalog as a runtime lookup, for prefixing the caller's bare `field` aliases (ADR-0059).
 const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
 
-const buildUrl = (
-  accessPoint: AccessPoint,
+// Paging is left out on purpose — see `field.ts` / RV-32.
+const buildParams = (
   partition: number,
-  q: UserSearchQuery,
-): string => {
+  q: Omit<UserSearchQuery, "count" | "start">,
+): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
   p.set("request_type", String(q.requestType ?? 1));
@@ -91,24 +90,36 @@ const buildUrl = (
       qualifyReadFields(USER_DESCRIPTOR.prefix, FIELD_MAP, q.field).join(","),
     );
   }
-  appendPaging(p, q.count, q.start);
-  return apiUrl(accessPoint, "user", p);
+  return p;
 };
 
 export const createUserResource = (deps: ResourceDeps): UserResource => {
   const decode = decoderFor(FIELDS);
   // `async` for the exception contract (ADR-0046).
-  const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
-    runRead(
-      deps.requester,
-      USER_DESCRIPTOR.name,
-      buildUrl(deps.accessPoint, deps.partition, query),
-      decode,
+  const readUrl = (q: UserSearchQuery): string =>
+    readUrlOf(
+      deps.accessPoint,
+      "user",
+      buildParams(deps.partition, q),
+      q.count,
+      q.start,
     );
+  const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
+    runRead(deps.requester, USER_DESCRIPTOR.name, readUrl(query), decode);
+  // The query is read once, at the first page (RV-32).
   const searchAll = (
     query: Omit<UserSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<User> =>
-    paginate((count, start) => search({ ...query, count, start }));
+    paginateOnce(() => {
+      const base = buildParams(deps.partition, query);
+      return (count, start) =>
+        runRead(
+          deps.requester,
+          USER_DESCRIPTOR.name,
+          readUrlOf(deps.accessPoint, "user", base, count, start),
+          decode,
+        );
+    });
   // VERIFY(live): code_direct + request_type=0 returning the App's own user is doc-only.
   // See docs/live-verification.md (LV-7).
   const current = async (): Promise<User | undefined> =>

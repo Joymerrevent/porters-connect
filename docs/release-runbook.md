@@ -1,6 +1,6 @@
 # リリース手順書（runbook）
 
-- ステータス: living（**半自動**・ADR-0029 案B）。タグ付け・publish は自動／back-merge は当面手動。
+- ステータス: living（**半自動**・ADR-0029 案B）。タグ付け・publish は自動／back-merge は手動（**PR 経由**・ADR-0062）。
 - 位置づけ: リリース手順チェックリスト。準備 → main マージで自動タグ → Release 作成 → 自動 publish。
 - コマンドは **pnpm** で統一（`npm` は使わない）。
 
@@ -37,9 +37,15 @@
 
 - [ ] PR `release/X.Y.Z` → `main`（**merge commit**・squash しない＝履歴保持）
 - [ ] マージ後、**`tag.yml` が自動で `vX.Y.Z` を作成・push**（タグ忘れ防止・ADR-0029 案B）。Actions の **Tag** ワークフロー green を確認
-- [ ] **back-merge**（当面手動）: `main` → `develop`（version/CHANGELOG を develop に戻す）
-  - `git checkout develop && git pull && git merge --no-edit origin/main && git push`
-  - ※ 完全自動化（案F）は GitHub App が要る（`GITHUB_TOKEN` は保護ブランチへ直 push 不可）。未導入
+- [ ] **back-merge**（手動・**PR 経由**／[ADR-0062][adr62]）: `main` → `develop`（version/CHANGELOG を develop に戻す）
+  - `gh pr create --base develop --head main --title "chore: X.Y.Z を develop へ back-merge する"`
+  - [ ] `ci` / `stryker` の green を確認して **merge commit** でマージ（**squash しない**）
+  - ⚠️ **squash すると `develop` に `main` と異なるコミットができ、次回以降の back-merge が毎回競合する**。
+  - ※ **直 push はしない**。`git merge origin/main && git push` は `develop` の保護（PR 必須・必須ステータス
+    チェック）を**管理者権限で bypass して通ってしまう**（0.12.0 で判明・[findings][findings] RV-33）。
+    PR 経由なら「develop へ入る変更は必ず PR ＋ チェック green」が本当になり、管理者以外でも実行できる。
+  - ※ PR タイトルは commitlint の検査対象（base≠`main`・[ADR-0039][adr39]）＝ `chore: …` の形にする。
+  - ※ 完全自動化（案I・GitHub App）は未導入（`GITHUB_TOKEN` は保護ブランチへ直 push 不可）。
 
 ## 3. GitHub Release を作成（＝publish の意図的ゲート）
 
@@ -69,10 +75,15 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.11.0**（npm latest・`v0.11.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  7 files / 430.0 kB・2026-08-30）。0.2.0 以降この半自動フローで公開（**全 15 版**）。
-  **0.11.0 は `pnpm changeset:version` が実際に動いた最初のリリース**（下記の復旧以降で初。
-  0.7.0〜0.10.0 の版 bump は手作業だった）。
+- ✅ 最新公開: **0.12.0**（npm latest・`v0.12.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  7 files / 553.4 kB・2026-08-31）。0.2.0 以降この半自動フローで公開（**全 16 版**）。
+  changeset **7 枚**を消費した通常リリースで、`pnpm changeset:version` は問題なく動いた
+  （復旧後 2 回目。0.7.0〜0.10.0 の版 bump は手作業だった）。
+- ✅ **back-merge は PR 経由に変更済み**（[ADR-0062][adr62] accepted・2026-09-03／[findings][findings] RV-33）。
+  0.12.0 まで使っていた直 push（`git merge origin/main && git push`）は、`develop` の
+  「Changes must be made through a pull request」「Required status check」を**bypass した**という
+  警告つきで成功していた（管理者権限のため・**必須チェックの完了も待たずに**通っていた）。
+  **0.13.0 以降は本書 §2 の PR 手順で行う**（初回適用時に実測を追記すること）。
 - ✅ **`pnpm changeset:version` は復旧済み**（**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**・2026-08-23）。
   原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が
@@ -93,7 +104,7 @@
 > js-yaml は override どおり v5 系のまま。
 
 - ✅ 自動化（ADR-0029 案B）：`tag.yml`（main マージで自動タグ）＋ `release.yml`（Release 公開で自動 publish）。0.3.0 以降はこのフロー。
-- ⏳ back-merge の完全自動化（案F・GitHub App）は未導入＝当面 §2 の手動手順。
+- ⏳ back-merge の完全自動化（案I・GitHub App）は未導入＝ §2 の手動手順（PR 経由）で行う。
 
 ### `changeset:version` が壊れていた期間（2026-08-23 に判明）
 
@@ -144,7 +155,8 @@ override が先、changesets の導入が翌日という順序だったため、
 ## 関連
 
 - 現況/残タスク: [roadmap][rm]
-- 自動化の方式: [ADR-0025][adr25]（リリース自動化）／[ADR-0029][adr29]（タグ・back-merge）
+- 自動化の方式: [ADR-0025][adr25]（リリース自動化）／[ADR-0029][adr29]（タグ・back-merge）／
+  [ADR-0030][adr30]（back-merge は手動）／[ADR-0062][adr62]（back-merge も PR を通す）
 - 変更履歴: [CHANGELOG][cl]
 
 [prd]: design/requirements.md
@@ -152,4 +164,8 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr25]: adr/0025-release-automation.md
 [adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
+[adr30]: adr/0030-backmerge-method.md
+[adr39]: adr/0039-commitlint-release-range.md
+[adr62]: adr/0062-backmerge-via-pull-request.md
 [cl]: ../CHANGELOG.md
+[findings]: reviews/findings.md

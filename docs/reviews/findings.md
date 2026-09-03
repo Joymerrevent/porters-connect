@@ -36,7 +36,7 @@
 | [RV-19][rv19] | 🟡     | エラーモデル / 認証         | fixed | 認証 API 経路が HTTP ステータスを見ない                           |
 | [RV-20][rv20] | 🟡     | フェイルセーフ / API 忠実性 | fixed | HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る             |
 | [RV-21][rv21] | 🟢     | 設定検証 / 後方互換         | fixed | 既定ポート `:443` 付きの `host` が弾かれる                        |
-| [RV-22][rv22] | 🟢     | リトライ / DX               | open  | HTTP 429 の後、非冪等な `create` が自動再送されない               |
+| [RV-22][rv22] | 🟢     | リトライ / DX               | fixed | HTTP 429 の後、非冪等な `create` が自動再送されない               |
 | [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed | Candidate の静的カタログが標準項目 4 件を欠く                     |
 | [RV-24][rv24] | 🟡     | ドキュメント / DX           | fixed | `defineFields` の使い方がどこにも無い                             |
 | [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | fixed | `partition` 未設定で無言のうちに `partition=0` を送る             |
@@ -46,7 +46,8 @@
 | [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed | reference ↔ カタログの突合が自動化されていない                    |
 | [RV-30][rv30] | 🟢     | 型安全 / 公開サーフェス     | fixed | 公開ジェネリクスの制約型が未 export                               |
 | [RV-31][rv31] | 🟡     | API 忠実性 / 型安全         | fixed | System[Reference] を展開して要求しても ID 以外が捨てられる        |
-| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | open  | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
+| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | fixed | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
+| [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ   | fixed | back-merge が develop の保護ルールをバイパスして通る              |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -87,3 +88,4 @@
 [rv30]: rv/0030-generic-constraint-types-unexported.md
 [rv31]: rv/0031-reference-expansion-discarded.md
 [rv32]: rv/0032-searchall-query-mutation.md
+[rv33]: rv/0033-backmerge-bypasses-branch-protection.md
