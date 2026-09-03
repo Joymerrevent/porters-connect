@@ -6,7 +6,7 @@
 
 import { PortersConfigError } from "../errors";
 import { qualify } from "../util/alias";
-import type { AccessPoint } from "../http/access-point";
+import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
 import {
   decodeField,
@@ -230,6 +230,23 @@ export const appendPaging = (
 };
 
 /**
+ * Assemble a Read URL from a **paging-free** parameter set: the shared half of the query is built
+ * once and only `count` / `start` differ per page (RV-32). The set is cloned rather than mutated,
+ * so one base can serve every page of the same `searchAll`.
+ */
+export const readUrlOf = (
+  accessPoint: AccessPoint,
+  path: string,
+  base: URLSearchParams,
+  count?: number,
+  start?: number,
+): string => {
+  const p = new URLSearchParams(base);
+  appendPaging(p, count, start);
+  return apiUrl(accessPoint, path, p);
+};
+
+/**
  * Offset pagination shared by every `searchAll`. Advances by the items actually returned and
  * stops at `total` — or on an empty page (defensive against a stuck offset / infinite loop).
  * A generator can't be an arrow; a function expression still satisfies func-style:expression.
@@ -247,4 +264,21 @@ export const paginate = async function* <T>(
     start += page.items.length;
     if (page.items.length === 0 || start >= page.total) return;
   }
+};
+
+/**
+ * {@link paginate}, with the per-page fetcher built **once**: `prepare` runs inside the generator,
+ * the first time a page is asked for. The iteration then holds the *serialised* query — not the
+ * caller's object — so writing to that object between pages cannot change what the next page asks
+ * for (RV-32). Preparing inside the generator (rather than when `searchAll(...)` is called) also
+ * keeps a query guard's failure arriving as a rejected iteration instead of a synchronous throw,
+ * which is the contract every Read path follows (ADR-0046).
+ */
+export const paginateOnce = async function* <T>(
+  prepare: () => (
+    count: number,
+    start: number,
+  ) => Promise<{ items: T[]; total: number }>,
+): AsyncGenerator<T> {
+  yield* paginate(prepare());
 };

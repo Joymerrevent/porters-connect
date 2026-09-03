@@ -4,12 +4,11 @@
 // 0 = the login partition (only under the browser `code` grant — 403s under code_direct, so
 // it is not exposed; ADR-0022 D3b). No `get(id)`: the API has no id/condition filter.
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
-  appendPaging,
   decoderFor,
-  paginate,
+  paginateOnce,
+  readUrlOf,
   runRead,
   type FieldCatalog,
   type ReadRecord,
@@ -57,14 +56,13 @@ export type PartitionResource = {
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
-const buildUrl = (
-  accessPoint: AccessPoint,
-  q: PartitionSearchQuery,
-): string => {
+// Paging is left out on purpose — see `field.ts` / RV-32.
+const buildParams = (
+  q: Omit<PartitionSearchQuery, "count" | "start">,
+): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("request_type", String(q.requestType ?? 1));
-  appendPaging(p, q.count, q.start);
-  return apiUrl(accessPoint, "partition", p);
+  return p;
 };
 
 export const createPartitionResource = (
@@ -73,18 +71,25 @@ export const createPartitionResource = (
   const decode = decoderFor(FIELDS);
   // `async` for the exception contract: a Promise-returning public method never throws
   // synchronously, whatever URL building does (ADR-0046).
+  const readUrl = (q: PartitionSearchQuery): string =>
+    readUrlOf(deps.accessPoint, "partition", buildParams(q), q.count, q.start);
   const search = async (
     query: PartitionSearchQuery = {},
   ): Promise<PartitionPage> =>
-    runRead(
-      deps.requester,
-      PARTITION_DESCRIPTOR.name,
-      buildUrl(deps.accessPoint, query),
-      decode,
-    );
+    runRead(deps.requester, PARTITION_DESCRIPTOR.name, readUrl(query), decode);
+  // The query is read once, at the first page (RV-32).
   const searchAll = (
     query: Omit<PartitionSearchQuery, "count" | "start"> = {},
   ): AsyncIterable<Partition> =>
-    paginate((count, start) => search({ ...query, count, start }));
+    paginateOnce(() => {
+      const base = buildParams(query);
+      return (count, start) =>
+        runRead(
+          deps.requester,
+          PARTITION_DESCRIPTOR.name,
+          readUrlOf(deps.accessPoint, "partition", base, count, start),
+          decode,
+        );
+    });
   return { search, searchAll };
 };

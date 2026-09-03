@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-08-30
+- 最終更新: 2026-08-31
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -13,13 +13,10 @@
 
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1 / D4 が完了**し、**0.12.0 で公開済み**
 （2026-08-31・データ系 13/13）。残るのは D2（マスタ項目）と D3（`Link` / `Image`）。
-品質ゲートは全 green（**782 tests**・coverage は perFile 100%）。
+品質ゲートは全 green（**789 tests**・coverage は perFile 100%）。
 
 ### 着手可能（ブロック無し）
 
-- [ ] **RV-32 の修正** — `searchAll` に渡したクエリを反復中に書き換えると次ページ以降が変わる。
-      **処置は (a) で確定済み**（1 度だけ直列化して以降はページングだけ差し替える）。
-      対象は `resources/resource.ts` ＋ マスタ 3 種（`field` / `partition` / `user`）。[RV-32][findings]
 - [ ] **D2: マスタ Read の標準項目を埋める** — User 4/17・Field 9/10（`P_ResourceType` 欠）・
       Option 6/7（`Items` 欠）。`System[Department]` の decode 形は [ADR-0061][adr61] で確定済みなので、
       残りは項目を足すだけ＝**ADR 不要の見込み**。突合テストの対象をマスタへ広げるかは実装時に判断する
@@ -92,7 +89,7 @@
   ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
   **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
   `itemstate` の明示指定をそのまま送るようにした（[ADR-0057][adr57]）。
-  **未リリースの変更は無し**（`.changeset/` は空）。
+  **未リリースの変更**は RV-32 の修正 1 件（`.changeset/` に 1 枚）。
 
 ### 随時・任意（急がない）
 
@@ -117,8 +114,8 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 
 | ファイル                      | 何の TODO か                                       | いまの状態                              |
 | ----------------------------- | -------------------------------------------------- | --------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 2 件（RV-32 の修正・D2）       |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | open 3 件 = RV-22 / RV-32 / RV-33       |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 1 件（D2）                     |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | open 2 件 = RV-22 / RV-33               |
 | [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | proposed **なし**／**実装待ちも なし**  |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜17 が未確認（契約待ち）           |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
@@ -234,8 +231,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - ADR 0001〜0061 accepted（0037 は 0039 で・**0033 は 0060 で** superseded）・**proposed は無し**／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**762 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 3 件**＝
-  RV-22（契約待ち）・RV-32（`searchAll` のクエリ書き換え）・RV-33（back-merge の保護バイパス）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
+- 品質ゲート green・**789 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 2 件**＝
+  RV-22（送信前に弾かれた write を再送しない）・RV-33（back-merge の保護バイパス）。
+  **RV-32（`searchAll` のクエリ書き換え）は fixed**（2026-08-31・未リリース）。台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
 - 初期 scaffold 資料を [docs/history][history] へ移設（ルート直下を利用者向けに整理）
 - **リポジトリ内スキル** `.claude/skills/` — 繰り返す判断を手順として固定する置き場。

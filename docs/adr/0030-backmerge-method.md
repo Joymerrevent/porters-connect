@@ -37,6 +37,8 @@ ADR-0029 の案F は「ワークフローが develop へ直 push」だったが�
 
 **決定（accepted・2026-06-21）：案H（手動 back-merge）。**
 
+> **［2026-09-03 追記・supersede］** back-merge の**実行方式**＝ runbook §2 の直 push は、`develop` の保護ルール（PR 必須・必須ステータスチェック）を bypass して通っていたことが分かり（[findings][findings] RV-33）、[ADR-0062][adr62] で **案A（back-merge も PR を通す）に superseded**。**手動で行うこと自体（案H）は不変**。以下の記述は当時の決定の記録として残す。
+
 back-merge は低頻度・低リスクで `git merge` 1コマンドで済む。
 案G は「PR は出るが merge にひと手間」で半端、案I は秘密鍵が増えトークンレス／フェイルセーフ方針に反する。
 「タグ忘れ」という発端の不満はタグ＋publish の自動化（案B）で既に解消済みなので、back-merge は無理に自動化しない。
@@ -71,6 +73,8 @@ back-merge は低頻度・低リスクで `git merge` 1コマンドで済む。
 - 関連: [ADR-0029][adr29]（タグ＋publish ＝ 案B は本 ADR の対象外・不変）／ [release-runbook][rb]。
 
 [adr29]: 0029-release-tag-automation.md
+[adr62]: 0062-backmerge-via-pull-request.md
+[findings]: ../reviews/findings.md
 [rb]: ../release-runbook.md
 [s1]: https://medium.com/ninjaneers/letting-github-actions-push-to-protected-branches-a-how-to-57096876850d
 [s2]: https://github.com/orgs/community/discussions/25305

@@ -16,10 +16,10 @@ import {
 } from "../xml/encode";
 import { parseWriteResult, type RawItem } from "../xml/parser";
 import {
-  appendPaging,
   decoderFor,
-  paginate,
+  paginateOnce,
   qualifyReadFields,
+  readUrlOf,
   runRead,
   type FieldCatalog,
   type ReadFieldAlias,
@@ -213,18 +213,18 @@ export const firstWriteResultId = (
 };
 
 /**
- * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
- * at the configured access point (ADR-0047).
+ * Serialise the Read query — `partition` / `field` / `condition` / `order` / `keywords` /
+ * `itemstate` — into the parameters every page of that query shares. **Paging is deliberately not
+ * here**: `count` / `start` are the only parts that differ page to page, so `readUrlOf` adds them
+ * to a copy and `searchAll` can serialise the caller's query exactly once (RV-32).
  * `ctx` (alias prefix + Data-Type map + reference targets) drives the typed query encoding
  * (ADR-0038): condition/order prefixing, date ISO -> PORTERS, and the keyword/itemstate guards.
  * It also assembles `field` from the bare aliases (ADR-0059) and folds `expand` into that list
  * (ADR-0058). Attachment is bespoke (no prefix / no catalog) and builds its own loose URL — see
  * attachment.ts.
  */
-export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
-  accessPoint: AccessPoint,
+export const buildReadParams = <F extends FieldCatalog, R extends ReferenceMap>(
   partition: number,
-  path: string,
   q: SearchQuery<F, R>,
   ctx: {
     prefix: string;
@@ -237,7 +237,7 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
      */
     params?: Readonly<Record<string, string>>;
   },
-): string => {
+): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
   for (const [key, value] of Object.entries(ctx.params ?? {}))
@@ -254,9 +254,27 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
     p.set("field", entries.join(","));
   }
   appendReadQuery(p, q, ctx);
-  appendPaging(p, q.count, q.start);
-  return apiUrl(accessPoint, path, p);
+  return p;
 };
+
+/**
+ * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
+ * at the configured access point (ADR-0047) — the single-page form of {@link buildReadParams}.
+ */
+export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
+  accessPoint: AccessPoint,
+  partition: number,
+  path: string,
+  q: SearchQuery<F, R>,
+  ctx: Parameters<typeof buildReadParams<F, R>>[2],
+): string =>
+  readUrlOf(
+    accessPoint,
+    path,
+    buildReadParams(partition, q, ctx),
+    q.count,
+    q.start,
+  );
 
 /** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */
 export const buildWriteUrl = (
@@ -293,13 +311,16 @@ export const createResource = <
   // The API-native "primary key only" stays reachable via `field: []` (透明化).
   const defaultFields = Object.keys(config.fields) as ReadFieldAlias<F>[];
 
-  const readUrl = (q: SearchQuery<F, R>): string =>
-    buildReadUrl(deps.accessPoint, deps.partition, config.path, q, {
+  const readParams = (q: SearchQuery<F, R>): URLSearchParams =>
+    buildReadParams(deps.partition, q, {
       prefix: config.prefix,
       fields: fieldMap,
       references,
       params: config.readParams,
     });
+
+  const readUrl = (q: SearchQuery<F, R>): string =>
+    readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
 
   const writeUrl = (): string =>
     buildWriteUrl(deps.accessPoint, deps.partition, config.path);
@@ -335,10 +356,29 @@ export const createResource = <
       decoderWith<ExpandedReadRecord<F, R, E>>(query.expand),
     );
 
+  // The caller's query object is read **once**, when the first page is asked for: what the walk
+  // keeps is the serialised parameters and the decoder, not the object. Writing to that object
+  // (`q.condition.P_Name.part = …`) between pages therefore cannot change a later page — the walk
+  // stays "every record matching the query as it was handed over" (RV-32). Building inside the
+  // generator keeps guard failures arriving as a rejected iteration (ADR-0046), and drops the
+  // per-page re-serialisation the old form paid for.
   const searchAll = <const E extends Expand<R> = EmptyReferences>(
     query: Omit<SearchQuery<F, R>, "count" | "start"> & { expand?: E } = {},
   ): AsyncIterable<ExpandedReadRecord<F, R, E>> =>
-    paginate((count, start) => search<E>({ ...query, count, start }));
+    paginateOnce(() => {
+      const base = readParams({
+        ...query,
+        field: query.field ?? defaultFields,
+      });
+      const decode = decoderWith<ExpandedReadRecord<F, R, E>>(query.expand);
+      return (count, start) =>
+        runRead(
+          deps.requester,
+          config.name,
+          readUrlOf(deps.accessPoint, config.path, base, count, start),
+          decode,
+        );
+    });
 
   const get = async <const E extends Expand<R> = EmptyReferences>(
     id: number,
