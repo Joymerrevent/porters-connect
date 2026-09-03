@@ -13,7 +13,7 @@
 
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1 / D4 が完了**し、**0.12.0 で公開済み**
 （2026-08-31・データ系 13/13）。残るのは D2（マスタ項目）と D3（`Link` / `Image`）。
-品質ゲートは全 green（**789 tests**・coverage は perFile 100%）。
+品質ゲートは全 green（**791 tests**・coverage は perFile 100%）。
 
 ### 着手可能（ブロック無し）
 
@@ -76,8 +76,10 @@
   📌 **紛らわしいので注意**: 上には無関係な「v3」が 2 つ出てくる。**js-yaml v3** は古く脆弱な版
   （`safeLoad` を持つ・戻してはいけない側）、**changesets v3** は最新版（上げた側）。
   今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
-- **RV-22**（429 後に `create` を再送しない）は**まだ着手しない** — 実 PORTERS では発火しない（レート超過は強制切断）。
-  429 が観測できるか自体が LV-9 の確認事項なので、契約後に判断する。
+- ✅ **RV-22 は fixed**（2026-09-03・[ADR-0063][adr63]＝冪等性ガードを「送信済み ＋ 結果が不明」に限定）。
+  **契約待ちだったのは 429 の側だけ**で、[ADR-0050][adr50] が RV-22 へ送っていた
+  「トークン取得の失敗＝リクエスト未送信でも `create` を再送しない」は**契約なしで今日起きる**経路だった。
+  429 の「常に処理前の拒否」という仮定は LV-9 に紐づくので `VERIFY(live)` をコードに残してある。
 - **0.12.0 を公開済み**（2026-08-31）。**PORTERS の全リソースに対応**した版（データ系 6/13 → 13/13）で、
   **破壊的変更は無い**。追加は Recruiter / Contact / Opportunity / Activity / Contract / Sales / Phase の 7 種と
   データ型 `System[Department]`（[ADR-0060][adr60] D1 完了・[ADR-0061][adr61]）。
@@ -86,7 +88,7 @@
   ひとつ前の 0.10.0（2026-08-22）も破壊的で、`partition` を `tenant(id)` 経由のみにし（[ADR-0055][adr55]）、
   **`P_Deleted` で削除済みを判別できる**ようにし（[ADR-0056][adr56]・RV-26）、
   `itemstate` の明示指定をそのまま送るようにした（[ADR-0057][adr57]）。
-  **未リリースの変更**は RV-32 の修正 1 件（`.changeset/` に 1 枚）。
+  **未リリースの変更**は RV-32 / RV-22 の修正 2 件（`.changeset/` に 2 枚）。
 
 ### 随時・任意（急がない）
 
@@ -112,8 +114,8 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                       | いまの状態                              |
 | ----------------------------- | -------------------------------------------------- | --------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 1 件（D2）                     |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | open 1 件 = RV-22                       |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | 0062 は accepted＋実装済み              |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件**                        |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | 0062 / 0063 は accepted＋実装済み       |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜17 が未確認（契約待ち）           |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
 | [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）        |
@@ -225,12 +227,12 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 ### 基盤・記録
 
-- ADR 0001〜0062 accepted（0037 は 0039 で・**0033 は 0060 で** superseded／**0030 の実行方式は
+- ADR 0001〜0063 accepted（0037 は 0039 で・**0033 は 0060 で** superseded／**0030 の実行方式は
   [ADR-0062][adr62] で** superseded＝手動であること自体は不変）／
   **実装待ちは [ADR-0060][adr60]**（主軸そのもの）と **[ADR-0061][adr61]**（Phase の設計。[索引][adr]）
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**789 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 1 件**＝
-  RV-22（送信前に弾かれた write を再送しない）。**RV-32（`searchAll` のクエリ書き換え）は fixed**（2026-08-31・未リリース）、
+- 品質ゲート green・**791 tests**／project-review プロセス＋台帳（[findings][findings]：**open は 0 件**。
+  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（どちらも未リリース）、
   **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
   台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）
@@ -403,6 +405,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr61]: adr/0061-phase-resource-surface.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
+[adr63]: adr/0063-idempotency-guard-scope.md
 [adr35]: adr/0035-usage-documentation-structure.md
 [adr52]: adr/0052-findings-register-layout.md
 [fake-plan]: design/fake-server-plan.md
