@@ -18,7 +18,7 @@ D1 は 0.12.0 で公開済み（2026-08-31・データ系 13/13）、**D2（マ�
 
 ### 着手可能（ブロック無し）
 
-- **無し** — 主軸の残り D3 は要 ADR（下記）。手を動かす前に決めることがある状態。
+- **無し** — 主軸の残り D3 は [ADR-0064][adr64] の accept 待ち（下記「要 ADR」）。
 
 ### 判断待ち（決めれば着手できる）
 
@@ -28,9 +28,11 @@ D1 は 0.12.0 で公開済み（2026-08-31・データ系 13/13）、**D2（マ�
 
 ### 要 ADR（起票から）
 
-- [ ] **D3: `Link` / `Image`**（R-4 の積み残し）— **カスタム項目経由でしか現れない**ので、
-      `DataType` に足すだけでは誰も宣言できない。**`defineFields` の builder への露出まで 1 本の ADR**で扱う。
-      これが入れば D3 が 17/17
+- [ ] **D3: `Link` / `Image`**（R-4 の積み残し）— **[ADR-0064][adr64] を起票済み（proposed・2026-09-04）**。
+      **カスタム項目経由でしか現れない**ので、`DataType` に足すだけでは誰も宣言できず、
+      `defineFields` の builder への露出まで 1 本で扱う。決めるのは 6 論点（Image の既定サブタグ／
+      `Content` の要求入口／Write とサイズガード／Link の値の型／builder への追加／condition・order）。
+      **accept されれば着手できる**。これが入れば D3 が 17/17
 - [ ] **`Activity.P_Resource` を名前で受けるか** — [ADR-0061][adr61] の案5b で `t.phase.of()` は名前になったが、
       あちらは**カタログ項目**なので機構が別（項目単位で書き込み値の型を差し替える）。
       揃えないなら「`of()` は名前・`P_Resource` は数値」の非対称が残る
@@ -115,7 +117,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ----------------------------- | -------------------------------------------------- | --------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 **0 件**（残る D3 は要 ADR）   |
 | [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件**                        |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | 0062 / 0063 は accepted＋実装済み       |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **0064 が proposed**（D3 の決定待ち）   |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜18 が未確認（契約待ち）           |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手 |
 | [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）        |
@@ -425,6 +427,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr20]: adr/0020-read-field-default.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr61]: adr/0061-phase-resource-surface.md
+[adr64]: adr/0064-link-image-types.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
 [adr63]: adr/0063-idempotency-guard-scope.md
 [adr35]: adr/0035-usage-documentation-structure.md
