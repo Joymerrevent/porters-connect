@@ -43,24 +43,23 @@ jobs:
           # base の鮮度判定に merge-base を使うため全履歴が要る（shallow だと誤判定）
           fetch-depth: 0
 
-      # 機械的な事実収集。ここは LLM を通さない＝毎回同じ結果になる決定的な工程。
-      - name: 判断材料を集める
+      # 機械的な事実収集と、走らせるべきかの判定。ここは LLM を通さない＝毎回同じ結果になる。
+      # PR が残っている限りワークフローは毎営業日走るので、状況が変わっていない日に
+      # 同じ判定をやり直さないためのゲートをここに置く（費用の主因は再送される会話全体）。
+      - name: 判断材料を集めて実行要否を決める
         id: facts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -uo pipefail
-          bash .claude/skills/dependabot-merge/scripts/triage.sh > triage-facts.txt 2>&1 || true
-          cat triage-facts.txt
-          if grep -q "open な dependabot PR はありません" triage-facts.txt; then
-            echo "has_prs=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_prs=true" >> "$GITHUB_OUTPUT"
-          fi
+          REPO: ${{ github.repository }}
+        run: bash .github/scripts/dependabot-triage-gate.sh
 
-      # PR が 1 件も無い日は Claude を起動しない。判断すべきものが無いのに課金しないため。
+      - name: 判定をスキップした理由を記録する
+        if: steps.facts.outputs.should_run != 'true'
+        run: echo "::notice::判定をスキップしました — ${{ steps.facts.outputs.reason }}"
+
+      # 判断すべきものが無い日・状況が変わっていない日は Claude を起動しない。
       - name: 判定して追跡 Issue に書く
-        if: steps.facts.outputs.has_prs == 'true'
+        if: steps.facts.outputs.should_run == 'true'
         uses: anthropics/claude-code-action@d9a44dc489924665d246f0fd0508d102211be397 # v1
         with:
           # Claude サブスクリプションで認証する（API 課金ではなく契約の利用枠を消費する）。
@@ -87,7 +86,9 @@ jobs:
                **破壊的変更・major 更新・Node 要件（engines）の変化**を探す。ここが人手では
                漏れやすく、この自動化の中心的な価値です。CHANGELOG の該当箇所は引用する。
             4. `.claude/skills/dependabot-merge/templates/report.md` を読み、**その構造をそのまま
-               埋めて** `triage-report.md` を書く（Write ツール）。雛形の指示に従うこと:
+               埋めて** `triage-report.md` を書く（Write ツール）。
+               **判定の指紋には `${{ steps.facts.outputs.fingerprint }}` をそのまま書くこと**
+               （次回の実行がこれを読んで、状況が変わっていなければ判定を省く）。雛形の指示に従うこと:
                - 見出しを足さない・消さない・並べ替えない。投稿後に機械検証される。
                - 埋め方の指示が書かれた HTML コメントは、出力には残さない。
                - 該当が無い節は空欄にせず「該当なし」「なし」と明記する。
@@ -113,7 +114,7 @@ jobs:
       # 形式が守られたかを機械で確かめる。プロンプトに書いただけでは「そう書いてある」
       # 以上の保証がなく、崩れても静かに通ってしまう。崩れたら job を落として気づかせる。
       - name: レポートの形式を検証する
-        if: steps.facts.outputs.has_prs == 'true'
+        if: steps.facts.outputs.should_run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
