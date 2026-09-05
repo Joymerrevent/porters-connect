@@ -77,8 +77,10 @@ emit fingerprint "$fingerprint"
 
 # ---- 前回のレポートと比べる ---------------------------------------------------
 
-prev=$(gh issue list --state open --limit 100 --json title,body \
-  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\")] | .[0].body // empty" 2> /dev/null \
+# 追跡 Issue はラベル＋タイトル＋bot 作者の 3 点で同定する。タイトルだけだと、
+# public リポジトリでは第三者が立てた同名 Issue を「前回のレポート」として読みうる。
+prev=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 100 --json title,body,author \
+  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select(.author.is_bot)] | .[0].body // empty" 2> /dev/null \
   | tr -d '\r')
 
 if [ -z "$prev" ]; then

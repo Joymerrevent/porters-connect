@@ -31,14 +31,17 @@ concurrency:
 jobs:
   merge:
     name: merge
-    # 起動条件は 4 つ全部。1 つでも欠けたら job 自体が始まらない。
+    # 起動条件は 5 つ全部。1 つでも欠けたら job 自体が始まらない。
     #   - PR ではなく Issue のコメントであること
-    #   - その Issue が判定レポートであること（無関係な Issue から起動させない）
+    #   - その Issue を立てたのがワークフロー自身であること
+    #   - その Issue に追跡ラベルが付いていること（ラベルは write 権限者しか付けられない
+    #     ＝タイトルを真似た第三者の Issue から起動できない）
     #   - コメントが /merge で始まること
     #   - コメント者が書き込み権限を持つ人であること（誰でも起動できてはいけない）
     if: >-
       github.event.issue.pull_request == null &&
-      github.event.issue.title == 'Dependabot 判定レポート' &&
+      github.event.issue.user.login == 'github-actions[bot]' &&
+      contains(github.event.issue.labels.*.name, 'dependabot-triage') &&
       startsWith(github.event.comment.body, '/merge') &&
       (github.event.comment.author_association == 'OWNER' ||
       github.event.comment.author_association == 'MEMBER' ||

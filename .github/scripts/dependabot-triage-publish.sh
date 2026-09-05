@@ -97,9 +97,15 @@ if [ "${DRY_RUN:-0}" = 1 ]; then
   exit 0
 fi
 
+# ラベルは追跡 Issue の同定に使う（第三者は付けられない＝なりすましを弾ける）。
+# 既にあれば失敗するので握りつぶす。無いまま create すると下で明示的に落ちる。
+gh label create "$DEPENDABOT_ISSUE_LABEL" \
+  --color ededed --description "Dependabot 判定レポート（ワークフローが自動更新）" > /dev/null 2>&1 || true
+
 # `--search` は検索インデックスの遅延で取りこぼすので、一覧から選ぶ。
-num=$(gh issue list --state open --limit 100 --json number,title \
-  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\")] | .[0].number // empty" 2> /dev/null)
+# タイトルだけで選ばないのは、public リポジトリでは誰でも同名 Issue を立てられるため。
+num=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 100 --json number,title,author \
+  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select(.author.is_bot)] | .[0].number // empty" 2> /dev/null)
 
 if [ -n "$num" ]; then
   gh issue edit "$num" --body-file "$REPORT" > /dev/null || {
@@ -108,7 +114,10 @@ if [ -n "$num" ]; then
   }
   echo "追跡 Issue #${num} を更新しました。"
 else
-  url=$(gh issue create --title "$DEPENDABOT_ISSUE_TITLE" --body-file "$REPORT") || {
+  url=$(gh issue create \
+    --title "$DEPENDABOT_ISSUE_TITLE" \
+    --label "$DEPENDABOT_ISSUE_LABEL" \
+    --body-file "$REPORT") || {
     fail "Issue の作成に失敗しました"
     exit 1
   }

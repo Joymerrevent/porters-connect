@@ -10,8 +10,10 @@
 # ここが受け持つのは「その中で機械が値を取り出す 3 行」だけ。
 # この 3 行を変えるときは、雛形とワークフローのプロンプトも同時に直すこと。
 
-# 追跡 Issue のタイトル。gate（読む側）と publish（書く側）が同じ Issue を指すための定数。
+# 追跡 Issue の同定。タイトル一致だけだと public リポジトリでは**誰でも同名の Issue を
+# 立てられる**ので、ラベル（付けられるのは write 権限を持つ人だけ）と bot 作者を併用する。
 DEPENDABOT_ISSUE_TITLE="Dependabot 判定レポート"
+DEPENDABOT_ISSUE_LABEL="dependabot-triage"
 
 # 検査時刻（ISO 8601 / UTC）。gate が「前回から何日経ったか」に使う。秒は省略可。
 REPORT_TIMESTAMP_RE='^- 検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$'
