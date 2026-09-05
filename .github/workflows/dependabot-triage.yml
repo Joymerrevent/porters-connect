@@ -70,8 +70,12 @@ jobs:
           # 自前の GITHUB_TOKEN を渡す＝Claude GitHub App 認証を使わないので
           # id-token: write は不要。認証で失敗する場合はここを疑う。
           github_token: ${{ github.token }}
+          # モデルと effort はどちらも明示的に固定する。既定に任せると判定の質が
+          # 差分を伴わずに変わる（変化は既定値の側で起き、こちらの diff には出ない）。
+          # 既定はモデルごとに違いうる（effort は Opus 4.7 だけ xhigh が既定）ので明記する。
           claude_args: |
             --model claude-opus-5
+            --effort high
             --allowedTools "Read,Write,Glob,Grep,Bash(gh api:*),Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue edit:*),Bash(date:*)"
           prompt: |
             このリポジトリの Dependabot 依存更新 PR を検査し、判定表を追跡 Issue に書き出してください。
