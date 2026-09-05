@@ -1,7 +1,7 @@
 # 65. Dependabot 依存更新の判定と取り込みを自動化する
 
-- Status: proposed
-- Date: 2026-09-05
+- Status: accepted
+- Date: 2026-09-05（accepted: 2026-09-05）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 依存更新 PR の検査は**毎回同じ手順**で、しかも**間違えても静かに通る**種類の作業。
@@ -173,9 +173,15 @@ cooldown 未達の警告が付いたパッケージ）。
 
 ## Decision Outcome
 
-**未決（proposed）。** 推奨は **案1a / 案2a / 案3a / 案4a / 案5a / 案6a / 案7a / 案8a**。
+**決定（accepted・2026-09-05）：推奨どおり全採用 — 案1a / 案2a / 案3a / 案4a / 案5a / 案6a / 案7a / 案8a。**
 
-### Consequences（推奨案を採った場合）
+まとめると: 判定は **`schedule`（平日朝）で走らせ**、前回から状況が変わっていなければ**起動しない**
+（指紋 ＋ 3 日の鮮度）。使うモデルは **`opus` エイリアスで階層だけ固定し版は浮動**、`--effort high` は
+明示。認証は**サブスクリプションの OAuth トークン**。出力は**雛形を単一の正とし、投稿の前に機械検証**
+してからシェルが追跡 Issue に反映する。マージは**判定 Issue への `/merge` コメント**で起動し、
+**その工程に LLM を入れない**。取り込みは 1 件ずつ **`update-branch` してから CI の緑を待つ**。
+
+### Consequences
 
 **良くなること**
 
