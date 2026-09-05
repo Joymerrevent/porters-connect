@@ -122,7 +122,13 @@ wait_green() {
       *) : ;;
     esac
     if [ "$(date +%s)" -ge "$deadline" ]; then
-      say "  ❌ CI が待ち時間の上限までに緑になりませんでした（mergeable_state=${state}）"
+      # どちらの上限に当たったかを書き分ける。理由が違えば次の手も違う
+      # （この 1 件の CI が遅いのか、一度に取り込みすぎなのか）。
+      if [ "$deadline" -eq "$budget_end" ]; then
+        say "  ❌ 全体の持ち時間 $((OVERALL_BUDGET / 60)) 分を使い切りました（mergeable_state=${state}）"
+      else
+        say "  ❌ CI が $((WAIT_SECONDS / 60)) 分以内に緑になりませんでした（mergeable_state=${state}）"
+      fi
       return 1
     fi
     log "#$n: state=${state} 待機中…"
