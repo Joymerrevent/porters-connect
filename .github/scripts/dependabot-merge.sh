@@ -117,7 +117,7 @@ say ""
 # ---- CI が緑になるまで待つ ----------------------------------------------------
 
 wait_green() {
-  local n="$1" deadline budget_end state head failed
+  local n="$1" deadline budget_end state head runs failed pending finished
   deadline=$(($(date +%s) + WAIT_SECONDS))
   budget_end=$((started + OVERALL_BUDGET))
   [ "$deadline" -gt "$budget_end" ] && deadline="$budget_end"
@@ -125,17 +125,28 @@ wait_green() {
     # 待機ループの API 呼び出しだけは stderr を捨てる（20 秒ごとの一時エラーでログが
     # 埋まると、本当の失敗理由が見えなくなる）。一発勝負の操作は下で stderr を残す。
     head=$(gh api "repos/$REPO/pulls/$n" -q .head.sha 2> /dev/null)
+    runs=$(gh api "repos/$REPO/commits/$head/check-runs" --paginate \
+      -q '.check_runs[] | "\(.name)=\(.conclusion // "pending")"' 2> /dev/null)
     # 失敗を先に見る。mergeable_state は「失敗」も「実行中」も blocked になるため、
     # これが無いと落ちている CI を上限まで待ち続けることになる。
-    failed=$(gh api "repos/$REPO/commits/$head/check-runs" --paginate \
-      -q '[.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped") | .name] | join(", ")' 2> /dev/null)
-    if [ -n "$failed" ]; then
+    failed=$(printf '%s\n' "$runs" | grep -E '=' | grep -vE '=(success|neutral|skipped|pending)$' | cut -d= -f1 | tr '\n' ' ')
+    if [ -n "${failed// /}" ]; then
       say "  ❌ CI が失敗しています: ${failed}"
       return 1
     fi
+    pending=$(printf '%s\n' "$runs" | grep -cE '=pending$')
+    finished=$(printf '%s\n' "$runs" | grep -E '=' | grep -cvE '=pending$')
     state=$(gh api "repos/$REPO/pulls/$n" -q .mergeable_state 2> /dev/null)
     case "$state" in
-      clean) return 0 ;; # マージ可能＋必須チェック（ci / stryker）が緑
+      clean)
+        # clean だけを根拠にしない。mergeable_state が見るのは**必須チェックだけ**で、
+        # 必須の設定が変われば（設定は変わりうる＝ADR-0065 の前提そのもの）CI が
+        # 終わる前でも・1 つも走っていなくても clean になる。「全部の結論が出ていて、
+        # 少なくとも 1 つ結果がある」まで待てば、その設定に依存せず緑を確かめられる。
+        if [ "$pending" -eq 0 ] && [ "$finished" -gt 0 ]; then
+          return 0
+        fi
+        ;;
       dirty)
         say "  ❌ コンフリクトしています"
         return 1
@@ -148,9 +159,9 @@ wait_green() {
       # どちらの上限に当たったかを書き分ける。理由が違えば次の手も違う
       # （この 1 件の CI が遅いのか、一度に取り込みすぎなのか）。
       if [ "$deadline" -eq "$budget_end" ]; then
-        say "  ❌ 全体の持ち時間 $((OVERALL_BUDGET / 60)) 分を使い切りました（mergeable_state=${state}）"
+        say "  ❌ 全体の持ち時間 $((OVERALL_BUDGET / 60)) 分を使い切りました（mergeable_state=${state} / 未完了 ${pending} 件 / 完了 ${finished} 件）"
       else
-        say "  ❌ CI が $((WAIT_SECONDS / 60)) 分以内に緑になりませんでした（mergeable_state=${state}）"
+        say "  ❌ CI が $((WAIT_SECONDS / 60)) 分以内に緑になりませんでした（mergeable_state=${state} / 未完了 ${pending} 件 / 完了 ${finished} 件）"
       fi
       return 1
     fi
