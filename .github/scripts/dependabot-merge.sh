@@ -173,7 +173,7 @@ wait_green() {
 # ---- 1 件を検証してマージする -------------------------------------------------
 
 merge_one() {
-  local n="$1" info="$2" author base state head files bad judged
+  local n="$1" info="$2" author base state head files bad judged added
   author=$(printf '%s' "$info" | jq -r .user.login)
   base=$(printf '%s' "$info" | jq -r .base.ref)
   state=$(printf '%s' "$info" | jq -r .state)
