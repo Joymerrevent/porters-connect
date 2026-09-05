@@ -35,13 +35,19 @@ jobs:
     #   - その Issue を立てたのがワークフロー自身であること
     #   - その Issue に追跡ラベルが付いていること（ラベルは write 権限者しか付けられない
     #     ＝タイトルを真似た第三者の Issue から起動できない）
-    #
-    # NOTE: ラベル名 'dependabot-triage' は .github/scripts/dependabot-report-format.sh の
-    # DEPENDABOT_ISSUE_LABEL と同じ値。`if:` は式なのでシェル定数を参照できず、ここだけ
-    # 二重管理になる。**片方だけ変えると /merge は無言で起動しなくなる**（if で落ちた job は
-    # リアクションもコメントも返さないので、押した人には沈黙に見える）。必ず両方直すこと。
     #   - コメントが /merge で始まること
     #   - コメント者が書き込み権限を持つ人であること（誰でも起動できてはいけない）
+    #
+    # **条件に外れた `/merge` は完全に無言になる。** `if:` で落ちた job はリアクションも
+    # コメントも返さないので、押した人には沈黙に見える。見分け方（👀 が付くか）は
+    # templates/report.md の「マージ依頼」行に書いてある。
+    #
+    # NOTE: `if:` は式なのでシェル定数を参照できず、下の 2 つは
+    # .github/scripts/dependabot-report-format.sh との二重管理になる。片方だけ変えると
+    # /merge が無言で起動しなくなるので、必ず両方を直すこと。
+    #   - ラベル名 'dependabot-triage' ＝ DEPENDABOT_ISSUE_LABEL と同じ値。
+    #   - 作者の条件 ＝ DEPENDABOT_ISSUE_FILTER と**同じ集合**を指していること。あちらが
+    #     広いと、投稿側が別 bot 作の Issue を採用して更新し、そこへの /merge がここで落ちる。
     if: >-
       github.event.issue.pull_request == null &&
       github.event.issue.user.login == 'github-actions[bot]' &&

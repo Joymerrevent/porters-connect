@@ -22,11 +22,19 @@ DEPENDABOT_ISSUE_LABEL="dependabot-triage"
 
 # 追跡 Issue を選ぶ jq 述語。gate（読む側）と publish（書く側）で同じものを使う
 # ＝「どれが自分たちの Issue か」の定義が 1 つになる。
-# is_bot だけに賭けないのは、gh の author に is_bot が無い／false だった場合に
-# **毎回「既存 Issue なし」と判断して新しい Issue を作り続ける**ため。login でも拾う。
+#
+# NOTE: この述語は .github/workflows/dependabot-merge.yml の起動条件
+# `github.event.issue.user.login == 'github-actions[bot]'` と**同じ集合**を指していないと
+# いけない。ここが広いと、publish が別 bot 作の Issue を「前回のレポート」として採用して
+# 上書きし、その Issue に打った `/merge` は起動条件から外れて**無言で不発**になる
+# （`if:` で落ちた job はリアクションもコメントも返さない）。だから is_bot 単独では通さない。
+#
+# is_bot を捨てないのは、gh の author に is_bot が無い／login が空で返った場合に
+# **毎回「既存 Issue なし」と判断して新しい Issue を作り続ける**のを防ぐため。
+# login が取れているときは login で判断し、取れないときだけ is_bot に頼る。
 # 逆に login の前方一致にしないのは、github-actions-… という第三者アカウントを
 # 巻き込まないため（ラベルと合わせて二重に絞る）。
-DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select((.author.is_bot // false) or (.author.login // \"\") == \"github-actions\" or (.author.login // \"\") == \"github-actions[bot]\")"
+DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select((.author.login // \"\") == \"github-actions\" or (.author.login // \"\") == \"github-actions[bot]\" or ((.author.login // \"\") == \"\" and (.author.is_bot // false)))"
 
 # 検査時刻（ISO 8601 / UTC）。gate が「前回から何日経ったか」に使う。秒は省略可。
 REPORT_TIMESTAMP_RE='^- 検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$'
