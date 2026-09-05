@@ -107,6 +107,15 @@ if [ -n "$plan_refs" ] && [ -z "${EXPECTED_PR_HEADS:-}" ]; then
   problems=1
 fi
 
+# 同じ PR を 2 回書いたレポートを弾く。SHA まで同じだと突き合わせも素通りし、
+# merge 側は 2 回処理して 2 回目に「open ではありません」で中断する＝レポートの
+# 記述と実行結果が食い違う。
+dup=$(printf '%s\n' "$plan_refs" | grep -E '@' | cut -d@ -f1 | sort | uniq -d | tr '\n' ' ')
+if [ -n "${dup// /}" ]; then
+  fail "取り込み対象に同じ PR が複数あります: ${dup}"
+  problems=1
+fi
+
 if [ -n "${EXPECTED_PR_HEADS:-}" ]; then
   while read -r pair; do
     [ -z "$pair" ] && continue
