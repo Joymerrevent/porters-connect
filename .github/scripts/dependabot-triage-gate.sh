@@ -79,9 +79,19 @@ emit fingerprint "$fingerprint"
 
 # 追跡 Issue はラベル＋タイトル＋bot 作者の 3 点で同定する。タイトルだけだと、
 # public リポジトリでは第三者が立てた同名 Issue を「前回のレポート」として読みうる。
-prev=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 100 --json title,body,author \
-  -q "[.[] | ${DEPENDABOT_ISSUE_FILTER}] | .[0].body // empty" 2> /dev/null \
-  | tr -d '\r')
+prev_raw=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 100 --json title,body,author \
+  -q "[.[] | ${DEPENDABOT_ISSUE_FILTER}] | .[0].body // empty" 2> /dev/null)
+lookup_status=$?
+prev=$(printf '%s' "$prev_raw" | tr -d '\r')
+
+# gh の失敗（API エラー・ラベル未作成）と「Issue がまだ無い」を区別する。どちらも
+# 実行に倒すので結果は同じだが、`::notice::` に残る理由が事実と違うと後から追えない
+# ＝「初回だと思っていたら毎回 API が落ちていた」に気づけない。
+if [ "$lookup_status" -ne 0 ]; then
+  emit should_run true
+  emit reason "前回のレポートを引き当てられませんでした（ラベル未作成か gh の失敗）。取りこぼさないよう判定します"
+  exit 0
+fi
 
 if [ -z "$prev" ]; then
   emit should_run true
