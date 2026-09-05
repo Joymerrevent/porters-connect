@@ -90,8 +90,12 @@ fingerprint=$(
   {
     printf '%s\n' "$pr_state" | while IFS=$'\t' read -r num sha; do
         [ -z "$num" ] && continue
+        # `--paginate` は `-q` を**ページごとに**適用するので、jq 側で集約しない。
+        # 集約したままだと 100 件を超えた瞬間にページ単位のソート済み断片が並び、
+        # 指紋がページ境界に依存する。行で受けて shell で畳む。
         checks=$(gh api "repos/$REPO/commits/$sha/check-runs" --paginate \
-          -q '[.check_runs[] | "\(.name)=\(.conclusion // .status)"] | sort | join(",")' 2> /dev/null)
+          -q '.check_runs[] | "\(.name)=\(.conclusion // .status)"' 2> /dev/null \
+          | sort | tr '\n' ',')
         if git merge-base --is-ancestor origin/develop "$sha" 2> /dev/null; then
           fresh=fresh
         else
