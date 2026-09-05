@@ -1,0 +1,83 @@
+name: Dependabot Merge
+
+# 判定レポート Issue に `/merge` とコメントすると、そこに書かれた依存更新 PR を
+# 順に取り込む。判断（通してよいか）は Issue の判定表として既に出ているので、
+# ここは固定シーケンスを実行するだけ＝**LLM を介さない**。
+# 第三者の CHANGELOG 由来のテキスト（PR 本文）を読んで判断する工程を挟まないため、
+# prompt injection でマージが誘発される経路が存在しない。
+#
+# 使い方:
+#   /merge          … open な dependabot PR を決定的な順で全件
+#   /merge 222 221  … 指定した PR だけを、指定した順で
+#
+# Issue は古くなりうる（投稿後に CI が再実行される・develop が動く）ので、
+# 実行時に必ず自分で再検証してから触る。1 つでも前提が外れたら中断する。
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+# 同時に走らせない。ロックファイルを触る PR を並行でマージすると、
+# どちらも「緑だった」まま壊れた lock が develop に入りうる。
+concurrency:
+  group: dependabot-merge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: merge
+    # 起動条件は 4 つ全部。1 つでも欠けたら job 自体が始まらない。
+    #   - PR ではなく Issue のコメントであること
+    #   - その Issue が判定レポートであること（無関係な Issue から起動させない）
+    #   - コメントが /merge で始まること
+    #   - コメント者が書き込み権限を持つ人であること（誰でも起動できてはいけない）
+    if: >-
+      github.event.issue.pull_request == null &&
+      github.event.issue.title == 'Dependabot 判定レポート' &&
+      startsWith(github.event.comment.body, '/merge') &&
+      (github.event.comment.author_association == 'OWNER' ||
+      github.event.comment.author_association == 'MEMBER' ||
+      github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write # マージとブランチ削除に必要
+      pull-requests: write # update-branch とマージに必要
+      issues: write # 結果を Issue に返すために必要
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: develop
+          fetch-depth: 0 # base の鮮度判定に merge-base を使うため全履歴が要る
+
+      - name: 受け付けたことを示す
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes --silent || true
+
+      - name: 検証してマージする
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # コメント本文はシェルに展開せず環境変数で渡す。
+          # ${{ }} で直接埋めるとコメントの中身がスクリプトとして実行されうる。
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: bash .github/scripts/dependabot-merge.sh
+
+      - name: 結果を Issue に返す
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s result.md ]; then
+            printf '`/merge` は実行されましたが、結果を記録できませんでした。ワークフローのログを確認してください。\n' > result.md
+          fi
+          printf '\n---\n[ワークフローの実行ログ](%s)\n' \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> result.md
+          gh issue comment "${{ github.event.issue.number }}" --body-file result.md
