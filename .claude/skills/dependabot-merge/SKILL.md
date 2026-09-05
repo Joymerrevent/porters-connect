@@ -31,8 +31,11 @@ description: >-
   ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
 - `gh pr merge` は `permissions.ask` で確認プロンプトが出る。**これは仕組み側のフェイルセーフなので迂回しない。**
 - **同じ判定は定期実行でも走る**（[ADR-0065][adr65]）。`.github/workflows/dependabot-triage.yml` が平日朝に
-  検査し、`Dependabot 判定レポート` Issue を上書き更新する。取り込みはその Issue に `/merge` と
-  コメントすると `.github/workflows/dependabot-merge.yml` が実行する。**このスキルは対話実行の経路**で、
+  検査し、`Dependabot 判定レポート` Issue を上書き更新する。取り込みは
+  その Issue に `/merge` とコメントすると `.github/workflows/dependabot-merge.yml` が実行する。
+  **`/merge` が読むのはレポートの `- 取り込み対象:` の 1 行だけ**で、そこに書かれた PR を書かれた順に
+  取り込む（`/merge 222 221` で上書きできる）。**見送る PR をその行に書かない**のが唯一の防波堤
+  ＝散文でいくら「見送り」と書いても、行に番号があれば入る。**このスキルは対話実行の経路**で、
   出力形式は `templates/report.md` を両者で共有する。定期実行は前回から状況が変わっていなければ
   起動しないので、**手元で今すぐ見たいときはこのスキルを使う**。
 

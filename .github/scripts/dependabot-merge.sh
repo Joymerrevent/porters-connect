@@ -5,9 +5,18 @@
 # 事実だけを再検証してから触る。Issue は古くなりうる（投稿後に CI が再実行される、
 # develop が動く、PR が閉じられる）ので、投稿時点の状態を信用しない。
 #
+# **対象はレポートの「取り込み対象」行から取る**（番号を明示された場合はそちら）。
+# open な dependabot PR を全部拾わないのは、レポートが「見送り」と判定した PR まで
+# 巻き込むため — 判定表を読んだ人の決定はその 1 行に現れているので、そこだけを実行する。
+#
 # 1 件でも前提が外れたら、そこで中断して残りには手を付けない。続行すると、外れた前提の
 # 上に次のマージを積むことになる＝壊れたときに被害が広がる。
 set -uo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# 「取り込み対象」行の形は gate / publish と共有（publish が投稿前に検証している）。
+# shellcheck source=.github/scripts/dependabot-report-format.sh
+. "${HERE}/dependabot-report-format.sh"
 
 RESULT="${RESULT_FILE:-result.md}"
 : > "$RESULT"
@@ -33,48 +42,48 @@ set -f
 args=$(printf '%s' "${COMMENT_BODY:-}" | head -1 | tr -d '\r' | sed -E 's#^[[:space:]]*/merge##' | tr -d '#,')
 
 targets=()
+source_of_targets=""
 if [ -n "${args//[[:space:]]/}" ]; then
   for t in $args; do
     case "$t" in
       '' | *[!0-9]*)
         say "❌ 番号として読めない引数があります: \`$t\`"
         say ""
-        say "使い方: \`/merge\`（全件）または \`/merge 222 221\`（指定した順）"
+        say "使い方: \`/merge\`（レポートの取り込み対象）または \`/merge 222 221\`（指定した順）"
         exit 1
         ;;
       *) targets+=("$t") ;;
     esac
   done
+  source_of_targets="コメントで指定された順"
 else
-  # 指定が無ければ全件。順番は「競合しないものから」＝ロックファイルを触らない PR を先に。
-  # 同じ lock を触るもの同士は prod → dev の順（prod は利用者に届くので単独で緑を帰属させる）。
-  order=$(mktemp)
-  while IFS=$'\t' read -r num title; do
-    [ -z "$num" ] && continue
-    files=$(gh api "repos/$REPO/pulls/$num/files" --paginate -q '[.[].filename] | join(" ")' 2>/dev/null)
-    if printf '%s' "$files" | grep -q 'pnpm-lock\.yaml'; then
-      case "$title" in
-        *prod-dependencies*) rank=1 ;;
-        *dev-dependencies*) rank=2 ;;
-        *) rank=3 ;;
-      esac
-    else
-      rank=0
-    fi
-    printf '%s\t%s\n' "$rank" "$num" >> "$order"
-  done < <(gh api "repos/$REPO/pulls?state=open&per_page=100" \
-    -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.title)"' 2>/dev/null)
-
-  while read -r n; do [ -n "$n" ] && targets+=("$n"); done < <(sort -k1,1n -k2,2n "$order" | cut -f2)
+  # 番号の指定が無ければ、レポートの「取り込み対象」行**だけ**を読む。
+  # 節の散文（「#223 は見送り」等）は拾わない＝見送った PR を巻き込まない。
+  plan_line=$(printf '%s' "${ISSUE_BODY:-}" | tr -d '\r' | grep -m1 -E "$REPORT_MERGE_PLAN_RE")
+  if [ -z "$plan_line" ]; then
+    say "❌ レポートに \`- 取り込み対象:\` の行が見つかりません（形式が古い可能性があります）。"
+    say ""
+    say "取り込む PR を明示してください: \`/merge 222 221\`"
+    exit 1
+  fi
+  if printf '%s' "$plan_line" | grep -qF 'なし'; then
+    say "レポートの取り込み対象は「なし」です。マージするものがありません。"
+    exit 0
+  fi
+  while read -r t; do
+    [ -n "$t" ] && targets+=("$t")
+  done < <(printf '%s' "$plan_line" | grep -oE '#[0-9]+' | tr -d '#')
+  source_of_targets="レポートの「取り込み対象」行"
 fi
 set +f
 
 if [ ${#targets[@]} -eq 0 ]; then
-  say "open な dependabot PR はありません。マージするものがありません。"
+  say "取り込む PR がありません。"
   exit 0
 fi
 
 say "対象: $(printf '#%s ' "${targets[@]}")"
+say "（${source_of_targets}）"
 say ""
 
 # ---- CI が緑になるまで待つ ----------------------------------------------------

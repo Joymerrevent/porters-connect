@@ -7,8 +7,11 @@ name: Dependabot Merge
 # prompt injection でマージが誘発される経路が存在しない。
 #
 # 使い方:
-#   /merge          … open な dependabot PR を決定的な順で全件
+#   /merge          … レポートの「取り込み対象」行に載っている PR を、その順で
 #   /merge 222 221  … 指定した PR だけを、指定した順で
+#
+# open な PR を全部拾う経路は**置かない**。レポートが「見送り」と判定した PR まで
+# 巻き込むためで、判定表を読んだ人の決定は「取り込み対象」行に現れている。
 #
 # Issue は古くなりうる（投稿後に CI が再実行される・develop が動く）ので、
 # 実行時に必ず自分で再検証してから触る。1 つでも前提が外れたら中断する。
@@ -65,9 +68,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          # コメント本文はシェルに展開せず環境変数で渡す。
-          # ${{ }} で直接埋めるとコメントの中身がスクリプトとして実行されうる。
+          # コメント本文と Issue 本文はシェルに展開せず環境変数で渡す。
+          # ${{ }} で直接埋めると、中身がスクリプトとして実行されうる。
           COMMENT_BODY: ${{ github.event.comment.body }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: bash .github/scripts/dependabot-merge.sh
 
       - name: 結果を Issue に返す
