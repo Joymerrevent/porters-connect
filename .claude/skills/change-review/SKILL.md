@@ -43,9 +43,10 @@ git diff --stat develop...HEAD
 - 比較基点は既定で `develop`（このリポジトリの開発本流）。リリース系なら `main`。
 - **正典を引く**: 関係する ADR（[docs/adr/index.md][adrindex]）、`docs/design/`、`docs/reference/`、`CLAUDE.md`。判断は記憶や一般論ではなく、ここに接地させる。
 - **ADR の決定と実装が食い違っていないかを最初に見る。** 文書やプロンプトが主張している性質（「〜の権限は渡していない」「〜で守られる」）が**事実か**を確かめる。前回のレビューで実際に出た指摘がこの型だった。
-- 変更の種類を判定し、当てる観点表を選ぶ（両方混ざる PR なら両方）:
-  - シェル / GitHub Actions → [breakage-matrix.md][matrix] §3
-  - TypeScript（ライブラリ本体） → [breakage-matrix.md][matrix] §4
+- **変更の種類を判定し、対象別ファイルを開く**（複数にまたがる PR なら全部）。バグクラスも具体的な検証手も対象ごとに違う:
+  - シェル / GitHub Actions → [targets/shell-ci.md][shell]
+  - TypeScript（ライブラリ本体） → [targets/typescript.md][ts]
+  - どちらでもない対象なら [targets/README.md][targets] の形で 1 ファイル起こす
 
 ### 2. 入力の棚卸し
 
@@ -55,24 +56,21 @@ git diff --stat develop...HEAD
 
 **入力と別に、経路も棚卸しする。** 値の壊れ方を全部当てても、その値を扱うループを一度も回していなければ何も確かめたことにならない。ループの 0 / 1 / 2 件以上、打ち切り、上限、dry-run と本番の分岐を数える（[breakage-matrix.md][matrix] §1）。
 
-例（シェル / CI の場合）: 人や LLM が書いた文書の機械可読行、別ジョブから渡る事実、外部コマンドの出力、イベントペイロード、リポジトリ設定（branch protection・ラベルの存在）。
-例（TypeScript の場合）: HTTP レスポンス（ステータス・ボディ）、XML パース結果、利用者が渡す設定と引数、環境変数、テナント固有のフィールド定義。
+その対象で典型的に「信じている入力」の種類は、§1 で開いた対象別ファイルの冒頭にある。
 
 作った表はそのまま報告に貼る。**この表が、後で収束を宣言するときの検査対象一覧になる。**
 
 ### 3. 決定的な検証を先に払う — 読む前にやる
 
-[verification-recipes.md][recipes] の 5 パターンから、対象に当たるものを**実際に走らせる**。
+[verification-recipes.md][recipes] の 5 つの狙いのうち、対象に当たるものを**実際に走らせる**。狙いは対象非依存、**具体的な手は §1 で開いた対象別ファイル**にある。
 
 1. 純粋な部分を切り出して総当たり（正規表現・パーサ・純関数）
-2. 外部コマンドを偽物に差し替える（`PATH` 先頭に偽 `gh` を置く）
-3. 使い捨てのリポジトリ / データを作る（git の意味論は実物で確かめる）
+2. 外部との境界を偽物に差し替える（偽物自身に未対応入力とモードを検証させる）
+3. 使い捨てのデータを作る（自分の理解が怪しい意味論は実物で確かめる）
 4. 本物の読み取り専用実行（**冪等性** ＝ 2 回走らせて出力が一致するかもここで取る）
 5. **本番と同じ起動の形**で確かめる（引数が絶対パスか相対パスかで結論が反転した実例あり）
 
-この 5 つはシェルと外部コマンドが前提。**TypeScript の変更なら [verification-recipes.md][recipes] §9** に同じ狙いの対応物がある（mock transport、coverage の「通っていない行」、型定義まで降りる、正典との突合をテストにする）。
-
-あわせて **実データで前提を潰す**。「一般に dependabot は force-push するか」ではなく「**この repo で実際に何回あったか**」を `gh api` で見る。コマンド集は [verification-recipes.md][recipes] §6。
+あわせて **実データで前提を潰す**。「一般に dependabot は force-push するか」ではなく「**この repo で実際に何回あったか**」を見る。取り方は対象別ファイルにある。
 
 各コミットが単独で緑かは、これで機械的に確かめる:
 
@@ -132,12 +130,14 @@ bash .claude/skills/change-review/scripts/per-commit-gates.sh
   ```
 
   個別には `pnpm typecheck` / `lint` / `format:check` / `test:coverage` / `build`、加えて `check:shell`・`check:index`・`check:release`・`check:publish`。
-- **`pnpm check:shell`** は `.sh` と `.github/workflows/*.yml` の「`$var` の直後に非 ASCII」を検出する（`.claude/` 配下の `.sh` も対象）。日本語メッセージ行で起きやすく、**異常を報告する行が報告せずに死ぬ**ので、シェルを触る変更では必ず回す。
+- **`pnpm check:shell`** は `.sh` と `.github/workflows/*.yml` を検査する（`.claude/` 配下の `.sh` も対象）。シェルを触る変更では必ず回す — 理由は [targets/shell-ci.md][shell]。
 - **pre-commit（lint-staged）は絶対パスを渡す**ので、markdownlint の `ignores`（`.claude` を含む）を迂回する。md を触る変更の検証は、この起動の形で再現する（`lint-staged.config.mjs` を読むこと）。
-- **bash は macOS 既定の 3.2**。連想配列 `declare -A` は使えない。
 - **md のリンクは参照スタイル**（`MD054`）。commitlint は件名の先頭大文字を弾く。
 
 [matrix]: references/breakage-matrix.md
 [recipes]: references/verification-recipes.md
+[targets]: references/targets/README.md
+[shell]: references/targets/shell-ci.md
+[ts]: references/targets/typescript.md
 [fmt]: references/report-format.md
 [adrindex]: ../../../docs/adr/index.md
