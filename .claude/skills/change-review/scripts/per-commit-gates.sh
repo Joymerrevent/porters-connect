@@ -119,20 +119,53 @@ LOGDIR="$(mktemp -d "${TMPDIR:-/tmp}/change-review-logs.XXXXXX")"
 # `pnpm -s <script>` 形のゲートが、そのコミットの package.json に在るかを見る。
 # ゲートを足す前のコミットを「赤」と記録すると、落ちた理由が事実と違うものになり、
 # 表全体が信用できなくなる。判定できない形のゲートは、実行して結果に任せる。
+# 判定は**迷ったら実行する**方に倒す。飛ばす方に倒すと、ゲートが走っていないのに
+# 「このコミットには無いゲート」という事実と違う理由が表に並び、要約は緑のままになる
+# ＝このスクリプトが防ごうとしている「無言で空振りする検査」そのものになる。
 gate_available() {
   local wt="$1"
   local gate="$2"
+  local rest=""
+  local tok=""
   local name=""
+
   case "${gate}" in
     pnpm\ *) ;;
     *) return 0 ;;
   esac
-  name="${gate##* }"   # 最後の語をスクリプト名とみなす（`pnpm -s typecheck` / `pnpm run lint`）
-  case "${name}" in
-    -*) return 0 ;;
+
+  # `pnpm` の後ろのフラグを飛ばして最初の語を見る。`run <名前>` なら次の語がスクリプト名、
+  # `exec` などの組み込みコマンドならスクリプトではないので、そのまま実行に任せる。
+  # 「最後の語をスクリプト名とみなす」だと `pnpm exec markdownlint-cli2` の
+  # `markdownlint-cli2` を存在しないスクリプトと誤判定して、ゲートが無言で飛ぶ。
+  rest="${gate#pnpm}"
+  while :; do
+    rest="${rest# }"
+    case "${rest}" in
+      -*) rest="${rest#* }" ;;
+      *) break ;;
+    esac
+  done
+  tok="${rest%% *}"
+
+  case "${tok}" in
+    "") return 0 ;;
+    run)
+      rest="${rest#run}"
+      rest="${rest# }"
+      name="${rest%% *}"
+      [ -z "${name}" ] && return 0
+      ;;
+    exec | dlx | install | i | add | remove | update | why | ls | list | store | dedupe \
+      | link | publish | pack | create | init | env | config | audit | outdated | rebuild \
+      | prune | patch | fetch | import | deploy | licenses | setup | node | start | test)
+      return 0
+      ;;
+    *) name="${tok}" ;;
   esac
+
   node -e 'const p=require(process.argv[1]);process.exit(((p.scripts||{})[process.argv[2]])?0:1)' \
-    "${wt}/package.json" "${name}" >/dev/null 2>&1
+    "${wt}/package.json" "${name}" > /dev/null 2>&1
 }
 
 WT=""
