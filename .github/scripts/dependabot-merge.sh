@@ -317,13 +317,25 @@ for i in "${!targets[@]}"; do
   say ""
 done
 
+# 中断時の要約も dry-run を見る。成功時だけ言い分けていたので、リハーサルで中断すると
+# 「✅ 検証は通過しました（dry-run のためマージしません）」の直後に「1 件マージ」と続き、
+# **人が最初に読む太字の行だけが起きていないことを書く**状態になっていた。
+# リハーサルは手順を本番で初めて動かさないために置いた機能なので、そこが嘘をつくと意味が無い。
+if [ "$DRY_RUN" = 1 ]; then
+  done_label="${merged} 件が検証を通過"
+  dry_note="（dry-run のためマージしていません）"
+else
+  done_label="${merged} 件マージ"
+  dry_note=""
+fi
+
 say ""
 if [ -n "$failed_at" ]; then
-  say "**結果: ${merged} 件マージ、#${failed_at} で中断。**"
+  say "**結果: ${done_label}、#${failed_at} で中断。**${dry_note}"
   exit 1
 fi
 if [ -n "$out_of_time" ]; then
-  say "**結果: ${merged} 件マージ、時間切れで中断。**"
+  say "**結果: ${done_label}、時間切れで中断。**${dry_note}"
   exit 1
 fi
 if [ "$DRY_RUN" = 1 ]; then
