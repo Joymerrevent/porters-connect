@@ -179,7 +179,12 @@ trap cleanup EXIT INT TERM
 
 declare -a ROW_SHA ROW_SUBJECT ROW_RESULT ROW_FAILED ROW_NOTE
 ROW_SHA=(); ROW_SUBJECT=(); ROW_RESULT=(); ROW_FAILED=(); ROW_NOTE=()
+# 「ゲートが落ちた」と「検査できなかった」を分けて数える。まとめて EXIT_CODE だけで
+# 持つと、要約が両方を「コミットが赤い」と report してしまい、**人が動く根拠になる
+# 最後の 1 行だけが事実と違う**状態になる（行の側は正しく書けているのに）。
 EXIT_CODE=0
+HAD_RED=0
+HAD_UNCHECKED=0
 
 for sha in "${SHAS[@]}"; do
   short="$(git rev-parse --short "${sha}")"
@@ -194,8 +199,9 @@ for sha in "${SHAS[@]}"; do
   rm -rf "${WT}"
   if ! git worktree add --detach "${WT}" "${sha}" >/dev/null 2>&1; then
     ROW_SHA+=("${short}"); ROW_SUBJECT+=("${subject}")
-    ROW_RESULT+=("⚠️ skip"); ROW_FAILED+=("worktree 作成に失敗"); ROW_NOTE+=("${note}")
+    ROW_RESULT+=("⛔ 未検査"); ROW_FAILED+=("worktree 作成に失敗"); ROW_NOTE+=("${note}")
     EXIT_CODE=1
+    HAD_UNCHECKED=1
     WT=""
     continue
   fi
@@ -233,6 +239,7 @@ for sha in "${SHAS[@]}"; do
     ROW_RESULT+=("❌")
     ROW_FAILED+=("${failed}")
     EXIT_CODE=1
+    HAD_RED=1
   elif [ -n "${skipped}" ]; then
     ROW_RESULT+=("⚠️")
     ROW_FAILED+=("未実行: ${skipped}")
@@ -257,11 +264,16 @@ while [ "${i}" -lt "${#ROW_SHA[@]}" ]; do
 done
 
 echo
-if [ "${EXIT_CODE}" -eq 0 ]; then
-  echo "全コミットが単独で緑です（⚠️ の行は、そのコミットに存在しないゲートを飛ばした分）。"
-else
+if [ "${HAD_RED}" -eq 1 ]; then
   echo "単独で緑にならないコミットがあります。bisect / revert が効かなくなるので、"
   echo "コミットの順序か分割を見直してください。落ちたゲートの出力: ${LOGDIR}"
+fi
+if [ "${HAD_UNCHECKED}" -eq 1 ]; then
+  echo "⛔ の行は worktree を作れず**検査できていません**。赤いのではなく結果が無いので、"
+  echo "緑と見なさないこと。原因（ディスク空き・TMPDIR・worktree の残骸）を直して回し直す。"
+fi
+if [ "${EXIT_CODE}" -eq 0 ]; then
+  echo "全コミットが単独で緑です（⚠️ の行は、そのコミットに存在しないゲートを飛ばした分）。"
 fi
 
 # 落ちたゲートのログは残す（原因を見るのはこの後の仕事）。緑なら消えている。
