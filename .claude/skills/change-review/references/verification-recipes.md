@@ -63,6 +63,12 @@ FAKE_GH_LOG=tmp/gh-calls.log PATH="${PWD}/tmp/fakebin:${PATH}" bash scripts/対�
 
 - **未対応の引数は `exit 1` で落とす。** 黙って空を返すと、偽物自体が fail-open になり、検証が嘘をつく。
 - **呼ばれた引数をログに残す。** 「叩かれると思っていた API が実は叩かれていない」がここで出る。
+- **同じ URL を別の `-q` で叩く呼び出しは、URL ではなく `-q` の中身で分岐する。** 実例: `dependabot-triage-gate.sh` は `pulls?state=open` を 2 列（番号・head SHA）で、`triage.sh` は同じ URL を 4 列（＋ブランチ名・タイトル）で叩く。URL だけで分岐すると、片方に列数の合わない応答を返してしまい、**実装ではなく偽物のバグ**を追うことになる。
+
+  ```sh
+  if printf '%s' "$*" | grep -q 'head.ref'; then ... else ... fi
+  ```
+
 - **応答は 1 通りで終わらせない。** [breakage-matrix.md][matrix] §2 の 7 つの壊れ方を、偽物の応答として順に食わせる。特に**空・フィールド欠落・2 件以上**。
 
 ## 3. 使い捨てのリポジトリ / データを作る
