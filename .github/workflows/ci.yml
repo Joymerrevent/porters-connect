@@ -65,6 +65,13 @@ jobs:
       - name: Doc index
         run: pnpm check:index
 
+      # シェルの `$var` に全角文字が吸われる箇所の検出（.sh と .github/workflows の YAML）。
+      # 日本語メッセージで自然に生まれ、しかも異常報告の行に出るため「報告せず死ぬ」形で
+      # 壊れる（実際に 2 度発生した）。検査対象は docs 配下やワークフローにも散るので
+      # code フィルタ配下に入れず**常時実行**する。
+      - name: Shell identifiers
+        run: pnpm check:shell
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
