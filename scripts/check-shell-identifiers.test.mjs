@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   checkSource,
-  collectShellFiles,
+  collectTargets,
+  isTarget,
   OFFENDING,
 } from "./check-shell-identifiers.mjs";
 
@@ -55,6 +56,26 @@ describe("checkSource", () => {
     expect(problems.map((p) => p.found)).toEqual(["$fingerprint"]);
   });
 
+  it("ワークフローの run: ブロックでも同じ形を拾う（.sh だけが対象ではない）", () => {
+    const problems = checkSource(
+      ".github/workflows/x.yml",
+      ["        run: |", '          echo "::notice::スキップ（$reason）"'].join(
+        "\n",
+      ),
+    );
+    expect(problems.map((p) => p.found)).toEqual(["$reason"]);
+    expect(problems[0].line).toBe(2);
+  });
+
+  it("Actions の ${{ }} 展開は誤検出しない（$ の次が英字ではない）", () => {
+    expect(
+      checkSource(
+        ".github/workflows/x.yml",
+        '        run: echo "理由は ${{ steps.a.outputs.reason }}（以上）"',
+      ),
+    ).toEqual([]);
+  });
+
   it("行番号と該当行のテキストを添えて返す", () => {
     const problems = checkSource(
       "a.sh",
@@ -79,12 +100,34 @@ describe("OFFENDING", () => {
   });
 });
 
-describe("collectShellFiles", () => {
+describe("isTarget", () => {
+  it(".sh はどこにあっても対象（docs 配下にも置きうる）", () => {
+    expect(isTarget("docs/examples/run.sh", "run.sh")).toBe(true);
+  });
+
+  it("ワークフローの YAML は対象（run: が同じ bash で走る）", () => {
+    expect(isTarget(".github/workflows/ci.yml", "ci.yml")).toBe(true);
+    expect(isTarget(".github/workflows/ci.yaml", "ci.yaml")).toBe(true);
+  });
+
+  it("ワークフロー以外の YAML は対象外（シェルではない）", () => {
+    expect(isTarget(".github/dependabot.yml", "dependabot.yml")).toBe(false);
+    expect(isTarget("pnpm-workspace.yaml", "pnpm-workspace.yaml")).toBe(false);
+  });
+
+  it("それ以外の拡張子は対象外", () => {
+    expect(isTarget("README.md", "README.md")).toBe(false);
+  });
+});
+
+describe("collectTargets", () => {
   // 実ファイルを読まずに走査ロジックだけ見るため、readdir/stat を注入する。
   const TREE = {
-    ".": ["a.sh", "b.txt", "node_modules", "sub"],
+    ".": ["a.sh", "b.txt", "node_modules", "sub", ".github"],
     node_modules: ["evil.sh"],
     sub: ["c.sh"],
+    ".github": ["dependabot.yml", "workflows"],
+    ".github/workflows": ["ci.yml", "old.yaml"],
   };
   const fakeFs = {
     readdirSync: (dir) => TREE[dir.replace(/^\.\//, "") || "."] ?? [],
@@ -93,15 +136,22 @@ describe("collectShellFiles", () => {
     }),
   };
 
-  it(".sh だけを集める", () => {
-    const found = collectShellFiles(".", fakeFs);
+  it(".sh を集める", () => {
+    const found = collectTargets(".", fakeFs);
     expect(found).toContain("a.sh");
     expect(found).toContain("sub/c.sh");
     expect(found).not.toContain("b.txt");
   });
 
+  it("ワークフローの YAML も集め、それ以外の YAML は集めない", () => {
+    const found = collectTargets(".", fakeFs);
+    expect(found).toContain(".github/workflows/ci.yml");
+    expect(found).toContain(".github/workflows/old.yaml");
+    expect(found).not.toContain(".github/dependabot.yml");
+  });
+
   it("node_modules には降りない（依存側の .sh を検査しない）", () => {
-    const found = collectShellFiles(".", fakeFs);
+    const found = collectTargets(".", fakeFs);
     expect(found.some((p) => p.includes("node_modules"))).toBe(false);
   });
 });
