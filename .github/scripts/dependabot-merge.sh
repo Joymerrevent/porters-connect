@@ -23,11 +23,16 @@ RESULT="${RESULT_FILE:-result.md}"
 
 # 変更を許すファイル。依存更新 PR がこれ以外を触っていたら、それは依存更新ではない。
 ALLOWED_FILES='^(pnpm-lock\.yaml|package\.json|\.github/workflows/[^/]+\.ya?ml)$'
-# CI が緑になるのを待つ上限。update-branch 後の再実行を見込む。
-WAIT_SECONDS=1500
+# 1 件あたり CI が緑になるのを待つ上限。update-branch 後の再実行を見込む。
+WAIT_SECONDS="${WAIT_SECONDS:-1500}"
+# 全体の上限。件数×WAIT_SECONDS が job の timeout-minutes を超えると、結果を報告する前に
+# job ごと殺される（何が起きたか Issue に残らない）。自分で先に止まって報告する。
+OVERALL_BUDGET="${OVERALL_BUDGET:-2700}"
 # DRY_RUN=1 で検証だけ行い、update-branch もマージもしない。ローカルで通しの
 # リハーサルができるようにするため（手順を本番で初めて動かさない）。
 DRY_RUN="${DRY_RUN:-0}"
+
+started=$(date +%s)
 
 say() { printf '%s\n' "$*" >> "$RESULT"; }
 log() { printf '%s\n' "$*" >&2; }
@@ -89,32 +94,38 @@ say ""
 # ---- CI が緑になるまで待つ ----------------------------------------------------
 
 wait_green() {
-  local n="$1" deadline state head failed
+  local n="$1" deadline budget_end state head failed
   deadline=$(($(date +%s) + WAIT_SECONDS))
+  budget_end=$((started + OVERALL_BUDGET))
+  [ "$deadline" -gt "$budget_end" ] && deadline="$budget_end"
   while :; do
-    head=$(gh api "repos/$REPO/pulls/$n" -q .head.sha 2>/dev/null)
+    # 待機ループの API 呼び出しだけは stderr を捨てる（20 秒ごとの一時エラーでログが
+    # 埋まると、本当の失敗理由が見えなくなる）。一発勝負の操作は下で stderr を残す。
+    head=$(gh api "repos/$REPO/pulls/$n" -q .head.sha 2> /dev/null)
     # 失敗を先に見る。mergeable_state は「失敗」も「実行中」も blocked になるため、
     # これが無いと落ちている CI を上限まで待ち続けることになる。
     failed=$(gh api "repos/$REPO/commits/$head/check-runs" --paginate \
-      -q '[.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped") | .name] | join(", ")' 2>/dev/null)
+      -q '[.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped") | .name] | join(", ")' 2> /dev/null)
     if [ -n "$failed" ]; then
-      say "  ❌ CI が失敗しています: $failed"
+      say "  ❌ CI が失敗しています: ${failed}"
       return 1
     fi
-    state=$(gh api "repos/$REPO/pulls/$n" -q .mergeable_state 2>/dev/null)
+    state=$(gh api "repos/$REPO/pulls/$n" -q .mergeable_state 2> /dev/null)
     case "$state" in
       clean) return 0 ;; # マージ可能＋必須チェック（ci / stryker）が緑
       dirty)
         say "  ❌ コンフリクトしています"
         return 1
         ;;
-      *) : ;; # blocked / unknown / behind → まだ走っている
+      # blocked（必須チェックが未完了）/ unknown（GitHub が計算中）/ unstable（必須外の
+      # チェックが未完了。失敗なら上の failed で既に抜けている）/ behind は待つ。
+      *) : ;;
     esac
     if [ "$(date +%s)" -ge "$deadline" ]; then
-      say "  ❌ CI が $((WAIT_SECONDS / 60)) 分以内に緑になりませんでした（mergeable_state=${state}）"
+      say "  ❌ CI が待ち時間の上限までに緑になりませんでした（mergeable_state=${state}）"
       return 1
     fi
-    log "#$n: state=$state 待機中…"
+    log "#$n: state=${state} 待機中…"
     sleep 20
   done
 }
@@ -122,7 +133,7 @@ wait_green() {
 # ---- 1 件を検証してマージする -------------------------------------------------
 
 merge_one() {
-  local n="$1" info="$2" author base state head bad
+  local n="$1" info="$2" author base state head files bad
   author=$(printf '%s' "$info" | jq -r .user.login)
   base=$(printf '%s' "$info" | jq -r .base.ref)
   state=$(printf '%s' "$info" | jq -r .state)
@@ -142,45 +153,50 @@ merge_one() {
     return 1
   }
 
-  bad=$(gh api "repos/$REPO/pulls/$n/files" --paginate -q '.[].filename' 2>/dev/null \
-    | grep -vE "$ALLOWED_FILES" | tr '\n' ' ')
+  # 取得に失敗したときに空リスト＝「許可外のファイルなし」と読まないこと。
+  # PR は必ず 1 つ以上ファイルを変えるので、空なら事実が取れていない＝緑に見せない。
+  files=$(gh api "repos/$REPO/pulls/$n/files" --paginate -q '.[].filename')
+  [ -n "$files" ] || {
+    say "  ❌ 変更ファイル一覧を取得できませんでした（緑と見なさず中断します）"
+    return 1
+  }
+  bad=$(printf '%s\n' "$files" | grep -vE "$ALLOWED_FILES" | tr '\n' ' ')
   [ -z "${bad// /}" ] || {
-    say "  ❌ 依存更新以外のファイルを変更しています: $bad"
+    say "  ❌ 依存更新以外のファイルを変更しています: ${bad}"
     return 1
   }
 
   # base が古ければ更新する。GitHub は base の鮮度を要求していない（strict=false）が、
   # 更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らない。
   # ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
-  if ! git merge-base --is-ancestor origin/develop "$head" 2>/dev/null; then
+  if ! git merge-base --is-ancestor origin/develop "$head" 2> /dev/null; then
     if [ "$DRY_RUN" = 1 ]; then
       say "  ↻ base 更新が必要です（dry-run のため実行しません）"
       say "  ✅ 検証は通過しました（dry-run のためマージしません）"
       return 0
     fi
-    if gh api -X PUT "repos/$REPO/pulls/$n/update-branch" -f expected_head_sha="$head" --silent 2>/dev/null; then
+    if gh api -X PUT "repos/$REPO/pulls/$n/update-branch" -f expected_head_sha="$head" --silent; then
       say "  ↻ base を develop の最新に更新しました（CI 再実行を待ちます）"
       sleep 15
     else
-      say "  ❌ update-branch に失敗しました（head が動いた可能性があります）"
+      say "  ❌ update-branch に失敗しました（head が動いた可能性があります。詳細はログ）"
       return 1
     fi
   fi
 
+  wait_green "$n" || return 1
+
   if [ "$DRY_RUN" = 1 ]; then
-    wait_green "$n" || return 1
     say "  ✅ 検証は通過しました（dry-run のためマージしません）"
     return 0
   fi
 
-  wait_green "$n" || return 1
-
-  if gh pr merge "$n" --squash --delete-branch 2>/dev/null; then
+  if gh pr merge "$n" --squash --delete-branch; then
     say "  ✅ マージしました"
-    git fetch --prune --quiet origin 2>/dev/null
+    git fetch --prune --quiet origin 2> /dev/null
     return 0
   fi
-  say "  ❌ マージに失敗しました"
+  say "  ❌ マージに失敗しました（詳細はログ）"
   return 1
 }
 
@@ -188,10 +204,19 @@ merge_one() {
 
 merged=0
 failed_at=""
+out_of_time=""
 for i in "${!targets[@]}"; do
   n="${targets[$i]}"
+  # 残りに手を付ける前に全体の持ち時間を見る。ここで止まれば結果を Issue に返せる。
+  if [ "$(($(date +%s) - started))" -ge "$OVERALL_BUDGET" ]; then
+    out_of_time=1
+    remaining=("${targets[@]:$i}")
+    say ""
+    say "⏸ 全体の上限 $((OVERALL_BUDGET / 60)) 分に達したので中断しました。未着手: $(printf '#%s ' "${remaining[@]}")"
+    break
+  fi
   # gh は失敗時もエラー JSON を stdout に出すので、番号の存在を jq で確かめてから見出しを出す。
-  info=$(gh api "repos/$REPO/pulls/$n" 2>/dev/null)
+  info=$(gh api "repos/$REPO/pulls/$n")
   if ! printf '%s' "$info" | jq -e '.number' > /dev/null 2>&1; then
     say "### #$n"
     say "  ❌ PR 情報を取得できません（存在しない番号の可能性があります）"
@@ -216,11 +241,15 @@ done
 
 say ""
 if [ -n "$failed_at" ]; then
-  say "**結果: $merged 件マージ、#$failed_at で中断。**"
+  say "**結果: ${merged} 件マージ、#${failed_at} で中断。**"
+  exit 1
+fi
+if [ -n "$out_of_time" ]; then
+  say "**結果: ${merged} 件マージ、時間切れで中断。**"
   exit 1
 fi
 if [ "$DRY_RUN" = 1 ]; then
-  say "**結果: $merged 件すべて検証を通過しました（dry-run のためマージしていません）。**"
+  say "**結果: ${merged} 件すべて検証を通過しました（dry-run のためマージしていません）。**"
 else
-  say "**結果: $merged 件すべてマージしました。**"
+  say "**結果: ${merged} 件すべてマージしました。**"
 fi

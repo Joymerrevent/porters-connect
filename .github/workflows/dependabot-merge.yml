@@ -1,10 +1,9 @@
 name: Dependabot Merge
 
-# 判定レポート Issue に `/merge` とコメントすると、そこに書かれた依存更新 PR を
-# 順に取り込む。判断（通してよいか）は Issue の判定表として既に出ているので、
-# ここは固定シーケンスを実行するだけ＝**LLM を介さない**。
-# 第三者の CHANGELOG 由来のテキスト（PR 本文）を読んで判断する工程を挟まないため、
-# prompt injection でマージが誘発される経路が存在しない。
+# 判定レポート Issue に `/merge` とコメントすると、依存更新 PR を順に取り込む。
+# 判断（通してよいか）は Issue の判定表として既に出ているので、ここは固定シーケンスを
+# 実行するだけ＝**LLM を介さない**。第三者の CHANGELOG 由来のテキスト（PR 本文）を読んで
+# 判断する工程を挟まないため、prompt injection でマージが誘発される経路が存在しない。
 #
 # 使い方:
 #   /merge          … レポートの「取り込み対象」行に載っている PR を、その順で
@@ -47,6 +46,8 @@ jobs:
       github.event.comment.author_association == 'MEMBER' ||
       github.event.comment.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
+    # スクリプト側の OVERALL_BUDGET（45 分）より長く取る。先にスクリプトが自分で
+    # 止まって結果を Issue に返せるようにするため（job ごと殺されると何も残らない）。
     timeout-minutes: 60
     permissions:
       contents: write # マージとブランチ削除に必要
