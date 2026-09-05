@@ -65,6 +65,12 @@ jobs:
       - name: Doc index
         run: pnpm check:index
 
+      # シェルの `$var` に全角文字が吸われる箇所の検出。日本語メッセージで自然に生まれ、
+      # しかも異常報告の行に出るため「報告せず死ぬ」形で壊れる（実際に 2 度発生した）。
+      # .sh は docs 配下にも置きうるので code フィルタ配下に入れず**常時実行**する。
+      - name: Shell identifiers
+        run: pnpm check:shell
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
