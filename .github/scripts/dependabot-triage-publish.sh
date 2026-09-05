@@ -90,6 +90,26 @@ require_one_line "$REPORT_MERGE_PLAN_RE" \
   "取り込み対象の行がありません（\`- 取り込み対象: #222 → #221\` または \`- 取り込み対象: なし\`。/merge がこの行だけを読みます）" \
   "取り込み対象の行"
 
+# 検査時刻を実時刻と突き合わせる。指紋と head SHA は gate が渡した事実と照合しているのに、
+# ここだけ「形が正しい」で通すと、機械が読む 3 行のうち 1 行だけが自己申告のまま残る。
+# 未来の時刻を書かれると gate の age_days が負になり、3 日ルール（指紋では捉えられない
+# cooldown 熟成の取りこぼしを防ぐ唯一の安全網）が無言で永久に効かなくなる。
+report_at=$(grep -m1 -E "$REPORT_TIMESTAMP_RE" "$REPORT" | grep -oE '[0-9T:-]+Z')
+if [ -n "$report_at" ]; then
+  at_epoch=$(to_epoch "$report_at")
+  now_epoch=$(date -u +%s)
+  if [ "$at_epoch" -le 0 ]; then
+    fail "検査時刻 ${report_at} を解釈できません"
+    problems=1
+  elif [ "$at_epoch" -gt $((now_epoch + 600)) ]; then
+    fail "検査時刻 ${report_at} が未来です。このまま投稿すると次回以降の再判定が無効になります"
+    problems=1
+  elif [ "$at_epoch" -lt $((now_epoch - 86400)) ]; then
+    fail "検査時刻 ${report_at} が古すぎます（1 日以上前）。この実行で書かれた値ではありません"
+    problems=1
+  fi
+fi
+
 # 指紋が期待どおりか。ここがずれると次回の実行要否の判定が壊れる。
 if [ -n "$EXPECTED_FINGERPRINT" ]; then
   grep -qE "^- 判定の指紋: \`?${EXPECTED_FINGERPRINT}\`?$" "$REPORT" || {

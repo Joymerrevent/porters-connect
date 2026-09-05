@@ -29,6 +29,17 @@ DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | selec
 # 検査時刻（ISO 8601 / UTC）。gate が「前回から何日経ったか」に使う。秒は省略可。
 REPORT_TIMESTAMP_RE='^- 検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$'
 
+# 検査時刻を epoch 秒に。読めなければ 0 を返す（呼び出し側が「分からない」として扱う）。
+# 読む側（gate の経過日数）と検証側（publish の実時刻との突き合わせ）が同じ解釈をする
+# 必要があるので、正規表現と同じくここに 1 つだけ置く。
+# GNU date と BSD date で構文が違うので順に試す（CI は ubuntu、手元検証は macOS）。
+to_epoch() {
+  date -u -d "$1" +%s 2> /dev/null \
+    || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2> /dev/null \
+    || date -u -j -f '%Y-%m-%dT%H:%MZ' "$1" +%s 2> /dev/null \
+    || echo 0
+}
+
 # 判定の指紋。gate が次回の実行要否に使う（gate が emit する 16 桁をそのまま）。
 REPORT_FINGERPRINT_RE='^- 判定の指紋: `?[0-9a-f]{16}`?$'
 

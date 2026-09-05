@@ -33,13 +33,7 @@ OUT="${GITHUB_OUTPUT:-/dev/stdout}"
 sha256() { if command -v sha256sum > /dev/null 2>&1; then sha256sum; else shasum -a 256; fi; }
 emit() { printf '%s=%s\n' "$1" "$2" >> "$OUT"; }
 
-# ISO 8601 を epoch 秒に。読めなければ 0（＝呼び出し側は「分からない」として実行に倒す）。
-to_epoch() {
-  date -u -d "$1" +%s 2> /dev/null \
-    || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2> /dev/null \
-    || date -u -j -f '%Y-%m-%dT%H:%MZ' "$1" +%s 2> /dev/null \
-    || echo 0
-}
+# to_epoch は dependabot-report-format.sh が持つ（publish と同じ解釈を使うため）。
 
 bash "${HERE}/../../.claude/skills/dependabot-merge/scripts/triage.sh" > "$FACTS" 2>&1
 triage_status=$?
