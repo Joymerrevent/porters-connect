@@ -9,11 +9,17 @@
 #   - **投稿が確実になる**。Claude が途中で失敗しても、レポートさえ書けていれば投稿できる
 #
 # 検証は投稿の**前**に行う。後に回すと、崩れたレポートが一度 Issue に出てしまう。
+# 検証するのは見出しの構造だけでなく、**次回の実行要否に使う機械可読行**も含む
+# （検証しない行は、読めなくなったときに静かに機能を失う）。
 set -uo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# 機械可読行の定義は gate と共有する（読む側と検証する側で形がズレないように）。
+# shellcheck source=.github/scripts/dependabot-report-format.sh
+. "${HERE}/dependabot-report-format.sh"
 
 REPORT="${REPORT_FILE:-triage-report.md}"
 TEMPLATE="${TEMPLATE_FILE:-.claude/skills/dependabot-merge/templates/report.md}"
-ISSUE_TITLE="Dependabot 判定レポート"
 EXPECTED_FINGERPRINT="${EXPECTED_FINGERPRINT:-}"
 
 fail() {
@@ -44,13 +50,38 @@ if grep -qF '<!--' "$REPORT"; then
   problems=1
 fi
 
+# 機械が読む 3 行。ここが崩れると、投稿は通るのに次の実行が壊れる（静かな故障）ので、
+# gate が読むのと同じ定義で、投稿の前に落とす。
+require_line() {
+  grep -qE "$1" "$REPORT" || {
+    fail "$2"
+    problems=1
+  }
+}
+require_line "$REPORT_TIMESTAMP_RE" \
+  "検査時刻の行がありません（\`- 検査時刻: 2026-01-02T03:04:05Z\` の形。次回の再判定間隔の判断に使います）"
+require_line "$REPORT_FINGERPRINT_RE" \
+  "判定の指紋の行がありません（\`- 判定の指紋: <16 桁の 16 進>\` の形。次回の実行要否の判断に使います）"
+require_line "$REPORT_MERGE_PLAN_RE" \
+  "取り込み対象の行がありません（\`- 取り込み対象: #222 → #221\` または \`- 取り込み対象: なし\`。/merge がこの行だけを読みます）"
+
 # 指紋が期待どおりか。ここがずれると次回の実行要否の判定が壊れる。
 if [ -n "$EXPECTED_FINGERPRINT" ]; then
-  grep -qF "$EXPECTED_FINGERPRINT" "$REPORT" || {
+  grep -qE "^- 判定の指紋: \`?${EXPECTED_FINGERPRINT}\`?$" "$REPORT" || {
     fail "判定の指紋が期待値 ${EXPECTED_FINGERPRINT} と一致しません"
     problems=1
   }
 fi
+
+# 「取り込み対象」に挙がった PR が、判定表にも現れているか。判定表に無い番号を
+# 取り込み対象に書くのは、レポート内部の矛盾（人が読んで承認できない）。
+while read -r ref; do
+  [ -z "$ref" ] && continue
+  grep -qF "$ref" <(grep -vE "$REPORT_MERGE_PLAN_RE" "$REPORT") || {
+    fail "取り込み対象の ${ref} が本文の他の場所に出てきません（判定表と食い違っています）"
+    problems=1
+  }
+done < <(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+')
 
 if [ "$problems" -ne 0 ]; then
   printf '\n--- 検証に失敗したので投稿しません。レポートの内容 ---\n' >&2
@@ -68,7 +99,7 @@ fi
 
 # `--search` は検索インデックスの遅延で取りこぼすので、一覧から選ぶ。
 num=$(gh issue list --state open --limit 100 --json number,title \
-  -q "[.[] | select(.title == \"${ISSUE_TITLE}\")] | .[0].number // empty" 2> /dev/null)
+  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\")] | .[0].number // empty" 2> /dev/null)
 
 if [ -n "$num" ]; then
   gh issue edit "$num" --body-file "$REPORT" > /dev/null || {
@@ -77,7 +108,7 @@ if [ -n "$num" ]; then
   }
   echo "追跡 Issue #${num} を更新しました。"
 else
-  url=$(gh issue create --title "$ISSUE_TITLE" --body-file "$REPORT") || {
+  url=$(gh issue create --title "$DEPENDABOT_ISSUE_TITLE" --body-file "$REPORT") || {
     fail "Issue の作成に失敗しました"
     exit 1
   }

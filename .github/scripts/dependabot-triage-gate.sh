@@ -15,17 +15,33 @@
 # （major の 14 日境界は triage.sh の 7 日警告では表現できない）。
 # そこで「前回から MAX_AGE_DAYS 以上経っていたら指紋が同じでも再判定する」を併用する。
 # 取りこぼすくらいなら余分に走らせる＝安全側に倒す。
+#
+# **迷ったら走らせる**のがこのファイルの原則。前回のレポートが読めない・時刻を解釈できない
+# といった「分からない」状態は、抑止ではなく実行に倒す（抑止に倒すと、cooldown の熟成を
+# 永久に取りこぼす形で静かに壊れる）。
 set -uo pipefail
 
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# レポートの機械可読行の定義は publish と共有する（形のズレを作らないため）。
+# shellcheck source=.github/scripts/dependabot-report-format.sh
+. "${HERE}/dependabot-report-format.sh"
+
 FACTS="${FACTS_FILE:-triage-facts.txt}"
-ISSUE_TITLE="Dependabot 判定レポート"
 MAX_AGE_DAYS="${MAX_AGE_DAYS:-3}"
 OUT="${GITHUB_OUTPUT:-/dev/stdout}"
 
 sha256() { if command -v sha256sum > /dev/null 2>&1; then sha256sum; else shasum -a 256; fi; }
 emit() { printf '%s=%s\n' "$1" "$2" >> "$OUT"; }
 
-bash "$(dirname "$0")/../../.claude/skills/dependabot-merge/scripts/triage.sh" > "$FACTS" 2>&1 || true
+# ISO 8601 を epoch 秒に。読めなければ 0（＝呼び出し側は「分からない」として実行に倒す）。
+to_epoch() {
+  date -u -d "$1" +%s 2> /dev/null \
+    || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s 2> /dev/null \
+    || date -u -j -f '%Y-%m-%dT%H:%MZ' "$1" +%s 2> /dev/null \
+    || echo 0
+}
+
+bash "${HERE}/../../.claude/skills/dependabot-merge/scripts/triage.sh" > "$FACTS" 2>&1 || true
 cat "$FACTS"
 
 if grep -q "open な dependabot PR はありません" "$FACTS"; then
@@ -62,7 +78,8 @@ emit fingerprint "$fingerprint"
 # ---- 前回のレポートと比べる ---------------------------------------------------
 
 prev=$(gh issue list --state open --limit 100 --json title,body \
-  -q "[.[] | select(.title == \"$ISSUE_TITLE\")] | .[0].body // empty" 2> /dev/null)
+  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\")] | .[0].body // empty" 2> /dev/null \
+  | tr -d '\r')
 
 if [ -z "$prev" ]; then
   emit should_run true
@@ -70,32 +87,41 @@ if [ -z "$prev" ]; then
   exit 0
 fi
 
-prev_fp=$(printf '%s' "$prev" | grep -oE '判定の指紋: `?[0-9a-f]{6,}`?' | head -1 | grep -oE '[0-9a-f]{6,}')
-prev_at=$(printf '%s' "$prev" | grep -oE '検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+Z' | head -1 | awk '{print $2}')
+prev_fp=$(printf '%s\n' "$prev" | grep -m1 -E "$REPORT_FINGERPRINT_RE" | grep -oE '[0-9a-f]{16}')
 
 if [ -z "$prev_fp" ]; then
   emit should_run true
-  emit reason "前回のレポートに指紋がありません（形式が古い）"
+  emit reason "前回のレポートから指紋を読めません（形式が古い）"
   exit 0
 fi
 
 if [ "$prev_fp" != "$fingerprint" ]; then
   emit should_run true
-  emit reason "状況が変わりました（指紋 $prev_fp → ${fingerprint}）"
+  emit reason "状況が変わりました（指紋 ${prev_fp} → ${fingerprint}）"
   exit 0
 fi
 
 # 指紋は同じ。ただし cooldown の熟成は時間依存なので、古すぎるレポートは作り直す。
-if [ -n "$prev_at" ]; then
-  prev_epoch=$(date -u -d "$prev_at" +%s 2> /dev/null || date -u -j -f '%Y-%m-%dT%H:%M:%SZ' "$prev_at" +%s 2> /dev/null || echo 0)
-  if [ "$prev_epoch" -gt 0 ]; then
-    age_days=$((($(date -u +%s) - prev_epoch) / 86400))
-    if [ "$age_days" -ge "$MAX_AGE_DAYS" ]; then
-      emit should_run true
-      emit reason "指紋は同じですが前回から ${age_days} 日経過しています（cooldown 熟成の取りこぼしを避けるため再判定）"
-      exit 0
-    fi
-  fi
+# ここで時刻が読めないと 3 日ルールごと無効化されるため、読めない場合は実行に倒す。
+prev_at=$(printf '%s\n' "$prev" | grep -m1 -E "$REPORT_TIMESTAMP_RE" | grep -oE '[0-9T:-]+Z')
+if [ -z "$prev_at" ]; then
+  emit should_run true
+  emit reason "前回のレポートから検査時刻を読めません（形式が古い）"
+  exit 0
+fi
+
+prev_epoch=$(to_epoch "$prev_at")
+if [ "$prev_epoch" -le 0 ]; then
+  emit should_run true
+  emit reason "前回の検査時刻を解釈できません（${prev_at}）"
+  exit 0
+fi
+
+age_days=$((($(date -u +%s) - prev_epoch) / 86400))
+if [ "$age_days" -ge "$MAX_AGE_DAYS" ]; then
+  emit should_run true
+  emit reason "指紋は同じですが前回から ${age_days} 日経過しています（cooldown 熟成の取りこぼしを避けるため再判定）"
+  exit 0
 fi
 
 emit should_run false
