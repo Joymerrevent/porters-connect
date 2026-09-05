@@ -72,6 +72,19 @@ emit has_prs true
 pr_state=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
   -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)"' 2> /dev/null \
   | sort)
+pr_state_status=$?
+
+# 事実がゼロなら指紋を作らない。空の入力から作った指紋は 16 桁の正当な値に見えるが、
+# 中身は空文字列の SHA-256（e3b0c442…）でしかない。それをレポートに載せてしまうと、
+# 翌日も同じ失敗が続いたときに「前回と同じ指紋」＝「状況が変わっていません」で抑止が効き、
+# 判定が静かに止まる。triage.sh は PR ありと報告しているのにここで取れないのは矛盾した
+# 状態なので、指紋を作らずに落とす（この 1 回の取得が指紋と pr_heads の両方の材料になる）。
+if [ "$pr_state_status" -ne 0 ] || [ -z "$pr_state" ]; then
+  emit should_run false
+  emit reason "PR の一覧を取得できませんでした（指紋を作れません）"
+  echo "::error::triage.sh は PR ありと報告しましたが、gate が PR 一覧を取得できませんでした。" >&2
+  exit 1
+fi
 
 fingerprint=$(
   {
