@@ -38,12 +38,25 @@ fi
 problems=0
 
 # 雛形の見出しが揃っているか。見出しは雛形が単一の正なので、そこから取る。
-while IFS= read -r heading; do
-  grep -qF "$heading" "$REPORT" || {
-    fail "見出しが欠落しています: ${heading}"
-    problems=1
-  }
-done < <(grep -E '^## ' "$TEMPLATE")
+#
+# 雛形を読めない（移動・改名された）と grep は 0 行を返し、while が 1 度も回らずに
+# **構造検証が丸ごと無効化される**。しかもスクリプトはそのまま「所定の形式です」と
+# 出力して投稿へ進む＝検証したと嘘をつく。空を「問題なし」と読まないよう、
+# 見出しが 1 つも取れなかった時点で落とす。
+template_headings=$(grep -E '^## ' "$TEMPLATE" 2> /dev/null)
+if [ -z "$template_headings" ]; then
+  fail "雛形 ${TEMPLATE} から見出しを読めません（移動・改名された可能性）。構造を検証できないので投稿しません"
+  problems=1
+else
+  while IFS= read -r heading; do
+    grep -qF "$heading" "$REPORT" || {
+      fail "見出しが欠落しています: ${heading}"
+      problems=1
+    }
+  done <<EOF
+${template_headings}
+EOF
+fi
 
 # 雛形の埋め方指示（HTML コメント）を消し忘れていないか。
 if grep -qF '<!--' "$REPORT"; then
