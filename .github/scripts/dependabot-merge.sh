@@ -26,7 +26,11 @@ log() { printf '%s\n' "$*" >&2; }
 # ---- 対象 PR を決める ---------------------------------------------------------
 
 # コメント 1 行目から番号を拾う。`/merge`, `/merge 222`, `/merge #222, #221` を許す。
-args=$(printf '%s' "${COMMENT_BODY:-}" | head -1 | sed -E 's#^[[:space:]]*/merge##' | tr -d '#,')
+# CR を落とすのは、コメント本文が CRLF で届くため（2 行目があると 1 行目の末尾に CR が
+# 残り、`222\r` が数字として読めずに弾かれる — 見た目が正しいので原因が分からない）。
+# glob を切るのは、この後の単語分割で `/merge *` がファイル名に展開されないようにするため。
+set -f
+args=$(printf '%s' "${COMMENT_BODY:-}" | head -1 | tr -d '\r' | sed -E 's#^[[:space:]]*/merge##' | tr -d '#,')
 
 targets=()
 if [ -n "${args//[[:space:]]/}" ]; then
@@ -63,6 +67,7 @@ else
 
   while read -r n; do [ -n "$n" ] && targets+=("$n"); done < <(sort -k1,1n -k2,2n "$order" | cut -f2)
 fi
+set +f
 
 if [ ${#targets[@]} -eq 0 ]; then
   say "open な dependabot PR はありません。マージするものがありません。"
