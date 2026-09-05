@@ -13,6 +13,9 @@
 # 追跡 Issue の同定。タイトル一致だけだと public リポジトリでは**誰でも同名の Issue を
 # 立てられる**ので、ラベル（付けられるのは write 権限を持つ人だけ）と bot 作者を併用する。
 DEPENDABOT_ISSUE_TITLE="Dependabot 判定レポート"
+# NOTE: ラベル名は .github/workflows/dependabot-merge.yml の起動条件にも直書きされている
+# （ワークフローの `if:` は式なので、このシェル定数を参照できない）。片方だけ変えると
+# **/merge が無言で起動しなくなる**ので、変えるときは必ず両方を直すこと。
 DEPENDABOT_ISSUE_LABEL="dependabot-triage"
 
 # 追跡 Issue を選ぶ jq 述語。gate（読む側）と publish（書く側）で同じものを使う
