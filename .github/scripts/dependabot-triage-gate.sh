@@ -54,11 +54,15 @@ emit has_prs true
 
 # ---- 指紋を作る ---------------------------------------------------------------
 
+# open な dependabot PR（develop 向け）と head SHA。指紋と「判定時点の SHA」の両方が
+# この 1 回の取得を材料にする＝レポートに書かれる SHA と指紋がずれない。
+pr_state=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
+  -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)"' 2> /dev/null \
+  | sort)
+
 fingerprint=$(
   {
-    gh api "repos/$REPO/pulls?state=open&per_page=100" \
-      -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)"' 2> /dev/null \
-      | sort | while IFS=$'\t' read -r num sha; do
+    printf '%s\n' "$pr_state" | while IFS=$'\t' read -r num sha; do
         [ -z "$num" ] && continue
         checks=$(gh api "repos/$REPO/commits/$sha/check-runs" --paginate \
           -q '[.check_runs[] | "\(.name)=\(.conclusion // .status)"] | sort | join(",")' 2> /dev/null)
@@ -74,6 +78,12 @@ fingerprint=$(
   } | sha256 | cut -c1-16
 )
 emit fingerprint "$fingerprint"
+
+# レポートの「取り込み対象」に書かれる head SHA を、投稿前に突き合わせるための事実。
+# 形は `221=<sha>;222=<sha>`。モデルが書き写した値を検証せずに信じないための材料で、
+# ここが無いと取り込み時の同一性チェックが「自己申告を信じるだけ」になる。
+pr_heads=$(printf '%s\n' "$pr_state" | awk -F'\t' 'NF == 2 {printf "%s%s=%s", sep, $1, $2; sep = ";"}')
+emit pr_heads "$pr_heads"
 
 # ---- 前回のレポートと比べる ---------------------------------------------------
 

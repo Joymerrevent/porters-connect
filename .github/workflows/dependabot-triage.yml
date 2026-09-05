@@ -49,6 +49,7 @@ jobs:
     outputs:
       should_run: ${{ steps.facts.outputs.should_run }}
       fingerprint: ${{ steps.facts.outputs.fingerprint }}
+      pr_heads: ${{ steps.facts.outputs.pr_heads }}
       report: ${{ steps.report.outputs.body }}
       sha: ${{ steps.rev.outputs.sha }}
     steps:
@@ -199,4 +200,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EXPECTED_FINGERPRINT: ${{ needs.triage.outputs.fingerprint }}
+          EXPECTED_PR_HEADS: ${{ needs.triage.outputs.pr_heads }}
         run: bash .github/scripts/dependabot-triage-publish.sh

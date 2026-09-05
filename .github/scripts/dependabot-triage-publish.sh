@@ -95,6 +95,29 @@ while read -r ref; do
   }
 done < <(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+')
 
+# 「取り込み対象」に書かれた head SHA が、gate が見た事実と一致するか。
+# 書き写した値を検証せずに信じると、取り込み時の同一性チェックが自己申告になる。
+if [ -n "${EXPECTED_PR_HEADS:-}" ]; then
+  while read -r pair; do
+    [ -z "$pair" ] && continue
+    num="${pair%@*}"
+    sha="${pair#*@}"
+    expected=$(printf '%s' "$EXPECTED_PR_HEADS" | tr ';' '\n' | awk -F= -v n="$num" '$1 == n {print $2}')
+    if [ -z "$expected" ]; then
+      fail "取り込み対象の #${num} は open な dependabot PR の一覧にありません"
+      problems=1
+    else
+      case "$expected" in
+        "$sha"*) : ;;
+        *)
+          fail "取り込み対象 #${num} の head SHA が事実と違います（レポート: ${sha} / 実際: ${expected}）"
+          problems=1
+          ;;
+      esac
+    fi
+  done < <(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+@[0-9a-f]{7,40}' | tr -d '#')
+fi
+
 if [ "$problems" -ne 0 ]; then
   printf '\n--- 検証に失敗したので投稿しません。レポートの内容 ---\n' >&2
   cat "$REPORT" >&2
