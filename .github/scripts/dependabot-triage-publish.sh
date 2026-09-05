@@ -97,6 +97,16 @@ done < <(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+')
 
 # 「取り込み対象」に書かれた head SHA が、gate が見た事実と一致するか。
 # 書き写した値を検証せずに信じると、取り込み時の同一性チェックが自己申告になる。
+plan_refs=$(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+@[0-9a-f]{7,40}' | tr -d '#')
+
+# 事実そのものが取れていない（gate が PR 一覧を取れなかった）のに承認行に PR が
+# 並んでいたら投稿しない。書かれた SHA を誰も検証できていない状態で「承認済み」の
+# レポートを出すことになり、取り込み時に必ず失敗する分だけ人の時間を捨てる。
+if [ -n "$plan_refs" ] && [ -z "${EXPECTED_PR_HEADS:-}" ]; then
+  fail "取り込み対象に PR が並んでいますが、突き合わせる事実（PR の head SHA）が渡っていません"
+  problems=1
+fi
+
 if [ -n "${EXPECTED_PR_HEADS:-}" ]; then
   while read -r pair; do
     [ -z "$pair" ] && continue
@@ -115,7 +125,7 @@ if [ -n "${EXPECTED_PR_HEADS:-}" ]; then
           ;;
       esac
     fi
-  done < <(grep -E "$REPORT_MERGE_PLAN_RE" "$REPORT" | grep -oE '#[0-9]+@[0-9a-f]{7,40}' | tr -d '#')
+  done < <(printf '%s\n' "$plan_refs")
 fi
 
 if [ "$problems" -ne 0 ]; then
