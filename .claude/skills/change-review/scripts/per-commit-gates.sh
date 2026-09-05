@@ -15,6 +15,12 @@
 # 省略時は typecheck / lint / test を回す。build と coverage は遅いので既定から外してある
 # （必要なら `-- "pnpm -s typecheck" "pnpm -s build"` のように明示する）。
 #
+# 長いブランチは二段で回す方が速い。コミットごとに worktree を作り直すので、
+# 既定ゲート 3 本 × 数十コミットは素直に時間を食う:
+#   1) 軽いゲートで全部を通す        … per-commit-gates.sh develop -- "pnpm -s typecheck"
+#   2) 赤が出たコミットだけ見直す    … per-commit-gates.sh <赤いコミット>^ -- "pnpm -s lint" "pnpm -s test"
+# 2 回目は `^` を基点にすることでそのコミット 1 件だけが対象になる。
+#
 # 制約（読まずに信じないこと）:
 #   - 作業ツリーの未コミット変更は検査対象外。コミット済みの状態だけを見る。
 #   - マージコミットは飛ばす（--no-merges）。
@@ -67,8 +73,10 @@ if ! git rev-parse --verify --quiet "${BASE}" >/dev/null; then
   exit 2
 fi
 
+USING_DEFAULT_GATES=0
 if [ "${#GATES[@]}" -eq 0 ]; then
   GATES=("pnpm -s typecheck" "pnpm -s lint" "pnpm -s test")
+  USING_DEFAULT_GATES=1
 fi
 
 # ---- 対象コミット -----------------------------------------------------------
@@ -94,6 +102,15 @@ fi
 
 echo "基点: ${BASE} ／ 対象 ${#SHAS[@]} コミット ／ ゲート: ${GATES[*]}"
 echo
+
+# 二段で回す方が速い場面を、待たされる前に知らせる（走らせてから気づくと、
+# 数十分ぶんの worktree 作り直しを捨てることになる）。
+if [ "${USING_DEFAULT_GATES}" -eq 1 ] && [ "${#SHAS[@]}" -gt 10 ]; then
+  echo "注意: ${#SHAS[@]} コミット × 既定ゲート 3 本は時間がかかります。二段で回す方が速い:"
+  echo "  1) bash $0 ${BASE} -- \"pnpm -s typecheck\""
+  echo "  2) bash $0 <赤いコミット>^ -- \"pnpm -s lint\" \"pnpm -s test\""
+  echo
+fi
 
 # ---- 実行 -------------------------------------------------------------------
 

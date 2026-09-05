@@ -140,6 +140,15 @@ bash .claude/skills/change-review/scripts/per-commit-gates.sh develop -- "pnpm -
 
 `git worktree add --detach` で各コミットを取り出し、ゲートを回して表で返す。詳細と制約（`node_modules` の扱い）はスクリプト冒頭のコメントに書いてある。
 
+**長いブランチは二段で回す。** コミットごとに worktree を作り直すので、既定ゲート 3 本 × 数十コミットは素直に時間を食う。軽いゲートで全部を通してから、赤が出たコミットだけ重いゲートで見直す:
+
+```sh
+# 1) 軽いゲートで全コミットを通す
+bash .claude/skills/change-review/scripts/per-commit-gates.sh develop -- "pnpm -s typecheck"
+# 2) 赤が出たコミットだけ。`^` を基点にするとその 1 件だけが対象になる
+bash .claude/skills/change-review/scripts/per-commit-gates.sh 9b80ee3^ -- "pnpm -s lint" "pnpm -s test"
+```
+
 ## 8. この repo で使える道具と落とし穴
 
 - **`gh`** — `/opt/homebrew/bin/gh`。サンドボックスの `PATH` に無いことがあるので、見つからなければ絶対パスで叩く。
