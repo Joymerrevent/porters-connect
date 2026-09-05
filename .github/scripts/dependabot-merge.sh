@@ -46,6 +46,30 @@ log() { printf '%s\n' "$*" >&2; }
 set -f
 args=$(printf '%s' "${COMMENT_BODY:-}" | head -1 | tr -d '\r' | sed -E 's#^[[:space:]]*/merge##' | tr -d '#,')
 
+# レポートの「取り込み対象」行。番号を明示された場合も、判定時点の head SHA は
+# ここから引くので先に読む（節の散文にある番号は拾わない）。
+plan_line=$(printf '%s' "${ISSUE_BODY:-}" | tr -d '\r' | grep -m1 -E "$REPORT_MERGE_PLAN_RE")
+plan_nums=()
+plan_shas=()
+while read -r pair; do
+  [ -z "$pair" ] && continue
+  plan_nums+=("${pair%@*}")
+  plan_shas+=("${pair#*@}")
+done < <(printf '%s' "$plan_line" | grep -oE '#[0-9]+@[0-9a-f]{7,40}' | tr -d '#')
+
+# 番号 → 判定時点の head SHA（レポートに無ければ空）。連想配列を使わないのは
+# bash 3.2（macOS 既定）でも DRY_RUN のリハーサルができるようにするため。
+judged_head_of() {
+  local i
+  [ ${#plan_nums[@]} -eq 0 ] && return
+  for i in "${!plan_nums[@]}"; do
+    if [ "${plan_nums[$i]}" = "$1" ]; then
+      printf '%s' "${plan_shas[$i]}"
+      return
+    fi
+  done
+}
+
 targets=()
 source_of_targets=""
 if [ -n "${args//[[:space:]]/}" ]; then
@@ -64,7 +88,6 @@ if [ -n "${args//[[:space:]]/}" ]; then
 else
   # 番号の指定が無ければ、レポートの「取り込み対象」行**だけ**を読む。
   # 節の散文（「#223 は見送り」等）は拾わない＝見送った PR を巻き込まない。
-  plan_line=$(printf '%s' "${ISSUE_BODY:-}" | tr -d '\r' | grep -m1 -E "$REPORT_MERGE_PLAN_RE")
   if [ -z "$plan_line" ]; then
     say "❌ レポートに \`- 取り込み対象:\` の行が見つかりません（形式が古い可能性があります）。"
     say ""
@@ -139,7 +162,7 @@ wait_green() {
 # ---- 1 件を検証してマージする -------------------------------------------------
 
 merge_one() {
-  local n="$1" info="$2" author base state head files bad
+  local n="$1" info="$2" author base state head files bad judged
   author=$(printf '%s' "$info" | jq -r .user.login)
   base=$(printf '%s' "$info" | jq -r .base.ref)
   state=$(printf '%s' "$info" | jq -r .state)
@@ -171,6 +194,20 @@ merge_one() {
     say "  ❌ 依存更新以外のファイルを変更しています: ${bad}"
     return 1
   }
+
+  # 判定したときと同じコミットか。承認は「その PR」ではなく「その PR のその
+  # コミット」に対して出ているので、force-push で中身が入れ替わっていたら取り込まない。
+  # update-branch は develop を取り込む merge なので、祖先関係は保たれる（＝通る）。
+  judged=$(judged_head_of "$n")
+  if [ -n "$judged" ]; then
+    if ! git merge-base --is-ancestor "$judged" "$head" 2> /dev/null; then
+      say "  ❌ 判定した時点のコミット ${judged} がこの PR の履歴にありません"
+      say "     （force-push で中身が入れ替わった可能性）。判定をやり直してください"
+      return 1
+    fi
+  else
+    say "  ⚠️ 判定時点のコミットが分からないため、同一性は確認していません"
+  fi
 
   # base が古ければ更新する。GitHub は base の鮮度を要求していない（strict=false）が、
   # 更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らない。
