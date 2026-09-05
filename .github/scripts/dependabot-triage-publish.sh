@@ -106,7 +106,7 @@ gh label create "$DEPENDABOT_ISSUE_LABEL" \
 # `--search` は検索インデックスの遅延で取りこぼすので、一覧から選ぶ。
 # タイトルだけで選ばないのは、public リポジトリでは誰でも同名 Issue を立てられるため。
 num=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 100 --json number,title,author \
-  -q "[.[] | select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select(.author.is_bot)] | .[0].number // empty" 2> /dev/null)
+  -q "[.[] | ${DEPENDABOT_ISSUE_FILTER}] | .[0].number // empty" 2> /dev/null)
 
 if [ -n "$num" ]; then
   gh issue edit "$num" --body-file "$REPORT" > /dev/null || {

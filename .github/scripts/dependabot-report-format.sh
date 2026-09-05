@@ -15,6 +15,14 @@
 DEPENDABOT_ISSUE_TITLE="Dependabot 判定レポート"
 DEPENDABOT_ISSUE_LABEL="dependabot-triage"
 
+# 追跡 Issue を選ぶ jq 述語。gate（読む側）と publish（書く側）で同じものを使う
+# ＝「どれが自分たちの Issue か」の定義が 1 つになる。
+# is_bot だけに賭けないのは、gh の author に is_bot が無い／false だった場合に
+# **毎回「既存 Issue なし」と判断して新しい Issue を作り続ける**ため。login でも拾う。
+# 逆に login の前方一致にしないのは、github-actions-… という第三者アカウントを
+# 巻き込まないため（ラベルと合わせて二重に絞る）。
+DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select((.author.is_bot // false) or (.author.login // \"\") == \"github-actions\" or (.author.login // \"\") == \"github-actions[bot]\")"
+
 # 検査時刻（ISO 8601 / UTC）。gate が「前回から何日経ったか」に使う。秒は省略可。
 REPORT_TIMESTAMP_RE='^- 検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$'
 
