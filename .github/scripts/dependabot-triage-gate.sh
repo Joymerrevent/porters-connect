@@ -166,6 +166,19 @@ if [ "$prev_epoch" -le 0 ]; then
 fi
 
 age_days=$((($(date -u +%s) - prev_epoch) / 86400))
+
+# 経過が負＝レポートの検査時刻が未来。publish が未来の時刻を弾くので、この workflow が
+# 書いた値ではありえない（人が Issue を編集した状態）。ここを抑止に倒すと自己保持で壊れる:
+# 抑止が続く限り publish job は走らず、未来の時刻を弾く唯一の検査に永久に到達しない
+# ＝3 日ルールが黙って無効化される。しかも 3 日ルールは「指紋が変わらないまま cooldown
+# だけ熟成する」ための唯一の網なので、網が要る状況でだけ網が消える。
+# このファイルの原則どおり、「分からない」は抑止ではなく実行に倒す。
+if [ "$age_days" -lt 0 ]; then
+  emit should_run true
+  emit reason "前回の検査時刻 ${prev_at} が未来です（3 日ルールが効かないので再判定）"
+  exit 0
+fi
+
 if [ "$age_days" -ge "$MAX_AGE_DAYS" ]; then
   emit should_run true
   emit reason "指紋は同じですが前回から ${age_days} 日経過しています（cooldown 熟成の取りこぼしを避けるため再判定）"
