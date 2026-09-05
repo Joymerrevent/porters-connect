@@ -1,7 +1,7 @@
 # 64. Link / Image 型の対応（宣言から Read / Write まで）
 
-- Status: proposed
-- Date: 2026-09-04
+- Status: accepted
+- Date: 2026-09-04（accepted: 2026-09-05）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0060][adr60] の **D3（データ型網羅 15/17 → 17/17）**の残り＝ `Link` と `Image`。
@@ -116,7 +116,13 @@ System 系（`System[Id]` / `[DateTime]` / `[Reference]` / `[Department]`）を�
 
 ## Decision Outcome
 
-**未決（proposed）。** 推奨は **案1a / 案2a / 案3a / 案4a / 案5a / 案6a**。
+**決定（accepted・2026-09-05）：推奨どおり全採用 — 案1a / 案2a / 案3a / 案4a / 案5a / 案6a。**
+
+まとめると: Image は**素の alias だけ送って既定 `FileName` のみ**を受け取り、`ContentType` / `Content` は
+**専用の `image` オプション**で選ぶ。**Write に対応**し、~15000 字ガードを外すかわりに
+**2MB・255 バイト・mime 4 種を送信前に検査**する（Image を含む一括書き込みは弾く）。Link は
+**形で判別する union**（`number | UserRef | DepartmentRef`）。`defineFields` の builder に
+**`f.image()` / `f.link()`** を足し、**condition / order は型の既定（`never`）のまま**閉じる。
 
 ### Consequences（推奨案を採った場合）
 
@@ -157,6 +163,12 @@ System 系（`System[Id]` / `[DateTime]` / `[Reference]` / `[Department]`）を�
 - 関連: [ADR-0060][adr60] D3（本 ADR の発端）／ [ADR-0023][adr23] D3（builder の対象を広げる）／
   [ADR-0018][adr18]（Attachment のサイズ扱い）／ [ADR-0041][adr41]（一括書き込みのチャンク）／
   [ADR-0020][adr20]・[ADR-0058][adr58]・[ADR-0059][adr59]（Read の既定と選択の語彙）。
+- **標準項目に Link / Image は 1 つも無い**ことを 2026-09-05 に確認した（stakeholder 質問への回答）。
+  根拠は 3 つ: ①`docs/reference` 全 17 リソースの Field Type 列を集計して **0 件**、②原記事の
+  各 Field List を検索して**該当なし**、③System Field List にも**無し**。両型は
+  **Field マスタで `P_Type` が 18 / 20 の項目として見つかる**テナント定義の項目としてのみ存在する
+  （Field Read 記事が「Field Type：Link の項目を取得するには ConnectAPI-Version2 以降が必要」と書くのは
+  この文脈）。**恩恵を受けるのは当該カスタム項目を持つテナントだけ**という前提で採用している。
 - 実装は accepted 後に別 PR。フェイクサーバーと突合テストの追従を含む。
 
 [adr18]: 0018-attachment-design.md
