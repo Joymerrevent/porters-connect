@@ -203,6 +203,17 @@ merge_one() {
     if ! git merge-base --is-ancestor "$judged" "$head" 2> /dev/null; then
       say "  ❌ 判定した時点のコミット ${judged} がこの PR の履歴にありません"
       say "     （force-push で中身が入れ替わった可能性）。判定をやり直してください"
+      say "     — Actions の Dependabot Triage を手動実行すると新しいレポートが出ます"
+      return 1
+    fi
+    # 祖先であることは「中身が入れ替わっていない」までしか言わない。判定の**後に**
+    # 積まれたコミットは祖先関係を壊さないので、別に見る必要がある。
+    # --first-parent で PR 自身の線だけを辿り、--no-merges で update-branch の
+    # マージを除く（実測: dependabot PR に積まれる 2 個目は常にこのマージ）。
+    added=$(git rev-list --no-merges --first-parent "${judged}..${head}" 2> /dev/null | wc -l | tr -d ' ')
+    if [ "${added:-0}" -ne 0 ]; then
+      say "  ❌ 判定の後に ${added} 件のコミットが積まれています（判定していない変更が入っています）"
+      say "     判定をやり直してください — Actions の Dependabot Triage を手動実行すると新しいレポートが出ます"
       return 1
     fi
   else
