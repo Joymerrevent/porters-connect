@@ -120,12 +120,15 @@ prev_raw=$(gh issue list --state open --label "$DEPENDABOT_ISSUE_LABEL" --limit 
 lookup_status=$?
 prev=$(printf '%s' "$prev_raw" | tr -d '\r')
 
-# gh の失敗（API エラー・ラベル未作成）と「Issue がまだ無い」を区別する。どちらも
+# gh の失敗（API エラー・認証切れ）と「Issue がまだ無い」を区別する。どちらも
 # 実行に倒すので結果は同じだが、`::notice::` に残る理由が事実と違うと後から追えない
 # ＝「初回だと思っていたら毎回 API が落ちていた」に気づけない。
+# なお**ラベル未作成はここへ来ない** — `gh issue list` は存在しないラベルを指定しても
+# exit 0 ＋ 空出力を返す（gh 2.91.0 で実測）ので、下の「Issue がまだ無い」側に落ちる。
+# 理由に書いていない状態を理由に混ぜると、この区別そのものが意味を失う。
 if [ "$lookup_status" -ne 0 ]; then
   emit should_run true
-  emit reason "前回のレポートを引き当てられませんでした（ラベル未作成か gh の失敗）。取りこぼさないよう判定します"
+  emit reason "前回のレポートを引き当てられませんでした（gh の失敗）。取りこぼさないよう判定します"
   exit 0
 fi
 
