@@ -120,9 +120,13 @@ fi
 
 # 「取り込み対象」に挙がった PR が、判定表にも現れているか。判定表に無い番号を
 # 取り込み対象に書くのは、レポート内部の矛盾（人が読んで承認できない）。
+#
+# 番号の後ろに数字が続かないことまで見る。固定文字列の一致だと `#22` が判定表の
+# `#222` に当たってしまい、判定表に無い番号を通す。ref は `#` ＋数字だけなので
+# そのまま ERE に埋めてよい。
 while read -r ref; do
   [ -z "$ref" ] && continue
-  grep -qF "$ref" <(grep -vE "$REPORT_MERGE_PLAN_RE" "$REPORT") || {
+  grep -qE "${ref}([^0-9]|$)" <(grep -vE "$REPORT_MERGE_PLAN_RE" "$REPORT") || {
     fail "取り込み対象の ${ref} が本文の他の場所に出てきません（判定表と食い違っています）"
     problems=1
   }
