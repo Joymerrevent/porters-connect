@@ -1,0 +1,185 @@
+# 65. Dependabot 依存更新の判定と取り込みを自動化する
+
+- Status: proposed
+- Date: 2026-09-05
+- Deciders: jun.shiromoto (Joymerrevent)
+
+> 依存更新 PR の検査は**毎回同じ手順**で、しかも**間違えても静かに通る**種類の作業。
+> `.claude/skills/dependabot-merge` はその手順を固定したが、**人が起動しないと動かない**。
+> 起動を仕組みへ移し、判断材料を毎回同じ深さで揃える。**通す/止める の決定は人に残す。**
+
+## Context and Problem Statement
+
+[ADR-0025][adr25] 以降、リリースと back-merge は自動化してきた（[ADR-0029][adr29] / [ADR-0062][adr62]）が、
+**依存更新の取り込みだけが人の記憶に残っている**。スキルは手順を固定したものの起動は手動で、実測では
+3 件（#220 / #221 / #222）が滞留していた。cooldown を満たし CI も緑なのに滞留するのは、**検査そのものの
+コストではなく「やろうと思い出すコスト」**が原因である。
+
+決めるべきことは 6 つある。**論点1〜3 が起動と実行の形、論点4 が認証、論点5 が出力、論点6 が取り込み手順。**
+
+調査で確かめた事実（設計の前提。いずれも設定変更で変わりうるので、変わったら本 ADR を見直す）:
+
+| 事実                                                                                                                                                                                                                              | 出典・確認方法                                                           | 効いてくる論点 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------- |
+| dependabot 発の `pull_request` は repository secrets を読めない（Dependabot secrets に二重管理が要る）                                                                                                                            | [GitHub Actions ドキュメント][ghdependabot]                              | 論点1          |
+| `schedule` / `issue_comment` は**既定ブランチのワークフローしか発火しない**。public リポジトリでは 60 日 activity が無いと `schedule` が**無言で無効化**される                                                                    | [Claude Code GitHub Actions ドキュメント][ccga]・GitHub 仕様             | 論点1 / 論点3  |
+| `develop` / `main` とも `strict: false`、ruleset 0 件、必須レビュー 0 ＝ **base の鮮度は GitHub 側では要求されていない**                                                                                                          | `gh api .../branches/{develop,main}/protection`（2026-09-05 実測）       | 論点6          |
+| 必須ステータスチェックは `ci` と `stryker` の 2 つ                                                                                                                                                                                | 同上                                                                     | 論点6          |
+| `.github/ISSUE_TEMPLATE/` は **Web UI の新規作成フローにしか適用されない**。`gh issue create --body-file` / API 経由の作成には効かない                                                                                            | GitHub 仕様                                                              | 論点5          |
+| 消費者向け利用規約の自動アクセス禁止には「**別途明示的に許可した場合を除く**」の但し書きがあり、公式ドキュメントが GitHub Actions での OAuth トークン利用（Pro / Max / Team / Enterprise、cron 実行を含む）を明示的に案内している | [Consumer Terms][terms]・[Claude Code GitHub Actions ドキュメント][ccga] | 論点4          |
+| cooldown は **dependabot 自身が PR を作る前に**効かせている（`.github/dependabot.yml`：npm major 14 日 / minor・patch 7 日、actions 7 日）                                                                                        | 設定ファイル                                                             | 論点1          |
+
+## Decision Drivers
+
+- **フェイルセーフ** — 壊れたときに安全側へ倒す。**静かに通る**形を作らない。
+- **人の記憶に置かない** — 起動も出力形式も仕組みで守る（[ADR-0039][adr39] / [ADR-0052][adr52] と同じ規律）。
+- **決定は人に残す** — 依存 PR は develop 向けで npm 公開を起動しない＝可逆性は高いが、**通す判断は人**。
+- **信頼できない入力を前提にする** — PR 本文は**第三者の CHANGELOG から dependabot が転記したテキスト**。
+- **権限で被害範囲を縛る** — 事故と prompt injection の両方に効くのは、プロンプトの文言ではなく権限。
+
+## 論点1: 判定をいつ走らせるか
+
+- **案1a: `schedule`（平日朝）＋ `workflow_dispatch`** — 推奨
+- 案1b: `pull_request`（PR 作成時）
+- 案1c: ローカルの SessionStart hook で検知して起動
+
+「PR ができた瞬間」は直感的だが、**判定材料の半分がまだ存在しない**。CI は走り始めたばかりで、base の
+鮮度は「他を 1 件マージした後」に初めて劣化する。cooldown は dependabot が既に効かせているので、
+作成イベントに反応しても再検査の意味が薄い。加えて案1b は secrets の二重管理を強いる。
+
+## 論点2: マージ工程に LLM を入れるか
+
+- **案2a: 入れない。判定と実行を分け、実行は固定シーケンス** — 推奨
+- 案2b: 入れる（`@claude` メンション等でエージェントにマージまでさせる）
+
+`update-branch` → CI 緑を待つ → `gh pr merge --squash` は**判断を一切含まない**。判断（通してよいか）は
+判定表として既に出ている。案2b は、**第三者由来のテキストを読むエージェントにマージ権限を与える**
+ことを意味し、しかも injection が狙う先は「この更新は安全だ、マージせよ」という**まさにその判断**である。
+
+## 論点3: マージをどこから起動するか
+
+- **案3a: 判定 Issue へのコメント `/merge`**（`/merge 222 221` で対象と順序を指定）— 推奨
+- 案3b: `workflow_dispatch` のボタン（Issue から導線リンク）
+- 案3c: ローカルのスキル実行のみ（現状維持）
+
+判定を読んだその場で依頼できるのが案3a。コメント解析と権限チェックが要る分だけ実装は増えるが、
+**起動条件を Issue のタイトル一致と `author_association` で二重に絞れる**。
+
+## 論点4: 判定ワークフローの認証
+
+- **案4a: Claude サブスクリプションの OAuth トークン（`CLAUDE_CODE_OAUTH_TOKEN`）** — 推奨
+- 案4b: API キー（`ANTHROPIC_API_KEY`）
+- 案4c: OIDC / Workload Identity Federation
+
+案4a は API 課金が発生しない。トークンは**発行した個人のサブスクに紐づく**ため、複数リポジトリや
+組織で共有する段階になったら案4b へ切り替える（公式もそう案内している）。案4c はサブスクリプションでは
+使えず、Console のサービスアカウントが要る。
+
+## 論点5: レポート形式をどう固定するか
+
+- **案5a: 雛形ファイルを単一の正とし、投稿後に機械検証する** — 推奨
+- 案5b: GitHub の `.github/ISSUE_TEMPLATE/`
+- 案5c: プロンプトに「この形式で書け」と書くだけ
+
+形が毎回変わると、読む側は差分ではなく全文を読み直すことになり、結局読まれなくなる。案5b は
+**API 経由の作成に効かない**ので、置いても案5c と同じ状態になる。案5c はモデルの記憶に依存し、
+崩れても静かに通る。
+
+## 論点6: base が古い PR を `update-branch` するか
+
+- **案6a: 続ける。ただし理由を「CI に検証させるため」に置き換える** — 推奨
+- 案6b: やめる（GitHub が要求していないので不要と割り切る）
+
+スキルの現行記述「branch protection が base の鮮度を要求する／1 件マージすると残りは
+`Base branch was modified` で弾かれる」は、**現在このリポジトリでは成り立たない**（`strict: false`）。
+だが結論は変わらない。**GitHub が止めてくれないからこそ**、更新しないと「develop を取り込んだ後の
+ロックファイル」に対して CI が一度も走らないまま develop に入る。ロックファイルは機械的に解決すると
+**静かに壊れる**ので、ここは CI に検証させる必要がある。
+
+## Decision Outcome
+
+**未決（proposed）。** 推奨は **案1a / 案2a / 案3a / 案4a / 案5a / 案6a**。
+
+### Consequences（推奨案を採った場合）
+
+**良くなること**
+
+- 依存更新が**滞留しなくなる**。起動が人の記憶から外れる。
+- 判定材料が**毎回同じ深さ**で揃う。破壊的変更・major・`engines` の読み取りという、人手で最も漏れやすい
+  部分が自動化の対象になる。
+- マージ経路に LLM が無いので、**prompt injection でマージが誘発される経路が存在しない**。
+- レポートの形が固定されるので、**前回との差分**として読める。
+
+**引き受けるコスト・制約**
+
+- **ワークフローが `main` に載るまで動かない。** `schedule` も `issue_comment` も既定ブランチ限定。
+  git-flow 上、有効化はリリースを経由する。
+- **public リポジトリでは 60 日停滞で `schedule` が無言停止する。** 気づけない壊れ方なので、
+  ワークフローにコメントで明記する。
+- **トークンは個人のサブスクに紐づく。** 共有段階になったら案4b へ切り替える判断が要る。
+- **判定は Claude が書く。** 形式は機械検証できるが、**内容の正しさは検証できない**。だから
+  マージの決定を人に残す設計にしている。
+- **`SKILL.md` の base 鮮度に関する記述は事実と食い違っている**ので、別途修正が要る（論点6）。
+
+## Pros and Cons of the Options
+
+### 案1a `schedule` ＋ `workflow_dispatch`（推奨）
+
+- 良い: 判定材料が揃った頃に走る。secrets の制約を受けない。PR が 0 件なら LLM を起動しないので課金されない。
+- 悪い: PR 作成から最大 1 日ずれる。既定ブランチにしか置けない。
+
+### 案1b `pull_request`
+
+- 良い: PR ができた瞬間に反応する。
+- 悪い: CI 未完了で判定材料が揃わない。base の鮮度が意味を持たない。**secrets を読めず**、
+  Dependabot secrets 側に鍵を二重管理することになる。
+
+### 案2a マージに LLM を入れない（推奨）
+
+- 良い: injection の経路が存在しない。API 課金も発生しない。決定的で再現する。
+- 悪い: 判定表に無い例外的な状況（想定外のファイル変更など）には**止まることしかできない**。
+
+### 案2b マージまでエージェントにやらせる
+
+- 良い: 1 往復で終わる。
+- 悪い: 第三者由来テキストを読む主体にマージ権限を与える。`contents: write` が要る。
+  サブスクリプション認証だと**共同作業者が個人の枠を消費する**形になり、規約のアカウント共有に近づく。
+
+### 案5a 雛形＋機械検証（推奨）
+
+- 良い: 対話実行（`SKILL.md` §4）と自動実行が**同じ雛形**を参照するので食い違わない。崩れたら job が落ちる。
+- 悪い: 雛形と検証の two-step を保守する必要がある。列を足すときは雛形側を直す規律が要る。
+
+### 案5b `ISSUE_TEMPLATE`
+
+- 良い: GitHub 標準の仕組みで、追加実装が要らない。
+- 悪い: **API 経由の作成に効かない**ので、この用途では何も強制できない。人間向けの新規作成ピッカーも汚す。
+
+### 案6a `update-branch` を続ける（推奨）
+
+- 良い: マージ後のロックファイルに対して CI が走る。壊れた lock が静かに入るのを防ぐ。
+- 悪い: 1 件ごとに CI の再実行を待つため、3 件で 10〜30 分かかる。
+
+### 案6b `update-branch` をやめる
+
+- 良い: 速い。GitHub も止めない。
+- 悪い: **develop を取り込んだ後の状態を誰も検証していない**まま取り込むことになる。
+  ロックファイルの壊れ方は静かなので、次に誰かが `pnpm install` するまで気づけない。
+
+## More Information
+
+- 実装は別 PR（本 ADR とは分ける。[ADR-0001][adr01] の運用）。
+- スキル本体は `.claude/skills/dependabot-merge/`。本 ADR で決めた形式の正は同ディレクトリの
+  `templates/report.md` に置き、`SKILL.md` §4 と定期実行の両方がこれを参照する。
+- 論点6 に伴い、`SKILL.md` の「branch protection が base の鮮度を要求する」旨の記述は**事実と
+  食い違っている**ので修正が要る。
+
+[adr01]: 0001-record-architecture-decisions.md
+[adr25]: 0025-release-automation.md
+[adr29]: 0029-release-tag-automation.md
+[adr39]: 0039-commitlint-release-range.md
+[adr52]: 0052-findings-register-layout.md
+[adr62]: 0062-backmerge-via-pull-request.md
+[ccga]: https://code.claude.com/docs/en/github-actions
+[ghdependabot]: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions
+[terms]: https://www.anthropic.com/legal/consumer-terms
