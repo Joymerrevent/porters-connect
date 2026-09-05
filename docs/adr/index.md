@@ -76,6 +76,7 @@
 | [0062][0062] | back-merge も PR を通す（ADR-0030 の実行方式を改訂）             | プロセス | accepted   | —     |
 | [0063][0063] | 冪等性ガードを「送信済みで結果が不明」に限定する                 | 詳細設計 | accepted   | —     |
 | [0064][0064] | Link / Image 型の対応（宣言から Read / Write まで）              | 基本設計 | accepted   | —     |
+| [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -143,3 +144,4 @@
 [0062]: 0062-backmerge-via-pull-request.md
 [0063]: 0063-idempotency-guard-scope.md
 [0064]: 0064-link-image-types.md
+[0065]: 0065-dependabot-update-automation.md
