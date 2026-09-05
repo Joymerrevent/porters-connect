@@ -50,12 +50,20 @@ jobs:
       should_run: ${{ steps.facts.outputs.should_run }}
       fingerprint: ${{ steps.facts.outputs.fingerprint }}
       report: ${{ steps.report.outputs.body }}
+      sha: ${{ steps.rev.outputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: develop # 依存 PR の base。triage.sh が origin/develop を参照する
           # base の鮮度判定に merge-base を使うため全履歴が要る（shallow だと誤判定）
           fetch-depth: 0
+
+      # 投稿 job は別チェックアウトになるので、**判定に使ったのと同じコミット**を指せる
+      # ようにしておく。develop はこの job の実行中にも動きうるため、取り直すと雛形や
+      # 検証スクリプトがレポート生成時と別物になりうる。
+      - name: 判定に使った develop の SHA を控える
+        id: rev
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       # 機械的な事実収集と、走らせるべきかの判定。ここは LLM を通さない＝毎回同じ結果になる。
       # PR が残っている限りワークフローは毎営業日走るので、状況が変わっていない日に
@@ -174,7 +182,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: develop # 雛形と検証スクリプトを取るだけなので履歴は要らない
+          # develop の先端ではなく**判定 job と同じコミット**を取る。雛形（見出し）と
+          # 検証（機械可読行の正規表現）がレポート生成時と一致していないと、正しい
+          # レポートが形式違反で落ちる・崩れたレポートが通る、のどちらも起こりうる。
+          ref: ${{ needs.triage.outputs.sha }}
 
       - name: レポートを復元する
         env:
