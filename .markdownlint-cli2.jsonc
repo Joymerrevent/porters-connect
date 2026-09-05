@@ -26,6 +26,12 @@
     "dist",
     "build",
     "coverage",
+    // Claude Code のスキル/エージェント向け内部文書。公開物ではなく、記法が崩れても
+    // 実害が無いので CI のゲートにはしない（ゲートは黙って壊れるものだけに絞る）。
+    // ただし pre-commit（lint-staged）は明示パスを渡すのでこの ignores を迂回する
+    // ＝編集時には --fix で整形される。「CI では見ない／コミット時には整う」の非対称は
+    // 意図したもの。手元で単体の markdownlint を当てるときは明示パスで渡すこと
+    // （globs 経由だと無言でスキップされ、通ったように見える）。
     ".claude",
     "CHANGELOG.md",
     // changesets の生成 README と contributor が書く changeset(.md) は参照スタイル強制の対象外
