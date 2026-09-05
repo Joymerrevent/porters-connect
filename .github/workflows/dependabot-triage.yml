@@ -76,9 +76,9 @@ jobs:
           claude_args: |
             --model claude-opus-5
             --effort high
-            --allowedTools "Read,Write,Glob,Grep,Bash(gh api:*),Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue edit:*),Bash(date:*)"
+            --allowedTools "Read,Write,Glob,Grep,Bash(gh api:*),Bash(date:*)"
           prompt: |
-            このリポジトリの Dependabot 依存更新 PR を検査し、判定表を追跡 Issue に書き出してください。
+            このリポジトリの Dependabot 依存更新 PR を検査し、判定表を `triage-report.md` に書いてください。
 
             ## 手順
 
@@ -96,13 +96,9 @@ jobs:
                - 見出しを足さない・消さない・並べ替えない。投稿後に機械検証される。
                - 埋め方の指示が書かれた HTML コメントは、出力には残さない。
                - 該当が無い節は空欄にせず「該当なし」「なし」と明記する。
-            5. 追跡 Issue に反映する。既存の Issue は
-               `gh issue list --state open --limit 100 --json number,title` の結果から
-               タイトルが `Dependabot 判定レポート` のものを選ぶ（`--search` は検索
-               インデックスの遅延で取りこぼすので使わない）。
-               **あれば `gh issue edit <N> --body-file triage-report.md` で本文を差し替え、
-               無ければ `gh issue create --title "Dependabot 判定レポート" --body-file triage-report.md`
-               で作る。** Issue を毎回増やさないこと。
+            **あなたの仕事は `triage-report.md` を書くところまでです。** Issue への投稿は
+            後続のワークフローステップが行うので、`gh issue` は触らないでください
+            （権限も渡していません）。
 
             ## 制約（守ること）
 
@@ -115,32 +111,12 @@ jobs:
               熟成するかまで書く。
             - 事実が取れなかった項目は「取得できず・要手動確認」と明記する。緑に見せない。
 
-      # 形式が守られたかを機械で確かめる。プロンプトに書いただけでは「そう書いてある」
-      # 以上の保証がなく、崩れても静かに通ってしまう。崩れたら job を落として気づかせる。
-      - name: レポートの形式を検証する
+      # レポートを検証してから追跡 Issue に反映する。ここは判断を含まない決定的な処理
+      # なので LLM に渡さない（論点2 と同じ理由）。検証を投稿の**前**に置くのは、
+      # 後に回すと崩れたレポートが一度 Issue に出てしまうため。
+      - name: レポートを検証して追跡 Issue に反映する
         if: steps.facts.outputs.should_run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          num=$(gh issue list --state open --limit 100 --json number,title \
-            -q '[.[] | select(.title == "Dependabot 判定レポート")] | .[0].number // empty')
-          if [ -z "$num" ]; then
-            echo "::error::追跡 Issue が見つかりません（作成に失敗した可能性があります）"
-            exit 1
-          fi
-          body=$(gh issue view "$num" --json body -q .body)
-          missing=0
-          while IFS= read -r heading; do
-            printf '%s' "$body" | grep -qF "$heading" || {
-              echo "::error::見出しが欠落しています: $heading"
-              missing=1
-            }
-          done < <(grep -E '^## ' .claude/skills/dependabot-merge/templates/report.md)
-          # 埋め方の指示（HTML コメント）が本文に残っていたら、雛形をそのまま貼った疑い
-          if printf '%s' "$body" | grep -qF '<!--'; then
-            echo "::error::雛形の HTML コメントが本文に残っています"
-            missing=1
-          fi
-          [ "$missing" -eq 0 ] || exit 1
-          echo "OK: 追跡 Issue #$num は所定の形式です"
+          EXPECTED_FINGERPRINT: ${{ steps.facts.outputs.fingerprint }}
+        run: bash .github/scripts/dependabot-triage-publish.sh
