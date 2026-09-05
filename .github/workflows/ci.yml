@@ -72,6 +72,27 @@ jobs:
       - name: Shell identifiers
         run: pnpm check:shell
 
+      # シェルの静的解析。上の check:shell（全角の吸い込み）とは別物で、こちらは
+      # クォート漏れ・未定義参照・パイプの終了ステータスなど一般的な bash の壊れ方を見る。
+      # .sh は docs-only の PR でも変わりうるので code フィルタ配下に置かず**常時実行**する。
+      # 手元で回すなら: pnpm dlx shellcheck@0.11.0 -x -s bash -S warning $(git ls-files '*.sh')
+      - name: Shellcheck
+        run: |
+          # shellcheck は ubuntu ランナーに同梱されている。無いときに黙って飛ばすと
+          # 「検査したつもりで一度も走っていない」状態になるので、明示的に落とす。
+          command -v shellcheck > /dev/null || {
+            echo "::error::shellcheck が見つかりません（ランナー同梱物の変更を疑うこと）。" >&2
+            exit 1
+          }
+          files=$(git ls-files '*.sh')
+          if [ -z "${files}" ]; then
+            echo "::error::検査対象の .sh が 1 つも見つかりません。検査が空振りしています。" >&2
+            exit 1
+          fi
+          shellcheck --version
+          # -x で source 先まで解決する。info（SC2016 等）は落とさず warning 以上を見る。
+          echo "${files}" | xargs shellcheck -x -s bash -S warning
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
