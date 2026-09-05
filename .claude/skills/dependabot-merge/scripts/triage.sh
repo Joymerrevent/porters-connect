@@ -33,8 +33,11 @@ else
 fi
 echo
 
+# base を develop に絞るのは、このスキルの対象が develop 向けの依存更新 PR だけだから
+# （main 向けはリリース PR ＝ docs/release-runbook.md の管轄）。定期実行側の指紋も
+# 同じ条件で PR を数えるので、ここを変えると両者の対象集合がずれる。
 PRS=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
-  -q '.[] | select(.user.login == "dependabot[bot]") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
+  -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
 
 if [ -z "$PRS" ]; then
   echo "open な dependabot PR はありません。"
