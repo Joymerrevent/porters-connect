@@ -75,7 +75,7 @@ jobs:
       # シェルの静的解析。上の check:shell（全角の吸い込み）とは別物で、こちらは
       # クォート漏れ・未定義参照・パイプの終了ステータスなど一般的な bash の壊れ方を見る。
       # .sh は docs-only の PR でも変わりうるので code フィルタ配下に置かず**常時実行**する。
-      # 手元で回すなら: git ls-files '*.sh' | xargs pnpm dlx shellcheck -x -s bash -S warning
+      # 手元で回すなら: git ls-files -z '*.sh' | xargs -0 pnpm dlx shellcheck -x -s bash -S warning
       # （npm の shellcheck ラッパーは版を指定してもバイナリは最新を取ってくるので、
       #   手元とランナーで版が違いうる。下の理由により、それでよい）
       - name: Shellcheck
@@ -100,7 +100,9 @@ jobs:
           fi
           shellcheck --version
           # -x で source 先まで解決する。info（SC2016 等）は落とさず warning 以上を見る。
-          echo "${files}" | xargs shellcheck -x -s bash -S warning
+          # NUL 区切りで渡す。改行区切りだと空白を含むファイル名で単語分割される
+          # （`-0` は GNU / BSD どちらの xargs にもあるので手元でも同じ形で回せる）。
+          git ls-files -z '*.sh' | xargs -0 shellcheck -x -s bash -S warning
 
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
