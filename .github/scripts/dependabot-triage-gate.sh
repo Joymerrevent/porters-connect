@@ -41,8 +41,21 @@ to_epoch() {
     || echo 0
 }
 
-bash "${HERE}/../../.claude/skills/dependabot-merge/scripts/triage.sh" > "$FACTS" 2>&1 || true
+bash "${HERE}/../../.claude/skills/dependabot-merge/scripts/triage.sh" > "$FACTS" 2>&1
+triage_status=$?
 cat "$FACTS"
+
+# 事実が集まらなかったなら緑で終わらせない。`|| true` で握ると、収集の失敗が
+# 「判断材料が揃った」と同じ見た目になり、気づける経路が無くなる。ここは
+# 「迷ったら走らせる」ではなく「事実が無いなら止めて知らせる」— 事実ゼロで
+# Claude を起動しても判定できないので、走らせる意味がそもそも無い。
+if [ "$triage_status" -ne 0 ]; then
+  emit has_prs false
+  emit should_run false
+  emit reason "判断材料を集められませんでした（triage.sh が失敗）"
+  echo "::error::判断材料を集められませんでした。上の出力を確認してください。" >&2
+  exit 1
+fi
 
 if grep -q "open な dependabot PR はありません" "$FACTS"; then
   emit has_prs false
