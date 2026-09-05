@@ -86,17 +86,18 @@ jobs:
             3. 各 PR の本文を `gh api repos/${{ github.repository }}/pulls/<N> -q .body` で読み、
                **破壊的変更・major 更新・Node 要件（engines）の変化**を探す。ここが人手では
                漏れやすく、この自動化の中心的な価値です。CHANGELOG の該当箇所は引用する。
-            4. SKILL.md §4 の形式で判定表を作り、マージ順（競合しないものから、影響の重いものは
-               単独で）とその根拠を書く。止めるべき兆候（major・prod 依存・CI の一部だけ赤・
-               cooldown 不足・破壊的変更の記載）があれば表の外にも言葉で書く。
-            5. 判定表をファイルに書き（Write ツール）、追跡 Issue に反映する。
-               既存の Issue は `gh issue list --state open --limit 100 --json number,title` の
-               結果からタイトルが `Dependabot 判定レポート` のものを選ぶ（`--search` は検索
+            4. `.claude/skills/dependabot-merge/templates/report.md` を読み、**その構造をそのまま
+               埋めて** `triage-report.md` を書く（Write ツール）。雛形の指示に従うこと:
+               - 見出しを足さない・消さない・並べ替えない。投稿後に機械検証される。
+               - 埋め方の指示が書かれた HTML コメントは、出力には残さない。
+               - 該当が無い節は空欄にせず「該当なし」「なし」と明記する。
+            5. 追跡 Issue に反映する。既存の Issue は
+               `gh issue list --state open --limit 100 --json number,title` の結果から
+               タイトルが `Dependabot 判定レポート` のものを選ぶ（`--search` は検索
                インデックスの遅延で取りこぼすので使わない）。
-               **あれば `gh issue edit <N> --body-file <file>` で本文を差し替え、無ければ
-               `gh issue create --title "Dependabot 判定レポート" --body-file <file>` で作る。**
-               Issue を毎回増やさないこと。本文の冒頭に検査時刻（UTC）と、対象が develop
-               であることを書く。
+               **あれば `gh issue edit <N> --body-file triage-report.md` で本文を差し替え、
+               無ければ `gh issue create --title "Dependabot 判定レポート" --body-file triage-report.md`
+               で作る。** Issue を毎回増やさないこと。
 
             ## 制約（守ること）
 
@@ -108,3 +109,33 @@ jobs:
             - cooldown は**時刻まで見て切り捨てて**数える。境界が近いときは、あと何時間で
               熟成するかまで書く。
             - 事実が取れなかった項目は「取得できず・要手動確認」と明記する。緑に見せない。
+
+      # 形式が守られたかを機械で確かめる。プロンプトに書いただけでは「そう書いてある」
+      # 以上の保証がなく、崩れても静かに通ってしまう。崩れたら job を落として気づかせる。
+      - name: レポートの形式を検証する
+        if: steps.facts.outputs.has_prs == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          num=$(gh issue list --state open --limit 100 --json number,title \
+            -q '[.[] | select(.title == "Dependabot 判定レポート")] | .[0].number // empty')
+          if [ -z "$num" ]; then
+            echo "::error::追跡 Issue が見つかりません（作成に失敗した可能性があります）"
+            exit 1
+          fi
+          body=$(gh issue view "$num" --json body -q .body)
+          missing=0
+          while IFS= read -r heading; do
+            printf '%s' "$body" | grep -qF "$heading" || {
+              echo "::error::見出しが欠落しています: $heading"
+              missing=1
+            }
+          done < <(grep -E '^## ' .claude/skills/dependabot-merge/templates/report.md)
+          # 埋め方の指示（HTML コメント）が本文に残っていたら、雛形をそのまま貼った疑い
+          if printf '%s' "$body" | grep -qF '<!--'; then
+            echo "::error::雛形の HTML コメントが本文に残っています"
+            missing=1
+          fi
+          [ "$missing" -eq 0 ] || exit 1
+          echo "OK: 追跡 Issue #$num は所定の形式です"

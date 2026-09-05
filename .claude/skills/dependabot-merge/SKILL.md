@@ -85,6 +85,10 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 
 止めるべき兆候があるなら、判定表と一緒に言葉でも伝える — major 更新、prod 依存、CI の一部だけ赤、cooldown 不足、PR 本文に破壊的変更の記載。
 
+列の意味と埋め方は `templates/report.md` が正。定期実行（`.github/workflows/dependabot-triage.yml`）が
+追跡 Issue に書き出すレポートも同じ雛形を使うので、**列を足す・言い換えるときは両方が参照する
+雛形の側を直す**。片方だけ変えると、自動レポートと対話実行で形が食い違って差分が読めなくなる。
+
 ### 5. 1 件ずつマージする
 
 承認を得たら、**1 件マージするごとに残りの base が古くなる**ことを前提に進む。
