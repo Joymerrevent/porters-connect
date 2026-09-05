@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// シェルスクリプトの `$var` の直後に非 ASCII 文字が続く箇所を検出する。
+// シェルコードの `$var` の直後に非 ASCII 文字が続く箇所を検出する。
 //
 // なぜ要るか: bash は `$state）` の `）`（U+FF09）を変数名の一部として読む。結果 `state）`
 // という未定義変数を参照し、`set -u` の下ではその場でスクリプトが終了する。
@@ -9,6 +9,9 @@
 // つまり「異常を報告しようとした瞬間に、報告せず死ぬ」＝黙って正常終了したように見える。
 // 安全側の経路が選択的に壊れるので、テストが緑でも気づけない。
 //
+// 対象は `.sh` と、`.github/workflows/` の YAML（`run:` ブロックは同じ bash で、
+// 同じ壊れ方をする）。`.sh` だけを見ていると、ワークフローに直接書いた数行が検査から漏れる。
+//
 // 直し方は `${var}` と括るだけ。人の記憶ではなく検査で守る（MD054 で参照スタイルを
 // 強制しているのと同じ発想）。
 //
@@ -16,7 +19,8 @@
 // シェルだけ変えた PR で走らないことがあり、検査が形だけになる）。
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -26,8 +30,17 @@ const SKIP_DIRS = new Set([
   "coverage",
 ]);
 
+/** ワークフロー YAML を対象に含める場所。ここの `run:` は bash で走る。 */
+const WORKFLOW_DIR = join(".github", "workflows");
+
 /** `$name` の直後が非 ASCII のときだけ拾う。`${name}` と書けば安全なので対象外。 */
 export const OFFENDING = /\$[A-Za-z_][A-Za-z0-9_]*(?=\P{ASCII})/gu;
+
+/** 検査対象のファイルか（`.sh`、または `.github/workflows/` 配下の YAML）。 */
+export const isTarget = (path, name) =>
+  name.endsWith(".sh") ||
+  ((name.endsWith(".yml") || name.endsWith(".yaml")) &&
+    path.includes(WORKFLOW_DIR));
 
 /** 1 ファイル分の中身を検査して、見つかった箇所を返す。 */
 export const checkSource = (path, source) => {
@@ -46,18 +59,15 @@ export const checkSource = (path, source) => {
   return problems;
 };
 
-/** 対象となる .sh を列挙する（深さ優先・SKIP_DIRS は降りない）。 */
-export const collectShellFiles = (
-  dir = ".",
-  read = { readdirSync, statSync },
-) => {
+/** 対象ファイルを列挙する（深さ優先・SKIP_DIRS は降りない）。 */
+export const collectTargets = (dir = ".", read = { readdirSync, statSync }) => {
   const found = [];
   for (const name of read.readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const full = join(dir, name);
     if (read.statSync(full).isDirectory()) {
-      found.push(...collectShellFiles(full, read));
-    } else if (name.endsWith(".sh")) {
+      found.push(...collectTargets(full, read));
+    } else if (isTarget(full, name)) {
       found.push(full);
     }
   }
@@ -65,17 +75,17 @@ export const collectShellFiles = (
 };
 
 export const checkAll = (dir = ".", read = readFileSync) =>
-  collectShellFiles(dir).flatMap((p) => checkSource(p, read(p, "utf8")));
+  collectTargets(dir).flatMap((p) => checkSource(p, read(p, "utf8")));
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
 if (
   process.argv[1] &&
-  import.meta.url.endsWith(process.argv[1].split("/").pop())
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const problems = checkAll();
   if (problems.length > 0) {
     console.error(
-      "シェルスクリプトに、全角文字が変数名へ吸われる箇所があります:\n",
+      "シェルコードに、全角文字が変数名へ吸われる箇所があります:\n",
     );
     for (const p of problems) {
       console.error(`  ${p.path}:${p.line}  ${p.found} → ${p.suggestion}`);
@@ -87,5 +97,5 @@ if (
     );
     process.exit(1);
   }
-  console.log("シェルスクリプトの変数参照は安全です。");
+  console.log("シェルコードの変数参照は安全です。");
 }
