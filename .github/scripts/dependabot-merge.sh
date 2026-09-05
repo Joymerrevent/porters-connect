@@ -110,6 +110,19 @@ if [ ${#targets[@]} -eq 0 ]; then
   exit 0
 fi
 
+# 同じ PR が 2 回並んでいたら弾く。1 回目でマージした後、2 回目は「open ではありません」で
+# 中断するので、**依頼どおり全部終わっているのに失敗として報告される**。publish は同じ理由で
+# レポート側の重複を既に弾いているが（dependabot-triage-publish.sh の「同じ PR を 2 回書いた
+# レポート」）、コメント側（`/merge 222 222`）には守りが無かった。同じ入力に守りの有無が
+# 分かれていたので揃える。
+dup=$(printf '%s\n' "${targets[@]}" | sort | uniq -d | sed 's/^/#/' | tr '\n' ' ')
+if [ -n "${dup// /}" ]; then
+  say "❌ 同じ PR が複数回指定されています: ${dup}"
+  say ""
+  say "使い方: \`/merge\`（レポートの取り込み対象）または \`/merge 222 221\`（指定した順）"
+  exit 1
+fi
+
 say "対象: $(printf '#%s ' "${targets[@]}")"
 say "（${source_of_targets}）"
 say ""
