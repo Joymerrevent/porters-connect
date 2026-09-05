@@ -24,8 +24,20 @@ description: >-
 - **グループ**: npm の `dev-dependencies` / `prod-dependencies`（minor・patch をまとめる）、github-actions の `actions`。**major は意図的にグループ外＝個別 PR**で来る。個別に来ている時点で「単独で判断してほしい更新」というシグナル。
 - **cooldown（熟成期間）**が設定されている。npm は major 14 日・minor/patch 7 日、actions は一律 7 日。**公開直後の版を避けて、悪性リリースが発見・削除される時間を稼ぐ**のが狙いで、防御の本体は「時間」。
 - **マージは squash**（履歴が `… (#NNN)` の形）。
-- **branch protection が base の鮮度を要求**する。1 件マージすると残りは `Base branch was modified` で弾かれる。
+- **base の鮮度は GitHub 側では要求されていない**（`develop` / `main` とも `strict: false`・ruleset なし・
+  必須レビュー 0。必須チェックは `ci` と `stryker`）。1 件マージしても残りはそのままマージできてしまう。
+  **それでも `update-branch` する**理由は [ADR-0065][adr65] 論点6 のとおり — 止めてくれないからこそ、
+  更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らないまま develop に入る。
+  ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
 - `gh pr merge` は `permissions.ask` で確認プロンプトが出る。**これは仕組み側のフェイルセーフなので迂回しない。**
+- **同じ判定は定期実行でも走る**（[ADR-0065][adr65]）。`.github/workflows/dependabot-triage.yml` が平日朝に
+  検査し、`Dependabot 判定レポート` Issue（ラベル `dependabot-triage`）を上書き更新する。取り込みは
+  その Issue に `/merge` とコメントすると `.github/workflows/dependabot-merge.yml` が実行する。
+  **`/merge` が読むのはレポートの `- 取り込み対象:` の 1 行だけ**で、そこに書かれた PR を書かれた順に
+  取り込む（`/merge 222 221` で上書きできる）。**見送る PR をその行に書かない**のが唯一の防波堤
+  ＝散文でいくら「見送り」と書いても、行に番号があれば入る。**このスキルは対話実行の経路**で、
+  出力形式は `templates/report.md` を両者で共有する。定期実行は前回から状況が変わっていなければ
+  起動しないので、**手元で今すぐ見たいときはこのスキルを使う**。
 
 ## 実行フロー
 
@@ -85,11 +97,34 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 
 止めるべき兆候があるなら、判定表と一緒に言葉でも伝える — major 更新、prod 依存、CI の一部だけ赤、cooldown 不足、PR 本文に破壊的変更の記載。
 
+列の意味と埋め方は `templates/report.md` が正。定期実行（`.github/workflows/dependabot-triage.yml`）が
+追跡 Issue に書き出すレポートも同じ雛形を使うので、**列を足す・言い換えるときは両方が参照する
+雛形の側を直す**。片方だけ変えると、自動レポートと対話実行で形が食い違って差分が読めなくなる。
+
+雛形のうち**機械が読む 3 行**（`検査時刻` / `判定の指紋` / `取り込み対象`）は形が固定で、正規表現は
+`.github/scripts/dependabot-report-format.sh` にある。定期実行では投稿の**前**に検証され、崩れていれば
+Issue に出ない。対話実行でも同じ形で書いておくと、そのまま Issue の本文として使える。
+
 ### 5. 1 件ずつマージする
 
 承認を得たら、**1 件マージするごとに残りの base が古くなる**ことを前提に進む。
+GitHub は古い base を弾かないので、**弾かれないことを理由に飛ばさない**（上記の前提を参照）。
 
-1. base が古ければ更新する（競合しないことを先に確かめる）:
+**取り込む前に、判定したときのコミットのままかを確かめる。** 承認は「その PR」ではなく
+**「その PR のそのコミット」**に対して出ている。判定後に dependabot が force-push していれば、
+誰も CHANGELOG を読んでいないコミットを取り込むことになる:
+
+```bash
+git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
+```
+
+偽なら取り込まず、判定からやり直す。update-branch は develop を取り込む merge なので、
+これを真のまま保つ（＝base 更新をしても確認は通る）。定期実行の経路では
+`.github/scripts/dependabot-merge.sh` が同じ確認をしていて、レポートの
+`- 取り込み対象: #222@<SHA>` に書かれた SHA をその場で突き合わせる。
+
+1. base が古ければ更新する（競合しないことを先に確かめる）。更新するのは protection に要求されるからではなく、
+   **マージ後の状態に CI を通すため**:
 
    ```bash
    gh api -X PUT repos/{owner}/{repo}/pulls/{N}/update-branch -f expected_head_sha=<head SHA>
@@ -109,7 +144,9 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 
 ## つまずいたときの読み方
 
-- **`Base branch was modified`** — branch protection が base の鮮度を要求している。§5 の update-branch から。
+- **`Base branch was modified`** — **現在の設定では起きないはず**（`strict: false`）。出たなら
+  branch protection か ruleset が変わっている。前提の記述ごと確かめ直す（設定は変わりうるし、
+  変わったことに気づかないのが一番危ない）。対処自体は §5 の update-branch でよい。
 - **`head ref does not exist`（422）** — ブランチが消えている。PR が閉じられた可能性が高いので、まず `git fetch --prune` と PR の state を確認する。
 - **`gh pr view` / `gh pr checks` が分類器にブロックされる** — マージ操作の文脈でブロックされることがある。`gh api` と `git log` に切り替えれば同じ情報が取れる（実際に起きた）。
 - **あったはずの PR が見当たらない** — dependabot が自分で閉じた可能性が高い（§2）。閉じられた PR を探すのはこの場合だけでよい:
@@ -126,3 +163,5 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 - **`main` 向けの PR をこのスキルで扱わない。** リリース PR は `docs/release-runbook.md` の手順。
 - **`dependabot.yml` の編集**は対象外（cooldown 日数を変えたいなど）。設定変更は影響が広いので独立して扱う。
 - **cooldown を回避するための設定変更を提案しない。** 待てないほど急ぐなら、それは security update の話であって version update の話ではない（security updates は cooldown を素通りする）。
+
+[adr65]: ../../../docs/adr/0065-dependabot-update-automation.md

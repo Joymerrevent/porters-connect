@@ -33,8 +33,21 @@ else
 fi
 echo
 
+# base を develop に絞るのは、このスキルの対象が develop 向けの依存更新 PR だけだから
+# （main 向けはリリース PR ＝ docs/release-runbook.md の管轄）。定期実行側の指紋も
+# 同じ条件で PR を数えるので、ここを変えると両者の対象集合がずれる。
 PRS=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
-  -q '.[] | select(.user.login == "dependabot[bot]") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
+  -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
+prs_status=$?
+
+# 取得の失敗と「0 件」を区別する。区別しないと、API が落ちている間ずっと
+# 「open な dependabot PR はありません」と報告し続けることになる。定期実行から見ると
+# 判断材料が揃った日と見分けが付かないので、**判定が緑のまま静かに止まる**
+# ＝この自動化が防ごうとしている「依存更新の滞留」そのものが、誰にも気づかれずに起きる。
+if [ "$prs_status" -ne 0 ]; then
+  echo "PR 一覧を取得できませんでした（gh api が失敗しました）。事実が無いので判断材料になりません。" >&2
+  exit 1
+fi
 
 if [ -z "$PRS" ]; then
   echo "open な dependabot PR はありません。"
