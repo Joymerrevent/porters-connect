@@ -70,6 +70,8 @@ git diff --stat develop...HEAD
 4. 本物の読み取り専用実行（**冪等性** ＝ 2 回走らせて出力が一致するかもここで取る）
 5. **本番と同じ起動の形**で確かめる（引数が絶対パスか相対パスかで結論が反転した実例あり）
 
+この 5 つはシェルと外部コマンドが前提。**TypeScript の変更なら [verification-recipes.md][recipes] §9** に同じ狙いの対応物がある（mock transport、coverage の「通っていない行」、型定義まで降りる、正典との突合をテストにする）。
+
 あわせて **実データで前提を潰す**。「一般に dependabot は force-push するか」ではなく「**この repo で実際に何回あったか**」を `gh api` で見る。コマンド集は [verification-recipes.md][recipes] §6。
 
 各コミットが単独で緑かは、これで機械的に確かめる:
