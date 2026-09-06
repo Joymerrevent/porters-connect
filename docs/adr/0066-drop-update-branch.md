@@ -1,6 +1,6 @@
 # 66. dependabot PR の base 更新をやめ、検証を develop の CI に移す（ADR-0065 論点6 の改訂）
 
-- Status: accepted
+- Status: superseded by [[0067-retire-dependabot-automation]]
 - Date: 2026-09-06（accepted: 2026-09-06）
 - Deciders: jun.shiromoto (Joymerrevent)
 

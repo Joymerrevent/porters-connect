@@ -76,8 +76,9 @@
 | [0062][0062] | back-merge も PR を通す（ADR-0030 の実行方式を改訂）             | プロセス | accepted   | —     |
 | [0063][0063] | 冪等性ガードを「送信済みで結果が不明」に限定する                 | 詳細設計 | accepted   | —     |
 | [0064][0064] | Link / Image 型の対応（宣言から Read / Write まで）              | 基本設計 | accepted   | —     |
-| [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | accepted   | —     |
-| [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | accepted   | —     |
+| [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | superseded | —     |
+| [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | superseded | —     |
+| [0067][0067] | Dependabot 自動化をやめ、スキルの対話実行に戻す                  | プロセス | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -147,3 +148,4 @@
 [0064]: 0064-link-image-types.md
 [0065]: 0065-dependabot-update-automation.md
 [0066]: 0066-drop-update-branch.md
+[0067]: 0067-retire-dependabot-automation.md
