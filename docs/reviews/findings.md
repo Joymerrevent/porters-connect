@@ -48,6 +48,8 @@
 | [RV-31][rv31] | 🟡     | API 忠実性 / 型安全         | fixed | System[Reference] を展開して要求しても ID 以外が捨てられる        |
 | [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | fixed | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
 | [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ   | fixed | back-merge が develop の保護ルールをバイパスして通る              |
+| [RV-34][rv34] | 🟢     | フェイルセーフ / DX         | open  | 取り込み時の同一性チェックが 3 つの別原因を同じ文言で報告する     |
+| [RV-35][rv35] | 🟢     | フェイルセーフ              | open  | 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -89,3 +91,5 @@
 [rv31]: rv/0031-reference-expansion-discarded.md
 [rv32]: rv/0032-searchall-query-mutation.md
 [rv33]: rv/0033-backmerge-bypasses-branch-protection.md
+[rv34]: rv/0034-merge-identity-failure-reason.md
+[rv35]: rv/0035-future-timestamp-guard-boundary.md
