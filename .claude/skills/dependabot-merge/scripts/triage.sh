@@ -33,8 +33,21 @@ else
 fi
 echo
 
+# base を develop に絞るのは、このスキルの対象が develop 向けの依存更新 PR だけだから
+# （main 向けはリリース PR ＝ docs/release-runbook.md の管轄）。定期実行側の指紋も
+# 同じ条件で PR を数えるので、ここを変えると両者の対象集合がずれる。
 PRS=$(gh api "repos/$REPO/pulls?state=open&per_page=100" \
-  -q '.[] | select(.user.login == "dependabot[bot]") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
+  -q '.[] | select(.user.login == "dependabot[bot]") | select(.base.ref == "develop") | "\(.number)\t\(.head.sha)\t\(.head.ref)\t\(.title)"' 2>/dev/null)
+prs_status=$?
+
+# 取得の失敗と「0 件」を区別する。区別しないと、API が落ちている間ずっと
+# 「open な dependabot PR はありません」と報告し続けることになる。定期実行から見ると
+# 判断材料が揃った日と見分けが付かないので、**判定が緑のまま静かに止まる**
+# ＝この自動化が防ごうとしている「依存更新の滞留」そのものが、誰にも気づかれずに起きる。
+if [ "$prs_status" -ne 0 ]; then
+  echo "PR 一覧を取得できませんでした（gh api が失敗しました）。事実が無いので判断材料になりません。" >&2
+  exit 1
+fi
 
 if [ -z "$PRS" ]; then
   echo "open な dependabot PR はありません。"
@@ -64,17 +77,31 @@ while IFS=$'\t' read -r num sha ref title; do
   fi
 
   # CI は必ず head SHA に対して見る。PR 番号で引くと更新前の結果を拾いうる。
-  echo -n "  CI: "
-  gh api "repos/$REPO/commits/$sha/check-runs" --paginate \
-    -q '[.check_runs[] | "\(.conclusion // .status)"] | group_by(.) | map("\(.[0])×\(length)") | join(" ")' 2>/dev/null \
-    || echo "取得失敗"
+  # `--paginate` は `-q` をページごとに適用するので、jq 側で集約しない（100 件を
+  # 超えるとページ単位の集計が複数行に分かれる）。行で受けて shell で畳む。
+  # ついでに「取得に失敗した」と「チェックが 1 つも無い」を分ける — まとめると
+  # 判定材料として一番危ない「結果ゼロ」が取得失敗と同じ見た目になる。
+  ci_runs=$(gh api "repos/$REPO/commits/$sha/check-runs" --paginate \
+    -q '.check_runs[] | "\(.conclusion // .status)"' 2>/dev/null)
+  ci_status=$?
+  if [ "$ci_status" -ne 0 ]; then
+    echo "  CI: 取得失敗（緑と見なさないこと）"
+  elif [ -z "$ci_runs" ]; then
+    echo "  CI: チェックがありません（結果ゼロ。緑と見なさないこと）"
+  else
+    printf '  CI: %s\n' "$(printf '%s\n' "$ci_runs" | sort | uniq -c \
+      | awk '{ printf "%s%s×%s", sep, $2, $1; sep = " " }')"
+  fi
 
+  # ここも同じ理由で jq 側では集約しない（上の CI 欄と同型）。
   failed=$(gh api "repos/$REPO/commits/$sha/check-runs" --paginate \
-    -q '[.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped") | .name] | join(", ")' 2>/dev/null)
+    -q '.check_runs[] | select(.conclusion != null and .conclusion != "success" and .conclusion != "neutral" and .conclusion != "skipped") | .name' 2>/dev/null \
+    | tr '\n' ' ')
   [ -n "$failed" ] && echo "  ⚠️ 失敗/未成功: $failed"
 
-  echo -n "  files: "
-  gh api "repos/$REPO/pulls/$num/files" --paginate -q '[.[].filename] | join(", ")' 2>/dev/null || echo "?"
+  # ここも同型。集約は shell 側で行う。
+  files_list=$(gh api "repos/$REPO/pulls/$num/files" --paginate -q '.[].filename' 2>/dev/null | tr '\n' ' ')
+  echo "  files: ${files_list:-取得できず}"
 
   # 更新先バージョンの公開日。cooldown を満たすかは SKILL.md の基準と突き合わせて判断する。
   echo "  更新内容と npm 公開日:"

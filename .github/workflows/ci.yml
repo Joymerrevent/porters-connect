@@ -72,6 +72,38 @@ jobs:
       - name: Shell identifiers
         run: pnpm check:shell
 
+      # シェルの静的解析。上の check:shell（全角の吸い込み）とは別物で、こちらは
+      # クォート漏れ・未定義参照・パイプの終了ステータスなど一般的な bash の壊れ方を見る。
+      # .sh は docs-only の PR でも変わりうるので code フィルタ配下に置かず**常時実行**する。
+      # 手元で回すなら: git ls-files -z '*.sh' | xargs -0 pnpm dlx shellcheck -x -s bash -S warning
+      # （npm の shellcheck ラッパーは版を指定してもバイナリは最新を取ってくるので、
+      #   手元とランナーで版が違いうる。下の理由により、それでよい）
+      - name: Shellcheck
+        run: |
+          # shellcheck は ubuntu ランナーに同梱されている（ubuntu-latest = Ubuntu 24.04、
+          # 同梱は 0.9.0。2026-09-06 に runner-images の同梱一覧と、その 0.9.0 を実際に
+          # 落として全 .sh に当てた結果の両方で確認済み）。
+          # 版はイメージ更新で上がりうるが**固定しない** — 固定したいのは検査の下限であって
+          # 特定の版ではない。新しい shellcheck は検査が増えるだけなので下限は下がらず、
+          # 版が上がって赤くなったならそれは本物の指摘（モデルの階層を固定して版は浮かせて
+          # いる dependabot-triage.yml と同じ考え方）。
+          # 無いときに黙って飛ばすと「検査したつもりで一度も走っていない」状態になるので、
+          # 存在しなければ明示的に落とす。
+          command -v shellcheck > /dev/null || {
+            echo "::error::shellcheck が見つかりません（ランナー同梱物の変更を疑うこと）。" >&2
+            exit 1
+          }
+          files=$(git ls-files '*.sh')
+          if [ -z "${files}" ]; then
+            echo "::error::検査対象の .sh が 1 つも見つかりません。検査が空振りしています。" >&2
+            exit 1
+          fi
+          shellcheck --version
+          # -x で source 先まで解決する。info（SC2016 等）は落とさず warning 以上を見る。
+          # NUL 区切りで渡す。改行区切りだと空白を含むファイル名で単語分割される
+          # （`-0` は GNU / BSD どちらの xargs にもあるので手元でも同じ形で回せる）。
+          git ls-files -z '*.sh' | xargs -0 shellcheck -x -s bash -S warning
+
       # 以下はコード変更時のみ（docs-only は skip）
       - name: Typecheck
         if: steps.changes.outputs.code == 'true'
