@@ -23,7 +23,10 @@
 - ステータスは次のいずれか：`proposed`（議論中）/ `accepted`（確定）/ `rejected`（不採用）/ `deprecated`（廃止）/ `superseded by NNNN`（後続で置換）。
 - 一度 `accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR を起こして旧 ADR を `superseded by NNNN` にする。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
-- セクション構成：Context and Problem Statement → Decision Drivers → Considered Options → Decision Outcome（+ Consequences）→ Pros and Cons of the Options → More Information。
+- セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
+  Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
+  「信じている入力」は**実装前に埋める**節で、該当が無ければ「該当なし — 理由」を 1 行書く
+  （節ごと消さない）。信頼できない入力源が 3 つ以上ある決定では必須。
 
 ### 索引との付き合い方（[ADR-0053][0053]）
 
