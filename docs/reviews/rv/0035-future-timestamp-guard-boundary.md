@@ -1,7 +1,7 @@
 # RV-35 🟢 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: wontfix
 
 ## 概要
 
@@ -41,4 +41,10 @@ change-review 2 巡目（2026-09-06）。**自分が前のラウンドで入れ�
 
 ## 処置
 
-RV-34 と同じく、change-review の**止めどきの規則**により見送り。
+[ADR-0067][adr67] により対象コード（`.github/scripts/dependabot-triage-gate.sh`）ごと削除された。
+判定の定期実行を畳んだため、指紋も 3 日ルールも存在しない。**指摘が誤りだったのではなく、対象が無くなった。**
+
+教訓（閾値を足したら発火する側と発火しない側の両方を測る）は
+`.claude/skills/change-review/references/breakage-matrix.md` の壊れ方「境界」として残っている。
+
+[adr67]: ../../adr/0067-retire-dependabot-automation.md
