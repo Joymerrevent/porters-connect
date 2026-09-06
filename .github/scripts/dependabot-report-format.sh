@@ -34,12 +34,19 @@ DEPENDABOT_ISSUE_LABEL="dependabot-triage"
 # 上書きし、その Issue に打った `/merge` は起動条件から外れて**無言で不発**になる
 # （`if:` で落ちた job はリアクションもコメントも返さない）。だから is_bot 単独では通さない。
 #
-# is_bot を捨てないのは、gh の author に is_bot が無い／login が空で返った場合に
-# **毎回「既存 Issue なし」と判断して新しい Issue を作り続ける**のを防ぐため。
-# login が取れているときは login で判断し、取れないときだけ is_bot に頼る。
-# 逆に login の前方一致にしないのは、github-actions-… という第三者アカウントを
-# 巻き込まないため（ラベルと合わせて二重に絞る）。
-DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select((.author.login // \"\") == \"github-actions\" or (.author.login // \"\") == \"github-actions[bot]\" or ((.author.login // \"\") == \"\" and (.author.is_bot // false)))"
+# **同じ identity が経路によって別表記で返る。**（2026-09-06、初回の本番実行で判明）
+#   gh CLI  `issue list --json author` -> `app/github-actions`
+#   webhook `issue.user.login`         -> `github-actions[bot]`
+# だから login の**完全一致では拾えない**。`app/` 接頭辞と `[bot]` 接尾辞を落として正規化してから
+# 比べる。ここを厳しくしすぎると「毎回『既存 Issue なし』と判断して**新しい Issue を作り続ける**」
+# 形で壊れる — 実際にこの述語を完全一致に絞った結果、初回実行で作った Issue を次回から拾えなく
+# なっていた（増殖 ＋ 指紋による抑止が一生効かない）。
+#
+# is_bot を捨てないのは、gh の author に login が無い／空で返った場合の退避。
+# login が取れているときは正規化した login で判断し、取れないときだけ is_bot に頼る。
+# 逆に前方一致や部分一致にしないのは、`github-actions-…` や `app/github-actions-evil` という
+# 第三者アカウントを巻き込まないため（ラベルと合わせて二重に絞る）。
+DEPENDABOT_ISSUE_FILTER="select(.title == \"${DEPENDABOT_ISSUE_TITLE}\") | select(((.author.login // \"\") | sub(\"^app/\";\"\") | sub(\"\\\\[bot\\\\]$\";\"\")) == \"github-actions\" or ((.author.login // \"\") == \"\" and (.author.is_bot // false)))"
 
 # 検査時刻（ISO 8601 / UTC）。gate が「前回から何日経ったか」に使う。秒は省略可。
 REPORT_TIMESTAMP_RE='^- 検査時刻: [0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z$'
