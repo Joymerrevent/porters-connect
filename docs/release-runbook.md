@@ -75,15 +75,17 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.12.0**（npm latest・`v0.12.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  7 files / 553.4 kB・2026-08-31）。0.2.0 以降この半自動フローで公開（**全 16 版**）。
-  changeset **7 枚**を消費した通常リリースで、`pnpm changeset:version` は問題なく動いた
-  （復旧後 2 回目。0.7.0〜0.10.0 の版 bump は手作業だった）。
+- ✅ 最新公開: **0.12.1**（npm latest・`v0.12.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  7 files / 563.5 kB・2026-09-03）。0.2.0 以降この半自動フローで公開（**全 17 版**）。
+  changeset **2 枚**を消費した patch リリースで、`pnpm changeset:version` は問題なく動いた（復旧後 3 回目）。
+  ひとつ前の 0.12.0（2026-08-31・7 files / 553.4 kB）は changeset 7 枚を消費した全リソース網羅の版。
 - ✅ **back-merge は PR 経由に変更済み**（[ADR-0062][adr62] accepted・2026-09-03／[findings][findings] RV-33）。
   0.12.0 まで使っていた直 push（`git merge origin/main && git push`）は、`develop` の
   「Changes must be made through a pull request」「Required status check」を**bypass した**という
   警告つきで成功していた（管理者権限のため・**必須チェックの完了も待たずに**通っていた）。
-  **0.13.0 以降は本書 §2 の PR 手順で行う**（初回適用時に実測を追記すること）。
+  **0.12.1 から本書 §2 の PR 手順に移行済み**。初回適用の実測（2026-09-03・back-merge PR **#216**）:
+  **必須チェックの完了まで約 84 秒**、merge commit でマージして完了。bypass 警告は出なくなった
+  （＝保護を迂回していない）。手順として増えたのはマージ操作 1 回分だけで、待ち時間も想定内。
 - ✅ **`pnpm changeset:version` は復旧済み**（**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**・2026-08-23）。
   原因は、`pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
   （`js-yaml: ^3.6.1` を宣言）にも効き、同パッケージが呼ぶ **js-yaml v3** の API（`yaml.safeLoad`）が

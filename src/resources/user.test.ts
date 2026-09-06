@@ -43,7 +43,7 @@ const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
 };
 
 describe("createUserResource", () => {
-  it("search() defaults to partition + request_type=1 + user_type=-1 and omits field", async () => {
+  it("search() defaults to partition + request_type=1 + user_type=-1", async () => {
     const calls: Call[] = [];
     const users = (await res(calls).search()).items;
     const url = calls[0].req.url;
@@ -51,10 +51,62 @@ describe("createUserResource", () => {
     expect(url).toContain("partition=12");
     expect(url).toContain("request_type=1");
     expect(url).toContain("user_type=-1");
-    expect(url).not.toContain("field=");
     expect(users.map((u) => u.P_Id)).toEqual([1, 2]);
     expect(users[0].P_Type).toBe(0); // Number
     expect(users[1].P_Mail).toBe("user2@xxx.co.jp"); // Mail
+  });
+
+  it("sends the catalog default when field is omitted (ADR-0020 / ADR-0060 D2)", async () => {
+    // PORTERS answers a fieldless User Read with 4 of the 17 fields, so the library asks for
+    // every catalogued one — otherwise the record type promises 17 and delivers 4 (RV-1).
+    const calls: Call[] = [];
+    await res(calls).search();
+    const field = new URL(calls[0].req.url).searchParams.get("field");
+    expect(field).toBe(
+      [
+        "User.P_Id",
+        "User.P_Type",
+        "User.P_Name",
+        "User.P_Mail",
+        "User.P_Department",
+        "User.P_Telephone",
+        "User.P_Mobile",
+        "User.P_MobileMail",
+        "User.P_UserName",
+        "User.P_TimeZone",
+        "User.P_Language",
+        "User.P_StartDate",
+        "User.P_EndDate",
+        "User.P_RegistrationDate",
+        // User 型の項目だけ 4 サブ項目付きで要求する（read-core の USER_SUBFIELDS）。
+        "User.P_RegisteredBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
+        "User.P_UpdateDate",
+        "User.P_UpdatedBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
+      ].join(","),
+    );
+  });
+
+  it("decodes the extended HR fields by their Data Type", async () => {
+    const calls: Call[] = [];
+    const body =
+      `<?xml version="1.0"?><User Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+      `<User.P_Id>5</User.P_Id>` +
+      `<User.P_Department><Department><Department.P_Id>3</Department.P_Id><Department.P_Name>営業部</Department.P_Name></Department></User.P_Department>` +
+      `<User.P_Telephone>03-1234-5678</User.P_Telephone>` +
+      `<User.P_TimeZone>Asia/Tokyo</User.P_TimeZone>` +
+      `<User.P_StartDate>2026/04/01</User.P_StartDate>` +
+      `<User.P_RegistrationDate>2026/04/01 09:30:00</User.P_RegistrationDate>` +
+      `<User.P_RegisteredBy><User><User.P_Id>1</User.P_Id><User.P_Name>管理 太郎</User.P_Name></User></User.P_RegisteredBy>` +
+      `<User.P_EndDate/>` +
+      `</Item></User>`;
+    const u = (await res(calls, body).search()).items[0];
+    expect(u?.P_Department).toEqual({ P_Id: 3, P_Name: "営業部" });
+    expect(u?.P_Telephone).toBe("03-1234-5678"); // Telephone は文字列のまま
+    expect(u?.P_TimeZone).toBe("Asia/Tokyo");
+    expect(u?.P_StartDate).toBe("2026-04-01"); // Date -> ISO
+    expect(u?.P_RegistrationDate).toBe("2026-04-01T09:30:00Z"); // System[DateTime] -> ISO(UTC)
+    expect(u?.P_RegisteredBy).toMatchObject({ P_Id: 1, P_Name: "管理 太郎" });
+    expect(u?.P_EndDate).toBeNull(); // 空要素は null
   });
 
   it("passes userType / field / count / start through", async () => {
@@ -74,7 +126,8 @@ describe("createUserResource", () => {
     expect(url).toContain("start=2");
   });
 
-  it("treats an empty field array as omitted (no field param)", async () => {
+  it("treats an empty field array as PORTERS' own default (no field param)", async () => {
+    // `[]` は「API ネイティブの答えに委ねる」＝ PORTERS 既定の 4 項目（他リソースの `[]` と同じ位置づけ）。
     const calls: Call[] = [];
     await res(calls).search({ field: [] });
     expect(calls[0].req.url).not.toContain("field=");
