@@ -61,6 +61,8 @@
   System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は**システム管理＝標準項目の領域**
   なので公開しない。Image / Link は内部 `DataType`（`src/xml/decode.ts`）に未モデルのため対象外。
   Reference / Image 型のカスタム項目は将来課題。
+  **［2026-09-05 追記］** Image / Link は [ADR-0064][0064] で `DataType` に載り、builder にも
+  `f.image()` / `f.link()` として**追加された**（D3 の対象が広がる）。本 ADR の他の決定は不変。
 - **D4 検証境界 = `defineFields`（同期）**: ここが唯一の検証点（[ADR-0005][0005]）。
   alias は `U_` / `A_` 接頭辞のみ許可し、`P_*`（静的カタログの領域）や他形式は `PortersConfigError`
   （category `config` — [ADR-0006][0006]）を同期 throw。リソースキーは既知のデータリソース集合
@@ -116,6 +118,7 @@
 [prd]: ../design/requirements.md
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
+[0064]: 0064-link-image-types.md
 [0006]: 0006-error-model.md
 [0016]: 0016-field-type-granularity.md
 [0019]: 0019-static-resource-types.md
