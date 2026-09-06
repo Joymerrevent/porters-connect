@@ -1,7 +1,7 @@
 # 66. dependabot PR の base 更新をやめ、検証を develop の CI に移す（ADR-0065 論点6 の改訂）
 
-- Status: proposed
-- Date: 2026-09-06
+- Status: accepted
+- Date: 2026-09-06（accepted: 2026-09-06）
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0065][adr65] 論点6 は「`update-branch` を続ける。理由は**更新後の状態を CI に検証させるため**」と
@@ -119,9 +119,10 @@ release を経由するため、壊れたロックファイルが利用者に届
 
 - [ADR-0065][adr65] の論点6 を本 ADR が改訂する。**他の 7 論点は有効**なので、
   ADR-0065 の Status は `accepted` のまま据え置く。
-- 実装は本 ADR が accepted になってから別 PR で行う（ADR と実装は分ける）。
-  対象は `.github/scripts/dependabot-merge.sh` の `update-branch` ブロックと、
-  `.claude/skills/dependabot-merge/SKILL.md` §5 の手順。
+- **2026-09-06 に案B で accepted。** 決め手は、承認ゲートが fork PR からの実行を止める防御を
+  兼ねている点 — 依存更新の利便のために、関係のない攻撃面を開くのは割に合わない。
+- 実装は別 PR で行う（ADR と実装は分ける）。対象は `.github/scripts/dependabot-merge.sh` の
+  `update-branch` ブロックと、`.claude/skills/dependabot-merge/SKILL.md` §5 の手順。
 - 承認ゲートの設定そのものは未特定。特定できれば、案A を将来また検討する余地は残る。
 
 [adr65]: 0065-dependabot-update-automation.md

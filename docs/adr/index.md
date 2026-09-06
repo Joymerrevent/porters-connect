@@ -77,7 +77,7 @@
 | [0063][0063] | 冪等性ガードを「送信済みで結果が不明」に限定する                 | 詳細設計 | accepted   | —     |
 | [0064][0064] | Link / Image 型の対応（宣言から Read / Write まで）              | 基本設計 | accepted   | —     |
 | [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | accepted   | —     |
-| [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | proposed   | —     |
+| [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
