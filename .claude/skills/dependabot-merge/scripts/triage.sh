@@ -11,7 +11,7 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # リモート追跡ブランチの鮮度を先に揃える。古いままだと消えたブランチを実在扱いして
-# しまい、update-branch が 422 を返すまで気づけない。
+# しまい、base の鮮度も誤って判定する。
 git fetch --prune --quiet origin 2>/dev/null
 
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null) || {
@@ -69,11 +69,12 @@ while IFS=$'\t' read -r num sha ref title; do
   fi
   echo "  mergeable_state: ${state:-?}"
 
-  # base の鮮度。develop が head の祖先でなければ update-branch が要る。
+  # base の鮮度。更新はしない（ADR-0066）が、古い base の CI が緑でも
+  # 「develop 取り込み後」は検証されていない、という事実は判断材料になる。
   if git merge-base --is-ancestor origin/develop "$sha" 2>/dev/null; then
     echo "  base: 最新（develop 取り込み済み）"
   else
-    echo "  base: ⚠️ 古い（update-branch が必要）"
+    echo "  base: ⚠️ 古い（取り込み後に develop の CI が検証する）"
   fi
 
   # CI は必ず head SHA に対して見る。PR 番号で引くと更新前の結果を拾いうる。

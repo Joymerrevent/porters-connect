@@ -62,13 +62,15 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write # マージとブランチ削除に必要
-      pull-requests: write # update-branch とマージに必要
+      pull-requests: write # マージに必要
       issues: write # 結果を Issue に返すために必要
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: develop
-          fetch-depth: 0 # base の鮮度判定に merge-base を使うため全履歴が要る
+          # 判定時点のコミットとの同一性判定（merge-base / rev-list）と、base 鮮度の
+          # 報告に全履歴が要る。base の更新自体は行わない（ADR-0066）。
+          fetch-depth: 0
 
       - name: 受け付けたことを示す
         env:

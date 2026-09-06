@@ -26,9 +26,11 @@ description: >-
 - **マージは squash**（履歴が `… (#NNN)` の形）。
 - **base の鮮度は GitHub 側では要求されていない**（`develop` / `main` とも `strict: false`・ruleset なし・
   必須レビュー 0。必須チェックは `ci` と `stryker`）。1 件マージしても残りはそのままマージできてしまう。
-  **それでも `update-branch` する**理由は [ADR-0065][adr65] 論点6 のとおり — 止めてくれないからこそ、
-  更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らないまま develop に入る。
-  ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
+  **`update-branch` はしない**（[ADR-0066][adr66]。ADR-0065 論点6 の改訂）。`GITHUB_TOKEN` で
+  update-branch すると直後の CI が承認ゲートに入り（`action_required`）、承認しない限り 1 件も走らない
+  ＝「更新後の状態を CI に検証させる」目的を果たせないため。**ロックファイルの検証は、マージ後に
+  develop への push で走る `ci` が担う。** 古い base のまま取り込むので、PR の CI が保証するのは
+  「その PR 単独での緑」だけ、という前提で読むこと。
 - `gh pr merge` は `permissions.ask` で確認プロンプトが出る。**これは仕組み側のフェイルセーフなので迂回しない。**
 - **同じ判定は定期実行でも走る**（[ADR-0065][adr65]）。`.github/workflows/dependabot-triage.yml` が平日朝に
   検査し、`Dependabot 判定レポート` Issue（ラベル `dependabot-triage`）を上書き更新する。取り込みは
@@ -43,7 +45,7 @@ description: >-
 
 ### 1. 状態を集める
 
-**必ず `git fetch --prune` から始める。** リモート追跡ブランチが古いと、既に消えたブランチを追いかけて的外れな診断をすることになる（`update-branch` が `head ref does not exist` を返して初めて気づく、という遠回りが実際に起きた）。
+**必ず `git fetch --prune` から始める。** リモート追跡ブランチが古いと、既に消えたブランチを追いかけて的外れな診断をすることになる（API が `head ref does not exist` を返して初めて気づく、という遠回りが実際に起きた）。
 
 ```bash
 bash .claude/skills/dependabot-merge/scripts/triage.sh
@@ -118,25 +120,21 @@ GitHub は古い base を弾かないので、**弾かれないことを理由�
 git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
 ```
 
-偽なら取り込まず、判定からやり直す。update-branch は develop を取り込む merge なので、
-これを真のまま保つ（＝base 更新をしても確認は通る）。定期実行の経路では
+偽なら取り込まず、判定からやり直す。base を取り込む merge は祖先関係を壊さないので、
+人が手で update-branch した場合もこの確認は通る。定期実行の経路では
 `.github/scripts/dependabot-merge.sh` が同じ確認をしていて、レポートの
 `- 取り込み対象: #222@<SHA>` に書かれた SHA をその場で突き合わせる。
 
-1. base が古ければ更新する（競合しないことを先に確かめる）。更新するのは protection に要求されるからではなく、
-   **マージ後の状態に CI を通すため**:
+1. **base が古くても更新しない**（[ADR-0066][adr66]）。ロックファイルの検証は、マージ後に develop への
+   push で走る `ci` が担う。古いまま入れることは結果に明記する。
 
-   ```bash
-   gh api -X PUT repos/{owner}/{repo}/pulls/{N}/update-branch -f expected_head_sha=<head SHA>
-   ```
-
-   `git diff --quiet <PR の base>..origin/develop -- pnpm-lock.yaml` が真なら競合しない。
-
-2. **更新後の head SHA で CI が緑になるのを待つ**。古い CI の結果でマージしない — ロックファイルは競合を機械的に解決すると壊れた内容になりやすく、しかも壊れ方が静かで気づきにくい。
+2. **head SHA に対する CI が緑であることを確かめる**。PR 番号ではなく head SHA で見る（更新前の結果を
+   拾わないため）。結論が出ていないチェックが 1 つでもあれば待つ — **証拠ゼロを緑と見なさない**。
 
 3. `gh pr merge <N> --squash --delete-branch`
 
-4. `git fetch --prune` して次へ。
+4. `git fetch --prune` して次へ。**次の 1 件を入れる前に、develop の `ci` が緑になったことを確かめる**
+   — ロックファイルが壊れていたらここで出る。赤いまま次を積まない。
 
 ### 6. 結果を報告する
 
@@ -146,7 +144,8 @@ git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
 
 - **`Base branch was modified`** — **現在の設定では起きないはず**（`strict: false`）。出たなら
   branch protection か ruleset が変わっている。前提の記述ごと確かめ直す（設定は変わりうるし、
-  変わったことに気づかないのが一番危ない）。対処自体は §5 の update-branch でよい。
+  変わったことに気づかないのが一番危ない）。**その場合は ADR-0066 の前提が崩れる**ので、
+  手順を直す前に ADR を見直すこと。
 - **`head ref does not exist`（422）** — ブランチが消えている。PR が閉じられた可能性が高いので、まず `git fetch --prune` と PR の state を確認する。
 - **`gh pr view` / `gh pr checks` が分類器にブロックされる** — マージ操作の文脈でブロックされることがある。`gh api` と `git log` に切り替えれば同じ情報が取れる（実際に起きた）。
 - **あったはずの PR が見当たらない** — dependabot が自分で閉じた可能性が高い（§2）。閉じられた PR を探すのはこの場合だけでよい:
@@ -165,3 +164,4 @@ git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
 - **cooldown を回避するための設定変更を提案しない。** 待てないほど急ぐなら、それは security update の話であって version update の話ではない（security updates は cooldown を素通りする）。
 
 [adr65]: ../../../docs/adr/0065-dependabot-update-automation.md
+[adr66]: ../../../docs/adr/0066-drop-update-branch.md

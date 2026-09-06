@@ -23,12 +23,13 @@ RESULT="${RESULT_FILE:-result.md}"
 
 # 変更を許すファイル。依存更新 PR がこれ以外を触っていたら、それは依存更新ではない。
 ALLOWED_FILES='^(pnpm-lock\.yaml|package\.json|\.github/workflows/[^/]+\.ya?ml)$'
-# 1 件あたり CI が緑になるのを待つ上限。update-branch 後の再実行を見込む。
+# 1 件あたり CI が緑になるのを待つ上限。base を更新しなくなった（ADR-0066）ので
+# 通常は判定時点で既に緑＝待たずに通る。ここは「まだ走っている場合」の安全網。
 WAIT_SECONDS="${WAIT_SECONDS:-1500}"
 # 全体の上限。件数×WAIT_SECONDS が job の timeout-minutes を超えると、結果を報告する前に
 # job ごと殺される（何が起きたか Issue に残らない）。自分で先に止まって報告する。
 OVERALL_BUDGET="${OVERALL_BUDGET:-2700}"
-# DRY_RUN=1 で検証だけ行い、update-branch もマージもしない。ローカルで通しの
+# DRY_RUN=1 で検証だけ行い、マージはしない。ローカルで通しの
 # リハーサルができるようにするため（手順を本番で初めて動かさない）。
 DRY_RUN="${DRY_RUN:-0}"
 
@@ -221,7 +222,8 @@ merge_one() {
 
   # 判定したときと同じコミットか。承認は「その PR」ではなく「その PR のその
   # コミット」に対して出ているので、force-push で中身が入れ替わっていたら取り込まない。
-  # update-branch は develop を取り込む merge なので、祖先関係は保たれる（＝通る）。
+  # なお merge コミット（人が手で update-branch した場合など）は develop を取り込むだけで
+  # 祖先関係を壊さないので、ここは通る。
   judged=$(judged_head_of "$n")
   if [ -n "$judged" ]; then
     if ! git merge-base --is-ancestor "$judged" "$head" 2> /dev/null; then
@@ -232,8 +234,9 @@ merge_one() {
     fi
     # 祖先であることは「中身が入れ替わっていない」までしか言わない。判定の**後に**
     # 積まれたコミットは祖先関係を壊さないので、別に見る必要がある。
-    # --first-parent で PR 自身の線だけを辿り、--no-merges で update-branch の
-    # マージを除く（実測: dependabot PR に積まれる 2 個目は常にこのマージ）。
+    # --first-parent で PR 自身の線だけを辿り、--no-merges で base 取り込みの
+    # マージを除く。このスクリプトは update-branch しなくなった（ADR-0066）が、
+    # dependabot 自身や人が base を取り込むことはあるので、除外は残す。
     added=$(git rev-list --no-merges --first-parent "${judged}..${head}" 2> /dev/null | wc -l | tr -d ' ')
     if [ "${added:-0}" -ne 0 ]; then
       say "  ❌ 判定の後に ${added} 件のコミットが積まれています（判定していない変更が入っています）"
@@ -244,22 +247,17 @@ merge_one() {
     say "  ⚠️ 判定時点のコミットが分からないため、同一性は確認していません"
   fi
 
-  # base が古ければ更新する。GitHub は base の鮮度を要求していない（strict=false）が、
-  # 更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らない。
-  # ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
+  # **base が古くても更新しない**（ADR-0066。ADR-0065 論点6 の改訂）。
+  # update-branch を GITHUB_TOKEN で行うと直後の CI が承認ゲートに入り
+  # （action_required・ジョブ 0 件）、承認しない限り 1 件も走らない。つまり
+  # 「更新後の状態を CI に検証させる」という当初の目的を果たせないうえ、/merge を
+  # 押した人がさらに CI の承認を求められて「1 回の承認で完了する」も崩れる。
+  # ロックファイルの検証は、**マージ後に develop への push で走る ci** が担う。
+  #
+  # 鮮度そのものは事実として報告する。ここを黙って飛ばすと、読んだ人は
+  # 「古い base のまま入った」ことに気づけない。
   if ! git merge-base --is-ancestor origin/develop "$head" 2> /dev/null; then
-    if [ "$DRY_RUN" = 1 ]; then
-      say "  ↻ base 更新が必要です（dry-run のため実行しません）"
-      say "  ✅ 検証は通過しました（dry-run のためマージしません）"
-      return 0
-    fi
-    if gh api -X PUT "repos/$REPO/pulls/$n/update-branch" -f expected_head_sha="$head" --silent; then
-      say "  ↻ base を develop の最新に更新しました（CI 再実行を待ちます）"
-      sleep 15
-    else
-      say "  ❌ update-branch に失敗しました（head が動いた可能性があります。詳細はログ）"
-      return 1
-    fi
+    say "  ↻ base は古いままマージします（マージ後の develop の CI が検証します・ADR-0066）"
   fi
 
   wait_green "$n" || return 1

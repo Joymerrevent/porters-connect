@@ -71,6 +71,6 @@ REPORT_FINGERPRINT_RE='^- 判定の指紋: `?[0-9a-f]{16}`?$'
 # 番号に **`@<判定した head SHA>`** を付けるのは、承認したのが「その PR」ではなく
 # 「その PR のそのコミット」だからである。レポートを書いた後に dependabot が force-push
 # すると、誰も CHANGELOG を読んでいないコミットが「承認済み」として取り込まれうる。
-# 取り込み時にこの SHA が現 head の祖先かを確かめる（update-branch は develop を
-# 取り込む merge なので祖先関係は保たれ、force-push では切れる）。
+# 取り込み時にこの SHA が現 head の祖先かを確かめる（base を取り込む merge では
+# 祖先関係が保たれ、force-push では切れる）。
 REPORT_MERGE_PLAN_RE='^- 取り込み対象: (なし|#[0-9]+@[0-9a-f]{7,40}([[:space:]]*(→|,)?[[:space:]]*#[0-9]+@[0-9a-f]{7,40})*)[[:space:]]*$'
