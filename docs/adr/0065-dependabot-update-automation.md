@@ -1,6 +1,6 @@
 # 65. Dependabot 依存更新の判定と取り込みを自動化する
 
-- Status: accepted
+- Status: superseded by [[0067-retire-dependabot-automation]]
 - Date: 2026-09-05（accepted: 2026-09-05）
 - Deciders: jun.shiromoto (Joymerrevent)
 
