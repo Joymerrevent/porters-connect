@@ -63,29 +63,48 @@ type ReferenceCondition = {
 };
 
 /**
- * The condition-operator object a field of Data Type `D` accepts. A field PORTERS gives no Data
- * Type (`null` — ADR-0056) falls through to the closing `never`, which is exactly right: the
- * reference says such a field cannot appear in `condition` at all.
+ * The operator object each Data Type accepts in a `condition`, as a **table rather than a
+ * conditional chain**: every Data Type is listed exactly once, and `never` — "cannot appear in a
+ * condition at all" — is written out rather than inherited from a trailing branch.
  *
- * `Image` and `Link` fall through the same way (ADR-0064 案6a). Image is stated to be
- * condition-incapable; Link is **not stated either way**, so it lands on the narrow side.
- * VERIFY(live): whether a Link can be conditioned (the Read overview's operator table hints it
- * can) — docs/live-verification.md (LV-21). Allowing it later only widens the type.
+ * That difference is the point. A chain silently sends anything unmatched to `never`, so a Data
+ * Type added later becomes un-conditionable **without anyone deciding that**. Here it fails to
+ * compile until the table says which it is, and `never` stays a decision that was made.
  */
-type ConditionFor<D extends DataType | null> = D extends "System[Id]"
-  ? IdCondition
-  : D extends "Number"
-    ? NumberCondition
-    : D extends "DateTime" | "System[DateTime]" | "Date" | "Age"
-      ? TemporalCondition
-      : D extends
-            "SinglelineText" | "MultilineText" | "Mail" | "Telephone" | "URL"
-        ? TextCondition
-        : D extends "Option"
-          ? OptionCondition
-          : D extends "User" | "System[Reference]"
-            ? ReferenceCondition
-            : never;
+type ConditionOf = {
+  "System[Id]": IdCondition;
+  Number: NumberCondition;
+  DateTime: TemporalCondition;
+  "System[DateTime]": TemporalCondition;
+  Date: TemporalCondition;
+  Age: TemporalCondition;
+  SinglelineText: TextCondition;
+  MultilineText: TextCondition;
+  Mail: TextCondition;
+  Telephone: TextCondition;
+  URL: TextCondition;
+  Option: OptionCondition;
+  User: ReferenceCondition;
+  "System[Reference]": ReferenceCondition;
+  // PORTERS shows no way to condition on a department (it is a User-master read value), so this
+  // one is deliberately not conditionable.
+  "System[Department]": never;
+  // Image: the reference states outright that it cannot appear in a condition (ADR-0064 論点6).
+  Image: never;
+  // Link: the reference says **nothing either way**, so it lands on the narrow side. VERIFY(live):
+  // the Read overview's operator table hints a Link can be conditioned — docs/live-verification.md
+  // (LV-21). Allowing it later only widens the type, so waiting costs nothing.
+  Link: never;
+};
+
+/**
+ * The condition-operator object a field of Data Type `D` accepts. A field PORTERS gives no Data
+ * Type (`null` — ADR-0056) resolves to `never`, which is exactly right: the reference says such a
+ * field cannot appear in `condition` at all.
+ */
+type ConditionFor<D extends DataType | null> = D extends DataType
+  ? ConditionOf[D]
+  : never;
 
 /**
  * A typed search condition over a catalog: each field maps to the operator object its Data Type

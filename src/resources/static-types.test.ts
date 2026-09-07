@@ -233,6 +233,19 @@ describe("image — Image 項目のサブタグを選ぶ（ADR-0064）", () => {
     expectTypeOf<NonNullable<AlbumImage>>().not.toHaveProperty("U_link");
   });
 
+  it("Image / Link は condition にも order にも書けない（ADR-0064 論点6）", () => {
+    // `ConditionOf` は「使えない」を never で**書き下す**表なので、行を書き換えれば通ってしまう。
+    // 決定そのものをここで固定する。Image は reference が不可と明記、Link は記載が無いので狭い側。
+    type AlbumQuery = NonNullable<Parameters<typeof _album.search>[0]>;
+    type AlbumCondition = NonNullable<AlbumQuery["condition"]>;
+    expectTypeOf<AlbumCondition["U_photo"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<AlbumCondition["U_link"]>().toEqualTypeOf<undefined>();
+    // order は列挙型なので、載っていないこと自体が「並べ替えられない」
+    type AlbumOrder = NonNullable<AlbumQuery["order"]>[number];
+    expectTypeOf<AlbumOrder>().not.toHaveProperty("U_photo");
+    expectTypeOf<AlbumOrder>().not.toHaveProperty("U_link");
+  });
+
   it("Link は 3 形の union で読める＝テナント設定と食い違いようがない", () => {
     expectTypeOf<Plain["items"][number]["U_link"]>().toEqualTypeOf<
       number | UserRef | DepartmentRef | null | undefined
