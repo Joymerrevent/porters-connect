@@ -70,6 +70,8 @@ const FIELD_TYPE_VALUE: Record<DataType, number> = {
   DateTime: 12,
   Telephone: 15,
   User: 17,
+  Image: 18,
+  Link: 20,
 };
 
 const intParam = (url: URL, key: string, fallback: number): number => {

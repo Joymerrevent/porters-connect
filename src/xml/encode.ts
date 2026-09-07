@@ -5,7 +5,7 @@
 
 import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
-import type { DataType } from "./decode";
+import type { DataType, ImageSubField } from "./decode";
 
 /**
  * A value to write. Scalars cover the string Data Types / Number / Id and the
@@ -17,7 +17,39 @@ import type { DataType } from "./decode";
  * Per-field static typing (Option fields as `string[]`, etc.) is future work — the
  * precise static Write type (SD-3).
  */
-export type WriteValue = string | number | string[] | null | undefined;
+export type WriteValue =
+  string | number | string[] | ImageWriteValue | null | undefined;
+
+/**
+ * The MIME types PORTERS accepts for an Image field's `ContentType` (reference: Write API - XML
+ * Format). Exported so the send-time guard and the static Write input agree on one list
+ * (ADR-0064 論点3).
+ */
+export const IMAGE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/gif",
+  "image/png",
+  "image/bmp",
+] as const;
+
+/** One of the four MIME types an Image field accepts. */
+export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
+
+/**
+ * An Image field's write value (ADR-0064 論点3): the three sub-elements PORTERS' Write format
+ * names, with `Content` Base64-encoded. All three are **required** — PORTERS' sample writes the
+ * full element and the library has no basis for a partial write; a value is either supplied whole
+ * or the field is omitted (`null` / `undefined`, like every other field). The keys are spelled
+ * exactly as they read back, so a decoded image round-trips into a write unchanged.
+ *
+ * Size / name-length / MIME are checked **before the request goes out** (the ~15000-char request
+ * guard is lifted for an image write, so this is what replaces it).
+ */
+export type ImageWriteValue = {
+  FileName: string;
+  ContentType: ImageContentType;
+  Content: string;
+};
 
 /** One record to write: field alias (bare, e.g. `P_Name`) -> value. */
 export type WriteItem = Record<string, WriteValue>;
@@ -39,11 +71,13 @@ export type WritableDataType = Exclude<
 // out of `WritableKeys`, and `never` keeps it that way if it is ever reached directly.
 export type WriteValueOf<D extends DataType | null> = D extends null
   ? never
-  : D extends "User" | "System[Reference]" | "Number"
+  : D extends "User" | "System[Reference]" | "Number" | "Link"
     ? number
     : D extends "Option"
       ? string[]
-      : string;
+      : D extends "Image"
+        ? ImageWriteValue
+        : string;
 
 // Element-content escaping. Only `& < >` are significant in PCDATA; we never emit
 // attributes, so quotes are left as-is.
@@ -52,34 +86,65 @@ const escapeXml = (s: string): string =>
     c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;",
   );
 
-const scalar = (v: string | number | string[]): string => escapeXml(String(v));
+// Image is the only Data Type whose value is an object. One handed to any *other* type can only
+// arrive through a cast, and `String({…})` would put a useless "[object Object]" on the wire — so
+// serialize it visibly instead and let PORTERS reject it, with the value still readable in the error.
+const text = (v: NonNullable<WriteValue>): string =>
+  typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : String(v);
+
+const scalar = (v: NonNullable<WriteValue>): string => escapeXml(text(v));
+
+// Write order follows PORTERS' own sample: `<FileName/><ContentType/><Content/>`.
+const IMAGE_SUBFIELDS: readonly ImageSubField[] = [
+  "FileName",
+  "ContentType",
+  "Content",
+];
+
+// An Image writes as the three nested sub-elements (write-format.md). The static Write input
+// requires all three, so a missing key can only arrive through a cast: emit what is there rather
+// than an empty element PORTERS would read as "clear this" (fail-safe — we never invent a value).
+// A non-object value (also cast-only) has no nested form at all, so it falls back to a scalar,
+// the same passthrough an uncatalogued alias gets.
+const imageInner = (value: NonNullable<WriteValue>): string => {
+  if (typeof value !== "object" || Array.isArray(value)) return scalar(value);
+  const parts = value as Partial<Record<ImageSubField, string>>;
+  return IMAGE_SUBFIELDS.filter((sub) => parts[sub] !== undefined)
+    .map((sub) => `<${sub}>${escapeXml(String(parts[sub]))}</${sub}>`)
+    .join("");
+};
 
 /** Encode one field's value into the inner XML of its element. */
 export const encodeField = (
   type: DataType,
-  value: string | number | string[],
+  value: NonNullable<WriteValue>,
 ): string => {
   switch (type) {
     // Option: the selected aliases as empty child elements. Canonical input is an
     // array (ADR-0017, symmetric with read); a lone string is wrapped as a 1-element
     // selection (fail-safe).
     case "Option":
-      return (Array.isArray(value) ? value : [value])
+      return (Array.isArray(value) ? value : [text(value)])
         .map((alias) => `<${alias}/>`)
         .join("");
     // System[DateTime] (registration/update) is Write-restricted by PORTERS; we still
     // serialize it identically — rejecting the write is the input type's job (SD-3).
     case "DateTime":
     case "System[DateTime]":
-      return scalar(isoToPortersDateTime(String(value)));
+      return scalar(isoToPortersDateTime(text(value)));
     // Age shares Date's wire format (`yyyy/mm/dd`): we write the birthdate.
     case "Date":
     case "Age":
-      return scalar(isoToPortersDate(String(value)));
-    // System[Id] / Number / User & System[Reference] (ID-only) / string Data Types all
+      return scalar(isoToPortersDate(text(value)));
+    // Image: the three nested sub-elements (ADR-0064 論点3).
+    case "Image":
+      return imageInner(value);
+    // System[Id] / Number / User & System[Reference] / Link (all ID-only) / string Data Types all
     // serialize as a scalar (the string types stay distinct labels per ADR-0016).
+    // Link の Read は 3 形の union だが、Write は ID ひとつ（`<Alias>10001</Alias>`）＝ User と同じ。
     // System[Department] は静的な Write 入力から外してあるので、ここに来るのは cast 経由のみ
     // （System[DateTime] と同じ扱い）。到達したときは User と同じくスカラとして書き出す。
+    case "Link":
     case "System[Id]":
     case "Number":
     case "User":
