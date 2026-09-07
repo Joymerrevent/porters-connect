@@ -275,6 +275,77 @@ const gadget = (calls: Call[], ...bodies: string[]) =>
 const fieldOf = (calls: Call[]): string =>
   decodeURIComponent(calls[0].req.url).match(/field=([^&]*)/)?.[1] ?? "";
 
+// A resource carrying a tenant Image field (declared with `defineFields` in real use — no standard
+// field is Image-typed). `U_photo` is catalogued here so the factory sees its Data Type, which is
+// what the `image` option keys off.
+const ALBUM_CONFIG = {
+  name: "Album",
+  path: "album",
+  prefix: "Al",
+  fields: {
+    P_Id: "System[Id]",
+    P_Name: "SinglelineText",
+    U_photo: "Image",
+    U_link: "Link",
+  },
+  requiredOnCreate: [],
+} as const;
+
+const ALBUM_PAGE =
+  `<Album Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+  `<Al.P_Id>1</Al.P_Id>` +
+  `<Al.U_photo><FileName>a.png</FileName><Content>QUJD</Content></Al.U_photo>` +
+  `<Al.U_link>10001</Al.U_link>` +
+  `</Item></Album>`;
+
+const album = (calls: Call[], ...bodies: string[]) =>
+  createResource(ALBUM_CONFIG, {
+    requester: stub(bodies.length > 0 ? bodies : [ALBUM_PAGE], calls),
+    accessPoint: { host: "h.test" },
+    partition: 12,
+  });
+
+describe("createResource — image (ADR-0064 論点2)", () => {
+  it("既定では素の alias だけ送る＝PORTERS の既定（FileName のみ）に委ねる", async () => {
+    const calls: Call[] = [];
+    await album(calls).search();
+    expect(fieldOf(calls)).toBe("Al.P_Id,Al.P_Name,Al.U_photo,Al.U_link");
+  });
+
+  it("選んだサブタグを () で明示し、素のエントリを置き換える", async () => {
+    const calls: Call[] = [];
+    await album(calls).search({ image: { U_photo: ["FileName", "Content"] } });
+    const field = fieldOf(calls);
+    expect(field).toBe(
+      "Al.P_Id,Al.P_Name,Al.U_photo(FileName,Content),Al.U_link",
+    );
+    expect(field).not.toContain("Al.U_photo,"); // 同じ alias を二度送らない
+  });
+
+  it("返ってきたサブタグを decode する（Link は形で判別する）", async () => {
+    const page = await album([]).search({
+      image: { U_photo: ["FileName", "Content"] },
+    });
+    expect(page.items[0].U_photo).toEqual({
+      FileName: "a.png",
+      Content: "QUJD",
+    });
+    expect(page.items[0].U_link).toBe(10001);
+  });
+
+  it("get(id) / searchAll でも同じように送る", async () => {
+    const calls: Call[] = [];
+    await album(calls).get(1, { image: { U_photo: ["Content"] } });
+    expect(fieldOf(calls)).toContain("Al.U_photo(Content)");
+
+    const paged: Call[] = [];
+    for await (const _ of album(paged, ALBUM_PAGE).searchAll({
+      image: { U_photo: ["Content"] },
+    }));
+    expect(fieldOf(paged)).toContain("Al.U_photo(Content)");
+  });
+});
+
 describe("createResource — expand (ADR-0058)", () => {
   it("sends the expansion as one field entry, prefixed with the *referenced* resource", async () => {
     const calls: Call[] = [];

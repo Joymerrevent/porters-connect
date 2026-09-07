@@ -38,6 +38,7 @@ import {
   type ExpandSelection,
   type ReferenceMap,
 } from "./expand";
+import { applyImage, type ImageOption, type ImageReadRecord } from "./image";
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
@@ -64,6 +65,8 @@ export type {
   ReferenceMap,
   ReferenceTarget,
 } from "./expand";
+// Image sub-field selection (ADR-0064). Defined in image.ts; re-exported for the same reason.
+export type { ImageOption, ImageReadRecord, ImageSelectedValue } from "./image";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).
@@ -142,26 +145,49 @@ export type ResourceConfig<
     requiredOnCreate: Req;
   };
 
-// Every Read method takes the same shape: the query's `expand` is captured as `E` (a `const` type
-// parameter, so the alias lists stay literal) and the record type widens accordingly (ADR-0058).
-// Omitting `expand` leaves `E` at the empty default, which collapses back to `ReadRecord<F>`.
+/**
+ * "No image sub-fields selected": the identity default for the image generic, mirroring
+ * {@link EmptyReferences}. With no keys, `ImageReadRecord` collapses back to the record it wrapped.
+ */
+export type EmptyImages = Record<never, never>;
+
+// Every Read method takes the same shape: the query's `expand` / `image` are captured as `E` / `I`
+// (`const` type parameters, so the alias lists stay literal) and the record type widens accordingly
+// (ADR-0058 / ADR-0064). Omitting them leaves both at the empty default, which collapses back to
+// `ReadRecord<F>`.
 export type Resource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
 > = {
-  search<const E extends Expand<R> = EmptyReferences>(
-    query?: SearchQuery<F, R> & { expand?: E },
-  ): Promise<ResourcePageOf<ExpandedReadRecord<F, R, E>>>;
+  search<
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    query?: SearchQuery<F, R> & { expand?: E; image?: I },
+  ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>>;
   /** Auto-paginating search: yields every matching record (200 per page). */
-  searchAll<const E extends Expand<R> = EmptyReferences>(
-    query?: Omit<SearchQuery<F, R>, "count" | "start"> & { expand?: E },
-  ): AsyncIterable<ExpandedReadRecord<F, R, E>>;
-  /** Read one record by id. `expand` reads referenced records too (ADR-0058). */
-  get<const E extends Expand<R> = EmptyReferences>(
+  searchAll<
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    query?: Omit<SearchQuery<F, R>, "count" | "start"> & {
+      expand?: E;
+      image?: I;
+    },
+  ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>;
+  /**
+   * Read one record by id. `expand` reads referenced records too (ADR-0058); `image` picks an
+   * Image field's sub-tags (ADR-0064) — `get` is where asking for a `Content` belongs, since it
+   * fetches one record rather than a page.
+   */
+  get<
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
     id: number,
-    options?: { expand?: E },
-  ): Promise<ExpandedReadRecord<F, R, E> | undefined>;
+    options?: { expand?: E; image?: I },
+  ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined>;
   /** Create one record; resolves to the newly assigned id. */
   create(input: CreateInput<F, Req>): Promise<number>;
   /** Update one record by id; resolves to that id. */
@@ -246,10 +272,17 @@ export const buildReadParams = <F extends FieldCatalog, R extends ReferenceMap>(
     // The typed `Expand<R>` is what constrains callers; the assembly below is purely structural,
     // like `encodeCondition` over the loose catalog.
     guardRawExpansion(q.field, ctx.fields);
-    const entries = applyExpand(
-      qualifyReadFields(ctx.prefix, ctx.fields, q.field),
-      q.expand,
-      { prefix: ctx.prefix, references: ctx.references ?? {} },
+    const entries = applyImage(
+      applyExpand(
+        qualifyReadFields(ctx.prefix, ctx.fields, q.field),
+        q.expand,
+        {
+          prefix: ctx.prefix,
+          references: ctx.references ?? {},
+        },
+      ),
+      q.image,
+      ctx.prefix,
     );
     p.set("field", entries.join(","));
   }
@@ -346,14 +379,19 @@ export const createResource = <
   // `async` for the exception contract, not for the body: URL building runs the typed-query
   // guards (keyword length, itemstate, raw expansions), and a Promise-returning method must never
   // throw synchronously — every failure reaches the caller as a rejection (ADR-0046).
-  const search = async <const E extends Expand<R> = EmptyReferences>(
-    query: SearchQuery<F, R> & { expand?: E } = {},
-  ): Promise<ResourcePageOf<ExpandedReadRecord<F, R, E>>> =>
+  const search = async <
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
+  ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>> =>
     runRead(
       deps.requester,
       config.name,
       readUrl({ ...query, field: query.field ?? defaultFields }),
-      decoderWith<ExpandedReadRecord<F, R, E>>(query.expand),
+      decoderWith<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>(
+        query.expand,
+      ),
     );
 
   // The caller's query object is read **once**, when the first page is asked for: what the walk
@@ -362,15 +400,23 @@ export const createResource = <
   // stays "every record matching the query as it was handed over" (RV-32). Building inside the
   // generator keeps guard failures arriving as a rejected iteration (ADR-0046), and drops the
   // per-page re-serialisation the old form paid for.
-  const searchAll = <const E extends Expand<R> = EmptyReferences>(
-    query: Omit<SearchQuery<F, R>, "count" | "start"> & { expand?: E } = {},
-  ): AsyncIterable<ExpandedReadRecord<F, R, E>> =>
+  const searchAll = <
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    query: Omit<SearchQuery<F, R>, "count" | "start"> & {
+      expand?: E;
+      image?: I;
+    } = {},
+  ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>> =>
     paginateOnce(() => {
       const base = readParams({
         ...query,
         field: query.field ?? defaultFields,
       });
-      const decode = decoderWith<ExpandedReadRecord<F, R, E>>(query.expand);
+      const decode = decoderWith<
+        ImageReadRecord<ExpandedReadRecord<F, R, E>, I>
+      >(query.expand);
       return (count, start) =>
         runRead(
           deps.requester,
@@ -380,18 +426,22 @@ export const createResource = <
         );
     });
 
-  const get = async <const E extends Expand<R> = EmptyReferences>(
+  const get = async <
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
     id: number,
-    options: { expand?: E } = {},
-  ): Promise<ExpandedReadRecord<F, R, E> | undefined> => {
+    options: { expand?: E; image?: I } = {},
+  ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined> => {
     // Every catalog carries a primary key (System[Id]); the generic `F` can't prove it
     // statically, so build the condition at runtime and let the encoder qualify it
     // (`{prefix}.{idAlias}:eq=id`, or just `{idAlias}` when there is no prefix).
     const condition = { [idAlias]: { eq: id } } as unknown as Condition<F>;
-    const page = await search<E>({
+    const page = await search<E, I>({
       condition,
       count: 1,
       expand: options.expand,
+      image: options.image,
     });
     return page.items[0];
   };

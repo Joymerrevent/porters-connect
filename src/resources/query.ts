@@ -10,6 +10,7 @@ import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType } from "../xml/decode";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
+import type { ImageOption } from "./image";
 import type { FieldCatalog, ReadFieldAlias } from "./read-core";
 
 // --- condition: per-Data-Type operator objects (reference: Read - Condition) ---
@@ -153,6 +154,21 @@ export type SearchQuery<
    * requested twice.
    */
   expand?: Expand<R>;
+  /**
+   * Read an Image field's `ContentType` / `Content`, not just its `FileName` (ADR-0064): map an
+   * Image-typed field to the sub-tags you want. Only what you select comes back, and the record
+   * type narrows to exactly that.
+   *
+   * ```ts
+   * const page = await t.resume.search({ image: { U_photo: ["FileName", "Content"] } });
+   * page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
+   * ```
+   *
+   * A field left out reads back `FileName` alone — PORTERS' own default — so listing records never
+   * drags every image body along with it. Like `expand`, a selected alias replaces its plain
+   * `field` entry, so nothing is requested twice.
+   */
+  image?: ImageOption<F>;
   /** Typed AND-conditions; each field's operators derive from its Data Type (ADR-0038). */
   condition?: Condition<F>;
   /** Sort order; orderable Data Types only (Number/Date/DateTime/Age/System). */

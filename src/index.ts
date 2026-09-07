@@ -74,6 +74,13 @@ export type {
   ReferenceMap,
   ResourcePageOf,
 } from "./resources";
+// Image sub-field selection (ADR-0064): `image` reads an Image field's ContentType / Content.
+// `ImageOption` is what the option accepts, `ImageReadRecord` what such a read resolves to.
+export type {
+  ImageOption,
+  ImageReadRecord,
+  ImageSelectedValue,
+} from "./resources";
 
 export type {
   Candidate,
@@ -206,9 +213,16 @@ export type {
 export type { Option, OptionResource, OptionSearchQuery } from "./resources";
 
 // `ReferenceRecord` is an expanded `System[Reference]` value (`expand` — ADR-0058).
+// `ImageValue` / `LinkValue` are the Image / Link read values, `ImageWriteValue` the write input
+// and `ImageContentType` the four MIME types PORTERS accepts (ADR-0064).
 export type {
   DepartmentRef,
   FieldValue,
+  ImageContentType,
+  ImageSubField,
+  ImageValue,
+  ImageWriteValue,
+  LinkValue,
   ReferenceRecord,
   UserRef,
 } from "./xml";
