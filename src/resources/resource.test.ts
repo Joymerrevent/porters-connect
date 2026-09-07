@@ -346,6 +346,73 @@ describe("createResource — image (ADR-0064 論点2)", () => {
   });
 });
 
+describe("createResource — image の write（ADR-0064 論点3）", () => {
+  const photo = {
+    FileName: "photo.png",
+    ContentType: "image/png",
+    Content: "QUJD",
+  } as const;
+
+  it("画像を含む write だけサイズガードを外す", async () => {
+    const calls: Call[] = [];
+    await album(calls, WRITE_OK()).create({ U_photo: photo });
+    expect(calls[0].spec).toEqual({
+      write: true,
+      idempotent: false,
+      unboundedBody: true,
+    });
+    expect(calls[0].req.body).toContain(
+      "<Al.U_photo><FileName>photo.png</FileName>" +
+        "<ContentType>image/png</ContentType><Content>QUJD</Content></Al.U_photo>",
+    );
+  });
+
+  it("画像を含まない write の spec は従来のまま（穴を広げない）", async () => {
+    const calls: Call[] = [];
+    await album(calls, WRITE_OK()).create({ P_Name: "x" });
+    expect(calls[0].spec).toEqual({ write: true, idempotent: false });
+  });
+
+  it("上限違反は送信前に落ちる＝リクエストは 1 本も出ない", async () => {
+    const calls: Call[] = [];
+    await expect(
+      album(calls, WRITE_OK()).create({
+        U_photo: { ...photo, ContentType: "image/webp" as never },
+      }),
+    ).rejects.toBeInstanceOf(PortersConfigError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("画像を含む一括書き込みは弾く（単発へ誘導する）", async () => {
+    const calls: Call[] = [];
+    await expect(
+      album(calls, WRITE_OK()).createMany([{ U_photo: photo }]),
+    ).rejects.toThrow(/cannot write an image/);
+    await expect(
+      album(calls, WRITE_OK()).updateMany([
+        { id: 1, fields: { U_photo: photo } },
+      ]),
+    ).rejects.toThrow(/cannot write an image/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("画像を含まない一括書き込みはこれまでどおり通る", async () => {
+    const calls: Call[] = [];
+    const result = await album(
+      calls,
+      `<Album><Item><Id>1</Id><Code>0</Code></Item></Album>`,
+    ).createMany([{ P_Name: "a" }]);
+    expect(result.hasFailures).toBe(false);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("Link は ID ひとつで書く", async () => {
+    const calls: Call[] = [];
+    await album(calls, WRITE_OK()).create({ U_link: 10001 });
+    expect(calls[0].req.body).toContain("<Al.U_link>10001</Al.U_link>");
+  });
+});
+
 describe("createResource — expand (ADR-0058)", () => {
   it("sends the expansion as one field entry, prefixed with the *referenced* resource", async () => {
     const calls: Call[] = [];

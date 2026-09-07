@@ -38,7 +38,13 @@ import {
   type ExpandSelection,
   type ReferenceMap,
 } from "./expand";
-import { applyImage, type ImageOption, type ImageReadRecord } from "./image";
+import {
+  applyImage,
+  guardImageWrite,
+  guardNoImageInBulk,
+  type ImageOption,
+  type ImageReadRecord,
+} from "./image";
 
 // Shared Read types/internals live in read-core (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
@@ -457,8 +463,15 @@ export const createResource = <
     ...item,
   });
 
-  const write = async (item: WriteItem, idempotent: boolean): Promise<number> =>
-    deps.requester.request(
+  const write = async (
+    item: WriteItem,
+    idempotent: boolean,
+  ): Promise<number> => {
+    // An image is checked against PORTERS' own limits here and then sent with the ~15000-char
+    // request guard lifted — a 2MB Base64 body can never fit under it (ADR-0064 論点3). The guard
+    // is only lifted for a write that actually carries one, and only after those checks passed.
+    const hasImage = guardImageWrite(item, fieldMap);
+    return deps.requester.request(
       {
         method: "POST",
         url: writeUrl(),
@@ -471,8 +484,11 @@ export const createResource = <
         }),
       },
       firstWriteId,
-      { write: true, idempotent },
+      // Spread rather than `unboundedBody: hasImage`: a write with no image keeps the exact spec
+      // it always had, so the opt-out shows up only where it was actually taken.
+      { write: true, idempotent, ...(hasImage ? { unboundedBody: true } : {}) },
     );
+  };
 
   const create = (input: CreateInput<F, Req[number]>): Promise<number> =>
     write(withDefaults({ ...input, [idAlias]: -1 }), false);
@@ -494,23 +510,33 @@ export const createResource = <
   // instead of rejecting (ADR-0046).
   const createMany = async (
     inputs: CreateInput<F, Req[number]>[],
-  ): Promise<BulkWriteResult> =>
-    runBulkWrite(
+  ): Promise<BulkWriteResult> => {
+    const records = inputs.map((input) =>
+      withDefaults({ ...input, [idAlias]: -1 }),
+    );
+    guardNoImageInBulk(records, fieldMap, "createMany");
+    return runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      inputs.map((input) => withDefaults({ ...input, [idAlias]: -1 })),
+      records,
       false,
     );
+  };
 
   const updateMany = async (
     items: { id: number; fields: UpdateInput<F> }[],
-  ): Promise<BulkWriteResult> =>
-    runBulkWrite(
+  ): Promise<BulkWriteResult> => {
+    const records = items.map(({ id, fields }) =>
+      withDefaults({ ...fields, [idAlias]: id }),
+    );
+    guardNoImageInBulk(records, fieldMap, "updateMany");
+    return runBulkWrite(
       deps.requester,
       { ...target, url: writeUrl() },
-      items.map(({ id, fields }) => withDefaults({ ...fields, [idAlias]: id })),
+      records,
       true,
     );
+  };
 
   return { search, searchAll, get, create, update, createMany, updateMany };
 };
