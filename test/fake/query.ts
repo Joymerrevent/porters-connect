@@ -135,8 +135,10 @@ export const parseReadQuery = (url: URL, prefix: string): ReadQuery => {
 
 // --- matching -------------------------------------------------------------------------------
 
+// An Image value is a record, and PORTERS forbids Image in a condition (ADR-0064 論点6) — so it
+// matches nothing here rather than being coerced into a string.
 const asList = (value: FakeValue): string[] =>
-  Array.isArray(value) ? value : [value];
+  Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
 
 const compare = (left: string, right: string, numeric: boolean): number => {
   if (numeric) return Number(left) - Number(right);

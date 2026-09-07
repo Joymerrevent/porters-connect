@@ -19,6 +19,10 @@ const fields = defineFields({
     U_site: f.url(),
     U_tags: f.option(),
     U_recruiter: f.user(),
+    // Image / Link only ever exist as tenant custom fields (ADR-0064) — no standard field
+    // carries either type, so this declaration is the only way they reach a record at all.
+    U_photo: f.image(),
+    U_link: f.link(),
   }),
 });
 
@@ -77,6 +81,54 @@ describe("field type round-trips", () => {
     expect(c?.P_RegistrationDate).toMatch(
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/,
     );
+  });
+
+  it("round-trips an Image: 既定は FileName のみ、image で選んだぶんだけ増える", async () => {
+    const { porters } = setup();
+    const id = await porters.tenant(1).candidate.create({
+      P_Owner: 5,
+      U_photo: {
+        FileName: "photo.png",
+        ContentType: "image/png",
+        Content: "QUJD",
+      },
+    });
+
+    // 既定（素の alias）＝ PORTERS の既定と同じく FileName だけが返る。一覧が重くならない。
+    const plain = await porters.tenant(1).candidate.get(id);
+    expect(plain?.U_photo).toEqual({ FileName: "photo.png" });
+
+    // 選んだサブタグだけが増える。
+    const picked = await porters.tenant(1).candidate.get(id, {
+      image: { U_photo: ["FileName", "ContentType", "Content"] },
+    });
+    expect(picked?.U_photo).toEqual({
+      FileName: "photo.png",
+      ContentType: "image/png",
+      Content: "QUJD",
+    });
+    // 読んだ値はキーの綴りがそのまま Write 入力に合う。ただし読み値のサブタグは `string | null`
+    // （要求したが空 = null）なので、**揃っていることを確かめる**のは利用側の責務。
+    const read = picked?.U_photo;
+    if (read?.FileName && read.ContentType && read.Content) {
+      await porters.tenant(1).candidate.update(id, {
+        U_photo: {
+          FileName: read.FileName,
+          ContentType: read.ContentType as "image/png",
+          Content: read.Content,
+        },
+      });
+    }
+    expect(read?.FileName).toBe("photo.png");
+  });
+
+  it("round-trips a Link as the referenced id", async () => {
+    const { porters } = setup();
+    const id = await porters.tenant(1).candidate.create({
+      P_Owner: 5,
+      U_link: 10001, // Write は ID のみ
+    });
+    expect((await porters.tenant(1).candidate.get(id))?.U_link).toBe(10001);
   });
 
   it("round-trips a multi-select Option, including replacing the selection", async () => {

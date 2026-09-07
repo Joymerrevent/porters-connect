@@ -39,8 +39,11 @@ export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
  * An Image field's write value (ADR-0064 論点3): the three sub-elements PORTERS' Write format
  * names, with `Content` Base64-encoded. All three are **required** — PORTERS' sample writes the
  * full element and the library has no basis for a partial write; a value is either supplied whole
- * or the field is omitted (`null` / `undefined`, like every other field). The keys are spelled
- * exactly as they read back, so a decoded image round-trips into a write unchanged.
+ * or the field is omitted (`null` / `undefined`, like every other field).
+ *
+ * The keys are spelled exactly as they read back, so a read value feeds straight back into a write
+ * — **once its sub-tags are known to be present**. A read part is `string | null` (null = requested
+ * but empty) and there is nothing to write for a null, so that check is the caller's.
  *
  * Size / name-length / MIME are checked **before the request goes out** (the ~15000-char request
  * guard is lifted for an image write, so this is what replaces it).

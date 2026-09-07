@@ -45,8 +45,13 @@ const records: FakeRecord[] = [
 const run = (query: Parameters<typeof buildReadUrl>[3]) =>
   runReadQuery(records, parse(query), FIELDS);
 
+// `P_Id` is always a scalar; a stored value can also be an alias list or an image (ADR-0064), so
+// narrow rather than stringify — `String({…})` would silently read "[object Object]".
+const idOf = (r: FakeRecord): string =>
+  typeof r.P_Id === "string" ? r.P_Id : "";
+
 const ids = (query: Parameters<typeof buildReadUrl>[3]): string[] =>
-  run(query).items.map((r) => String(r.P_Id));
+  run(query).items.map(idOf);
 
 describe("parseReadQuery", () => {
   it("splits the field list on top-level commas only", () => {
@@ -168,7 +173,7 @@ describe("runReadQuery", () => {
     ]);
 
     const paged = run({ order: [{ P_Id: "desc" }], count: 2, start: 1 });
-    expect(paged.items.map((r) => String(r.P_Id))).toEqual(["10002", "10001"]);
+    expect(paged.items.map(idOf)).toEqual(["10002", "10001"]);
     expect(paged.total).toBe(3);
   });
 
@@ -176,9 +181,7 @@ describe("runReadQuery", () => {
     // 上の 3 件はフラグを持たない＝生存扱い。削除済みを 1 件だけ足して 3 状態を見る。
     const withDeleted = [...records, { P_Id: "10004", P_Deleted: "1" }];
     const state = (itemstate: "existing" | "deleted" | "all"): string[] =>
-      runReadQuery(withDeleted, parse({ itemstate }), FIELDS).items.map((r) =>
-        String(r.P_Id),
-      );
+      runReadQuery(withDeleted, parse({ itemstate }), FIELDS).items.map(idOf);
 
     expect(state("existing")).toEqual(["10001", "10002", "10003"]);
     expect(state("deleted")).toEqual(["10004"]);

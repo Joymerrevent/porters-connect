@@ -293,9 +293,14 @@ export const createFakeTransport = (
       const type = resource.descriptor.fields[alias];
       if (type === "User" && typeof value === "string") masters.user(value);
       if (type === "Option") {
-        for (const selected of Array.isArray(value) ? value : [value]) {
-          masters.option(selected);
-        }
+        // An Option value is the selected aliases; a lone string is a 1-element selection. An
+        // image (a record) is never one — `asList`-style narrowing keeps it out.
+        const selection = Array.isArray(value)
+          ? value
+          : typeof value === "string"
+            ? [value]
+            : [];
+        for (const selected of selection) masters.option(selected);
       }
     }
   };
