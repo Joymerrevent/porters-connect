@@ -87,26 +87,38 @@ export type FieldValue =
   | ReferenceRecord
   | null;
 
-// Per-Data-Type decoded value (the non-null shape). A read value is `DecodedValue<D> | null`
-// (empty -> null). Mirrors `decodeField`'s branches and drives the static resource Read type
-// (ADR-0019): id/number/reference -> number, User -> UserRef, Option -> string[], rest -> string.
-// `null` = PORTERS assigns the field no Data Type (`P_Deleted` — ADR-0056). With no Data Type
-// there is no basis for a conversion, so the raw string stands (e.g. `"0"` / `"1"`).
-export type DecodedValue<D extends DataType | null> = D extends null
-  ? string
-  : D extends "System[Id]" | "Number" | "System[Reference]"
-    ? number
-    : D extends "User"
-      ? UserRef
-      : D extends "System[Department]"
-        ? DepartmentRef
-        : D extends "Option"
-          ? string[]
-          : D extends "Image"
-            ? ImageValue
-            : D extends "Link"
-              ? LinkValue
-              : string;
+// Per-Data-Type decoded value (the non-null shape), as a **table rather than a conditional chain**.
+// Every Data Type is listed exactly once, so the mapping reads at a glance and adding a type to
+// `DataType` fails to compile here until it is given a value type — a chain would have silently
+// dropped it into the trailing `string`. Mirrors `decodeField`'s branches and drives the static
+// resource Read type (ADR-0019).
+type DecodedValueOf = {
+  "System[Id]": number;
+  Number: number;
+  "System[Reference]": number;
+  User: UserRef;
+  "System[Department]": DepartmentRef;
+  Option: string[];
+  Image: ImageValue;
+  Link: LinkValue;
+  // The string Data Types share one decoded shape but keep distinct labels (ADR-0016).
+  DateTime: string;
+  "System[DateTime]": string;
+  Date: string;
+  Age: string;
+  SinglelineText: string;
+  MultilineText: string;
+  Mail: string;
+  Telephone: string;
+  URL: string;
+};
+
+// A read value is `DecodedValue<D> | null` (empty -> null). `null` = PORTERS assigns the field no
+// Data Type (`P_Deleted` — ADR-0056); with no Data Type there is no basis for a conversion, so the
+// raw string stands (e.g. `"0"` / `"1"`).
+export type DecodedValue<D extends DataType | null> = D extends DataType
+  ? DecodedValueOf[D]
+  : string;
 
 // A tag's bare alias: `Client.P_Name` -> `P_Name`. Nested reference tags carry the *referenced*
 // resource's prefix, which nothing here knows. Mirrors `bareAlias` in resources/read-core.ts.

@@ -127,11 +127,19 @@ const MAX_FILE_NAME_BYTES = 255;
 
 const utf8Bytes = (s: string): number => new TextEncoder().encode(s).length;
 
+// Base64 pads to a multiple of 4 with at most two `=`, each standing in for a byte that is not
+// there. Anything longer is malformed, and treating it as 2 keeps the size *over*-estimated
+// rather than under (fail-safe: an oversized image is rejected, never let through).
+const paddingBytes = (b64: string): number => {
+  if (b64.endsWith("==")) return 2;
+  if (b64.endsWith("=")) return 1;
+  return 0;
+};
+
 // Decoded size straight from the Base64 length — 4 encoded characters carry 3 bytes, minus the
 // padding. No need to actually decode 2MB of image just to measure it.
 const base64Bytes = (b64: string): number =>
-  Math.floor(b64.length / 4) * 3 -
-  (b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0);
+  Math.floor(b64.length / 4) * 3 - paddingBytes(b64);
 
 const configError = (message: string, hint: string): PortersConfigError =>
   new PortersConfigError(message, { category: "config", hint });

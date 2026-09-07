@@ -72,19 +72,38 @@ export type WritableDataType = Exclude<
   "System[Id]" | "System[DateTime]" | "System[Department]"
 >;
 
-// Per-Data-Type write value (mirror of `encodeField`): User / System[Reference] / Number take a
-// number, Option an alias array, the rest a scalar string. Drives the static Write type (ADR-0019).
+// Per-Data-Type write value (mirror of `encodeField`), as a **table rather than a conditional
+// chain** — same reason as `DecodedValueOf`: every Data Type appears once, and a new one fails to
+// compile here instead of quietly inheriting the trailing `string`. Drives the static Write type
+// (ADR-0019).
+//
+// The three system types are listed for completeness only: they are excluded from `WritableKeys`,
+// so reaching them needs a cast — and then they serialize as a scalar, which is what `string` says.
+type WriteValueOfType = {
+  Number: number;
+  User: number;
+  "System[Reference]": number;
+  Link: number;
+  Option: string[];
+  Image: ImageWriteValue;
+  DateTime: string;
+  Date: string;
+  Age: string;
+  SinglelineText: string;
+  MultilineText: string;
+  Mail: string;
+  Telephone: string;
+  URL: string;
+  "System[Id]": string;
+  "System[DateTime]": string;
+  "System[Department]": string;
+};
+
 // A field PORTERS gives no Data Type (`null` — ADR-0056) has no write value at all: it is already
 // out of `WritableKeys`, and `never` keeps it that way if it is ever reached directly.
-export type WriteValueOf<D extends DataType | null> = D extends null
-  ? never
-  : D extends "User" | "System[Reference]" | "Number" | "Link"
-    ? number
-    : D extends "Option"
-      ? string[]
-      : D extends "Image"
-        ? ImageWriteValue
-        : string;
+export type WriteValueOf<D extends DataType | null> = D extends DataType
+  ? WriteValueOfType[D]
+  : never;
 
 // Element-content escaping. Only `& < >` are significant in PCDATA; we never emit
 // attributes, so quotes are left as-is.

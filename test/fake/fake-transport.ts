@@ -19,7 +19,7 @@ import { MAX_REQUEST_LENGTH } from "../../src/http/requester";
 import type { TransportRequest, TransportResponse } from "../../src/http/types";
 import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";
-import { parseReadQuery, runReadQuery } from "./query";
+import { asList, parseReadQuery, runReadQuery } from "./query";
 import { createRateLimiter } from "./rate-limit";
 import {
   createRecord,
@@ -292,15 +292,10 @@ export const createFakeTransport = (
     for (const [alias, value] of Object.entries(item)) {
       const type = resource.descriptor.fields[alias];
       if (type === "User" && typeof value === "string") masters.user(value);
+      // `asList` is the read path's own reading of a stored value (aliases / lone scalar / never
+      // an image), reused here so both sides agree on what counts as a selection.
       if (type === "Option") {
-        // An Option value is the selected aliases; a lone string is a 1-element selection. An
-        // image (a record) is never one — `asList`-style narrowing keeps it out.
-        const selection = Array.isArray(value)
-          ? value
-          : typeof value === "string"
-            ? [value]
-            : [];
-        for (const selected of selection) masters.option(selected);
+        for (const selected of asList(value)) masters.option(selected);
       }
     }
   };
