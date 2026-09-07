@@ -66,6 +66,11 @@ type ReferenceCondition = {
  * The condition-operator object a field of Data Type `D` accepts. A field PORTERS gives no Data
  * Type (`null` — ADR-0056) falls through to the closing `never`, which is exactly right: the
  * reference says such a field cannot appear in `condition` at all.
+ *
+ * `Image` and `Link` fall through the same way (ADR-0064 案6a). Image is stated to be
+ * condition-incapable; Link is **not stated either way**, so it lands on the narrow side.
+ * VERIFY(live): whether a Link can be conditioned (the Read overview's operator table hints it
+ * can) — docs/live-verification.md (LV-21). Allowing it later only widens the type.
  */
 type ConditionFor<D extends DataType | null> = D extends "System[Id]"
   ? IdCondition

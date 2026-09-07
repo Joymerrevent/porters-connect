@@ -47,6 +47,10 @@ export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
  *
  * Size / name-length / MIME are checked **before the request goes out** (the ~15000-char request
  * guard is lifted for an image write, so this is what replaces it).
+ *
+ * VERIFY(live): there is no way to *clear* an image. Whether empty sub-elements erase the value or
+ * are rejected is not written down, and guessing wrong would mean thinking a value was cleared
+ * when it was not — docs/live-verification.md (LV-22).
  */
 export type ImageWriteValue = {
   FileName: string;
