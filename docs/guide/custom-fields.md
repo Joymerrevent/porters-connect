@@ -61,19 +61,21 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 
 ビルダー `f` のメソッドが、そのまま Data Type に対応します。
 
-| メソッド             | Data Type                                     | 読み取り値                                           |
-| -------------------- | --------------------------------------------- | ---------------------------------------------------- |
-| `f.number()`         | `Number`（Currency 含む）                     | `number`                                             |
-| `f.singlelineText()` | `SinglelineText`                              | `string`                                             |
-| `f.multilineText()`  | `MultilineText`                               | `string`                                             |
-| `f.mail()`           | `Mail`                                        | `string`                                             |
-| `f.telephone()`      | `Telephone`                                   | `string`                                             |
-| `f.url()`            | `URL`                                         | `string`                                             |
-| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                 |
-| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                       |
-| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                 |
-| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                       |
-| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`） |
+| メソッド             | Data Type                                     | 読み取り値                                                      |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        |
+| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        |
+| `f.multilineText()`  | `MultilineText`                               | `string`                                                        |
+| `f.mail()`           | `Mail`                                        | `string`                                                        |
+| `f.telephone()`      | `Telephone`                                   | `string`                                                        |
+| `f.url()`            | `URL`                                         | `string`                                                        |
+| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            |
+| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  |
+| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            |
+| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  |
+| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            |
+| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） |
+| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        |
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
 `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
@@ -81,7 +83,40 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
 > システムが管理する標準項目の領分なので、ビルダーに用意していません。
-> `Image` / `Link` は現時点で未対応です（[PRD R-4][prd] で v1 未対応と明記）。
+
+**`Image` と `Link` は、この宣言が唯一の入口です**（[ADR-0064][adr64]。[PRD R-4][prd] で
+v1 未対応としていたものを実装しました）。標準項目にこの 2 型は 1 つもなく
+（reference 全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
+宣言しない限り、型にも読み取り結果にも現れません。
+
+```ts
+const fields = defineFields({
+  resume: (f) => ({ U_photo: f.image(), U_contact: f.link() }),
+});
+
+// Read: 既定は FileName だけ。中身は image で明示的に取りに行きます。
+const r = await porters.tenant(1).resume.get(id, {
+  image: { U_photo: ["FileName", "Content"] },
+});
+r?.U_photo; // { FileName: string | null; Content: string | null }
+
+// Link は形で判別します（テナントの設定次第で 3 通り）。
+const link = r?.U_contact;
+if (typeof link === "number") {
+  // Contact の ID。名前などは Contact API で別途取得します
+} else if (link && "P_Mail" in link) {
+  // ユーザー型（UserRef）
+}
+
+// Write: Image は 3 つとも必須、Link は ID のみ。
+await porters.tenant(1).resume.update(id, {
+  U_photo: { FileName: "photo.png", ContentType: "image/png", Content: base64 },
+  U_contact: 10001,
+});
+```
+
+画像の上限（2MB / 255 バイト / mime 4 種）と、**一括書き込みでは画像を送れない**ことは
+[書き込みの制約ガイド][write-constraints]にまとめています。
 
 ## テナントの項目を調べる
 
@@ -150,6 +185,8 @@ const clientFor = (partition: number, fields: DefinedFields) =>
 [adr46]: ../adr/0046-guard-error-contract.md
 [adr59]: ../adr/0059-read-field-bare-alias.md
 [adr60]: ../adr/0060-full-resource-coverage-direction.md
+[adr64]: ../adr/0064-link-image-types.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenancy.md
+[write-constraints]: write-constraints.md
 [prd]: ../design/requirements.md
