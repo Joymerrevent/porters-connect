@@ -311,14 +311,17 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 
 ## LV-21 Link を condition / order に使えるか
 
-- **現在の対応 / 仮定**: **どちらにも出さない**（[ADR-0064][a64] 案6a）。`ConditionFor` は未知の Data Type に
-  `never` を返し、`OrderableKeys` は列挙なので、`DataType` に足すだけで両方から自動的に外れている
+- **現在の対応 / 仮定**: **どちらにも出さない**（[ADR-0064][a64] 案6a）。condition は Data Type ごとの表
+  `ConditionOf` に **`Link: never` と書き下して**あり、order は `OrderableKeys` が列挙なので載っていない
+  （ADR-0064 は「両方とも自動的に外れる」と書いているが、condition 側の機構は表引きに変わった。
+  決定は同じで、ADR 側にも訂正を注記済み）
 - **不確実な理由**: reference は **Image については condition 不可と明記**するが、**Link には記載が無い**。
   一方 Read 概要の演算子表には「Link（ユーザー型/部署型）: `or` / `and`（値は ID のみ）」という行があり、
   **使える可能性がある**。「不可」ではなく「不明」なので、**狭い側に倒してある**
-- **コード箇所**: `src/resources/query.ts`（`ConditionFor` / `OrderableKeys` — 実装は足していない）
+- **コード箇所**: `src/resources/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
+  order 側の `OrderableKeys` は列挙なので Link を載せていないだけ）
 - **確認方法**: Link 項目に `condition` を付けた Read を投げ、受け付けられるか確認する。
-  使えると分かったら `ConditionFor` に `Link` の分岐を足す＝**緩めるだけなので後方互換**
+  使えると分かったら `ConditionOf` の `Link` を実際の演算子オブジェクトに差し替える＝**緩めるだけなので後方互換**
 - **状態**: 未確認
 - **確認結果**: —
 - **関連**: Image は reference が不可と明記＝ LV 対象外（確定した制約）
