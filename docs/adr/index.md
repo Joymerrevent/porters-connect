@@ -79,6 +79,7 @@
 | [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | superseded | —     |
 | [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | superseded | —     |
 | [0067][0067] | Dependabot 自動化をやめ、スキルの対話実行に戻す                  | プロセス | accepted   | —     |
+| [0068][0068] | 公開 API リファレンスの作り方                                    | プロセス | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -149,3 +150,4 @@
 [0065]: 0065-dependabot-update-automation.md
 [0066]: 0066-drop-update-branch.md
 [0067]: 0067-retire-dependabot-automation.md
+[0068]: 0068-api-reference-tooling.md
