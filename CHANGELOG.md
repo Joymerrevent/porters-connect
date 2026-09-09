@@ -5,6 +5,60 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-09
+
+**PORTERS の Data Type 17 種すべてを型で表せるようになった版**です（[ADR-0060][adr60] の完了条件 D3）。
+破壊的変更はありません。追加された `Link` / `Image` は**標準項目に 1 つも存在せず**、テナントが作った
+カスタム項目としてのみ現れるため、恩恵を受けるのは当該項目を持つテナントだけです。
+
+### Added
+
+- **`Image`（画像）と `Link` の 2 型に対応しました**（[ADR-0064][adr64]）。どちらも `defineFields` の
+  宣言が唯一の入口です（標準項目に存在しないため、宣言しない限り型にも読み取り結果にも現れません）。
+
+  ```ts
+  const fields = defineFields({
+    resume: (f) => ({ U_photo: f.image(), U_contact: f.link() }),
+  });
+  ```
+
+- **`image` クエリ**で、Image 項目の `ContentType` / `Content`（Base64 本体）を読めます。
+  **既定は `FileName` のみ**（PORTERS 自身の既定）なので、一覧取得が画像本体で重くなりません。
+  選んだサブタグだけが戻り型に出ます。
+
+  ```ts
+  const r = await t.resume.get(id, {
+    image: { U_photo: ["FileName", "Content"] },
+  });
+  r?.U_photo; // { FileName: string | null; Content: string | null }
+  ```
+
+- **Image の書き込みに対応しました**。約 15000 文字のリクエスト長ガードは画像を含む書き込みでだけ外し、
+  かわりに **decode 後 2MB ／ ファイル名 255 バイト ／ mime 4 種（jpeg・gif・png・bmp）** を
+  **送信前に**検査して `PortersConfigError` で弾きます。
+
+- **`Link` は読み取り時に 3 つの形の union** になります（Contact の ID＝`number` ／ `UserRef` ／
+  `DepartmentRef`）。PORTERS が種別の判別子を返さないため、**届いた XML の形**で判別します。
+  書き込みは ID のみです。
+
+  ```ts
+  const link = r?.U_contact;
+  if (typeof link === "number") {
+    // Contact の ID。名前などは Contact API で別途取得します
+  } else if (link && "P_Mail" in link) {
+    // ユーザー型（UserRef）
+  }
+  ```
+
+### Changed
+
+- **一括書き込み（`createMany` / `updateMany`）は画像を受け付けません**。一括は「1 リクエスト
+  約 15000 文字」を前提に 200 件ずつへ分割しており、画像はその前提を壊すためです。何件目が画像を
+  持つかを添えて**送信前に** `PortersConfigError` で落とし、単発の `create` / `update` へ誘導します。
+
+- `Image` / `Link` は `condition` / `order` に指定できません（Image は reference が明記、
+  Link は記載が無いため安全側に倒しています）。指定すると**コンパイルエラー**になります。
+
 ## [0.13.0] - 2026-09-06
 
 **User マスタが PORTERS の全 17 項目を返すようになった版**です。破壊的変更はありませんが、
@@ -568,6 +622,7 @@
 [adr58]: docs/adr/0058-reference-expansion-read.md
 [adr59]: docs/adr/0059-read-field-bare-alias.md
 [adr60]: docs/adr/0060-full-resource-coverage-direction.md
+[adr64]: docs/adr/0064-link-image-types.md
 [adr61]: docs/adr/0061-phase-resource-surface.md
 [adr63]: docs/adr/0063-idempotency-guard-scope.md
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
@@ -576,7 +631,8 @@
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.11.0...v0.12.0
