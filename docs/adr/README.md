@@ -71,7 +71,12 @@
 
 ### 【詳細設計】
 
-- **未起票の論点はなし**（HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／
+- **値レベルの実行時検証と、日時変換の例外の系統** — 宣言した Data Type に合わない値を
+  どこまで手前で弾くか（既定 off の opt-in が前提）。**ゼロから足す話ではなく**、
+  `Date` / `DateTime` / `Age` だけ既に検証が効いていて、そこだけ素の `RangeError` が飛ぶ
+  （読み・書きの両方）現状を揃える話から始まる＝ [RV-36][rv36] を含む。
+  ロードマップの**案D の残り 1 つ**（他の 2 つは [ADR-0069][0069] で起票済み）。
+- 上記以外に未起票の論点はなし（HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／
   トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／マスタ Read は
   すべて起票済み。各々の状態は [索引][index] を参照）。
 
@@ -83,6 +88,8 @@
 [index]: index.md
 [prd]: ../design/requirements.md
 [lv-doc]: ../live-verification.md
+[rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0003]: 0003-add-attachment-to-mvp.md

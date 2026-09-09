@@ -80,6 +80,7 @@
 | [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | superseded | —     |
 | [0067][0067] | Dependabot 自動化をやめ、スキルの対話実行に戻す                  | プロセス | accepted   | —     |
 | [0068][0068] | 公開 API リファレンスの作り方                                    | プロセス | accepted   | —     |
+| [0069][0069] | テナントの Field カタログで宣言を突き合わせ、宣言を生成する      | 詳細設計 | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -151,3 +152,4 @@
 [0066]: 0066-drop-update-branch.md
 [0067]: 0067-retire-dependabot-automation.md
 [0068]: 0068-api-reference-tooling.md
+[0069]: 0069-tenant-field-catalog-tooling.md
