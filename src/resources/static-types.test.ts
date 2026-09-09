@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import type { UserRef } from "../xml/decode";
+import type { DepartmentRef, UserRef } from "../xml/decode";
 import type {
   Candidate,
   CandidateCreateInput,
@@ -15,6 +15,9 @@ import type { ProcessCreateInput } from "./process";
 // exist to be the subject of `typeof`, never to be read.
 declare const _job: JobResource;
 declare const _looseQuery: JobSearchQuery;
+// The same accessor with a tenant Image / Link field declared (ADR-0023 + ADR-0064): no standard
+// field is Image- or Link-typed, so the custom catalog is the only way these types reach a record.
+declare const _album: JobResource<{ U_photo: "Image"; U_link: "Link" }>;
 type ExpandedClient = Awaited<
   ReturnType<
     typeof _job.search<{ readonly P_Client: readonly ["P_Id", "P_Name"] }>
@@ -188,6 +191,64 @@ describe("expand — 参照先の項目を読む（ADR-0058）", () => {
     // `ExpandedValue` の条件型を非分配にしてある理由。loose な宣言は「展開した」約束ではない。
     expectTypeOf<LooseQueryPage["items"][number]["P_Client"]>().toEqualTypeOf<
       number | null | undefined
+    >();
+  });
+});
+
+// Image のサブタグ選択（ADR-0064 論点2）。expand と同じく**選んだ人だけ型が変わる**ことが
+// 案2a を選んだ理由なので、型で固定する。ここが崩れると「一覧が 2MB × 件数」に戻る。
+describe("image — Image 項目のサブタグを選ぶ（ADR-0064）", () => {
+  type Selected = Awaited<
+    ReturnType<
+      typeof _album.search<
+        Record<never, never>,
+        { readonly U_photo: readonly ["FileName", "Content"] }
+      >
+    >
+  >;
+  type Plain = Awaited<ReturnType<typeof _album.search>>;
+
+  it("選んだサブタグだけが値に出る（選んでいないものは書けない）", () => {
+    expectTypeOf<Selected["items"][number]["U_photo"]>().toEqualTypeOf<
+      { FileName: string | null; Content: string | null } | null | undefined
+    >();
+  });
+
+  it("image を書かなければ既定＝サブタグはどれも optional（PORTERS は FileName のみ返す）", () => {
+    expectTypeOf<Plain["items"][number]["U_photo"]>().toEqualTypeOf<
+      | {
+          FileName?: string | null;
+          ContentType?: string | null;
+          Content?: string | null;
+        }
+      | null
+      | undefined
+    >();
+  });
+
+  it("Image 型でない項目は image に書けない", () => {
+    type AlbumImage = NonNullable<Parameters<typeof _album.search>[0]>["image"];
+    expectTypeOf<NonNullable<AlbumImage>>().toHaveProperty("U_photo");
+    expectTypeOf<NonNullable<AlbumImage>>().not.toHaveProperty("P_Name");
+    expectTypeOf<NonNullable<AlbumImage>>().not.toHaveProperty("U_link");
+  });
+
+  it("Image / Link は condition にも order にも書けない（ADR-0064 論点6）", () => {
+    // `ConditionOf` は「使えない」を never で**書き下す**表なので、行を書き換えれば通ってしまう。
+    // 決定そのものをここで固定する。Image は reference が不可と明記、Link は記載が無いので狭い側。
+    type AlbumQuery = NonNullable<Parameters<typeof _album.search>[0]>;
+    type AlbumCondition = NonNullable<AlbumQuery["condition"]>;
+    expectTypeOf<AlbumCondition["U_photo"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<AlbumCondition["U_link"]>().toEqualTypeOf<undefined>();
+    // order は列挙型なので、載っていないこと自体が「並べ替えられない」
+    type AlbumOrder = NonNullable<AlbumQuery["order"]>[number];
+    expectTypeOf<AlbumOrder>().not.toHaveProperty("U_photo");
+    expectTypeOf<AlbumOrder>().not.toHaveProperty("U_link");
+  });
+
+  it("Link は 3 形の union で読める＝テナント設定と食い違いようがない", () => {
+    expectTypeOf<Plain["items"][number]["U_link"]>().toEqualTypeOf<
+      number | UserRef | DepartmentRef | null | undefined
     >();
   });
 });

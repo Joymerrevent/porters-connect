@@ -13,43 +13,43 @@
 
 ## 一覧
 
-| ID            | 重要度 | 観点                        | 状態  | 概要                                                              |
-| ------------- | ------ | --------------------------- | ----- | ----------------------------------------------------------------- |
-| [RV-1][rv1]   | 🔴     | API 忠実性                  | fixed | field 省略時の Read が主キーしか返さない                          |
-| [RV-2][rv2]   | 🟡     | テスト厳密性                | fixed | field 無し search の fixture が本番と乖離                         |
-| [RV-3][rv3]   | 🟡     | エラーモデル                | fixed | ErrorCategory の rateLimit が到達不能                             |
-| [RV-4][rv4]   | 🟡     | リリース準備                | fixed | publishConfig.access と npm メタデータが未設定                    |
-| [RV-5][rv5]   | 🟡     | API 忠実性                  | fixed | 送信前ガードの非対称                                              |
-| [RV-6][rv6]   | 🟢     | テスト厳密性                | fixed | mock transport の既定 status 経路が未テスト                       |
-| [RV-7][rv7]   | 🟢     | ドキュメント / DX           | fixed | 未モック時エラーメッセージが冗長                                  |
-| [RV-8][rv8]   | 🟢     | アーキテクチャ              | fixed | 依存方向：resources → fields                                      |
-| [RV-9][rv9]   | 🟡     | アーキテクチャ / リリース   | fixed | 単調増加チェックの baseline が back-merge ラグで誤検知            |
-| [RV-10][rv10] | 🟡     | アーキテクチャ / DX         | fixed | per-call partition の JSDoc 偽宣言                                |
-| [RV-11][rv11] | 🟡     | 認証                        | fixed | refresh 失効時の挙動が doc と乖離                                 |
-| [RV-12][rv12] | 🟢     | ドキュメント                | fixed | roadmap/PRD の coverage 過大主張                                  |
-| [RV-13][rv13] | 🟡     | エラーモデル / API 忠実性   | fixed | HTTP ステータスを一切見ていない                                   |
-| [RV-14][rv14] | 🟡     | エラーモデル / API 忠実性   | fixed | Write のルート `<Code>` を読まない                                |
-| [RV-15][rv15] | 🟢     | エラーモデル / DX           | fixed | 送信前ガードが同期 throw する経路がある                           |
-| [RV-16][rv16] | 🟢     | ドキュメント                | fixed | 月次クォータを内蔵スロットルが守るかのような記述                  |
-| [RV-17][rv17] | 🟡     | フェイルセーフ / 設定検証   | fixed | `host` の書式を検証せず、設定ミスが別ホストへの実リクエストになる |
-| [RV-18][rv18] | 🟢     | ドキュメント / 計画         | fixed | accepted 済み ADR-0044〜0046 の実装が roadmap に現れない          |
-| [RV-19][rv19] | 🟡     | エラーモデル / 認証         | fixed | 認証 API 経路が HTTP ステータスを見ない                           |
-| [RV-20][rv20] | 🟡     | フェイルセーフ / API 忠実性 | fixed | HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る             |
-| [RV-21][rv21] | 🟢     | 設定検証 / 後方互換         | fixed | 既定ポート `:443` 付きの `host` が弾かれる                        |
-| [RV-22][rv22] | 🟢     | リトライ / DX               | fixed | HTTP 429 の後、非冪等な `create` が自動再送されない               |
-| [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed | Candidate の静的カタログが標準項目 4 件を欠く                     |
-| [RV-24][rv24] | 🟡     | ドキュメント / DX           | fixed | `defineFields` の使い方がどこにも無い                             |
-| [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | fixed | `partition` 未設定で無言のうちに `partition=0` を送る             |
-| [RV-26][rv26] | 🟡     | API 忠実性                  | fixed | `P_Deleted` 未対応 ＝ 削除済みかを判別できない                    |
-| [RV-27][rv27] | 🟢     | ドキュメント / DX           | fixed | F-2 だけトピック ガイドが無い                                     |
-| [RV-28][rv28] | 🟢     | API 忠実性 / フェイルセーフ | fixed | `count` の範囲を送信前に検証しない                                |
-| [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed | reference ↔ カタログの突合が自動化されていない                    |
-| [RV-30][rv30] | 🟢     | 型安全 / 公開サーフェス     | fixed | 公開ジェネリクスの制約型が未 export                               |
-| [RV-31][rv31] | 🟡     | API 忠実性 / 型安全         | fixed | System[Reference] を展開して要求しても ID 以外が捨てられる        |
-| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | fixed | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
-| [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ   | fixed | back-merge が develop の保護ルールをバイパスして通る              |
-| [RV-34][rv34] | 🟢     | フェイルセーフ / DX         | open  | 取り込み時の同一性チェックが 3 つの別原因を同じ文言で報告する     |
-| [RV-35][rv35] | 🟢     | フェイルセーフ              | open  | 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない           |
+| ID            | 重要度 | 観点                        | 状態    | 概要                                                              |
+| ------------- | ------ | --------------------------- | ------- | ----------------------------------------------------------------- |
+| [RV-1][rv1]   | 🔴     | API 忠実性                  | fixed   | field 省略時の Read が主キーしか返さない                          |
+| [RV-2][rv2]   | 🟡     | テスト厳密性                | fixed   | field 無し search の fixture が本番と乖離                         |
+| [RV-3][rv3]   | 🟡     | エラーモデル                | fixed   | ErrorCategory の rateLimit が到達不能                             |
+| [RV-4][rv4]   | 🟡     | リリース準備                | fixed   | publishConfig.access と npm メタデータが未設定                    |
+| [RV-5][rv5]   | 🟡     | API 忠実性                  | fixed   | 送信前ガードの非対称                                              |
+| [RV-6][rv6]   | 🟢     | テスト厳密性                | fixed   | mock transport の既定 status 経路が未テスト                       |
+| [RV-7][rv7]   | 🟢     | ドキュメント / DX           | fixed   | 未モック時エラーメッセージが冗長                                  |
+| [RV-8][rv8]   | 🟢     | アーキテクチャ              | fixed   | 依存方向：resources → fields                                      |
+| [RV-9][rv9]   | 🟡     | アーキテクチャ / リリース   | fixed   | 単調増加チェックの baseline が back-merge ラグで誤検知            |
+| [RV-10][rv10] | 🟡     | アーキテクチャ / DX         | fixed   | per-call partition の JSDoc 偽宣言                                |
+| [RV-11][rv11] | 🟡     | 認証                        | fixed   | refresh 失効時の挙動が doc と乖離                                 |
+| [RV-12][rv12] | 🟢     | ドキュメント                | fixed   | roadmap/PRD の coverage 過大主張                                  |
+| [RV-13][rv13] | 🟡     | エラーモデル / API 忠実性   | fixed   | HTTP ステータスを一切見ていない                                   |
+| [RV-14][rv14] | 🟡     | エラーモデル / API 忠実性   | fixed   | Write のルート `<Code>` を読まない                                |
+| [RV-15][rv15] | 🟢     | エラーモデル / DX           | fixed   | 送信前ガードが同期 throw する経路がある                           |
+| [RV-16][rv16] | 🟢     | ドキュメント                | fixed   | 月次クォータを内蔵スロットルが守るかのような記述                  |
+| [RV-17][rv17] | 🟡     | フェイルセーフ / 設定検証   | fixed   | `host` の書式を検証せず、設定ミスが別ホストへの実リクエストになる |
+| [RV-18][rv18] | 🟢     | ドキュメント / 計画         | fixed   | accepted 済み ADR-0044〜0046 の実装が roadmap に現れない          |
+| [RV-19][rv19] | 🟡     | エラーモデル / 認証         | fixed   | 認証 API 経路が HTTP ステータスを見ない                           |
+| [RV-20][rv20] | 🟡     | フェイルセーフ / API 忠実性 | fixed   | HTTP 200 ＋ 非 PORTERS ボディが「空ページ」として通る             |
+| [RV-21][rv21] | 🟢     | 設定検証 / 後方互換         | fixed   | 既定ポート `:443` 付きの `host` が弾かれる                        |
+| [RV-22][rv22] | 🟢     | リトライ / DX               | fixed   | HTTP 429 の後、非冪等な `create` が自動再送されない               |
+| [RV-23][rv23] | 🔴     | API 忠実性 / 型安全         | fixed   | Candidate の静的カタログが標準項目 4 件を欠く                     |
+| [RV-24][rv24] | 🟡     | ドキュメント / DX           | fixed   | `defineFields` の使い方がどこにも無い                             |
+| [RV-25][rv25] | 🟡     | フェイルセーフ / 設定検証   | fixed   | `partition` 未設定で無言のうちに `partition=0` を送る             |
+| [RV-26][rv26] | 🟡     | API 忠実性                  | fixed   | `P_Deleted` 未対応 ＝ 削除済みかを判別できない                    |
+| [RV-27][rv27] | 🟢     | ドキュメント / DX           | fixed   | F-2 だけトピック ガイドが無い                                     |
+| [RV-28][rv28] | 🟢     | API 忠実性 / フェイルセーフ | fixed   | `count` の範囲を送信前に検証しない                                |
+| [RV-29][rv29] | 🟢     | テスト厳密性 / プロセス     | fixed   | reference ↔ カタログの突合が自動化されていない                    |
+| [RV-30][rv30] | 🟢     | 型安全 / 公開サーフェス     | fixed   | 公開ジェネリクスの制約型が未 export                               |
+| [RV-31][rv31] | 🟡     | API 忠実性 / 型安全         | fixed   | System[Reference] を展開して要求しても ID 以外が捨てられる        |
+| [RV-32][rv32] | 🟢     | フェイルセーフ / DX         | fixed   | searchAll のクエリを反復中に書き換えると次ページ以降が変わる      |
+| [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ   | fixed   | back-merge が develop の保護ルールをバイパスして通る              |
+| [RV-34][rv34] | 🟢     | フェイルセーフ / DX         | wontfix | 取り込み時の同一性チェックが 3 つの別原因を同じ文言で報告する     |
+| [RV-35][rv35] | 🟢     | フェイルセーフ              | wontfix | 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 

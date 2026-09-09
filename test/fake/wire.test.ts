@@ -218,3 +218,37 @@ describe("buildWriteResultXml / error envelopes", () => {
     );
   });
 });
+
+// Image は Option と同じく入れ子で届くので、フェイクは**形**で見分ける（カスタム項目は
+// クライアント側の defineFields で宣言されており、フェイクのカタログには無い）。
+describe("Image の write 取り込みと read 出力（ADR-0064）", () => {
+  const write = (inner: string): string =>
+    `<Candidate><Item><Person.U_photo>${inner}</Person.U_photo></Item></Candidate>`;
+
+  it("サブ要素に本文があるものを画像として取り込む", () => {
+    expect(
+      parseWriteBody(
+        write(
+          "<FileName>a.png</FileName><ContentType>image/png</ContentType><Content>QUJD</Content>",
+        ),
+        PREFIX,
+      )?.items[0]?.U_photo,
+    ).toEqual({
+      FileName: "a.png",
+      ContentType: "image/png",
+      Content: "QUJD",
+    });
+  });
+
+  it("空要素だけの入れ子は Option のまま（選択肢の集合）", () => {
+    expect(
+      parseWriteBody(write("<Option.A /><Option.B />"), PREFIX)?.items[0]
+        ?.U_photo,
+    ).toEqual(["Option.A", "Option.B"]);
+    // サブ要素名と同じ綴りでも、本文が無ければ Option として扱う
+    expect(
+      parseWriteBody(write("<FileName /><Content />"), PREFIX)?.items[0]
+        ?.U_photo,
+    ).toEqual(["FileName", "Content"]);
+  });
+});

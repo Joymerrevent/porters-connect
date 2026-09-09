@@ -1,4 +1,4 @@
-# Read クエリ（field / expand / condition / order / keywords / itemstate）
+# Read クエリ（field / expand / image / condition / order / keywords / itemstate）
 
 データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
 **演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります
@@ -129,6 +129,31 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 
 > 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です
 > （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装なので、
+> 外れた場合に直すのは要求側の文字列だけです。
+
+## `image` — 画像の中身も読む
+
+`Image` 型の項目は、**素で要求すると `FileName` だけ**が返ります（PORTERS の既定）。
+`ContentType` / `Content`（Base64 の本体）が要るときに `image` で明示します。
+
+```ts
+const page = await porters.tenant(1).resume.search({
+  image: { U_photo: ["FileName", "Content"] },
+});
+page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
+```
+
+- **選んだサブタグだけが戻り型に出ます**。書かなければ `{ FileName?, ContentType?, Content? }` のまま
+  （どれも「要求していない」ので optional）。`expand` と同じく、**税を払うのは選んだ人だけ**です。
+- **既定が軽いことが大事です**。1 件 2MB の画像を持つ項目を一覧で 200 件取ると、既定で本体まで
+  返す設計なら 1 往復で数百 MB になります。だから既定は `FileName` のみに委ねています。
+- `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が素直です。
+- `Image` 型の項目にしか書けません（`Link` 型やテキスト項目を書くと**コンパイルエラー**）。
+- **`Image` は `condition` に使えません**（reference が明記）。`Link` は記載が無いため、
+  安全側に倒して同じく対象外にしています（[live-verification][lv] LV-21 — 使えると分かれば緩めます）。
+
+> `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です
+> （[live-verification][lv] LV-20）。応答は**返ってきたサブタグを読む**実装なので、
 > 外れた場合に直すのは要求側の文字列だけです。
 
 ## `condition` — 検索条件

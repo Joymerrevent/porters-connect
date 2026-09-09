@@ -250,3 +250,80 @@ describe("突合の前提", () => {
     expect([...unknown]).toEqual([]);
   });
 });
+
+// --- Data Type の網羅（ADR-0060 D3 / ADR-0064）------------------------------------------------
+//
+// 「PORTERS の Data Type をすべて型で表せる」を**主張ではなく検査結果**にする。上の突合は
+// 「リソースの項目」を見るが、こちらは**型そのものの集合**を見る。Image / Link は標準項目に
+// 1 つも無いので、項目単位の突合ではいつまでも 0 件のまま＝この検査でしか押さえられない。
+//
+// LIBRARY_DATA_TYPES は `Record<DataType, true>` なので、**union に型を足すとここが
+// コンパイルエラーになる**（列挙を忘れられない）。その上で reference の表と集合が一致することを
+// 見るので、片側だけ増えたら落ちる。
+const LIBRARY_DATA_TYPES: Record<DataType, true> = {
+  "System[Id]": true,
+  "System[DateTime]": true,
+  "System[Reference]": true,
+  "System[Department]": true,
+  Number: true,
+  Date: true,
+  DateTime: true,
+  Age: true,
+  SinglelineText: true,
+  MultilineText: true,
+  Mail: true,
+  Telephone: true,
+  URL: true,
+  User: true,
+  Option: true,
+  Image: true,
+  Link: true,
+};
+
+/** field-data-types.md の「Field Type 一覧」表から Data Type 列を拾う（後続の表は読まない）。 */
+const readReferenceDataTypes = (): string[] => {
+  const lines = readFileSync(
+    "docs/reference/resource-api/field-data-types.md",
+    "utf8",
+  ).split("\n");
+  const start = lines.findIndex((l) => l.startsWith("## Field Type 一覧"));
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((l) => l.startsWith("## "));
+  return rest
+    .slice(0, end)
+    .filter((l) => l.startsWith("|"))
+    .map((l) =>
+      l
+        .split("|")
+        .slice(1, -1)
+        .map((c) => c.trim()),
+    )
+    .filter((cells) => cells[1] !== "Field Type" && !cells[0].startsWith("---"))
+    .map((cells) => cells[2])
+    .filter((type) => type !== undefined);
+};
+
+describe("Data Type の網羅（ADR-0060 D3）", () => {
+  const referenced = readReferenceDataTypes();
+
+  it("reference の型表を読めている（前提の自己チェック）", () => {
+    // 表の形が変わって 0 件になったら以下が素通りするので、行数を先に固定する。
+    expect(referenced.length).toBeGreaterThan(15);
+  });
+
+  it("reference が挙げる Data Type を 17/17 すべて型で表せる", () => {
+    // FT-16 Reference は Data Type 列が `—`（項目自体が値を持たない）＝表せる型ではない。
+    const expected = [...new Set(referenced)].filter((t) => t !== EMPTY_CELL);
+    expect(expected).toHaveLength(17);
+    expect(new Set(Object.keys(LIBRARY_DATA_TYPES))).toEqual(new Set(expected));
+  });
+
+  it("Image / Link は標準カタログに 1 つも無い（テナントのカスタム項目でのみ現れる）", () => {
+    // ADR-0064 の前提。ここが崩れたら「宣言 DSL が唯一の入口」という設計判断ごと見直す。
+    for (const { descriptor } of [...TARGETS, ...TYPELESS_MASTERS]) {
+      const types = Object.values(descriptor.fields);
+      expect(types).not.toContain("Image");
+      expect(types).not.toContain("Link");
+    }
+  });
+});

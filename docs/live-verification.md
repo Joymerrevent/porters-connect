@@ -31,6 +31,10 @@ grep -rn "VERIFY(live)" src test
 | LV-16 | Candidate 参照を展開するときの alias 接頭辞         | 未確認 |
 | LV-17 | Phase の User 項目を `()` 付きで要求できるか        | 未確認 |
 | LV-18 | User Read で拡張 13 項目を field に並べられるか     | 未確認 |
+| LV-19 | Link の User / Department 応答の入れ子形            | 未確認 |
+| LV-20 | Image のサブタグを field に括弧で並べる記法         | 未確認 |
+| LV-21 | Link を condition / order に使えるか                | 未確認 |
+| LV-22 | Image の値を消す書き方                              | 未確認 |
 
 ---
 
@@ -273,6 +277,69 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: [LV-17][lv17]（`()` 形の可否）／`P_Department` は `System[Department]` で、
   応答形は 2019-12-10 の機能拡張記事のサンプルで確定（LV 対象外）
 
+## LV-19 Link の User / Department 応答の入れ子形
+
+- **現在の対応 / 仮定**: **`User` / `System[Department]` とまったく同じ入れ子**を想定してデコードする。
+  スカラなら Contact の ID（数値）、`<User>` があれば `UserRef`、`<Department>` があれば `DepartmentRef`
+  （[ADR-0064][a64] 案4a ＝ 形で判別する union）
+- **不確実な理由**: reference は Link の値を「Contact の ID、またはユーザー型 / 部署型」とだけ書き、
+  **User / Department 形の応答 XML を示していない**。`User` 型・`System[Department]` 型の入れ子形は
+  それぞれ確定しているので同じ形だと見ているが、Link 経由でも同じかは未確認
+- **コード箇所**: `src/xml/decode.ts`（`decodeLink` — `VERIFY(live)` 済み）
+- **確認方法**: ユーザー型 / 部署型に設定した Link 項目を持つテナントで Read し、応答 XML を確認する。
+  外れていたら `decodeLink` の判別（`"User" in outer` / `"Department" in outer`）を実形に合わせる。
+  **判別できない形が来たら `null`** になるので、黙って別の型の値が入ることはない
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 入れ子形の出どころは [LV-10][lv10]（System[Reference]）と同系統の未確認点
+
+## LV-20 Image のサブタグを field に括弧で並べる記法
+
+- **現在の対応 / 仮定**: **`field=Resume.U_photo(FileName,Content)`** と、括弧の中に**素のサブタグ名**を
+  並べて送る（[ADR-0064][a64] 案2a の `image` オプション）。省略時は素の alias だけを送り、
+  PORTERS の既定（`FileName` のみ）に委ねる
+- **不確実な理由**: reference は「既定は FileName のみ」「`ContentType` / `Content` は明示」と**散文で**書き、
+  Write 形式の側にサブ要素名（`FileName` / `ContentType` / `Content`）があるだけで、
+  **Read の `field` にどう書くかのサンプルが無い**。`User` 型の `()` 記法から類推している
+- **コード箇所**: `src/resources/image.ts`（`applyImage` — `VERIFY(live)` 済み）
+- **確認方法**: Image 項目を持つテナントで `field=<alias>(FileName,ContentType,Content)` を投げ、
+  **HTTP 200 ＋ ルート `<Code>0`** と 3 つのサブタグが返ることを確認する。外れていたら
+  `applyImage` の組み立てだけを直す（decode は**返ってきたサブタグを読む**実装なので影響しない）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: `()` 記法の可否という点で [LV-17][lv17] と同型
+
+## LV-21 Link を condition / order に使えるか
+
+- **現在の対応 / 仮定**: **どちらにも出さない**（[ADR-0064][a64] 案6a）。condition は Data Type ごとの表
+  `ConditionOf` に **`Link: never` と書き下して**あり、order は `OrderableKeys` が列挙なので載っていない
+  （ADR-0064 は「両方とも自動的に外れる」と書いているが、condition 側の機構は表引きに変わった。
+  決定は同じで、ADR 側にも訂正を注記済み）
+- **不確実な理由**: reference は **Image については condition 不可と明記**するが、**Link には記載が無い**。
+  一方 Read 概要の演算子表には「Link（ユーザー型/部署型）: `or` / `and`（値は ID のみ）」という行があり、
+  **使える可能性がある**。「不可」ではなく「不明」なので、**狭い側に倒してある**
+- **コード箇所**: `src/resources/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
+  order 側の `OrderableKeys` は列挙なので Link を載せていないだけ）
+- **確認方法**: Link 項目に `condition` を付けた Read を投げ、受け付けられるか確認する。
+  使えると分かったら `ConditionOf` の `Link` を実際の演算子オブジェクトに差し替える＝**緩めるだけなので後方互換**
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: Image は reference が不可と明記＝ LV 対象外（確定した制約）
+
+## LV-22 Image の値を消す書き方
+
+- **現在の対応 / 仮定**: **消せない**。`ImageWriteValue` は 3 つのサブ要素すべてを必須にしてあり、
+  項目を省略（`null` / `undefined`）すれば**値は変わらない**。テキスト項目の `""` に当たる書き方は用意していない
+- **不確実な理由**: reference の Write 形式は `<FieldAlias><FileName/><ContentType/><Content/></FieldAlias>` を
+  示すだけで、**空要素を送ると消えるのか・エラーになるのか**を書いていない。推測で「消す」形を用意すると、
+  外れたときに**消えたと思って消えていない**（またはその逆）になるので、用意しないほうが安全側
+- **コード箇所**: `src/xml/encode.ts`（`ImageWriteValue` — 3 つとも必須）
+- **確認方法**: 空の `<FileName/><ContentType/><Content/>` を書き込み、値が消えるか確認する。
+  消えると分かったら「消す」表現（例: `null` とは別の明示的な値）を足す
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: テキスト項目は `""` で消える（実装済み・確定）
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -299,3 +366,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a20]: adr/0020-read-field-default.md
 [a60]: adr/0060-full-resource-coverage-direction.md
 [lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
+[lv10]: #lv-10-systemreference-read-の入れ子タグ
+[a64]: adr/0064-link-image-types.md

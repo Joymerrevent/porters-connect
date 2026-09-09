@@ -30,14 +30,11 @@ description: >-
   更新しないと「develop を取り込んだ後のロックファイル」に対して CI が一度も走らないまま develop に入る。
   ロックファイルは機械的に解決すると静かに壊れるので、ここは CI に検証させる。
 - `gh pr merge` は `permissions.ask` で確認プロンプトが出る。**これは仕組み側のフェイルセーフなので迂回しない。**
-- **同じ判定は定期実行でも走る**（[ADR-0065][adr65]）。`.github/workflows/dependabot-triage.yml` が平日朝に
-  検査し、`Dependabot 判定レポート` Issue（ラベル `dependabot-triage`）を上書き更新する。取り込みは
-  その Issue に `/merge` とコメントすると `.github/workflows/dependabot-merge.yml` が実行する。
-  **`/merge` が読むのはレポートの `- 取り込み対象:` の 1 行だけ**で、そこに書かれた PR を書かれた順に
-  取り込む（`/merge 222 221` で上書きできる）。**見送る PR をその行に書かない**のが唯一の防波堤
-  ＝散文でいくら「見送り」と書いても、行に番号があれば入る。**このスキルは対話実行の経路**で、
-  出力形式は `templates/report.md` を両者で共有する。定期実行は前回から状況が変わっていなければ
-  起動しないので、**手元で今すぐ見たいときはこのスキルを使う**。
+- **これが唯一の経路。** かつて GitHub Actions で判定と取り込みを自動化していたが、
+  [ADR-0067][adr67] で畳んだ。`GITHUB_TOKEN` による書き込みは CI を起動できず
+  （push では run が作られず、`update-branch` では毎回承認待ちになる）、
+  マージ後の状態を検証する手段が無かったため。詳細は [設計前提の調査][facts]。
+  依存 PR は週 3 件・滞留は多くが 0〜1 日で、自動化が省くのはクリック 1 回だった。
 
 ## 実行フロー
 
@@ -97,13 +94,9 @@ dependabot[bot]: Looks like fast-xml-parser is no longer updatable, so this is n
 
 止めるべき兆候があるなら、判定表と一緒に言葉でも伝える — major 更新、prod 依存、CI の一部だけ赤、cooldown 不足、PR 本文に破壊的変更の記載。
 
-列の意味と埋め方は `templates/report.md` が正。定期実行（`.github/workflows/dependabot-triage.yml`）が
-追跡 Issue に書き出すレポートも同じ雛形を使うので、**列を足す・言い換えるときは両方が参照する
-雛形の側を直す**。片方だけ変えると、自動レポートと対話実行で形が食い違って差分が読めなくなる。
-
-雛形のうち**機械が読む 3 行**（`検査時刻` / `判定の指紋` / `取り込み対象`）は形が固定で、正規表現は
-`.github/scripts/dependabot-report-format.sh` にある。定期実行では投稿の**前**に検証され、崩れていれば
-Issue に出ない。対話実行でも同じ形で書いておくと、そのまま Issue の本文として使える。
+列の意味と埋め方は `templates/report.md` が正。**形を変えるときは雛形の側を直す。**
+毎回同じ形にすることで「前回と何が変わったか」が読める — 形が毎回変わるレポートは、
+読む側が差分ではなく全文を読み直す羽目になり、結局読まれなくなる。
 
 ### 5. 1 件ずつマージする
 
@@ -118,10 +111,9 @@ GitHub は古い base を弾かないので、**弾かれないことを理由�
 git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
 ```
 
-偽なら取り込まず、判定からやり直す。update-branch は develop を取り込む merge なので、
-これを真のまま保つ（＝base 更新をしても確認は通る）。定期実行の経路では
-`.github/scripts/dependabot-merge.sh` が同じ確認をしていて、レポートの
-`- 取り込み対象: #222@<SHA>` に書かれた SHA をその場で突き合わせる。
+偽なら取り込まず、判定からやり直す。base を取り込む merge は祖先関係を壊さないので、
+`update-branch` した場合もこの確認は通る。レポートの `- 取り込み対象: #222@<SHA>` に
+判定時の SHA を書いておくと、時間が空いても突き合わせられる。
 
 1. base が古ければ更新する（競合しないことを先に確かめる）。更新するのは protection に要求されるからではなく、
    **マージ後の状態に CI を通すため**:
@@ -131,6 +123,9 @@ git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
    ```
 
    `git diff --quiet <PR の base>..origin/develop -- pnpm-lock.yaml` が真なら競合しない。
+
+   **人が実行する限り、更新後の CI は普通に走る。** 自動化を畳んだのはここが理由で、
+   `GITHUB_TOKEN` で同じことをすると CI が毎回承認待ちになる（[設計前提の調査][facts]）。
 
 2. **更新後の head SHA で CI が緑になるのを待つ**。古い CI の結果でマージしない — ロックファイルは競合を機械的に解決すると壊れた内容になりやすく、しかも壊れ方が静かで気づきにくい。
 
@@ -165,3 +160,5 @@ git merge-base --is-ancestor <判定時の head SHA> <現在の head SHA>
 - **cooldown を回避するための設定変更を提案しない。** 待てないほど急ぐなら、それは security update の話であって version update の話ではない（security updates は cooldown を素通りする）。
 
 [adr65]: ../../../docs/adr/0065-dependabot-update-automation.md
+[adr67]: ../../../docs/adr/0067-retire-dependabot-automation.md
+[facts]: ../../../docs/design/dependabot-automation-facts.md

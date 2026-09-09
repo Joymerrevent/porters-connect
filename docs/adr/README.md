@@ -21,7 +21,18 @@
 - **ADR は自己完結させない**。フローは **起票（`proposed`）→ チームで議論 → 決定を反映（`accepted`）**。
   個人や AI が単独で `accepted` にしない。**決定事項の反映（`CLAUDE.md` / `SPEC` などの更新）は `accepted` 後**に行う。
 - ステータスは次のいずれか：`proposed`（議論中）/ `accepted`（確定）/ `rejected`（不採用）/ `deprecated`（廃止）/ `superseded by NNNN`（後続で置換）。
-- 一度 `accepted` した ADR は**書き換えず**、変えたくなったら新しい ADR を起こして旧 ADR を `superseded by NNNN` にする。
+- **`accepted` 後の直しは 2 通りある。「方針を変える」のか「間違いを直す」のかで扱いが違う**。
+  - **方針（決定）を変える → 本文の書き換えは禁止**。新しい ADR を起こし、旧 ADR を
+    `superseded by NNNN` にする。決定を上書きすると「なぜそう決めたか」の記録が消え、
+    ADR が存在する理由そのものが無くなるため。
+  - **事実の間違い・古くなった記述を直す → 直してよい**。決定が変わらないなら新 ADR は要らない。
+    ただし**黙って直さない**: 誤った記述に取り消し線（`~~…~~`）を引き、**訂正（日付）**で始まる注記を
+    続けて、①何が違ったか ②現状はどうか ③**決定そのものは変わらないこと**を書く。
+    読んだ人が「決定が変わったのか」を判断できるようにするため。
+    先例は [ADR-0049][0049]（実装時に前提の見立てが誤りと判明した箇所に
+    `**訂正（実装時 2026-08-12）**` を注記し、決定は据え置いた）。
+  - 判断に迷ったら**「その注記を読んで、決定が変わったと思う人がいるか」**で切り分ける。
+    いるなら方針変更＝新 ADR、いないなら訂正注記でよい。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
@@ -82,4 +93,5 @@
 [0008]: 0008-multitenancy-partition.md
 [0038]: 0038-read-query-surface-impl.md
 [0042]: 0042-supported-version-policy.md
+[0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md

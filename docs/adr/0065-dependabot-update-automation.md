@@ -1,6 +1,6 @@
 # 65. Dependabot 依存更新の判定と取り込みを自動化する
 
-- Status: accepted
+- Status: superseded by [[0067-retire-dependabot-automation]]
 - Date: 2026-09-05（accepted: 2026-09-05）
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -129,6 +129,13 @@ Claude が途中で失敗してもレポートさえ書けていれば投稿で�
 だが結論は変わらない。**GitHub が止めてくれないからこそ**、更新しないと「develop を取り込んだ後の
 ロックファイル」に対して CI が一度も走らないまま develop に入る。ロックファイルは機械的に解決すると
 **静かに壊れる**ので、ここは CI に検証させる必要がある。
+
+> **［2026-09-06 追記・改訂］** **この結論は [ADR-0066][adr66]（accepted・2026-09-06）が改訂する。**
+> 初回の本番実行で、`update-branch` を `GITHUB_TOKEN` で行うと**直後の CI が承認ゲートに入り
+> （`action_required`・ジョブ 0 件）、承認しない限り 1 件も走らない**ことが分かった。
+> つまり「更新後の状態を CI に検証させる」という本論点の目的が果たせていない。
+> 検証はマージ後の develop の push CI に移す（ADR-0066 案B）。
+> **他の 7 論点は影響を受けない。**
 
 ## 論点7: 判定に使うモデルをどう選び、固定するか
 
@@ -376,6 +383,7 @@ Decision Drivers の「信頼できない入力を前提にする」を、値の
   （最終コンテキスト全体の 10%）に留まり、残りは Changelog / Release notes ＝**落としてはいけない部分**
   だった。入力削減の手としては割に合わない。
 
+[adr66]: 0066-drop-update-branch.md
 [adr01]: 0001-record-architecture-decisions.md
 [adr25]: 0025-release-automation.md
 [adr29]: 0029-release-tag-automation.md
