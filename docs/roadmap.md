@@ -270,8 +270,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.12.0`**（npm latest・2026-08-31 にレジストリで確認）。**全 16 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.14.0`**（npm latest・2026-09-09 にレジストリで確認）。**全 19 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -280,7 +280,10 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.8.0 で「0 件」と「届いていない」の区別＝[ADR-0051][adr51]（Read 応答の同定）、
       0.9.0 で Candidate の標準 4 項目 ＋ reference 突合検査 ＋ 利用ガイド 2 本、
       0.10.0 で partition を `tenant(id)` 経由のみに（破壊的）＋ `P_Deleted` で削除済みを判別、
-      **0.11.0 で参照先の展開 `expand`（RV-31）＋ `field` を接頭辞なしの型付き alias に（破壊的）**）。
+      **0.11.0 で参照先の展開 `expand`（RV-31）＋ `field` を接頭辞なしの型付き alias に（破壊的）**、
+      0.12.0 で全リソース網羅（データ系 13/13・D1）、0.12.1 でフェイルセーフの修正 2 件（RV-32 / RV-22）、
+      0.13.0 で User マスタの標準項目 4→17（D2）、
+      **0.14.0 で `Link` / `Image` に対応＝ Data Type 17/17（D3）**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
