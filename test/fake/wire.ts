@@ -14,7 +14,7 @@ import type { ReferenceTarget } from "../../src/resources/expand";
 import type { DataType } from "../../src/xml/decode";
 import { asArray, asRecord, asString } from "../../src/xml/raw";
 import type { FakeMasters } from "./masters";
-import type { FakeRecord, FakeValue } from "./types";
+import type { FakeImage, FakeRecord, FakeValue } from "./types";
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -53,9 +53,33 @@ export type FieldSelection = { alias: string; sub: string[] };
 /** A Write request body, parsed back into bare aliases. */
 export type ParsedWriteBody = { resource: string; items: FakeRecord[] };
 
+// The sub-elements of an Image, in PORTERS' write order (ADR-0064).
+const IMAGE_SUBFIELDS = ["FileName", "ContentType", "Content"] as const;
+
+// Two Data Types nest on write, and the fake has no catalog for a tenant's custom field (it is
+// declared client-side with `defineFields`), so they are told apart by shape — the same kind of
+// heuristic `buildItemXml` already uses for User. An Option is a set of **empty** elements whose
+// tags are the selected aliases; an Image is up to three **named** elements carrying text.
+const asImage = (nested: Record<string, unknown>): FakeImage | undefined => {
+  const keys = Object.keys(nested);
+  if (
+    !keys.every((key) => (IMAGE_SUBFIELDS as readonly string[]).includes(key))
+  )
+    return undefined;
+  const image: FakeImage = {};
+  for (const key of IMAGE_SUBFIELDS) {
+    const value = asString(nested[key]);
+    if (value !== undefined && value !== "") image[key] = value;
+  }
+  // Every key matched but nothing carried text: that is an Option selection whose aliases happen
+  // to be named like image sub-elements, so leave it to the Option branch.
+  return Object.keys(image).length > 0 ? image : undefined;
+};
+
 // One Write `<Item>`'s children -> bare alias -> value. A scalar stays a string; an Option field
 // arrives as `<Field><Option.A/><Option.B/></Field>`, i.e. a record whose *keys* are the selected
-// aliases (fast-xml-parser gives empty elements an empty-string value).
+// aliases (fast-xml-parser gives empty elements an empty-string value); an Image arrives as a
+// record whose keys are its sub-elements and whose values carry text.
 const parseWriteItem = (raw: unknown, prefix: string): FakeRecord => {
   const item = asRecord(raw) ?? {};
   const out: FakeRecord = {};
@@ -69,8 +93,9 @@ const parseWriteItem = (raw: unknown, prefix: string): FakeRecord => {
       continue;
     }
     const nested = asRecord(value);
-    // An empty element parses to `""` (handled above) — a record here is the Option shape.
-    if (nested) out[alias] = Object.keys(nested);
+    if (!nested) continue;
+    // An empty element parses to `""` (handled above) — a record here is an Image or an Option.
+    out[alias] = asImage(nested) ?? Object.keys(nested);
   }
   return out;
 };
@@ -159,6 +184,19 @@ export type ReferenceResolver = (
 const referenceIdOnly = (id: string): string =>
   element("Reference", element("P_Id", escapeXml(id)));
 
+// An Image reads back as the sub-elements the request asked for; the bare alias returns
+// `FileName` alone, which is PORTERS' own default (ADR-0064 案1a). A stored sub-element that was
+// not written comes back as an empty element, like any other unset field.
+const imageInner = (image: FakeImage, sub: string[]): string => {
+  const wanted = sub.length > 0 ? sub : ["FileName"];
+  return wanted
+    .filter((name) => (IMAGE_SUBFIELDS as readonly string[]).includes(name))
+    .map((name) =>
+      element(name, escapeXml(image[name as keyof FakeImage] ?? "")),
+    )
+    .join("");
+};
+
 const fieldInner = (
   masters: FakeMasters,
   type: DataType | null | undefined,
@@ -169,6 +207,8 @@ const fieldInner = (
   reference?: ReferenceResolver,
 ): string => {
   if (Array.isArray(value)) return optionInner(masters, value, optionShape);
+  // A record value is an image — the only stored value that is neither scalar nor alias list.
+  if (typeof value !== "string") return imageInner(value, sub);
   switch (type) {
     case "Option":
       // A single selection may have been stored as a bare alias — normalise to the read shape.

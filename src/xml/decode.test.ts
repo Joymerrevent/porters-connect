@@ -8,6 +8,7 @@ import {
   decodeReferenceRecord,
   type DataType,
   type DepartmentRef,
+  type ImageValue,
   type UserRef,
 } from "./decode";
 import { parseResourcePage } from "./parser";
@@ -253,5 +254,84 @@ describe("decodeReferenceRecord — 展開した System[Reference]（ADR-0058）
   it("入れ子が record でない / raw が record でない -> null", () => {
     expect(decodeReferenceRecord({ Client: "oops" }, CLIENT)).toBeNull();
     expect(decodeReferenceRecord("scalar", CLIENT)).toBeNull();
+  });
+});
+
+describe("decodeField: Image (ADR-0064 論点1)", () => {
+  it("keeps only the sub-tags that came back (a plain read returns FileName alone)", () => {
+    const value = decodeField("Image", {
+      FileName: "photo.png",
+    }) as ImageValue;
+    expect(value).toEqual({ FileName: "photo.png" });
+    // Absent = not requested. It must not be filled in as null, which would mean "empty".
+    expect("Content" in value).toBe(false);
+    expect("ContentType" in value).toBe(false);
+  });
+
+  it("decodes every selected sub-tag, empty -> null", () => {
+    expect(
+      decodeField("Image", {
+        FileName: "photo.png",
+        ContentType: "image/png",
+        Content: "",
+      }),
+    ).toEqual({
+      FileName: "photo.png",
+      ContentType: "image/png",
+      Content: null,
+    });
+  });
+
+  it("tolerates prefixed sub-tags and ignores anything else in the node", () => {
+    expect(
+      decodeField("Image", {
+        "Image.FileName": "photo.png",
+        Unexpected: "x",
+      }),
+    ).toEqual({ FileName: "photo.png" });
+  });
+
+  it("decodes a non-record node to null (a scalar has no image in it)", () => {
+    expect(decodeField("Image", "photo.png")).toBeNull();
+    expect(decodeField("Image", [])).toBeNull();
+  });
+});
+
+describe("decodeField: Link (ADR-0064 論点4)", () => {
+  it("decodes a bare id (Contact) to a number", () => {
+    expect(decodeField("Link", "10001")).toBe(10001);
+  });
+
+  it("decodes the User shape to a UserRef", () => {
+    expect(
+      decodeField("Link", {
+        User: {
+          "User.P_Id": "5",
+          "User.P_Type": "0",
+          "User.P_Name": "採用 花子",
+          "User.P_Mail": "hanako@example.com",
+        },
+      }),
+    ).toEqual({
+      P_Id: 5,
+      P_Type: "0",
+      P_Name: "採用 花子",
+      P_Mail: "hanako@example.com",
+    } satisfies UserRef);
+  });
+
+  it("decodes the Department shape to a DepartmentRef", () => {
+    expect(
+      decodeField("Link", {
+        Department: { "Department.P_Id": "3", "Department.P_Name": "営業部" },
+      }),
+    ).toEqual({ P_Id: 3, P_Name: "営業部" } satisfies DepartmentRef);
+  });
+
+  it("decodes an unrecognised shape to null rather than guessing", () => {
+    expect(
+      decodeField("Link", { Contact: { "Contact.P_Id": "7" } }),
+    ).toBeNull();
+    expect(decodeField("Link", [])).toBeNull();
   });
 });

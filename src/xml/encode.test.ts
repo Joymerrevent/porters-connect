@@ -137,3 +137,68 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     );
   });
 });
+
+describe("encodeField: Image / Link (ADR-0064)", () => {
+  it("writes an Image as the three nested sub-elements, in PORTERS' order", () => {
+    expect(
+      encodeField("Image", {
+        Content: "QUJD",
+        FileName: "photo.png",
+        ContentType: "image/png",
+      }),
+    ).toBe(
+      "<FileName>photo.png</FileName>" +
+        "<ContentType>image/png</ContentType>" +
+        "<Content>QUJD</Content>",
+    );
+  });
+
+  it("escapes an image sub-value and omits a key that is not there (cast-only)", () => {
+    expect(
+      encodeField("Image", {
+        FileName: "a&b<c>.png",
+      } as unknown as Parameters<typeof encodeField>[1]),
+    ).toBe("<FileName>a&amp;b&lt;c&gt;.png</FileName>");
+  });
+
+  it("falls back to a scalar when an Image value is not an object (cast-only)", () => {
+    expect(encodeField("Image", "photo.png")).toBe("photo.png");
+    expect(encodeField("Image", ["a"])).toBe("a");
+  });
+
+  it("serializes an object handed to a non-Image type visibly (cast-only)", () => {
+    expect(
+      encodeField("SinglelineText", {
+        FileName: "photo.png",
+      } as unknown as Parameters<typeof encodeField>[1]),
+    ).toBe('{"FileName":"photo.png"}');
+  });
+
+  it("writes a Link as the referenced id only", () => {
+    expect(encodeField("Link", 10001)).toBe("10001");
+  });
+
+  it("nests an Image inside its own field element on a write", () => {
+    const xml = buildWriteXml({
+      resource: "Resume",
+      prefix: "Resume",
+      fields: new Map<string, DataType>([["U_photo", "Image"]]),
+      items: [
+        {
+          U_photo: {
+            FileName: "photo.png",
+            ContentType: "image/png",
+            Content: "QUJD",
+          },
+        },
+      ],
+    });
+    expect(xml).toBe(
+      "<Resume><Item><Resume.U_photo>" +
+        "<FileName>photo.png</FileName>" +
+        "<ContentType>image/png</ContentType>" +
+        "<Content>QUJD</Content>" +
+        "</Resume.U_photo></Item></Resume>",
+    );
+  });
+});

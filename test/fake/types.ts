@@ -8,8 +8,21 @@
 
 import type { Transport } from "../../src/http/types";
 
-/** A stored field value in PORTERS wire shape: a scalar, or the selected Option aliases. */
-export type FakeValue = string | string[];
+/**
+ * A stored image (ADR-0064): the sub-elements a write carried, kept as they arrived so a read can
+ * hand back exactly the ones it was asked for.
+ */
+export type FakeImage = {
+  FileName?: string;
+  ContentType?: string;
+  Content?: string;
+};
+
+/**
+ * A stored field value in PORTERS wire shape: a scalar, the selected Option aliases, or an image's
+ * sub-elements.
+ */
+export type FakeValue = string | string[] | FakeImage;
 
 /** One stored record: bare alias (`P_Name`) -> wire value. `P_Id` is always present. */
 export type FakeRecord = Record<string, FakeValue>;

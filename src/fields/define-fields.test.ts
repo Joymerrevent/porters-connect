@@ -20,6 +20,8 @@ describe("defineFields — builder -> catalog", () => {
         U_born: f.age(),
         U_tags: f.option(),
         U_sub: f.user(),
+        U_photo: f.image(),
+        U_link: f.link(),
       }),
     });
     expect(fields.candidate).toEqual({
@@ -34,6 +36,8 @@ describe("defineFields — builder -> catalog", () => {
       U_born: "Age",
       U_tags: "Option",
       U_sub: "User",
+      U_photo: "Image",
+      U_link: "Link",
     });
   });
 

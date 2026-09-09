@@ -135,8 +135,17 @@ export const parseReadQuery = (url: URL, prefix: string): ReadQuery => {
 
 // --- matching -------------------------------------------------------------------------------
 
-const asList = (value: FakeValue): string[] =>
-  Array.isArray(value) ? value : [value];
+/**
+ * A stored value as a list of strings: the selected Option aliases, or a lone scalar as a
+ * 1-element selection. An **image** (a record) yields nothing — PORTERS forbids Image in a
+ * condition (ADR-0064 論点6), so it must match nothing rather than be coerced into a string.
+ * Exported because the write path needs the same reading to register Option aliases.
+ */
+export const asList = (value: FakeValue): string[] => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") return [value];
+  return [];
+};
 
 const compare = (left: string, right: string, numeric: boolean): number => {
   if (numeric) return Number(left) - Number(right);

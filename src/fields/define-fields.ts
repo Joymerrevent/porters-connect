@@ -13,7 +13,9 @@ export type FieldDef<D extends DataType> = { readonly dataType: D };
 
 // Data Types a custom U_/A_ field may declare (ADR-0023 D3): the value-shaped types. The
 // System family (System[Id]/[DateTime]/[Reference]) is system-managed = standard territory,
-// so it is not offered; Image / Link are not modelled in DataType yet (future work).
+// so it is not offered. Image / Link are here (ADR-0064 案5a) and **only** here: no standard
+// field carries either type, so declaring one is the only way a tenant's image / link field
+// can be read or written at all.
 export type CustomDataType =
   | "Number"
   | "SinglelineText"
@@ -25,7 +27,9 @@ export type CustomDataType =
   | "DateTime"
   | "Age"
   | "Option"
-  | "User";
+  | "User"
+  | "Image"
+  | "Link";
 
 /** Builder passed to each resource declaration: one method per declarable Data Type. */
 export type FieldBuilder = {
@@ -40,6 +44,16 @@ export type FieldBuilder = {
   age(): FieldDef<"Age">;
   option(): FieldDef<"Option">;
   user(): FieldDef<"User">;
+  /**
+   * An Image field (FT-18). Reads back `FileName` alone unless the query's `image` option asks
+   * for `ContentType` / `Content`; writes the three sub-elements, checked before send.
+   */
+  image(): FieldDef<"Image">;
+  /**
+   * A Link field (FT-20). Reads back a Contact id, a `UserRef`, or a `DepartmentRef` — whichever
+   * the tenant configured, told apart by shape; writes the referenced id.
+   */
+  link(): FieldDef<"Link">;
 };
 
 /** Data resources that accept custom fields (ADR-0023 D6). Master / Attachment are excluded. */
@@ -122,6 +136,8 @@ const builder: FieldBuilder = {
   age: () => def("Age"),
   option: () => def("Option"),
   user: () => def("User"),
+  image: () => def("Image"),
+  link: () => def("Link"),
 };
 
 // Custom field aliases are `U_[Name]` (user-created) or `A_[Name]` (app-created) — ADR-0004.

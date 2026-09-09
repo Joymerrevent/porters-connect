@@ -109,10 +109,18 @@ System 系（`System[Id]` / `[DateTime]` / `[Reference]` / `[Department]`）を�
 - Image は reference が **condition 不可**と明記。order も認めない。
 - Link は**記載が無い**。
 
-**両方とも condition / order の対象外にする**（案6a）。`ConditionFor` と `OrderableKeys` は
+**両方とも condition / order の対象外にする**（案6a）。~~`ConditionFor` と `OrderableKeys` は
 **未知の Data Type に `never` を返す**ので、`DataType` に足すだけで自動的にそうなる
-＝**実装を足さずに型で閉じる**。Link は「不可」ではなく「不明」なので、
+＝**実装を足さずに型で閉じる**。~~ Link は「不可」ではなく「不明」なので、
 **[live-verification][lv] に LV 項目を起こし**、確認できたら緩める（緩めるのは後方互換）。
+
+**訂正（実装時 2026-09-07）**: 機構の見立てのうち **condition 側は実装時点で成立しなくなった**。
+本 ADR の実装に先立ち、`ConditionFor` を**多段ネストの条件型から Data Type ごとの表**（`ConditionOf`）へ
+置き換えたため、末尾の分岐から `never` を継承する形が無くなっている。**`Image: never` / `Link: never` は
+表に書き下す**（書かなければ索引できずコンパイルエラー）。`OrderableKeys` は列挙のままなので、
+**order 側の記述はそのまま正しい**。**決定そのものは変わらない** — どちらの型も condition / order の
+対象外で、型テストで固定してある。以後 `DataType` に型を足すときは `ConditionOf` に 1 行必要になる
+（忘れてもビルドが落ちるので、安全側に倒れる）。
 
 ## Decision Outcome
 
@@ -129,6 +137,8 @@ System 系（`System[Id]` / `[DateTime]` / `[Reference]` / `[Department]`）を�
 - Good: **D3 が 17/17** になり、「PORTERS の Data Type をすべて型で表せる」を検査結果として言える。
 - Good: 画像を**型付きで読み書きできる**のに、**一覧取得は軽いまま**（既定は `FileName` のみ）。
 - Good: `condition` / `order` からの除外は**型の既定**で閉じる＝新しい分岐を書かない。
+  **訂正（実装時 2026-09-07）**: condition は表引きへ変わったため**1 行書く**ようになった（上記 論点6 の訂正）。
+  除外という結果は同じで、書き忘れはコンパイルエラーになる。
 - Bad: 公開サーフェスが 1 つ増える（`image` オプション）。`expand` と似ているが別物という説明が要る。
 - Bad: **サイズガードの穴が 1 つ増える**（Image を含む write）。埋め合わせの検証 3 つを正しく保つ責任が生じる。
 - Neutral: フェイクサーバー（[ADR-0043][adr43]）に Image / Link の wire 形を足す必要がある。

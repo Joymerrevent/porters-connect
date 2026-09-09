@@ -8,7 +8,9 @@ import { asRecord, asString } from "./raw";
 // strings, incl. the System family (`System[Id]` / `System[DateTime]` / `System[Reference]`).
 // Currency collapses to Number and the three Option subtypes to Option (PORTERS' own
 // Data Type does the same); the string Data Types stay distinct (room for future
-// validation / normalisation). The `System[…]` qualifier marks system-managed values
+// validation / normalisation). Image (FT-18) and Link (FT-20) complete the set (ADR-0064);
+// neither appears in any standard catalog — they reach the library only as tenant custom
+// fields declared with `defineFields`. The `System[…]` qualifier marks system-managed values
 // (auto-assigned, often Write-restricted); that lifecycle is enforced via input types,
 // not here — decoding is by value shape.
 export type DataType =
@@ -26,7 +28,9 @@ export type DataType =
   | "User"
   | "Option"
   | "System[Reference]"
-  | "System[Department]";
+  | "System[Department]"
+  | "Image"
+  | "Link";
 
 /**
  * A referenced Department (`System[Department]` — ADR-0061 案3a). Read is nested exactly like
@@ -46,6 +50,25 @@ export type UserRef = {
   P_Mail: string | null;
 };
 
+/** The sub-tags an Image field is made of (`<Alias><FileName/><ContentType/><Content/></Alias>`). */
+export type ImageSubField = "FileName" | "ContentType" | "Content";
+
+/**
+ * A decoded Image value (ADR-0064 論点1): the sub-tags PORTERS actually returned, each empty ->
+ * null. Every key is **optional for the same reason a read record's fields are** — a sub-tag that
+ * was not requested is simply absent. A plain read asks for the bare alias, which PORTERS answers
+ * with `FileName` alone; `image` selects more and narrows this to exactly what it selected.
+ */
+export type ImageValue = { [K in ImageSubField]?: string | null };
+
+/**
+ * A decoded Link value (ADR-0064 論点4). PORTERS resolves a Link to **a Contact id, a User, or a
+ * Department**, decided by the tenant's own field setting, and the response carries no
+ * discriminator — the shapes just differ. So the value is a union and the decode reads the shape,
+ * which cannot disagree with what arrived. Narrow with `typeof v === "number"` / `"P_Mail" in v`.
+ */
+export type LinkValue = number | UserRef | DepartmentRef;
+
 /**
  * An **expanded** `System[Reference]` value: the referenced record's requested fields, decoded by
  * the referenced resource's own catalog (ADR-0058). Only a read that asked for the expansion
@@ -55,7 +78,14 @@ export type ReferenceRecord = { [alias: string]: FieldValue };
 
 // `string[]` is the Option read value (a set of selected aliases — ADR-0017).
 export type FieldValue =
-  string | number | string[] | UserRef | DepartmentRef | ReferenceRecord | null;
+  | string
+  | number
+  | string[]
+  | UserRef
+  | DepartmentRef
+  | ImageValue
+  | ReferenceRecord
+  | null;
 
 // Per-Data-Type decoded value (the non-null shape), as a **table rather than a conditional chain**.
 // Every Data Type is listed exactly once, so the mapping reads at a glance and adding a type to
@@ -69,6 +99,8 @@ type DecodedValueOf = {
   User: UserRef;
   "System[Department]": DepartmentRef;
   Option: string[];
+  Image: ImageValue;
+  Link: LinkValue;
   // The string Data Types share one decoded shape but keep distinct labels (ADR-0016).
   DateTime: string;
   "System[DateTime]": string;
@@ -173,6 +205,43 @@ const decodeReference = (raw: unknown): number | null => {
   return null;
 };
 
+// Image Read: `<Alias><FileName>photo.png</FileName></Alias>`. Only the sub-tags the request
+// asked for are present (the bare alias returns `FileName` alone — ADR-0064 案1a), so we keep the
+// keys that arrived rather than filling in the other two: absent means "not requested", while
+// `null` means "requested and empty" — the same distinction the read record itself draws.
+// The sub-tags are bare in PORTERS' sample; `bareTag` also tolerates a prefixed form.
+const decodeImage = (raw: unknown): ImageValue | null => {
+  const outer = asRecord(raw);
+  if (!outer) return null;
+  const out: ImageValue = {};
+  for (const [key, child] of Object.entries(outer)) {
+    const sub = bareTag(key);
+    if (sub !== "FileName" && sub !== "ContentType" && sub !== "Content")
+      continue;
+    const value = asString(child);
+    // An empty element parses to "" -> null, like every other empty value.
+    out[sub] = value === undefined || value === "" ? null : value;
+  }
+  return out;
+};
+
+// Link Read (ADR-0064 案4a): the value is a Contact id, a User, or a Department, and PORTERS
+// sends **no discriminator** — the shapes differ and nothing else does. Read the shape:
+// a scalar is the Contact id, `<User>` is a user, `<Department>` a department. Anything else
+// decodes to null rather than to a guess.
+// VERIFY(live): the User / Department forms are assumed to nest exactly like the `User` and
+// `System[Department]` Data Types do, which is what the reference implies but does not show for
+// Link specifically. See docs/live-verification.md (LV-19).
+const decodeLink = (raw: unknown): LinkValue | null => {
+  const scalar = asString(raw);
+  if (scalar !== undefined) return Number(scalar);
+  const outer = asRecord(raw);
+  if (!outer) return null;
+  if ("User" in outer) return decodeUser(raw);
+  if ("Department" in outer) return decodeDepartment(raw);
+  return null;
+};
+
 /** Decode one field's raw node by its Data Type (`null` = PORTERS assigns none — ADR-0056). */
 export const decodeField = (
   type: DataType | null,
@@ -227,6 +296,10 @@ export const decodeField = (
       return decodeOption(raw);
     case "System[Reference]":
       return decodeReference(raw);
+    case "Image":
+      return decodeImage(raw);
+    case "Link":
+      return decodeLink(raw);
   }
 };
 
