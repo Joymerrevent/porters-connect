@@ -2,7 +2,7 @@
 "@joymerrevent/porters-connect": patch
 ---
 
-公開 API の全記号のリファレンスを `docs/api/` に用意した（ADR-0068・`1.0.0` 条件の V2）。
+公開 API の全記号のリファレンスを `docs/api/` に用意した（ADR-0068）。
 
 TypeDoc + `typedoc-plugin-markdown` で JSDoc から生成した 176 ページをリポジトリに置いてある。
 `dist/index.d.ts` の export 節にある 177 記号すべてにページがあり、TypeDoc は entry point から
