@@ -1,0 +1,32 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "docs/api",
+  "readme": "none",
+
+  // ソースリンクはブランチ名に固定する（ADR-0068 実装時の決定1）。既定ではコミット SHA が
+  // 埋まり、**中身が同じでも毎コミットで 175 / 176 ファイルが変わる**（実測）。ブランチ名なら
+  // 変わるのは「記号の定義位置が実際に動いたファイル」だけ＝1 行ずらすと 2 ファイル（実測）。
+  // これは残すべき差分なので消さない。`main` にしているのは、読者が見るのが公開版だから。
+  "gitRevision": "main",
+
+  // 出力の入口を index.md にする（docs/ の他の索引と同じ形）。
+  "entryFileName": "index",
+  "mergeReadme": false,
+
+  // 生成物は決定的でなければならない（CI が再生成して git diff で検査する）。時刻や
+  // バージョンを埋めると毎回変わるので入れない。
+  "hideGenerator": true,
+  "includeVersion": false,
+
+  // 公開型が未 export の内部型を参照している 58 箇所は **公開 API そのものの性質**で、
+  // ADR-0068 は「当面は警告のまま生成する」と決めている（決定4）。だから警告で落とさない。
+  // 0 件にするかは `1.0.0` の公開 API 凍結を考えるときに別途決める。
+  "treatWarningsAsErrors": false,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  }
+}

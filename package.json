@@ -73,6 +73,8 @@
     "check:release": "node scripts/check-release-invariants.mjs",
     "check:index": "node scripts/check-doc-index.mjs",
     "check:docs": "node scripts/check-doc-examples.mjs",
+    "docs:api": "typedoc",
+    "check:api": "node scripts/check-api-reference.mjs",
     "check:shell": "node scripts/check-shell-identifiers.mjs",
     "prepare": "simple-git-hooks"
   },
@@ -96,6 +98,8 @@
     "simple-git-hooks": "^2.13.1",
     "tsup": "^8.5.1",
     "tsx": "^4.22.4",
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.13.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.1",
     "vitest": "^4.1.9"

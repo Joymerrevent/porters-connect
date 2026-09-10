@@ -72,6 +72,13 @@ jobs:
       - name: Doc examples
         run: pnpm check:docs
 
+      # docs/api（TypeDoc の生成物）が今のソースと一致しているかの検査（ADR-0068 決定3）。
+      # 生成物をリポジトリに置く方式の値打ちは「公開 API を変えるとリファレンスの差分が PR に
+      # 出る」ことで、生成し忘れるとその値打ちが消える。JSDoc だけの変更でも差分が出るので
+      # code フィルタ配下に置かず**常時実行**する（src と docs のどちらの変更でも走らせる）。
+      - name: API reference
+        run: pnpm check:api
+
       # シェルの `$var` に全角文字が吸われる箇所の検出（.sh と .github/workflows の YAML）。
       # 日本語メッセージで自然に生まれ、しかも異常報告の行に出るため「報告せず死ぬ」形で
       # 壊れる（実際に 2 度発生した）。検査対象は docs 配下やワークフローにも散るので
