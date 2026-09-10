@@ -43,7 +43,12 @@ import { join, relative, resolve, sep } from "node:path";
 
 // 検査対象。ADR / レビュー台帳 / 生成物は対象外 — 決定の記録や生成物のコードは
 // 「動くこと」を約束していない（README とガイドは約束している）。
-const ROOTS = ["README.md", "docs/guide/**/*.md"];
+const MARKDOWN_ROOTS = ["README.md", "docs/guide/**/*.md"];
+
+// JSDoc の `@example` も対象。これは **`docs/api` に生成されて利用者に見える**ので、
+// ガイドのコード例とまったく同じ性質を持つ（ADR-0068 の生成物経由で公開される）。
+// 実測（2026-09-11）では 7 個あり、いずれも通っていた＝ここは予防のための追加。
+const SOURCE_ROOTS = ["src/**/*.ts"];
 const REPO = process.cwd();
 
 /** `src/**` の `export class` を採る。クラスは**値であり型でもある**ので両方の宣言が要る。 */
@@ -169,7 +174,11 @@ const KINDS = new Set(["skip", "expect-error", "fields"]);
  * 意図的な型エラーを含む例）。`skip` の残りは理由として扱う。
  */
 const directiveOf = (line) => {
-  const m = /^<!--\s*doccheck:\s*(.*?)\s*-->$/.exec(line.trim());
+  const text = line.trim();
+  // Markdown は HTML コメント、JSDoc の `@example` は行コメント。
+  const m =
+    /^<!--\s*doccheck:\s*(.*?)\s*-->$/.exec(text) ??
+    /^\/\/\s*doccheck:\s*(.*?)\s*$/.exec(text);
   if (!m) return undefined;
   const words = m[1].split(/\s+/).filter((w) => w !== "");
   const kinds = new Set();
@@ -212,10 +221,48 @@ const blocksOf = (file) => {
   return out;
 };
 
-const files = ROOTS.flatMap((p) =>
+const files = MARKDOWN_ROOTS.flatMap((p) =>
   p.includes("*") ? globSync(p, { cwd: REPO }) : [p],
 ).sort();
-const blocks = files.flatMap((f) => blocksOf(f));
+/**
+ * JSDoc の `@example` を抜く。`*` の飾りを外し、次の `@tag` かコメント終端で切る。
+ * 目印は例の 1 行目に `// doccheck: …` と書く（Markdown の HTML コメントは使えない）。
+ */
+const examplesOf = (file) => {
+  const lines = readFileSync(file, "utf8").split("\n");
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*\*\s*@example\s*$/.test(lines[i])) continue;
+    const body = [];
+    let j = i + 1;
+    for (; j < lines.length; j++) {
+      const ln = lines[j];
+      if (/^\s*\*\/\s*$/.test(ln)) break; // コメント終端
+      if (/^\s*\*\s*@\w+/.test(ln)) break; // 次のタグ
+      body.push(ln.replace(/^\s*\* ?/, ""));
+    }
+    const first = body[0]?.trim() ?? "";
+    const directive = directiveOf(first);
+    out.push({
+      file,
+      // 目印の行は本文から外す
+      firstLine: i + 2 + (directive ? 1 : 0),
+      code: (directive ? body.slice(1) : body).join("\n").trimEnd(),
+      directive,
+    });
+    i = j;
+  }
+  return out.filter((b) => b.code.trim() !== "");
+};
+
+const sourceFiles = SOURCE_ROOTS.flatMap((p) => globSync(p, { cwd: REPO }))
+  .filter((f) => !f.endsWith(".test.ts"))
+  .sort();
+
+const blocks = [
+  ...files.flatMap((f) => blocksOf(f)),
+  ...sourceFiles.flatMap((f) => examplesOf(f)),
+];
 
 const skipped = blocks.filter((b) => b.directive?.kinds.has("skip"));
 const missingReason = skipped.filter((b) => b.directive.reason === "");
