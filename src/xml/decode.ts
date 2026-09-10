@@ -1,6 +1,7 @@
 // Data-Type-driven value decoding (ADR-0011). Input is the raw node (string or
 // nested object) from the parser; output is the typed value. Empty -> null.
 
+import { PortersResourceError } from "../errors/index";
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
 import { asRecord, asString } from "./raw";
 
@@ -136,9 +137,8 @@ const pickPrefixed = (
 ): string | undefined =>
   asString(obj[`${prefix}.${key}`]) ?? asString(obj[key]);
 
-const decodeUser = (raw: unknown): UserRef | null => {
-  const outer = asRecord(raw);
-  const user = outer ? asRecord(outer.User) : undefined;
+const decodeUser = (outer: Record<string, unknown>): UserRef | null => {
+  const user = asRecord(outer.User);
   if (!user) return null;
   const id = pickPrefixed(user, "User", "P_Id");
   return {
@@ -151,9 +151,10 @@ const decodeUser = (raw: unknown): UserRef | null => {
 
 // System[Department] mirrors User: `<Field><Department><Department.P_Id>…</Department></Field>`
 // (ADR-0061 — the shape comes from PORTERS' own 2019-12-10 sample, not a guess).
-const decodeDepartment = (raw: unknown): DepartmentRef | null => {
-  const outer = asRecord(raw);
-  const dept = outer ? asRecord(outer.Department) : undefined;
+const decodeDepartment = (
+  outer: Record<string, unknown>,
+): DepartmentRef | null => {
+  const dept = asRecord(outer.Department);
   if (!dept) return null;
   const id = pickPrefixed(dept, "Department", "P_Id");
   return {
@@ -167,9 +168,7 @@ const decodeDepartment = (raw: unknown): DepartmentRef | null => {
 // — incl. the `Option.` prefix (ADR-0017). None / empty -> null.
 // VERIFY(live): the `Option.` prefix and the `OptionRoot` wrapper come from the Read API
 // doc, not a live contract; we tolerate a missing wrapper. See docs/live-verification.md (LV-1, LV-2).
-const decodeOption = (raw: unknown): string[] | null => {
-  const outer = asRecord(raw);
-  if (!outer) return null;
+const decodeOption = (outer: Record<string, unknown>): string[] | null => {
   // Aliases live under `<OptionRoot>` when present; the doc's sample omits it, so fall
   // back to the field's own children.
   const root = "OptionRoot" in outer ? asRecord(outer.OptionRoot) : outer;
@@ -183,9 +182,7 @@ const decodeOption = (raw: unknown): string[] | null => {
 // record's id — enough to round-trip. Richer reference reading is future work (SD-3).
 // NB: the label is literally `System[Reference]` (a nested record). It is NOT the
 // display-only Field-Type-16 "Reference" (a scalar mirror, Data Type `—`), left uncatalogued.
-const decodeReference = (raw: unknown): number | null => {
-  const outer = asRecord(raw);
-  if (!outer) return null;
+const decodeReference = (outer: Record<string, unknown>): number | null => {
   // The nested resource is the first record-valued child (skip attributes / siblings,
   // which decodeUser avoids via a fixed key — here the tag varies). Read that record's own
   // `P_Id` by its **bare** alias: the wrapper tag is the referenced resource's name while its
@@ -210,9 +207,7 @@ const decodeReference = (raw: unknown): number | null => {
 // keys that arrived rather than filling in the other two: absent means "not requested", while
 // `null` means "requested and empty" — the same distinction the read record itself draws.
 // The sub-tags are bare in PORTERS' sample; `bareTag` also tolerates a prefixed form.
-const decodeImage = (raw: unknown): ImageValue | null => {
-  const outer = asRecord(raw);
-  if (!outer) return null;
+const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
   const out: ImageValue = {};
   for (const [key, child] of Object.entries(outer)) {
     const sub = bareTag(key);
@@ -237,15 +232,91 @@ const decodeLink = (raw: unknown): LinkValue | null => {
   if (scalar !== undefined) return Number(scalar);
   const outer = asRecord(raw);
   if (!outer) return null;
-  if ("User" in outer) return decodeUser(raw);
-  if ("Department" in outer) return decodeDepartment(raw);
+  if ("User" in outer) return decodeUser(outer);
+  if ("Department" in outer) return decodeDepartment(outer);
   return null;
+};
+
+// --- Declared type vs actual data (RV-36 / ADR-0006・ADR-0011) -------------------------------
+//
+// ADR-0006 requires that a **declared type disagreeing with the real data** surface as
+// `category: "validation"`, field name included, and that no silent mis-conversion happen.
+// Before RV-36 the opposite was true: an Option field declared as text (or the reverse) decoded to
+// `null`, which a caller cannot tell apart from "the field was empty".
+//
+// The signal is deliberately narrow: a **categorical** shape mismatch. PORTERS sends a scalar for
+// the value-shaped types and a nested record for the composite ones, so a record arriving where a
+// scalar belongs (or the reverse) can only mean the Data Type is wrong. Anything subtler — an
+// unexpected inner tag, a missing `P_Id` — stays tolerant, because there the value may genuinely be
+// absent and guessing would trade a silent null for a false alarm.
+
+// Types whose value is a nested record. `Link` is legitimately either (a Contact id, or a nested
+// User / Department — ADR-0064 案4a) so it is exempt; everything else is a scalar.
+type RecordShaped =
+  "Option" | "User" | "System[Reference]" | "System[Department]" | "Image";
+
+/** The scalar-valued Data Types — the complement, so a new Data Type must join one side. */
+type ScalarShaped = Exclude<DataType, RecordShaped | "Link">;
+
+const RECORD_SHAPED: ReadonlySet<DataType> = new Set<RecordShaped>([
+  "Option",
+  "User",
+  "System[Reference]",
+  "System[Department]",
+  "Image",
+]);
+
+const isRecordShaped = (type: DataType): type is RecordShaped =>
+  RECORD_SHAPED.has(type);
+
+const mismatch = (
+  alias: string,
+  type: DataType,
+  wants: "a nested record" | "a scalar value",
+): PortersResourceError =>
+  new PortersResourceError(
+    `${alias}: declared ${type}, but the value is not ${wants} — PORTERS sends ${wants} for ${type}`,
+    {
+      category: "validation",
+      hint: `The Data Type declared for "${alias}" does not match the field in this partition. Check it against Field Read (verifyFields / generateFieldDecls) and fix the declaration.`,
+      context: { operation: "decode" },
+    },
+  );
+
+// A value whose shape is right but whose *format* is not — the only case is a date-like type
+// whose text does not parse. `portersDate*ToIso` throw `RangeError`, which is outside the
+// PortersError family and so escapes the documented error contract (RV-36).
+//
+// Reaching this means one of two things, and both are the same finding: the field's declared Data
+// Type is wrong, or PORTERS sent a format the reference does not describe. Either way it is a
+// mismatch to report — not a null to swallow.
+const converted = (
+  alias: string,
+  type: DataType,
+  value: string,
+  convert: () => string,
+): string => {
+  try {
+    return convert();
+  } catch (cause) {
+    throw new PortersResourceError(
+      `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
+      {
+        category: "validation",
+        hint: `PORTERS sends ${type} as "yyyy/mm/dd${type === "DateTime" || type === "System[DateTime]" ? " HH:MM:SS" : ""}". Check the Data Type declared for "${alias}" against Field Read (verifyFields).`,
+        context: { operation: "decode" },
+        cause,
+      },
+    );
+  }
 };
 
 /** Decode one field's raw node by its Data Type (`null` = PORTERS assigns none — ADR-0056). */
 export const decodeField = (
   type: DataType | null,
   raw: unknown,
+  /** The field's bare alias, so a mismatch names it (ADR-0006 requires フィールド名付き). */
+  alias: string,
 ): FieldValue => {
   // `raw === ""` is load-bearing (a Text "" must become null, not stay "");
   // `=== undefined` / `=== null` are defense-in-depth — every switch branch below
@@ -258,14 +329,36 @@ export const decodeField = (
   // itemstate 省略時にも返るか、値が 0/1 以外を取りうるかは未確認。
   // docs/live-verification.md（LV-14）。外れたらこの分岐を直す。
   if (type === null) return asString(raw) ?? null;
-  switch (type) {
-    case "System[Id]":
-    case "Number": {
-      // raw is neither "" nor non-string here (guarded above), so `s` is a
-      // non-empty string or undefined — `s === ""` would be dead.
-      const s = asString(raw);
-      return s === undefined ? null : Number(s);
+  // Link is the one type where both shapes are correct — a Contact id is a scalar, a User /
+  // Department is nested, and the shape is the discriminator (ADR-0064 案4a). So no shape check.
+  if (type === "Link") return decodeLink(raw);
+  if (isRecordShaped(type)) {
+    const outer = asRecord(raw);
+    if (outer === undefined) throw mismatch(alias, type, "a nested record");
+    switch (type) {
+      case "User":
+        return decodeUser(outer);
+      case "System[Department]":
+        return decodeDepartment(outer);
+      case "Option":
+        return decodeOption(outer);
+      case "System[Reference]":
+        return decodeReference(outer);
+      case "Image":
+        return decodeImage(outer);
     }
+  }
+  // Scalar-valued from here. The shape check means the branches below need no second `undefined`
+  // test: a value that is neither a scalar nor empty has already been rejected as a mismatch.
+  const value = asString(raw);
+  if (value === undefined) throw mismatch(alias, type, "a scalar value");
+  // `type` is `ScalarShaped` here, so a Data Type added to the union without joining either the
+  // record-shaped list or this switch fails to compile (the ADR-0016 property, kept).
+  const scalarType: ScalarShaped = type;
+  switch (scalarType) {
+    case "System[Id]":
+    case "Number":
+      return Number(value);
     // String Data Types share one decode (a plain string); they stay distinct
     // labels for fidelity / future per-type validation (ADR-0016).
     case "SinglelineText":
@@ -273,33 +366,19 @@ export const decodeField = (
     case "Mail":
     case "Telephone":
     case "URL":
-      return asString(raw) ?? null;
+      return value;
     // FT-12 DateTime and the system timestamps (registration/update) share the wire
     // format; System[DateTime] is Write-restricted, but that is a write-time concern.
     case "DateTime":
-    case "System[DateTime]": {
-      const s = asString(raw);
-      return s === undefined ? null : portersDateTimeToIso(s);
-    }
+    case "System[DateTime]":
+      return converted(alias, scalarType, value, () =>
+        portersDateTimeToIso(value),
+      );
     // Age shares Date's wire format (`yyyy/mm/dd`); PORTERS transmits the birthdate
     // and derives the age in its UI, so the faithful value is the date itself.
     case "Date":
-    case "Age": {
-      const s = asString(raw);
-      return s === undefined ? null : portersDateToIso(s);
-    }
-    case "User":
-      return decodeUser(raw);
-    case "System[Department]":
-      return decodeDepartment(raw);
-    case "Option":
-      return decodeOption(raw);
-    case "System[Reference]":
-      return decodeReference(raw);
-    case "Image":
-      return decodeImage(raw);
-    case "Link":
-      return decodeLink(raw);
+    case "Age":
+      return converted(alias, scalarType, value, () => portersDateToIso(value));
   }
 };
 
@@ -326,7 +405,7 @@ export const decodeReferenceRecord = (
     const out: ReferenceRecord = {};
     for (const [key, child] of Object.entries(inner)) {
       const alias = bareTag(key);
-      out[alias] = decodeField(types.get(alias) ?? null, child);
+      out[alias] = decodeField(types.get(alias) ?? null, child, alias);
     }
     return out;
   }
