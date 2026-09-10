@@ -54,6 +54,8 @@ await t.candidate.search({ field: [] }); // total だけ見たい
 （標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）か、
 未宣言のカスタム項目（`U_` / `A_` で始まる名前）しか受け付けません。
 
+<!-- doccheck: expect-error -->
+
 ```ts
 await t.candidate.search({ field: ["U_memo"] }); // OK（未宣言カスタムも引ける）
 await t.candidate.search({ field: ["P_Nmae"] }); // ✗ 型エラー（綴り間違い）
@@ -135,6 +137,8 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 
 `Image` 型の項目は、**素で要求すると `FileName` だけ**が返ります（PORTERS の既定）。
 `ContentType` / `Content`（Base64 の本体）が要るときに `image` で明示します。
+
+<!-- doccheck: fields -->
 
 ```ts
 const page = await porters.tenant(1).resume.search({

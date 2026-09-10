@@ -287,6 +287,8 @@ Data Type が違うことしか意味しません。それより細かい違い�
 日時（`Date` / `DateTime` / `Age`）はライブラリが **ISO 8601 ⇄ PORTERS 形式**を変換します。
 だから変換できない値は送れません。
 
+<!-- doccheck: fields -->
+
 ```ts
 await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式をそのまま渡した
 // PortersConfigError: U_hiredOn: cannot write "2026/09/10" as Date

@@ -64,8 +64,11 @@ await t.attachment.create(file);
 **partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
 
 ```ts
-const clientFor = (partition: number, tokenStore: TokenStore) =>
-  new PortersClient({ host, appId, appSecret, partition, tokenStore });
+// partition ごとに別のトークン置き場を与える＝トークンが混ざらない
+const clientFor = (tokenStore: TokenStore) =>
+  new PortersClient({ host, appId, appSecret, tokenStore });
+
+const t = clientFor(tokenStore).tenant(partition);
 ```
 
 > [!NOTE]
