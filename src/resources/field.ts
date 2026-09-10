@@ -14,28 +14,17 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./read-core";
+import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
-// Resource-type selector -> Value code (docs/reference resources-list). Master/Phase/Attachment
-// have no Value, so only the R/W data resources are selectable here.
 /**
- * Field Read's `resource` selector -> Value code (docs/reference resources-list). Exported for
- * in-repo dev tooling: the fake server maps the code back to a resource. Not published.
+ * A resource whose field catalog can be read (Field Read `resource` selector).
+ *
+ * Field Read takes a Resource List Value, so the selectable set **is** the set PORTERS gives a
+ * Value — the same one `t.phase.of()` accepts. This is an alias rather than a second table on
+ * purpose: `field.ts` used to keep its own copy and it silently lost Process (RV-37), so the
+ * Value table lives in one place (`resource-list.ts`) and both roles read from it.
  */
-export const RESOURCE_VALUE = {
-  candidate: 1,
-  job: 3,
-  client: 5,
-  recruiter: 9,
-  sales: 11,
-  contract: 13,
-  resume: 17,
-  activity: 19,
-  opportunity: 25,
-  contact: 27,
-} as const;
-
-/** A resource whose field catalog can be read (Field Read `resource` selector). */
-export type ResourceType = keyof typeof RESOURCE_VALUE;
+export type ResourceType = ResourceName;
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -95,7 +84,7 @@ const buildParams = (
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
-  p.set("resource", String(RESOURCE_VALUE[q.resource]));
+  p.set("resource", String(RESOURCE_VALUES[q.resource]));
   p.set("active", String(q.active ?? -1));
   return p;
 };
