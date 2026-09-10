@@ -144,7 +144,7 @@ const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
 
 // Bare `<Tag>value</Tag>` (Attachment has no alias prefix). encodeField escapes the value.
 const tag = (name: string, value: string | number): string =>
-  `<${name}>${encodeField("SinglelineText", String(value))}</${name}>`;
+  `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 const guardContent = (content: string | undefined): void => {

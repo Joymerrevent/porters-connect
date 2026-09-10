@@ -210,3 +210,32 @@ describe("appendReadQuery — itemstate", () => {
     expect((err as PortersConfigError).message).toContain("P_Name");
   });
 });
+
+// RV-36: condition の日時も変換するので、変換できない値は素の RangeError ではなく
+// PortersError の系統で届く（ガイドが勧める instanceof PortersError の分岐で捕まる）。
+describe("condition の変換できない日時（RV-36）", () => {
+  it("ISO でない日付は PortersConfigError（category: validation）", () => {
+    expect(() =>
+      encode({ condition: { P_Day: { ge: "not-a-date" } } }),
+    ).toThrow(PortersConfigError);
+  });
+
+  it("どの項目かをメッセージに載せ、原因を cause に残す", () => {
+    try {
+      encode({ condition: { P_When: { ge: "nope" } } });
+      expect.unreachable();
+    } catch (e) {
+      const err = e as PortersConfigError;
+      expect(err.category).toBe("validation");
+      expect(err.message).toContain("P_When");
+      expect(err.hint).toContain("ISO 8601");
+      expect(err.cause).toBeInstanceOf(RangeError);
+    }
+  });
+
+  it("Age も同じ経路", () => {
+    expect(() => encode({ condition: { P_Age: { eq: "nope" } } })).toThrow(
+      PortersConfigError,
+    );
+  });
+});

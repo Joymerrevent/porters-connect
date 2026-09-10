@@ -2,6 +2,14 @@
 //   DateTime `yyyy/mm/dd HH:MM:SS` (UTC) <-> ISO `...Z`
 //   Date     `yyyy/mm/dd`                <-> date-only (no `Z`)
 // No business-timezone (e.g. JST) conversion — that is the caller's responsibility.
+//
+// **The `RangeError`s below never reach a caller of the library** (RV-36). They say only "this text
+// is not that format", which is not enough for the error contract: ADR-0006 wants the *field* named.
+// So every call site catches them and re-raises a `PortersError` that knows the alias — the read
+// path as `PortersResourceError` (`category: "validation"`, the response is at fault), the write and
+// condition paths as `PortersConfigError` (the caller's value is). Adding the alias here instead
+// would push field knowledge into a date utility, so the wrapping stays at the call sites:
+// `src/xml/decode.ts`, `src/xml/encode.ts`, `src/resources/query.ts`.
 
 const DATETIME_RE = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
 const DATE_RE = /^(\d{4})\/(\d{2})\/(\d{2})$/;

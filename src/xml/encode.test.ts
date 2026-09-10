@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { PortersConfigError, PortersError } from "../errors/index";
+
 import type { DataType } from "./decode";
 import { buildWriteXml, encodeField } from "./encode";
 
@@ -11,6 +13,13 @@ const FIELDS = new Map<string, DataType>([
   ["P_PhaseDate", "DateTime"],
   ["P_Phase", "Option"],
 ]);
+// `encodeField` takes the field's alias so an unconvertible value can name it (RV-36). These
+// tests are about the encoding, so they pass a stand-in; the failure tests pass a real one.
+const enc = (
+  type: Parameters<typeof encodeField>[0],
+  value: Parameters<typeof encodeField>[1],
+  alias = "P_Field",
+): string => encodeField(type, value, alias);
 
 describe("encodeField (ADR-0011, Write)", () => {
   it("keeps string Data Types as-is but escapes & < >", () => {
@@ -22,37 +31,35 @@ describe("encodeField (ADR-0011, Write)", () => {
       "URL",
     ] as const;
     for (const t of stringTypes) {
-      expect(encodeField(t, "a&b<c>d")).toBe("a&amp;b&lt;c&gt;d");
+      expect(enc(t, "a&b<c>d")).toBe("a&amp;b&lt;c&gt;d");
     }
-    expect(encodeField("MultilineText", "山田 太郎")).toBe("山田 太郎");
+    expect(enc("MultilineText", "山田 太郎")).toBe("山田 太郎");
   });
 
   it("serializes System[Id] / Number / User / System[Reference] (ID-only) as a plain scalar", () => {
-    expect(encodeField("System[Id]", -1)).toBe("-1");
-    expect(encodeField("Number", 42)).toBe("42");
-    expect(encodeField("User", 5)).toBe("5"); // Write is the ID, not a nested ref
-    expect(encodeField("System[Reference]", 100)).toBe("100"); // System[Reference] -> id only
+    expect(enc("System[Id]", -1)).toBe("-1");
+    expect(enc("Number", 42)).toBe("42");
+    expect(enc("User", 5)).toBe("5"); // Write is the ID, not a nested ref
+    expect(enc("System[Reference]", 100)).toBe("100"); // System[Reference] -> id only
   });
 
   it("converts DateTime / Date from ISO to PORTERS (UTC)", () => {
-    expect(encodeField("DateTime", "2020-01-02T03:04:05Z")).toBe(
-      "2020/01/02 03:04:05",
-    );
+    expect(enc("DateTime", "2020-01-02T03:04:05Z")).toBe("2020/01/02 03:04:05");
     // System[DateTime] serializes identically (Write is rejected at the input type, not here)
-    expect(encodeField("System[DateTime]", "2020-01-02T03:04:05Z")).toBe(
+    expect(enc("System[DateTime]", "2020-01-02T03:04:05Z")).toBe(
       "2020/01/02 03:04:05",
     );
-    expect(encodeField("Date", "2020-01-02")).toBe("2020/01/02");
-    expect(encodeField("Age", "1990-01-02")).toBe("1990/01/02"); // Age shares Date's wire format
+    expect(enc("Date", "2020-01-02")).toBe("2020/01/02");
+    expect(enc("Age", "1990-01-02")).toBe("1990/01/02"); // Age shares Date's wire format
   });
 
   it("writes Option from an array of aliases (canonical); a lone string is tolerated", () => {
     // canonical input: an array of selected aliases (ADR-0017, symmetric with read)
-    expect(encodeField("Option", ["Option.P_Tokyo", "Option.P_Kanagawa"])).toBe(
+    expect(enc("Option", ["Option.P_Tokyo", "Option.P_Kanagawa"])).toBe(
       "<Option.P_Tokyo/><Option.P_Kanagawa/>",
     );
     // fail-safe: a lone string is wrapped as a 1-element selection
-    expect(encodeField("Option", "Option.P_Tokyo")).toBe("<Option.P_Tokyo/>");
+    expect(enc("Option", "Option.P_Tokyo")).toBe("<Option.P_Tokyo/>");
   });
 });
 
@@ -141,7 +148,7 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
 describe("encodeField: Image / Link (ADR-0064)", () => {
   it("writes an Image as the three nested sub-elements, in PORTERS' order", () => {
     expect(
-      encodeField("Image", {
+      enc("Image", {
         Content: "QUJD",
         FileName: "photo.png",
         ContentType: "image/png",
@@ -155,27 +162,27 @@ describe("encodeField: Image / Link (ADR-0064)", () => {
 
   it("escapes an image sub-value and omits a key that is not there (cast-only)", () => {
     expect(
-      encodeField("Image", {
+      enc("Image", {
         FileName: "a&b<c>.png",
       } as unknown as Parameters<typeof encodeField>[1]),
     ).toBe("<FileName>a&amp;b&lt;c&gt;.png</FileName>");
   });
 
   it("falls back to a scalar when an Image value is not an object (cast-only)", () => {
-    expect(encodeField("Image", "photo.png")).toBe("photo.png");
-    expect(encodeField("Image", ["a"])).toBe("a");
+    expect(enc("Image", "photo.png")).toBe("photo.png");
+    expect(enc("Image", ["a"])).toBe("a");
   });
 
   it("serializes an object handed to a non-Image type visibly (cast-only)", () => {
     expect(
-      encodeField("SinglelineText", {
+      enc("SinglelineText", {
         FileName: "photo.png",
       } as unknown as Parameters<typeof encodeField>[1]),
     ).toBe('{"FileName":"photo.png"}');
   });
 
   it("writes a Link as the referenced id only", () => {
-    expect(encodeField("Link", 10001)).toBe("10001");
+    expect(enc("Link", 10001)).toBe("10001");
   });
 
   it("nests an Image inside its own field element on a write", () => {
@@ -200,5 +207,44 @@ describe("encodeField: Image / Link (ADR-0064)", () => {
         "<Content>QUJD</Content>" +
         "</Resume.U_photo></Item></Resume>",
     );
+  });
+});
+
+// RV-36: 日時だけは変換するので、変換できない値は送れない。以前はここで素の RangeError が飛び、
+// PortersError の系統から外れていた＝ガイドが勧める `instanceof PortersError` の分岐で漏れた。
+describe("変換できない値（RV-36）", () => {
+  it("ISO でない日付は PortersConfigError（category: validation）", () => {
+    try {
+      enc("Date", "not-a-date", "U_hiredOn");
+      expect.unreachable();
+    } catch (e) {
+      const err = e as PortersConfigError;
+      expect(err).toBeInstanceOf(PortersConfigError);
+      expect(err).toBeInstanceOf(PortersError);
+      expect(err.category).toBe("validation");
+      expect(err.message).toContain("U_hiredOn");
+      expect(err.hint).toContain("ISO 8601");
+      // 原因の RangeError は cause に残す（握り潰さない）。
+      expect(err.cause).toBeInstanceOf(RangeError);
+    }
+  });
+
+  it("PORTERS 形式をそのまま渡した典型的な取り違えも弾く", () => {
+    // ライブラリの入力は ISO 8601（PRD R-10）。素通しにすると "2026/09/09" は通るが
+    // ISO の側が変換されずに出ていくので、弾く側で揃えている。
+    expect(() => enc("Date", "2026/09/09")).toThrow(PortersConfigError);
+  });
+
+  it("DateTime / Age も同じ経路", () => {
+    expect(() => enc("DateTime", "nope")).toThrow(PortersConfigError);
+    expect(() => enc("Age", "nope")).toThrow(PortersConfigError);
+  });
+
+  it("変換を持たない型は素通し＝検査しない（意図した非対称・#4 = 案3）", () => {
+    // サーバーが弾くものを手前で弾いても防げるのは silent な失敗ではないので足していない。
+    expect(enc("Number", "abc")).toBe("abc");
+    expect(enc("Mail", "not-a-mail")).toBe("not-a-mail");
+    expect(enc("Telephone", "---")).toBe("---");
+    expect(enc("URL", "nope")).toBe("nope");
   });
 });
