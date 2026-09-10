@@ -61,10 +61,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
         **実装は 2 PR に分かれる** — ① [RV-37][rv37] の是正（Field Read が Process を選べない。
         対応表を `resource-list.ts` に一本化＋網羅テスト）→ ② 本体（読み取りプリミティブ＋
         `verifyFields` / `assertFieldsMatch` / `generateFieldDecls`）
-  - [ ] **値レベルの実行時検証** → **未起票**（[ADR README][adr-readme] の論点バックログ）。
-        **値検証は契約前に厳しくしすぎない**（サーバーが受けるものを手前で落とすと安全側でなく
-        危険側に倒れる）＝ **opt-in 前提**。ゼロから足す話ではなく、日時変換だけ既に効いていて
-        そこだけ `PortersError` でない現状（[RV-36][rv36]）を揃える話から始まる
+  - [ ] **値レベルの実行時検証** → **ADR 不要と決着**（2026-09-10）。方針は既に accepted で
+        決まっていた（[ADR-0006][adr6] / [ADR-0011][adr11]＝「宣言型と実データの食い違いも
+        `validation` で surface・silent な誤変換はしない」）のに実装が従っておらず、
+        残った 1 点（書き側の検証範囲）も**足さない**という現状維持の決定になった。
+        **[RV-36][rv36] の処置として実装するだけ**（[ADR README][adr-readme] に記録）
 - [ ] **API リファレンスの実装**（[ADR-0068][adr68]・accepted）— **V2 そのもの**。TypeDoc +
       `typedoc-plugin-markdown` で `docs/api/` に生成してコミットし、CI で再生成差分を検査する。
       着手時に 4 点を確定する（ソースリンクの SHA 埋め込み・出力先・ゲートの形・内部型 57〜58 箇所の扱い）
@@ -499,6 +500,8 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr64]: adr/0064-link-image-types.md
 [adr68]: adr/0068-api-reference-tooling.md
 [adr69]: adr/0069-tenant-field-catalog-tooling.md
+[adr6]: adr/0006-error-model.md
+[adr11]: adr/0011-xml-parse-serialize.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
 [adr63]: adr/0063-idempotency-guard-scope.md
 [adr35]: adr/0035-usage-documentation-structure.md
