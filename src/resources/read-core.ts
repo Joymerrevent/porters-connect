@@ -165,7 +165,7 @@ export const decoderFor = <F extends FieldCatalog>(
           ? typeof raw === "string"
             ? raw
             : null
-          : decodeField(type, raw);
+          : decodeField(type, raw, alias);
     }
     return out as ReadRecord<F>;
   };

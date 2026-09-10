@@ -50,7 +50,7 @@
 | [RV-33][rv33] | 🟡     | プロセス / フェイルセーフ     | fixed   | back-merge が develop の保護ルールをバイパスして通る                       |
 | [RV-34][rv34] | 🟢     | フェイルセーフ / DX           | wontfix | 取り込み時の同一性チェックが 3 つの別原因を同じ文言で報告する              |
 | [RV-35][rv35] | 🟢     | フェイルセーフ                | wontfix | 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない                    |
-| [RV-36][rv36] | 🟡     | エラーモデル / フェイルセーフ | open    | 日時の変換だけが例外を投げ、それが PortersError でない（読み・書きの両方） |
+| [RV-36][rv36] | 🟡     | エラーモデル / フェイルセーフ | fixed   | 日時の変換だけが例外を投げ、それが PortersError でない（読み・書きの両方） |
 | [RV-37][rv37] | 🟡     | API 忠実性 / 機能網羅         | fixed   | Field Read が Process を選べず、同じ事実の対応表が 2 つに割れている        |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。

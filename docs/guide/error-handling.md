@@ -252,10 +252,54 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 | 登録最大件数超過                          | リソース `500`             | `validation` | 件数を減らす／200 件以下のバッチに分割                                      |
 | `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）        |
 | `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                      |
+| **読み取りで宣言型と実データが食い違う**  | —（応答の形が違う）        | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す    |
+| **書き込み・condition の日時が変換不能**  | —（渡した値の書式）        | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）                |
 | `new PortersClient(...)` がその場で落ちる | `host` / `scheme` の書式   | `config`     | `host` は**ホスト名（＋ポート）だけ**（下記）                               |
 | `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                      |
 | `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）         |
 | `resource response root is …` が出る      | —（200 ＋ 別物のボディ）   | `unknown`    | 中間装置が代わりに応答している。`host` と経路を確認（[ADR-0051][adr-0051]） |
+
+## 宣言型と実データの食い違い（`validation`）
+
+宣言したカスタム項目の Data Type が実物と違うと、読み取りは
+**`PortersResourceError`（`category: "validation"`）**で失敗します。どの項目かがメッセージに入ります。
+
+```text
+U_source: declared Option, but the value is not a nested record — PORTERS sends a nested record for Option
+```
+
+**以前は黙って `null` になっていました**（[RV-36][rv36]）。例外も警告も出ないので「その項目は空だった」
+と区別が付かず、気づけない壊れ方でした。[ADR-0006][adr-0006] は「宣言型と実データの食い違いも
+`validation` で surface（フィールド名付き・silent な誤変換はしない）」と決めており、いまは実装がそれに従います。
+
+事前に知りたいなら [`verifyFields`][custom-fields] です（起動時や CI で突き合わせられます）。
+
+判定は**形の食い違いだけ**に絞っています。PORTERS は値型（数値・文字列・日時）をスカラで、
+複合型（Option / User / 参照 / Image）を入れ子で送るので、**スカラが来るべき所に入れ子**（またはその逆）は
+Data Type が違うことしか意味しません。それより細かい違い（入れ子の中の想定外のタグ、`P_Id` の欠落）は
+**そのまま許容して `null`** にします — そこは値が本当に無いこともあり、弾くと偽の警報になるためです。
+
+`Link` は検査しません。Contact の ID はスカラ、User / Department は入れ子で、**形そのものが判別子**
+だからです（[ADR-0064][adr-0064]）。
+
+## 日時だけは変換するので、変換できない値は弾く
+
+日時（`Date` / `DateTime` / `Age`）はライブラリが **ISO 8601 ⇄ PORTERS 形式**を変換します。
+だから変換できない値は送れません。
+
+```ts
+await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式をそのまま渡した
+// PortersConfigError: U_hiredOn: cannot write "2026/09/10" as Date
+//   category: "validation" / hint: ISO 8601 で渡す
+```
+
+他の型は**変換が無いので検査しません**（`Number` に `"abc"` を渡しても素通しし、PORTERS が弾きます）。
+この非対称は意図したものです — 日時が特別なのは検証があるからではなく**変換があるから**で、
+手前で厳しくすると、サーバーが受け付ける値をライブラリが落としてしまいます（[RV-36][rv36] #4）。
+
+条件（`condition`）の日時も同じ経路です。クラスは `PortersConfigError`（値を渡したのは呼び出し側なので
+「PORTERS 由来でない」＝このクラス）、`category` は `validation`（[ADR-0006][adr-0006] が
+「入力・パラメータ・**書式**」と定義している側）です。
 
 ## コード対応表（2 系統）
 
@@ -297,6 +341,9 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 - 契約後に確認する仮定: [live-verification][lv]
 
 [adr-0006]: ../adr/0006-error-model.md
+[adr-0064]: ../adr/0064-link-image-types.md
+[rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[custom-fields]: custom-fields.md
 [adr-0044]: ../adr/0044-http-status-handling.md
 [adr-0046]: ../adr/0046-guard-error-contract.md
 [adr-0047]: ../adr/0047-access-point-scheme.md
