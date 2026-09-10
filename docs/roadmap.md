@@ -56,12 +56,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 - [ ] 案D **`defineFields` 深掘りの残り**（[ADR-0023][adr23] D5）— **2026-09-09 に 2 つへ分割した**
       （中身の性質が違い、片方の是非でもう片方が止まるのを避けるため）。
-  - [ ] **テナント突合＋宣言生成** → [ADR-0069][adr69]・**accepted**（2026-09-10・推奨案どおり）。
-        テナントの Field カタログを読んで、宣言との食い違いを報告し、宣言の雛形を生成する。
-        ✅ 前提の [RV-37][rv37] は **fixed**（2026-09-10・対応表を `resource-list.ts` に一本化＋
-        両側に網羅テスト。`t.field.search({ resource: "process" })` が書けるようになった）。
-        残るのは**本体**（読み取りプリミティブ＋ `verifyFields` / `assertFieldsMatch` /
-        `generateFieldDecls`）
+  - [x] ✅ **テナント突合＋宣言生成** → [ADR-0069][adr69]・**実装済み・未リリース**（2026-09-10）。
+        `readCustomCatalog` / `verifyFields` / `assertFieldsMatch` / `generateFieldDecls` の 4 つを
+        公開し、Field Type Value ↔ Data Type の対応表を `src/resources/field-type.ts` に一本化した。
+        前提の [RV-37][rv37] も **fixed**。フェイクに `customFields` を足したので、統合テストが
+        実際の Field Read 経路（XML パース・decode）を通る
   - [ ] **値レベルの実行時検証** → **ADR 不要と決着**（2026-09-10）。方針は既に accepted で
         決まっていた（[ADR-0006][adr6] / [ADR-0011][adr11]＝「宣言型と実データの食い違いも
         `validation` で surface・silent な誤変換はしない」）のに実装が従っておらず、
@@ -174,7 +173,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ----------------------------- | -------------------------------------------------- | ---------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 3・要 ADR 1（＝V3） |
 | [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open 1 件**（RV-36。RV-37 は fixed）   |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **0069 は accepted・実装待ち**           |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **0069 は実装済み・未リリース**          |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜22 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
 | [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）         |
@@ -308,10 +307,10 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - ADR 0001〜0069（0037 は 0039 で・**0033 は 0060 で**・0065 / 0066 は 0067 で superseded／
   **0030 の実行方式は [ADR-0062][adr62] で** superseded＝手動であること自体は不変）／
-  **実装待ちは [ADR-0068][adr68]**（API リファレンス＝V2）と
-  **[ADR-0069][adr69]**（テナント突合＋宣言生成。前提に RV-37）。[索引][adr] が正
+  **実装待ちは [ADR-0068][adr68]**（API リファレンス＝V2）のみ
+  （**[ADR-0069][adr69] は実装済み・未リリース**）。[索引][adr] が正
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**885 tests**／project-review プロセス＋台帳（[findings][findings]：
+- 品質ゲート green・**953 tests**／project-review プロセス＋台帳（[findings][findings]：
   **open は 1 件**＝ RV-36（日時変換の例外が `PortersError` でない・方針は確定・実装待ち）。
   RV-37（Field Read が Process を選べない）は **fixed**。どちらも 2026-09-09 に案D の評価過程で検出。
   **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（0.12.1 で公開済み）、

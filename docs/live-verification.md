@@ -158,7 +158,13 @@ grep -rn "VERIFY(live)" src test
   Value が未公開の `System[DateTime]` / `System[Reference]` は **11（System）** を返す
 - **不確実な理由**: reference の Field 項目表は Alias の表記例を持たず、System 系サブタイプの Field Type Value も
   公開されていない（Option は 3 サブタイプが同じ Data Type に畳まれる）
-- **コード箇所**: `test/fake/master-read.ts`（`FIELD_TYPE_VALUE` / `readField`）
+- **影響範囲が広がった**（2026-09-10・[ADR-0069][a69] 実装）: 以前はフェイクの都合だけだったが、
+  いま `P_Alias` の表記は **利用者に見せる生成物（`generateFieldDecls`）と突合結果（`verifyFields`）の
+  正しさ**に効く。**外れても壊れない設計にはしてある**（接頭辞つき・bare の両対応）が、
+  確認の価値は上がった。System 系の Value は**宣言できない型**なので、外れても生成・突合は変わらない
+- **コード箇所**: `src/resources/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
+  `src/fields/tenant-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
+  `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
 - **状態**: 未確認
 - **確認結果**: —
@@ -358,6 +364,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a40]: adr/0040-multitenancy-surface-impl.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md
+[a69]: adr/0069-tenant-field-catalog-tooling.md
 [a38]: adr/0038-read-query-surface-impl.md
 [a56]: adr/0056-deleted-flag-typing.md
 [a57]: adr/0057-itemstate-existing-explicit.md
