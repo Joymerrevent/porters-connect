@@ -114,9 +114,25 @@ Process の Field Read が実際に応答するかは実機で確かめる必要
 
 ## 処置
 
-—（未処置）
+**方針は (a) に決定・実装は未着手**（2026-09-10）。
+
+[ADR-0069][adr69] の**論点6 で案6a が採られた**ことで、本件の処置方針も同時に決まった。
+案6a は「RV-37 を先に直し、**対応表を 1 つに統合してから**本 ADR を実装する」なので、
+上記 (a)（`field.ts` の `RESOURCE_VALUE` を消して `resource-list.ts` の `RESOURCE_VALUES` を
+唯一の正典にする）が方針として確定している。(b) の「`process: 7` を足すだけ」は採らない。
+
+実装は ADR-0069 の**先行 PR**として入れる（ADR-0069 本体はこれを前提にする）。やること:
+
+1. `field.ts` の `RESOURCE_VALUE` を削除し、`ResourceType` を `ResourceName` から導出する
+2. `field.ts` 側にも網羅テストを置く（`resource-list.test.ts` と同じ形＝今回ずれた原因を塞ぐ）
+3. `process` が公開型 `ResourceType` に増えるので CHANGELOG に出す（拡張なので破壊的ではない）
+
+**状態は `open` のまま**にしている。方針が決まっただけで、`t.field.search({ resource: "process" })`
+は今も書けないため — 決定と処置を同じ欄で潰さない（[ADR-0052][adr52]＝処置が追えること）。
 
 [adr22]: ../../adr/0022-master-read-query-surface.md
+[adr52]: ../../adr/0052-findings-register-layout.md
 [adr61]: ../../adr/0061-phase-resource-surface.md
+[adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
 [res-list]: ../../reference/resource-api/resources-list.md
 [rm]: ../../roadmap.md
