@@ -41,6 +41,10 @@ export type MasterContext = {
   optionTree: FakeOptionNode[];
   /** Data resources, for Field Read (`resource=` selects one). */
   resources: ReadonlyMap<string, ResourceDescriptor>;
+  /** Tenant custom fields Field Read should report, by resource path then bare alias. */
+  customFields: Readonly<Record<string, Record<string, DataType>>>;
+  /** `Field.P_Name` for those custom fields, by resource path then bare alias. */
+  customFieldNames: Readonly<Record<string, Record<string, string>>>;
 };
 
 export type MasterReadHandler = (
@@ -143,7 +147,8 @@ export const readField: MasterReadHandler = (url, ctx) => {
     ([, code]) => code === value,
   )?.[0];
   const descriptor = path === undefined ? undefined : ctx.resources.get(path);
-  if (descriptor === undefined) {
+  // Both checks together, so `path` narrows to a string for the custom-field lookups below.
+  if (path === undefined || descriptor === undefined) {
     // An unknown/unsupported resource selector is a parameter error, not an empty catalog.
     return {
       status: 200,
@@ -154,14 +159,18 @@ export const readField: MasterReadHandler = (url, ctx) => {
       ),
     };
   }
-  const records = Object.entries(descriptor.fields)
+  // Standard `P_` fields come from the library's own catalog; tenant `U_`/`A_` fields are whatever
+  // the test seeded. A real Field Read returns both in one response, so the fake does too.
+  const custom = Object.entries(ctx.customFields[path] ?? {});
+  const customNames = ctx.customFieldNames[path] ?? {};
+  const records = [...Object.entries(descriptor.fields), ...custom]
     // A Field row carries a Field Type value. A field PORTERS assigns no Data Type (`ー` -> `null`,
     // ADR-0056) has no Field Type either — the reference's `P_Deleted` row is `ー` in both columns —
     // so it gets no row here. Inventing a Value for it would be exactly the fabrication ADR-0056 refuses.
     .filter((entry): entry is [string, DataType] => entry[1] !== null)
     .map(([alias, type], index) => ({
       P_Id: String(index + 1),
-      P_Name: alias,
+      P_Name: customNames[alias] ?? alias,
       // The alias as it travels on the wire, i.e. what you would put in `field=`.
       // VERIFY(live): prefixed vs bare in a real Field Read is unconfirmed — see LV-12.
       P_Alias: `${descriptor.prefix}.${alias}`,

@@ -396,6 +396,8 @@ export const createFakeTransport = (
         currentUserId: context.currentUserId,
         optionTree: options.optionTree ?? [],
         resources: FAKE_DATA_DESCRIPTORS,
+        customFields: options.customFields ?? {},
+        customFieldNames: options.customFieldNames ?? {},
       });
     }
     if (!write) return handleRead(url, resource);

@@ -54,6 +54,34 @@ export type {
   DeclaredCatalogs,
 } from "./fields";
 
+// Checking a declaration against the tenant it will run against, and writing one from it
+// (ADR-0069). Opt-in and dev-time: `defineFields` alone never calls PORTERS, and none of these run
+// unless you call them. All three need the `field_r` scope.
+//
+// `verifyFields` reports rather than throws — a tenant administrator renaming one field should not
+// stop an application from starting. `assertFieldsMatch` is the one line that makes it fatal.
+export {
+  assertFieldsMatch,
+  generateFieldDecls,
+  readCustomCatalog,
+  verifyFields,
+} from "./fields";
+export type {
+  FieldCatalogSource,
+  FieldTypeMismatch,
+  FieldVerification,
+  GenerateFieldDeclsOptions,
+  MissingField,
+  ReadCustomCatalogOptions,
+  TenantCustomCatalog,
+  UndeclarableField,
+  UndeclarableTenantField,
+  UndeclarableReason,
+  UndeclaredField,
+  UnverifiableResource,
+  VerifyFieldsOptions,
+} from "./fields";
+
 // Typed Read query surface shared by data resources (ADR-0038 / F-2): condition / order /
 // keywords / itemstate. Per-resource `*SearchQuery` aliases below specialise `SearchQuery`.
 // `ReadFieldAlias` is what `field` accepts — bare aliases, prefixed by the library (ADR-0059).

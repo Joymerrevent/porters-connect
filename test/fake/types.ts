@@ -7,6 +7,7 @@
 // HTTP server adapter is phase 5 of the plan).
 
 import type { Transport } from "../../src/http/types";
+import type { DataType } from "../../src/xml/decode";
 
 /**
  * A stored image (ADR-0064): the sub-elements a write carried, kept as they arrived so a read can
@@ -115,6 +116,17 @@ export type FakeTransportOptions = {
   optionTree?: FakeOptionNode[];
   /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */
   currentUserId?: number;
+  /**
+   * Tenant custom fields (`U_`/`A_`) Field Read should report, keyed by resource path then bare
+   * alias. Standard `P_` fields come from the library's own catalogs; these are the per-tenant ones
+   * a real PORTERS tenant would add, and the only way to exercise `readCustomCatalog` / `verifyFields`
+   * / `generateFieldDecls` against a real Field Read response (ADR-0069).
+   *
+   * @example { candidate: { U_score: "Number" } }
+   */
+  customFields?: Record<string, Record<string, DataType>>;
+  /** Display names for those custom fields (`Field.P_Name`), keyed the same way. Optional. */
+  customFieldNames?: Record<string, Record<string, string>>;
   /** Request caps; `false` disables them. Defaults to the reference limits. */
   rateLimit?: FakeRateLimit | false;
 };

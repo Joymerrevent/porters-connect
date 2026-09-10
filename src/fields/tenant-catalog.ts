@@ -61,6 +61,14 @@ export type TenantCustomCatalog = {
    * an unknown Field Type means PORTERS grew a type, and nobody would notice if it vanished here.
    */
   readonly undeclarable: readonly UndeclarableField[];
+  /**
+   * Bare alias -> `Field.P_Name`, for every custom field seen (declarable or not).
+   *
+   * Collected while the rows go past so nothing needs a second round trip. This is the **tenant's
+   * own business vocabulary**, so it is carried but never printed unless a caller explicitly asks
+   * (`generateFieldDecls` has it off by default). A field PORTERS returned without a name is absent.
+   */
+  readonly names: Readonly<Record<string, string>>;
 };
 
 /** Options for {@link readCustomCatalog}. */
@@ -149,6 +157,7 @@ export const readCustomCatalog = async (
 ): Promise<TenantCustomCatalog> => {
   const fields: Record<string, CustomDataType> = {};
   const undeclarable: UndeclarableField[] = [];
+  const names: Record<string, string> = {};
   for await (const row of source.field.searchAll({
     resource,
     active: options.active ?? -1,
@@ -159,9 +168,11 @@ export const readCustomCatalog = async (
     if (row.P_Alias === null || row.P_Alias === undefined) continue;
     const alias = bareAlias(row.P_Alias);
     if (!CUSTOM_ALIAS.test(alias)) continue;
+    if (row.P_Name !== null && row.P_Name !== undefined)
+      names[alias] = row.P_Name;
     const result = classify(alias, row.P_Type ?? null);
     if (result.kind === "declarable") fields[alias] = result.dataType;
     else undeclarable.push(result.entry);
   }
-  return { resource, fields, undeclarable };
+  return { resource, fields, undeclarable, names };
 };
