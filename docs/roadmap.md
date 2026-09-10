@@ -35,7 +35,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 | --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
 | V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **未検査**（マトリクス未作成）                     |
 | V2  | **リファレンス完成**                   | 公開 API（`src/index.ts` の export）が 1 つ残らずリファレンスに載っている                                                                  | 方式は [ADR-0068][adr68] で決定（案B）・**未着手** |
-| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち 3・要 ADR 1・**open 2**       |
+| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち 3・要 ADR 1・**open 1**       |
 | V4  | **残る未確認はライブ検証だけ**         | `grep -rn "VERIFY(live)" src test` の結果が [live-verification][lv] のエントリと 1:1 で対応する                                            | LV-1〜22（22 件）                                  |
 | V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の全エントリが「状態: **確定**」                                                                                   | **0 / 22**（契約待ち）                             |
 | V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                       |
@@ -58,9 +58,10 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
       （中身の性質が違い、片方の是非でもう片方が止まるのを避けるため）。
   - [ ] **テナント突合＋宣言生成** → [ADR-0069][adr69]・**accepted**（2026-09-10・推奨案どおり）。
         テナントの Field カタログを読んで、宣言との食い違いを報告し、宣言の雛形を生成する。
-        **実装は 2 PR に分かれる** — ① [RV-37][rv37] の是正（Field Read が Process を選べない。
-        対応表を `resource-list.ts` に一本化＋網羅テスト）→ ② 本体（読み取りプリミティブ＋
-        `verifyFields` / `assertFieldsMatch` / `generateFieldDecls`）
+        ✅ 前提の [RV-37][rv37] は **fixed**（2026-09-10・対応表を `resource-list.ts` に一本化＋
+        両側に網羅テスト。`t.field.search({ resource: "process" })` が書けるようになった）。
+        残るのは**本体**（読み取りプリミティブ＋ `verifyFields` / `assertFieldsMatch` /
+        `generateFieldDecls`）
   - [ ] **値レベルの実行時検証** → **ADR 不要と決着**（2026-09-10）。方針は既に accepted で
         決まっていた（[ADR-0006][adr6] / [ADR-0011][adr11]＝「宣言型と実データの食い違いも
         `validation` で surface・silent な誤変換はしない」）のに実装が従っておらず、
@@ -172,7 +173,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 | ファイル                      | 何の TODO か                                       | いまの状態                               |
 | ----------------------------- | -------------------------------------------------- | ---------------------------------------- |
 | **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 3・要 ADR 1（＝V3） |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open 2 件**（RV-36 / RV-37）           |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open 1 件**（RV-36。RV-37 は fixed）   |
 | [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **0069 は accepted・実装待ち**           |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜22 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
@@ -310,9 +311,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
   **実装待ちは [ADR-0068][adr68]**（API リファレンス＝V2）と
   **[ADR-0069][adr69]**（テナント突合＋宣言生成。前提に RV-37）。[索引][adr] が正
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
-- 品質ゲート green・**880 tests**／project-review プロセス＋台帳（[findings][findings]：
-  **open は 2 件**＝ RV-36（日時変換の例外が `PortersError` でない）／ RV-37（Field Read が Process を選べない）。
-  どちらも 2026-09-09 に案D の評価過程で検出、処置は未着手。
+- 品質ゲート green・**885 tests**／project-review プロセス＋台帳（[findings][findings]：
+  **open は 1 件**＝ RV-36（日時変換の例外が `PortersError` でない・方針は確定・実装待ち）。
+  RV-37（Field Read が Process を選べない）は **fixed**。どちらも 2026-09-09 に案D の評価過程で検出。
   **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（0.12.1 で公開済み）、
   **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
   台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、

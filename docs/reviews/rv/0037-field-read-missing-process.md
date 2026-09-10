@@ -1,7 +1,7 @@
 # RV-37 🟡 Field Read が Process を選べず、同じ事実の対応表が 2 つに割れている
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / 機能網羅
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -114,24 +114,45 @@ Process の Field Read が実際に応答するかは実機で確かめる必要
 
 ## 処置
 
-**方針は (a) に決定・実装は未着手**（2026-09-10）。
+**(a) を実施**（2026-09-10）。方針は [ADR-0069][adr69] の論点6＝案6a で決まっていた
+（「RV-37 を先に直し、**対応表を 1 つに統合してから**本 ADR を実装する」）。
 
-[ADR-0069][adr69] の**論点6 で案6a が採られた**ことで、本件の処置方針も同時に決まった。
-案6a は「RV-37 を先に直し、**対応表を 1 つに統合してから**本 ADR を実装する」なので、
-上記 (a)（`field.ts` の `RESOURCE_VALUE` を消して `resource-list.ts` の `RESOURCE_VALUES` を
-唯一の正典にする）が方針として確定している。(b) の「`process: 7` を足すだけ」は採らない。
+- **`field.ts` の `RESOURCE_VALUE` を削除**し、`resource-list.ts` の `RESOURCE_VALUES` を
+  唯一の正典にした。公開型 `ResourceType` は `ResourceName` の**別名**にしてある
+  （同じ集合を指すので、2 つ目の表を作らない）。名前を 2 つ残したのは、使用箇所ごとに
+  役割が読めるほうがよいため（`ResourceType` は Field Read のセレクタ、
+  `ResourceName` は `t.phase.of()` の語彙）。
+- **`process` が自動的に入った** — 表が 1 つなので欠けようがない。
+  `t.field.search({ resource: "process" })` が書けるようになった。
+- **網羅テストを Field Read 側にも置いた**（`field.test.ts`）。ずれた直接の原因は
+  片方にしか「全部覆っているか」を聞く検査が無かったことなので、そこを塞ぐのが本体。
+  型レベル（`ResourceType` が 11 件ちょうど・`ResourceName` と同一・Phase / Attachment を含まない）と
+  実行時（`RESOURCE_VALUES.process === 7`・11 件）の両方を固定した。
+- **統合テストを 1 本足した**（`test/integration/masters.test.ts`）。フェイク経由で
+  Process のカタログを読み、`P_ResourceType === 7` を確認する＝
+  セレクタが実際に 7 として届いていることの確認。
+- フェイクの Field Read（`test/fake/master-read.ts`）も同じ表を引くように直した。
 
-実装は ADR-0069 の**先行 PR**として入れる（ADR-0069 本体はこれを前提にする）。やること:
+**検査が効くことを実際に確かめた**（読んだだけで済ませていない）。`RESOURCE_VALUES` から
+`process` の行を一時的に外すと:
 
-1. `field.ts` の `RESOURCE_VALUE` を削除し、`ResourceType` を `ResourceName` から導出する
-2. `field.ts` 側にも網羅テストを置く（`resource-list.test.ts` と同じ形＝今回ずれた原因を塞ぐ）
-3. `process` が公開型 `ResourceType` に増えるので CHANGELOG に出す（拡張なので破壊的ではない）
+```text
+typecheck  field.test.ts(128,40): error TS2344  ← 型レベルの網羅テストが落ちる
+           field.test.ts(142,23): error TS2344
+           field.test.ts(158,28): error TS2339  Property 'process' does not exist
+vitest     × reads the Value from the one table, so `resource=` cannot drift
+```
 
-**状態は `open` のまま**にしている。方針が決まっただけで、`t.field.search({ resource: "process" })`
-は今も書けないため — 決定と処置を同じ欄で潰さない（[ADR-0052][adr52]＝処置が追えること）。
+品質ゲートは全 green（**885 tests**・coverage は perFile 100%／branch 98.93%）。
+`ResourceType` に `"process"` が増えるのは**拡張**なので破壊的ではないが、公開型が変わるため
+changeset（minor）を入れてある。
+
+> **Value を送れること自体は未確認**（契約前なので当然）で、Process の Field Read が実際に
+> 応答するかは実機で確かめる必要がある。ただしこれは**既に `RESOURCE_VALUES` 経由で
+> `t.phase.of("process")` が同じ Value 7 を送っている**のと同じ信頼度であり、
+> 本件のために新しい仮定を増やしてはいない（LV へのエントリ追加は不要）。
 
 [adr22]: ../../adr/0022-master-read-query-surface.md
-[adr52]: ../../adr/0052-findings-register-layout.md
 [adr61]: ../../adr/0061-phase-resource-surface.md
 [adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
 [res-list]: ../../reference/resource-api/resources-list.md
