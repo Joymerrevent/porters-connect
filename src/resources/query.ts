@@ -224,6 +224,33 @@ type QueryContext = {
   fields: ReadonlyMap<string, DataType | null>;
 };
 
+// A condition value that cannot be converted (RV-36). Same reasoning as the write side: the value
+// came from the caller, so `PortersConfigError`; the failure is a format one, so
+// `category: "validation"`. Without this the raw `RangeError` from `isoToPorters*` escapes the
+// PortersError family, which is what the error-handling guide tells callers to branch on.
+const convertedForQuery = (
+  alias: string,
+  type: DataType,
+  value: unknown,
+  convert: () => string,
+): string => {
+  try {
+    return convert();
+  } catch (cause) {
+    throw new PortersConfigError(
+      `condition ${alias}: cannot use ${JSON.stringify(value)} as ${type}`,
+      {
+        category: "validation",
+        hint: `${type} values in a condition are written in ISO 8601 (e.g. "2026-09-10"); the library converts them to PORTERS' format.`,
+        // The underlying RangeError stays on `cause` rather than in the message: the message
+        // already names the field, the value and the type, which is what a reader needs.
+        context: { operation: "read" },
+        cause,
+      },
+    );
+  }
+};
+
 /**
  * Serialise one condition value by the field's Data Type: dates ISO -> PORTERS, arrays (Option
  * aliases / id sets) colon-joined, everything else stringified. No Data Type — an unknown alias
@@ -233,12 +260,19 @@ type QueryContext = {
 const serializeConditionValue = (
   type: DataType | null | undefined,
   value: unknown,
+  alias: string,
 ): string => {
   if (Array.isArray(value)) return value.map(String).join(":");
   if (type === "DateTime" || type === "System[DateTime]") {
-    return isoToPortersDateTime(String(value));
+    return convertedForQuery(alias, type, value, () =>
+      isoToPortersDateTime(String(value)),
+    );
   }
-  if (type === "Date" || type === "Age") return isoToPortersDate(String(value));
+  if (type === "Date" || type === "Age") {
+    return convertedForQuery(alias, type, value, () =>
+      isoToPortersDate(String(value)),
+    );
+  }
   return String(value);
 };
 
@@ -267,7 +301,7 @@ const encodeCondition = (
     for (const [suffix, value] of Object.entries(ops)) {
       if (value === undefined) continue;
       parts.push(
-        `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value)}`,
+        `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value, alias)}`,
       );
     }
   }

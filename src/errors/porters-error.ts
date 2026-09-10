@@ -76,5 +76,12 @@ export class PortersResourceError extends PortersError {}
 /** Connection / timeout / forced rate-limit disconnect. */
 export class PortersNetworkError extends PortersError {}
 
-/** Misconfiguration / misuse — not PORTERS-originated; thrown synchronously. */
+/**
+ * Misconfiguration / misuse — **not PORTERS-originated**.
+ *
+ * Thrown synchronously where the API returns no Promise (`new PortersClient()`, `defineFields`,
+ * `assertFieldsMatch`). From a `Promise`-returning method it arrives as a **rejection**, never a
+ * synchronous throw (ADR-0046) — a per-call value the library cannot convert reaches you that way
+ * (`category: "validation"` — RV-36).
+ */
 export class PortersConfigError extends PortersError {}

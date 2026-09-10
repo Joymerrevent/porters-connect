@@ -1,7 +1,7 @@
 # RV-36 🟡 日時の変換だけが例外を投げ、それが `PortersError` でない（読み・書きの両方）
 
 - 重要度: 🟡 ／ 観点: エラーモデル / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -191,64 +191,62 @@ _silent_ な失敗ではない — 日時と違って、送ってしまっても
 
 ## 処置
 
-**方針は全 4 点が確定・実装は未着手**（2026-09-10・stakeholder）。**新しい ADR は起こさない。**
+**実施済み**（2026-09-10）。新しい ADR は起こしていない（下記「なぜ ADR を起こさないか」のとおり）。
 
-### 決まったこと
+### 直したもの
 
-| #   | 決定                                                                         | 由来                                         |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| 1   | 読みと書きで**クラスは分ける・`category` は揃える**（下表）                  | ADR-0006 の 2 軸設計（案C）                  |
-| 2   | `category: "validation"` ＋ **フィールド名** ＋ `hint`                       | [ADR-0006][adr6]（既決）                     |
-| 3   | 型付きエラーで surface する（**黙って `null` にしない**）                    | [ADR-0006][adr6] / [ADR-0011][adr11]（既決） |
-| 4   | **案3 — 書き側に値検証を足さない**。日時の変換は維持し、エラーの型だけ揃える | 2026-09-10・stakeholder                      |
+**`PortersError` 派生でない throw が `src/` から消えた。** 変換の失敗は 3 経路あり、引き金で
+クラスを分け、`category` は揃えた。
 
-**#4 では「明文の根拠がある型」（`Number` は数値・ID 系は数値・`Option` は配列）も
-`やらない`と決めた**（＝未実装ではなく**不要と判断した**）。理由は 2 つ:
+| 経路                    | 引き金         | クラス                 | category       |
+| ----------------------- | -------------- | ---------------------- | -------------- |
+| 読み（`decode.ts`）     | PORTERS の応答 | `PortersResourceError` | `"validation"` |
+| 書き（`encode.ts`）     | 利用者の値     | `PortersConfigError`   | `"validation"` |
+| condition（`query.ts`） | 利用者の値     | `PortersConfigError`   | `"validation"` |
 
-- 防げるのは _silent_ な失敗ではない。送ってしまっても PORTERS の result code で**大きな音がする**ので、
-  フェイルセーフが守りたい側ではない。
-- 静的な Write 型（`WriteValueOfType.Number = number` 等）が**既にコンパイル時に止めている**。
-  実行時に到達するのは cast 経由だけ。
+**3 経路目は起票時に見落としていた** — `serializeConditionValue` も日時を変換しており、
+`condition` に不正な日付を渡すと同じ素の `RangeError` が飛んでいた。処置の過程で
+`grep -rn "isoToPorters\|portersDate" src/` を取って見つけた。
 
-日時が特別なのは検証があるからではなく **変換があるから**であり、変換を持つ型は日時系だけ
-（「#4 の判断材料」の検算）。したがって**非対称は残るが、それは正しい非対称**である。
-ガイドにもそう書く。
+**読み側の「黙って `null`」も塞いだ**（ADR-0006 の「silent な誤変換をしない」の本体）。
+判定は**形の食い違いだけ**に絞った: PORTERS は値型をスカラ・複合型を入れ子で送るので、
+**スカラが来るべき所に入れ子**（またはその逆）は Data Type が違うことしか意味しない。
+それより細かい違い（入れ子の中の想定外のタグ・`P_Id` の欠落）は**許容して `null`** のままにした —
+そこは値が本当に無いこともあり、弾くと偽の警報になる。`Link` は**形そのものが判別子**なので検査しない。
 
-### エラーの型（#1・#2 の帰結）
+**副産物として `decodeField` が単純になった。** 形の検査を 1 箇所に集めたことで、各型の
+「念のため `undefined` を見る」分岐が到達不能になり、`decodeOption` / `decodeReference` /
+`decodeImage` / `decodeUser` / `decodeDepartment` の `if (!outer) return null` も不要になった。
+narrowed な record を受け取る形に変え、switch を「入れ子型」「スカラ型」の 2 つに割った。
+**ADR-0016 の性質（型を足すとコンパイルが落ちる）は保っている** — `ScalarShaped` を
+`Exclude<DataType, RecordShaped | "Link">` で定義したので、どちらにも入れない型は switch で落ちる。
 
-| 引き金                                | クラス                 | category       | 根拠                                                                                    |
-| ------------------------------------- | ---------------------- | -------------- | --------------------------------------------------------------------------------------- |
-| **読み** — サーバー応答が宣言型と違う | `PortersResourceError` | `"validation"` | ADR-0006 が明文で指定（フィールド名 ＋ `hint` つき）                                    |
-| **書き** — 利用者の値の書式が不正     | `PortersConfigError`   | `"validation"` | クラス＝「PORTERS 由来でない・使い方の誤り」／ category＝「入力・パラメータ・**書式**」 |
+### #4（案3）の実装
 
-`category` を揃えるので利用者は `category === "validation"` で一様に分岐でき、
-`instanceof` で**由来**（サーバー / 自分の値）を見分けられる。これは ADR-0006 案C の
-「系統＝クラス、横断＝`category`」がそのまま効く形で、**新しい決定を持ち込んでいない**。
-
-> **`config` ではなく `validation` を選んだ根拠** — ADR-0006 の category 定義は
-> `config` を「設定/使い方の誤り（**`defineFields`・client オプション**。同期 throw）」と
-> **明示的に絞っており**、`validation` を「入力・パラメータ・**書式**」と定義している。
-> 呼び出しごとの値の書式は後者。SD-E が `PortersConfigError` と `config` を並べているのは
-> 構築時・宣言時の話で、そこと衝突しない。
+**書き側に値検証は足していない。** 日時の変換は維持し、エラーの型だけ揃えた。
+「明文の根拠がある型」（`Number` は数値等）も**やらないと決めたまま**で、テストで固定してある
+（`enc("Number", "abc")` は素通し）。日時が特別なのは検証があるからではなく**変換があるから**という
+非対称は、コメントとガイドの両方に書いた。
 
 ### なぜ ADR を起こさないか
 
-- #1〜#3 は **accepted な決定（ADR-0006 / ADR-0011）に実装を合わせる**作業。
-- #4 は **現状維持**の決定＝新しい挙動を持ち込まない。
-- エラーの型も上記のとおり ADR-0006 の定義から**導かれる**もので、選択肢を新たに決めていない。
+\#1〜#3 は accepted な決定（[ADR-0006][adr6] / [ADR-0011][adr11]）に実装を合わせる作業、
+\#4 は現状維持。エラーのクラスと `category` も ADR-0006 の定義から導けたので、新しい決定は無い。
 
-[RV-32][rv32] と同じ形（「挙動の決定を持ち込まないので ADR は起こしていない」）。
+### 検査
 
-### 着手手順
+- **`grep -rn "throw new " src/` に `Porters` 以外が残っていない**ことを確認
+  （`src/util/datetime.ts` の `RangeError` は内部専用＝全呼び出し元が包む。その旨をファイル先頭に明記した）
+- 品質ゲートは全 green（**970 tests**・coverage は perFile 100%／branch 99.08%＝**処置前より改善**）
+- **破壊的変更を含む**: 以前 `null` を返していた形の食い違いが reject になる。0.x なので
+  changeset は minor。CHANGELOG で告知する
 
-1. `decode.ts` / `encode.ts` の日時変換の失敗を、上表のクラス ＋ `category: "validation"` に
-   置き換える（フィールド名を載せるため、alias を変換関数まで渡す必要がある）
-2. **読み側の型不一致（黙って `null`）も surface する** — `Option` ↔ テキストの取り違えが
-   現状 `null` になる経路。ADR-0006 の「silent な誤変換をしない」はここが本体
-3. `docs/guide/error-handling.md` のエラー一覧表に 2 行を足す
-4. `docs/guide/custom-fields.md` の「値レベルの検証はしません」を書き分ける（下記）
-5. `PortersConfigError` の JSDoc「thrown synchronously」に**呼び出し経路では reject で届く**旨を補う
-   （[ADR-0046][adr46] と整合。同期 throw は構築時・`defineFields` のみ）
+### 併せて直したドキュメント
+
+- `docs/guide/error-handling.md` — 一覧表に 2 行 ＋ 専用の節 2 つ（食い違い／日時の変換）
+- `docs/guide/custom-fields.md` — 「値レベルの検証はしません」を 3 つに書き分け、未処置の注記を撤去
+- `src/errors/porters-error.ts` — `PortersConfigError` の「thrown synchronously」を補足
+  （呼び出し経路では reject で届く＝[ADR-0046][adr46] と整合）
 
 [adr6]: ../../adr/0006-error-model.md
 [adr11]: ../../adr/0011-xml-parse-serialize.md

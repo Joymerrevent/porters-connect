@@ -241,9 +241,9 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
   手前で厳しく弾くと、サーバーが受け付ける値をライブラリが落としてしまう可能性があるためです
   （安全側ではなく危険側に倒れる）。
 
-> **注意（未処置）**: 現在の実装はこのうち 1 つ目に従っていません。食い違いは `validation` ではなく
-> 黙って `null` になり、日時の変換失敗は `PortersError` ではない素の `RangeError` が飛びます。
-> [RV-36][rv36] として起票済みで、方針は確定・実装待ちです。
+食い違いの検出は**形の違いだけ**に絞っています（スカラが来るべき所に入れ子、またはその逆）。
+それより細かい違いは許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
+詳しくは[エラーハンドリング ガイド][error-handling]にあります（[RV-36][rv36] で実装済み）。
 
 ## 複数テナントで項目が違う場合
 
@@ -278,6 +278,7 @@ const clientFor = (partition: number, fields: DefinedFields) =>
 [adr69]: ../adr/0069-tenant-field-catalog-tooling.md
 [adr6]: ../adr/0006-error-model.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[error-handling]: error-handling.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenancy.md
 [write-constraints]: write-constraints.md

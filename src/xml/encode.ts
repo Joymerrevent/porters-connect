@@ -3,6 +3,7 @@
 // `<Field><OptionAlias/></Field>`, and DateTime/Date go ISO -> PORTERS. This is the
 // mirror of decode.ts; it builds the request body so XML stays out of resources/.
 
+import { PortersConfigError } from "../errors/index";
 import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import type { DataType, ImageSubField } from "./decode";
@@ -140,10 +141,54 @@ const imageInner = (value: NonNullable<WriteValue>): string => {
     .join("");
 };
 
+// A caller's value that cannot be converted (RV-36 / ADR-0006). `PortersConfigError` because the
+// value came from the caller, not PORTERS — the class means "misuse, not PORTERS-originated" — and
+// `category: "validation"` because ADR-0006 defines that as「入力・パラメータ・書式」while it scopes
+// `config` to `defineFields` / client options.
+//
+// Only the date types can fail here: they are the only ones this file **converts** (ISO 8601 ->
+// PORTERS `yyyy/mm/dd[ HH:MM:SS]`). Everything else is written through as a scalar, so there is
+// nothing to fail. That asymmetry is intended, not an oversight (RV-36 #4 = 案3).
+const invalidValue = (
+  alias: string,
+  type: DataType,
+  value: NonNullable<WriteValue>,
+  cause: unknown,
+): PortersConfigError =>
+  new PortersConfigError(
+    `${alias}: cannot write ${JSON.stringify(value)} as ${type}`,
+    {
+      category: "validation",
+      hint: `${type} values are written in ISO 8601 (e.g. "2026-09-10" / "2026-09-10T12:00:00Z"); the library converts them to PORTERS' format.`,
+      // The underlying RangeError stays on `cause` rather than in the message: the message
+      // already names the field, the value and the type, which is what a reader needs.
+      context: { operation: "encode" },
+      cause,
+    },
+  );
+
+// Runs a conversion and re-labels its failure as the library's own error type. `isoToPorters*`
+// throw `RangeError`, which is outside the PortersError family and so escapes the documented
+// error contract (RV-36).
+const converted = (
+  alias: string,
+  type: DataType,
+  value: NonNullable<WriteValue>,
+  convert: () => string,
+): string => {
+  try {
+    return convert();
+  } catch (cause) {
+    throw invalidValue(alias, type, value, cause);
+  }
+};
+
 /** Encode one field's value into the inner XML of its element. */
 export const encodeField = (
   type: DataType,
   value: NonNullable<WriteValue>,
+  /** The field's bare alias, so an unconvertible value names it (ADR-0006). */
+  alias: string,
 ): string => {
   switch (type) {
     // Option: the selected aliases as empty child elements. Canonical input is an
@@ -157,11 +202,15 @@ export const encodeField = (
     // serialize it identically — rejecting the write is the input type's job (SD-3).
     case "DateTime":
     case "System[DateTime]":
-      return scalar(isoToPortersDateTime(text(value)));
+      return scalar(
+        converted(alias, type, value, () => isoToPortersDateTime(text(value))),
+      );
     // Age shares Date's wire format (`yyyy/mm/dd`): we write the birthdate.
     case "Date":
     case "Age":
-      return scalar(isoToPortersDate(text(value)));
+      return scalar(
+        converted(alias, type, value, () => isoToPortersDate(text(value))),
+      );
     // Image: the three nested sub-elements (ADR-0064 論点3).
     case "Image":
       return imageInner(value);
@@ -202,7 +251,7 @@ const encodeItem = (
     const inner =
       type === undefined || type === null
         ? scalar(value)
-        : encodeField(type, value);
+        : encodeField(type, value, alias);
     const tag = qualify(prefix, alias);
     parts.push(`<${tag}>${inner}</${tag}>`);
   }
