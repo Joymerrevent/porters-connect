@@ -35,6 +35,15 @@
 フェイルセーフで避けたい側そのものである。3 行目は落ちるので気づけるが、
 飛ぶのが `PortersError` ですらない（[RV-36][rv36]）。
 
+> **追記（2026-09-10）** — 上表の挙動は「望ましくない」に留まらず、**既に accepted な決定に反している**。
+> [ADR-0006][0006] は「**宣言型と実データの食い違い**も `validation` で surface
+> （フィールド名付き・**silent な誤変換はしない**）」と決めており、[ADR-0011][0011] も
+> 「型不一致はクラッシュさせず `validation` で surface」と重ねている。
+> **その是正は本 ADR ではなく [RV-36][rv36] の担当**（実行時の surface）で、本 ADR は
+> ADR-0006 が同じ箇所で「起動前に検出したい場合は Field Read と突き合わせる**任意の事前検証**
+> （opt-in・ライブ接続要・**将来の dev ツール**）。既定では行わない」と予告していた側を作る。
+> **決定は変わらない** — 2 つは同じ問題への実行時／事前の両輪であり、本 ADR の 7 論点はそのまま。
+
 ### 食い違いは「あり得る事故」ではなく、PORTERS 自身が警告している状況
 
 `docs/reference/gotchas.md` の「データモデル・Alias」節は、出典記事からこう転記している:
@@ -321,7 +330,9 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 ## More Information
 
 - 接地対象: [ADR-0023][0023] D5（follow-up 送り）／[ADR-0004][0004]（案B＝ Field Read からの生成を
-  P2 の opt-in dev ツールと位置づけ）。
+  P2 の opt-in dev ツールと位置づけ）／**[ADR-0006][0006]**（「起動前に検出したい場合は Field Read と
+  突き合わせる任意の事前検証（opt-in・将来の dev ツール）。既定では行わない」＝本 ADR を予告していた条項。
+  同条項の**実行時側**（食い違いを `validation` で surface）は [RV-36][rv36] の担当）。
 - 前提: [ADR-0022][0022]（Field Read のクエリ面・`ResourceType`）／[ADR-0016][0016]（Data Type の粒度）／
   [ADR-0017][0017]（Option は常に `string[]`）／[ADR-0064][0064]（Image / Link が `CustomDataType` に加わった）。
 - 未確認: [LV-6][lv]（`P_ReferTo` の入れ子形）／[LV-12][lv]（`P_Alias` の表記と System 系の Field Type）。
@@ -335,6 +346,8 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
   Attachment のカスタム項目（[ADR-0023][0023] D6）。
 
 [0004]: 0004-field-type-model.md
+[0006]: 0006-error-model.md
+[0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md
 [0017]: 0017-option-read-shape.md
 [0022]: 0022-master-read-query-surface.md
