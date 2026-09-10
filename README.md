@@ -447,6 +447,8 @@ try {
 
 ## リンク
 
+- **API リファレンス（全記号）**：[docs/api][api-ref] — 公開 API の全記号を JSDoc から生成したもの。
+  本 README とガイドは「使い方」を絞って説明するもので、網羅はこちらが担当します
 - 設計・決定の記録：[ADR][adr] ／ 基本設計：[docs/design][design] ／ API 事実：[docs/reference][ref]
 - 提供元：[Joymerrevent][joymerrevent]
 
@@ -475,6 +477,7 @@ try {
 [coc]: ./CODE_OF_CONDUCT.md
 [issues]: https://github.com/Joymerrevent/porters-connect/issues
 [auth-flow]: ./docs/reference/authentication-api/README.md
+[api-ref]: ./docs/api/index.md
 [oauth-guide]: ./docs/guide/oauth.md
 [error-handling]: ./docs/guide/error-handling.md
 [custom-fields-guide]: ./docs/guide/custom-fields.md
