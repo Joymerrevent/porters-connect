@@ -1,11 +1,18 @@
 # 35. 利用ドキュメントの構成（README の役割とトピック別 docs/guide の役割分担）
 
-- Status: accepted
+- Status: superseded by [[0070-usage-documentation-architecture]]
 - Date: 2026-06-23
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > F-1（`porters.auth.*`・[[0034-oauth-public-surface-impl]]）の実装を機に、**機能の使い方をどこに・どの粒度で書くか**の
 > 方針を決める。今後 F-2〜F-4 でも公開 API が増えるため、**再利用できる構成方針**として起票。案A で `accepted`（2026-06-23）。
+>
+> **［2026-09-10 追記］supersede された理由** — 本 ADR の「README は存在に気づき最短で動かす入口・
+> 機能ごとの手順は `docs/guide/<topic>.md`」という**役割分担そのものは正しかった**が、
+> `docs/guide` の**並べ方が機能単位**だったため、読者が「〜したい」から引けない構成になった。
+> また README は実際にはこの決定を大きく超えて肥大した（`## リソースと操作` だけで 133 行）。
+> [ADR-0070][0070] が「入門（順に読む）／考え方／目的別 HOWTO／リファレンス」の 4 層に置き換える。
+> **README を入口に絞るという方向は 0070 が引き継いでいる。**
 
 ## Context and Problem Statement
 
@@ -90,3 +97,4 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
 
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ../guide/error-handling.md
+[0070]: 0070-usage-documentation-architecture.md
