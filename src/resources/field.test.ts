@@ -1,12 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import {
   createFieldResource,
-  RESOURCE_VALUE,
   type FieldSearchQuery,
+  type ResourceType,
 } from "./field";
+import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
 // Fixture from the canonical Field Read sample (115012160308): two Job fields — one with an
 // empty P_ReferTo, one whose P_ReferTo nests the referenced option group alias.
@@ -113,8 +114,48 @@ describe("createFieldResource", () => {
       const url = new URL(c.req.url);
       expect(url.pathname).toBe("/v1/field");
       const p = url.searchParams;
-      expect(p.get("resource")).toBe(String(RESOURCE_VALUE.job));
+      expect(p.get("resource")).toBe(String(RESOURCE_VALUES.job));
       expect(p.get("active")).toBe("1");
     }
+  });
+});
+
+// RV-37: `field.ts` used to keep its own copy of the Resource List and silently lost Process.
+// The copy is gone (`ResourceType` is now an alias of `ResourceName`), and these fix that it
+// stays gone — the drift happened because only `resource-list.test.ts` asked "is it complete?".
+describe("ResourceType (Field Read's resource selector)", () => {
+  it("covers every resource PORTERS gives a Value — Process included (RV-37)", () => {
+    expectTypeOf<"process">().toExtend<ResourceType>();
+    // The full set, so dropping one is a failure here and not just a missing feature.
+    expectTypeOf<
+      | "candidate"
+      | "job"
+      | "client"
+      | "process"
+      | "recruiter"
+      | "sales"
+      | "contract"
+      | "resume"
+      | "activity"
+      | "opportunity"
+      | "contact"
+    >().toEqualTypeOf<ResourceType>();
+  });
+
+  it("is the same set as `ResourceName`, not a second table (RV-37)", () => {
+    expectTypeOf<ResourceType>().toEqualTypeOf<ResourceName>();
+  });
+
+  it("excludes what PORTERS gives no Value (Phase / Attachment / masters)", () => {
+    expectTypeOf<"phase">().not.toExtend<ResourceType>();
+    expectTypeOf<"attachment">().not.toExtend<ResourceType>();
+    expectTypeOf<"field">().not.toExtend<ResourceType>();
+  });
+
+  it("reads the Value from the one table, so `resource=` cannot drift", () => {
+    // Not a restatement of RESOURCE_VALUES: it fixes that *this* accessor sends what that
+    // table says, which is the link that broke.
+    expect(RESOURCE_VALUES.process).toBe(7);
+    expect(Object.keys(RESOURCE_VALUES)).toHaveLength(11);
   });
 });

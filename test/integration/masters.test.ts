@@ -46,6 +46,20 @@ describe("partition master", () => {
     ).rejects.toMatchObject({ category: "permission", code: 403 });
   });
 
+  // RV-37: Process was missing from the Field Read selector, so this call did not compile.
+  // The Resource List gives Process a Value (7) and PORTERS publishes a Process Field List, so
+  // the omission was a write-off, not a decision.
+  it("reads Process's catalog — the resource RV-37 could not select", async () => {
+    const { porters } = setup();
+
+    const page = await porters.tenant(1).field.search({ resource: "process" });
+
+    // `P_ResourceType` echoes the Value the fake resolved the request to, so 7 here means the
+    // selector really travelled as 7 (the link RV-37 had broken).
+    expect(page.items.map((f) => f.P_Alias)).toContain("Process.P_Id");
+    expect(page.items.every((f) => f.P_ResourceType === 7)).toBe(true);
+  });
+
   it("pages with searchAll", async () => {
     const { porters } = setup({ partitions: [1, 2, 3] });
 

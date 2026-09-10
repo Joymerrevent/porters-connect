@@ -12,7 +12,8 @@
 // like `code_direct`, so Partition `request_type=0` (login partition) answers Result Code 403 and
 // User `request_type=0` answers the App's own user.
 
-import { FIELD_DESCRIPTOR, RESOURCE_VALUE } from "../../src/resources/field";
+import { FIELD_DESCRIPTOR } from "../../src/resources/field";
+import { RESOURCE_VALUES } from "../../src/resources/resource-list";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
 import type { ResourceDescriptor } from "../../src/resources/resource";
@@ -158,7 +159,7 @@ export const readUser: MasterReadHandler = (url, ctx) => {
 /** `GET /v1/field?partition=&resource=&active=` — a resource's catalog, as Field rows. */
 export const readField: MasterReadHandler = (url, ctx) => {
   const value = intParam(url, "resource", -1);
-  const path = Object.entries(RESOURCE_VALUE).find(
+  const path = Object.entries(RESOURCE_VALUES).find(
     ([, code]) => code === value,
   )?.[0];
   const descriptor = path === undefined ? undefined : ctx.resources.get(path);
