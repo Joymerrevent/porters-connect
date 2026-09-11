@@ -8,7 +8,8 @@
 
 - エンドポイントは `https://{host}/v1/{resource}`（resource はリソース名の小文字。例 `/v1/candidate`）。
 - **XML のルート要素はリソース名**（`Candidate`, `Job`, ...）。
-- **Field Alias の接頭辞**は原則リソース名と同じだが、**Candidate だけ `Person.P_*`**（要注意）。
+- **Field Alias の接頭辞**は原則リソース名と同じだが、例外が 3 つある。**Candidate は `Person.P_*`**、
+  **Phase と Attachment は接頭辞も `P_` も無い**（`Id` / `Resource` / `FileName` のように裸）。
 - `Value` 列は Process / Phase などが内部でリソースを参照するときに使う数値 ID。
 
 ## マスタ系（読み取り専用）
@@ -35,7 +36,7 @@
 | Contract    | `/v1/contract`    | 13    | `contract_r` / `contract_w`       | `Contract`    | [Read][contract-read] ／ [Write][contract-write] ／ [Field][contract-field]          |
 | Sales       | `/v1/sales`       | 11    | `sales_r` / `sales_w`             | `Sales`       | [Read][sales-read] ／ [Write][sales-write] ／ [Field][sales-field]                   |
 | Opportunity | `/v1/opportunity` | 25    | `opportunity_r` / `opportunity_w` | `Opportunity` | [Read][opportunity-read] ／ [Write][opportunity-write] ／ [Field][opportunity-field] |
-| Phase       | `/v1/phase`       | —     | `phase_r` / `phase_w`             | `Phase`       | [Read][phase-read] ／ [Write][phase-write] ／ [Field][phase-field]                   |
+| Phase       | `/v1/phase`       | —     | `phase_r` / `phase_w`             | 接頭辞なし    | [Read][phase-read] ／ [Write][phase-write] ／ [Field][phase-field]                   |
 | Attachment  | `/v1/attachment`  | —     | `attachment_r` / `attachment_w`   | 接頭辞なし    | [Read][attachment-read] ／ [Write][attachment-write] ／ [Mime Type][mime-type]       |
 
 ## 補足
@@ -48,6 +49,10 @@
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
 - Phase の更新には専用の作法がある（[Phase の更新について][phase]）。
+- **Phase の接頭辞は出典記事の中で揺れている。** 散文は「省略した場合は `Phase.P_Id` が指定された
+  ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
+  サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も
+  **すべて裸**。裸のほうを正として扱う（→ Phase の公開サーフェスの ADR-0061）。
 - 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] に per-resource でまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。
