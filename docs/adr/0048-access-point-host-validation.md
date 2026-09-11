@@ -171,13 +171,13 @@ decider が 2026-08-11 に選択。
 - 影響範囲（accept 後の実装 PR）: `src/http/access-point.ts` または `src/client.ts`（検証関数の追加）・
   `src/http/access-point.test.ts`（異常系の pin: スキーム込み／空／末尾 `/`／パス付き／不正 `scheme`）・
   `PortersClientOptions.host` の JSDoc（「スキーム・パスを含めない」を明文化）・
-  `docs/guide/error-handling.md`（config カテゴリの例）。
+  `docs/howto/handle-failures.md`（config カテゴリの例）。
 - 関連: [ADR-0047][adr47]（`host` と `scheme` の分離＝本 ADR の前提）／[ADR-0006][adr6]（エラーモデル）／
   [ADR-0046][adr46]（例外の届き方。コンストラクタは対象外）／[ADR-0009][adr9]（Transport seam）。
 
 [findings]: ../reviews/findings.md
 [run]: ../reviews/2026-08-10-01.md
-[guide]: ../guide/error-handling.md
+[guide]: ../howto/handle-failures.md
 [adr6]: 0006-error-model.md
 [adr9]: 0009-http-transport.md
 [adr46]: 0046-guard-error-contract.md

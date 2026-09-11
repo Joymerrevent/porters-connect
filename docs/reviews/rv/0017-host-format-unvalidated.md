@@ -71,6 +71,6 @@ docs 側は正しい（`README.md:347`「ポートが要る場合は `host` に�
 [adr47]: ../../adr/0047-access-point-scheme.md
 [adr48]: ../../adr/0048-access-point-host-validation.md
 [adr49]: ../../adr/0049-host-port-roundtrip.md
-[guide]: ../../guide/error-handling.md
+[guide]: ../../howto/handle-failures.md
 [rv21]: 0021-default-port-rejected.md
 [run810]: ../2026-08-10-01.md

@@ -43,7 +43,13 @@ import { join, relative, resolve, sep } from "node:path";
 
 // 検査対象。ADR / レビュー台帳 / 生成物は対象外 — 決定の記録や生成物のコードは
 // 「動くこと」を約束していない（README とガイドは約束している）。
-const MARKDOWN_ROOTS = ["README.md", "docs/guide/**/*.md"];
+const MARKDOWN_ROOTS = [
+  "README.md",
+  "docs/index.md",
+  "docs/start/**/*.md",
+  "docs/concepts/**/*.md",
+  "docs/howto/**/*.md",
+];
 
 // JSDoc の `@example` も対象。これは **`docs/api` に生成されて利用者に見える**ので、
 // ガイドのコード例とまったく同じ性質を持つ（ADR-0068 の生成物経由で公開される）。
@@ -273,6 +279,17 @@ if (missingReason.length > 0) {
     "`doccheck: skip` には理由が要ります（何を諦めたかが見える形にする）:",
   );
   for (const b of missingReason) console.error(`  ${b.file}:${b.firstLine}`);
+  process.exit(1);
+}
+
+// 対象が 1 件も見つからないのは「例が無い」ではなく**検査対象の指定が外れている**合図。
+// ディレクトリを動かしたときに静かに検査が消えるのを防ぐ（ADR-0070 の移設で実際に起きうる）。
+const MIN_BLOCKS = 40;
+if (blocks.length < MIN_BLOCKS) {
+  console.error(
+    `検査対象が ${String(blocks.length)} ブロックしかありません（最低 ${String(MIN_BLOCKS)} 件を期待）。\n` +
+      `MARKDOWN_ROOTS / SOURCE_ROOTS がドキュメントの現在地と合っているか確認してください。`,
+  );
   process.exit(1);
 }
 

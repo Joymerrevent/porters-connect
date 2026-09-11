@@ -183,8 +183,55 @@ export const checkTarget = (target, read = readFileSync) => {
   return problems;
 };
 
-export const checkAll = (targets = TARGETS, read = readFileSync) =>
-  targets.flatMap((t) => checkTarget(t, read));
+/**
+ * 利用者向けドキュメントの目次（`docs/index.md`）と実ファイルの 1:1 突合
+ * （[ADR-0070] 論点4 の検査①）。
+ *
+ * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
+ * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
+ *
+ * 対象は `docs/{start,concepts,howto}` の 3 階層だけ。`reference/` と `api/` は
+ * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
+ */
+const USER_DOC_DIRS = ["start", "concepts", "howto"];
+
+export const checkUserDocIndex = (read = readFileSync) => {
+  const problems = [];
+  const indexPath = "docs/index.md";
+  let index;
+  try {
+    index = read(indexPath, "utf8");
+  } catch {
+    return [`${indexPath} がありません（利用者向けドキュメントの目次）`];
+  }
+  // 参照スタイルの定義から、3 階層へのリンクだけを拾う。
+  const linked = new Set(
+    [...index.matchAll(/^\[[^\]]+\]:\s*(\S+)$/gm)]
+      .map((m) => m[1])
+      .filter((t) => USER_DOC_DIRS.some((d) => t.startsWith(`${d}/`))),
+  );
+  const actual = new Set();
+  for (const dir of USER_DOC_DIRS) {
+    let entries;
+    try {
+      entries = readdirSync(join("docs", dir));
+    } catch {
+      continue; // まだ無いディレクトリは対象外（段階的に作る）
+    }
+    for (const f of entries) if (f.endsWith(".md")) actual.add(`${dir}/${f}`);
+  }
+  for (const t of [...linked].sort())
+    if (!actual.has(t)) problems.push(`目次にあるがファイルが無い: ${t}`);
+  for (const t of [...actual].sort())
+    if (!linked.has(t))
+      problems.push(`ファイルがあるが目次に無い（誰からも辿れない）: ${t}`);
+  return problems;
+};
+
+export const checkAll = (targets = TARGETS, read = readFileSync) => [
+  ...targets.flatMap((t) => checkTarget(t, read)),
+  ...checkUserDocIndex(read),
+];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
 if (
@@ -196,7 +243,7 @@ if (
     console.error("索引と本文が食い違っています:\n");
     for (const p of problems) console.error(`  - ${p}`);
     console.error(
-      "\n索引（docs/adr/index.md ほか）か、各ファイルのメタ行のどちらかを直してください。",
+      "\n索引（docs/adr/index.md・docs/index.md ほか）か、各ファイルのどちらかを直してください。",
     );
     process.exit(1);
   }

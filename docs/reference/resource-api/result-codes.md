@@ -44,4 +44,4 @@ Resource API（Read / Write）のエラーは、ルート要素 `<{Resource}>` �
 
 [readme]: README.md
 [errors]: ../authentication-api/errors.md
-[guide]: ../../guide/error-handling.md
+[guide]: ../../howto/handle-failures.md

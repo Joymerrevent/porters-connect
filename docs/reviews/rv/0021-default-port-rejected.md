@@ -60,4 +60,4 @@ decider が選ぶ — (a) **現状維持**（`:443` を省けば通る・hint �
 
 [adr48]: ../../adr/0048-access-point-host-validation.md
 [adr49]: ../../adr/0049-host-port-roundtrip.md
-[guide]: ../../guide/error-handling.md
+[guide]: ../../howto/handle-failures.md

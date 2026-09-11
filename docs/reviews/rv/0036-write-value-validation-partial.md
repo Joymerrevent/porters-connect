@@ -15,7 +15,7 @@
 「**型不一致はクラッシュさせず `validation` で surface（silent な誤変換をしない）**」と決めているのに、
 `decode.ts` / `encode.ts` は**エラーモジュールを import していない**。詳細は「推奨」節。
 
-併せて `docs/guide/custom-fields.md` の「**値レベルの検証はしません**」も、
+併せて `docs/howto/custom-fields.md` の「**値レベルの検証はしません**」も、
 読み側については ADR-0006 と矛盾している（後述）。
 
 ## 根拠
@@ -43,7 +43,7 @@
   「`Promise` を返す公開メソッドは同期 throw しない」は**守られている**。問題は届き方ではなく**型**。
 - [ADR-0006][adr6] は「エラーは判別可能な型に整理：基底 `PortersError` ＋ 系統別サブクラス ＋ `category`」
   と決めている。`RangeError` はそのどれでもない。
-- `docs/guide/error-handling.md` のエラー一覧表に `RangeError` の行は**無い**
+- `docs/howto/handle-failures.md` のエラー一覧表に `RangeError` の行は**無い**
   （`grep -rn "RangeError" docs/` は 0 件）。ガイドが勧める
   `catch (e) { if (e instanceof PortersError) … }` の形は、この経路だけ取りこぼす。
 - `Age` も同じ経路（`case "Date": case "Age":`）＝ 3 つ目の対象。
@@ -179,7 +179,7 @@ _silent_ な失敗ではない — 日時と違って、送ってしまっても
 
 ### ガイドの記述も直す必要がある
 
-`docs/guide/custom-fields.md` の「**値レベルの検証はしません**」は、
+`docs/howto/custom-fields.md` の「**値レベルの検証はしません**」は、
 **読み側について ADR-0006 と矛盾している**（ADR-0006 は食い違いを `validation` で surface せよと言っている）。
 実装を直すときに、3 つに書き分ける:
 
@@ -243,8 +243,8 @@ narrowed な record を受け取る形に変え、switch を「入れ子型」�
 
 ### 併せて直したドキュメント
 
-- `docs/guide/error-handling.md` — 一覧表に 2 行 ＋ 専用の節 2 つ（食い違い／日時の変換）
-- `docs/guide/custom-fields.md` — 「値レベルの検証はしません」を 3 つに書き分け、未処置の注記を撤去
+- `docs/howto/handle-failures.md` — 一覧表に 2 行 ＋ 専用の節 2 つ（食い違い／日時の変換）
+- `docs/howto/custom-fields.md` — 「値レベルの検証はしません」を 3 つに書き分け、未処置の注記を撤去
 - `src/errors/porters-error.ts` — `PortersConfigError` の「thrown synchronously」を補足
   （呼び出し経路では reject で届く＝[ADR-0046][adr46] と整合）
 

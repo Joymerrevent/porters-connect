@@ -449,8 +449,10 @@ try {
 
 ## リンク
 
+- **ドキュメントの目次**：[docs/index.md][docs-index] — 入門 ／ 考え方 ／ 目的別（「〜したい」）／
+  リファレンスの 4 層。**目的から引くならここから**（[ADR-0070][adr70]）
 - **API リファレンス（全記号）**：[docs/api][api-ref] — 公開 API の全記号を JSDoc から生成したもの。
-  本 README とガイドは「使い方」を絞って説明するもので、網羅はこちらが担当します
+  本 README は「最短で動かす」ところまでで、網羅はこちらが担当します
 - 設計・決定の記録：[ADR][adr] ／ 基本設計：[docs/design][design] ／ API 事実：[docs/reference][ref]
 - 提供元：[Joymerrevent][joymerrevent]
 
@@ -480,13 +482,15 @@ try {
 [issues]: https://github.com/Joymerrevent/porters-connect/issues
 [auth-flow]: ./docs/reference/authentication-api/README.md
 [api-ref]: ./docs/api/index.md
-[oauth-guide]: ./docs/guide/oauth.md
-[error-handling]: ./docs/guide/error-handling.md
-[custom-fields-guide]: ./docs/guide/custom-fields.md
-[read-query-guide]: ./docs/guide/read-query.md
-[multi-tenancy]: ./docs/guide/multi-tenancy.md
-[bulk-write]: ./docs/guide/bulk-write.md
-[write-constraints]: ./docs/guide/write-constraints.md
+[docs-index]: ./docs/index.md
+[adr70]: ./docs/adr/0070-usage-documentation-architecture.md
+[oauth-guide]: ./docs/howto/authenticate.md
+[error-handling]: ./docs/howto/handle-failures.md
+[custom-fields-guide]: ./docs/howto/custom-fields.md
+[read-query-guide]: ./docs/howto/search-records.md
+[multi-tenancy]: ./docs/howto/multi-tenant.md
+[bulk-write]: ./docs/howto/bulk-write.md
+[write-constraints]: ./docs/concepts/limits.md
 [sandbox]: ./examples/offline-sandbox.ts
 [adr]: ./docs/adr/README.md
 [adr-0060]: ./docs/adr/0060-full-resource-coverage-direction.md

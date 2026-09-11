@@ -114,8 +114,8 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 
 [write-format]: ../reference/resource-api/write-format.md
 [resources-list]: ../reference/resource-api/resources-list.md
-[error-handling]: error-handling.md
-[bulk]: bulk-write.md
+[error-handling]: ../howto/handle-failures.md
+[bulk]: ../howto/bulk-write.md
 [adr41]: ../adr/0041-bulk-write-surface-impl.md
 [adr45]: ../adr/0045-write-response-root-code.md
 [adr46]: ../adr/0046-guard-error-contract.md

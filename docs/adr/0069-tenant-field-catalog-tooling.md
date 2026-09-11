@@ -56,7 +56,7 @@
 
 ### 生成側 — 翻訳表を持っているのに、利用者に手でやらせている
 
-現在の手順は `docs/guide/custom-fields.md` の「テナントの項目を調べる」節にある:
+現在の手順は `docs/howto/custom-fields.md` の「テナントの項目を調べる」節にある:
 
 ```ts
 for await (const f of t.field.searchAll({ resource: "candidate" })) {

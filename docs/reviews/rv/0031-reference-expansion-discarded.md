@@ -97,7 +97,7 @@ PORTERS は入れ子を返し、**ライブラリがそれを捨てる**。
 [adr56]: ../../adr/0056-deleted-flag-typing.md
 [fdt]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List
 [rapi]: ../../reference/resource-api/README.md
-[rq]: ../../guide/read-query.md
+[rq]: ../../howto/search-records.md
 [rv1]: 0001-read-field-default-missing.md
 [adr5]: ../../adr/0005-public-api-shape.md
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md

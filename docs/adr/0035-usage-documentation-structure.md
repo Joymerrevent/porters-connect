@@ -24,7 +24,7 @@ F-1 で `porters.auth.*`（初回ブラウザ付与 `authorizationUrl` / `exchan
 
 今後 **F-2（Read クエリ）・F-3（マルチテナント）・F-4（一括書き込み）** でも公開 API が増える。毎回 README に全部
 書けば**肥大化**し、書かなければ利用者が手順を**見つけられない**（フェイルセーフに反する）。
-既に [`docs/guide/error-handling.md`][error-handling]（README は短い節＋ `>` ポインタ、深掘りはガイド）という**前例**がある。
+既に [`docs/howto/handle-failures.md`][error-handling]（README は短い節＋ `>` ポインタ、深掘りはガイド）という**前例**がある。
 
 決めるべきは「**利用ドキュメントをどこに・どの粒度で・どう増やすか**」。本 ADR はその方針を定め、**F-1 を最初の適用例**にする
 （実装＝ガイド本文の執筆は accepted 後の別 PR）。
@@ -41,7 +41,7 @@ F-1 で `porters.auth.*`（初回ブラウザ付与 `authorizationUrl` / `exchan
 ## Considered Options
 
 - 案A: **README＝短い節＋ポインタ／深掘り＝`docs/guide/<topic>.md`**（[`error-handling`][error-handling] と同形）。
-  F-1 は `docs/guide/oauth.md` を新設。（推奨）
+  F-1 は `docs/howto/authenticate.md` を新設。（推奨）
 - 案B: **README にすべて書く**（独立ガイドを作らない）。
 - 案C: **ガイドのみ**（README には使い方を書かず、`docs/guide` へのリンク集に留める）。
 
@@ -53,7 +53,7 @@ F-2〜F-4 も同じ型で増やせる（再利用）。
 
 F-1 への具体的な適用（accepted・別 PR で実施）:
 
-- **新規 `docs/guide/oauth.md`**（章立て案）:
+- **新規 `docs/howto/authenticate.md`**（章立て案）:
   1. 全体像（普段は透過 `code_direct`／初回だけ人手のブラウザ付与）
   2. 初回権限付与: `authorizationUrl({ redirectUrl, scopes, state })` → ブラウザで承諾 → redirect の `?code=` を
      `exchangeAuthorizationCode(code)`（成功 `void`・失敗 throw）
@@ -90,11 +90,11 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
 ## More Information
 
 - 起点: F-1 実装（`porters.auth.*`・[[0034-oauth-public-surface-impl]] / [[0007-oauth-public-surface]]）。
-- 前例: [`docs/guide/error-handling.md`][error-handling]（README 短節＋ポインタ＝本 ADR が一般化する形）。
+- 前例: [`docs/howto/handle-failures.md`][error-handling]（README 短節＋ポインタ＝本 ADR が一般化する形）。
 - 規約: `CLAUDE.md`（日本語ファースト／公開 API は英語／md 参照スタイル）。
-- 後続: 本 ADR が `accepted` になったら、**別 PR**で `docs/guide/oauth.md` 新設＋README 追記（ADR 先行→実装の順）。
+- 後続: 本 ADR が `accepted` になったら、**別 PR**で `docs/howto/authenticate.md` 新設＋README 追記（ADR 先行→実装の順）。
   F-2〜F-4 も同じ型（`docs/guide/<topic>.md` ＋ README 短節）で追加する。
 
 [auth-ref]: ../reference/authentication-api/README.md
-[error-handling]: ../guide/error-handling.md
+[error-handling]: ../howto/handle-failures.md
 [0070]: 0070-usage-documentation-architecture.md
