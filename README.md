@@ -240,6 +240,8 @@ await phases.create({ ResourceId: 20001, Memo: "初回接触" });
 
 テナント固有のカスタム項目は `defineFields` で宣言すると、**読み書きの型に現れ**、Data Type どおりに変換されます。
 
+<!-- doccheck: fields -->
+
 ```ts
 import { PortersClient, defineFields } from "@joymerrevent/porters-connect";
 

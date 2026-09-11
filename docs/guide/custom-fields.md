@@ -16,16 +16,13 @@ const fields = defineFields({
   candidate: (f) => ({ U_score: f.number(), U_source: f.option() }),
 });
 
-const porters = new PortersClient({
-  host,
-  appId,
-  appSecret,
-  partition,
-  fields,
-});
+const porters = new PortersClient({ host, appId, appSecret, fields });
+const t = porters.tenant(partition);
 ```
 
 これで `t.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
+
+<!-- doccheck: fields expect-error -->
 
 ```ts
 const one = await t.candidate.get(10001);
@@ -88,6 +85,8 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 v1 未対応としていたものを実装しました）。標準項目にこの 2 型は 1 つもなく
 （reference 全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
 宣言しない限り、型にも読み取り結果にも現れません。
+
+<!-- doccheck: fields -->
 
 ```ts
 const fields = defineFields({
@@ -251,8 +250,11 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 **テナントごとに `PortersClient` を構築**してください。
 
 ```ts
-const clientFor = (partition: number, fields: DefinedFields) =>
-  new PortersClient({ host, appId, appSecret, partition, fields });
+const clientFor = (fields: DefinedFields) =>
+  new PortersClient({ host, appId, appSecret, fields });
+
+// partition は tenant(id) で束ねます（ADR-0055）
+const t = clientFor(myFields).tenant(partition);
 ```
 
 `porters.tenant(id)` は partition を差し替えるスコープで、**カタログは共有**します

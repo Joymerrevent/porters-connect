@@ -8,7 +8,7 @@
 
 > **generateFieldDecls**(`source`, `resources`, `options?`): `Promise`\<`string`\>
 
-Defined in: [src/fields/generate-field-decls.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L117)
+Defined in: [src/fields/generate-field-decls.ts:119](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L119)
 
 Read the given resources' custom fields and print a `defineFields` call for them.
 
@@ -39,6 +39,8 @@ readonly [`CustomFieldResource`](../type-aliases/CustomFieldResource.md)[]
 ## Example
 
 ```ts
+import { writeFile } from "node:fs/promises";
+
 const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 await writeFile("src/porters-fields.ts", src);
 ```

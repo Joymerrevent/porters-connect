@@ -65,6 +65,13 @@ jobs:
       - name: Doc index
         run: pnpm check:index
 
+      # README / ガイドの TypeScript コード例が今の公開 API でコンパイルするかの検査
+      # （ADR-0070 論点4 の検査④）。実測では 58 例のうち検査されているものが 0 個で、
+      # `new PortersClient({ …, partition })` は 0.10.0 以来 19 日間壊れていた。
+      # src の変更でも docs の変更でも壊れるので**常時実行**する。
+      - name: Doc examples
+        run: pnpm check:docs
+
       # docs/api（TypeDoc の生成物）が今のソースと一致しているかの検査（ADR-0068 決定3）。
       # 生成物をリポジトリに置く方式の値打ちは「公開 API を変えるとリファレンスの差分が PR に
       # 出る」ことで、生成し忘れるとその値打ちが消える。JSDoc だけの変更でも差分が出るので

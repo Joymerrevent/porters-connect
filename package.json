@@ -72,6 +72,7 @@
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
     "check:release": "node scripts/check-release-invariants.mjs",
     "check:index": "node scripts/check-doc-index.mjs",
+    "check:docs": "node scripts/check-doc-examples.mjs",
     "docs:api": "typedoc",
     "check:api": "node scripts/check-api-reference.mjs",
     "check:shell": "node scripts/check-shell-identifiers.mjs",
