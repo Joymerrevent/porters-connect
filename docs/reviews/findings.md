@@ -52,6 +52,8 @@
 | [RV-35][rv35] | 🟢     | フェイルセーフ                | wontfix | 未来の検査時刻を弾くガードが 1 日未満の未来で発火しない                    |
 | [RV-36][rv36] | 🟡     | エラーモデル / フェイルセーフ | fixed   | 日時の変換だけが例外を投げ、それが PortersError でない（読み・書きの両方） |
 | [RV-37][rv37] | 🟡     | API 忠実性 / 機能網羅         | fixed   | Field Read が Process を選べず、同じ事実の対応表が 2 つに割れている        |
+| [RV-38][rv38] | 🟢     | ドキュメント / フェイルセーフ | open    | リンク検査が inline リンクの一部を見ない                                   |
+| [RV-39][rv39] | 🟢     | ドキュメント                  | open    | リンク検査が見出しアンカーの実在を見ない                                   |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -97,3 +99,5 @@
 [rv35]: rv/0035-future-timestamp-guard-boundary.md
 [rv36]: rv/0036-write-value-validation-partial.md
 [rv37]: rv/0037-field-read-missing-process.md
+[rv38]: rv/0038-link-check-inline-forms.md
+[rv39]: rv/0039-link-check-ignores-anchors.md
