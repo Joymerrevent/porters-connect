@@ -35,7 +35,8 @@ const gone = await t.candidate.search({ itemstate: "deleted" });
 
 削除済みを読むときは**条件が絞られます**。`condition` に使えるのは
 **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**で、それ以外を書くと**送信前に弾かれます**
-（PORTERS に送れば 400 になるので、待たずに落とします）。
+（PORTERS に送れば 400 になるので、待たずに落とします）。この制限は `"deleted"` だけでなく
+**`"all"` にも掛かります** — 生きているデータが混ざっていても、絞り込みはこの 3 つだけです。
 
 このとき 2 つの項目の意味が変わります。**`P_UpdateDate` は削除された時刻**、
 **`P_UpdatedBy` は最後に編集した人**です。加えて PORTERS が
