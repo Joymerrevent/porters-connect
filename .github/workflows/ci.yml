@@ -65,6 +65,12 @@ jobs:
       - name: Doc index
         run: pnpm check:index
 
+      # Markdown のリンク先が実在するかの検査。markdownlint の MD052 は「ラベルが未定義」を
+      # 見るだけで、**リンク先のファイルがあるか**は見ない。ADR-0070 の移設で実際に壊れた
+      # （手動チェック 2 回でどちらも検出）ので機械に渡す。
+      - name: Doc links
+        run: pnpm check:links
+
       # README / ガイドの TypeScript コード例が今の公開 API でコンパイルするかの検査
       # （ADR-0070 論点4 の検査④）。実測では 58 例のうち検査されているものが 0 個で、
       # `new PortersClient({ …, partition })` は 0.10.0 以来 19 日間壊れていた。
