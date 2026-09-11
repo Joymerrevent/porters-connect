@@ -72,7 +72,7 @@ Partition ごとに client を分ける形に切り替えてください — **�
 - 手順: [マルチテナント][multi-tenant]（1 プロセスで複数テナントを扱う）／[認証][authenticate]
 - API 事実: [リソース一覧][res-list]（Partition は `/v1/partition`）
 
-[adr8]: ../adr/0008-multi-tenancy.md
+[adr8]: ../adr/0008-multitenancy-partition.md
 [adr22]: ../adr/0022-master-read-query-surface.md
 [adr55]: ../adr/0055-partition-binding-guard.md
 [authenticate]: ../howto/authenticate.md

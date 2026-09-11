@@ -18,10 +18,28 @@ import { dirname, join, normalize } from "node:path";
 // 生成物と、リポジトリの文書ではないもの。`docs/api` は TypeDoc の出力（`pnpm check:api` が見る）。
 const SKIP_PREFIXES = ["docs/api/", ".claude/"];
 
-const tracked = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" })
+// **追跡済み ＋ 未追跡（gitignore 対象を除く）**。`git ls-files` だけでは
+// **新しく書いたページが検査されない** — いちばん必要なときに効かない形になる（実際に踏んだ）。
+const files = execFileSync(
+  "git",
+  ["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+  { encoding: "utf8" },
+)
   .split("\0")
   .filter((f) => f.endsWith(".md"))
   .filter((f) => !SKIP_PREFIXES.some((p) => f.startsWith(p)));
+
+// gitignore 対象を指すリンクは**この環境にしか無い**もの。手元では解決し CI では落ちる＝
+// 環境依存の結果になるので、最初から対象外にして件数だけ見せる（ADR が `tmp/` に
+// 取得した PORTERS の原記事を指している箇所がこれに当たる）。
+const isIgnored = (path) => {
+  try {
+    execFileSync("git", ["check-ignore", "-q", path], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 /** 1 ファイル分のリンク先（行番号つき）。 */
 const linksOf = (file) => {
@@ -40,22 +58,31 @@ const linksOf = (file) => {
 };
 
 const problems = [];
-for (const file of tracked) {
+let ignoredTargets = 0;
+for (const file of files) {
   for (const { target, line } of linksOf(file)) {
     // 外部・アンカーのみ・プロトコル相対は対象外
     if (/^(https?:|mailto:|#|\/\/)/.test(target)) continue;
     const path = target.split("#")[0];
     if (path === "") continue; // 同一ページ内アンカー
     const resolved = normalize(join(dirname(file), path));
-    if (!existsSync(resolved)) {
-      problems.push(`${file}:${String(line)} -> ${target}`);
+    if (existsSync(resolved)) continue;
+    // gitignore 対象（手元の作業ファイル）は環境差なので数えるだけ。
+    if (isIgnored(resolved)) {
+      ignoredTargets += 1;
+      continue;
     }
+    problems.push(`${file}:${String(line)} -> ${target}`);
   }
 }
 
 if (problems.length === 0) {
+  const note =
+    ignoredTargets > 0
+      ? `／gitignore 対象を指すリンク ${String(ignoredTargets)} 件は対象外`
+      : "";
   console.log(
-    `リンク先はすべて実在します（${String(tracked.length)} ファイルを検査）。`,
+    `リンク先はすべて実在します（${String(files.length)} ファイルを検査${note}）。`,
   );
   process.exit(0);
 }
