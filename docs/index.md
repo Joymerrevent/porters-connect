@@ -5,8 +5,8 @@
 このページが**ドキュメントの目次**です（[ADR-0070][adr70]）。構成は 4 層で、上から順に
 「**初めて触る → 前提を理解する → 目的を達する → 細部を引く**」になっています。
 
-> **⚠️ 工事中です。** [ADR-0070][adr70] で構成を決め、既存の資料を移し終えた段階です。
-> 「入門」と「考え方」はこれから書きます。下の表で**未着手**と書いてあるものはまだありません。
+> **⚠️ 工事中です。** [ADR-0070][adr70] で構成を決め、「考え方」まで書いた段階です。
+> **「入門」はこれから**で、下の表で**未着手**と書いてあるものはまだありません。
 
 ---
 
@@ -29,13 +29,13 @@
 このライブラリの難所は API の形ではなく、**PORTERS 側の前提**です。ここを読んでおくと
 目的別の手順が短く読めます。
 
-| ページ                    | 内容                                         |
-| ------------------------- | -------------------------------------------- |
-| [上限][limits]            | 長さ・件数・レートの上限と、どこで弾かれるか |
-| Partition とテナント      | **未着手**                                   |
-| alias と Data Type        | **未着手**                                   |
-| 日時は UTC                | **未着手**                                   |
-| 削除 API が無いということ | **未着手**                                   |
+| ページ                                         | 内容                                                 |
+| ---------------------------------------------- | ---------------------------------------------------- |
+| [Partition（Company DB）とテナント][partition] | データは Partition に分かれる。`tenant(id)` で束ねる |
+| [alias と Data Type][aliases]                  | `P_` / `U_` / `A_` と、値の形（読みと書きで違う）    |
+| [日時は UTC][datetime]                         | ISO 8601 で入出力する。業務タイムゾーンは扱わない    |
+| [削除 API が無いということ][no-delete]         | 消せない。ただし削除済みは読める                     |
+| [上限][limits]                                 | 長さ・件数・レートの上限と、どこで弾かれるか         |
 
 ## 目的別 — 「〜したい」
 
@@ -84,7 +84,11 @@
 [fake]: fake-server-runbook.md
 [findings]: reviews/findings.md
 [handle-failures]: howto/handle-failures.md
+[aliases]: concepts/aliases.md
+[datetime]: concepts/datetime.md
 [limits]: concepts/limits.md
+[no-delete]: concepts/no-delete.md
+[partition]: concepts/partition.md
 [lv]: live-verification.md
 [multi-tenant]: howto/multi-tenant.md
 [readme]: ../README.md
