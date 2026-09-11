@@ -33,11 +33,11 @@ README に最低限の記述はあるため 🟢。
 
 ## 推奨
 
-`docs/guide/read-query.md` を新設する。[RV-24][rv24] と同じ作業単位で片付く（**ADR 不要**）。
+`docs/howto/search-records.md` を新設する。[RV-24][rv24] と同じ作業単位で片付く（**ADR 不要**）。
 
 ## 処置
 
-`docs/guide/read-query.md` を新設した（[RV-24][rv24] と同じ作業単位）。
+`docs/howto/search-records.md` を新設した（[RV-24][rv24] と同じ作業単位）。
 README の検索クエリの箇条書きに `>` でガイドへの導線を足した。
 
 ガイドで扱ったのは、`field` の 3 通りの意味（省略＝全項目 / `[]`＝主キーのみ / 明示）／

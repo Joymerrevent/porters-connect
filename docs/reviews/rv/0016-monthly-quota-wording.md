@@ -47,6 +47,6 @@ README「PORTERS 固有の注意」・`CLAUDE.md`「PORTERS API 固有の注意�
 薄いラッパー方針を崩さずに doc だけを実態へ寄せた。
 
 [adr43]: ../../adr/0043-local-fake-server.md
-[guide]: ../../guide/error-handling.md
+[guide]: ../../howto/handle-failures.md
 [run809]: ../2026-08-09-01.md
 [run810]: ../2026-08-10-01.md

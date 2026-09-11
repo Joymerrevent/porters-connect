@@ -248,7 +248,7 @@ await t.candidate.search();
 [bd]: ../design/basic-design.md
 [glossary]: ../reference/glossary.md
 [lv]: ../live-verification.md
-[mt]: ../guide/multi-tenancy.md
+[mt]: ../howto/multi-tenant.md
 [rc]: ../reference/resource-api/result-codes.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv28]: ../reviews/rv/0028-count-range-unvalidated.md

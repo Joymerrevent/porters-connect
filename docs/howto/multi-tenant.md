@@ -91,4 +91,4 @@ const user = await t.user.current(); // ログイン中 user
 [adr-0040]: ../adr/0040-multitenancy-surface-impl.md
 [bd]: ../design/basic-design.md
 [lv]: ../live-verification.md
-[oauth]: ./oauth.md
+[oauth]: ./authenticate.md

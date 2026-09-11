@@ -280,8 +280,8 @@ const t = clientFor(myFields).tenant(partition);
 [adr69]: ../adr/0069-tenant-field-catalog-tooling.md
 [adr6]: ../adr/0006-error-model.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
-[error-handling]: error-handling.md
+[error-handling]: handle-failures.md
 [fdt]: ../reference/resource-api/field-data-types.md
-[multi-tenancy]: multi-tenancy.md
-[write-constraints]: write-constraints.md
+[multi-tenancy]: multi-tenant.md
+[write-constraints]: ../concepts/limits.md
 [prd]: ../design/requirements.md

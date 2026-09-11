@@ -38,14 +38,14 @@ F-1〜F-4 に適用されているかを 1 つずつ確認していて、
 
 ## 推奨
 
-`docs/guide/custom-fields.md` を新設する（宣言 → client への受け渡し → 型がどう変わるか →
+`docs/howto/custom-fields.md` を新設する（宣言 → client への受け渡し → 型がどう変わるか →
 Field Read でテナントの項目を調べる手順 → 制限）。
 README「リソースと操作」付近に 3〜5 行の節 ＋ `>` でガイドへ誘導。
 [ADR-0035][adr35] の型に沿うだけなので**新しい決定は不要**（ADR 不要）。
 
 ## 処置
 
-`docs/guide/custom-fields.md` を新設した（[ADR-0035][adr35] の型どおり）。
+`docs/howto/custom-fields.md` を新設した（[ADR-0035][adr35] の型どおり）。
 README には「リソースと操作」の中に**カスタム項目の節**を足し、3 行の例と `>` でガイドへ誘導する。
 
 ガイドで扱ったのは、宣言の書き方／**宣言しないとどうなるか**（型が付かず `field` 省略時に

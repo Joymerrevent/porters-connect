@@ -120,12 +120,12 @@
 
 - 出典: [findings][findings] RV-15（`file:line` つきの根拠・検出経緯）。
 - 影響範囲（accept 後の実装 PR）: `src/resources/resource.ts`・`attachment.ts`・マスタ 4 ファイル・
-  `docs/guide/error-handling.md`（例外の届き方の記述）・該当テスト。
+  `docs/howto/handle-failures.md`（例外の届き方の記述）・該当テスト。
 - 関連: [ADR-0024][adr24]（Transport の同契約）／[ADR-0005][adr5]（公開 API の形）／[ADR-0006][adr6]（エラーモデル）／
   [ADR-0038][adr38]（Read クエリ＝ガードの出所）。
 
 [findings]: ../reviews/findings.md
-[guide]: ../guide/error-handling.md
+[guide]: ../howto/handle-failures.md
 [adr5]: 0005-public-api-shape.md
 [adr6]: 0006-error-model.md
 [adr24]: 0024-mock-transport.md

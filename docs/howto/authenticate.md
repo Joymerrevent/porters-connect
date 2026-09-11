@@ -224,5 +224,5 @@ try {
 [adr-0034]: ../adr/0034-oauth-public-surface-impl.md
 [adr-0012]: ../adr/0012-token-cache-refresh.md
 [auth-ref]: ../reference/authentication-api/README.md
-[error-handling]: ./error-handling.md
+[error-handling]: ./handle-failures.md
 [readme]: ../../README.md

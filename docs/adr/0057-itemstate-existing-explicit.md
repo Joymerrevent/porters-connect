@@ -194,6 +194,6 @@ if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
 [codes]: ../reference/resource-api/result-codes.md
 [lv]: ../live-verification.md
 [rapi]: ../reference/resource-api/README.md
-[rq]: ../guide/read-query.md
+[rq]: ../howto/search-records.md
 [rv1]: ../reviews/rv/0001-read-field-default-missing.md
 [rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md

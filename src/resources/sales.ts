@@ -13,7 +13,7 @@
 // are required" would reject calls the server accepts. Being stricter than the server fails
 // to the *unsafe* side here — the caller cannot work around a client-side rejection, but a
 // server-side one comes back as a typed error they can act on. So the library sends what it
-// is given and lets PORTERS arbitrate; the rule is documented in docs/guide/write-constraints.md.
+// is given and lets PORTERS arbitrate; the rule is documented in docs/concepts/limits.md.
 // VERIFY(live): the exact conditions are doc-only until a contract environment confirms them.
 //
 // `P_ClientOwner` / `P_RecruiterOwner` / `P_JobOwner` / `P_CandidateOwner` / `P_ResumeOwner`
@@ -113,7 +113,7 @@ export type SalesSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 /**
  * Fields for `create`: only `P_Owner` is unconditionally required. The six references are
  * required *conditionally* (a dependency chain PORTERS validates server-side) — see the
- * module comment and docs/guide/write-constraints.md.
+ * module comment and docs/concepts/limits.md.
  */
 export type SalesCreateInput = CreateInput<
   typeof FIELDS,
