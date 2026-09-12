@@ -25,13 +25,20 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 
 ## 前提
 
-1. **PORTERS 契約 ＋ Connect API オプション契約**。ホスト名・App ID・App Secret が通知されます。
-2. **初回のみブラウザで権限付与**（人手・1 回）。以降はライブラリが `code_direct`（サーバ間）で
-   無人運用します。手順は[認証を通す][s-auth]にあります。
-3. Node.js 20 以上（ESM）。型定義は同梱です。
+繋ぐ前に、**PORTERS 側で 4 つ**が要ります。揃っていないと 1 行も動きません。
 
-**契約が無くても試せます** — [インストールと、最初の 1 回][s-install]は、契約もネットワークも
-無しで動かすところから始まります。
+1. **PORTERS 契約 ＋ Connect API オプション契約**（オプションは別契約）。
+2. **API アプリの登録**。ここで Redirect URL を決め、**ホスト名・App ID・App Secret** が
+   通知されます（いずれも秘密・ハードコード禁止）。
+3. **初回のみブラウザで権限付与**（人手・Company DB ごとに 1 回）。以降はライブラリが
+   `code_direct`（サーバ間）で無人運用します。
+4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
+
+揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
+あります。実行環境は Node.js 20 以上（ESM）で、型定義は同梱です。
+
+契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
+（[契約なしでテストを書きたい][test-without-contract]）。
 
 ## インストール
 
@@ -65,7 +72,7 @@ const page = await t.candidate.search({
 console.log(page.total, page.items[0]?.P_Name);
 ```
 
-続きは[入門][s-install]（5 ページ）へ。読み取り・書き込み・本番に出す前の確認まで順に進みます。
+続きは[入門][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
 
 ## リソースと操作
 
@@ -151,7 +158,8 @@ console.log(page.total, page.items[0]?.P_Name);
 [c-no-delete]: docs/usage/concepts/no-delete.md
 [c-partition]: docs/usage/concepts/partition.md
 [s-auth]: docs/usage/start/authenticate.md
-[s-install]: docs/usage/start/install.md
+[s-prereq]: docs/usage/start/prerequisites.md
+[test-without-contract]: docs/usage/howto/test-without-contract.md
 [docs-index]: docs/usage/index.md
 [docs-resources]: docs/usage/index.md#リソースと操作
 [adr70]: ./docs/adr/0070-usage-documentation-architecture.md
