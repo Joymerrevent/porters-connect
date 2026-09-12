@@ -1,6 +1,6 @@
 # 73. スロットルの共有単位（client ごとをやめ、注入できるようにする）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-13
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,6 +8,10 @@
 > ため、テナント別に client を立てると 1 プロセス内で自制が分裂する。しかもドキュメントが
 > その形を勧めていた。**既定を安全側に寄せる**のと、**プロセスを跨いで協調できる継ぎ目を開ける**
 > のを、まとめて決める。
+>
+> **decider が 4 論点すべて推奨案どおり選択し `accepted`（2026-09-13）**（既定でプロセス内共有 ／
+> 共有の単位はホスト ／ `Throttle` を注入可能にする ／ テスト専用のリセット API は公開しない）。
+> 実装は別 PR。
 
 ## Context and Problem Statement
 
