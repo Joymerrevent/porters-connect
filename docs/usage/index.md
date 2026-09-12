@@ -72,6 +72,8 @@
 | `t.phase`       | フェーズ履歴   | `search` / `searchAll` / `get` / `create` / `update` | **`t.phase.of("candidate")` のように上位リソースを先に束ねる**       |
 
 データ系 13 種はすべて **`create` と `update` を持ち、`delete` は持ちません**（[削除 API が無いということ][no-delete]）。
+200 件を超えてまとめて書く **`createMany` / `updateMany`** も持ちます（**`t.attachment` だけ例外で、
+単件のみ**）。使い方は[一括書き込み][bulk-write]にあります。
 
 マスタ 4 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
 

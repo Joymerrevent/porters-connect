@@ -1,7 +1,9 @@
 # 一括書き込み（createMany / updateMany）
 
-複数レコードをまとめて登録・更新するガイドです。各データ系リソース（Candidate / Job / Client /
-Process / Resume）に `createMany` / `updateMany` があります。
+複数レコードをまとめて登録・更新するガイドです。**データ系 11 種**（Candidate / Job / Client /
+Recruiter / Contact / Opportunity / Activity / Contract / Sales / Process / Resume）と
+**Phase**（`t.phase.of(...)` で束ねたもの）に `createMany` / `updateMany` があります。
+**Attachment にはありません**（本体が巨大な Base64 のため。下記「対象外」）。
 
 設計の根拠は [ADR-0041（F-4 実装）][adr-0041]、書式の一次情報は [Write API（XML 形式）][write-format]。
 

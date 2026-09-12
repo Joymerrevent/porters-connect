@@ -118,7 +118,7 @@ console.log(page.total, page.items[0]?.P_Name);
 ## 対応バージョン
 
 - **契約は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定送信し、**v2 を動作の前提**とします（担当者型・部署型 Link 等は v2 必須）。互換性はこの **API version** で明示します。
-- **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正典は [docs/reference][ref]**（実 API ドキュメントに接地）。
+- **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正典は [PORTERS API の事実][ref]**（実 API ドキュメントに接地）。
 
 ## リンク
 
