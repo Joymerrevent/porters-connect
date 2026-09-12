@@ -77,6 +77,13 @@ const t = clientFor(tokenStore).tenant(partition);
 > 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です（[live-verification][lv]）。
 > 共有トークンで不都合があればテナント別 client に切り替えてください（設計は両対応）。
 
+ただし、**分けるには代償があります**。
+
+> [!WARNING]
+> **client を分けるとスロットルも分かれます。** 1 分あたりの上限を自制するバケットは client
+> ごとに作られるので、テナント数だけ client を作ると、その数倍まで叩けてしまいます
+> （[RV-43][rv43]）。**分ける理由が無いなら `tenant(id)` で束ねてください。**
+
 ## オンボーディング（partition の発見）
 
 初回はブラウザでの権限付与（[OAuth 認証ガイド][oauth]）の後、`request_type=0` でログイン中の
@@ -104,3 +111,4 @@ const user = await t.user.current(); // ログイン中 user
 [custom-fields]: custom-fields.md
 [partition]: ../concepts/partition.md
 [index]: ../index.md
+[rv43]: ../../reviews/rv/0043-throttle-scoped-per-client.md

@@ -262,6 +262,11 @@ const t = clientFor(myFields).tenant(partition);
 （[マルチテナント ガイド][multi-tenancy]）。項目構成が同じテナント群には `tenant(id)`、
 違うなら別クライアント、と使い分けます。
 
+> [!WARNING]
+> **client を分けるとスロットルも分かれます**（[RV-43][rv43]）。1 分あたりの上限を自制する
+> バケットは client ごとなので、テナント数だけ client を作ると、その数倍まで叩けてしまいます。
+> 項目構成が同じテナントは `tenant(id)` で束ねてください。
+
 ## 関連
 
 - 決定: [ADR-0023][adr23]（宣言 DSL の詳細設計）／[ADR-0004][adr4]（型モデル）
@@ -289,3 +294,4 @@ const t = clientFor(myFields).tenant(partition);
 [prd]: ../../design/requirements.md
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
+[rv43]: ../../reviews/rv/0043-throttle-scoped-per-client.md
