@@ -225,4 +225,4 @@ try {
 [adr-0012]: ../../adr/0012-token-cache-refresh.md
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./handle-failures.md
-[readme]: ../../README.md
+[readme]: ../../../README.md
