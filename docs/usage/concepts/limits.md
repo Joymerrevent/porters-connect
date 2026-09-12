@@ -61,8 +61,13 @@ PORTERS に蹴られるより、**何件目が画像を持つか**を添えて�
 （Read 1800 / Write 450 相当）。手前で使い切ったら**待ちます** — 例外にはしません。
 バーストは容量まで許し、平均が上限を下回るようにしてあります。
 
-**数えているのはプロセス 1 つ分です。** 複数プロセス・複数インスタンスで動かすなら、
-PORTERS から見た合計はその足し算になります。ライブラリはプロセス間で協調しません。
+**数えているのは `PortersClient` 1 つ分です。** プロセスでもインスタンスでもなく、
+**クライアント単位**です。テナントごとにクライアントを作ると（[マルチテナント][multi-tenant]と
+[カスタム項目][custom-fields]がそう勧めています）、バケットはその数だけ並び、PORTERS から見た
+合計はクライアント数倍まで出ます。プロセス・インスタンスを跨いでも協調しません。
+
+> **これは既知の問題です**（[RV-43][rv43]）。上限を守り切りたい間は、テナントごとに
+> クライアントを増やさない（`tenant(id)` で束ねる）ほうが安全です。
 
 ### 超えたときに何が返るか
 
@@ -159,3 +164,6 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [adr44]: ../../adr/0044-http-status-handling.md
 [failures]: ../howto/handle-failures.md
 [authenticate]: ../howto/authenticate.md
+[multi-tenant]: ../howto/multi-tenant.md
+[custom-fields]: ../howto/custom-fields.md
+[rv43]: ../../reviews/rv/0043-throttle-scoped-per-client.md
