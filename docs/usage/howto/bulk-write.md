@@ -66,7 +66,21 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 - **Attachment** は単件のみ（`create` / `update`）。本体が巨大な Base64 のため一括は提供しません。
 
+## 関連
+
+- 手順: [失敗の扱い][handle-failures]（部分成功と、再送してよいか）／[毎日の同期][sync-batch]（差分をまとめて書く）／[添付ファイル][attachments]（単件のみ）
+- 考え方: [上限][limits]（200 件・リクエスト長）／[削除 API が無いということ][no-delete]（作りすぎても消せない）
+- 決定: [ADR-0041][adr-0041]（一括書き込みの公開サーフェス）／[ADR-0045][adr-0045]（Write 応答のルート Code）
+- API 事実: [Write API（XML 形式）][write-format]／[Result Code][result-codes]
+- ほかの目的から探す: [目次][index]
+
 [adr-0041]: ../../adr/0041-bulk-write-surface-impl.md
 [adr-0045]: ../../adr/0045-write-response-root-code.md
 [write-format]: ../reference/resource-api/write-format.md
 [result-codes]: ../reference/resource-api/result-codes.md
+[handle-failures]: handle-failures.md
+[sync-batch]: sync-batch.md
+[attachments]: attachments.md
+[limits]: ../concepts/limits.md
+[no-delete]: ../concepts/no-delete.md
+[index]: ../index.md

@@ -19,19 +19,26 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 - **型安全**：リソース・項目の値を型で表現。`any` を撒きません。
 - **XML を外に出さない**：返り値は型付きオブジェクト、入力も素直な JS の値。
 - **独自 OAuth を透過**：`code_direct` によるトークン取得・キャッシュ・更新を自動化。
-- **良き API 市民**：スロットリング・リトライ（指数バックオフ）・リクエストサイズガード内蔵。
+- **上限内に自制する**：スロットリング・リトライ（指数バックオフ）・リクエストサイズガード内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
 - **PORTERS の全リソースに対応**：データ系 13 種 ＋ Phase ＋ マスタ Read 4 種。
 
 ## 前提
 
-1. **PORTERS 契約 ＋ Connect API オプション契約**。ホスト名・App ID・App Secret が通知されます。
-2. **初回のみブラウザで権限付与**（人手・1 回）。以降はライブラリが `code_direct`（サーバ間）で
-   無人運用します。手順は[認証を通す][s-auth]にあります。
-3. Node.js 20 以上（ESM）。型定義は同梱です。
+繋ぐ前に、**PORTERS 側で 4 つ**が要ります。揃っていないと 1 行も動きません。
 
-**契約が無くても試せます** — [インストールと、最初の 1 回][s-install]は、契約もネットワークも
-無しで動かすところから始まります。
+1. **PORTERS 契約 ＋ Connect API オプション契約**（オプションは別契約）。
+2. **API アプリの登録**。ここで Redirect URL を決め、**ホスト名・App ID・App Secret** が
+   通知されます（いずれも機密情報・ハードコード禁止）。
+3. **初回のみブラウザで権限付与**（人手・Company DB ごとに 1 回）。以降はライブラリが
+   `code_direct`（サーバ間）で無人運用します。
+4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
+
+揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
+あります。実行環境は Node.js 20 以上（ESM）で、型定義は同梱です。
+
+契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
+（[契約なしでテストを書きたい][test-without-contract]）。
 
 ## インストール
 
@@ -56,7 +63,7 @@ const porters = new PortersClient({
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({
-  field: ["P_Id", "P_Name", "P_UpdateDate"], // 省略すると主キーしか返らない
+  field: ["P_Id", "P_Name", "P_UpdateDate"], // 省略時は標準項目（P_）が全部返る
   condition: { P_Name: { part: "山田" } }, // part = 部分一致 / full = 完全一致
   order: [{ P_UpdateDate: "desc" }],
   count: 50, // 1 ページ最大 200
@@ -65,7 +72,7 @@ const page = await t.candidate.search({
 console.log(page.total, page.items[0]?.P_Name);
 ```
 
-続きは[入門][s-install]（5 ページ）へ。読み取り・書き込み・本番に出す前の確認まで順に進みます。
+続きは[入門][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
 
 ## リソースと操作
 
@@ -91,9 +98,9 @@ console.log(page.total, page.items[0]?.P_Name);
 
 | 層               | 何が書いてあるか                                                                   |
 | ---------------- | ---------------------------------------------------------------------------------- |
-| **入門**         | 順に読む 5 ページ。契約なしで動かす → 認証 → 読み → 書き → 本番前                  |
-| **考え方**       | PORTERS 固有の前提（Partition ／ alias と Data Type ／ UTC ／ 削除が無い ／ 上限） |
+| **入門**         | 順に読む 6 ページ。準備 → 導入 → 認証と疎通 → 読み → 書き → 本番前                 |
 | **目的別**       | 「〜したい」から引く 9 ページ（検索・一括書き込み・添付・同期バッチ・テスト ほか） |
+| **考え方**       | PORTERS 固有の前提（Partition ／ alias と Data Type ／ UTC ／ 削除が無い ／ 上限） |
 | **リファレンス** | [公開 API の全記号][api-ref]（JSDoc から生成）と [PORTERS API の事実][ref]         |
 
 ## PORTERS 固有の注意
@@ -151,7 +158,8 @@ console.log(page.total, page.items[0]?.P_Name);
 [c-no-delete]: docs/usage/concepts/no-delete.md
 [c-partition]: docs/usage/concepts/partition.md
 [s-auth]: docs/usage/start/authenticate.md
-[s-install]: docs/usage/start/install.md
+[s-prereq]: docs/usage/start/prerequisites.md
+[test-without-contract]: docs/usage/howto/test-without-contract.md
 [docs-index]: docs/usage/index.md
 [docs-resources]: docs/usage/index.md#リソースと操作
 [adr70]: ./docs/adr/0070-usage-documentation-architecture.md

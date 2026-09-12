@@ -1,7 +1,16 @@
 # テストを書きたい（契約なし）
 
-PORTERS の契約が無くても、**このライブラリを通るコードはすべてテストできます**。
+PORTERS に繋がなくても、**このライブラリを通るコードはすべてテストできます**。
 公開ヘルパー `createMockTransport` に、PORTERS の代わりの XML を返させるだけです。
+
+効くのは 3 つの場面です。
+
+- **CI で回す** — 本番の PORTERS を叩かずに、送信内容と失敗経路まで検証する
+- **契約や権限付与を待っている** — [始める前に][prereq]が揃う前に、書き進めておく
+- **本番でしか出ない失敗を手元で起こす** — レート制限・リクエスト長・Result Code
+  （下記「XML を書くのがつらいとき」のフェイクサーバー）
+
+契約済みで、まず繋ぐところから始めたいなら[入門][start]へ。
 
 ## 差し替えるのは「トランスポート」1 箇所
 
@@ -148,10 +157,13 @@ PORTERS_HOST=xxxxx.example.com node app.js                   # 本番（未設�
 ## 関連
 
 - 手順: [失敗の扱い][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
-- 入門: [1. インストールと、最初の 1 回][install]（最初の 1 本も同じ仕組み）
+- 入門: [始める前に][prereq]（契約済みなら、繋ぐのが先）
 - 開発者向け: [フェイクサーバー手順書][fake]
+- ほかの目的から探す: [目次][index]
 
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
 [handle-failures]: handle-failures.md
-[install]: ../start/install.md
+[prereq]: ../start/prerequisites.md
+[start]: ../index.md
+[index]: ../index.md

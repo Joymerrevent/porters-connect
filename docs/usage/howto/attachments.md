@@ -77,7 +77,7 @@ await t.attachment.create({ ...file, content: base64 });
 **アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限][limits]）。
 
-## まとめて作る方法は無い
+## まとめて作成する方法は無い
 
 `createMany` / `updateMany` は Attachment にはありません。ファイルは 1 件ずつです。
 たくさん送るときは、レートの自制（1 分あたり Write 500）がライブラリ側で効きます。
@@ -87,6 +87,7 @@ await t.attachment.create({ ...file, content: base64 });
 - 手順: [一括書き込み][bulk-write]（データ系リソースの 200 件分割）／[失敗の扱い][handle-failures]
 - 考え方: [上限][limits]（長さ・件数・レート）／[削除 API が無いということ][no-delete]
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
+- ほかの目的から探す: [目次][index]
 
 [bulk-write]: bulk-write.md
 [handle-failures]: handle-failures.md
@@ -94,3 +95,4 @@ await t.attachment.create({ ...file, content: base64 });
 [ref-attachment]: ../reference/resource-api/resources/attachment.md
 [no-delete]: ../concepts/no-delete.md
 [res-list]: ../reference/resource-api/resources-list.md
+[index]: ../index.md

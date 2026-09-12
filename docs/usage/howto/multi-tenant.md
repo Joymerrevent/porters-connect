@@ -85,6 +85,13 @@ const me = await porters.partition.search({ requestType: 0 }); // ログイン�
 const user = await t.user.current(); // ログイン中 user
 ```
 
+## 関連
+
+- 手順: [認証][oauth]（Company DB ごとの権限付与）／[カスタム項目][custom-fields]（テナントで項目が違う場合）
+- 考え方: [Partition（Company DB）とテナント][partition]
+- 決定: [ADR-0008][adr-0008]（マルチテナント）／[ADR-0040][adr-0040]（実装）／[ADR-0055][adr-0055]（client から partition を外す）
+- ほかの目的から探す: [目次][index]
+
 [adr-0008]: ../../adr/0008-multitenancy-partition.md
 [adr-0021]: ../../adr/0021-master-read-resources.md
 [adr-0055]: ../../adr/0055-partition-binding-guard.md
@@ -92,3 +99,6 @@ const user = await t.user.current(); // ログイン中 user
 [bd]: ../../design/basic-design.md
 [lv]: ../../live-verification.md
 [oauth]: ./authenticate.md
+[custom-fields]: custom-fields.md
+[partition]: ../concepts/partition.md
+[index]: ../index.md

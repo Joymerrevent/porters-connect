@@ -75,7 +75,7 @@ const token = await porters.auth.getToken();
 
 既定（透過ストラテジ）のトークン保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
 
-永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（良き API 市民）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
+永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（**認証のリクエストも API アクセス数に数えられます**）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
 ```ts
 // get / set / clear の 3 つ（StoredTokens とも型 export 済み）
@@ -214,11 +214,12 @@ try {
 }
 ```
 
-## 参考
+## 関連
 
 - 設計: [ADR-0007（OAuth 公開 API）][adr-0007] / [ADR-0034（F-1 実装）][adr-0034] / [ADR-0012（トークンのキャッシュ/更新）][adr-0012]
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
-- 関連ガイド: [エラーハンドリング][error-handling] ／ 透過運用は [README の「認証」][readme]
+- 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [README の「認証」][readme]
+- ほかの目的から探す: [目次][index]
 
 [adr-0007]: ../../adr/0007-oauth-public-surface.md
 [adr-0034]: ../../adr/0034-oauth-public-surface-impl.md
@@ -226,3 +227,4 @@ try {
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./handle-failures.md
 [readme]: ../../../README.md
+[index]: ../index.md

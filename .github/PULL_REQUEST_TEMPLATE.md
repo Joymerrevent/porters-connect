@@ -17,7 +17,7 @@
 - [ ] 変更に対応するテストを追加・更新した（新リソースはテスト必須）
 - [ ] 設計判断を伴う場合、ADR を起票した（`proposed`。自己 accept しない）
 - [ ] 利用者影響がある場合、CHANGELOG の `[Unreleased]` を更新した（日本語 curated）
-- [ ] App ID / Secret / ホスト名 / トークンなどの秘匿情報を含めていない
+- [ ] App ID / Secret / ホスト名 / トークンなどの機密情報を含めていない
 - [ ] Conventional Commits に沿ったコミットメッセージ
 - [ ] Markdown のリンクは参照スタイル
 

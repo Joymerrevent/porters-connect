@@ -32,7 +32,8 @@ for await (const c of t.candidate.searchAll({
 ## `field` — 取得する項目
 
 **省略が既定**です。PORTERS は `field` 未指定だと**主キーしか返さない**ため、
-ライブラリがカタログ由来の既定 field を補います（[ADR-0020][adr20]）。3 通りの意味があります。
+ライブラリが[カタログ][aliases]（知っている項目の一覧）由来の既定 field を補います
+（[ADR-0020][adr20]）。3 通りの意味があります。
 
 | 書き方         | 送られるもの                                                 |
 | -------------- | ------------------------------------------------------------ |
@@ -337,8 +338,10 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
   [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
+- ほかの目的から探す: [目次][index]
 
 [adr5]: ../../adr/0005-public-api-shape.md
+[aliases]: ../concepts/aliases.md
 [adr20]: ../../adr/0020-read-field-default.md
 [adr38]: ../../adr/0038-read-query-surface-impl.md
 [adr56]: ../../adr/0056-deleted-flag-typing.md
@@ -351,3 +354,4 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [prd]: ../../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
 [partition]: ../concepts/partition.md
+[index]: ../index.md
