@@ -77,7 +77,7 @@ await t.attachment.create({ ...file, content: base64 });
 **アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限][limits]）。
 
-## まとめて作る方法は無い
+## まとめて作成する方法は無い
 
 `createMany` / `updateMany` は Attachment にはありません。ファイルは 1 件ずつです。
 たくさん送るときは、レートの自制（1 分あたり Write 500）がライブラリ側で効きます。

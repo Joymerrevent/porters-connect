@@ -120,7 +120,7 @@ for await (const c of t.candidate.searchAll({
 
 ## 次に読む
 
-**[はじめての書き込み][s4]** — 読めたので、次は作って更新します。
+**[はじめての書き込み][s4]** — 読めたので、次は作成して更新します。
 
 [adr20]: ../../adr/0020-read-field-default.md
 [aliases]: ../concepts/aliases.md

@@ -17,7 +17,7 @@ npm i @joymerrevent/porters-connect
 **Node.js 20 以上・ESM 前提**です。型定義（`.d.ts`）は同梱しているので、TypeScript なら
 追加の `@types` は要りません。
 
-## クライアントを作る
+## クライアントを作成する
 
 渡すのは[前ページ][s-prereq]で受け取った 3 つの値です。**どれもコミットしないでください**
 （`.env.example` は値が空の雛形です）。

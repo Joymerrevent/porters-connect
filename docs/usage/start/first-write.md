@@ -6,7 +6,7 @@
 書き込みは `create` と `update` の 2 つだけです。**`delete` はありません** — PORTERS Connect API
 に削除が無いからで、型の上でも生やしていません（[削除 API が無いということ][no-delete]）。
 
-## 作る
+## 作成する
 
 ```ts
 const newId = await t.candidate.create({
@@ -39,7 +39,7 @@ await t.candidate.update(10001, { P_Mail: "new@example.com" });
 **`P_RegistrationDate` / `P_UpdateDate` は書けません**（PORTERS が管理します）。入力型から
 外してあるので、書こうとするとコンパイルが通りません。
 
-## 書くときは形が変わる
+## 書くときはかたちが変わる
 
 読みで入れ子だったものは、**書くときは id だけ**です。
 
