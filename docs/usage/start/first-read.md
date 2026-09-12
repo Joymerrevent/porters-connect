@@ -54,15 +54,25 @@ console.log(page.items.length); // このページの件数
   `P_Name` だけです（接頭辞はライブラリが付けます）。**Candidate の接頭辞は `Person`** で、
   リソース名と一致しません — 覚えなくて済むようにしてあります（[alias と Data Type][aliases]）。
 
-## `field` は省略しないほうがいい
+## `field` は省略してよい
 
-**省略すると主キーしか返りません。** PORTERS の仕様で、ライブラリもそれに合わせています。
+**PORTERS は `field` 未指定だと主キーしか返しません。** 型が全項目を約束しているのに中身が
+`P_Id` だけ、という乖離が起きるので、**ライブラリがカタログ由来の既定 field を補います**
+（[ADR-0020][adr20]）。3 通りの意味があります。
+
+| 書き方         | 返ってくるもの                                     |
+| -------------- | -------------------------------------------------- |
+| 省略           | **カタログ上の全項目**（既定）                     |
+| `field: [...]` | 指定したものだけ（**転送量が減るので、慣れたら**） |
+| `field: []`    | **主キーのみ**（API 本来の挙動。件数だけ欲しい）   |
 
 ```ts
-const idsOnly = await t.candidate.search(); // P_Id だけが入って返る
+const all = await t.candidate.search(); // カタログ上の全項目が入って返る
+const idsOnly = await t.candidate.search({ field: [] }); // P_Id だけ
 ```
 
-「項目が空で返ってくる」の原因はたいていこれです。欲しい項目は明示してください。
+**例外はテナント固有の項目（`U_` / `A_`）です。** 宣言していないものはカタログに無いので、
+既定にも含まれません（後述）。
 
 ## 1 件だけ取る
 
@@ -84,7 +94,9 @@ for await (const c of t.candidate.searchAll({
 }
 ```
 
-ページングの途中でクエリを書き換えないでください（次ページ以降の結果が変わります）。
+渡したクエリは**最初のページを取るときに 1 度だけ**組み立てられます。反復中に元のオブジェクトを
+書き換えても、**後続のページは最初の条件のまま**です（[RV-32][rv32]）— 「全件取ったつもりが
+途中から別条件の全件」にならないようにしてあります。
 
 ## 返ってくる値の形
 
@@ -106,9 +118,11 @@ for await (const c of t.candidate.searchAll({
 
 **[はじめての書き込み][s4]** — 読めたので、次は作って更新します。
 
+[adr20]: ../../adr/0020-read-field-default.md
 [aliases]: ../concepts/aliases.md
 [custom-fields]: ../howto/custom-fields.md
 [partition]: ../concepts/partition.md
+[rv32]: ../../reviews/rv/0032-searchall-query-mutation.md
 [s2]: authenticate.md
 [s4]: first-write.md
 [search-records]: ../howto/search-records.md
