@@ -267,6 +267,7 @@ const t = clientFor(myFields).tenant(partition);
 - 型の由来: [ADR-0016][adr16]（Data Type の粒度）／[ADR-0017][adr17]（Option は常に `string[]`）
 - 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
+- ほかの目的から探す: [目次][index]
 
 [adr4]: ../../adr/0004-field-type-model.md
 [adr16]: ../../adr/0016-field-type-granularity.md
@@ -285,3 +286,4 @@ const t = clientFor(myFields).tenant(partition);
 [multi-tenancy]: multi-tenant.md
 [write-constraints]: ../concepts/limits.md
 [prd]: ../../design/requirements.md
+[index]: ../index.md

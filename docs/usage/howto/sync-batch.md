@@ -110,6 +110,7 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 
 - 手順: [一括書き込み][bulk-write]（分割と部分成功）／[検索][search-records]（条件の書き方）／[失敗の扱い][handle-failures]
 - 考え方: [上限][limits]／[日時は UTC][datetime]（`P_UpdateDate` は ISO 8601）／[削除 API が無いということ][no-delete]
+- ほかの目的から探す: [目次][index]
 
 [bulk-write]: bulk-write.md
 [datetime]: ../concepts/datetime.md
@@ -118,3 +119,4 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 [no-delete]: ../concepts/no-delete.md
 [aliases]: ../concepts/aliases.md
 [search-records]: search-records.md
+[index]: ../index.md

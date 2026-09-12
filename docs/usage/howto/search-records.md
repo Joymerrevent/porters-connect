@@ -338,6 +338,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
   [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
+- ほかの目的から探す: [目次][index]
 
 [adr5]: ../../adr/0005-public-api-shape.md
 [aliases]: ../concepts/aliases.md
@@ -353,3 +354,4 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [prd]: ../../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
 [partition]: ../concepts/partition.md
+[index]: ../index.md

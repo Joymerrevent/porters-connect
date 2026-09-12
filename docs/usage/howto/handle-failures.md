@@ -341,6 +341,7 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式�
 - 一次情報: [リソース Result Code][result-codes] ／ [認証エラーコード][auth-errors]
 - 認証フロー: [認証 API のフロー][auth-flow]
 - 契約後に確認する仮定: [live-verification][lv]
+- ほかの目的から探す: [目次][index]
 
 [adr-0006]: ../../adr/0006-error-model.md
 [adr-0064]: ../../adr/0064-link-image-types.md
@@ -357,3 +358,4 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式�
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md
 [auth-flow]: ../reference/authentication-api/README.md
+[index]: ../index.md

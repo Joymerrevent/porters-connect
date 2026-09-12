@@ -87,6 +87,7 @@ await t.attachment.create({ ...file, content: base64 });
 - 手順: [一括書き込み][bulk-write]（データ系リソースの 200 件分割）／[失敗の扱い][handle-failures]
 - 考え方: [上限][limits]（長さ・件数・レート）／[削除 API が無いということ][no-delete]
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
+- ほかの目的から探す: [目次][index]
 
 [bulk-write]: bulk-write.md
 [handle-failures]: handle-failures.md
@@ -94,3 +95,4 @@ await t.attachment.create({ ...file, content: base64 });
 [ref-attachment]: ../reference/resource-api/resources/attachment.md
 [no-delete]: ../concepts/no-delete.md
 [res-list]: ../reference/resource-api/resources-list.md
+[index]: ../index.md

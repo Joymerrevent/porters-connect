@@ -159,9 +159,11 @@ PORTERS_HOST=xxxxx.example.com node app.js                   # 本番（未設�
 - 手順: [失敗の扱い][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
 - 入門: [始める前に][prereq]（契約済みなら、繋ぐのが先）
 - 開発者向け: [フェイクサーバー手順書][fake]
+- ほかの目的から探す: [目次][index]
 
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
 [handle-failures]: handle-failures.md
 [prereq]: ../start/prerequisites.md
 [start]: ../index.md
+[index]: ../index.md
