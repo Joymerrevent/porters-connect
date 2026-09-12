@@ -82,7 +82,9 @@ console.log(page.total, page.items[0]?.P_Name);
 | `t.activity`    | アクティビティ |                |                                           |
 
 マスタ Read は `porters.partition` / `t.user` / `t.field` / `t.option` の 4 種（読み取り専用）。
-各リソースの項目一覧・引数・戻り値は **[API リファレンス][api-ref]** が正典です。
+**例外（`t.attachment` に `searchAll` が無い・`t.phase` は `of()` で束ねる・マスタの語彙）**は
+[リソースと操作][docs-resources]にまとめてあります。引数・戻り値・項目の一覧は
+**[API リファレンス][api-ref]** が正典です。
 
 ## ドキュメント
 
@@ -152,6 +154,7 @@ console.log(page.total, page.items[0]?.P_Name);
 [s-auth]: docs/usage/start/authenticate.md
 [s-install]: docs/usage/start/install.md
 [docs-index]: docs/usage/index.md
+[docs-resources]: docs/usage/index.md#リソースと操作
 [adr70]: ./docs/adr/0070-usage-documentation-architecture.md
 [docs-readme]: ./docs/README.md
 [ref]: docs/usage/reference/README.md

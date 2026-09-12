@@ -49,6 +49,31 @@
 | **毎日同期するバッチを書きたい**           | [毎日の同期][sync-batch]              |
 | **契約なしでテストを書きたい**             | [テストを書く][test-without-contract] |
 
+## リソースと操作
+
+**操作はどのリソースでも共通**です（`search` / `searchAll` / `get` / `create` / `update`）。
+どれも `porters.tenant(id)` で束ねたスコープの下にあります。
+
+| アクセサ        | リソース   | アクセサ     | リソース       |
+| --------------- | ---------- | ------------ | -------------- |
+| `t.candidate`   | 個人連絡先 | `t.contract` | 契約           |
+| `t.job`         | JOB        | `t.sales`    | 成約・売上     |
+| `t.client`      | 企業       | `t.process`  | 選考プロセス   |
+| `t.recruiter`   | 企業担当者 | `t.resume`   | レジュメ       |
+| `t.contact`     | コンタクト | `t.activity` | アクティビティ |
+| `t.opportunity` | 商談管理   |              |                |
+
+例外が 3 つあります。
+
+- **`t.attachment`（添付ファイル）** — `searchAll` がありません。`condition` も型付きではなく
+  `{ "Id:eq": "123" }` のゆるい形です（[添付ファイル][attachments]）
+- **`t.phase`（フェーズ履歴）** — `t.phase.of("candidate")` のように**上位リソースを先に束ねて**
+  から使います。Read が `resource` を要求するためで、`t.phase.search(...)` はありません
+- **マスタ 4 種**（`porters.partition` / `t.user` / `t.field` / `t.option`）— 読み取り専用で、
+  `condition` と `get(id)` を持ちません（[検索][search-records]の「マスタは語彙が違う」）
+
+各メソッドの引数・戻り値・項目の一覧は [公開 API の全記号][api] が正典です。
+
 ## リファレンス — 細部を引く
 
 | ページ                          | 何の正典か                                           |
