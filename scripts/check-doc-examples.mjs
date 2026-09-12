@@ -336,6 +336,11 @@ try {
           ? `  const ${n}: typeof __Lib.${n};\n  type ${n} = __Lib.${n};`
           : `  const ${n}: typeof __Lib.${n};`,
       ),
+      // 既知の制限: ここで作る別名は**型引数を落とす**（`type TenantScope = __Lib.TenantScope`
+      // は既定の型引数で固定される）。ジェネリックな公開型を使う例は、ブロックの中で
+      // `import type { TenantScope } from "@joymerrevent/porters-connect";` と明示すること。
+      // さもないと TS2315「is not generic」で落ちる——expect-error の例では**別の理由で緑**
+      // になり、証明したいことが証明できない。
       ...types.map((n) => `  type ${n} = __Lib.${n};`),
       CONVENTIONAL.split("\n")
         .map((l) => (l.trim() === "" ? l : `  ${l.replace(/^declare /, "")}`))

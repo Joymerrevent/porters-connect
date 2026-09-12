@@ -35,6 +35,9 @@ const porters = new PortersClient({
 初回の権限付与を自分のアプリから行うなら、**付与したいスコープ**もここで渡せます
 （次のページで使います）。
 
+この設定オブジェクトの型は **`PortersClientOptions`** という名前で export しています。設定を
+関数や別ファイルに切り出すときに使えます。
+
 ```ts
 const withScopes = new PortersClient({
   host: process.env.PORTERS_HOST ?? "",

@@ -267,6 +267,116 @@ const t = clientFor(myFields).tenant(partition);
 > バケットは client ごとなので、テナント数だけ client を作ると、その数倍まで叩けてしまいます。
 > 項目構成が同じテナントは `tenant(id)` で束ねてください。
 
+## 宣言したクライアントを関数に渡す
+
+アプリが育つと、クライアントや `tenant(id)` のスコープを**引数に取る関数**を切り出したくなります。
+そのとき型をどう書くかで、**カスタム項目が残るかどうか**が変わります。
+
+```ts
+import type {
+  DeclaredCatalogs,
+  PortersClient,
+  TenantScope,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+// (1) 自分の宣言で受ける — カスタム項目が型付きのまま
+const topScorers = async (t: TenantScope<typeof fields>) => {
+  const page = await t.candidate.search({ field: ["P_Name", "U_score"] });
+  return page.items.filter((c) => (c.U_score ?? 0) > 80);
+};
+
+// (2) どの宣言のクライアントでも受ける
+const listPartitions = (porters: PortersClient<DeclaredCatalogs>) =>
+  porters.partition.search();
+```
+
+**(2) はカスタム項目が返り値の型に出ません。** `DeclaredCatalogs` は「何か宣言されているかも
+しれない」としか言っていないので、読み取り結果は標準項目（`P_`）だけになります。`field` に
+書くことはできる（`U_` / `A_` で始まる alias は常に要求できます）のに、受け取る側で型が
+付かない、という形です。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import type {
+  DeclaredCatalogs,
+  TenantScope,
+} from "@joymerrevent/porters-connect";
+
+const wide = async (t: TenantScope<DeclaredCatalogs>) => {
+  const page = await t.candidate.search({ field: ["U_score"] }); // 要求はできる
+  return page.items[0]?.U_score; // ✗ 型エラー：宣言が分からないので型には出ない
+};
+```
+
+使い分けはこうなります。
+
+| 書き方                          | 受けられるクライアント | カスタム項目の型      |
+| ------------------------------- | ---------------------- | --------------------- |
+| `TenantScope<typeof fields>`    | その宣言のものだけ     | **付く**              |
+| `TenantScope<DeclaredCatalogs>` | どれでも               | 付かない（`P_` のみ） |
+
+**カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分のカタログだけ
+取り出したいときは `CustomFor<typeof fields, "candidate">` が使えます（名前の一覧は
+`CustomFieldResource`）。
+
+`typeof porters` で書く手もありますが、**値が先に無いと書けません**。関数を別ファイルに
+切り出すなら、上の型名で書くほうが素直です。
+
+### 設定を切り出すときも同じ
+
+構築オプションの型は `PortersClientOptions` です。これも型引数を取るので、**宣言つきの設定を
+関数や別ファイルに切り出すなら、型引数も渡します**。
+
+```ts
+import type { PortersClientOptions } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+const options: PortersClientOptions<typeof fields> = {
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
+};
+
+const porters = new PortersClient(options);
+```
+
+型引数を省いて `PortersClientOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
+落ちるのはそのあとで、**作ったクライアントからカスタム項目が消えます** — 注釈が
+`EmptyCatalog` に固定するためです。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import type { PortersClientOptions } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+const bare: PortersClientOptions = {
+  host: "xxxxx.example.com",
+  appId: "a",
+  appSecret: "s",
+  fields, // 代入は通る
+};
+
+const score = async () => {
+  const page = await new PortersClient(bare)
+    .tenant(1)
+    .candidate.search({ field: ["U_score"] });
+  return page.items[0]?.U_score; // ✗ 型引数を省いたので、型からは消えている
+};
+```
+
 ## 関連
 
 - 決定: [ADR-0023][adr23]（宣言 DSL の詳細設計）／[ADR-0004][adr4]（型モデル）
