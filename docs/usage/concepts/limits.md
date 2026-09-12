@@ -116,9 +116,9 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [resources-list]: ../reference/resource-api/resources-list.md
 [error-handling]: ../howto/handle-failures.md
 [bulk]: ../howto/bulk-write.md
-[adr41]: ../adr/0041-bulk-write-surface-impl.md
-[adr45]: ../adr/0045-write-response-root-code.md
-[adr46]: ../adr/0046-guard-error-contract.md
-[adr59]: ../adr/0059-read-field-bare-alias.md
-[adr64]: ../adr/0064-link-image-types.md
-[lv]: ../live-verification.md
+[adr41]: ../../adr/0041-bulk-write-surface-impl.md
+[adr45]: ../../adr/0045-write-response-root-code.md
+[adr46]: ../../adr/0046-guard-error-contract.md
+[adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr64]: ../../adr/0064-link-image-types.md
+[lv]: ../../live-verification.md

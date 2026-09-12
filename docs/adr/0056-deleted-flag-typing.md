@@ -277,7 +277,7 @@ reference が「Write 時の指定はできません」と明記している項�
 [adr38]: 0038-read-query-surface-impl.md
 [adr55]: 0055-partition-binding-guard.md
 [fdt-src]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List
-[rq]: ../howto/search-records.md
+[rq]: ../usage/howto/search-records.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md
 [rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md
 [rv29]: ../reviews/rv/0029-reference-catalog-check-missing.md

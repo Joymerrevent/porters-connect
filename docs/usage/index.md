@@ -72,22 +72,22 @@
 | [フェイクサーバー手順書][fake] | 契約なしで動かす仕組み                 |
 | [リリース手順][release]        | 公開の手順                             |
 
-[adr]: adr/index.md
-[adr70]: adr/0070-usage-documentation-architecture.md
+[adr]: ../adr/index.md
+[adr70]: ../adr/0070-usage-documentation-architecture.md
 [api]: api/index.md
 [authenticate]: howto/authenticate.md
 [bulk-write]: howto/bulk-write.md
 [custom-fields]: howto/custom-fields.md
-[design]: design/basic-design.md
-[fake]: fake-server-runbook.md
-[findings]: reviews/findings.md
+[design]: ../design/basic-design.md
+[fake]: ../fake-server-runbook.md
+[findings]: ../reviews/findings.md
 [handle-failures]: howto/handle-failures.md
 [aliases]: concepts/aliases.md
 [datetime]: concepts/datetime.md
 [limits]: concepts/limits.md
 [no-delete]: concepts/no-delete.md
 [partition]: concepts/partition.md
-[lv]: live-verification.md
+[lv]: ../live-verification.md
 [multi-tenant]: howto/multi-tenant.md
 [readme]: ../README.md
 [s-auth]: start/authenticate.md
@@ -96,6 +96,6 @@
 [s-read]: start/first-read.md
 [s-write]: start/first-write.md
 [reference]: reference/README.md
-[release]: release-runbook.md
-[roadmap]: roadmap.md
+[release]: ../release-runbook.md
+[roadmap]: ../roadmap.md
 [search-records]: howto/search-records.md

@@ -118,7 +118,7 @@ Write の成功応答は Read と非対称で、ルートに `Total`/`Count`/`St
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
-[ref-write]: ../reference/resource-api/write-format.md
+[ref-write]: ../usage/reference/resource-api/write-format.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md
 [adr11]: 0011-xml-parse-serialize.md

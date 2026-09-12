@@ -358,7 +358,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - XML 内部: [ADR-0011][a11]（接頭辞・ラッパーの揺れは実/サンプル XML を fixture 化して確定する方針）
 
 [findings]: reviews/findings.md
-[fdt]: reference/resource-api/field-data-types.md
+[fdt]: usage/reference/resource-api/field-data-types.md
 [a2]: adr/0002-ground-design-in-live-api-docs.md
 [a8]: adr/0008-multitenancy-partition.md
 [a40]: adr/0040-multitenancy-surface-impl.md

@@ -432,9 +432,9 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
   案5b を採るなら、`of()` は名前・`P_Resource` は数値という非対称が残る＝**別途起票して揃えるか決める**。
 - **残る論点は D3 の `Link` / `Image`**（R-4）と D2（マスタ項目の拡張）で、どちらも別 ADR。
 
-[write-constraints]: ../concepts/limits.md
-[write-format]: ../reference/resource-api/write-format.md
-[resource-list]: ../reference/resource-api/resources-list.md
+[write-constraints]: ../usage/concepts/limits.md
+[write-format]: ../usage/reference/resource-api/write-format.md
+[resource-list]: ../usage/reference/resource-api/resources-list.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md
 [field-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List
 [read]: https://hrbcapi.porters.jp/hc/ja/articles/115012161288-Phase-Read

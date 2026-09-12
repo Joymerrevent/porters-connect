@@ -342,18 +342,18 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式�
 - 認証フロー: [認証 API のフロー][auth-flow]
 - 契約後に確認する仮定: [live-verification][lv]
 
-[adr-0006]: ../adr/0006-error-model.md
-[adr-0064]: ../adr/0064-link-image-types.md
-[rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[adr-0006]: ../../adr/0006-error-model.md
+[adr-0064]: ../../adr/0064-link-image-types.md
+[rv36]: ../../reviews/rv/0036-write-value-validation-partial.md
 [custom-fields]: custom-fields.md
-[adr-0044]: ../adr/0044-http-status-handling.md
-[adr-0046]: ../adr/0046-guard-error-contract.md
-[adr-0047]: ../adr/0047-access-point-scheme.md
-[adr-0048]: ../adr/0048-access-point-host-validation.md
-[adr-0049]: ../adr/0049-host-port-roundtrip.md
-[adr-0050]: ../adr/0050-auth-http-status-handling.md
-[adr-0051]: ../adr/0051-read-envelope-identification.md
-[lv]: ../live-verification.md
+[adr-0044]: ../../adr/0044-http-status-handling.md
+[adr-0046]: ../../adr/0046-guard-error-contract.md
+[adr-0047]: ../../adr/0047-access-point-scheme.md
+[adr-0048]: ../../adr/0048-access-point-host-validation.md
+[adr-0049]: ../../adr/0049-host-port-roundtrip.md
+[adr-0050]: ../../adr/0050-auth-http-status-handling.md
+[adr-0051]: ../../adr/0051-read-envelope-identification.md
+[lv]: ../../live-verification.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md
 [auth-flow]: ../reference/authentication-api/README.md

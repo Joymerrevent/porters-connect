@@ -246,9 +246,9 @@ await t.candidate.search();
 [adr48]: 0048-access-point-host-validation.md
 [adr49]: 0049-host-port-roundtrip.md
 [bd]: ../design/basic-design.md
-[glossary]: ../reference/glossary.md
+[glossary]: ../usage/reference/glossary.md
 [lv]: ../live-verification.md
-[mt]: ../howto/multi-tenant.md
-[rc]: ../reference/resource-api/result-codes.md
+[mt]: ../usage/howto/multi-tenant.md
+[rc]: ../usage/reference/resource-api/result-codes.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv28]: ../reviews/rv/0028-count-range-unvalidated.md

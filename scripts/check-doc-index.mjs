@@ -184,20 +184,20 @@ export const checkTarget = (target, read = readFileSync) => {
 };
 
 /**
- * 利用者向けドキュメントの目次（`docs/index.md`）と実ファイルの 1:1 突合
+ * 利用者向けドキュメントの目次（`docs/usage/index.md`）と実ファイルの 1:1 突合
  * （[ADR-0070] 論点4 の検査①）。
  *
  * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
  * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
  *
- * 対象は `docs/{start,concepts,howto}` の 3 階層だけ。`reference/` と `api/` は
+ * 対象は `docs/usage/{start,concepts,howto}` の 3 階層だけ。`reference/` と `api/` は
  * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
  */
 const USER_DOC_DIRS = ["start", "concepts", "howto"];
 
 export const checkUserDocIndex = (read = readFileSync) => {
   const problems = [];
-  const indexPath = "docs/index.md";
+  const indexPath = "docs/usage/index.md";
   let index;
   try {
     index = read(indexPath, "utf8");
@@ -214,7 +214,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
   for (const dir of USER_DOC_DIRS) {
     let entries;
     try {
-      entries = readdirSync(join("docs", dir));
+      entries = readdirSync(join("docs", "usage", dir));
     } catch {
       continue; // まだ無いディレクトリは対象外（段階的に作る）
     }
@@ -229,7 +229,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
 };
 
 /**
- * 入門（`docs/start/`）の鎖が切れていないかの検査（[ADR-0070] 論点4 の検査②）。
+ * 入門（`docs/usage/start/`）の鎖が切れていないかの検査（[ADR-0070] 論点4 の検査②）。
  *
  * 入門は**順に読む**ことが前提なので、各ページに `- **前提**:` と `- **次に読む**:` を置き、
  * **次に読むの連なりが全ページを 1 列に並べる**ことを機械で確かめる。人が順序を保つ形にすると、
@@ -238,7 +238,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
  *
  * 検出するもの: メタ行の欠落／リンク切れ／鎖の分岐・輪・孤立／`前提` が鎖の 1 つ前と食い違う。
  */
-const START_DIR = "docs/start";
+const START_DIR = "docs/usage/start";
 const META = { prev: "前提", next: "次に読む" };
 
 /** `- **ラベル**: …` の行から、最初のリンク先（参照スタイルのラベルは定義で解決）を採る。 */
@@ -351,7 +351,7 @@ if (
     console.error("索引と本文が食い違っています:\n");
     for (const p of problems) console.error(`  - ${p}`);
     console.error(
-      "\n索引（docs/adr/index.md・docs/index.md ほか）か、各ファイルのどちらかを直してください。",
+      "\n索引（docs/adr/index.md・docs/usage/index.md ほか）か、各ファイルのどちらかを直してください。",
     );
     process.exit(1);
   }

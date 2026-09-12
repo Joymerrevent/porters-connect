@@ -89,6 +89,6 @@ PORTERS のフィールド型は 2 段ある（[field-data-types][fdt]）:
     Data Type であり、名前が決定に追従していなかったため）。内部専用で公開 API は不変。本 ADR の表題は
     起票時の問い（「FieldType の粒度を Field Type/Data Type どちらに合わせるか」）を歴史的経緯として残す。
 
-[fdt]: ../reference/resource-api/field-data-types.md
+[fdt]: ../usage/reference/resource-api/field-data-types.md
 [0004]: 0004-field-type-model.md
 [0011]: 0011-xml-parse-serialize.md

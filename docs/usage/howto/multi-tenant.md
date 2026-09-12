@@ -85,10 +85,10 @@ const me = await porters.partition.search({ requestType: 0 }); // ログイン�
 const user = await t.user.current(); // ログイン中 user
 ```
 
-[adr-0008]: ../adr/0008-multitenancy-partition.md
-[adr-0021]: ../adr/0021-master-read-resources.md
-[adr-0055]: ../adr/0055-partition-binding-guard.md
-[adr-0040]: ../adr/0040-multitenancy-surface-impl.md
-[bd]: ../design/basic-design.md
-[lv]: ../live-verification.md
+[adr-0008]: ../../adr/0008-multitenancy-partition.md
+[adr-0021]: ../../adr/0021-master-read-resources.md
+[adr-0055]: ../../adr/0055-partition-binding-guard.md
+[adr-0040]: ../../adr/0040-multitenancy-surface-impl.md
+[bd]: ../../design/basic-design.md
+[lv]: ../../live-verification.md
 [oauth]: ./authenticate.md

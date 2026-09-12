@@ -125,7 +125,7 @@
   [ADR-0038][adr38]（Read クエリ＝ガードの出所）。
 
 [findings]: ../reviews/findings.md
-[guide]: ../howto/handle-failures.md
+[guide]: ../usage/howto/handle-failures.md
 [adr5]: 0005-public-api-shape.md
 [adr6]: 0006-error-model.md
 [adr24]: 0024-mock-transport.md

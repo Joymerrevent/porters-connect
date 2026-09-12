@@ -89,6 +89,6 @@ PORTERS には 2 系統のバージョンがある：
 - 関連 ADR: [[0002-ground-design-in-live-api-docs]]（接地方針）／[[0009-http-transport]]（`X-P-ConnectAPI-Version: 2` 既定送信）／[[0033-post-mvp-direction]]（案E）
 
 [prd]: ../design/requirements.md
-[ref]: ../reference/README.md
-[headers]: ../reference/authentication-api/headers.md
-[fdt]: ../reference/resource-api/field-data-types.md
+[ref]: ../usage/reference/README.md
+[headers]: ../usage/reference/authentication-api/headers.md
+[fdt]: ../usage/reference/resource-api/field-data-types.md

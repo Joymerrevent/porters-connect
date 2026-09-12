@@ -102,12 +102,12 @@ PORTERS 自身が注意している点です。
 - 手順: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 
-[adr4]: ../adr/0004-field-type-model.md
-[adr16]: ../adr/0016-field-type-granularity.md
-[adr17]: ../adr/0017-option-read-shape.md
-[adr19]: ../adr/0019-static-resource-types.md
-[adr56]: ../adr/0056-deleted-flag-typing.md
-[adr59]: ../adr/0059-read-field-bare-alias.md
+[adr4]: ../../adr/0004-field-type-model.md
+[adr16]: ../../adr/0016-field-type-granularity.md
+[adr17]: ../../adr/0017-option-read-shape.md
+[adr19]: ../../adr/0019-static-resource-types.md
+[adr56]: ../../adr/0056-deleted-flag-typing.md
+[adr59]: ../../adr/0059-read-field-bare-alias.md
 [custom-fields]: ../howto/custom-fields.md
 [datetime]: datetime.md
 [fdt]: ../reference/resource-api/field-data-types.md

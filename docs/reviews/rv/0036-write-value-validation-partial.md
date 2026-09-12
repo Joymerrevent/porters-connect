@@ -254,5 +254,5 @@ narrowed な record を受け取る形に変え、switch を「入れ子型」�
 [adr46]: ../../adr/0046-guard-error-contract.md
 [adr64]: ../../adr/0064-link-image-types.md
 [adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
-[gotchas]: ../../reference/gotchas.md
+[gotchas]: ../../usage/reference/gotchas.md
 [rv32]: 0032-searchall-query-mutation.md

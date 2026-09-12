@@ -268,20 +268,20 @@ const t = clientFor(myFields).tenant(partition);
 - 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
 
-[adr4]: ../adr/0004-field-type-model.md
-[adr16]: ../adr/0016-field-type-granularity.md
-[adr17]: ../adr/0017-option-read-shape.md
-[adr20]: ../adr/0020-read-field-default.md
-[adr23]: ../adr/0023-custom-field-declaration-dsl.md
-[adr46]: ../adr/0046-guard-error-contract.md
-[adr59]: ../adr/0059-read-field-bare-alias.md
-[adr60]: ../adr/0060-full-resource-coverage-direction.md
-[adr64]: ../adr/0064-link-image-types.md
-[adr69]: ../adr/0069-tenant-field-catalog-tooling.md
-[adr6]: ../adr/0006-error-model.md
-[rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[adr4]: ../../adr/0004-field-type-model.md
+[adr16]: ../../adr/0016-field-type-granularity.md
+[adr17]: ../../adr/0017-option-read-shape.md
+[adr20]: ../../adr/0020-read-field-default.md
+[adr23]: ../../adr/0023-custom-field-declaration-dsl.md
+[adr46]: ../../adr/0046-guard-error-contract.md
+[adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr60]: ../../adr/0060-full-resource-coverage-direction.md
+[adr64]: ../../adr/0064-link-image-types.md
+[adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
+[adr6]: ../../adr/0006-error-model.md
+[rv36]: ../../reviews/rv/0036-write-value-validation-partial.md
 [error-handling]: handle-failures.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenant.md
 [write-constraints]: ../concepts/limits.md
-[prd]: ../design/requirements.md
+[prd]: ../../design/requirements.md

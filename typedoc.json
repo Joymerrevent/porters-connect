@@ -2,7 +2,7 @@
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["src/index.ts"],
   "plugin": ["typedoc-plugin-markdown"],
-  "out": "docs/api",
+  "out": "docs/usage/api",
   "readme": "none",
 
   // ソースリンクはブランチ名に固定する（ADR-0068 実装時の決定1）。既定ではコミット SHA が

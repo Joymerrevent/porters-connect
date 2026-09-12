@@ -112,7 +112,7 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 [0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md
 [0019]: 0019-static-resource-types.md
-[ref-read]: ../reference/resource-api/README.md
+[ref-read]: ../usage/reference/resource-api/README.md
 [src-mitigation]: ../../tmp/porters-docs/txt/115010010367-2015-07-01-Read系APIのfieldパラメータがセットされなかった場合の挙動-緩和措置あり.md
 [findings]: ../reviews/findings.md
 [claude]: ../../CLAUDE.md

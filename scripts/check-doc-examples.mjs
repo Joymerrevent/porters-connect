@@ -45,13 +45,13 @@ import { join, relative, resolve, sep } from "node:path";
 // 「動くこと」を約束していない（README とガイドは約束している）。
 const MARKDOWN_ROOTS = [
   "README.md",
-  "docs/index.md",
-  "docs/start/**/*.md",
-  "docs/concepts/**/*.md",
-  "docs/howto/**/*.md",
+  "docs/usage/index.md",
+  "docs/usage/start/**/*.md",
+  "docs/usage/concepts/**/*.md",
+  "docs/usage/howto/**/*.md",
 ];
 
-// JSDoc の `@example` も対象。これは **`docs/api` に生成されて利用者に見える**ので、
+// JSDoc の `@example` も対象。これは **`docs/usage/api` に生成されて利用者に見える**ので、
 // ガイドのコード例とまったく同じ性質を持つ（ADR-0068 の生成物経由で公開される）。
 // 実測（2026-09-11）では 7 個あり、いずれも通っていた＝ここは予防のための追加。
 const SOURCE_ROOTS = ["src/**/*.ts"];
