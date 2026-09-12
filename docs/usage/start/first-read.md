@@ -1,7 +1,7 @@
-# 3. はじめての読み取り
+# はじめての読み取り
 
-- **前提**: [2. 認証を通す][s2]（トークンが取れる状態）
-- **次に読む**: [4. はじめての書き込み][s4]
+- **前提**: [認証を通して、疎通を確認する][s2]（Company DB の一覧が返る状態）
+- **次に読む**: [はじめての書き込み][s4]
 
 読み取りは 3 つ覚えれば足ります。**どの Partition か**を束ねて、**どの項目が欲しいか**を
 書いて、`search` か `get` を呼ぶ。
@@ -9,7 +9,7 @@
 ## まず Partition を束ねる
 
 `PortersClient` を作っただけでは、まだ何も読めません。データは Partition（Company DB）に
-分かれていて、`tenant(id)` がそれを束ねます。
+分かれていて、`tenant(id)` がそれを束ねます。**前ページの一覧に出た `P_Id`** を渡します。
 
 ```ts
 const t = porters.tenant(123); // 以降 `t` をクライアントのように使う
@@ -43,6 +43,16 @@ console.log(page.items.length); // このページの件数
 `condition` に書ける演算子は**項目の Data Type ごとに違います**。文字列に `part` / `full`、
 数値や日時に `ge` / `le` のように、型が許すものだけが補完に出ます。書き方の全体像は
 [検索][search-records] にあります。
+
+### いま何が起きたか
+
+短いコードですが、このライブラリの性格がほぼ出ています。
+
+- **XML は外に漏れません。** PORTERS の応答は XML ですが、返るのは型の付いたオブジェクトです。
+  `page.items[0]?.P_Name` は `string | null` で、`P_Nmae` と書けばコンパイルが通りません。
+- **`Person.` を書いていません。** wire 上の項目名は `Person.P_Name` ですが、書くのは
+  `P_Name` だけです（接頭辞はライブラリが付けます）。**Candidate の接頭辞は `Person`** で、
+  リソース名と一致しません — 覚えなくて済むようにしてあります（[alias と Data Type][aliases]）。
 
 ## `field` は省略しないほうがいい
 
@@ -94,7 +104,7 @@ for await (const c of t.candidate.searchAll({
 
 ## 次に読む
 
-**[4. はじめての書き込み][s4]** — 読めたので、次は作って更新します。
+**[はじめての書き込み][s4]** — 読めたので、次は作って更新します。
 
 [aliases]: ../concepts/aliases.md
 [custom-fields]: ../howto/custom-fields.md

@@ -12,15 +12,19 @@
 
 ## 入門 — 順に読む
 
-初めて使うときは上から順に読んでください。
+**PORTERS と契約済み**の人が、自分のアプリを繋ぐまでの順路です。上から順に読んでください。
 
-| ページ                                      | 内容                                                  |
-| ------------------------------------------- | ----------------------------------------------------- |
-| [1. インストールと、最初の 1 回][s-install] | 契約なしで動かす。返ってくる型を見る                  |
-| [2. 認証を通す][s-auth]                     | 初回だけブラウザで 1 回。以降は無人                   |
-| [3. はじめての読み取り][s-read]             | `tenant(id)` ／ `search` ／ `get` ／ `field` の効き方 |
-| [4. はじめての書き込み][s-write]            | `create` と `update`。`delete` が無いということ       |
-| [5. 本番に出す前に][s-live]                 | 秘密・Partition・トークン・上限・失敗・差分取得       |
+| ページ                                            | 内容                                                    |
+| ------------------------------------------------- | ------------------------------------------------------- |
+| [始める前に — PORTERS 側で用意するもの][s-prereq] | 契約・アプリ登録・3 つの値・Company DB・スコープ        |
+| [インストールと、クライアントの構築][s-install]   | `npm i` と、受け取った 3 つの値の渡し方                 |
+| [認証を通して、疎通を確認する][s-auth]            | 初回だけブラウザで 1 回。以降は無人。**繋がった**の確認 |
+| [はじめての読み取り][s-read]                      | `tenant(id)` ／ `search` ／ `get` ／ `field` の効き方   |
+| [はじめての書き込み][s-write]                     | `create` と `update`。`delete` が無いということ         |
+| [本番に出す前に][s-live]                          | 秘密・Partition・トークン・上限・失敗・差分取得         |
+
+契約や権限付与を待っている間に書き始めたいなら、[契約なしでテストを書きたい][test-without-contract]
+から入れます。
 
 ## 考え方 — PORTERS 固有の前提
 
@@ -111,6 +115,7 @@
 [s-auth]: start/authenticate.md
 [s-install]: start/install.md
 [s-live]: start/going-live.md
+[s-prereq]: start/prerequisites.md
 [s-read]: start/first-read.md
 [s-write]: start/first-write.md
 [reference]: reference/README.md
