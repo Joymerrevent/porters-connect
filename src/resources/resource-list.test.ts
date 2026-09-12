@@ -3,7 +3,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
 describe("RESOURCE_VALUES", () => {
-  it("matches the Resource List (docs/reference resources-list.md)", () => {
+  it("matches the Resource List (docs/usage/reference resources-list.md)", () => {
     expect(RESOURCE_VALUES).toEqual({
       candidate: 1,
       job: 3,

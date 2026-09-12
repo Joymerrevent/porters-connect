@@ -132,7 +132,7 @@ describe("the fake's error envelopes match the reference fixtures", () => {
 });
 
 describe("Result Code catalogue -> category", () => {
-  // Every code docs/reference/resource-api/result-codes.md lists, with the category ADR-0006 maps
+  // Every code docs/usage/reference/resource-api/result-codes.md lists, with the category ADR-0006 maps
   // it to. Driving them through the fake's envelope proves the fake can *raise* each of them and
   // that the classification survives the round-trip.
   const catalogue: [number, string][] = [
@@ -189,7 +189,7 @@ describe("Result Code catalogue -> category", () => {
 
 describe("Authentication error family", () => {
   // A different numbering from the Resource codes — 401 means "refresh expired" here, not
-  // "access token expired" (docs/reference authentication-api/errors.md).
+  // "access token expired" (docs/usage/reference authentication-api/errors.md).
   const catalogue: [number, string][] = [
     [100, "validation"],
     [102, "validation"],

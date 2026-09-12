@@ -25,7 +25,7 @@ import type { FakeRecord } from "./types";
 /** What the fake needs to stamp a record: a clock and the acting user. */
 export type RecordContext = { now: () => number; currentUserId: number };
 
-// The standard aliases every data resource in docs/reference uses for these system fields.
+// The standard aliases every data resource in docs/usage/reference uses for these system fields.
 const REGISTRATION_DATE = "P_RegistrationDate";
 const UPDATE_DATE = "P_UpdateDate";
 const REGISTERED_BY = "P_RegisteredBy";

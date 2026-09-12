@@ -31,7 +31,7 @@ export type FakeRecord = Record<string, FakeValue>;
 /** A user in the fake's User master: expands `User`-typed fields, and is what `/v1/user` reads. */
 export type FakeUser = {
   P_Id: number;
-  /** `0` = standard user, `1` = system admin (docs/reference). Default `0`. */
+  /** `0` = standard user, `1` = system admin (docs/usage/reference). Default `0`. */
   P_Type?: string;
   P_Name?: string;
   P_Mail?: string;
@@ -46,7 +46,7 @@ export type FakeOptionNode = {
   /** Leaf alias as it appears in a value, e.g. `Option.P_Tokyo`. */
   alias: string;
   name?: string;
-  /** `0` = ordinary choice, `1`–`11` = a phase kind (docs/reference). Default `0`. */
+  /** `0` = ordinary choice, `1`–`11` = a phase kind (docs/usage/reference). Default `0`. */
   type?: number;
   children?: FakeOptionNode[];
 };

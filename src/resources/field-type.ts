@@ -6,7 +6,7 @@
 //
 // Two hand-written maps is exactly how RV-37 happened (the resource Value table existed twice and
 // one copy silently lost Process), so this file is the single source and `field-type.test.ts` fixes
-// it against docs/reference/resource-api/field-data-types.md.
+// it against docs/usage/reference/resource-api/field-data-types.md.
 //
 // The mapping is **not** a bijection:
 //   - Option has three Field Types (5 Checkbox / 6 Radiobutton / 7 Dropdown) that decode alike.

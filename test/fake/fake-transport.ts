@@ -54,7 +54,7 @@ const API_PREFIX = "/v1/";
 const OAUTH_PATH = "/v1/oauth";
 const TOKEN_PATH = "/v1/token";
 
-// Resource Result Codes this fake can raise (docs/reference/resource-api/result-codes.md).
+// Resource Result Codes this fake can raise (docs/usage/reference/resource-api/result-codes.md).
 const CODE_NOT_FOUND = 7;
 const CODE_INVALID_PARAMETER = 100;
 const CODE_TOO_MANY_PARAMETERS = 102;

@@ -21,7 +21,7 @@ import {
 } from "./read-core";
 import type { DataType } from "../xml/decode";
 
-// docs/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
+// docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある
 // （`Job.P_Owner(User.…)` の展開 — read-core の `USER_SUBFIELDS`）。以降の 13 項目は
 // reference が「Resource API での Read 時に、参照取得することはできません」と明記する項目で、
@@ -53,7 +53,7 @@ const FIELDS = {
 /**
  * User's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
  * builds User Read responses from this very catalog, so the two cannot drift. The alias
- * prefix is the resource name itself (`User.P_Id` — docs/reference). Not re-exported from
+ * prefix is the resource name itself (`User.P_Id` — docs/usage/reference). Not re-exported from
  * `src/index.ts`, so it stays out of the published API.
  */
 export const USER_DESCRIPTOR = {

@@ -67,7 +67,7 @@ describe("SD-3 static resource types (ADR-0019)", () => {
   });
 
   it("create required set follows the reference per resource (Process = relations, LV-5)", () => {
-    // Process requires P_Owner + the five relation fields (docs/reference resources/process.md)
+    // Process requires P_Owner + the five relation fields (docs/usage/reference resources/process.md)
     expectTypeOf<ProcessCreateInput>()
       .toHaveProperty("P_Owner")
       .toEqualTypeOf<number>();

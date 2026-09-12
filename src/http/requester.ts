@@ -19,7 +19,7 @@ import type { Transport, TransportRequest } from "./types";
 // Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
 const API_VERSION = "2";
 
-// docs/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).
+// docs/usage/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).
 // "Whole" is load-bearing: a write's body dominates, but a read's length lives in the
 // URL (field / condition) — and ADR-0020 makes a fieldless Read send the catalog default
 // field set, so that URL grew. A future 16KB cap is planned but undetermined — follow the

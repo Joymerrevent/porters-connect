@@ -18,7 +18,7 @@ import {
 } from "./resource";
 
 // A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
-// (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
+// (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/usage/reference.
 const MAX_CONTENT_CHARS = 14_000_000;
 
 // Attachment has no ResourceDescriptor (bespoke accessor — ADR-0018), so its wire name lives

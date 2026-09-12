@@ -1,7 +1,7 @@
 // Read query: parse the URL the library builds (`buildReadUrl` + `appendReadQuery`) and apply it
 // to the store — field selection, condition, order, keywords, itemstate and offset paging.
 //
-// Grounded in docs/reference (Resource API 概要 / Read パラメータ). Matching is deliberately shallow
+// Grounded in docs/usage/reference (Resource API 概要 / Read パラメータ). Matching is deliberately shallow
 // where PORTERS' own semantics are business logic (relevance, collation): text `part` is a plain
 // substring match, ordering a plain value comparison. That is the "業務面は浅い" half of ADR-0043.
 
