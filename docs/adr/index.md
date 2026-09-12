@@ -82,6 +82,7 @@
 | [0068][0068] | 公開 API リファレンスの作り方                                    | プロセス | accepted   | —     |
 | [0069][0069] | テナントの Field カタログで宣言を突き合わせ、宣言を生成する      | 詳細設計 | accepted   | —     |
 | [0070][0070] | 使い方ドキュメントの構成（説明サイトの元になる原稿）             | プロセス | accepted   | —     |
+| [0071][0071] | 利用者向けドキュメントを `docs/usage/` の 1 箇所にまとめる       | プロセス | proposed   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -155,3 +156,4 @@
 [0068]: 0068-api-reference-tooling.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0070]: 0070-usage-documentation-architecture.md
+[0071]: 0071-usage-docs-single-root.md
