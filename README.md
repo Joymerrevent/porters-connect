@@ -63,7 +63,7 @@ const porters = new PortersClient({
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({
-  field: ["P_Id", "P_Name", "P_UpdateDate"], // 省略時はカタログ上の全項目
+  field: ["P_Id", "P_Name", "P_UpdateDate"], // 省略時は標準項目（P_）が全部返る
   condition: { P_Name: { part: "山田" } }, // part = 部分一致 / full = 完全一致
   order: [{ P_UpdateDate: "desc" }],
   count: 50, // 1 ページ最大 200

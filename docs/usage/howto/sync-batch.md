@@ -31,7 +31,7 @@ for await (const c of t.candidate.searchAll({
 }
 ```
 
-`field` を省略すると**カタログ上の全項目**が返ります。同期では**使う項目だけ**挙げてください。
+`field` を省略すると[カタログ][aliases]上の**全項目**が返ります。同期では**使う項目だけ**挙げてください。
 毎日・全件を回すぶん、転送量とリクエスト長の差がそのまま効きます（[検索][search-records]）。
 
 ### 取りこぼしを防ぐ 3 点
@@ -116,4 +116,5 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 [handle-failures]: handle-failures.md
 [limits]: ../concepts/limits.md
 [no-delete]: ../concepts/no-delete.md
+[aliases]: ../concepts/aliases.md
 [search-records]: search-records.md
