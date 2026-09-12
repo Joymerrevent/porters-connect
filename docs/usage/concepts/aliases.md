@@ -70,7 +70,7 @@ Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。
 | `Image`             | 要求したサブ項目だけ               | 3 つとも必須                 |
 | `Link`              | Contact id ／ User ／ Department   | id だけ（数値）              |
 
-**読みと書きで形が違う**のがこの API の癖です。`User` や参照は読むと入れ子で返り、書くときは
+**読みと書きで形が違う**のが PORTERS Connect API の性質です。`User` や参照は読むと入れ子で返り、書くときは
 id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が
 別の型なのはこのためです）。
 
