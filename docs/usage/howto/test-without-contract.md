@@ -123,6 +123,28 @@ describe("候補者の取得", () => {
 ただし**リポジトリを clone したときの開発用**で、npm で入れたパッケージには含まれません
 （配布物は `dist` と `CHANGELOG.md` だけです）。使い方は[フェイクサーバー手順書][fake]にあります。
 
+### 向き先を env で切り替える
+
+ローカルのフェイクは `http` で動きます。`scheme: "http"` は**明示したときだけ**有効で、
+平文になるので毎プロセス 1 回警告が出ます（抑止は専用の env のみ＝**許可と沈黙は別**）。
+
+**ライブラリは `host` / `scheme` を環境変数から読みません**（設定の出所を明示にするため）。
+env で本番とローカルを切り替えたいときは、アプリ側で渡してください。
+
+```ts
+const forLocal = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+});
+```
+
+```sh
+PORTERS_HOST=127.0.0.1:4010 PORTERS_SCHEME=http node app.js  # ローカルのフェイクへ
+PORTERS_HOST=xxxxx.example.com node app.js                   # 本番（未設定なら https）
+```
+
 ## 関連
 
 - 手順: [失敗の扱い][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
