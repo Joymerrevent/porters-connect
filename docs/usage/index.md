@@ -5,8 +5,8 @@
 このページが**ドキュメントの目次**です（[ADR-0070][adr70]）。構成は 4 層で、上から順に
 「**初めて触る → 前提を理解する → 目的を達する → 細部を引く**」になっています。
 
-> **⚠️ 工事中です。** [ADR-0070][adr70] の構成のうち、**入門・考え方・目的別**まで書きました。
-> 下の表で**未着手**と書いてあるページ（目的別の 3 ページ）はまだありません。
+> **⚠️ 工事中です。** [ADR-0070][adr70] の 4 層はすべて埋まりました。残っているのは
+> **README を入口に絞る**作業（同 ADR の論点3）です。
 
 ---
 
@@ -37,17 +37,17 @@
 
 ## 目的別 — 「〜したい」
 
-| したいこと                                 | ページ                                              |
-| ------------------------------------------ | --------------------------------------------------- |
-| **認証を通したい**（初回の権限付与まで）   | [認証][authenticate]                                |
-| **条件でレコードを探したい**               | [検索][search-records]                              |
-| **200 件を超える書き込みをしたい**         | [一括書き込み][bulk-write]                          |
-| **テナント固有の項目を型付きで扱いたい**   | [カスタム項目][custom-fields]                       |
-| **複数テナントを 1 プロセスで扱いたい**    | [マルチテナント][multi-tenant]                      |
-| **失敗したときに落とす／続けるを決めたい** | [失敗の扱い][handle-failures]                       |
-| 添付ファイルを扱いたい                     | **未着手**（[README][readme] に最小の例）           |
-| 毎日同期するバッチを書きたい               | **未着手**                                          |
-| テストを書きたい（契約なし）               | **未着手**（[フェイクサーバー手順書][fake] が近い） |
+| したいこと                                 | ページ                                |
+| ------------------------------------------ | ------------------------------------- |
+| **認証を通したい**（初回の権限付与まで）   | [認証][authenticate]                  |
+| **条件でレコードを探したい**               | [検索][search-records]                |
+| **200 件を超える書き込みをしたい**         | [一括書き込み][bulk-write]            |
+| **テナント固有の項目を型付きで扱いたい**   | [カスタム項目][custom-fields]         |
+| **複数テナントを 1 プロセスで扱いたい**    | [マルチテナント][multi-tenant]        |
+| **失敗したときに落とす／続けるを決めたい** | [失敗の扱い][handle-failures]         |
+| **添付ファイルを扱いたい**                 | [添付ファイル][attachments]           |
+| **毎日同期するバッチを書きたい**           | [毎日の同期][sync-batch]              |
+| **契約なしでテストを書きたい**             | [テストを書く][test-without-contract] |
 
 ## リファレンス — 細部を引く
 
@@ -65,15 +65,14 @@
 [authenticate]: howto/authenticate.md
 [bulk-write]: howto/bulk-write.md
 [custom-fields]: howto/custom-fields.md
-[fake]: ../fake-server-runbook.md
 [handle-failures]: howto/handle-failures.md
+[attachments]: howto/attachments.md
 [aliases]: concepts/aliases.md
 [datetime]: concepts/datetime.md
 [limits]: concepts/limits.md
 [no-delete]: concepts/no-delete.md
 [partition]: concepts/partition.md
 [multi-tenant]: howto/multi-tenant.md
-[readme]: ../../README.md
 [s-auth]: start/authenticate.md
 [s-install]: start/install.md
 [s-live]: start/going-live.md
@@ -82,3 +81,5 @@
 [reference]: reference/README.md
 [search-records]: howto/search-records.md
 [docs-readme]: ../README.md
+[sync-batch]: howto/sync-batch.md
+[test-without-contract]: howto/test-without-contract.md
