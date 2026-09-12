@@ -1,12 +1,15 @@
 # 71. 利用者向けドキュメントを `docs/usage/` の 1 箇所にまとめる
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-12
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0070][0070] は 4 層（入門 → 考え方 → 目的別 → リファレンス）を決めたが、**置き場所は
 > `docs/` 直下のまま**にした。結果として利用者向けと開発者向けが同じ階層に 14 項目並んでいる。
 > 本 ADR は 0070 の**ディレクトリ構成だけ**を改める（層の分け方・各層の役割は変えない）。
+>
+> **decider が案B（4 層すべて）・名前 `usage`・論点1＝案1b（目次も `usage/` へ）・論点2＝案2a
+> （番人を足す）を選択し `accepted`（2026-09-12）**。実装は別 PR。
 
 ## Context and Problem Statement
 
