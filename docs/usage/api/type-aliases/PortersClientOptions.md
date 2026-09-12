@@ -65,7 +65,7 @@ their declared Data Type and appear typed on reads / writes. Omit for standard `
 Defined in: [src/client.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L70)
 
 API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
-(A representative value lives in docs/reference.) May carry a port — `localhost:4010`.
+(A representative value lives in docs/usage/reference.) May carry a port — `localhost:4010`.
 
 The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
 `https://xxxxx.example.com` is rejected at construction with a [PortersConfigError](../classes/PortersConfigError.md)
