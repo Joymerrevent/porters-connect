@@ -89,6 +89,6 @@ console.log(page.items[0]?.P_UpdateDate); // "2026-09-11T12:00:00Z"
 
 [aliases]: ../concepts/aliases.md
 [datetime]: ../concepts/datetime.md
-[fake]: ../fake-server-runbook.md
+[fake]: ../../fake-server-runbook.md
 [partition]: ../concepts/partition.md
 [s2]: authenticate.md

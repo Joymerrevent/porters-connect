@@ -306,15 +306,15 @@ page.start; // 今回の開始インデックス
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 
-[adr5]: ../adr/0005-public-api-shape.md
-[adr20]: ../adr/0020-read-field-default.md
-[adr38]: ../adr/0038-read-query-surface-impl.md
-[adr56]: ../adr/0056-deleted-flag-typing.md
-[adr57]: ../adr/0057-itemstate-existing-explicit.md
-[adr58]: ../adr/0058-reference-expansion-read.md
-[adr59]: ../adr/0059-read-field-bare-alias.md
-[adr23]: ../adr/0023-custom-field-declaration-dsl.md
+[adr5]: ../../adr/0005-public-api-shape.md
+[adr20]: ../../adr/0020-read-field-default.md
+[adr38]: ../../adr/0038-read-query-surface-impl.md
+[adr56]: ../../adr/0056-deleted-flag-typing.md
+[adr57]: ../../adr/0057-itemstate-existing-explicit.md
+[adr58]: ../../adr/0058-reference-expansion-read.md
+[adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
-[lv]: ../live-verification.md
-[prd]: ../design/requirements.md
+[lv]: ../../live-verification.md
+[prd]: ../../design/requirements.md
 [rapi]: ../reference/resource-api/README.md

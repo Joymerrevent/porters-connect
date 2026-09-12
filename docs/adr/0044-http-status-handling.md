@@ -109,8 +109,8 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
-[guide]: ../howto/handle-failures.md
-[ref-resource]: ../reference/resource-api/README.md
+[guide]: ../usage/howto/handle-failures.md
+[ref-resource]: ../usage/reference/resource-api/README.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md
 [adr9]: 0009-http-transport.md

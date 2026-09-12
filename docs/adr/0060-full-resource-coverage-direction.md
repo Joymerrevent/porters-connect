@@ -196,9 +196,9 @@ D3 の `Link` / `Image` は [PRD R-4][prd] の積み残しで、**カスタム�
 [findings]: ../reviews/findings.md
 [adr-readme]: README.md
 [index]: index.md
-[resources-list]: ../reference/resource-api/resources-list.md
-[resources]: ../reference/resource-api/resources/README.md
-[field-types]: ../reference/resource-api/field-data-types.md
+[resources-list]: ../usage/reference/resource-api/resources-list.md
+[resources]: ../usage/reference/resource-api/resources/README.md
+[field-types]: ../usage/reference/resource-api/field-data-types.md
 [rv12]: ../reviews/rv/0012-coverage-overclaim-docs.md
 [rv22]: ../reviews/rv/0022-ratelimit-create-no-retry.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md

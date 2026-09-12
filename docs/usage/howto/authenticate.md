@@ -220,9 +220,9 @@ try {
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
 - 関連ガイド: [エラーハンドリング][error-handling] ／ 透過運用は [README の「認証」][readme]
 
-[adr-0007]: ../adr/0007-oauth-public-surface.md
-[adr-0034]: ../adr/0034-oauth-public-surface-impl.md
-[adr-0012]: ../adr/0012-token-cache-refresh.md
+[adr-0007]: ../../adr/0007-oauth-public-surface.md
+[adr-0034]: ../../adr/0034-oauth-public-surface-impl.md
+[adr-0012]: ../../adr/0012-token-cache-refresh.md
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./handle-failures.md
-[readme]: ../../README.md
+[readme]: ../../../README.md

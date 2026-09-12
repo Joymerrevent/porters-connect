@@ -12,4 +12,4 @@ Defined in: [src/resources/sales.ts:118](https://github.com/Joymerrevent/porters
 
 Fields for `create`: only `P_Owner` is unconditionally required. The six references are
 required *conditionally* (a dependency chain PORTERS validates server-side) — see the
-module comment and docs/concepts/limits.md.
+module comment and docs/usage/concepts/limits.md.

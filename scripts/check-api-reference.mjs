@@ -23,7 +23,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative, sep } from "node:path";
 
-const COMMITTED = "docs/api";
+const COMMITTED = "docs/usage/api";
 
 /** 相対パス -> 内容。ディレクトリを丸ごと読む（比較のため）。 */
 const readTree = (root) => {

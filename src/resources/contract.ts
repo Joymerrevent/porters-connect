@@ -7,7 +7,7 @@
 //   - **No `P_Owner`.** PORTERS does not publish one, so `create` requires only `P_Client`.
 //     (Everywhere else the owner is required on create.) We do not invent an owner field.
 //   - **`Currency` fields.** `P_AdvancePayment` / `P_ContingentFee` / `P_ContractorFee` are
-//     Field Type `Currency`, whose **Data Type is `Number`** (docs/reference field-data-types).
+//     Field Type `Currency`, whose **Data Type is `Number`** (docs/usage/reference field-data-types).
 //     Field Type and Data Type are different axes; the catalog records the latter, so no new
 //     Data Type is needed and the values decode as plain numbers.
 
@@ -72,7 +72,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/contract.md「新規必須」列): P_Client のみ
+// Required on create per docs/usage/reference (resources/contract.md「新規必須」列): P_Client のみ
 // （P_Id は System[Id]＝lib 供給のため除外）。P_Owner はこのリソースには存在しない。
 const REQUIRED_ON_CREATE = [
   "P_Client",

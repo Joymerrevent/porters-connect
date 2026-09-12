@@ -74,8 +74,8 @@
 - 関連: [[0007-oauth-public-surface]], [[0006-error-model]], [[0008-multitenancy-partition]]。
 
 [prd]: ../design/requirements.md
-[token]: ../reference/authentication-api/token.md
-[oauth]: ../reference/authentication-api/oauth.md
+[token]: ../usage/reference/authentication-api/token.md
+[oauth]: ../usage/reference/authentication-api/oauth.md
 [0006]: 0006-error-model.md
 [0007]: 0007-oauth-public-surface.md
 [0008]: 0008-multitenancy-partition.md

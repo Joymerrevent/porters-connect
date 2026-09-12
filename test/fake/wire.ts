@@ -28,7 +28,7 @@ const parser = new XMLParser({
 
 const DECLARATION = `<?xml version="1.0" encoding="UTF-8"?>`;
 
-// The 4 readable sub-fields of a User field (docs/reference) — what a Read returns when the
+// The 4 readable sub-fields of a User field (docs/usage/reference) — what a Read returns when the
 // caller does not narrow `Person.P_Owner(...)` itself.
 const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
 

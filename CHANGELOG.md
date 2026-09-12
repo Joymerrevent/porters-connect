@@ -601,7 +601,7 @@
 - **エラー対処ガイド**: [docs/howto/handle-failures.md][guide]（症状別早見表＋2 系統のコード対応表）。
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
-[guide]: docs/howto/handle-failures.md
+[guide]: docs/usage/howto/handle-failures.md
 [adr44]: docs/adr/0044-http-status-handling.md
 [adr45]: docs/adr/0045-write-response-root-code.md
 [adr46]: docs/adr/0046-guard-error-contract.md
@@ -610,12 +610,12 @@
 [adr50]: docs/adr/0050-auth-http-status-handling.md
 [adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
-[oauth-guide]: docs/howto/authenticate.md
+[oauth-guide]: docs/usage/howto/authenticate.md
 [adr19]: docs/adr/0019-static-resource-types.md
 [adr20]: docs/adr/0020-read-field-default.md
 [adr35]: docs/adr/0035-usage-documentation-structure.md
-[custom-fields-guide]: docs/howto/custom-fields.md
-[read-query-guide]: docs/howto/search-records.md
+[custom-fields-guide]: docs/usage/howto/custom-fields.md
+[read-query-guide]: docs/usage/howto/search-records.md
 [adr55]: docs/adr/0055-partition-binding-guard.md
 [adr56]: docs/adr/0056-deleted-flag-typing.md
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
@@ -627,7 +627,7 @@
 [adr63]: docs/adr/0063-idempotency-guard-scope.md
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
 [rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
-[write-constraints]: docs/concepts/limits.md
+[write-constraints]: docs/usage/concepts/limits.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/

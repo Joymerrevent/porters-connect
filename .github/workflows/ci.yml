@@ -78,7 +78,7 @@ jobs:
       - name: Doc examples
         run: pnpm check:docs
 
-      # docs/api（TypeDoc の生成物）が今のソースと一致しているかの検査（ADR-0068 決定3）。
+      # docs/usage/api（TypeDoc の生成物）が今のソースと一致しているかの検査（ADR-0068 決定3）。
       # 生成物をリポジトリに置く方式の値打ちは「公開 API を変えるとリファレンスの差分が PR に
       # 出る」ことで、生成し忘れるとその値打ちが消える。JSDoc だけの変更でも差分が出るので
       # code フィルタ配下に置かず**常時実行**する（src と docs のどちらの変更でも走らせる）。

@@ -6,7 +6,7 @@
 // Contact and Recruiter have the *same* field list (both are people at a Client company —
 // PORTERS separates them by role, not by shape). They stay two modules rather than one
 // shared factory: the catalogs are independent facts about the API and are checked against
-// docs/reference one by one, so a future divergence shows up as a diff, not as a surprise.
+// docs/usage/reference one by one, so a future divergence shows up as a diff, not as a surprise.
 
 import {
   createResource,
@@ -56,7 +56,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/contact.md「新規必須」列): P_Owner /
+// Required on create per docs/usage/reference (resources/contact.md「新規必須」列): P_Owner /
 // P_Client（P_Id は System[Id]＝lib 供給のため除外）。
 const REQUIRED_ON_CREATE = [
   "P_Owner",

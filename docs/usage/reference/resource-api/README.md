@@ -95,5 +95,5 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 [result-codes]: result-codes.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
-[adr22]: ../../adr/0022-master-read-query-surface.md
-[adr51]: ../../adr/0051-read-envelope-identification.md
+[adr22]: ../../../adr/0022-master-read-query-surface.md
+[adr51]: ../../../adr/0051-read-envelope-identification.md

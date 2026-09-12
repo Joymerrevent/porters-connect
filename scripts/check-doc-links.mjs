@@ -20,14 +20,14 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join, normalize } from "node:path";
 
-// 生成物と、リポジトリの文書ではないもの。`docs/api` は TypeDoc の出力（`pnpm check:api` が見る）。
-const SKIP_PREFIXES = ["docs/api/", ".claude/"];
+// 生成物と、リポジトリの文書ではないもの。`docs/usage/api` は TypeDoc の出力（`pnpm check:api` が見る）。
+const SKIP_PREFIXES = ["docs/usage/api/", ".claude/"];
 
 // 検査対象に必ず含まれるはずのファイル。ここを確かめないと、ディレクトリを移した / 除外を
 // 増やした / 別の場所から起動した、のいずれでも「0 ファイルを検査しました」と言って**緑で
 // 抜ける**。ゲートが残ったまま中身だけ消えるのが最悪なので、空振りは赤にする
 // （兄弟の `check-doc-examples.mjs` の `MIN_BLOCKS` と同じ規律）。
-const SENTINELS = ["README.md", "docs/index.md"];
+const SENTINELS = ["README.md", "docs/usage/index.md"];
 
 // リンク先として「この環境にしか無い」ことを許す接頭辞。ADR が取得した PORTERS の原記事
 // （`tmp/porters-docs/…`）がこれに当たる。**gitignore 全体を除外条件にしない** — それだと

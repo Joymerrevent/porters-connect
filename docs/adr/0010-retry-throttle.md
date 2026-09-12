@@ -84,8 +84,8 @@ PORTERS は[gotchas][gotchas] / [result-codes][rc] の通り:
 - 関連: [[0006-error-model]], [[0009-http-transport]]。
 
 [prd]: ../design/requirements.md
-[gotchas]: ../reference/gotchas.md
-[rc]: ../reference/resource-api/result-codes.md
+[gotchas]: ../usage/reference/gotchas.md
+[rc]: ../usage/reference/resource-api/result-codes.md
 [0006]: 0006-error-model.md
 [0009]: 0009-http-transport.md
 [0012]: 0012-token-cache-refresh.md

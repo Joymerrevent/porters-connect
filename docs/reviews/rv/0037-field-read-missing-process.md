@@ -155,5 +155,5 @@ changeset（minor）を入れてある。
 [adr22]: ../../adr/0022-master-read-query-surface.md
 [adr61]: ../../adr/0061-phase-resource-surface.md
 [adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
-[res-list]: ../../reference/resource-api/resources-list.md
+[res-list]: ../../usage/reference/resource-api/resources-list.md
 [rm]: ../../roadmap.md

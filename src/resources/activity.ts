@@ -53,7 +53,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/activity.md「新規必須」列): P_Owner /
+// Required on create per docs/usage/reference (resources/activity.md「新規必須」列): P_Owner /
 // P_Title（P_Id は System[Id]＝lib 供給のため除外）。P_Resource / P_ResourceId は必須では
 // ないと公表されている＝どこにも紐づかない Activity も登録できる。手前で厳しくしない。
 const REQUIRED_ON_CREATE = [

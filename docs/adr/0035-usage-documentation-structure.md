@@ -95,6 +95,6 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
 - 後続: 本 ADR が `accepted` になったら、**別 PR**で `docs/howto/authenticate.md` 新設＋README 追記（ADR 先行→実装の順）。
   F-2〜F-4 も同じ型（`docs/guide/<topic>.md` ＋ README 短節）で追加する。
 
-[auth-ref]: ../reference/authentication-api/README.md
-[error-handling]: ../howto/handle-failures.md
+[auth-ref]: ../usage/reference/authentication-api/README.md
+[error-handling]: ../usage/howto/handle-failures.md
 [0070]: 0070-usage-documentation-architecture.md

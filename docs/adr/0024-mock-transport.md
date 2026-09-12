@@ -120,7 +120,7 @@ follow-up（コアと分離した別パッケージ）。案2 は公式の軸に
   XML/フィクスチャ生成ヘルパー、`/testing` サブパス分離、宣言的ルートマップの薄い糖衣。
 
 [prd]: ../design/requirements.md
-[ref]: ../reference/README.md
+[ref]: ../usage/reference/README.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md
 [0009]: 0009-http-transport.md

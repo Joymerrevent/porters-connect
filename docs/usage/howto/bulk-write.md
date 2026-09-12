@@ -66,7 +66,7 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 - **Attachment** は単件のみ（`create` / `update`）。本体が巨大な Base64 のため一括は提供しません。
 
-[adr-0041]: ../adr/0041-bulk-write-surface-impl.md
-[adr-0045]: ../adr/0045-write-response-root-code.md
+[adr-0041]: ../../adr/0041-bulk-write-surface-impl.md
+[adr-0045]: ../../adr/0045-write-response-root-code.md
 [write-format]: ../reference/resource-api/write-format.md
 [result-codes]: ../reference/resource-api/result-codes.md

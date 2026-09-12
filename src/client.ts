@@ -60,7 +60,7 @@ import type { PartitionId, Scheme, Scope } from "./types";
 export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /**
    * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
-   * (A representative value lives in docs/reference.) May carry a port — `localhost:4010`.
+   * (A representative value lives in docs/usage/reference.) May carry a port — `localhost:4010`.
    *
    * The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
    * `https://xxxxx.example.com` is rejected at construction with a {@link PortersConfigError}

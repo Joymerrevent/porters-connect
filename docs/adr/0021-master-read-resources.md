@@ -170,9 +170,9 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 [bd]: ../design/basic-design.md
 [claude]: ../../CLAUDE.md
 [lv]: ../live-verification.md
-[ref-masters]: ../reference/resource-api/resources/
-[ref-read]: ../reference/resource-api/README.md
-[gotchas]: ../reference/gotchas.md
+[ref-masters]: ../usage/reference/resource-api/resources
+[ref-read]: ../usage/reference/resource-api/README.md
+[gotchas]: ../usage/reference/gotchas.md
 [src-option-read]: ../../tmp/porters-docs/txt/115012160328-Option-Read.md
 [0005]: 0005-public-api-shape.md
 [0008]: 0008-multitenancy-partition.md

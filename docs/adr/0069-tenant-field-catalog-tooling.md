@@ -354,7 +354,7 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 [0023]: 0023-custom-field-declaration-dsl.md
 [0047]: 0047-access-point-scheme.md
 [0064]: 0064-link-image-types.md
-[fdt]: ../reference/resource-api/field-data-types.md
+[fdt]: ../usage/reference/resource-api/field-data-types.md
 [lv]: ../live-verification.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [rv37]: ../reviews/rv/0037-field-read-missing-process.md

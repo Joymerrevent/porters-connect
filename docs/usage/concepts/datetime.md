@@ -92,9 +92,9 @@ await t.candidate.search({
 - 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
 - API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
 
-[adr11]: ../adr/0011-xml-parse-serialize.md
-[adr16]: ../adr/0016-field-type-granularity.md
+[adr11]: ../../adr/0011-xml-parse-serialize.md
+[adr16]: ../../adr/0016-field-type-granularity.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [handle-failures]: ../howto/handle-failures.md
-[prd]: ../design/requirements.md
+[prd]: ../../design/requirements.md
 [search-records]: ../howto/search-records.md

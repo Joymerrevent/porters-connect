@@ -154,7 +154,7 @@ accessor 呼び出し
 
 [prd]: requirements.md
 [adr]: ../adr/README.md
-[ref]: ../reference/README.md
+[ref]: ../usage/reference/README.md
 [a2]: ../adr/0002-ground-design-in-live-api-docs.md
 [a3]: ../adr/0003-add-attachment-to-mvp.md
 [a4]: ../adr/0004-field-type-model.md

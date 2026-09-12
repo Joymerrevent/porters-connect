@@ -145,4 +145,4 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 [adr24]: ../adr/0024-mock-transport.md
 [adr42]: ../adr/0042-supported-version-policy.md
 [lv]: ../live-verification.md
-[ref]: ../reference/README.md
+[ref]: ../usage/reference/README.md

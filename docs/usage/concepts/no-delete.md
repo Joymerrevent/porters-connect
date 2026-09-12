@@ -93,12 +93,12 @@ const page = await t.candidate.search({
 - 手順: [検索][search-records]（`itemstate` の指定）／[失敗の扱い][handle-failures]（再送の判断）
 - API 事実: [gotchas][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複）
 
-[adr56]: ../adr/0056-deleted-flag-typing.md
-[adr57]: ../adr/0057-itemstate-existing-explicit.md
-[adr63]: ../adr/0063-idempotency-guard-scope.md
+[adr56]: ../../adr/0056-deleted-flag-typing.md
+[adr57]: ../../adr/0057-itemstate-existing-explicit.md
+[adr63]: ../../adr/0063-idempotency-guard-scope.md
 [codes]: ../reference/resource-api/result-codes.md
-[fake]: ../fake-server-runbook.md
+[fake]: ../../fake-server-runbook.md
 [gotchas]: ../reference/gotchas.md
 [handle-failures]: ../howto/handle-failures.md
-[lv]: ../live-verification.md
+[lv]: ../../live-verification.md
 [search-records]: ../howto/search-records.md

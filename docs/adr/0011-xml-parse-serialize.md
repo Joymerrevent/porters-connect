@@ -92,9 +92,9 @@ Read 応答（[resource-api][rapi]）は `<{Resource} Total Count Start><Code>0<
 - 関連: [[0004-field-type-model]], [[0005-public-api-shape]]。
 
 [prd]: ../design/requirements.md
-[rapi]: ../reference/resource-api/README.md
-[fdt]: ../reference/resource-api/field-data-types.md
-[wf]: ../reference/resource-api/write-format.md
+[rapi]: ../usage/reference/resource-api/README.md
+[fdt]: ../usage/reference/resource-api/field-data-types.md
+[wf]: ../usage/reference/resource-api/write-format.md
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md

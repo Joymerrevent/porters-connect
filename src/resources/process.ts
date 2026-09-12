@@ -54,7 +54,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/process.md「新規必須」列): P_Owner と関連 5 項目
+// Required on create per docs/usage/reference (resources/process.md「新規必須」列): P_Owner と関連 5 項目
 // （P_Client / P_Recruiter / P_Job / P_Candidate / P_Resume）。P_Id は System[Id]＝lib 供給で除外。
 // LV-5 は reference で確定。
 const REQUIRED_ON_CREATE = [

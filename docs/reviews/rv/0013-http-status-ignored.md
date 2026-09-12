@@ -58,7 +58,7 @@ envelope が無い非 2xx は `httpStatusCategory` で分類（5xx → `server` 
 [adr6]: ../../adr/0006-error-model.md
 [adr43]: ../../adr/0043-local-fake-server.md
 [adr44]: ../../adr/0044-http-status-handling.md
-[guide]: ../../howto/handle-failures.md
+[guide]: ../../usage/howto/handle-failures.md
 [lv]: ../../live-verification.md
 [rv3]: 0003-unreachable-ratelimit-category.md
 [rv22]: 0022-ratelimit-create-no-retry.md

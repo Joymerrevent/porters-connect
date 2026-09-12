@@ -31,6 +31,7 @@
 
 import { execFileSync } from "node:child_process";
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -45,13 +46,13 @@ import { join, relative, resolve, sep } from "node:path";
 // 「動くこと」を約束していない（README とガイドは約束している）。
 const MARKDOWN_ROOTS = [
   "README.md",
-  "docs/index.md",
-  "docs/start/**/*.md",
-  "docs/concepts/**/*.md",
-  "docs/howto/**/*.md",
+  "docs/usage/index.md",
+  "docs/usage/start/**/*.md",
+  "docs/usage/concepts/**/*.md",
+  "docs/usage/howto/**/*.md",
 ];
 
-// JSDoc の `@example` も対象。これは **`docs/api` に生成されて利用者に見える**ので、
+// JSDoc の `@example` も対象。これは **`docs/usage/api` に生成されて利用者に見える**ので、
 // ガイドのコード例とまったく同じ性質を持つ（ADR-0068 の生成物経由で公開される）。
 // 実測（2026-09-11）では 7 個あり、いずれも通っていた＝ここは予防のための追加。
 const SOURCE_ROOTS = ["src/**/*.ts"];
@@ -230,6 +231,24 @@ const blocksOf = (file) => {
 const files = MARKDOWN_ROOTS.flatMap((p) =>
   p.includes("*") ? globSync(p, { cwd: REPO }) : [p],
 ).sort();
+
+// **ルート単位の番人**（ADR-0071 論点2）。総数の下限（下の `MIN_BLOCKS`）では捕まらない穴が
+// ある — 実測（2026-09-12）では `docs/start` を移しただけで 95 → 78 ブロックに縮んだのに、
+// 下限 40 には掛からず**緑のまま**だった。移設したのに定数を直し忘れると、その分だけ検査が
+// 静かに消える。だから「宣言したルートが 1 件も拾えない」を落とす。
+const emptyRoots = MARKDOWN_ROOTS.filter((p) =>
+  p.includes("*")
+    ? globSync(p, { cwd: REPO }).length === 0
+    : !existsSync(resolve(REPO, p)),
+);
+if (emptyRoots.length > 0) {
+  console.error(
+    `検査対象の指定がドキュメントの現在地と合っていません。1 件も拾えないルート:\n` +
+      emptyRoots.map((p) => `  ${p}`).join("\n") +
+      `\n\nMARKDOWN_ROOTS を直してください（移設したなら、その分の例が黙って検査対象から消えます）。`,
+  );
+  process.exit(1);
+}
 /**
  * JSDoc の `@example` を抜く。`*` の飾りを外し、次の `@tag` かコメント終端で切る。
  * 目印は例の 1 行目に `// doccheck: …` と書く（Markdown の HTML コメントは使えない）。
