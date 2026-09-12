@@ -343,10 +343,84 @@ export const checkStartChain = (read = readFileSync) => {
   return problems;
 };
 
+/**
+ * 目的別（`docs/usage/howto/`）の各ページに**出口**があるかの検査（[ADR-0070] 追記の検査⑤）。
+ *
+ * 入門と違い、目的別は**順序が無い**（目次から目的で引いて 1 本読む層）。だから鎖ではなく、
+ * 「読み終えた人が次の目的へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
+ * **目次へ戻れる**こと。実測（2026-09-12）では 9 本中 3 本に節が無く、1 本は別名だった。
+ *
+ * 検出するもの: `## 関連` の欠落／関連から目次へのリンクが無い／階層ごと消えた（番人）。
+ */
+const HOWTO_DIR = "docs/usage/howto";
+const HOWTO_SECTION = "## 関連";
+const HOWTO_EXIT = "../index.md";
+
+/** `## 関連` 以降（次の `## ` 手前まで）を返す。節が無ければ `undefined`。 */
+const relatedSection = (body) => {
+  const start = body.indexOf(`\n${HOWTO_SECTION}\n`);
+  if (start === -1) return undefined;
+  const rest = body.slice(start + HOWTO_SECTION.length + 2);
+  const end = rest.indexOf("\n## ");
+  return end === -1 ? rest : rest.slice(0, end);
+};
+
+/** 参照スタイルのラベルを本文末の定義で解決して、リンク先の集合を返す。 */
+const linkTargets = (body, section) => {
+  const targets = [];
+  for (const [, label] of section.matchAll(/\[[^\]]*\]\[([^\]]+)\]/g)) {
+    const def = new RegExp(`^\\[${label}\\]:\\s*(\\S+)$`, "m").exec(body);
+    if (def) targets.push(def[1]);
+  }
+  for (const [, target] of section.matchAll(/\[[^\]]*\]\((\S+?)\)/g))
+    targets.push(target);
+  return targets;
+};
+
+export const checkHowtoExits = (
+  read = readFileSync,
+  list = () => readdirSync(HOWTO_DIR),
+) => {
+  const problems = [];
+  let files;
+  try {
+    files = list().filter((f) => f.endsWith(".md"));
+  } catch {
+    // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
+    return [
+      `検査対象が見つかりません: ${HOWTO_DIR}（HOWTO_DIR を直すか、移設を戻す）`,
+    ];
+  }
+  if (files.length === 0)
+    return [
+      `${HOWTO_DIR} に .md がありません（HOWTO_DIR を直すか、移設を戻す）`,
+    ];
+
+  for (const f of files.sort()) {
+    const body = read(join(HOWTO_DIR, f), "utf8");
+    const section = relatedSection(body);
+    if (section === undefined) {
+      problems.push(
+        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` の節がありません（読み終えた人の出口が無い）`,
+      );
+      continue;
+    }
+    const exits = linkTargets(body, section).filter((t) =>
+      t.startsWith(HOWTO_EXIT),
+    );
+    if (exits.length === 0)
+      problems.push(
+        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` から目次（${HOWTO_EXIT}）へ戻れません`,
+      );
+  }
+  return problems;
+};
+
 export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...targets.flatMap((t) => checkTarget(t, read)),
   ...checkUserDocIndex(read),
   ...checkStartChain(read),
+  ...checkHowtoExits(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
