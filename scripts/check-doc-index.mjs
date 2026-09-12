@@ -228,9 +228,117 @@ export const checkUserDocIndex = (read = readFileSync) => {
   return problems;
 };
 
+/**
+ * 入門（`docs/start/`）の鎖が切れていないかの検査（[ADR-0070] 論点4 の検査②）。
+ *
+ * 入門は**順に読む**ことが前提なので、各ページに `- **前提**:` と `- **次に読む**:` を置き、
+ * **次に読むの連なりが全ページを 1 列に並べる**ことを機械で確かめる。人が順序を保つ形にすると、
+ * ページを 1 本足した / 名前を変えた瞬間に**どこからも辿れないページ**が静かにできる
+ * （ADR-0070 が 5 本に割ると決めた理由もここで、1 本の長いページだとこの検査が空振りする）。
+ *
+ * 検出するもの: メタ行の欠落／リンク切れ／鎖の分岐・輪・孤立／`前提` が鎖の 1 つ前と食い違う。
+ */
+const START_DIR = "docs/start";
+const META = { prev: "前提", next: "次に読む" };
+
+/** `- **ラベル**: …` の行から、最初のリンク先（参照スタイルのラベルは定義で解決）を採る。 */
+const metaLink = (body, label) => {
+  const line = body.split("\n").find((l) => l.startsWith(`- **${label}**:`));
+  if (line === undefined) return { found: false };
+  const ref = /\[[^\]]*\]\[([^\]]+)\]/.exec(line);
+  if (ref) {
+    const def = new RegExp(`^\\[${ref[1]}\\]:\\s*(\\S+)$`, "m").exec(body);
+    return { found: true, target: def?.[1], label: ref[1] };
+  }
+  const inline = /\[[^\]]*\]\((\S+?)\)/.exec(line);
+  return { found: true, target: inline?.[1] };
+};
+
+export const checkStartChain = (read = readFileSync) => {
+  const problems = [];
+  let files;
+  try {
+    files = readdirSync(START_DIR)
+      .filter((f) => f.endsWith(".md"))
+      .sort();
+  } catch {
+    return problems; // まだ無いディレクトリは対象外（段階的に作る）
+  }
+  if (files.length === 0) return problems;
+
+  const next = new Map(); // file -> 次に読む先（start 内なら file 名、外なら null）
+  const prev = new Map(); // file -> 前提が指す start 内のページ（無ければ undefined）
+  for (const f of files) {
+    const body = read(join(START_DIR, f), "utf8");
+    for (const [key, label] of Object.entries(META)) {
+      const link = metaLink(body, label);
+      if (!link.found) {
+        problems.push(
+          `${START_DIR}/${f}: \`- **${label}**:\` の行がありません`,
+        );
+        continue;
+      }
+      if (link.label !== undefined && link.target === undefined) {
+        problems.push(
+          `${START_DIR}/${f}: ${label} のラベル \`${link.label}\` に定義がありません`,
+        );
+        continue;
+      }
+      // start 内を指すものだけを鎖として扱う（外を指すのは鎖の終端・前提の補足）。
+      const inStart =
+        link.target !== undefined && !link.target.includes("/")
+          ? link.target
+          : undefined;
+      if (key === "next") next.set(f, inStart ?? null);
+      else if (inStart !== undefined) prev.set(f, inStart);
+      if (inStart !== undefined && !files.includes(inStart))
+        problems.push(
+          `${START_DIR}/${f}: ${label} が指す ${inStart} が ${START_DIR} にありません`,
+        );
+    }
+  }
+  if (problems.length > 0) return problems; // 鎖をたどる前に、材料の欠けを直す
+
+  // 入口＝どのページの「次に読む」からも指されていないページ。1 つでなければ鎖ではない。
+  const pointed = new Set([...next.values()].filter((v) => v !== null));
+  const heads = files.filter((f) => !pointed.has(f));
+  if (heads.length !== 1) {
+    problems.push(
+      `${START_DIR}: 入口が ${String(heads.length)} 個あります（${heads.join(" / ") || "なし＝輪になっています"}）。入門は 1 列に並んでいる必要があります`,
+    );
+    return problems;
+  }
+
+  const visited = [];
+  for (let at = heads[0]; at !== null && at !== undefined; at = next.get(at)) {
+    if (visited.includes(at)) {
+      problems.push(`${START_DIR}: 鎖が輪になっています（${at} に戻りました）`);
+      return problems;
+    }
+    visited.push(at);
+  }
+  const orphans = files.filter((f) => !visited.includes(f));
+  if (orphans.length > 0)
+    problems.push(
+      `${START_DIR}: 鎖から辿れないページがあります: ${orphans.join(" / ")}`,
+    );
+
+  // 「前提」が鎖の 1 つ前と食い違っていないか（並べ替えたときに片方だけ直す事故を止める）。
+  visited.forEach((f, i) => {
+    const declared = prev.get(f);
+    const actual = i === 0 ? undefined : visited[i - 1];
+    if (declared !== undefined && declared !== actual)
+      problems.push(
+        `${START_DIR}/${f}: 前提が ${declared} を指していますが、鎖の 1 つ前は ${actual ?? "（入口なので無し）"} です`,
+      );
+  });
+  return problems;
+};
+
 export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...targets.flatMap((t) => checkTarget(t, read)),
   ...checkUserDocIndex(read),
+  ...checkStartChain(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
