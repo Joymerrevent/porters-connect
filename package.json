@@ -76,6 +76,7 @@
     "check:links": "node scripts/check-doc-links.mjs",
     "docs:api": "typedoc",
     "check:api": "node scripts/check-api-reference.mjs",
+    "check:mentions": "node scripts/check-api-mentions.mjs",
     "check:shell": "node scripts/check-shell-identifiers.mjs",
     "prepare": "simple-git-hooks"
   },
