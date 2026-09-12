@@ -51,7 +51,9 @@ const job = await t.job.get(jobId);
 await t.attachment.create(file);
 ```
 
-- 露出するのは **data（candidate/job/client/process/resume）＋ attachment ＋ master Read（user/field/option）**。
+- 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
+  activity / contract / sales / process / resume ＋ `phase` ＋ `attachment`）**＋ master Read**
+  （user / field / option）。
 - 含まれないもの: `auth`（App 単位・partition 非依存）／`partition` マスタ（partition の**発見**専用で partition を取らない）／
   `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
 - **per-call 引数は設けません**（ADR-0040 案1c）。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。

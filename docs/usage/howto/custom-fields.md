@@ -163,7 +163,7 @@ catalog.undeclarable; // 宣言では表せない項目（理由つき）
 
 宣言と実物がずれると**黙って壊れます**。実物が Option の項目を `f.singlelineText()` と宣言すると、
 読み取りは例外も警告も出さずに `null` を返し、「その項目は空だった」と区別が付きません。
-`docs/reference/gotchas.md` のとおり **Alias のズレは PORTERS の運用で起きます**（環境間のコピー・
+[ハマりどころ][gotchas]のとおり **Alias のズレは PORTERS の運用で起きます**（環境間のコピー・
 項目の変更削除）。だから確かめる手段が要ります。
 
 ```ts
@@ -221,7 +221,8 @@ for await (const f of t.field.searchAll({ resource: "candidate" })) {
 
 ```ts
 defineFields({ candidate: (f) => ({ score: f.number() }) });
-// PortersConfigError: custom field alias "score" on "candidate" must start with "U_" or "A_"
+// PortersConfigError: defineFields: custom field alias "score" on "candidate"
+//   must start with "U_" or "A_" (standard P_ fields are built in)
 ```
 
 検証を通った宣言は**ブランド付き**になり、`PortersClient` は再検証しません。
@@ -287,3 +288,4 @@ const t = clientFor(myFields).tenant(partition);
 [write-constraints]: ../concepts/limits.md
 [prd]: ../../design/requirements.md
 [index]: ../index.md
+[gotchas]: ../reference/gotchas.md
