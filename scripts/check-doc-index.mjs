@@ -216,7 +216,12 @@ export const checkUserDocIndex = (read = readFileSync) => {
     try {
       entries = readdirSync(join("docs", "usage", dir));
     } catch {
-      continue; // まだ無いディレクトリは対象外（段階的に作る）
+      // **番人**（ADR-0071 論点2）。以前は「まだ無いディレクトリは対象外」と読み飛ばしていたが、
+      // 移設したのに定数を直し忘れると検査が静かに空振りする。3 階層はすべて実在する前提。
+      problems.push(
+        `検査対象の階層が見つかりません: docs/usage/${dir}（USER_DOC_DIRS を直すか、移設を戻す）`,
+      );
+      continue;
     }
     for (const f of entries) if (f.endsWith(".md")) actual.add(`${dir}/${f}`);
   }
@@ -262,7 +267,10 @@ export const checkStartChain = (read = readFileSync) => {
       .filter((f) => f.endsWith(".md"))
       .sort();
   } catch {
-    return problems; // まだ無いディレクトリは対象外（段階的に作る）
+    // **番人**（ADR-0071 論点2）。実測で、入門を移すとこの検査は対象ゼロで黙って緑になった。
+    return [
+      `検査対象が見つかりません: ${START_DIR}（START_DIR を直すか、移設を戻す）`,
+    ];
   }
   if (files.length === 0) return problems;
 
