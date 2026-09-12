@@ -51,28 +51,38 @@
 
 ## リソースと操作
 
-**操作はどのリソースでも共通**です（`search` / `searchAll` / `get` / `create` / `update`）。
-どれも `porters.tenant(id)` で束ねたスコープの下にあります。
+`porters.tenant(id)` で束ねたスコープ（`t`）の下にあります。**メソッドは行ごとに違う**ので、
+呼べるものはこの表で確かめてください。
 
-| アクセサ        | リソース   | アクセサ     | リソース       |
-| --------------- | ---------- | ------------ | -------------- |
-| `t.candidate`   | 個人連絡先 | `t.contract` | 契約           |
-| `t.job`         | JOB        | `t.sales`    | 成約・売上     |
-| `t.client`      | 企業       | `t.process`  | 選考プロセス   |
-| `t.recruiter`   | 企業担当者 | `t.resume`   | レジュメ       |
-| `t.contact`     | コンタクト | `t.activity` | アクティビティ |
-| `t.opportunity` | 商談管理   |              |                |
+| アクセサ           | リソース       | メソッド                                                                                       |
+| ------------------ | -------------- | ---------------------------------------------------------------------------------------------- |
+| `t.candidate`      | 個人連絡先     | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.job`            | JOB            | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.client`         | 企業           | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.recruiter`      | 企業担当者     | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.contact`        | コンタクト     | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.opportunity`    | 商談管理       | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.activity`       | アクティビティ | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.contract`       | 契約           | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.sales`          | 成約・売上     | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.process`        | 選考プロセス   | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.resume`         | レジュメ       | `search` / `searchAll` / `get` / `create` / `update`                                           |
+| `t.attachment`     | 添付ファイル   | `search` / `get` / `create` / `update`（**`searchAll` なし**）                                 |
+| `t.phase.of(名前)` | フェーズ履歴   | `search` / `searchAll` / `get` / `create` / `update`（**先に `of()` で上位リソースを束ねる**） |
 
-例外が 3 つあります。
+データ系 13 種はすべて **`create` と `update` を持ち、`delete` は持ちません**（[削除 API が無いということ][no-delete]）。
 
-- **`t.attachment`（添付ファイル）** — `searchAll` がありません。`condition` も型付きではなく
-  `{ "Id:eq": "123" }` のゆるい形です（[添付ファイル][attachments]）
-- **`t.phase`（フェーズ履歴）** — `t.phase.of("candidate")` のように**上位リソースを先に束ねて**
-  から使います。Read が `resource` を要求するためで、`t.phase.search(...)` はありません
-- **マスタ 4 種**（`porters.partition` / `t.user` / `t.field` / `t.option`）— 読み取り専用で、
-  `condition` と `get(id)` を持ちません（[検索][search-records]の「マスタは語彙が違う」）
+マスタ 4 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
 
-各メソッドの引数・戻り値・項目の一覧は [公開 API の全記号][api] が正典です。
+| アクセサ            | リソース                | メソッド                                 |
+| ------------------- | ----------------------- | ---------------------------------------- |
+| `porters.partition` | Partition（Company DB） | `search` / `searchAll` — **client 直下** |
+| `t.user`            | User                    | `search` / `searchAll` / `current`       |
+| `t.field`           | Field（項目定義）       | `search` / `searchAll`                   |
+| `t.option`          | Option（選択肢）        | `search`（**`searchAll` なし**）         |
+
+引数・戻り値・項目の一覧は [公開 API の全記号][api] が正典です。クエリの書き方は
+[検索][search-records]、添付の扱いは[添付ファイル][attachments]にあります。
 
 ## リファレンス — 細部を引く
 

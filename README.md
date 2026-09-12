@@ -69,22 +69,21 @@ console.log(page.total, page.items[0]?.P_Name);
 
 ## リソースと操作
 
-**操作はどのリソースでも共通**です（`search` / `searchAll` / `get` / `create` / `update`）。
-
-| アクセサ        | リソース       | アクセサ       | リソース                                  |
-| --------------- | -------------- | -------------- | ----------------------------------------- |
-| `t.candidate`   | 個人連絡先     | `t.contract`   | 契約                                      |
-| `t.job`         | JOB            | `t.sales`      | 成約・売上                                |
-| `t.client`      | 企業           | `t.process`    | 選考プロセス                              |
-| `t.recruiter`   | 企業担当者     | `t.resume`     | レジュメ                                  |
-| `t.contact`     | コンタクト     | `t.attachment` | 添付ファイル（`searchAll` なし）          |
-| `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴（`of(リソース名)` で束ねる） |
-| `t.activity`    | アクティビティ |                |                                           |
+| アクセサ        | リソース       | アクセサ       | リソース     |
+| --------------- | -------------- | -------------- | ------------ |
+| `t.candidate`   | 個人連絡先     | `t.contract`   | 契約         |
+| `t.job`         | JOB            | `t.sales`      | 成約・売上   |
+| `t.client`      | 企業           | `t.process`    | 選考プロセス |
+| `t.recruiter`   | 企業担当者     | `t.resume`     | レジュメ     |
+| `t.contact`     | コンタクト     | `t.attachment` | 添付ファイル |
+| `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴 |
+| `t.activity`    | アクティビティ |                |              |
 
 マスタ Read は `porters.partition` / `t.user` / `t.field` / `t.option` の 4 種（読み取り専用）。
-**例外（`t.attachment` に `searchAll` が無い・`t.phase` は `of()` で束ねる・マスタの語彙）**は
-[リソースと操作][docs-resources]にまとめてあります。引数・戻り値・項目の一覧は
-**[API リファレンス][api-ref]** が正典です。
+
+**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of()` で
+束ねるものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
+[API リファレンス][api-ref]が正典です。
 
 ## ドキュメント
 
