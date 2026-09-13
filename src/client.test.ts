@@ -6,6 +6,8 @@ import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import { PortersClient } from "./client";
 import type { TenantScope } from "./client";
 import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
+import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
+import type { Throttle } from "./http/throttle";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/decode";
 
@@ -513,5 +515,75 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     expectTypeOf<TenantScope>().not.toHaveProperty("auth");
     expectTypeOf<TenantScope>().not.toHaveProperty("partition");
     expectTypeOf<TenantScope>().not.toHaveProperty("tenant");
+  });
+});
+
+// ADR-0073 / RV-43: バケットは client ごとではなくホストごと。ガイドが勧めるとおりに
+// テナント別 client を立てても、合計が 1 つの上限に収まることを pin する。
+describe("PortersClient のスロットル（ホスト共有・注入）", () => {
+  const clientFor = (host: string, throttle?: Throttle): PortersClient =>
+    new PortersClient({
+      host,
+      throttle,
+      transport: {
+        send: (req) =>
+          Promise.resolve({
+            status: 200,
+            body:
+              req.method === "GET"
+                ? emptyPageFor(req.url)
+                : "<Candidate><Item><Id>10001</Id><Code>0</Code></Item></Candidate>",
+          }),
+      },
+      auth: { getAccessToken: () => Promise.resolve("TKN") },
+    });
+
+  it("同じホストの client は同じバケットを通る", async () => {
+    resetSharedThrottles();
+    const shared = sharedThrottleFor("example.test");
+    const take = vi.spyOn(shared, "take");
+
+    await clientFor("example.test").tenant(1).candidate.search();
+    await clientFor("example.test").tenant(2).candidate.search();
+
+    // 2 client ぶんの要求が、同じ実体を通っている＝バケットは増えていない
+    expect(take).toHaveBeenCalledTimes(2);
+    expect(take).toHaveBeenCalledWith(false); // Read
+    take.mockRestore();
+  });
+
+  it("別ホストの client は別のバケットを通る", async () => {
+    resetSharedThrottles();
+    const take = vi.spyOn(sharedThrottleFor("example.test"), "take");
+
+    await clientFor("other.test").tenant(1).candidate.search();
+
+    expect(take).not.toHaveBeenCalled();
+    take.mockRestore();
+  });
+
+  it("注入したスロットルが共有より優先される", async () => {
+    resetSharedThrottles();
+    const sharedTake = vi.spyOn(sharedThrottleFor("example.test"), "take");
+    const mineTake = vi.fn(() => Promise.resolve());
+    const mine: Throttle = { take: mineTake };
+
+    await clientFor("example.test", mine).tenant(1).candidate.search();
+
+    expect(mineTake).toHaveBeenCalledWith(false);
+    expect(sharedTake).not.toHaveBeenCalled();
+    sharedTake.mockRestore();
+  });
+
+  it("書き込みは write=true で通る", async () => {
+    resetSharedThrottles();
+    const mineTake = vi.fn(() => Promise.resolve());
+    const mine: Throttle = { take: mineTake };
+
+    await clientFor("example.test", mine)
+      .tenant(1)
+      .candidate.create({ P_Owner: 1 });
+
+    expect(mineTake).toHaveBeenCalledWith(true);
   });
 });
