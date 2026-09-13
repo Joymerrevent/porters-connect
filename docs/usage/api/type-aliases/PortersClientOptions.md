@@ -50,7 +50,7 @@ Custom auth strategy; defaults to the transparent code_direct strategy.
 
 > `optional` **fields?**: [`DefinedFields`](DefinedFields.md)\<`C`\>
 
-Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L93)
+Defined in: [src/client.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L102)
 
 Tenant custom field declarations from [defineFields](../functions/defineFields.md) (ADR-0023). Each resource's
 declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
@@ -93,6 +93,21 @@ Silence it only where cleartext is intended, with the env var
 > `optional` **scopes?**: [`Scope`](Scope.md)[]
 
 Defined in: [src/client.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L81)
+
+***
+
+### throttle?
+
+> `optional` **throttle?**: [`Throttle`](Throttle.md)
+
+Defined in: [src/client.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L96)
+
+Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this host**,
+so several clients aimed at the same PORTERS add up to one limit instead of one each.
+
+Pass your own to opt out of that sharing, to run different limits, or to coordinate across
+processes — a `Throttle` backed by Redis is what makes the multi-instance case honest
+(ADR-0010 left that to the caller). `createThrottle()` builds the default implementation.
 
 ***
 

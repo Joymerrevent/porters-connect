@@ -30,6 +30,11 @@ export type {
   RevokeUrlOptions,
 } from "./auth";
 export type { Transport, TransportRequest, TransportResponse } from "./http";
+// Rate-limit self-restraint (ADR-0073). The default is one bucket **per host**, shared across
+// every client aimed at it — so a client per tenant no longer means a limit per tenant (RV-43).
+// Inject your own `Throttle` to opt out, run different limits, or coordinate across processes.
+export { createThrottle } from "./http";
+export type { Throttle, ThrottleOptions } from "./http";
 // Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
 export { createMockTransport } from "./http";
 export type { MockHandler, MockReply, MockTransportOptions } from "./http";
