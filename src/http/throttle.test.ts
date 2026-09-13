@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createThrottle } from "./throttle";
+import {
+  createThrottle,
+  createThrottleRegistry,
+  resetSharedThrottles,
+  sharedThrottleFor,
+} from "./throttle";
 
 // Flush pending microtasks (an immediate take() resolves without a timer).
 const flush = async (): Promise<void> => {
@@ -134,5 +139,76 @@ describe("createThrottle (token-bucket, ADR-0010)", () => {
 
     setTimeoutSpy.mockRestore();
     vi.useRealTimers();
+  });
+});
+
+// ADR-0073: バケットは client ごとではなく**ホストごと**。テナント別に client を立てても
+// 合計が上限に収まることが要件なので、「同じホストなら同じ実体」を直接 pin する。
+describe("createThrottleRegistry (per-host buckets, ADR-0073)", () => {
+  const counting = () => {
+    let made = 0;
+    const registry = createThrottleRegistry(() => {
+      made += 1;
+      return { take: () => Promise.resolve() };
+    });
+    return { registry, made: () => made };
+  };
+
+  it("同じホストには同じバケットを返す", () => {
+    const { registry, made } = counting();
+    const a = registry.forHost("xxxxx.example.com");
+    const b = registry.forHost("xxxxx.example.com");
+    expect(b).toBe(a);
+    expect(made()).toBe(1);
+  });
+
+  it("違うホストには別のバケットを返す", () => {
+    const { registry, made } = counting();
+    const a = registry.forHost("xxxxx.example.com");
+    const b = registry.forHost("127.0.0.1:4010");
+    expect(b).not.toBe(a);
+    expect(made()).toBe(2);
+  });
+
+  it("ホスト名の大小は無視する（ホストは case-insensitive）", () => {
+    const { registry, made } = counting();
+    const a = registry.forHost("XXXXX.Example.COM");
+    const b = registry.forHost("xxxxx.example.com");
+    expect(b).toBe(a);
+    expect(made()).toBe(1);
+  });
+
+  it("ポートが違えば別のバケット（別の宛先だから）", () => {
+    const { registry } = counting();
+    expect(registry.forHost("localhost:4010")).not.toBe(
+      registry.forHost("localhost:4011"),
+    );
+  });
+
+  it("reset() で忘れる（テスト用の継ぎ目）", () => {
+    const { registry, made } = counting();
+    const before = registry.forHost("xxxxx.example.com");
+    registry.reset();
+    expect(registry.forHost("xxxxx.example.com")).not.toBe(before);
+    expect(made()).toBe(2);
+  });
+});
+
+describe("sharedThrottleFor (process-wide registry)", () => {
+  it("プロセス全体で 1 ホスト 1 バケット", () => {
+    resetSharedThrottles();
+    expect(sharedThrottleFor("xxxxx.example.com")).toBe(
+      sharedThrottleFor("xxxxx.example.com"),
+    );
+    expect(sharedThrottleFor("other.example.com")).not.toBe(
+      sharedThrottleFor("xxxxx.example.com"),
+    );
+  });
+
+  it("既定のバケットは本物のスロットル（take できる）", async () => {
+    resetSharedThrottles();
+    await expect(
+      sharedThrottleFor("xxxxx.example.com").take(false),
+    ).resolves.toBeUndefined();
   });
 });
