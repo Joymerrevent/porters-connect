@@ -1,7 +1,13 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["src/index.ts"],
-  "plugin": ["typedoc-plugin-markdown"],
+  // 2 本目は自前。依存側の記号の「Defined in」から pnpm ストアの版つきパスを落とす
+  // （理由はプラグイン先頭のコメント）。typedoc.json に置くことで `pnpm docs:api` と
+  // `check:api` の両方に同じ正規化がかかる＝片方だけ変わることがない。
+  "plugin": [
+    "typedoc-plugin-markdown",
+    "./scripts/typedoc-plugin-normalize-external-sources.mjs"
+  ],
   "out": "docs/usage/api",
   "readme": "none",
 
