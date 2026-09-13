@@ -5,6 +5,41 @@
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-09-13
+
+**開発・CI まわりだけの版**です。**公開されるパッケージの中身（`dist`）は 0.15.0 と同一**で、
+公開 API・型・挙動に変更はありません（既存コードはそのまま動きます）。
+
+### Security
+
+- **開発用依存の既知脆弱性 5 件を解消しました**。いずれもビルド・テスト用ツールの推移依存で、
+  **利用者の実行時には入りません**（`dependencies` は `fast-xml-parser` のみ）。
+  依存の解決を `pnpm.overrides` で固定しています。
+
+  | パッケージ        | 経路                                          | Advisory                                                |
+  | ----------------- | --------------------------------------------- | ------------------------------------------------------- |
+  | `brace-expansion` | `@stryker-mutator/core` > `minimatch`         | [GHSA-mh99-v99m-4gvg][gh1] / [GHSA-rgw5-rvv9-x895][gh2] |
+  | `smol-toml`       | `markdownlint-cli2`                           | [GHSA-7w5x-hrqm-74c2][gh5]                              |
+  | `qs`              | `@stryker-mutator/core` > `typed-rest-client` | [GHSA-x5fp-wj9c-mxmx][gh3] / [GHSA-4mjr-xmp4-gh2g][gh4] |
+
+- **GitHub Actions の書き込み権限を job 単位に絞りました**。タグ作成ワークフローの既定を
+  読み取りのみにし、書き込みは実際に必要な job にだけ与えます。ワークフローが行える操作の範囲は
+  変わりません（最小権限の原則に寄せた整理です）。
+
+### Changed
+
+- **往復・エスケープ・分割の不変条件を property-based テストで検査するようになりました**
+  （[fast-check][fastcheck]）。代表値を 1 点ずつ確かめる形では境界の抜けが見えないため、
+  値を機械に選ばせて不変条件そのものを検査します。対象は 3 つです。
+
+  - 日時: PORTERS 形式 ⇄ ISO 8601 (UTC) の往復と、オフセット表記によらない UTC 正規化
+  - Write XML: エスケープ後に生の `&` `<` `>` が残らないこと、書いて読むと元の値に戻ること
+  - bulk write: 200 件と約 15000 文字の 2 つの上限を、どの入力でも同時に満たすこと
+
+- **生成 API リファレンスの「Defined in」表記を整理しました**。継承元が依存側にある記号
+  （`Error.message` など）のパスから pnpm ストアの版つきディレクトリを落とし、
+  `@types/node/globals.d.ts:67` の形にしています。表示されるメンバーは変わりません。
+
 ## [0.15.0] - 2026-09-13
 
 **宣言と実物のズレを黙って飲み込まなくなった版**です。**破壊的変更**（読み取りの型不一致が
@@ -709,7 +744,8 @@
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...HEAD
+[0.15.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.1...v0.13.0
@@ -730,3 +766,9 @@
 [0.2.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Joymerrevent/porters-connect/releases/tag/v0.1.0
+[gh1]: https://github.com/advisories/GHSA-mh99-v99m-4gvg
+[gh2]: https://github.com/advisories/GHSA-rgw5-rvv9-x895
+[gh3]: https://github.com/advisories/GHSA-x5fp-wj9c-mxmx
+[gh4]: https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
+[gh5]: https://github.com/advisories/GHSA-7w5x-hrqm-74c2
+[fastcheck]: https://github.com/dubzzz/fast-check
