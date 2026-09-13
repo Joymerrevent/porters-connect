@@ -79,6 +79,26 @@ if (result.hasFailures) {
 1 分あたり Read 2000 / Write 500 を、ライブラリが内蔵スロットリングで抑えます。**上限に近づくと
 待つ**ので、バッチ側で `sleep` を挟む必要はありません。
 
+**バケットはホストごと**です（[ADR-0073][adr73]）。同じ PORTERS を向くクライアントをいくつ
+作っても、合計が上限に収まります。バッチと Web アプリを同じプロセスで動かしても同じです。
+
+**別プロセスで動かすなら話は別です。** 日次バッチを Web アプリとは別のプロセスで回すと、
+2 つのバケットが並びます。合計で守りたいなら `Throttle` を自分で実装して渡します
+（`take(write: boolean): Promise<void>` の 1 メソッドなので、Redis に載せれば協調できます）。
+既定の実装は `createThrottle` で、上限だけ変えることもできます。
+
+```ts
+import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
+
+// バッチには控えめな枠を割り当てる（Web アプリ側に余らせる）
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  throttle: createThrottle({ readPerMin: 500, writePerMin: 100 }),
+});
+```
+
 一方、**月あたり約 15 万アクセスは契約条件**で、ライブラリは数えていません。日次バッチなら
 「1 回あたりのリクエスト数 × 日数」を見積もっておいてください（[上限][limits]）。
 
@@ -120,3 +140,4 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 [aliases]: ../concepts/aliases.md
 [search-records]: search-records.md
 [index]: ../index.md
+[adr73]: ../../adr/0073-throttle-sharing.md

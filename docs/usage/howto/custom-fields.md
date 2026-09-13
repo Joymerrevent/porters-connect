@@ -262,10 +262,10 @@ const t = clientFor(myFields).tenant(partition);
 （[マルチテナント ガイド][multi-tenancy]）。項目構成が同じテナント群には `tenant(id)`、
 違うなら別クライアント、と使い分けます。
 
-> [!WARNING]
-> **client を分けるとスロットルも分かれます**（[RV-43][rv43]）。1 分あたりの上限を自制する
-> バケットは client ごとなので、テナント数だけ client を作ると、その数倍まで叩けてしまいます。
-> 項目構成が同じテナントは `tenant(id)` で束ねてください。
+> [!NOTE]
+> **client を分けてもスロットルは分かれません。** 1 分あたりの上限を自制するバケットは
+> **ホストごと**だからです（[ADR-0073][adr73]）。テナントごとに client を立てても、合計は
+> 上限に収まります。
 
 ## 宣言したクライアントを関数に渡す
 
@@ -404,4 +404,4 @@ const score = async () => {
 [prd]: ../../design/requirements.md
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
-[rv43]: ../../reviews/rv/0043-throttle-scoped-per-client.md
+[adr73]: ../../adr/0073-throttle-sharing.md

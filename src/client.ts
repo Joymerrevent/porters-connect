@@ -8,12 +8,12 @@ import type {
 import {
   createFetchTransport,
   createRequester,
-  createThrottle,
+  sharedThrottleFor,
   expoBackoff,
   validateAccessPoint,
   warnIfInsecureScheme,
 } from "./http";
-import type { AccessPoint, Transport } from "./http";
+import type { AccessPoint, Throttle, Transport } from "./http";
 import {
   createAttachmentResource,
   createCandidateResource,
@@ -85,6 +85,15 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   tokenStore?: TokenStore;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
+  /**
+   * Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this host**,
+   * so several clients aimed at the same PORTERS add up to one limit instead of one each.
+   *
+   * Pass your own to opt out of that sharing, to run different limits, or to coordinate across
+   * processes — a `Throttle` backed by Redis is what makes the multi-instance case honest
+   * (ADR-0010 left that to the caller). `createThrottle()` builds the default implementation.
+   */
+  throttle?: Throttle;
   /**
    * Tenant custom field declarations from {@link defineFields} (ADR-0023). Each resource's
    * declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
@@ -204,7 +213,10 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     const requester = createRequester({
       transport,
       auth,
-      throttle: createThrottle(),
+      // Per host, not per client (ADR-0073): building a client per tenant is something the guides
+      // recommend, and a bucket each would let the process issue N times the limit — silently
+      // (RV-43). An injected throttle takes over entirely, sharing included.
+      throttle: options.throttle ?? sharedThrottleFor(accessPoint.host),
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;
