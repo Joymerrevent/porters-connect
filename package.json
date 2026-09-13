@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -92,6 +92,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.9.0",
     "globals": "^17.6.0",
     "lint-staged": "^17.0.7",
     "markdownlint-cli2": "^0.23.1",
@@ -118,7 +119,9 @@
       "js-yaml": ">=4.2.0",
       "markdown-it": ">=14.2.0",
       "esbuild": ">=0.28.1",
-      "qs": ">=6.15.2"
+      "qs": ">=6.16.0",
+      "brace-expansion": ">=5.0.9",
+      "smol-toml": ">=1.7.1"
     }
   }
 }

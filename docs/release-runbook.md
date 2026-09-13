@@ -75,11 +75,17 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.14.0**（npm latest・`v0.14.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  **7 files / 613.8 kB**・2026-09-09）。**累計 19 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 17 版**が
-  この半自動フロー）。changeset **1 枚**を消費した minor リリースで、`pnpm changeset:version` が
-  **正常終了することを実行して確認**した（changesets v3.0.1）。`Link` / `Image` の対応＝
-  Data Type 17/17（[ADR-0060][adr60] D3）の版。
+- ✅ 最新公開: **0.15.0**（npm latest・`v0.15.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **7 files / 673.7 kB**・2026-09-13）。**累計 20 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 18 版**が
+  この半自動フロー）。changeset **5 枚**を消費した minor リリース。挙動が 2 つ変わる版で、
+  **破壊的変更**（宣言型と実データの形が食い違うと `null` ではなくエラー・RV-36）と
+  **既定の挙動変更**（スロットルの共有単位が client ごと → ホストごと・[ADR-0073][adr73]・RV-43）を含む。
+  - **publish 直後の `npm view` は前版を返す**。Release ワークフローが green でも、npm は
+    `Your package is being processed and may take a few minutes to become available.` と返しており、
+    レジストリへの反映に数分かかる。**伝播待ちと publish 失敗は外から見ると同じ**なので、
+    慌てて再実行せず、ワークフローのログで `+ @joymerrevent/porters-connect@X.Y.Z` を確認してから待つ。
+- ✅ 直前の **0.14.0**（2026-09-09・7 files / 613.8 kB）は changeset **1 枚**を消費した minor リリースで、
+  `Link` / `Image` の対応＝ Data Type 17/17（[ADR-0060][adr60] D3）の版。
   - ひとつ前の **0.13.0**（2026-09-06・7 files / 569.5 kB）は User マスタの標準項目を 4→17 に揃えた版
     （D2）。**この版は §5 の後追い記録が行われておらず**、本書の「最新公開」も roadmap の公開済み行も
     0.12.x のままだった。0.14.0 の記録と併せて追いつかせた。
@@ -181,3 +187,4 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr62]: adr/0062-backmerge-via-pull-request.md
 [cl]: ../CHANGELOG.md
 [findings]: reviews/findings.md
+[adr73]: adr/0073-throttle-sharing.md
