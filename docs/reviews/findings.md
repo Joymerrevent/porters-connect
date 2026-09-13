@@ -57,7 +57,7 @@
 | [RV-40][rv40] | 🟢     | ドキュメント / DX             | open    | リンク検査がインラインコードスパン内のリンクを誤検出する                   |
 | [RV-41][rv41] | 🟢     | プロセス / テスト厳密性       | open    | 検証ハーネスが gitignore 下にあり、履歴が挙げる証拠を再現できない          |
 | [RV-42][rv42] | 🟢     | プロセス / DX                 | open    | 品質ゲートの一覧が 4 箇所に分散して腐る                                    |
-| [RV-43][rv43] | 🟡     | フェイルセーフ / API 忠実性   | open    | スロットルが client 単位で、テナント別 client を作ると自制が分裂する       |
+| [RV-43][rv43] | 🟡     | フェイルセーフ / API 忠実性   | fixed   | スロットルが client 単位で、テナント別 client を作ると自制が分裂する       |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 

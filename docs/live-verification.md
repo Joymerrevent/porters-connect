@@ -35,6 +35,7 @@ grep -rn "VERIFY(live)" src test
 | LV-20 | Image のサブタグを field に括弧で並べる記法         | 未確認 |
 | LV-21 | Link を condition / order に使えるか                | 未確認 |
 | LV-22 | Image の値を消す書き方                              | 未確認 |
+| LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
 
 ---
 
@@ -346,6 +347,21 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **確認結果**: —
 - **関連**: テキスト項目は `""` で消える（実装済み・確定）
 
+## LV-23 レート上限は何単位か（App / 契約 / ホスト）
+
+- **現在の対応 / 仮定**: 1 分あたりの自制バケットを**ホスト単位**で共有している（[ADR-0073][adr73]）。
+  同じホストを向くクライアントは、いくつ作っても 1 つの上限を分け合う
+- **不確実な理由**: reference は「1 分あたり Read 2000 / Write 500・超過すると強制切断され得る」と
+  書くだけで、**それが App ごとなのか・契約ごとなのか・ホストごとなのか**を書いていない。
+  ホストは契約ごとに払い出されるので「ホスト ≒ 契約」と仮定している
+- **コード箇所**: `src/http/throttle.ts`（`createThrottleRegistry` / `sharedThrottleFor`）
+- **確認方法**: 同じホストに対して 2 つの App ID で並行に叩き、切断が**合算で**起きるか、
+  App ごとに独立して起きるかを見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 仮定が外れた場合の倒れ方は**安全側**（広く共有＝叩きすぎない）。App 単位だと判明したら、
+  鍵にホスト＋App ID を採る改定になる。超過側へは倒れない
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -375,3 +391,4 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
 [lv10]: #lv-10-systemreference-read-の入れ子タグ
 [a64]: adr/0064-link-image-types.md
+[adr73]: adr/0073-throttle-sharing.md

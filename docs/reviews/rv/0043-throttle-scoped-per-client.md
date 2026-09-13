@@ -1,7 +1,7 @@
 # RV-43 🟡 スロットルが client 単位で、テナント別 client を作ると自制が分裂する
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -77,9 +77,39 @@ PORTERS から見えるのは合計なので、[R-7][prd]（レート上限の�
 
 ## 処置
 
-—
+[ADR-0073][adr73] を accepted（4 論点すべて推奨案）ののち実装。**(a) 既定でプロセス内共有**＋
+**(b) 注入できるようにする**の両方を入れた。
+
+- バケットは**ホストごと**になった（`createThrottleRegistry` / `sharedThrottleFor`）。鍵は
+  アクセスポイントのホストを小文字化したもの。ローカルのフェイクは別ホストなので本番向けの枠を
+  食わない。状態はファクトリに持たせ、プロセス全体のインスタンスをそこから作る
+  （`insecure-http-warning` と同じ形）
+- `PortersClientOptions.throttle` を追加。共有から降りる・別の上限で走らせる・
+  **プロセスを跨いで協調する**（Redis 実装）がすべて利用側でできる
+- 公開記号が 3 つ増えた: `createThrottle` ／ `Throttle` ／ `ThrottleOptions`（semver minor）
+- **既定の挙動が変わる**（同じホストへ複数 client を立てていた場合、以前より待つ）。changeset に明記
+
+ドキュメントも直した。`concepts/limits.md` の「数えているのは〜」をホスト単位に、
+`multi-tenant.md` / `custom-fields.md` の警告を「分けても分かれません」に、`sync-batch.md` に
+別プロセスで回す場合の注入例を足した。
+
+レート上限が何単位か（App / 契約 / ホスト）は正典に無いので [LV-23][lv23] を起票した。
+仮定が外れても倒れ方は安全側（広く共有＝叩きすぎない）。
+
+## 検証
+
+- `src/http/throttle.test.ts` — 同じホストで同じ実体・違うホストで別実体・大小無視・ポート違いは
+  別・`reset()` で忘れる、の 5 つをファクトリ直接で pin。プロセス全体の `sharedThrottleFor` も
+  1 ホスト 1 バケットを確認
+- `src/client.test.ts` — 同じホストの 2 client が**同じバケットを通る**（`sharedThrottleFor` の
+  戻りを spy して 2 回呼ばれることを確認＝バケットが増えていない）／別ホストは通らない／
+  注入が共有より優先される／書き込みが `write=true` で通る
+- 全ゲート green（`lint:ts` / `tsc` / vitest / `check:api` / `check:docs` / `check:index` /
+  `check:links` / `check-api-mentions` / `lint:md`）
 
 [adr10]: ../../adr/0010-retry-throttle.md
+[adr73]: ../../adr/0073-throttle-sharing.md
 [adr44]: ../../adr/0044-http-status-handling.md
 [pr270]: https://github.com/Joymerrevent/porters-connect/pull/270
+[lv23]: ../../live-verification.md
 [prd]: ../../design/requirements.md

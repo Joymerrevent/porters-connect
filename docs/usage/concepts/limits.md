@@ -61,13 +61,28 @@ PORTERS に蹴られるより、**何件目が画像を持つか**を添えて�
 （Read 1800 / Write 450 相当）。手前で使い切ったら**待ちます** — 例外にはしません。
 バーストは容量まで許し、平均が上限を下回るようにしてあります。
 
-**数えているのは `PortersClient` 1 つ分です。** プロセスでもインスタンスでもなく、
-**クライアント単位**です。テナントごとにクライアントを作ると（[マルチテナント][multi-tenant]と
-[カスタム項目][custom-fields]がそう勧めています）、バケットはその数だけ並び、PORTERS から見た
-合計はクライアント数倍まで出ます。プロセス・インスタンスを跨いでも協調しません。
+**数えているのはホスト 1 つ分です**（[ADR-0073][adr73]）。クライアントの数ではありません。
+テナントごとにクライアントを作っても（[マルチテナント][multi-tenant]と[カスタム項目][custom-fields]が
+そう勧めています）、同じホストを向いている限り**バケットは 1 つ**で、合計が上限に収まります。
+ローカルのフェイクは別ホストなので、本番向けの枠を食いません。
 
-> **これは既知の問題です**（[RV-43][rv43]）。上限を守り切りたい間は、テナントごとに
-> クライアントを増やさない（`tenant(id)` で束ねる）ほうが安全です。
+**プロセスを跨ぐと協調しません。** 複数インスタンスで動かすなら、PORTERS から見た合計は
+その足し算になります。そこまで守りたいなら、`Throttle` を自分で実装して渡します。
+
+```ts
+import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
+
+// 共有から降りる／別の上限で走らせる
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  throttle: createThrottle({ readPerMin: 500 }),
+});
+```
+
+`Throttle` は `take(write: boolean): Promise<void>` の 1 メソッドだけなので、Redis などに載せれば
+**プロセスを跨いだ協調**も書けます。ライブラリはそこまでやりません（月次と同じ線引き）。
 
 ### 超えたときに何が返るか
 
@@ -166,4 +181,4 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [authenticate]: ../howto/authenticate.md
 [multi-tenant]: ../howto/multi-tenant.md
 [custom-fields]: ../howto/custom-fields.md
-[rv43]: ../../reviews/rv/0043-throttle-scoped-per-client.md
+[adr73]: ../../adr/0073-throttle-sharing.md
