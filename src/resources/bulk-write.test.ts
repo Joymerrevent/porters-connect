@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -298,5 +299,72 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     expect(err.category).toBe("unknown");
     expect(err.message).toContain("result(s) for");
     expect(err.context).toMatchObject({ resource: "Candidate" });
+  });
+});
+
+// Property-based tests (fast-check). 分割は「200 件」と「~15000 文字」の 2 つの上限に同時に
+// 従う必要があり、例示テストは代表的な境界を 1 点ずつ突いているだけ。レコード長がばらつく
+// 現実の入力で上限を破らないことは、値を機械に選ばせないと確かめられない。
+describe("bulk write の分割: 不変条件（property-based）", () => {
+  const WRITE_URL = buildWriteUrl({ host: "h.test" }, 7, "candidate");
+  const ENVELOPE = "<Candidate></Candidate>".length;
+
+  it("どの入力でも上限を破らず、順序と件数が保たれる", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(fc.integer({ min: 0, max: 400 }), {
+          minLength: 1,
+          maxLength: 250,
+        }),
+        async (extras) => {
+          const { requester, calls } = fakeRequester();
+          const items = extras.map((n) => inputOfLen(sentLen("") + n));
+          const result = await resource(requester).createMany(items);
+
+          let seen = 0;
+          for (const call of calls) {
+            const count = (call.body.match(/<Item>/g) ?? []).length;
+            // 空のバッチを送らない
+            expect(count).toBeGreaterThan(0);
+            // 200 件の上限
+            expect(count).toBeLessThanOrEqual(200);
+            // リクエスト全体（URL + body）が文字数上限以下
+            expect(WRITE_URL.length + call.body.length).toBeLessThanOrEqual(
+              MAX_REQUEST_LENGTH,
+            );
+            // 早すぎる分割をしない: 次のバッチの先頭を足すとどちらかの上限を破る
+            const next = items[seen + count];
+            if (next !== undefined) {
+              const packed = call.body.length - ENVELOPE;
+              const overCount = count >= 200;
+              const overBudget = packed + sentLen(next.P_Memo) > BUDGET;
+              expect(overCount || overBudget).toBe(true);
+            }
+            seen += count;
+          }
+
+          // 全件が 1 回ずつ、入力順のまま返る
+          expect(seen).toBe(items.length);
+          expect(result.results.map((r) => r.index)).toEqual(
+            items.map((_, i) => i),
+          );
+        },
+      ),
+      { numRuns: 25 },
+    );
+  });
+
+  it("budget を 1 文字でも超えるレコードは送信前に弾く", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.integer({ min: 1, max: 500 }), async (over) => {
+        const { requester, calls } = fakeRequester();
+        await expect(
+          resource(requester).createMany([inputOfLen(BUDGET + over)]),
+        ).rejects.toBeInstanceOf(PortersConfigError);
+        // 送る前に弾く（1 本もリクエストが出ない）＝フェイルセーフ
+        expect(calls).toHaveLength(0);
+      }),
+      { numRuns: 15 },
+    );
   });
 });
