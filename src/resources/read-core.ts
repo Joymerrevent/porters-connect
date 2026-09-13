@@ -87,7 +87,7 @@ export const bareAlias = (key: string): string =>
 
 // --- Read `field` assembly (ADR-0020) -------------------------------------------------------
 
-// The 4 readable sub-fields of a User-type field (docs/reference: only these are returned).
+// The 4 readable sub-fields of a User-type field (docs/usage/reference: only these are returned).
 const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
 
 // One `field=` entry for a bare alias. PORTERS wants `{prefix}.{alias}`; a User-typed field is
@@ -165,7 +165,7 @@ export const decoderFor = <F extends FieldCatalog>(
           ? typeof raw === "string"
             ? raw
             : null
-          : decodeField(type, raw);
+          : decodeField(type, raw, alias);
     }
     return out as ReadRecord<F>;
   };
@@ -192,7 +192,7 @@ export const runRead = <T>(
     };
   });
 
-// Read page size bounds (docs/reference: `count` is 1–200, default 10). `searchAll` pages by MAX.
+// Read page size bounds (docs/usage/reference: `count` is 1–200, default 10). `searchAll` pages by MAX.
 const MIN_READ_COUNT = 1;
 const MAX_READ_COUNT = 200;
 const PAGE_SIZE = MAX_READ_COUNT;

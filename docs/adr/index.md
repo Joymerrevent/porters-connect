@@ -46,7 +46,7 @@
 | [0032][0032] | 単調増加検証を base=main の PR に限定（ADR-0031 (2) 改訂）       | プロセス | accepted   | 0.2.1 |
 | [0033][0033] | ポスト MVP の次の注力領域（v0.2 以降）                           | 要件定義 | superseded | —     |
 | [0034][0034] | OAuth 公開 API porters.auth.\* の詳細設計（F-1）                 | 詳細設計 | accepted   | 0.3.0 |
-| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）        | プロセス | accepted   | —     |
+| [0035][0035] | 利用ドキュメントの構成（README と docs/guide の役割分担）        | プロセス | superseded | —     |
 | [0036][0036] | refresh 失効時は code_direct 自動再取得（0007/0012 amend）       | 詳細設計 | accepted   | —     |
 | [0037][0037] | commitlint CI をフィーチャー PR に限定（base=main を除外）       | プロセス | superseded | —     |
 | [0038][0038] | Read クエリ condition/order/keywords/itemstate（F-2）            | 詳細設計 | accepted   | 0.4.0 |
@@ -79,6 +79,12 @@
 | [0065][0065] | Dependabot 依存更新の判定と取り込みを自動化する                  | プロセス | superseded | —     |
 | [0066][0066] | dependabot PR の base 更新をやめ、検証を develop の CI に移す    | プロセス | superseded | —     |
 | [0067][0067] | Dependabot 自動化をやめ、スキルの対話実行に戻す                  | プロセス | accepted   | —     |
+| [0068][0068] | 公開 API リファレンスの作り方                                    | プロセス | accepted   | —     |
+| [0069][0069] | テナントの Field カタログで宣言を突き合わせ、宣言を生成する      | 詳細設計 | accepted   | —     |
+| [0070][0070] | 使い方ドキュメントの構成（説明サイトの元になる原稿）             | プロセス | accepted   | —     |
+| [0071][0071] | 利用者向けドキュメントを `docs/usage/` の 1 箇所にまとめる       | プロセス | accepted   | —     |
+| [0072][0072] | 入門を「契約済みの読者」から始める（`start/` の並べ直し）        | プロセス | accepted   | —     |
+| [0073][0073] | スロットルの共有単位（client ごとをやめ、注入できるようにする）  | 詳細設計 | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -149,3 +155,9 @@
 [0065]: 0065-dependabot-update-automation.md
 [0066]: 0066-drop-update-branch.md
 [0067]: 0067-retire-dependabot-automation.md
+[0068]: 0068-api-reference-tooling.md
+[0069]: 0069-tenant-field-catalog-tooling.md
+[0070]: 0070-usage-documentation-architecture.md
+[0071]: 0071-usage-docs-single-root.md
+[0072]: 0072-start-contract-first.md
+[0073]: 0073-throttle-sharing.md

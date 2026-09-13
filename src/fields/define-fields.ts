@@ -16,20 +16,23 @@ export type FieldDef<D extends DataType> = { readonly dataType: D };
 // so it is not offered. Image / Link are here (ADR-0064 案5a) and **only** here: no standard
 // field carries either type, so declaring one is the only way a tenant's image / link field
 // can be read or written at all.
-export type CustomDataType =
-  | "Number"
-  | "SinglelineText"
-  | "MultilineText"
-  | "Mail"
-  | "Telephone"
-  | "URL"
-  | "Date"
-  | "DateTime"
-  | "Age"
-  | "Option"
-  | "User"
-  | "Image"
-  | "Link";
+export const CUSTOM_DATA_TYPES = [
+  "Number",
+  "SinglelineText",
+  "MultilineText",
+  "Mail",
+  "Telephone",
+  "URL",
+  "Date",
+  "DateTime",
+  "Age",
+  "Option",
+  "User",
+  "Image",
+  "Link",
+] as const satisfies readonly DataType[];
+
+export type CustomDataType = (typeof CUSTOM_DATA_TYPES)[number];
 
 /** Builder passed to each resource declaration: one method per declarable Data Type. */
 export type FieldBuilder = {

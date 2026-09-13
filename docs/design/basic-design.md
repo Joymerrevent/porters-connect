@@ -121,10 +121,10 @@ accessor 呼び出し
 
 ## 8. 横断方針
 
-- **良き API 市民／フェイルセーフ**：自前スロットリング（1 分 Read2000/Write500）、retryable のみ指数バックオフ、リクエスト ~15000 字ガード。
+- **上限内に自制する／フェイルセーフ**：自前スロットリング（1 分 Read2000/Write500）、retryable のみ指数バックオフ、リクエスト ~15000 字ガード。
   - ※ 数値は理解のための目安。**正典は [docs/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
-- **秘匿情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
+- **機密情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
   - **アクセスポイント**：URL 組立は 1 関数（`http/access-point.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
     抑止は専用 env のみ（許可と沈黙は別・[ADR-0047][a47]）。
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
@@ -154,7 +154,7 @@ accessor 呼び出し
 
 [prd]: requirements.md
 [adr]: ../adr/README.md
-[ref]: ../reference/README.md
+[ref]: ../usage/reference/README.md
 [a2]: ../adr/0002-ground-design-in-live-api-docs.md
 [a3]: ../adr/0003-add-attachment-to-mvp.md
 [a4]: ../adr/0004-field-type-model.md

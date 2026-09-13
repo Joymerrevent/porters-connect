@@ -85,8 +85,8 @@ PORTERS 固有の制約（[gotchas][gotchas] / [resource-api][rapi] / [headers][
 - 関連: [[0005-public-api-shape]]。
 
 [prd]: ../design/requirements.md
-[rapi]: ../reference/resource-api/README.md
-[headers]: ../reference/authentication-api/headers.md
-[gotchas]: ../reference/gotchas.md
+[rapi]: ../usage/reference/resource-api/README.md
+[headers]: ../usage/reference/authentication-api/headers.md
+[gotchas]: ../usage/reference/gotchas.md
 [0005]: 0005-public-api-shape.md
 [0010]: 0010-retry-throttle.md

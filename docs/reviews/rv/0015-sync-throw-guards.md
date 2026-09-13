@@ -54,5 +54,5 @@ Attachment（`search` / `create` / `update`）・マスタ Read 4 種の `search
 [adr24]: ../../adr/0024-mock-transport.md
 [adr43]: ../../adr/0043-local-fake-server.md
 [adr46]: ../../adr/0046-guard-error-contract.md
-[guide]: ../../guide/error-handling.md
+[guide]: ../../usage/howto/handle-failures.md
 [run809]: ../2026-08-09-01.md

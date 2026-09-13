@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { checkTarget, parseIndexTable } from "./check-doc-index.mjs";
+import {
+  checkHowtoExits,
+  checkTarget,
+  parseIndexTable,
+} from "./check-doc-index.mjs";
 
 // 実ファイルを読まずに検査するため、対象定義とファイル内容を注入する。
 // dir/pattern はディレクトリ走査に使うので、テストでは実在する docs/adr を借りて
@@ -222,5 +226,90 @@ describe("checkTarget — 対象が存在しないとき", () => {
     });
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("索引が読めない");
+  });
+});
+
+// 検査⑤（[ADR-0070] 追記）: 目的別の各ページに出口があるか。
+// 黙って通る検査がいちばん質の悪い壊れ方なので、**落ちるべきケースで落ちる**ことを確かめる。
+describe("checkHowtoExits", () => {
+  const page = (related) =>
+    `# 何かの手順\n\n本文。\n${related}\n[index]: ../index.md\n[other]: other.md\n`;
+
+  const WITH_EXIT = page(
+    "\n## 関連\n\n- 手順: [ほか][other]\n- ほかの目的から探す: [目次][index]\n\n",
+  );
+  const NO_EXIT = page("\n## 関連\n\n- 手順: [ほか][other]\n\n");
+  const NO_SECTION = page("\n## 対象外\n\n- なにか\n\n");
+
+  const reader = (byFile) => (path) => {
+    const name = path.split("/").pop();
+    const body = byFile[name];
+    if (body === undefined) throw new Error(`想定外の読み取り: ${path}`);
+    return body;
+  };
+
+  it("関連があり、そこから目次へ戻れれば問題なし", () => {
+    const problems = checkHowtoExits(
+      reader({ "a.md": WITH_EXIT, "b.md": WITH_EXIT }),
+      () => ["a.md", "b.md"],
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it("関連の節が無いページを検出する", () => {
+    const problems = checkHowtoExits(
+      reader({ "a.md": WITH_EXIT, "b.md": NO_SECTION }),
+      () => ["a.md", "b.md"],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("b.md");
+    expect(problems[0]).toContain("出口が無い");
+  });
+
+  it("関連はあるが目次へ戻れないページを検出する", () => {
+    const problems = checkHowtoExits(reader({ "a.md": NO_EXIT }), () => [
+      "a.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("目次");
+  });
+
+  it("インラインリンクでも目次へ戻れれば通す", () => {
+    const inline = page(
+      "\n## 関連\n\n- ほかの目的から探す: [目次](../index.md)\n\n",
+    );
+    expect(checkHowtoExits(reader({ "a.md": inline }), () => ["a.md"])).toEqual(
+      [],
+    );
+  });
+
+  it("md 以外は対象外", () => {
+    const problems = checkHowtoExits(reader({ "a.md": WITH_EXIT }), () => [
+      "a.md",
+      "notes.txt",
+    ]);
+    expect(problems).toEqual([]);
+  });
+
+  // ここから番人（ADR-0071 論点2）。移設して定数を直し忘れると、検査は対象ゼロで
+  // 黙って緑になる。「1 件も拾えない」を落とすことで、それを止める。
+  it("階層が見つからなければ落ちる（対象ゼロで緑にしない）", () => {
+    const problems = checkHowtoExits(
+      () => "",
+      () => {
+        throw new Error("ENOENT");
+      },
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("検査対象が見つかりません");
+  });
+
+  it("md が 1 件も無ければ落ちる", () => {
+    const problems = checkHowtoExits(
+      () => "",
+      () => [],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(".md がありません");
   });
 });

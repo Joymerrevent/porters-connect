@@ -53,7 +53,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/recruiter.md「新規必須」列): P_Owner /
+// Required on create per docs/usage/reference (resources/recruiter.md「新規必須」列): P_Owner /
 // P_Client（P_Id は System[Id]＝lib 供給のため除外）。
 const REQUIRED_ON_CREATE = [
   "P_Owner",

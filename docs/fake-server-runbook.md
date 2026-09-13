@@ -532,8 +532,8 @@ new PortersClient({
 [adr47]: adr/0047-access-point-scheme.md
 [adr22]: adr/0022-master-read-query-surface.md
 [plan]: design/fake-server-plan.md
-[ref]: reference/README.md
-[codes]: reference/resource-api/result-codes.md
-[autherr]: reference/authentication-api/errors.md
-[writefmt]: reference/resource-api/write-format.md
+[ref]: usage/reference/README.md
+[codes]: usage/reference/resource-api/result-codes.md
+[autherr]: usage/reference/authentication-api/errors.md
+[writefmt]: usage/reference/resource-api/write-format.md
 [lv]: live-verification.md

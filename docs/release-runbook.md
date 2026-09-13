@@ -75,10 +75,19 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.12.1**（npm latest・`v0.12.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  7 files / 563.5 kB・2026-09-03）。0.2.0 以降この半自動フローで公開（**全 17 版**）。
-  changeset **2 枚**を消費した patch リリースで、`pnpm changeset:version` は問題なく動いた（復旧後 3 回目）。
-  ひとつ前の 0.12.0（2026-08-31・7 files / 553.4 kB）は changeset 7 枚を消費した全リソース網羅の版。
+- ✅ 最新公開: **0.14.0**（npm latest・`v0.14.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **7 files / 613.8 kB**・2026-09-09）。**累計 19 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 17 版**が
+  この半自動フロー）。changeset **1 枚**を消費した minor リリースで、`pnpm changeset:version` が
+  **正常終了することを実行して確認**した（changesets v3.0.1）。`Link` / `Image` の対応＝
+  Data Type 17/17（[ADR-0060][adr60] D3）の版。
+  - ひとつ前の **0.13.0**（2026-09-06・7 files / 569.5 kB）は User マスタの標準項目を 4→17 に揃えた版
+    （D2）。**この版は §5 の後追い記録が行われておらず**、本書の「最新公開」も roadmap の公開済み行も
+    0.12.x のままだった。0.14.0 の記録と併せて追いつかせた。
+  - **数え方の注記**: 以前ここに書いていた「0.2.0 以降この半自動フローで公開（全 17 版）」の 17 は、
+    実際には**0.1.x を含む当時の累計**（0.12.1 時点）だった。0.2.0 以降だけなら当時 15 版。
+    同じ取り違えを繰り返さないよう、上では**累計**と**フロー適用分**を分けて書いている。
+  - 0.12.1（2026-09-03・7 files / 563.5 kB）は changeset 2 枚を消費した patch、
+    0.12.0（2026-08-31・7 files / 553.4 kB）は changeset 7 枚を消費した全リソース網羅の版。
 - ✅ **back-merge は PR 経由に変更済み**（[ADR-0062][adr62] accepted・2026-09-03／[findings][findings] RV-33）。
   0.12.0 まで使っていた直 push（`git merge origin/main && git push`）は、`develop` の
   「Changes must be made through a pull request」「Required status check」を**bypass した**という
@@ -168,6 +177,7 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr29]: adr/0029-release-tag-automation.md
 [adr30]: adr/0030-backmerge-method.md
 [adr39]: adr/0039-commitlint-release-range.md
+[adr60]: adr/0060-full-resource-coverage-direction.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
 [cl]: ../CHANGELOG.md
 [findings]: reviews/findings.md

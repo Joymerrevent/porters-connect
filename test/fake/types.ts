@@ -7,6 +7,7 @@
 // HTTP server adapter is phase 5 of the plan).
 
 import type { Transport } from "../../src/http/types";
+import type { DataType } from "../../src/xml/decode";
 
 /**
  * A stored image (ADR-0064): the sub-elements a write carried, kept as they arrived so a read can
@@ -30,7 +31,7 @@ export type FakeRecord = Record<string, FakeValue>;
 /** A user in the fake's User master: expands `User`-typed fields, and is what `/v1/user` reads. */
 export type FakeUser = {
   P_Id: number;
-  /** `0` = standard user, `1` = system admin (docs/reference). Default `0`. */
+  /** `0` = standard user, `1` = system admin (docs/usage/reference). Default `0`. */
   P_Type?: string;
   P_Name?: string;
   P_Mail?: string;
@@ -45,7 +46,7 @@ export type FakeOptionNode = {
   /** Leaf alias as it appears in a value, e.g. `Option.P_Tokyo`. */
   alias: string;
   name?: string;
-  /** `0` = ordinary choice, `1`–`11` = a phase kind (docs/reference). Default `0`. */
+  /** `0` = ordinary choice, `1`–`11` = a phase kind (docs/usage/reference). Default `0`. */
   type?: number;
   children?: FakeOptionNode[];
 };
@@ -115,6 +116,17 @@ export type FakeTransportOptions = {
   optionTree?: FakeOptionNode[];
   /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */
   currentUserId?: number;
+  /**
+   * Tenant custom fields (`U_`/`A_`) Field Read should report, keyed by resource path then bare
+   * alias. Standard `P_` fields come from the library's own catalogs; these are the per-tenant ones
+   * a real PORTERS tenant would add, and the only way to exercise `readCustomCatalog` / `verifyFields`
+   * / `generateFieldDecls` against a real Field Read response (ADR-0069).
+   *
+   * @example { candidate: { U_score: "Number" } }
+   */
+  customFields?: Record<string, Record<string, DataType>>;
+  /** Display names for those custom fields (`Field.P_Name`), keyed the same way. Optional. */
+  customFieldNames?: Record<string, Record<string, string>>;
   /** Request caps; `false` disables them. Defaults to the reference limits. */
   rateLimit?: FakeRateLimit | false;
 };

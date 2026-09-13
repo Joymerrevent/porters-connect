@@ -85,7 +85,7 @@ describe("createPhaseAccessor — decode catalog", () => {
   it("carries no alias prefix and names its primary key `Id`", () => {
     expect(PHASE_DESCRIPTOR.prefix).toBe("");
     expect(PHASE_DESCRIPTOR.idAlias).toBe("Id");
-    // Phase has no custom fields and no Deleted field (docs/reference resources/phase.md).
+    // Phase has no custom fields and no Deleted field (docs/usage/reference resources/phase.md).
     expect("P_Deleted" in PHASE_DESCRIPTOR.fields).toBe(false);
   });
 });

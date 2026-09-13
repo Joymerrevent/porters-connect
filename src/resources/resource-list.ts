@@ -1,5 +1,5 @@
 // PORTERS' Resource List: the numeric id each resource is known by when another resource points
-// at it (docs/reference resources-list.md — Candidate 1, Job 3, Client 5, …). Phase's Read takes
+// at it (docs/usage/reference resources-list.md — Candidate 1, Job 3, Client 5, …). Phase's Read takes
 // one as its required `resource=` parameter, and Activity stores one in `P_Resource`.
 //
 // The library exposes **names**, not those numbers (ADR-0061 案5b): the values are non-contiguous
@@ -23,7 +23,7 @@ import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
 import { SALES_DESCRIPTOR } from "./sales";
 
-/** Resource name -> the numeric id PORTERS uses for it (docs/reference resources-list.md). */
+/** Resource name -> the numeric id PORTERS uses for it (docs/usage/reference resources-list.md). */
 export const RESOURCE_VALUES = {
   [CANDIDATE_DESCRIPTOR.path]: 1,
   [JOB_DESCRIPTOR.path]: 3,

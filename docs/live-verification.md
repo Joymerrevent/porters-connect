@@ -35,6 +35,7 @@ grep -rn "VERIFY(live)" src test
 | LV-20 | Image のサブタグを field に括弧で並べる記法         | 未確認 |
 | LV-21 | Link を condition / order に使えるか                | 未確認 |
 | LV-22 | Image の値を消す書き方                              | 未確認 |
+| LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
 
 ---
 
@@ -158,7 +159,13 @@ grep -rn "VERIFY(live)" src test
   Value が未公開の `System[DateTime]` / `System[Reference]` は **11（System）** を返す
 - **不確実な理由**: reference の Field 項目表は Alias の表記例を持たず、System 系サブタイプの Field Type Value も
   公開されていない（Option は 3 サブタイプが同じ Data Type に畳まれる）
-- **コード箇所**: `test/fake/master-read.ts`（`FIELD_TYPE_VALUE` / `readField`）
+- **影響範囲が広がった**（2026-09-10・[ADR-0069][a69] 実装）: 以前はフェイクの都合だけだったが、
+  いま `P_Alias` の表記は **利用者に見せる生成物（`generateFieldDecls`）と突合結果（`verifyFields`）の
+  正しさ**に効く。**外れても壊れない設計にはしてある**（接頭辞つき・bare の両対応）が、
+  確認の価値は上がった。System 系の Value は**宣言できない型**なので、外れても生成・突合は変わらない
+- **コード箇所**: `src/resources/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
+  `src/fields/tenant-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
+  `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
 - **状態**: 未確認
 - **確認結果**: —
@@ -340,6 +347,21 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **確認結果**: —
 - **関連**: テキスト項目は `""` で消える（実装済み・確定）
 
+## LV-23 レート上限は何単位か（App / 契約 / ホスト）
+
+- **現在の対応 / 仮定**: 1 分あたりの自制バケットを**ホスト単位**で共有している（[ADR-0073][adr73]）。
+  同じホストを向くクライアントは、いくつ作っても 1 つの上限を分け合う
+- **不確実な理由**: reference は「1 分あたり Read 2000 / Write 500・超過すると強制切断され得る」と
+  書くだけで、**それが App ごとなのか・契約ごとなのか・ホストごとなのか**を書いていない。
+  ホストは契約ごとに払い出されるので「ホスト ≒ 契約」と仮定している
+- **コード箇所**: `src/http/throttle.ts`（`createThrottleRegistry` / `sharedThrottleFor`）
+- **確認方法**: 同じホストに対して 2 つの App ID で並行に叩き、切断が**合算で**起きるか、
+  App ごとに独立して起きるかを見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 仮定が外れた場合の倒れ方は**安全側**（広く共有＝叩きすぎない）。App 単位だと判明したら、
+  鍵にホスト＋App ID を採る改定になる。超過側へは倒れない
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -352,12 +374,13 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - XML 内部: [ADR-0011][a11]（接頭辞・ラッパーの揺れは実/サンプル XML を fixture 化して確定する方針）
 
 [findings]: reviews/findings.md
-[fdt]: reference/resource-api/field-data-types.md
+[fdt]: usage/reference/resource-api/field-data-types.md
 [a2]: adr/0002-ground-design-in-live-api-docs.md
 [a8]: adr/0008-multitenancy-partition.md
 [a40]: adr/0040-multitenancy-surface-impl.md
 [a11]: adr/0011-xml-parse-serialize.md
 [a22]: adr/0022-master-read-query-surface.md
+[a69]: adr/0069-tenant-field-catalog-tooling.md
 [a38]: adr/0038-read-query-surface-impl.md
 [a56]: adr/0056-deleted-flag-typing.md
 [a57]: adr/0057-itemstate-existing-explicit.md
@@ -368,3 +391,4 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
 [lv10]: #lv-10-systemreference-read-の入れ子タグ
 [a64]: adr/0064-link-image-types.md
+[adr73]: adr/0073-throttle-sharing.md

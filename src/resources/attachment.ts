@@ -18,7 +18,7 @@ import {
 } from "./resource";
 
 // A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
-// (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/reference.
+// (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/usage/reference.
 const MAX_CONTENT_CHARS = 14_000_000;
 
 // Attachment has no ResourceDescriptor (bespoke accessor — ADR-0018), so its wire name lives
@@ -144,7 +144,7 @@ const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
 
 // Bare `<Tag>value</Tag>` (Attachment has no alias prefix). encodeField escapes the value.
 const tag = (name: string, value: string | number): string =>
-  `<${name}>${encodeField("SinglelineText", String(value))}</${name}>`;
+  `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 const guardContent = (content: string | undefined): void => {

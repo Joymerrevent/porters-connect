@@ -50,7 +50,7 @@ const FIELDS = {
   UpdatedBy: "User",
   Owner: "User",
   OwnerDepartment: "System[Department]",
-  // Only present on a Phase attached to Process / Sales (docs/reference resources/phase.md).
+  // Only present on a Phase attached to Process / Sales (docs/usage/reference resources/phase.md).
   // Reading them elsewhere simply yields nothing, like any unset field.
   JobOwner: "User",
   JobOwnerDepartment: "System[Department]",
@@ -58,7 +58,7 @@ const FIELDS = {
   ResumeOwnerDepartment: "System[Department]",
 } as const satisfies FieldCatalog;
 
-// Required on create per docs/reference (resources/phase.md「新規必須」列): Id / Resource /
+// Required on create per docs/usage/reference (resources/phase.md「新規必須」列): Id / Resource /
 // ResourceId。`Id` はライブラリが供給し、`Resource` は `of(name)` が埋めるので、
 // 呼び出し側に残るのは `ResourceId` だけ。
 const REQUIRED_ON_CREATE = [

@@ -84,5 +84,5 @@ PRD（[requirements][prd] R-13/R-16）は「**公開サーフェスに any を�
 - 関連: [[0002-ground-design-in-live-api-docs]]。
 
 [prd]: ../design/requirements.md
-[fdt]: ../reference/resource-api/field-data-types.md
-[res]: ../reference/resource-api/resources-list.md
+[fdt]: ../usage/reference/resource-api/field-data-types.md
+[res]: ../usage/reference/resource-api/resources-list.md

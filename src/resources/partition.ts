@@ -24,7 +24,7 @@ const FIELDS = {
 /**
  * Partition's names + catalog. Exported for in-repo dev tooling — the fake server (ADR-0043)
  * builds Partition Read responses from this very catalog, so the two cannot drift. The alias
- * prefix is the resource name itself (`Partition.P_Id` — docs/reference). Not re-exported from
+ * prefix is the resource name itself (`Partition.P_Id` — docs/usage/reference). Not re-exported from
  * `src/index.ts`, so it stays out of the published API.
  */
 export const PARTITION_DESCRIPTOR = {

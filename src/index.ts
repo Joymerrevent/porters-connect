@@ -30,6 +30,11 @@ export type {
   RevokeUrlOptions,
 } from "./auth";
 export type { Transport, TransportRequest, TransportResponse } from "./http";
+// Rate-limit self-restraint (ADR-0073). The default is one bucket **per host**, shared across
+// every client aimed at it — so a client per tenant no longer means a limit per tenant (RV-43).
+// Inject your own `Throttle` to opt out, run different limits, or coordinate across processes.
+export { createThrottle } from "./http";
+export type { Throttle, ThrottleOptions } from "./http";
 // Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
 export { createMockTransport } from "./http";
 export type { MockHandler, MockReply, MockTransportOptions } from "./http";
@@ -52,6 +57,34 @@ export type {
   CustomFieldResource,
   CustomFor,
   DeclaredCatalogs,
+} from "./fields";
+
+// Checking a declaration against the tenant it will run against, and writing one from it
+// (ADR-0069). Opt-in and dev-time: `defineFields` alone never calls PORTERS, and none of these run
+// unless you call them. All three need the `field_r` scope.
+//
+// `verifyFields` reports rather than throws — a tenant administrator renaming one field should not
+// stop an application from starting. `assertFieldsMatch` is the one line that makes it fatal.
+export {
+  assertFieldsMatch,
+  generateFieldDecls,
+  readCustomCatalog,
+  verifyFields,
+} from "./fields";
+export type {
+  FieldCatalogSource,
+  FieldTypeMismatch,
+  FieldVerification,
+  GenerateFieldDeclsOptions,
+  MissingField,
+  ReadCustomCatalogOptions,
+  TenantCustomCatalog,
+  UndeclarableField,
+  UndeclarableTenantField,
+  UndeclarableReason,
+  UndeclaredField,
+  UnverifiableResource,
+  VerifyFieldsOptions,
 } from "./fields";
 
 // Typed Read query surface shared by data resources (ADR-0038 / F-2): condition / order /

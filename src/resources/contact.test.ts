@@ -89,7 +89,7 @@ describe("createContactResource — decode catalog", () => {
 
   it("carries the same field list as Recruiter, under its own prefix", () => {
     // PORTERS gives the two roles identical fields. Keeping that fact in a test means a future
-    // divergence in docs/reference surfaces here instead of silently in one catalog.
+    // divergence in docs/usage/reference surfaces here instead of silently in one catalog.
     expect(Object.keys(CONTACT_DESCRIPTOR.fields)).toEqual(
       Object.keys(RECRUITER_DESCRIPTOR.fields),
     );

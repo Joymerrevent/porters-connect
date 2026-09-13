@@ -258,7 +258,7 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
 [rv1]: ../reviews/rv/0001-read-field-default-missing.md
 [rv8]: ../reviews/rv/0008-resources-fields-dependency.md
 [run816]: ../reviews/2026-08-16-01.md
-[rq]: ../guide/read-query.md
+[rq]: ../usage/howto/search-records.md
 [lv]: ../live-verification.md
 [lv16]: ../live-verification.md#lv-16-candidate-参照を展開するときの-alias-接頭辞
 [prd]: ../design/requirements.md

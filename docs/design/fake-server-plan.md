@@ -229,5 +229,5 @@
 [findings]: ../reviews/findings.md
 [adr22]: ../adr/0022-master-read-query-surface.md
 [rm]: ../roadmap.md
-[ref]: ../reference/README.md
+[ref]: ../usage/reference/README.md
 [lv]: ../live-verification.md

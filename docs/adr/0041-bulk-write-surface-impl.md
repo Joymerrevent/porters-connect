@@ -147,8 +147,8 @@ PORTERS の Write は **1 リクエストに `<Item>` を複数並べて一括�
 - 不確実性 → [live-verification][lv]: 部分失敗時のロールバック有無（非アトミックの実挙動）。
 - 後続/対象外: 実装は別 PR（ADR 先行 → 実装）。混在 `writeMany`・Attachment 一括・件数並列化は将来 follow-up。
 
-[wf]: ../reference/resource-api/write-format.md
-[ra]: ../reference/resource-api/README.md
+[wf]: ../usage/reference/resource-api/write-format.md
+[ra]: ../usage/reference/resource-api/README.md
 [lv]: ../live-verification.md
 [adr]: README.md
 [a10]: 0010-retry-throttle.md

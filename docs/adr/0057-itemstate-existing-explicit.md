@@ -191,9 +191,9 @@ if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
 [adr16]: 0016-field-type-granularity.md
 [adr38]: 0038-read-query-surface-impl.md
 [adr56]: 0056-deleted-flag-typing.md
-[codes]: ../reference/resource-api/result-codes.md
+[codes]: ../usage/reference/resource-api/result-codes.md
 [lv]: ../live-verification.md
-[rapi]: ../reference/resource-api/README.md
-[rq]: ../guide/read-query.md
+[rapi]: ../usage/reference/resource-api/README.md
+[rq]: ../usage/howto/search-records.md
 [rv1]: ../reviews/rv/0001-read-field-default-missing.md
 [rv26]: ../reviews/rv/0026-deleted-flag-unsupported.md

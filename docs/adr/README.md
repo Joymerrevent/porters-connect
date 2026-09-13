@@ -75,6 +75,17 @@
   トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／マスタ Read は
   すべて起票済み。各々の状態は [索引][index] を参照）。
 
+### ADR を起こさずに決着した論点（記録）
+
+- **値レベルの実行時検証**（ロードマップの案D の残り 1 つ）— **ADR 不要と判断**（2026-09-10）。
+  一度ここに未起票論点として挙げたが、精査すると**方針は既に accepted で決まっていた**
+  （[ADR-0006][0006]「宣言型と実データの食い違いも `validation` で surface・silent な誤変換は
+  しない」／[ADR-0011][0011] が同旨）。残った 1 点（書き側の検証範囲）も**現状維持**の決定に
+  なったため、新しい決定は 1 つも生じない。実装は [RV-36][rv36] の処置として行う
+  （**事前**に突き合わせる側は [0069][0069] が担当＝実行時／事前の両輪）。
+  **教訓**: 「未起票の論点」に見えるものが、既存 ADR の**未実装**であることがある。
+  起票する前に既存 ADR を検索する。
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
@@ -83,6 +94,9 @@
 [index]: index.md
 [prd]: ../design/requirements.md
 [lv-doc]: ../live-verification.md
+[rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[0011]: 0011-xml-parse-serialize.md
+[0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0003]: 0003-add-attachment-to-mvp.md

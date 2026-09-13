@@ -121,4 +121,4 @@ rejection として届く。これを `searchAll` の**呼び出し時点**へ�
 
 [adr46]: ../../adr/0046-guard-error-contract.md
 [adr61]: ../../adr/0061-phase-resource-surface.md
-[read-query]: ../../guide/read-query.md
+[read-query]: ../../usage/howto/search-records.md

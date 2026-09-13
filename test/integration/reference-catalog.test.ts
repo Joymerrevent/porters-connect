@@ -1,4 +1,4 @@
-// reference（docs/reference/.../resources/*.md）↔ 静的カタログ（src/resources/*.ts）の突合。
+// reference（docs/usage/reference/.../resources/*.md）↔ 静的カタログ（src/resources/*.ts）の突合。
 //
 // なぜ要るか（RV-29）: フェイクサーバーは src の descriptor を直接使うので「実装 ↔ フェイク」は
 // 構造的にズレないが、「reference ↔ カタログ」は誰も見ていなかった。その結果 RV-23（Candidate が
@@ -64,7 +64,7 @@ const DATA_TYPE_OF: Record<string, DataType | null> = {
 };
 
 // カタログに載せない Field Type。
-// - `Reference`（Field Type 16）は「**当該項目自体にデータを持つことはありません**」（docs/reference の
+// - `Reference`（Field Type 16）は「**当該項目自体にデータを持つことはありません**」（docs/usage/reference の
 //   型一覧）＝値が無いので読む対象にならない。除外の理由は「値を持たない」ことであって「型が無い」ことではない。
 // - `ー`（＝ `P_Deleted`）は**除外しない**。型は無いが**値は持つ**（0/1）ので、`null` として
 //   カタログに載せる（ADR-0056）。この 2 つを一緒くたにしていたのが RV-26 の原因。
@@ -128,7 +128,7 @@ describe.each(TARGETS)(
   "reference ↔ カタログ: $descriptor.name",
   ({ descriptor, doc }) => {
     const fields = readReferenceFields(
-      `docs/reference/resource-api/resources/${doc}.md`,
+      `docs/usage/reference/resource-api/resources/${doc}.md`,
       descriptor.prefix,
     );
     const valued = fields.filter((f) => !NOT_IN_CATALOG.has(f.fieldType));
@@ -180,7 +180,7 @@ describe.each(TARGETS)(
 describe.each(TYPELESS_MASTERS)(
   "reference ↔ カタログ（型の列なし）: $descriptor.name",
   ({ descriptor, doc }) => {
-    const path = `docs/reference/resource-api/resources/${doc}.md`;
+    const path = `docs/usage/reference/resource-api/resources/${doc}.md`;
     const fields = readReferenceFields(path, descriptor.prefix);
     const catalog = descriptor.fields as Record<string, DataType | null>;
 
@@ -216,7 +216,7 @@ describe("接頭辞を持たない行の扱い（Option の Items）", () => {
     // カタログの項目として持たないのが正しい。ここで固定するのは「見落として落ちたのではなく、
     // 理由があって載せていない」ことと、**他に接頭辞なしの行が増えたら気づく**ようにするため。
     const rows = readFileSync(
-      "docs/reference/resource-api/resources/option.md",
+      "docs/usage/reference/resource-api/resources/option.md",
       "utf8",
     )
       .split("\n")
@@ -236,7 +236,7 @@ describe("突合の前提", () => {
     const unknown = new Set<string>();
     for (const { descriptor, doc } of TARGETS) {
       for (const f of readReferenceFields(
-        `docs/reference/resource-api/resources/${doc}.md`,
+        `docs/usage/reference/resource-api/resources/${doc}.md`,
         descriptor.prefix,
       )) {
         if (
@@ -283,7 +283,7 @@ const LIBRARY_DATA_TYPES: Record<DataType, true> = {
 /** field-data-types.md の「Field Type 一覧」表から Data Type 列を拾う（後続の表は読まない）。 */
 const readReferenceDataTypes = (): string[] => {
   const lines = readFileSync(
-    "docs/reference/resource-api/field-data-types.md",
+    "docs/usage/reference/resource-api/field-data-types.md",
     "utf8",
   ).split("\n");
   const start = lines.findIndex((l) => l.startsWith("## Field Type 一覧"));

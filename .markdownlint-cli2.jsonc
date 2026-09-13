@@ -35,6 +35,10 @@
     ".claude",
     "CHANGELOG.md",
     // changesets の生成 README と contributor が書く changeset(.md) は参照スタイル強制の対象外
-    ".changeset"
+    ".changeset",
+    // TypeDoc の生成物（ADR-0068）。参照スタイル（MD054）は**人が書く文書**の規約で、
+    // ジェネレータに守らせるものではない。ここを守るのは lint ではなく
+    // `pnpm check:api`（再生成して差分が出たら落とす）＝生成物には生成物の検査を当てる。
+    "docs/usage/api"
   ]
 }

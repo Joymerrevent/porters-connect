@@ -29,7 +29,7 @@ describe("data resources round-trip", () => {
       P_Owner: 5,
       P_Client: 20001,
       P_Recruiter: 30001,
-      // Job has no `P_Name` — its title field is `P_Position` (docs/reference), and the catalog
+      // Job has no `P_Name` — its title field is `P_Position` (docs/usage/reference), and the catalog
       // is what the types enforce.
       P_Position: "TypeScript エンジニア",
     });
@@ -170,7 +170,7 @@ describe("data resources round-trip", () => {
     const { porters } = setup();
 
     // PORTERS validates the dependency chain server-side; the library does not pre-judge it
-    // (docs/guide/write-constraints.md). A minimal Sales is accepted here.
+    // (docs/usage/concepts/limits.md). A minimal Sales is accepted here.
     const id = await porters.tenant(1).sales.create({
       P_Owner: 5,
       P_SalesAmount: 1200000,

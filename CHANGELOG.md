@@ -5,6 +5,81 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-13
+
+**宣言と実物のズレを黙って飲み込まなくなった版**です。**破壊的変更**（読み取りの型不一致が
+`null` ではなくエラーになる）と、**既定の挙動変更**（スロットルの共有単位）を含みます。
+
+### Added
+
+- **テナントの項目と宣言を突き合わせる 4 つの API**（[ADR-0069][adr69]）。いずれも opt-in で、
+  呼ばなければ既存の挙動は変わりません（`field_r` スコープが必要です）。
+
+  ```ts
+  const report = await verifyFields(porters.tenant(1), myFields);
+  if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていません");
+  ```
+
+  - `readCustomCatalog(tenant, resource)` — カスタム項目を「alias → Data Type」で返します
+  - `verifyFields(tenant, fields)` — 宣言と実物を 5 区分で突き合わせます（**投げません**）
+  - `assertFieldsMatch(report)` — 落としたい運用のための 1 行
+  - `generateFieldDecls(tenant, resources)` — `defineFields` の呼び出しをソース文字列で生成します
+
+- **Field Read で Process の項目カタログを読めます**（RV-37）。`t.field.search({ resource: "process" })`
+  がこれまで型エラーで書けなかったのは、同じ事実の対応表が 2 つあり片方から抜けていたためで、
+  判断ではなく書き落としでした。`ResourceType` に `"process"` が増える**拡張**です。
+
+- **スロットルを差し替えられるようになりました**（[ADR-0073][adr73]）。`createThrottle` ／
+  `Throttle` ／ `ThrottleOptions` ／ `PortersClientOptions.throttle` を公開しています。
+
+  ```ts
+  // バッチには控えめな枠を割り当てる
+  const porters = new PortersClient({
+    host,
+    appId,
+    appSecret,
+    throttle: createThrottle({ readPerMin: 500 }),
+  });
+  ```
+
+  `Throttle` は `take(write: boolean): Promise<void>` の 1 メソッドなので、Redis などに載せれば
+  **プロセスを跨いだ協調**も書けます。ライブラリはそこまでやりません（月次の累積管理と同じ線引き）。
+
+- **公開 API の全記号のリファレンス**を `docs/usage/api/` に用意しました（[ADR-0068][adr68]）。
+  JSDoc から生成した 179 ページで、生成漏れは CI が落とします。パッケージの中身は変わりません。
+
+### Changed
+
+- **（破壊的）宣言型と実データの形が食い違うと、`null` ではなくエラーになります**（RV-36）。
+  実物が Option の項目を `f.singlelineText()` と宣言していた場合、これまでは読み取りが黙って
+  `null` を返し、「その項目は空だった」と区別が付きませんでした。いまは
+  `PortersResourceError`（`category: "validation"`）で**項目名つきに**失敗します。
+
+  判定は**形の食い違いだけ**です（スカラが来るべき所に入れ子、またはその逆）。それより細かい違いは
+  許容して `null` のままにしてあります — 弾くと偽の警報になるためです。
+  宣言が正しいかを**事前に**確かめたいなら、上記の `verifyFields` を使ってください。
+
+- **（挙動変更）スロットルがクライアントごとではなく、ホストごとの共有になりました**
+  （[ADR-0073][adr73]・RV-43）。1 分あたりの上限を自制するバケットはこれまで `PortersClient` ごとに
+  作られており、**ガイドが勧めるとおりテナント別にクライアントを立てると、その数だけ上限が並んで**
+  いました。PORTERS から見えるのは合計なので、50 テナントなら上限の 50 倍まで出せた計算です。
+
+  同じホストを向くクライアントは、同じバケットを通るようになりました。**以前より待つことがあります**
+  が、それが本来の上限です。共有から降りたいときは上記の `throttle` を渡してください。
+  ローカルのフェイクサーバーは別ホストなので、本番向けの枠を食いません。
+
+- **日時の変換失敗が `PortersError` の系統になりました**（RV-36）。以前は素の `RangeError` が飛び、
+  ガイドが勧める `instanceof PortersError` の分岐から漏れていました。読み（応答が引き金）は
+  `PortersResourceError`、書き・`condition`（渡した値が引き金）は `PortersConfigError` で、
+  `category` はどちらも `validation` です。
+
+### 移行
+
+- **型不一致でエラーが出るようになった場合、宣言かテナントのどちらかが実際に間違っています。**
+  `verifyFields` を起動時に 1 回呼べば、どの項目がどうズレているかが分かります。
+- **スロットル**は設定変更不要です。同じホストへ複数クライアントを立てていた場合のみ、
+  スループットが上限内に収まります（それが正しい状態です）。
+
 ## [0.14.0] - 2026-09-09
 
 **PORTERS の Data Type 17 種すべてを型で表せるようになった版**です（[ADR-0060][adr60] の完了条件 D3）。
@@ -538,7 +613,7 @@
   - `exchangeAuthorizationCode(code)` — redirect の `?code=` をトークンに交換し内部保存（成功時 `void`・失敗時 throw）。
   - `clearTokens()` — ローカルの cache ＋ トークンストアを破棄。
   - `ensureAuthenticated()` / `getToken()` — トークンのウォームアップ／取得（Refresh Token は返さない）。カスタム auth ストラテジでも動作。
-  - カスタムストラテジ下では credential 依存メソッドが `PortersConfigError`。新規 export 型 `AuthApi` / `AuthorizationUrlOptions` / `RevokeUrlOptions`。利用手順は [docs/guide/oauth.md][oauth-guide]。
+  - カスタムストラテジ下では credential 依存メソッドが `PortersConfigError`。新規 export 型 `AuthApi` / `AuthorizationUrlOptions` / `RevokeUrlOptions`。利用手順は [docs/howto/authenticate.md][oauth-guide]。
 
 ### Fixed
 
@@ -598,10 +673,10 @@
 - **日時**: ISO 8601（UTC）⇄ PORTERS 形式の正規化（業務タイムゾーン変換はしない）。
 - **動的カスタム項目**: `defineFields` でテナント固有の `U_` / `A_` を宣言し、型安全に read / write（ADR-0023）。
 - **評価用サンドボックス**: 公開モック `createMockTransport` で契約なし・オフライン動作（ADR-0024）。
-- **エラー対処ガイド**: [docs/guide/error-handling.md][guide]（症状別早見表＋2 系統のコード対応表）。
+- **エラー対処ガイド**: [docs/howto/handle-failures.md][guide]（症状別早見表＋2 系統のコード対応表）。
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
-[guide]: docs/guide/error-handling.md
+[guide]: docs/usage/howto/handle-failures.md
 [adr44]: docs/adr/0044-http-status-handling.md
 [adr45]: docs/adr/0045-write-response-root-code.md
 [adr46]: docs/adr/0046-guard-error-contract.md
@@ -610,12 +685,12 @@
 [adr50]: docs/adr/0050-auth-http-status-handling.md
 [adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
-[oauth-guide]: docs/guide/oauth.md
+[oauth-guide]: docs/usage/howto/authenticate.md
 [adr19]: docs/adr/0019-static-resource-types.md
 [adr20]: docs/adr/0020-read-field-default.md
 [adr35]: docs/adr/0035-usage-documentation-structure.md
-[custom-fields-guide]: docs/guide/custom-fields.md
-[read-query-guide]: docs/guide/read-query.md
+[custom-fields-guide]: docs/usage/howto/custom-fields.md
+[read-query-guide]: docs/usage/howto/search-records.md
 [adr55]: docs/adr/0055-partition-binding-guard.md
 [adr56]: docs/adr/0056-deleted-flag-typing.md
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
@@ -627,11 +702,15 @@
 [adr63]: docs/adr/0063-idempotency-guard-scope.md
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
 [rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
-[write-constraints]: docs/guide/write-constraints.md
+[write-constraints]: docs/usage/concepts/limits.md
+[adr68]: docs/adr/0068-api-reference-tooling.md
+[adr69]: docs/adr/0069-tenant-field-catalog-tooling.md
+[adr73]: docs/adr/0073-throttle-sharing.md
 [lv]: docs/live-verification.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
 [unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...HEAD
+[0.15.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.12.0...v0.12.1

@@ -103,14 +103,14 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
 
 - 出典: [findings][findings] RV-13（`file:line` つきの根拠）／[live-verification][lv] LV-9（実機で確定すべき点）。
 - 影響範囲（accept 後の実装 PR）: `src/http/requester.ts`（status 分岐）・`src/errors/classify.ts`（status→category）・
-  `docs/guide/error-handling.md`（「非 PORTERS ボディの HTTP エラー」の項を追加）・
+  `docs/howto/handle-failures.md`（「非 PORTERS ボディの HTTP エラー」の項を追加）・
   `test/integration/constraints.test.ts`（RV-13 を固定しているテストの更新）。
 - 関連: [ADR-0006][adr6]（エラーモデル）／[ADR-0009][adr9]（Transport が status を運ぶ）／[ADR-0010][adr10]（リトライ方針）。
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
-[guide]: ../guide/error-handling.md
-[ref-resource]: ../reference/resource-api/README.md
+[guide]: ../usage/howto/handle-failures.md
+[ref-resource]: ../usage/reference/resource-api/README.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md
 [adr9]: 0009-http-transport.md

@@ -183,8 +183,245 @@ export const checkTarget = (target, read = readFileSync) => {
   return problems;
 };
 
-export const checkAll = (targets = TARGETS, read = readFileSync) =>
-  targets.flatMap((t) => checkTarget(t, read));
+/**
+ * 利用者向けドキュメントの目次（`docs/usage/index.md`）と実ファイルの 1:1 突合
+ * （[ADR-0070] 論点4 の検査①）。
+ *
+ * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
+ * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
+ *
+ * 対象は `docs/usage/{start,concepts,howto}` の 3 階層だけ。`reference/` と `api/` は
+ * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
+ */
+const USER_DOC_DIRS = ["start", "concepts", "howto"];
+
+export const checkUserDocIndex = (read = readFileSync) => {
+  const problems = [];
+  const indexPath = "docs/usage/index.md";
+  let index;
+  try {
+    index = read(indexPath, "utf8");
+  } catch {
+    return [`${indexPath} がありません（利用者向けドキュメントの目次）`];
+  }
+  // 参照スタイルの定義から、3 階層へのリンクだけを拾う。
+  const linked = new Set(
+    [...index.matchAll(/^\[[^\]]+\]:\s*(\S+)$/gm)]
+      .map((m) => m[1])
+      .filter((t) => USER_DOC_DIRS.some((d) => t.startsWith(`${d}/`))),
+  );
+  const actual = new Set();
+  for (const dir of USER_DOC_DIRS) {
+    let entries;
+    try {
+      entries = readdirSync(join("docs", "usage", dir));
+    } catch {
+      // **番人**（ADR-0071 論点2）。以前は「まだ無いディレクトリは対象外」と読み飛ばしていたが、
+      // 移設したのに定数を直し忘れると検査が静かに空振りする。3 階層はすべて実在する前提。
+      problems.push(
+        `検査対象の階層が見つかりません: docs/usage/${dir}（USER_DOC_DIRS を直すか、移設を戻す）`,
+      );
+      continue;
+    }
+    for (const f of entries) if (f.endsWith(".md")) actual.add(`${dir}/${f}`);
+  }
+  for (const t of [...linked].sort())
+    if (!actual.has(t)) problems.push(`目次にあるがファイルが無い: ${t}`);
+  for (const t of [...actual].sort())
+    if (!linked.has(t))
+      problems.push(`ファイルがあるが目次に無い（誰からも辿れない）: ${t}`);
+  return problems;
+};
+
+/**
+ * 入門（`docs/usage/start/`）の鎖が切れていないかの検査（[ADR-0070] 論点4 の検査②）。
+ *
+ * 入門は**順に読む**ことが前提なので、各ページに `- **前提**:` と `- **次に読む**:` を置き、
+ * **次に読むの連なりが全ページを 1 列に並べる**ことを機械で確かめる。人が順序を保つ形にすると、
+ * ページを 1 本足した / 名前を変えた瞬間に**どこからも辿れないページ**が静かにできる
+ * （ADR-0070 が 5 本に割ると決めた理由もここで、1 本の長いページだとこの検査が空振りする）。
+ *
+ * 検出するもの: メタ行の欠落／リンク切れ／鎖の分岐・輪・孤立／`前提` が鎖の 1 つ前と食い違う。
+ */
+const START_DIR = "docs/usage/start";
+const META = { prev: "前提", next: "次に読む" };
+
+/** `- **ラベル**: …` の行から、最初のリンク先（参照スタイルのラベルは定義で解決）を採る。 */
+const metaLink = (body, label) => {
+  const line = body.split("\n").find((l) => l.startsWith(`- **${label}**:`));
+  if (line === undefined) return { found: false };
+  const ref = /\[[^\]]*\]\[([^\]]+)\]/.exec(line);
+  if (ref) {
+    const def = new RegExp(`^\\[${ref[1]}\\]:\\s*(\\S+)$`, "m").exec(body);
+    return { found: true, target: def?.[1], label: ref[1] };
+  }
+  const inline = /\[[^\]]*\]\((\S+?)\)/.exec(line);
+  return { found: true, target: inline?.[1] };
+};
+
+export const checkStartChain = (read = readFileSync) => {
+  const problems = [];
+  let files;
+  try {
+    files = readdirSync(START_DIR)
+      .filter((f) => f.endsWith(".md"))
+      .sort();
+  } catch {
+    // **番人**（ADR-0071 論点2）。実測で、入門を移すとこの検査は対象ゼロで黙って緑になった。
+    return [
+      `検査対象が見つかりません: ${START_DIR}（START_DIR を直すか、移設を戻す）`,
+    ];
+  }
+  if (files.length === 0) return problems;
+
+  const next = new Map(); // file -> 次に読む先（start 内なら file 名、外なら null）
+  const prev = new Map(); // file -> 前提が指す start 内のページ（無ければ undefined）
+  for (const f of files) {
+    const body = read(join(START_DIR, f), "utf8");
+    for (const [key, label] of Object.entries(META)) {
+      const link = metaLink(body, label);
+      if (!link.found) {
+        problems.push(
+          `${START_DIR}/${f}: \`- **${label}**:\` の行がありません`,
+        );
+        continue;
+      }
+      if (link.label !== undefined && link.target === undefined) {
+        problems.push(
+          `${START_DIR}/${f}: ${label} のラベル \`${link.label}\` に定義がありません`,
+        );
+        continue;
+      }
+      // start 内を指すものだけを鎖として扱う（外を指すのは鎖の終端・前提の補足）。
+      const inStart =
+        link.target !== undefined && !link.target.includes("/")
+          ? link.target
+          : undefined;
+      if (key === "next") next.set(f, inStart ?? null);
+      else if (inStart !== undefined) prev.set(f, inStart);
+      if (inStart !== undefined && !files.includes(inStart))
+        problems.push(
+          `${START_DIR}/${f}: ${label} が指す ${inStart} が ${START_DIR} にありません`,
+        );
+    }
+  }
+  if (problems.length > 0) return problems; // 鎖をたどる前に、材料の欠けを直す
+
+  // 入口＝どのページの「次に読む」からも指されていないページ。1 つでなければ鎖ではない。
+  const pointed = new Set([...next.values()].filter((v) => v !== null));
+  const heads = files.filter((f) => !pointed.has(f));
+  if (heads.length !== 1) {
+    problems.push(
+      `${START_DIR}: 入口が ${String(heads.length)} 個あります（${heads.join(" / ") || "なし＝輪になっています"}）。入門は 1 列に並んでいる必要があります`,
+    );
+    return problems;
+  }
+
+  const visited = [];
+  for (let at = heads[0]; at !== null && at !== undefined; at = next.get(at)) {
+    if (visited.includes(at)) {
+      problems.push(`${START_DIR}: 鎖が輪になっています（${at} に戻りました）`);
+      return problems;
+    }
+    visited.push(at);
+  }
+  const orphans = files.filter((f) => !visited.includes(f));
+  if (orphans.length > 0)
+    problems.push(
+      `${START_DIR}: 鎖から辿れないページがあります: ${orphans.join(" / ")}`,
+    );
+
+  // 「前提」が鎖の 1 つ前と食い違っていないか（並べ替えたときに片方だけ直す事故を止める）。
+  visited.forEach((f, i) => {
+    const declared = prev.get(f);
+    const actual = i === 0 ? undefined : visited[i - 1];
+    if (declared !== undefined && declared !== actual)
+      problems.push(
+        `${START_DIR}/${f}: 前提が ${declared} を指していますが、鎖の 1 つ前は ${actual ?? "（入口なので無し）"} です`,
+      );
+  });
+  return problems;
+};
+
+/**
+ * 目的別（`docs/usage/howto/`）の各ページに**出口**があるかの検査（[ADR-0070] 追記の検査⑤）。
+ *
+ * 入門と違い、目的別は**順序が無い**（目次から目的で引いて 1 本読む層）。だから鎖ではなく、
+ * 「読み終えた人が次の目的へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
+ * **目次へ戻れる**こと。実測（2026-09-12）では 9 本中 3 本に節が無く、1 本は別名だった。
+ *
+ * 検出するもの: `## 関連` の欠落／関連から目次へのリンクが無い／階層ごと消えた（番人）。
+ */
+const HOWTO_DIR = "docs/usage/howto";
+const HOWTO_SECTION = "## 関連";
+const HOWTO_EXIT = "../index.md";
+
+/** `## 関連` 以降（次の `## ` 手前まで）を返す。節が無ければ `undefined`。 */
+const relatedSection = (body) => {
+  const start = body.indexOf(`\n${HOWTO_SECTION}\n`);
+  if (start === -1) return undefined;
+  const rest = body.slice(start + HOWTO_SECTION.length + 2);
+  const end = rest.indexOf("\n## ");
+  return end === -1 ? rest : rest.slice(0, end);
+};
+
+/** 参照スタイルのラベルを本文末の定義で解決して、リンク先の集合を返す。 */
+const linkTargets = (body, section) => {
+  const targets = [];
+  for (const [, label] of section.matchAll(/\[[^\]]*\]\[([^\]]+)\]/g)) {
+    const def = new RegExp(`^\\[${label}\\]:\\s*(\\S+)$`, "m").exec(body);
+    if (def) targets.push(def[1]);
+  }
+  for (const [, target] of section.matchAll(/\[[^\]]*\]\((\S+?)\)/g))
+    targets.push(target);
+  return targets;
+};
+
+export const checkHowtoExits = (
+  read = readFileSync,
+  list = () => readdirSync(HOWTO_DIR),
+) => {
+  const problems = [];
+  let files;
+  try {
+    files = list().filter((f) => f.endsWith(".md"));
+  } catch {
+    // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
+    return [
+      `検査対象が見つかりません: ${HOWTO_DIR}（HOWTO_DIR を直すか、移設を戻す）`,
+    ];
+  }
+  if (files.length === 0)
+    return [
+      `${HOWTO_DIR} に .md がありません（HOWTO_DIR を直すか、移設を戻す）`,
+    ];
+
+  for (const f of files.sort()) {
+    const body = read(join(HOWTO_DIR, f), "utf8");
+    const section = relatedSection(body);
+    if (section === undefined) {
+      problems.push(
+        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` の節がありません（読み終えた人の出口が無い）`,
+      );
+      continue;
+    }
+    const exits = linkTargets(body, section).filter((t) =>
+      t.startsWith(HOWTO_EXIT),
+    );
+    if (exits.length === 0)
+      problems.push(
+        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` から目次（${HOWTO_EXIT}）へ戻れません`,
+      );
+  }
+  return problems;
+};
+
+export const checkAll = (targets = TARGETS, read = readFileSync) => [
+  ...targets.flatMap((t) => checkTarget(t, read)),
+  ...checkUserDocIndex(read),
+  ...checkStartChain(read),
+  ...checkHowtoExits(read),
+];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
 if (
@@ -196,7 +433,7 @@ if (
     console.error("索引と本文が食い違っています:\n");
     for (const p of problems) console.error(`  - ${p}`);
     console.error(
-      "\n索引（docs/adr/index.md ほか）か、各ファイルのメタ行のどちらかを直してください。",
+      "\n索引（docs/adr/index.md・docs/usage/index.md ほか）か、各ファイルのどちらかを直してください。",
     );
     process.exit(1);
   }

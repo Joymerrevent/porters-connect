@@ -1,4 +1,4 @@
-// The Resource API's request caps (docs/reference: 1 分あたり Read 2000 / Write 500、月 約15万アクセス).
+// The Resource API's request caps (docs/usage/reference: 1 分あたり Read 2000 / Write 500、月 約15万アクセス).
 //
 // What exceeding them *looks like* is the interesting part: the reference says the connection may
 // be forcibly closed and explicitly notes that **no HTTP 429 / Retry-After is documented**, so the

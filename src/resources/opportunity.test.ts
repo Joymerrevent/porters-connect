@@ -78,7 +78,7 @@ describe("createOpportunityResource — decode catalog", () => {
 
   it("has no P_Deleted — PORTERS does not publish one for Opportunity", () => {
     // The absence is the fact, not an oversight. reference-catalog.test.ts checks it against
-    // docs/reference in both directions; this pins the consequence for readers of the catalog.
+    // docs/usage/reference in both directions; this pins the consequence for readers of the catalog.
     expect("P_Deleted" in OPPORTUNITY_DESCRIPTOR.fields).toBe(false);
   });
 });

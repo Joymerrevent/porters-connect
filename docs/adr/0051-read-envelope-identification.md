@@ -259,11 +259,11 @@
   [ADR-0022][adr22]（マスタ Read の封筒の形・事実5）／[ADR-0002][adr2]（実記事への接地）。
 
 [findings]: ../reviews/findings.md
-[guide]: ../guide/error-handling.md
+[guide]: ../usage/howto/handle-failures.md
 [lv]: ../live-verification.md
-[ref-resource]: ../reference/resource-api/README.md
-[ref-write]: ../reference/resource-api/write-format.md
-[ref-auth-err]: ../reference/authentication-api/errors.md
+[ref-resource]: ../usage/reference/resource-api/README.md
+[ref-write]: ../usage/reference/resource-api/write-format.md
+[ref-auth-err]: ../usage/reference/authentication-api/errors.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md
 [adr11]: 0011-xml-parse-serialize.md

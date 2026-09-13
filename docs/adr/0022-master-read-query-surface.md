@@ -128,8 +128,8 @@ partition+field 前提、カタログ既定 field）を流用する」、軸4 �
 [0002]: 0002-ground-design-in-live-api-docs.md
 [bd]: ../design/basic-design.md
 [lv]: ../live-verification.md
-[ref-masters]: ../reference/resource-api/resources/
-[res-list]: ../reference/resource-api/resources-list.md
+[ref-masters]: ../usage/reference/resource-api/resources
+[res-list]: ../usage/reference/resource-api/resources-list.md
 [src-partition]: ../../tmp/porters-docs/txt/115012006227-Partition-Read.md
 [src-user]: ../../tmp/porters-docs/txt/115012160288-User-Read.md
 [src-field]: ../../tmp/porters-docs/txt/115012160308-Field-Read.md

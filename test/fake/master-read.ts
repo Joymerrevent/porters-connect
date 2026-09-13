@@ -12,7 +12,9 @@
 // like `code_direct`, so Partition `request_type=0` (login partition) answers Result Code 403 and
 // User `request_type=0` answers the App's own user.
 
-import { FIELD_DESCRIPTOR, RESOURCE_VALUE } from "../../src/resources/field";
+import { FIELD_DESCRIPTOR } from "../../src/resources/field";
+import { fieldTypeValueOf } from "../../src/resources/field-type";
+import { RESOURCE_VALUES } from "../../src/resources/resource-list";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
 import type { ResourceDescriptor } from "../../src/resources/resource";
@@ -39,6 +41,10 @@ export type MasterContext = {
   optionTree: FakeOptionNode[];
   /** Data resources, for Field Read (`resource=` selects one). */
   resources: ReadonlyMap<string, ResourceDescriptor>;
+  /** Tenant custom fields Field Read should report, by resource path then bare alias. */
+  customFields: Readonly<Record<string, Record<string, DataType>>>;
+  /** `Field.P_Name` for those custom fields, by resource path then bare alias. */
+  customFieldNames: Readonly<Record<string, Record<string, string>>>;
 };
 
 export type MasterReadHandler = (
@@ -49,30 +55,9 @@ export type MasterReadHandler = (
 // Data permission error — what `code_direct` gets for the login-partition read (ADR-0022 fact 4).
 const CODE_NO_DATA_PERMISSION = 403;
 
-// Data Type -> Field Type Value (docs/reference field-data-types.md). The Option subtypes
-// (5 Checkbox / 6 Radio / 7 Dropdown) all decode alike, so the fake reports Dropdown; the System
-// family other than System[Id] has no published Value, so it reports System (11).
-// VERIFY(live): the Value a real Field Read returns for System[DateTime] / System[Reference] is
-// unconfirmed — see docs/live-verification.md (LV-12).
-const FIELD_TYPE_VALUE: Record<DataType, number> = {
-  SinglelineText: 1,
-  MultilineText: 2,
-  Number: 3,
-  Date: 4,
-  Option: 7,
-  Age: 8,
-  URL: 9,
-  Mail: 10,
-  "System[Id]": 11,
-  "System[DateTime]": 11,
-  "System[Reference]": 11,
-  "System[Department]": 11,
-  DateTime: 12,
-  Telephone: 15,
-  User: 17,
-  Image: 18,
-  Link: 20,
-};
+// Data Type -> Field Type Value: the single table in src/resources/field-type.ts (ADR-0069
+// 論点3). This file used to keep its own copy; the representative choices (Option -> 7, the
+// System family -> 11) and the LV-12 caveat now live there.
 
 const intParam = (url: URL, key: string, fallback: number): number => {
   const raw = url.searchParams.get(key);
@@ -158,11 +143,12 @@ export const readUser: MasterReadHandler = (url, ctx) => {
 /** `GET /v1/field?partition=&resource=&active=` — a resource's catalog, as Field rows. */
 export const readField: MasterReadHandler = (url, ctx) => {
   const value = intParam(url, "resource", -1);
-  const path = Object.entries(RESOURCE_VALUE).find(
+  const path = Object.entries(RESOURCE_VALUES).find(
     ([, code]) => code === value,
   )?.[0];
   const descriptor = path === undefined ? undefined : ctx.resources.get(path);
-  if (descriptor === undefined) {
+  // Both checks together, so `path` narrows to a string for the custom-field lookups below.
+  if (path === undefined || descriptor === undefined) {
     // An unknown/unsupported resource selector is a parameter error, not an empty catalog.
     return {
       status: 200,
@@ -173,18 +159,22 @@ export const readField: MasterReadHandler = (url, ctx) => {
       ),
     };
   }
-  const records = Object.entries(descriptor.fields)
+  // Standard `P_` fields come from the library's own catalog; tenant `U_`/`A_` fields are whatever
+  // the test seeded. A real Field Read returns both in one response, so the fake does too.
+  const custom = Object.entries(ctx.customFields[path] ?? {});
+  const customNames = ctx.customFieldNames[path] ?? {};
+  const records = [...Object.entries(descriptor.fields), ...custom]
     // A Field row carries a Field Type value. A field PORTERS assigns no Data Type (`ー` -> `null`,
     // ADR-0056) has no Field Type either — the reference's `P_Deleted` row is `ー` in both columns —
     // so it gets no row here. Inventing a Value for it would be exactly the fabrication ADR-0056 refuses.
     .filter((entry): entry is [string, DataType] => entry[1] !== null)
     .map(([alias, type], index) => ({
       P_Id: String(index + 1),
-      P_Name: alias,
+      P_Name: customNames[alias] ?? alias,
       // The alias as it travels on the wire, i.e. what you would put in `field=`.
       // VERIFY(live): prefixed vs bare in a real Field Read is unconfirmed — see LV-12.
       P_Alias: `${descriptor.prefix}.${alias}`,
-      P_Type: String(FIELD_TYPE_VALUE[type]),
+      P_Type: String(fieldTypeValueOf(type)),
       P_Required: "0",
       P_ResourceType: String(value),
       // Option-typed fields point at their option group; the fake names the field's own alias.

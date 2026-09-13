@@ -228,7 +228,7 @@ await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパ�
 - 実施は accept 後の**別 PR**（ADR と実装は分ける）。
 
 [do]: #decision-outcome
-[rq]: ../guide/read-query.md
+[rq]: ../usage/howto/search-records.md
 [rv1]: ../reviews/rv/0001-read-field-default-missing.md
 [rv31]: ../reviews/rv/0031-reference-expansion-discarded.md
 [adr5]: 0005-public-api-shape.md
