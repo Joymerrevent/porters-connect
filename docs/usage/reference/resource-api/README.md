@@ -16,16 +16,16 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 
 ## Read パラメータ（共通）
 
-| パラメータ  | 必須 | 内容                                                              |
-| ----------- | ---- | ----------------------------------------------------------------- |
-| `partition` | ●    | Partition Id（数値）。Partition Read で取得可能。                 |
-| `count`     |      | 取得件数 1〜200。**既定 10**。                                    |
-| `start`     |      | 取得開始インデックス（0 始まり）。                                |
-| `field`     |      | 出力項目。カンマ区切り。既定は主キー（例 `Person.P_Id`）。        |
-| `condition` |      | 検索条件。カンマ区切りは AND。                                    |
-| `keywords`  |      | キーワード検索。カンマ区切りは AND（OR 不可）。**100 文字まで**。 |
-| `order`     |      | 並び順。`Alias:asc` / `Alias:desc`。                              |
-| `itemstate` |      | `existing`（既定）/ `deleted` / `all`。削除済みデータの取得制御。 |
+| パラメータ  | 必須 | 内容                                                                                 |
+| ----------- | ---- | ------------------------------------------------------------------------------------ |
+| `partition` | ●    | Partition Id（数値）。Partition Read で取得可能。**Partition Read 自身は取らない**。 |
+| `count`     |      | 取得件数 1〜200。**既定 10**（Option Read だけは省略時に全件）。                     |
+| `start`     |      | 取得開始インデックス（0 始まり）。                                                   |
+| `field`     |      | 出力項目。カンマ区切り。既定は主キー（例 `Person.P_Id`）。                           |
+| `condition` |      | 検索条件。カンマ区切りは AND。                                                       |
+| `keywords`  |      | キーワード検索。カンマ区切りは AND（OR 不可）。**100 文字まで**。                    |
+| `order`     |      | 並び順。`Alias:asc` / `Alias:desc`。                                                 |
+| `itemstate` |      | `existing`（既定）/ `deleted` / `all`。削除済みデータの取得制御。                    |
 
 ### field の指定
 
