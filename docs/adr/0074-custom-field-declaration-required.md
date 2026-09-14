@@ -90,7 +90,12 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
 
 ## Decision Outcome
 
-採用: **案B**（`field` からも未宣言 alias を外し、宣言必須に揃える）。decider が 2026-09-14 に選択。
+決定点は 2 つ。**型は宣言必須に締め、逃げ道には名前を付ける**（D1 と D2 は裏表で、逃げ道が要るのは
+締めたから）。decider が 2026-09-14 に選択。
+
+### D1: `field` からも未宣言 alias を外す（案B）
+
+採用: **案B**（`field` からも未宣言 alias を外し、宣言必須に揃える）。
 
 理由は 3 つ。
 
@@ -104,6 +109,36 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
 `U_hiredOn` を `string` として受け取れるようにすると、**PORTERS 書式の日時をそのまま表示に流して
 気づかない**という静かな失敗が新たに生まれる。いまは型エラーで止まるので、宣言するか cast するかを
 選ばされる。案A を採るならここの手当て（型名・ドキュメント）が別途要る。
+
+### D2: 逃げ道に名前を付ける（`rawValue` を公開 API に足す）
+
+D1 で締めても、知らない alias の値が手元に来ることはある（下の Consequences に挙げた 3 経路）。
+いまそれを読むには型リテラル込みの cast が要る。
+
+```ts
+const v = (c as { U_unknown?: string | null } | undefined)?.U_unknown;
+```
+
+D1 のあとは `field` 側にも cast が要るので**さらに醜くなる**。`as` が散らばると「どこで型を外したか」
+も追えない。そこで**逃げ道を 1 つの関数に集める**。
+
+```ts
+import { rawValue } from "@joymerrevent/porters-connect";
+
+const v = rawValue(c, "U_unknown"); // string | null | undefined
+```
+
+戻り値は **`ReadRecord` と同じ規約**に揃える。`undefined` = その alias が応答に無かった、
+`null` = あったがスカラでない（入れ子）か空、`string` = 生の値。畳んで `string | null` にする案も
+あったが、**「返ってこなかった」と「空だった」を潰す**ので採らない（[ADR-0020][0020] 以来、
+ライブラリはこの 2 つを別の状態として扱っている）。
+
+検討した形は 2 つ。
+
+- **ガイドに 4 行のヘルパーを載せるだけ**（公開 API を増やさない）— 利用者ごとに書き方が割れ、
+  規約（`undefined` と `null` の意味）も各自の解釈になる
+- **ライブラリが export する**（採用）— 逃げ道が 1 か所になり、規約をライブラリが保証する。
+  `bytesToBase64` と同じく小さなユーティリティの前例がある
 
 ### Consequences
 
@@ -119,6 +154,11 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
   参照先レコードの中（`decodeReferenceRecord` も同じ扱い）、PORTERS が要求していない項目を足して
   返した場合。ライブラリは毎回 `field` を明示して送るので、通常は 3 つ目は起きない。
 - Neutral: Attachment の `field?: string[]`（カタログを持たない緩い形）は射程外。揃えるなら別 ADR。
+- Good（D2）: `as` が散らばらない。逃げ道を使った場所が `rawValue` で grep できる。
+- Bad（D2）: 公開 API が 1 つ増える。値の変換はしないので、**日時は PORTERS 書式のまま返る**
+  （それが「生の値」の意味だとドキュメントで示す必要がある）。
+- Neutral（D2）: 型は `string | null | undefined` で固定。`Option` / `User` / `Image` の中身を
+  取り出す用途には使えない（入れ子は `null`）。そこまで要るなら宣言する。
 
 ## 信じている入力
 
@@ -162,7 +202,8 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
   [ADR-0023][0023]（宣言 DSL）／[ADR-0020][0020]（`field` の既定挙動）／
   [ADR-0069][0069]（宣言の自動生成）
 - 実装は accept 後・別 PR（ADR と実装は分ける）。対象は `src/resources/read-core.ts` の
-  `ReadFieldAlias`、およびガイド（[Read クエリ][rq]・[カスタム項目][cf]）の書き換え。
+  `ReadFieldAlias`（D1）、`rawValue` の追加と `src/index.ts` からの export（D2。置き場所は実装時に
+  決める）、およびガイド（[Read クエリ][rq]・[カスタム項目][cf]）の書き換え。
 - 案B を採る場合、ガイドから消える説明: 「要求と受け取りは別です」「未宣言のカスタム項目は
   『読めるだけ』」「未宣言のまま押し通すなら自分で型を当てます」。
 
