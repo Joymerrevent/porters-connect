@@ -128,6 +128,22 @@ import { rawValue } from "@joymerrevent/porters-connect";
 const v = rawValue(c, "U_unknown"); // string | null | undefined
 ```
 
+逃げ道を通しで書くとこうなる（D1 後）。`field` は型が受け付けないので、そちらも cast する。
+
+```ts
+import { rawValue } from "@joymerrevent/porters-connect";
+import type { CandidateSearchQuery } from "@joymerrevent/porters-connect";
+
+const page = await t.candidate.search({
+  field: ["P_Name", "U_memo"] as CandidateSearchQuery["field"],
+});
+const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
+```
+
+実行時は今までどおり通る（実測: 送られる `field` は `Person.P_Name,Person.U_memo`、
+`U_memo` の値は生の文字列で返る）。**型を外した箇所が 2 つとも見える**のがこの形の値打ちで、
+`as` の行を消せば宣言に戻せる。
+
 戻り値は **`ReadRecord` と同じ規約**に揃える。`undefined` = その alias が応答に無かった、
 `null` = あったがスカラでない（入れ子）か空、`string` = 生の値。畳んで `string | null` にする案も
 あったが、**「返ってこなかった」と「空だった」を潰す**ので採らない（[ADR-0020][0020] 以来、
