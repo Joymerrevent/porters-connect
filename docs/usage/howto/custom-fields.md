@@ -35,44 +35,52 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 
 ## 宣言しないとどうなるか
 
-**エラーにはなりません。** カタログに無い alias は、読み取りでは**生の文字列**、
-書き込みでは**テキストとして**そのまま通ります。つまり宣言は「動かすため」ではなく
+**エラーにはなりません。** カタログに無い alias は、読み取りでは**変換されない生の値**、
+書き込みでは**文字列としてそのまま**通ります。つまり宣言は「動かすため」ではなく
 **型と値の変換を効かせるため**のものです。
 
-宣言しない場合との違いは 3 つあります。
+宣言の有無は、読み取りと書き込みでこう効きます。
 
-|            | 宣言しない                      | 宣言する                                                                              |
-| ---------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| 型         | 現れない（`as` で cast が要る） | `Candidate` / `CreateInput` / `UpdateInput` / `SearchQuery` に現れる                  |
-| 読み取り値 | 生の文字列                      | Data Type どおり（`Number` → `number`、`Option` → `string[]`、`DateTime` → ISO 8601） |
-| 既定 field | 送られない（明示指定が要る）    | `field` 省略時に**自動で要求される**（[ADR-0020][adr20]）                             |
+|                          | 宣言しない                                                                                                                 | 宣言する                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **読み取り**：型         | 結果の型に出ない（`as` で受ける）。`field` に書くことはできる                                                              | `Candidate` / `SearchQuery` に現れる                                                         |
+| **読み取り**：値         | PORTERS が返した生の文字列のまま（日時なら `2026/09/10 12:00:00`）。入れ子で返る型（`Option` / `User` / `Image`）は `null` | Data Type どおり（`Number` → `number`、`DateTime` → ISO 8601、`Option` → `string[]`）        |
+| **読み取り**：既定 field | 送られない＝`field` に書かない限り**そもそも取得されない**                                                                 | `field` 省略時に**自動で要求される**（[ADR-0020][adr20]）                                    |
+| **書き込み**：型         | 入力の型に無い（cast が要る）                                                                                              | `CreateInput` / `UpdateInput` に現れる                                                       |
+| **書き込み**：値         | `String(値)` にして素通し。ISO 8601 の日時は**変換されず**そのまま送られ、配列は `"a,b"` という 1 本の文字列になる         | Data Type どおりに組み立てる（ISO 8601 → PORTERS 形式、`Option` → 子要素、`Image` → 3 要素） |
 
-3 つ目が実務では効きます。宣言していないカスタム項目は、`field` を明示しない限り
-**そもそも取得されません**。
+値のほうは、**書き込みのほうが影響が大きい**です。読み取りは変換されない文字列が来るだけですが、
+書き込みでは**ライブラリが変換しないまま PORTERS に送ります** — 日時は ISO 8601 のまま
+（PORTERS の書式は `2026/09/10`）、`Option` に渡した配列は `"a,b"` という 1 本の文字列として
+送られます。受理されるかどうかは PORTERS 次第で、ライブラリは検知しません。
 
-なお `field` に書くだけなら宣言は要りません（`U_` / `A_` で始まる名前は未宣言でも通ります）。
-ただし**宣言していないと `U_` 以降の綴りは検査されない**ので、
+実務でいちばん効くのは**既定 field** です。宣言していないカスタム項目は、`field` を明示しない限り
+**そもそも取得されません**。宣言していないと `U_` 以降の綴りも検査されないので、
 取得漏れを型で防ぎたいものはここで宣言してください（[ADR-0059][adr59]）。
 
 ## 宣言できる型
 
 ビルダー `f` のメソッドが、そのまま Data Type に対応します。
 
-| メソッド             | Data Type                                     | 読み取り値                                                      |
-| -------------------- | --------------------------------------------- | --------------------------------------------------------------- |
-| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        |
-| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        |
-| `f.multilineText()`  | `MultilineText`                               | `string`                                                        |
-| `f.mail()`           | `Mail`                                        | `string`                                                        |
-| `f.telephone()`      | `Telephone`                                   | `string`                                                        |
-| `f.url()`            | `URL`                                         | `string`                                                        |
-| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            |
-| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  |
-| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            |
-| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  |
-| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            |
-| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） |
-| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        |
+| メソッド             | Data Type                                     | 読み取り値                                                      | 書き込み値                                           |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        | `number`                                             |
+| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        | `string`                                             |
+| `f.multilineText()`  | `MultilineText`                               | `string`                                                        | `string`                                             |
+| `f.mail()`           | `Mail`                                        | `string`                                                        | `string`                                             |
+| `f.telephone()`      | `Telephone`                                   | `string`                                                        | `string`                                             |
+| `f.url()`            | `URL`                                         | `string`                                                        | `string`                                             |
+| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            | `string`（ISO 8601）                                 |
+| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  | `string`（ISO 8601・UTC `…Z`）                       |
+| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            | `string`（ISO 8601 の生年月日）                      |
+| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  | `string[]`（選択する alias）                         |
+| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            | `number`（ユーザーの ID だけ）                       |
+| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） | `{ FileName, ContentType, Content }`（3 つとも必須） |
+| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        | `number`（参照先の ID だけ）                         |
+
+**`User` / `Link` / `Image` は読み書きが対称ではありません**。読み取りは入れ子で返る一方、
+書き込みは `User` / `Link` が ID ひとつ、`Image` が 3 要素そろって、という形です
+（日時は読み書きとも ISO 8601 で、PORTERS 形式との変換はライブラリがやります）。
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
 `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
