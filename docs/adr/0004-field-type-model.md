@@ -82,6 +82,10 @@ PRD（[requirements][prd] R-13/R-16）は「**公開サーフェスに any を�
 - 依存/前提: [requirements][prd]（R-13 型安全・R-16 カスタム項目）、[field-data-types][fdt]、[resources][res]。
 - 後続: **XML パース/シリアライズ ADR**（データ型別の値エンコード・Read/Write 非対称）、**公開 API の ADR**（宣言 DSL とアクセサ形）。
 - 関連: [[0002-ground-design-in-live-api-docs]]。
+- **その後**: 本 ADR が「将来の opt-in 開発ツール（P2）」とした **Field Read からの宣言生成は
+  [[0069-tenant-field-catalog-tooling]] で実装済み**（`generateFieldDecls` / `verifyFields` /
+  `readCustomCatalog`）。宣言そのものの設計は [[0023-custom-field-declaration-dsl]]、
+  未宣言のカスタム項目の扱いは [[0074-custom-field-declaration-required]] が決めている。
 
 [prd]: ../design/requirements.md
 [fdt]: ../usage/reference/resource-api/field-data-types.md

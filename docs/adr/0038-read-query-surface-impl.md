@@ -10,6 +10,11 @@
 > （`condition` / `order` / `count` / `start`）で再決定しない。本 ADR は **typed `condition` の型モデル・
 > `keywords` / `itemstate` の形・値正規化・`itemstate` の condition 制約・エンコード配置**を reference に接地して詰める。
 > **推奨案（案1a／案2a／案4a／clean break ＋ 各 SD）全採用で `accepted`（2026-06-27）。** 実装は別 PR（ADR 先行 → 実装）。
+>
+> **Amended by [ADR-0057][0057]（2026-08-28）**: 本 ADR の **SD-4**（`itemstate` は既定値を送らない）は
+> 再検討され、**`itemstate: "existing"` を明示したらそのまま送る**ようになった（省略＝API の既定に委ねる、と
+> 明示＝生存のみを要求する、を別の意思表示として扱う）。SD-4 以外は不変。
+>
 > 公開型 `condition` の loose→typed は破壊的変更で、pre-1.0 ゆえ semver minor（`0.3.0` → `0.4.0`）として実装 PR で出す。
 
 ## Context and Problem Statement
@@ -160,3 +165,4 @@ reference が定める事実（要点）:
 [rev]: ../reviews/2026-06-22-03.md
 [lv]: ../live-verification.md
 [adr]: README.md
+[0057]: 0057-itemstate-existing-explicit.md

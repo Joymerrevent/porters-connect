@@ -10,6 +10,12 @@
 > 接頭辞は**リソースごとの定数**なので利用者が書いても情報は増えず、罠と綴り間違いだけが残る。
 >
 > **案D で `accepted`（2026-08-29）**: `field` は**接頭辞なしの型付き alias**で受ける
+>
+> **Amended by [ADR-0074][0074]（2026-09-14）**: 本 ADR の Decision Driver「**逃げ道を塞がない**」
+> （未宣言のカスタム項目も `field` に書ける）は覆された。`condition` / `order` / 書き込みが以前から
+> 宣言必須だったのに `field` だけが例外で、しかも書けても受け取り側の型には出なかったため、
+> **宣言必須に揃えた**。接頭辞を書かせない・綴りを型で検査する、という本 ADR の核は不変。
+>
 > （カタログの `keyof F` ＋ 未宣言カスタム用のテンプレートリテラル型）。接頭辞はライブラリが付け、
 > **綴り間違い・接頭辞付き・展開文字列はコンパイル時に止まる**。実行時は接頭辞付きが来たら剥がして受ける。
 > **公開 API の破壊的変更**を含む（移行は接頭辞を消すだけ・0.x なので minor）。実施は本 ADR とは別 PR。
@@ -238,3 +244,4 @@ await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパ�
 [adr38]: 0038-read-query-surface-impl.md
 [adr55]: 0055-partition-binding-guard.md
 [adr58]: 0058-reference-expansion-read.md
+[0074]: 0074-custom-field-declaration-required.md
