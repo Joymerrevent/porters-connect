@@ -127,7 +127,8 @@ describe("型を持たない項目（P_Deleted）の制約 — ADR-0056", () => 
 
 // `field` は接頭辞なしの型付き alias で受ける（ADR-0059）。綴り間違い・接頭辞付き・展開文字列が
 // **コンパイル時に**止まることが決定の中身なので、型の側で固定する。実行時テストでは捕まえられない。
-describe("Read の field は接頭辞なしの型付き alias — ADR-0059", () => {
+// ADR-0074 D1 で未宣言のカスタム項目もここから外れた（宣言してから使う、の 1 ルールに揃える）。
+describe("Read の field は接頭辞なしの型付き alias — ADR-0059 / ADR-0074", () => {
   type Field = NonNullable<CandidateSearchQuery["field"]>[number];
 
   it("カタログ済みの標準項目を素の alias で受ける", () => {
@@ -135,9 +136,18 @@ describe("Read の field は接頭辞なしの型付き alias — ADR-0059", () 
     expectTypeOf<"P_Deleted">().toExtend<Field>(); // 型を持たない項目も field には出せる
   });
 
-  it("未宣言のカスタム項目は U_/A_ の命名規則で受ける", () => {
-    expectTypeOf<"U_memo">().toExtend<Field>();
-    expectTypeOf<"A_flag">().toExtend<Field>();
+  it("未宣言のカスタム項目は受けない（ADR-0074 D1）", () => {
+    expectTypeOf<"U_memo">().not.toExtend<Field>();
+    expectTypeOf<"A_flag">().not.toExtend<Field>();
+  });
+
+  it("宣言済みのカスタム項目は受ける", () => {
+    // 宣言したカタログは `keyof F` に入るので、同じ `field` に書ける（ADR-0023 + ADR-0074 D1）。
+    type AlbumField = NonNullable<
+      NonNullable<Parameters<typeof _album.search>[0]>["field"]
+    >[number];
+    expectTypeOf<"U_photo">().toExtend<AlbumField>();
+    expectTypeOf<"U_unknown">().not.toExtend<AlbumField>();
   });
 
   it("綴り間違い・接頭辞付き・展開文字列は型として書けない", () => {

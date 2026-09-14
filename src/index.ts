@@ -99,6 +99,9 @@ export type {
 } from "./resources";
 // Bulk write result from createMany / updateMany (ADR-0041 / F-4).
 export type { BulkWriteResult, BulkWriteResultItem } from "./resources";
+// Read a field the catalog does not know, unconverted (ADR-0074 D2). `field` only accepts
+// catalogued aliases, so this is the deliberate way out when a value arrives without a declaration.
+export { rawValue } from "./resources";
 // Reference expansion (ADR-0058): `expand` reads the referenced record's fields, not just its id.
 // `ExpandedReadRecord` / `ResourcePageOf` name what a read with `expand` resolves to.
 export type {
