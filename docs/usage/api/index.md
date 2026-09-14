@@ -188,5 +188,6 @@
 - [createThrottle](functions/createThrottle.md)
 - [defineFields](functions/defineFields.md)
 - [generateFieldDecls](functions/generateFieldDecls.md)
+- [rawValue](functions/rawValue.md)
 - [readCustomCatalog](functions/readCustomCatalog.md)
 - [verifyFields](functions/verifyFields.md)

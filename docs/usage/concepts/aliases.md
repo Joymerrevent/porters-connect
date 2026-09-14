@@ -18,9 +18,9 @@ PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで�
 `U_` / `A_` は**テナントごとに違う**ので、同梱できません。だから宣言する仕組みがあります
 （[ADR-0004][adr4]）。**宣言したものがカタログに加わる**、という関係です。
 
-> **`U_` / `A_` は宣言しなくても動きます。** ただし型が付かず、`field` を明示しないと
-> **要求すらされません**。さらに未宣言のうちは `field` 専用で、`condition` / `order` と
-> 書き込みには書けません。詳しくは[カスタム項目][custom-fields]にあります。
+> **`U_` / `A_` は宣言してから使います。** 宣言していない alias は `field` / `condition` /
+> `order` / 書き込みのどこに書いても型エラーです（[ADR-0074][adr74]）。実行時は寛容なままなので、
+> 型を外せば押し通せます。詳しくは[カスタム項目][custom-fields]にあります。
 
 ## 接頭辞は書かない
 
@@ -47,8 +47,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 | Attachment | **なし**     | `FileName` のように裸        |
 | その他     | リソース名   | `Job.P_Position` など        |
 
-`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます
-（カタログ済みの alias に限ります。未宣言のカスタム項目は `field` だけ）。
+`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます。
 
 ## Data Type が「値の形」を決める
 
@@ -115,6 +114,7 @@ PORTERS 自身が注意している点です。
 [adr19]: ../../adr/0019-static-resource-types.md
 [adr56]: ../../adr/0056-deleted-flag-typing.md
 [adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr74]: ../../adr/0074-custom-field-declaration-required.md
 [custom-fields]: ../howto/custom-fields.md
 [datetime]: datetime.md
 [fdt]: ../reference/resource-api/field-data-types.md

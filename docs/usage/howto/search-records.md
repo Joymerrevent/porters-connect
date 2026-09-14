@@ -43,7 +43,6 @@ for await (const c of t.candidate.searchAll({
 
 alias は **`condition` / `order` と同じ素の名前**（接頭辞なし）で書きます。
 接頭辞はリソースごとの定数なので**ライブラリが付けます**（[ADR-0059][adr59]）。
-語彙が同じなのは**カタログ済みの alias** の話で、未宣言のカスタム項目だけは `field` 専用です（後述）。
 
 ```ts
 await t.candidate.search({ field: ["P_Id", "P_Name"] });
@@ -52,25 +51,21 @@ await t.candidate.search({ field: ["P_Id", "P_Name"] });
 await t.candidate.search({ field: [] }); // total だけ見たい
 ```
 
-**間違いはコンパイル時に止まります**。`field` はカタログ済みの alias
-（標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）か、
-未宣言のカスタム項目（`U_` / `A_` で始まる名前）しか受け付けません。
+**間違いはコンパイル時に止まります**。`field` が受け付けるのは**カタログ済みの alias** だけです
+（標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）。
 
 <!-- doccheck: expect-error -->
 
 ```ts
-await t.candidate.search({ field: ["U_memo"] }); // OK（未宣言カスタムも引ける）
 await t.candidate.search({ field: ["P_Nmae"] }); // ✗ 型エラー（綴り間違い）
 await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（接頭辞は書かない）
+await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言していないカスタム項目）
 ```
 
 綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
-型で受けることでそこを手前に引き上げています。未宣言のカスタム項目は `U_` 以降の綴りまでは検査できないので、
-よく使うものは [`defineFields`][custom-fields] で宣言してください（宣言すれば綴りも検査されます）。
-
-**未宣言のカスタム項目を書けるのは `field` だけです。** `condition` / `order` はカタログ済みの
-alias しか受けないので（型に出ません）、絞り込み・並べ替えに使う項目は
-[`defineFields`][custom-fields] で宣言してください。宣言すれば 3 つとも同じ語彙で書けます。
+型で受けることでそこを手前に引き上げています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
+綴りまで検査されます（[ADR-0074][adr74]）。宣言せずに触る必要があるときの逃げ道は
+[カスタム項目][custom-fields]にあります。
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
 > 型が `値 | null | undefined` になっているのはこのためです。
@@ -387,6 +382,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [adr57]: ../../adr/0057-itemstate-existing-explicit.md
 [adr58]: ../../adr/0058-reference-expansion-read.md
 [adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr74]: ../../adr/0074-custom-field-declaration-required.md
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
 [lv]: ../../live-verification.md

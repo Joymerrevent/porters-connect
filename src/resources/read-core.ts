@@ -16,6 +16,7 @@ import {
   type FieldValue,
 } from "../xml/decode";
 import { parseResourcePage, type RawItem } from "../xml/parser";
+import { asRecord } from "../xml/raw";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
@@ -49,12 +50,42 @@ export type EmptyCatalog = Record<never, never>;
 
 /**
  * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
- * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). Custom
- * `U_`/`A_` aliases are not in the catalog, so they are not typed here (access via a cast until
- * the declaration DSL lands — ADR-0005 SD-2); at runtime they still pass through as raw values.
+ * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). An alias the
+ * catalog does not know is not typed here — declare it with `defineFields` (ADR-0023) to get it
+ * typed and converted. At runtime such a field still passes through as a raw value; read it with
+ * {@link rawValue} (ADR-0074 D2).
  */
 export type ReadRecord<F extends FieldCatalog> = {
   [K in keyof F]?: DecodedValue<F[K]> | null;
+};
+
+/**
+ * Read a field the catalog does not know (ADR-0074 D2) — the named escape hatch for a value that
+ * arrived without a declaration: through a cast in `field`, inside an expanded reference record,
+ * or because PORTERS returned a field that was not asked for.
+ *
+ * Returns what the record actually holds, unconverted:
+ *
+ * - `undefined` — the alias is not on the record (it was never returned)
+ * - `null` — it is there but not a scalar (PORTERS sends a nested node for Option / User / Image)
+ * - `string` — the raw text, exactly as PORTERS sent it
+ *
+ * **No conversion happens.** A date comes back in PORTERS' own format (`2026/09/10 12:00:00`), not
+ * ISO 8601, and a number comes back as text. Declare the field with `defineFields` to get the
+ * converted, typed value instead — this is the escape hatch, not the normal path.
+ *
+ * @example
+ * const page = await t.candidate.search({ field: ["P_Name"] });
+ * const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
+ */
+export const rawValue = (
+  record: unknown,
+  alias: string,
+): string | null | undefined => {
+  const rec = asRecord(record);
+  if (rec === undefined || !(alias in rec)) return undefined;
+  const value = rec[alias];
+  return typeof value === "string" ? value : null;
 };
 
 /**

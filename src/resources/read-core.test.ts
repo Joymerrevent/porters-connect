@@ -7,6 +7,7 @@ import {
   appendPaging,
   decoderFor,
   paginateOnce,
+  rawValue,
   type FieldCatalog,
 } from "./read-core";
 
@@ -116,5 +117,47 @@ describe("read-core — paginateOnce", () => {
       throw new PortersConfigError("bad query", { category: "config" });
     });
     await expect(drain(walk)).rejects.toBeInstanceOf(PortersConfigError);
+  });
+});
+
+// カタログ外の値を読む逃げ道（ADR-0074 D2）。3 つの状態（無い / スカラでない / 生の値）を
+// 別物として返すことが決定の中身なので、潰れていないことをここで固定する。
+describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
+  const record = decoderFor({ P_Name: "SinglelineText" } as const)({
+    P_Name: "山田 太郎",
+    U_memo: "面談済み",
+    U_empty: "",
+    U_nested: { "Option.P_Foo": "" },
+  });
+
+  it("生の文字列をそのまま返す（変換しない）", () => {
+    expect(rawValue(record, "U_memo")).toBe("面談済み");
+  });
+
+  it("応答に無い alias は undefined（「空」と区別する）", () => {
+    expect(rawValue(record, "U_unknown")).toBeUndefined();
+  });
+
+  it("スカラでない値（入れ子）は null", () => {
+    expect(rawValue(record, "U_nested")).toBeNull();
+  });
+
+  it("空の要素は空文字のまま（レコードが持っているものを返す）", () => {
+    expect(rawValue(record, "U_empty")).toBe("");
+  });
+
+  it("カタログ済みの項目も読めるが、変換後の値が string でなければ null", () => {
+    expect(rawValue(record, "P_Name")).toBe("山田 太郎");
+    const numeric = decoderFor({ P_Score: "Number" } as const)({
+      P_Score: "80",
+    });
+    expect(rawValue(numeric, "P_Score")).toBeNull(); // number は string ではない
+  });
+
+  it("レコードでないものを渡しても落ちない", () => {
+    expect(rawValue(undefined, "U_memo")).toBeUndefined();
+    expect(rawValue(null, "U_memo")).toBeUndefined();
+    expect(rawValue("scalar", "U_memo")).toBeUndefined();
+    expect(rawValue([1, 2], "U_memo")).toBeUndefined();
   });
 });
