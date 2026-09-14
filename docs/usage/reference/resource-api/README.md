@@ -51,6 +51,11 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
   `{Resource}.P_Id` / `{Resource}.P_UpdateDate` / `{Resource}.P_UpdatedBy` の 3 種のみ、
   かつ更新日は **90 日以内**（自動で 90 日条件が付く。91 日以前を指定すると Result Code 124）。
 
+## Write パラメータ
+
+Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ**（必須）で、
+値は Read と同じ。項目の値は URL ではなくリクエストボディの XML で送る（[write-format][write-format]）。
+
 ## Read レスポンス XML
 
 ```xml

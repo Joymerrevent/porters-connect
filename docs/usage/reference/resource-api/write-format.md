@@ -7,8 +7,12 @@
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008171688>
 - <https://hrbcapi.porters.jp/hc/ja/articles/115012006467-Candidate-Write>
 
-Write は `POST https://{host}/v1/{resource}`、`Content-Type: application/xml; charset=UTF-8`、
-ヘッダに Access Token。詳細は [認証 API][authentication-md] / [Resource API 概要][resource-api-md]。
+Write は `POST https://{host}/v1/{resource}?partition=[value]`、
+`Content-Type: application/xml; charset=UTF-8`、ヘッダに Access Token。
+詳細は [認証 API][authentication-md] / [Resource API 概要][resource-api-md]。
+
+**`partition` は Write でも必須**（各リソースの Write 記事の Input Variables が ● で挙げている）。
+Write が URL で取るパラメータはこれだけで、項目の値はすべてボディの XML に載せる。
 
 ## 標準フォーマット
 

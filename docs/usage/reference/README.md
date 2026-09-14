@@ -22,7 +22,7 @@
 
 ### Resource API（[resource-api/][rapi]）
 
-- [概要][rapi]: エンドポイント・Read パラメータ・XML 形式・各種制限。
+- [概要][rapi]: エンドポイント・Read / Write パラメータ・XML 形式・各種制限。
 - [result-codes][rapi-rc]: リソース系 Result Code 一覧・リトライ方針（認証エラーとは別系統）。
 - [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
 - [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
