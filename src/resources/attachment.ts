@@ -112,6 +112,11 @@ export type AttachmentResource = {
 // Bespoke Read URL (ADR-0018): Attachment has no alias prefix and no Data-Type catalog, so it keeps
 // the loose `condition` (`{ "Id:eq": "123" }`) and stays off the typed data-resource builder
 // (ADR-0038). itemstate/order/keywords do not apply to Attachment.
+//
+// VERIFY(live): the Attachment - Read article lists `requestType` (0 = with Content, 1 = without)
+// and `resource` as **required**, and lists neither `field` nor `condition` — this builder sends
+// neither required parameter and decides Content by `field`. See docs/live-verification.md (LV-24;
+// LV-3 / LV-4 cover the same call).
 const buildAttachmentReadUrl = (
   accessPoint: AccessPoint,
   partition: number,
