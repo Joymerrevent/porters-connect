@@ -82,7 +82,7 @@ const idsOnly = await t.candidate.search({ field: [] }); // P_Id だけ
 
 ```ts
 const one = await t.candidate.get(10001);
-console.log(one?.P_Name); // 見つからなければ null
+console.log(one?.P_Name); // 見つからなければレコードごと undefined
 ```
 
 ## 全件を回す
