@@ -212,8 +212,14 @@ describe("createResource — bare field aliases (ADR-0059)", () => {
     );
   });
 
-  it("passes an undeclared custom U_/A_ alias through, prefixed", async () => {
-    expect(await fieldParam(["U_memo", "A_flag"])).toBe("W.U_memo,W.A_flag");
+  // ADR-0074 D1: the *type* no longer admits an undeclared U_/A_ alias, but the runtime is
+  // unchanged — a cast still reaches the wire, prefixed like any other alias. That is the
+  // documented escape hatch, so it is pinned here rather than left to chance.
+  it("still sends an undeclared custom U_/A_ alias that arrived through a cast", async () => {
+    const cast = ["U_memo", "A_flag"] as unknown as SearchQuery<
+      typeof FIELDS
+    >["field"];
+    expect(await fieldParam(cast)).toBe("W.U_memo,W.A_flag");
   });
 
   it("strips a prefix that arrived through a cast instead of doubling it", async () => {
