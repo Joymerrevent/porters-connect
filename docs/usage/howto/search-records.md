@@ -139,6 +139,40 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 > （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装なので、
 > 外れた場合に直すのは要求側の文字列だけです。
 
+### ユーザー型は `expand` に書きません
+
+`P_Owner` のような**ユーザー型**（Data Type は `User`）は、`field` に名前を書くだけで
+**最初から入れ子**で返ります。括弧はライブラリが付けるので、書き方を覚える必要はありません。
+
+```ts
+const page = await t.job.search({ field: ["P_Position", "P_Owner"] });
+const owner = page.items[0]?.P_Owner;
+console.log(owner?.P_Id, owner?.P_Name, owner?.P_Mail);
+```
+
+送られるのはこの形です（`field` を省略したときの既定でも同じ形で要求されます）。
+
+```text
+field=Job.P_Position,Job.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)
+```
+
+参照型との違いは 3 つです。
+
+|          | ユーザー型（`P_Owner`）  | 参照型（`P_Client`）                |
+| -------- | ------------------------ | ----------------------------------- |
+| 既定     | **最初から入れ子**で返る | **ID だけ**返る                     |
+| 書き方   | `field` に名前を書くだけ | `expand` に欲しい項目を書く         |
+| 部分指定 | **できない**（4 つ固定） | できる（`["P_Id", "P_Name"]` など） |
+
+**4 つ固定**は PORTERS の制約です（`User.P_Id` / `P_Type` / `P_Name` / `P_Mail` 以外は参照
+できません — [Resource API 概要][rapi]）。`expand` に書こうとすると型エラーになります。
+
+<!-- doccheck: expect-error -->
+
+```ts
+await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // ✗ expand は参照型だけ
+```
+
 ## `image` — 画像の中身も読む
 
 `Image` 型の項目は、**素で要求すると `FileName` だけ**が返ります（PORTERS の既定）。
