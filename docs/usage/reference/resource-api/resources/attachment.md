@@ -24,9 +24,9 @@
 |      | `count`       | 1〜200。省略時 10                                                       |
 |      | `start`       | 0 以上。省略時 0                                                        |
 
-**本体を取るかどうかは `field` ではなく `requestType` で決まる**、というのが他リソースとの
-いちばん大きな違いです。記事は Attachment Read の `field` / `condition` / `order` /
-`keywords` / `itemstate` を挙げていません。
+他リソースとのいちばん大きな違いは、**本体を取るかどうかが `field` ではなく `requestType` で
+決まる**ことです。記事は Attachment Read の `field` / `condition` / `order` / `keywords` /
+`itemstate` を挙げていません。
 
 ## Write パラメータ
 
