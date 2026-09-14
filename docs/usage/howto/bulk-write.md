@@ -67,6 +67,10 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 ## 対象外
 
 - **Attachment** は単件のみ（`create` / `update`）。本体が巨大な Base64 のため一括は提供しません。
+- **`Image` 型のカスタム項目を含むレコード**は一括で送れません。分割は「1 リクエスト約 15000 文字」を
+  前提にしており、画像はその前提を桁で壊すためです。**何件目が画像を持つか**を添えて送信前に
+  `PortersConfigError` で弾くので、その項目は単件の `create` / `update` で書いてください
+  （そちらは画像に対応しています）。詳しくは[上限][limits]と[カスタム項目][custom-fields]。
 
 ## 関連
 
@@ -85,4 +89,5 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 [attachments]: attachments.md
 [limits]: ../concepts/limits.md
 [no-delete]: ../concepts/no-delete.md
+[custom-fields]: custom-fields.md
 [index]: ../index.md

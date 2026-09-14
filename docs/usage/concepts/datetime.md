@@ -53,7 +53,7 @@ if (iso) new Date(iso).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 UTC の 0 時として解釈されるので、タイムゾーンを足して表示すると**日付がずれることがあります**。
 日付だけの項目は日付として扱ってください。
 
-## 変換できない値は送る前に弾かれます
+## 変換できない値は、送る前・読んだ直後に弾かれます
 
 日時は**変換する**ので、変換できない値はそのまま送れません。
 
@@ -69,6 +69,14 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" });
 （`Number` に `"abc"` を渡しても素通しし、PORTERS が弾きます）。**この非対称は意図したもの**で、
 手前で厳しくするとサーバーが受け付ける値をライブラリが落としてしまうためです。詳しくは
 [失敗の扱い][handle-failures]にあります。
+
+**読み取りも同じです。** 変換できる形でなければ行き場が無いので、日時として読めない文字列が
+返ってきたら `PortersResourceError`（`category: "validation"`）になります。実際にこれが出るのは、
+たいてい日時でない項目を `f.date()` と宣言したときです（[カスタム項目][custom-fields]）。
+
+```text
+U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
+```
 
 `condition` に書く日時も同じ経路を通ります。
 
@@ -97,4 +105,5 @@ await t.candidate.search({
 [fdt]: ../reference/resource-api/field-data-types.md
 [handle-failures]: ../howto/handle-failures.md
 [prd]: ../../design/requirements.md
+[custom-fields]: ../howto/custom-fields.md
 [search-records]: ../howto/search-records.md

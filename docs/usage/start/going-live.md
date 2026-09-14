@@ -57,10 +57,12 @@
 [削除 API が無いということ][no-delete]）。
 
 ```ts
-const updated = await t.candidate.searchAll({
+for await (const c of t.candidate.searchAll({
   field: ["P_Id", "P_Name", "P_UpdateDate"],
   condition: { P_UpdateDate: { ge: "2026-09-01T00:00:00Z" } },
-});
+})) {
+  console.log(c.P_Id, c.P_UpdateDate);
+}
 ```
 
 ## 出す前のチェックリスト
