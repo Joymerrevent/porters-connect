@@ -29,11 +29,19 @@ page.items[0]?.U_score; // ✗ 型エラー：結果の型には出ない
 
 これは**検討したうえで引いた線ではない**。2 つの決定の隙間に残ったものと見ている。
 
-- 要求側は [ADR-0059][0059] が「**未宣言のカスタム項目は塞がない**」と決めた（Decision Drivers の
-  「逃げ道を塞がない」）
-- 受け取り側は `ReadRecord<F>` がカタログのみで、根拠コメントは「**宣言 DSL が来るまでは cast で**」
-  （ADR-0005 SD-2 由来）
-- DSL は [ADR-0023][0023] で入ったが、**そのときこの点は見直されていない**
+**要求側は決めてある。** [ADR-0059][0059] は Decision Drivers に「**逃げ道を塞がない**」と掲げ、
+宣言していない `U_` / `A_` も `field` に書けることを意図して守った。
+
+**受け取り側は決めていない。** `ReadRecord<F>` がカタログの alias だけを持つ理由は、ソースの
+コメントに残っている（`src/resources/read-core.ts`）。
+
+> Custom `U_`/`A_` aliases are not in the catalog, so they are not typed here
+> (access via a cast until the declaration DSL lands — ADR-0005 SD-2)
+
+ここでいう declaration DSL が `defineFields` のことで、`defineFields` は
+[ADR-0023][0023] で入った。つまりこのコメントは「**`defineFields` ができるまでの暫定**」を
+書いたものであって、線引きとして選んだものではない。**そして DSL が入ったとき、この暫定は
+見直されていない。**
 
 問い: **`field` の未宣言 alias を許し続けるか。許すなら受け取れるようにするか、いっそ塞ぐか。**
 
