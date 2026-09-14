@@ -1,11 +1,13 @@
 # 74. 未宣言のカスタム項目を `field` からも外す（宣言必須へ揃える）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-14
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > ドキュメント見直し（[#286][pr286]）の途中で、**`field` には書けるのに受け取れない**という
 > 非対称が見つかった。説明に 1 段落を要する形になっており、その説明自体が設計の徴候と判断して起票する。
+>
+> **decider が案B を選択し `accepted`（2026-09-14）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -88,7 +90,7 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
 
 ## Decision Outcome
 
-採用: **（未決定 — `proposed`）**。起案者の推しは **案B**。
+採用: **案B**（`field` からも未宣言 alias を外し、宣言必須に揃える）。decider が 2026-09-14 に選択。
 
 理由は 3 つ。
 
@@ -103,11 +105,7 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
 気づかない**という静かな失敗が新たに生まれる。いまは型エラーで止まるので、宣言するか cast するかを
 選ばされる。案A を採るならここの手当て（型名・ドキュメント）が別途要る。
 
-**決定はレビューで行う。** 本 ADR は `proposed` のまま置く。
-
 ### Consequences
-
-案B を採った場合。
 
 - Good: カスタム項目の入口 4 つがすべて「宣言必須」で揃う。ガイドから非対称の説明が消える。
 - Good: `U_` 以降の綴りも**すべての入口で**機械に検査される。
@@ -115,8 +113,11 @@ await t.candidate.search({ field: [found] }); // ✗ 型エラー（string は `
   移行は「宣言を 1 行足す」で機械的、`generateFieldDecls`（[ADR-0069][0069]）で生成もできる。
 - Bad: [ADR-0059][0059] の Decision Driver「逃げ道を塞がない」を**覆す**。本 ADR がその一点を
   supersede する（bare alias・接頭辞を書かせない決定は維持）。
-- Neutral: **実行時は変えない**。未知の alias が応答に混ざっても素通しで decode する
-  （フェイルセーフ）。したがって「できない」は**型の話**で、cast すれば送れる。
+- Neutral: **実行時は変えない**。応答に知らない alias が混ざっても、**キーは残したまま**素通しで
+  decode する（スカラは生の文字列、入れ子は `null`。実測）。したがって「できない」は**型の話**で、
+  cast すれば送れる。知らない alias が届く経路は 3 つ — cast で `field` に入れた場合、`expand` した
+  参照先レコードの中（`decodeReferenceRecord` も同じ扱い）、PORTERS が要求していない項目を足して
+  返した場合。ライブラリは毎回 `field` を明示して送るので、通常は 3 つ目は起きない。
 - Neutral: Attachment の `field?: string[]`（カタログを持たない緩い形）は射程外。揃えるなら別 ADR。
 
 ## 信じている入力
