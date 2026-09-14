@@ -96,8 +96,10 @@ PORTERS 自身が注意している点です。
 > — [gotchas][gotchas]（出典記事からの転記）
 
 つまり**宣言した alias が今のテナントに実在するとは限りません**。宣言と実物を突き合わせる
-手段があります（[`verifyFields`][custom-fields]）。ずれていると読み取りが黙って `null` を
-返す形で壊れるので、ここは機械に確かめさせてください。
+手段があります（[`verifyFields`][custom-fields]）。Data Type がずれていると読み取りは
+`PortersResourceError`（`category: "validation"`）で落ち、形が同じスカラどうしのずれ
+（`SinglelineText` を `Number` と宣言した、など）に至っては `NaN` が入るだけで気づけません。
+ここは機械に確かめさせてください。
 
 ## 関連
 
