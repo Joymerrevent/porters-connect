@@ -375,7 +375,7 @@ const wide = async (t: TenantScope<DeclaredCatalogs>) => {
 
 | 書き方                          | 受けられるクライアント | カスタム項目の型      |
 | ------------------------------- | ---------------------- | --------------------- |
-| `TenantScope<typeof fields>`    | その宣言のものだけ     | **付く**              |
+| `TenantScope<typeof fields>`    | その宣言のもの（下記） | **付く**              |
 | `TenantScope<DeclaredCatalogs>` | どれでも               | 付かない（`P_` のみ） |
 
 **カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分のカタログだけ
@@ -384,6 +384,40 @@ const wide = async (t: TenantScope<DeclaredCatalogs>) => {
 
 `typeof porters` で書く手もありますが、**値が先に無いと書けません**。関数を別ファイルに
 切り出すなら、上の型名で書くほうが素直です。
+
+### 注釈は意図の記録で、取り違えは止まりません
+
+`TenantScope<typeof fields>` と書いても、**`U_score` を宣言していないクライアントの
+`tenant()` を渡せてしまいます**。
+
+```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
+import type { TenantScope } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({ candidate: (f) => ({ U_score: f.number() }) });
+const other = defineFields({
+  candidate: (f) => ({ U_memo: f.singlelineText() }),
+});
+
+const topScorers = async (t: TenantScope<typeof fields>) => {
+  const page = await t.candidate.search({ field: ["U_score"] });
+  return page.items[0]?.U_score; // 型は number | null | undefined
+};
+
+// U_score を宣言していないクライアントでも、型は通る
+const porters = new PortersClient({ host, appId, appSecret, fields: other });
+void topScorers(porters.tenant(1));
+```
+
+このとき `U_score` は型の上では `number` のままですが、実際に返るのは**未宣言の素通し＝生の
+文字列**です（上の「宣言しないとどうなるか」）。型で弾けないのは、読み取りレコードが
+**全項目 optional**（`field` に挙げなかった項目は存在しない）で、項目の足りないカタログも
+代入できるためです。ここを厳しくすると (2) の `TenantScope<DeclaredCatalogs>` も受け取れなく
+なる — 両立しないので、いまは緩いままです。
+
+避け方は単純です。**宣言はプロジェクトに 1 か所置いて export してください**
+（`generateFieldDecls` の出力先がその置き場になります）。宣言が複数要るなら、クライアントと
+それを受ける関数を同じモジュールに閉じます。
 
 ### 設定を切り出すときも同じ
 
