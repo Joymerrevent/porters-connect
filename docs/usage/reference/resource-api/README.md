@@ -51,6 +51,10 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
   `{Resource}.P_Id` / `{Resource}.P_UpdateDate` / `{Resource}.P_UpdatedBy` の 3 種のみ、
   かつ更新日は **90 日以内**（自動で 90 日条件が付く。91 日以前を指定すると Result Code 124）。
 
+マスタ 4 種（Partition / User / Field / Option）は**この共通表と語彙が違う**。各リソースの
+「Read パラメータ」節を参照（[Partition][res-partition] / [User][res-user] / [Field][res-field] /
+[Option][res-option]）。
+
 ## Write パラメータ
 
 Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ**（必須）で、
@@ -99,6 +103,10 @@ Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルー
 - 月次クォータ（約 15 万アクセス/月）は契約オプション側の上限（ドキュメントではなく契約条件）。
 
 [result-codes]: result-codes.md
+[res-partition]: resources/partition.md
+[res-user]: resources/user.md
+[res-field]: resources/field.md
+[res-option]: resources/option.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
 [adr22]: ../../../adr/0022-master-read-query-surface.md

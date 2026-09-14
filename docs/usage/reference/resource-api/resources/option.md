@@ -8,6 +8,22 @@
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > マスタ系（読み取り専用）。下表は Read 記事の出力項目から抽出。
 
+## Read パラメータ
+
+出典: [Option - Read][src]（Input Variables）。
+
+| 必須 | パラメータ  | 内容                                                                    |
+| ---- | ----------- | ----------------------------------------------------------------------- |
+| ●    | `partition` | Partition Id                                                            |
+|      | `alias`     | 取得するアイテムの alias                                                |
+|      | `level`     | `-1` すべての階層（既定）／`0` `alias` の兄弟／`1` 以上 `alias` の子    |
+|      | `enabled`   | `-1` すべて（既定）／`0` 未使用／`1` 使用中                             |
+|      | `count`     | 取得する最大数。**省略時は全アイテム**（他の Read の「既定 10」と違う） |
+
+**`start` がありません**＝オフセット式のページングができません。応答のルート要素にも
+`Total` / `Count` / `Start` 属性が付かない、という非対称がここだけあります
+（[Resource API 概要][resource-api]）。
+
 ## 項目一覧
 
 | Alias             | Name | Field Type | 新規必須 | 更新必須 | 備考                                                                                                                                                                                                                                                                                                                                                                       |
@@ -21,3 +37,4 @@
 | Items             | —    | —          | —        | —        | ネストしたItemのコレクションです。                                                                                                                                                                                                                                                                                                                                         |
 
 [src]: https://hrbcapi.porters.jp/hc/ja/articles/115012160328-Option-Read
+[resource-api]: ../README.md
