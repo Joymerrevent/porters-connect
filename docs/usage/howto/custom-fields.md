@@ -142,6 +142,13 @@ const fields = defineFields({
   resume: (f) => ({ U_photo: f.image(), U_contact: f.link() }),
 });
 
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
+});
+
 // Read: 既定は FileName だけ。中身は image で明示的に取りに行きます。
 const r = await porters.tenant(1).resume.get(id, {
   image: { U_photo: ["FileName", "Content"] },

@@ -59,12 +59,18 @@ await porters.tenant(1).job.search();
 ```ts
 const sent: { method: string; url: string; body?: string }[] = [];
 
-const transport = createMockTransport((req) => {
-  sent.push({ method: req.method, url: req.url, body: req.body });
-  return `<Candidate><Item><Id>10003</Id><Code>0</Code></Item></Candidate>`;
+const porters = new PortersClient({
+  host: "test.invalid",
+  appId: "test",
+  appSecret: "test",
+  transport: createMockTransport((req) => {
+    sent.push({ method: req.method, url: req.url, body: req.body });
+    return `<Candidate><Item><Id>10003</Id><Code>0</Code></Item></Candidate>`;
+  }),
 });
 
-// … クライアントを作って create を呼んだあと
+await porters.tenant(1).candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+
 const last = sent.at(-1);
 console.log(new URL(last?.url ?? "").searchParams.get("partition")); // "1"
 console.log(last?.body?.includes("山田 太郎")); // true
@@ -78,10 +84,24 @@ console.log(last?.body?.includes("山田 太郎")); // true
 文字列の代わりに `{ status, body }` を返せば、HTTP エラーも作れます。
 
 ```ts
-const failing = createMockTransport(() => ({
-  status: 401,
-  body: `<Candidate><Code>402</Code></Candidate>`,
-}));
+const porters = new PortersClient({
+  host: "test.invalid",
+  appId: "test",
+  appSecret: "test",
+  transport: createMockTransport(() => ({
+    status: 401,
+    body: `<Candidate><Code>402</Code></Candidate>`,
+  })),
+});
+
+try {
+  await porters.tenant(1).candidate.search();
+} catch (err) {
+  if (err instanceof PortersError) {
+    console.log(err.constructor.name); // "PortersResourceError"
+    console.log(err.category, err.code, err.httpStatus); // "auth" 402 401
+  }
+}
 ```
 
 `PortersError` の系統と `category` の対応は[失敗の扱い][handle-failures]にあります。

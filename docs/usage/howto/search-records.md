@@ -25,7 +25,7 @@ const page = await t.candidate.search({
 for await (const c of t.candidate.searchAll({
   condition: { P_Name: { part: "山田" } },
 })) {
-  // …
+  console.log(c.P_Id, c.P_Name);
 }
 ```
 
