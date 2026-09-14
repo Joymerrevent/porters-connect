@@ -9,6 +9,27 @@
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > 固定項目のみ（カスタム項目なし）。
 
+## Read パラメータ
+
+出典: [Phase - Read][read]（Input Variables）。パラメータ同士は AND で結合されます。
+
+| 必須 | パラメータ                                | 内容                                                                                    |
+| ---- | ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| ●    | `partition`                               | Partition Id                                                                            |
+| ●    | `resource`                                | どのリソースのフェーズ履歴を読むか（値は [リソース一覧][resources-list] の `Value` 列） |
+|      | `resourceId`                              | 紐づくレコードの Id。**複数を or 検索するなら `condition` に `ResourceId`** を書く      |
+|      | `id`                                      | Phase の Id。複数の or 検索は同じく `condition` へ                                      |
+|      | `field`                                   | 省略時は主キーのみ                                                                      |
+|      | `condition` / `order` / `count` / `start` | 共通の Read パラメータと同じ                                                            |
+
+**どのリソースの履歴かは `condition` ではなく `resource` パラメータで決まります**
+（[Resource API 概要][resource-api] の共通表に無い、Phase だけの必須パラメータ）。
+
+## Write パラメータ
+
+`POST /v1/phase?partition=[value]`。`Id` / `Resource` / `ResourceId` は**ボディの必須項目**で、
+新規は `Id` に `-1` を入れます（下表の「新規必須」列。[write-format][write-format]）。
+
 ## 項目一覧
 
 | Alias                 | Name | Field Type         | 新規必須 | 更新必須 | 備考                                                                                                                     |
@@ -32,3 +53,7 @@
 | ResumeOwner           | —    | User               | ー       | ー       | ※Process/Sales のみにあります。 / フェーズ履歴に登録されているレジュメの所有者                                           |
 
 [src]: https://hrbcapi.porters.jp/hc/ja/articles/115008171728-Phase-Field-List
+[read]: https://hrbcapi.porters.jp/hc/ja/articles/115012161288
+[resource-api]: ../README.md
+[resources-list]: ../resources-list.md
+[write-format]: ../write-format.md

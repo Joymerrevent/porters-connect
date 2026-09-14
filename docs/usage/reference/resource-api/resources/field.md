@@ -8,6 +8,21 @@
 > 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
 > マスタ系（読み取り専用）。下表は Read 記事の出力項目から抽出。
 
+## Read パラメータ
+
+出典: [Field - Read][src]（Input Variables）。
+
+| 必須 | パラメータ  | 内容                                                                    |
+| ---- | ----------- | ----------------------------------------------------------------------- |
+| ●    | `partition` | Partition Id                                                            |
+| ●    | `resource`  | 対象リソースの種別（値は [リソース一覧][resources-list] の `Value` 列） |
+|      | `active`    | `-1` すべて（既定）／`0` 未使用の項目／`1` 使用中の項目                 |
+|      | `count`     | 1〜200。省略時 10                                                       |
+|      | `start`     | 0 以上。省略時 0                                                        |
+
+`field` / `condition` / `order` / `keywords` / `itemstate` は取りません（[Resource API 概要][resource-api]）。
+**Field Type が Link の項目を取るには `X-P-ConnectAPI-Version: 2` 以降**が必要です。
+
 ## 項目一覧
 
 | Alias                   | Name | Field Type | 新規必須 | 更新必須 | 備考                                                                                                                                               |
@@ -24,3 +39,5 @@
 | Field.P_ResourceType    | —    | —          | —        | —        | Resourceの値です。詳細は、Resource Listを参照してください。                                                                                        |
 
 [src]: https://hrbcapi.porters.jp/hc/ja/articles/115012160308-Field-Read
+[resource-api]: ../README.md
+[resources-list]: ../resources-list.md

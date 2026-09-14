@@ -16,16 +16,16 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 
 ## Read パラメータ（共通）
 
-| パラメータ  | 必須 | 内容                                                              |
-| ----------- | ---- | ----------------------------------------------------------------- |
-| `partition` | ●    | Partition Id（数値）。Partition Read で取得可能。                 |
-| `count`     |      | 取得件数 1〜200。**既定 10**。                                    |
-| `start`     |      | 取得開始インデックス（0 始まり）。                                |
-| `field`     |      | 出力項目。カンマ区切り。既定は主キー（例 `Person.P_Id`）。        |
-| `condition` |      | 検索条件。カンマ区切りは AND。                                    |
-| `keywords`  |      | キーワード検索。カンマ区切りは AND（OR 不可）。**100 文字まで**。 |
-| `order`     |      | 並び順。`Alias:asc` / `Alias:desc`。                              |
-| `itemstate` |      | `existing`（既定）/ `deleted` / `all`。削除済みデータの取得制御。 |
+| パラメータ  | 必須 | 内容                                                                                 |
+| ----------- | ---- | ------------------------------------------------------------------------------------ |
+| `partition` | ●    | Partition Id（数値）。Partition Read で取得可能。**Partition Read 自身は取らない**。 |
+| `count`     |      | 取得件数 1〜200。**既定 10**（Option Read だけは省略時に全件）。                     |
+| `start`     |      | 取得開始インデックス（0 始まり）。                                                   |
+| `field`     |      | 出力項目。カンマ区切り。既定は主キー（例 `Person.P_Id`）。                           |
+| `condition` |      | 検索条件。カンマ区切りは AND。                                                       |
+| `keywords`  |      | キーワード検索。カンマ区切りは AND（OR 不可）。**100 文字まで**。                    |
+| `order`     |      | 並び順。`Alias:asc` / `Alias:desc`。                                                 |
+| `itemstate` |      | `existing`（既定）/ `deleted` / `all`。削除済みデータの取得制御。                    |
 
 ### field の指定
 
@@ -50,6 +50,15 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 - `itemstate` が `deleted` / `all` の場合、condition に使えるのは
   `{Resource}.P_Id` / `{Resource}.P_UpdateDate` / `{Resource}.P_UpdatedBy` の 3 種のみ、
   かつ更新日は **90 日以内**（自動で 90 日条件が付く。91 日以前を指定すると Result Code 124）。
+
+マスタ 4 種（Partition / User / Field / Option）は**この共通表と語彙が違う**。各リソースの
+「Read パラメータ」節を参照（[Partition][res-partition] / [User][res-user] / [Field][res-field] /
+[Option][res-option]）。
+
+## Write パラメータ
+
+Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ**（必須）で、
+値は Read と同じ。項目の値は URL ではなくリクエストボディの XML で送る（[write-format][write-format]）。
 
 ## Read レスポンス XML
 
@@ -80,9 +89,10 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 
 ## Result Code（リソース系。認証エラーとは別）
 
-成功は HTTP 200 かつ `<Code>0`。エラーは HTTP 200 以外、または `<Code>` が 0 以外。
-コード一覧とリトライ方針は [result-codes][result-codes] に分離（認証 API の
-[認証エラー][errors] と対称。番号体系が異なるので混同しない）。
+Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルートに `<Code>` を持たず、
+`<Item>` ごとの `<Code>` で返る**（[write-format][write-format]）。コード一覧・出る場所・
+リトライ方針は [result-codes][result-codes] に分離（認証 API の [認証エラー][errors] と対称。
+番号体系が異なるので混同しない）。
 
 ## 各種制限（最新: 2026-04-28）
 
@@ -93,6 +103,10 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 - 月次クォータ（約 15 万アクセス/月）は契約オプション側の上限（ドキュメントではなく契約条件）。
 
 [result-codes]: result-codes.md
+[res-partition]: resources/partition.md
+[res-user]: resources/user.md
+[res-field]: resources/field.md
+[res-option]: resources/option.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
 [adr22]: ../../../adr/0022-master-read-query-surface.md
