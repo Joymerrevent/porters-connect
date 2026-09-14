@@ -5,8 +5,7 @@ PORTERS のテナントは、標準項目（`P_`）に加えて**テナント固
 
 カスタム項目は**テナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。
 代わりに、**利用側が `defineFields` で宣言する**と、その項目が読み書きの型に現れるようになります
-（[ADR-0004][adr4] のハイブリッド方式／宣言 DSL（`defineFields` の書き方）の詳細設計は
-[ADR-0023][adr23]）。
+（[ADR-0004][adr4] のハイブリッド方式／`defineFields` の詳細設計は [ADR-0023][adr23]）。
 
 ## 3 行で
 
@@ -518,7 +517,7 @@ const score = async () => {
 
 ## 関連
 
-- 決定: [ADR-0023][adr23]（宣言 DSL の詳細設計）／[ADR-0004][adr4]（型モデル）
+- 決定: [ADR-0023][adr23]（`defineFields` の詳細設計）／[ADR-0004][adr4]（型モデル）
 - 型の由来: [ADR-0016][adr16]（Data Type の粒度）／[ADR-0017][adr17]（Option は常に `string[]`）
 - 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
