@@ -40,7 +40,7 @@
   - ※ これは理解のための**参考値**。コード・設定に**ハードコードしない**（CLAUDE.md「ホスト名は非公開」）。実値は常に `PORTERS_HOST` 経由。
 - 認証コードの有効期限は **30 秒**。Access Token **約30分**、Refresh Token **約2時間**。
 - **削除 API は無い**が、`itemstate=deleted|all` で**削除済みデータの読み取りは可能**（90日以内の制約あり）。
-- **エラーコードが 2 系統**ある（認証系 `<Authentication><Error>` → [auth-errors] ／ リソース系 `<Resource><Code>` → [rapi-rc]）。番号が重複しても意味が違う。
+- **エラーコードが 2 系統**ある（認証系 `<Authentication><Error>` → [auth-errors] ／ リソース系 `<Code>` → [rapi-rc]）。番号が重複しても意味が違う。リソース系は **Read がルート直下、Write は `<Item>` ごと**と出る場所が違う。
 - 1 リクエスト最大 **200 レコード**、1 分あたり Read **2000** / Write **500**、リクエスト長 **約15000文字**（将来 16KB を検討中・未確定）。
   - ※ `SPEC_v1.md` の「32KB」は旧情報。最新は約15000文字。
 - **Field Alias の接頭辞はリソース名と一致しないことがある**（例: Candidate の項目は `Person.P_*`）。

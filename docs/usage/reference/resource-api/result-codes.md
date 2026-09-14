@@ -3,10 +3,19 @@
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008171708-Result-Code-List>（updated_at 2026-04-28、取得 2026-06-12）。
 全体像は [Resource API 概要][readme]。
 
-Resource API（Read / Write）のエラーは、ルート要素 `<{Resource}>` の `<Code>` に出る。
-**認証 API のエラー（[認証エラー][errors]）とは番号体系が異なる**ので混同しない（番号が重複しても意味が違う）。
+下の番号は Resource API（Read / Write）のもので、**認証 API のエラー（[認証エラー][errors]）とは
+番号体系が異なる**ので混同しない（番号が重複しても意味が違う）。
 
-成功は HTTP 200 かつ `<Code>0`。エラーは HTTP 200 以外、または `<Code>` が 0 以外。
+**`<Code>` がどこに出るかは Read と Write で違う**（[write-format][write-format] のレスポンス節）。
+
+|           | 成功                                                                  | エラー                                                   |
+| --------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Read**  | HTTP 200 ＋ ルート `<{Resource}>` 直下の `<Code>0`                    | HTTP 200 以外、またはルートの `<Code>` が 0 以外         |
+| **Write** | HTTP 200 ＋ **`<Item>` ごと**の `<Code>0`（ルートに `<Code>` は無い） | HTTP 200 以外、または該当 `<Item>` の `<Code>` が 0 以外 |
+
+**Write がリクエストごと拒否されたときの形は出典に書かれていない。** ライブラリはルートの
+`<Code>` があればそれを読む（[ADR-0045][adr45]）が、その形で返るかどうかは実機で未確認
+（[live-verification][lv] LV-11）。
 
 | Code      | 意味                                                                | リトライ方針（本ライブラリ案） |
 | --------- | ------------------------------------------------------------------- | ------------------------------ |
@@ -43,5 +52,8 @@ Resource API（Read / Write）のエラーは、ルート要素 `<{Resource}>` �
 利用者向けの症状別対処は [エラーハンドリング ガイド][guide] を参照。
 
 [readme]: README.md
+[write-format]: write-format.md
+[adr45]: ../../../adr/0045-write-response-root-code.md
+[lv]: ../../../live-verification.md
 [errors]: ../authentication-api/errors.md
 [guide]: ../../howto/handle-failures.md

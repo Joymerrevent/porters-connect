@@ -80,9 +80,10 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 
 ## Result Code（リソース系。認証エラーとは別）
 
-成功は HTTP 200 かつ `<Code>0`。エラーは HTTP 200 以外、または `<Code>` が 0 以外。
-コード一覧とリトライ方針は [result-codes][result-codes] に分離（認証 API の
-[認証エラー][errors] と対称。番号体系が異なるので混同しない）。
+Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルートに `<Code>` を持たず、
+`<Item>` ごとの `<Code>` で返る**（[write-format][write-format]）。コード一覧・出る場所・
+リトライ方針は [result-codes][result-codes] に分離（認証 API の [認証エラー][errors] と対称。
+番号体系が異なるので混同しない）。
 
 ## 各種制限（最新: 2026-04-28）
 
