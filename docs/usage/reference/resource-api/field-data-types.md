@@ -52,12 +52,22 @@
 | User               | `{Resource}.P_RegisteredBy` / `P_UpdatedBy`      | 登録者 / 更新者。Write 省略時はアクセス中のアプリユーザーを自動割当     |
 | User               | `Activity.P_EventParticipants`                   | アクティビティ参加者                                                    |
 
-## 設計メモ
+## 設計メモ（ライブラリ側の決定）
 
-- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。JST 運用は境界で +9h 補正（→ 日時の ADR）。
-- **参照・User・Link は Write 時 ID のみ**。読み取りは入れ子展開。型表現を Read/Write で分けるか検討（→ 型設計の ADR-0004）。
-- **Link は version 2 必須**。既定で `X-P-ConnectAPI-Version: 2` を送る方針（→ HTTP トランスポートの ADR）。
-- `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → 入力型から除外できる。
+上の事実に対して、このライブラリがどう決めたか。**いずれも決着済み**です。
+
+- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。ライブラリは境界で
+  **ISO 8601（UTC）に正規化**し、**JST など業務タイムゾーンへの変換はしない**（利用側の責務。
+  [要件 R-10][prd]／[ADR-0011][adr11]）。
+- **参照・User・Link は Write 時 ID のみ**、読み取りは入れ子展開。**型は Read / Write で分けた**
+  （`Candidate` と `CandidateUpdateInput`。[ADR-0016][adr16]／[ADR-0019][adr19]）。
+- **Link は version 2 必須**。`X-P-ConnectAPI-Version: 2` を**既定で送る**（[ADR-0042][adr42]）。
+- `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → **入力型から除外済み**（[ADR-0019][adr19]）。
 
 [write-format-md]: write-format.md
+[prd]: ../../../design/requirements.md
+[adr11]: ../../../adr/0011-xml-parse-serialize.md
+[adr16]: ../../../adr/0016-field-type-granularity.md
+[adr19]: ../../../adr/0019-static-resource-types.md
+[adr42]: ../../../adr/0042-supported-version-policy.md
 [resource-api-md]: README.md
