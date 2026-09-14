@@ -45,6 +45,8 @@
   ほぼ常に `user_r` / `option_r` を含む（例: Process Read =
   `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
+- **Write は自リソースの `_w` だけ**で足りる（各 Write 記事が挙げるスコープは 1 つ）。
+  参照先のスコープまで要るのは Read 側だけ、という非対称になっている。
 - **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
