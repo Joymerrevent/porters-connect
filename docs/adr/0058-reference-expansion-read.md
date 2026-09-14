@@ -184,6 +184,7 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
   decode をタグ非依存に書けば実装のブロッカーにはならない。`VERIFY(live)` ＋ LV で追う。
 - Neutral: 参照先 5 種のうち **Recruiter が未実装**（Job / Process の `P_Recruiter`）。
   `expand` の対象から外して始めるか、Recruiter を先に実装するかは実施時に決める。
+  **その後**: Recruiter は [ADR-0060][0060] D1 で実装され、`P_Recruiter` も展開できる。
 - semver: **minor**（`expand` は追加。raw `field` の展開を弾く分だけ挙動変更。0.x では破壊的変更も minor ＝ [ADR-0055][adr55] の前例）。
 
 ## Pros and Cons of the Options
@@ -271,3 +272,4 @@ field=Job.P_Id,Job.P_Position,Job.P_Client(Client.P_Id,Client.P_Name)
 [adr55]: 0055-partition-binding-guard.md
 [adr56]: 0056-deleted-flag-typing.md
 [adr59]: 0059-read-field-bare-alias.md
+[0060]: 0060-full-resource-coverage-direction.md

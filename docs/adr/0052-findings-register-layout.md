@@ -188,6 +188,11 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
 
 ## More Information
 
+- **未実装**: 決定 5 の検査（`pnpm check:findings` ／ `scripts/check-findings-index.mjs`）は入っていない
+  （2026-09-15 時点）。台帳の分割（`docs/reviews/rv/NNNN-*.md`・44 件）とメタ行の書式は実装済みで、
+  index との対応は**人が見ている**状態。決定そのものは有効なので、やるなら
+  [`scripts/check-release-invariants.mjs`][ci] と同じ形で足す。
+
 - 現行の運用と様式: [SKILL.md][skill]／[report-format][fmt]。**両方とも本決定に合わせて更新が要る**（実施時の合意事項 8）。
 - 検査の前例: [`scripts/check-release-invariants.mjs`][ci]（`pnpm check:release`・CI の常時実行ステップ・
   同ディレクトリにテスト）。本決定の `check:findings` はこれと同じ形に揃える。
