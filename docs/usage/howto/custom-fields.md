@@ -142,8 +142,8 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 | `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） | `{ FileName, ContentType, Content }`（3 つとも必須） |
 | `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        | `number`（参照先の ID だけ）                         |
 
-**`User` / `Link` / `Image` は読み書きが対称ではありません**。読み取りは入れ子で返る一方、
-書き込みは `User` / `Link` が ID ひとつ、`Image` が 3 要素そろって、という形です
+**`User` / `Link` / `Image` は読み書きが対称ではありません**。読み取りは入れ子で返りますが、
+書き込みは `User` / `Link` が ID ひとつだけ、`Image` は 3 要素そろって必要です
 （日時は読み書きとも ISO 8601 で、PORTERS 形式との変換はライブラリがやります）。
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
