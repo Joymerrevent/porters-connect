@@ -331,14 +331,21 @@ const t = clientFor(myFields).tenant(partition);
 そのとき型をどう書くかで、**カスタム項目が残るかどうか**が変わります。
 
 ```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
 import type {
   DeclaredCatalogs,
-  PortersClient,
   TenantScope,
 } from "@joymerrevent/porters-connect";
 
 const fields = defineFields({
   candidate: (f) => ({ U_score: f.number() }),
+});
+
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
 });
 
 // (1) 自分の宣言で受ける — カスタム項目が型付きのまま
@@ -348,8 +355,17 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
 };
 
 // (2) どの宣言のクライアントでも受ける
-const listPartitions = (porters: PortersClient<DeclaredCatalogs>) =>
-  porters.partition.search();
+const listPartitions = (client: PortersClient<DeclaredCatalogs>) =>
+  client.partition.search();
+
+// 呼ぶ側
+const t = porters.tenant(123);
+for (const c of await topScorers(t)) {
+  console.log(c.P_Name, c.U_score); // string | null | undefined / number | null | undefined
+}
+
+const partitions = await listPartitions(porters);
+console.log(partitions.items.map((p) => p.P_Name));
 ```
 
 **(2) はカスタム項目が返り値の型に出ません。** `DeclaredCatalogs` は「何か宣言されているかも
