@@ -43,6 +43,7 @@ for await (const c of t.candidate.searchAll({
 
 alias は **`condition` / `order` と同じ素の名前**（接頭辞なし）で書きます。
 接頭辞はリソースごとの定数なので**ライブラリが付けます**（[ADR-0059][adr59]）。
+語彙が同じなのは**カタログ済みの alias** の話で、未宣言のカスタム項目だけは `field` 専用です（後述）。
 
 ```ts
 await t.candidate.search({ field: ["P_Id", "P_Name"] });
@@ -66,6 +67,10 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（�
 綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
 型で受けることでそこを手前に引き上げています。未宣言のカスタム項目は `U_` 以降の綴りまでは検査できないので、
 よく使うものは [`defineFields`][custom-fields] で宣言してください（宣言すれば綴りも検査されます）。
+
+**未宣言のカスタム項目を書けるのは `field` だけです。** `condition` / `order` はカタログ済みの
+alias しか受けないので（型に出ません）、絞り込み・並べ替えに使う項目は
+[`defineFields`][custom-fields] で宣言してください。宣言すれば 3 つとも同じ語彙で書けます。
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
 > 型が `値 | null | undefined` になっているのはこのためです。

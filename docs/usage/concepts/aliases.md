@@ -19,7 +19,8 @@ PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで�
 （[ADR-0004][adr4]）。**宣言したものがカタログに加わる**、という関係です。
 
 > **`U_` / `A_` は宣言しなくても動きます。** ただし型が付かず、`field` を明示しないと
-> **要求すらされません**。詳しくは[カスタム項目][custom-fields]にあります。
+> **要求すらされません**。さらに未宣言のうちは `field` 専用で、`condition` / `order` と
+> 書き込みには書けません。詳しくは[カスタム項目][custom-fields]にあります。
 
 ## 接頭辞は書かない
 
@@ -46,7 +47,8 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 | Attachment | **なし**     | `FileName` のように裸        |
 | その他     | リソース名   | `Job.P_Position` など        |
 
-`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます。
+`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます
+（カタログ済みの alias に限ります。未宣言のカスタム項目は `field` だけ）。
 
 ## Data Type が「値の形」を決める
 
