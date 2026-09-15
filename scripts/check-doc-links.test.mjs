@@ -1,0 +1,267 @@
+// リンク検査（`check-doc-links.mjs`）の受理/棄却をテストとして残す（RV-41）。
+//
+// なぜ要るか: この検査の形（「inline は `./` を要求する」「フェンスの中は見ない」など）は
+// **実験して決めた**もので、理由は台帳に文章で残っているが**確かめる 1 行**が残っていなかった。
+// ハーネスを `tmp/` に置くと gitignore で消え、次に触る人が同じ実験をやり直すことになる
+// （`.claude/skills/change-review/references/verification-recipes.md` §1）。
+//
+// 置き場所: **スクリプトの隣**（`docs/design/basic-design.md` §2「UT は co-located」と同じ規律）。
+// `scripts/` に初めて置くテストなので、以降ここに増やす。
+//
+// 検証の形: 一時 git リポジトリに md を書いて**スクリプトを実際に起動する**。
+// 実在判定が `git ls-files` に依存する（＝OS の大文字小文字を避けるための設計）ので、
+// 関数を切り出して呼ぶ形では**本番と同じ形にならない**。終了コードと出力で見る。
+
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { afterEach, describe, expect, it } from "vitest";
+
+const SCRIPT = fileURLToPath(new URL("check-doc-links.mjs", import.meta.url));
+
+// スクリプトは「必ずあるはずのファイル」が対象に入らないと空振りとして落ちる。
+// どのケースでも土台として置く（空振りそのものを見るケースだけ null で落とす）。
+const SENTINELS = {
+  "README.md": "# README\n",
+  "docs/usage/index.md": "# Usage\n",
+};
+
+const tempDirs = [];
+afterEach(() => {
+  let dir;
+  while ((dir = tempDirs.pop()) !== undefined)
+    rmSync(dir, { recursive: true, force: true });
+});
+
+/**
+ * 一時 git リポジトリに `files`（パス → 中身。`null` は置かない）を書き、
+ * そこを cwd にして検査を起動する。`staged` に挙げたパスは `git add` したうえで
+ * 作業ツリーから消す（索引にあるのに読めない状態の再現）。
+ */
+const run = (files, { staged = [] } = {}) => {
+  const dir = mkdtempSync(join(tmpdir(), "check-doc-links-"));
+  tempDirs.push(dir);
+  execFileSync("git", ["init", "-q"], { cwd: dir });
+  for (const [path, body] of Object.entries({ ...SENTINELS, ...files })) {
+    if (body === null) continue;
+    const full = join(dir, path);
+    mkdirSync(dirname(full), { recursive: true });
+    writeFileSync(full, body);
+  }
+  for (const path of staged) {
+    execFileSync("git", ["add", "--", path], { cwd: dir });
+    rmSync(join(dir, path));
+  }
+  try {
+    const out = execFileSync(process.execPath, [SCRIPT], {
+      cwd: dir,
+      encoding: "utf8",
+    });
+    return { code: 0, out };
+  } catch (e) {
+    return { code: e.status, out: `${e.stdout}${e.stderr}` };
+  }
+};
+
+/** 受理（緑）だったこと。落ちたときは出力ごと見せる（原因の特定に往復を要らせない）。 */
+const expectAccepted = (result) => {
+  expect(result.out).toContain("リンク先はすべて実在します");
+  expect(result.code).toBe(0);
+};
+
+/** 棄却（赤）で、`報告` の文字列が出力に含まれること。 */
+const expectRejected = (result, reported) => {
+  expect(result.code).toBe(1);
+  expect(result.out).toContain(reported);
+};
+
+describe("参照スタイルの定義", () => {
+  it("`./` 付きの相対パスを見る", () => {
+    expectAccepted(run({ "a.md": "[x]: ./b.md\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x]: ./gone.md\n" }), "a.md:1 -> ./gone.md");
+  });
+
+  it("`./` を付けない相対パスも見る", () => {
+    expectAccepted(run({ "a.md": "[x]: b.md\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x]: gone.md\n" }), "a.md:1 -> gone.md");
+  });
+
+  it("親ディレクトリを辿る形を見る", () => {
+    expectAccepted(run({ "docs/a/x.md": "[x]: ../usage/index.md\n" }));
+    expectRejected(
+      run({ "docs/a/x.md": "[x]: ../usage/gone.md\n" }),
+      "docs/a/x.md:1 -> ../usage/gone.md",
+    );
+  });
+
+  it("`<…>` 囲みの宛先を見る", () => {
+    expectAccepted(run({ "a.md": "[x]: <./b.md>\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x]: <./gone.md>\n" }), "-> ./gone.md");
+  });
+
+  it("末尾のタイトル付き（3 形すべて）を見る", () => {
+    for (const title of ['"T"', "'T'", "(T)"]) {
+      expectAccepted(
+        run({ "a.md": `[x]: ./b.md ${title}\n`, "b.md": "# B\n" }),
+      );
+      expectRejected(run({ "a.md": `[x]: ./gone.md ${title}\n` }), "./gone.md");
+    }
+  });
+
+  it("3 字までの字下げを見る（4 字はコードブロック＝見ない）", () => {
+    expectRejected(run({ "a.md": "   [x]: ./gone.md\n" }), "./gone.md");
+    expectAccepted(run({ "a.md": "    [x]: ./gone.md\n" }));
+  });
+
+  it("ディレクトリを指す形を受理する", () => {
+    expectAccepted(run({ "a.md": "[x]: ./docs/usage\n" }));
+    expectAccepted(run({ "a.md": "[x]: ./docs/usage/\n" }));
+    expectRejected(run({ "a.md": "[x]: ./docs/gone/\n" }), "./docs/gone/");
+  });
+
+  it("外部・プロトコル相対は対象外", () => {
+    expectAccepted(
+      run({
+        "a.md": [
+          "[h]: https://example.com/gone.md",
+          "[m]: mailto:x@example.com",
+          "[p]: //example.com/gone.md",
+          "",
+        ].join("\n"),
+      }),
+    );
+  });
+
+  it("宛先が 1 語なら散文でも宛先として扱う（CommonMark の定義そのもの）", () => {
+    // `[注]: これは説明です` は CommonMark では**リンク参照定義**（宛先=「これは説明です」）。
+    // 報告されるのが正しい。空白を含む散文は定義として成立しないので拾わない。
+    expectRejected(run({ "a.md": "[注]: これは説明です\n" }), "これは説明です");
+    expectAccepted(run({ "a.md": "[注]: これは 説明です\n" }));
+  });
+
+  it("リポジトリ外を許した接頭辞は数えるだけ", () => {
+    // 解決後のパスで判定するので、リポジトリ内から `tmp/` に落ちる形で置く。
+    const r = run({ "docs/a.md": "[x]: ../tmp/porters-docs/foo.md\n" });
+    expectAccepted(r);
+    expect(r.out).toContain("リンク先はすべて実在します");
+    expect(r.out).toContain("対象外");
+  });
+});
+
+describe("inline リンク", () => {
+  it("`./` 付きを見る", () => {
+    expectAccepted(run({ "a.md": "[x](./b.md)\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x](./gone.md)\n" }), "a.md:1 -> ./gone.md");
+  });
+
+  it("`./` を付けない形は見ない（RV-38）", () => {
+    // 広げると「リンクではない散文」を拾うため、今は取りこぼす側を選んでいる。
+    expectAccepted(run({ "a.md": "[x](gone.md)\n" }));
+  });
+
+  it("タイトル付きは見ない（RV-38）", () => {
+    expectAccepted(run({ "a.md": '[x](./gone.md "T")\n' }));
+  });
+
+  it("リンクではない散文を拾わない", () => {
+    expectAccepted(
+      run({
+        "a.md": [
+          "見出し `Field Alias` の説明: `condition`",
+          "文章の途中に ](…) が出てくる形",
+          "項目一覧 ]([Field Alias],[Field Alias]...) の形",
+          "",
+        ].join("\n"),
+      }),
+    );
+  });
+
+  it("コードスパンの中を拾ってしまう（RV-40）", () => {
+    // フェイルクローズ側の誤検出。説明のための引用が書けない。
+    expectRejected(
+      run({ "a.md": "説明: `[x](./gone.md)` のように書きます。\n" }),
+      "./gone.md",
+    );
+  });
+});
+
+describe("コードフェンス", () => {
+  it("フェンスの中は見ない", () => {
+    expectAccepted(
+      run({ "a.md": "```md\n[x]: ./gone.md\n[y](./gone.md)\n```\n" }),
+    );
+    expectAccepted(run({ "a.md": "~~~md\n[x]: ./gone.md\n~~~\n" }));
+  });
+
+  it("入れ子のフェンス（```` で ``` を囲む）で開閉が逆転しない", () => {
+    expectRejected(
+      run({
+        "a.md": [
+          "````md",
+          "```",
+          "[x]: ./inner.md",
+          "```",
+          "````",
+          "[y]: ./gone.md",
+          "",
+        ].join("\n"),
+      }),
+      "a.md:6 -> ./gone.md",
+    );
+  });
+
+  it("閉じていないフェンスを開始行つきで報告する", () => {
+    const r = run({ "a.md": "本文\n```md\n[x]: ./gone.md\n" });
+    expectRejected(r, "コードフェンスが閉じていません");
+    expect(r.out).toContain("a.md:2");
+  });
+});
+
+describe("アンカー", () => {
+  it("ファイル部分だけを見る（RV-39）", () => {
+    expectAccepted(
+      run({ "a.md": "[x]: ./b.md#gone\n", "b.md": "# B\n" }),
+      // 見出しが無くても通る。
+    );
+    expectRejected(run({ "a.md": "[x]: ./gone.md#B\n" }), "./gone.md#B");
+  });
+
+  it("同一ページ内アンカーは対象外（RV-39）", () => {
+    expectAccepted(run({ "a.md": "[x]: #gone\n" }));
+  });
+});
+
+describe("検査そのものの健全性", () => {
+  it("必ずあるはずのファイルが対象に無ければ空振りとして落ちる", () => {
+    const r = run({ "docs/usage/index.md": null });
+    expectRejected(r, "検査が空振りしています");
+    expect(r.out).toContain("docs/usage/index.md");
+  });
+
+  it("索引にあるのに読めないファイルを報告する（`git rm` 忘れ）", () => {
+    const r = run({ "a.md": "# A\n" }, { staged: ["a.md"] });
+    expectRejected(r, "索引にあるのに読めないファイルがあります");
+    expect(r.out).toContain("a.md");
+  });
+
+  it("3 種類の異常を 1 回の実行で全部出す", () => {
+    const r = run(
+      { "a.md": "```md\n", "b.md": "[x]: ./gone.md\n", "c.md": "# C\n" },
+      { staged: ["c.md"] },
+    );
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("索引にあるのに読めないファイルがあります");
+    expect(r.out).toContain("コードフェンスが閉じていません");
+    expect(r.out).toContain("リンク先が見つかりません");
+  });
+
+  it("除外した件数を赤いときも出す", () => {
+    const r = run({
+      "docs/a.md": "[x]: ../tmp/porters-docs/foo.md\n[y]: ./gone.md\n",
+    });
+    expectRejected(r, "リンク先が見つかりません");
+    expect(r.out).toContain("対象外");
+  });
+});
