@@ -8,7 +8,8 @@
 //
 // 何を見るか: 参照スタイルの定義（`[label]: path`）と inline の相対リンク（`](./path)`）。
 // 外部 URL とページ内アンカー（`#…`）は対象外。アンカー付きのパスはファイル部分だけ見る。
-// コードフェンスの中は**説明のための例**なので見ない。
+// コードフェンスの中と**インラインのコードスパン**は**説明のための例**なので見ない
+// （リンクの書き方を説明する文章が、説明しただけで壊れリンクとして報告されるのを防ぐ）。
 //
 // 実在判定は **git の索引**（追跡済み ＋ 未追跡）に聞く。ファイルシステムに聞くと
 // macOS（大文字小文字を区別しない）では `../INDEX.md` が通り、CI の ext4 では落ちる
@@ -73,6 +74,38 @@ for (const p of allPaths) {
 const existsInRepo = (path) => fileSet.has(path) || dirSet.has(path);
 
 /**
+ * インラインのコードスパン（バッククォート 1 組）を空白に潰す。
+ *
+ * なぜ要るか: リンクの**書き方を説明する文章**（`` `[x](./gone.md)` `` のような引用）が、
+ * 説明しただけで壊れリンクとして報告される。フェイルクローズなので見逃しではないが、
+ * 書き手はフェンスへ逃がすか表現を変えることになり、**引用が書けない**（RV-40）。
+ *
+ * 対応付けはフェンスと同じ考え方（開いたのと**同じ長さ**のバッククォート列で閉じる）。
+ * 中身は**空白に置き換える**＝列の位置を保つので、置換で行の構造（行頭の字下げや
+ * 定義の `[label]:`）が動かない。閉じが無ければコードスパンではないのでそのまま残す。
+ */
+const maskCodeSpans = (line) => {
+  const runs = [...line.matchAll(/`+/g)].map((m) => ({
+    at: m.index,
+    len: m[0].length,
+  }));
+  const chars = [...line];
+  let i = 0;
+  while (i < runs.length) {
+    const open = runs[i];
+    const closeAt = runs.findIndex((r, j) => j > i && r.len === open.len);
+    if (closeAt === -1) {
+      i += 1;
+      continue;
+    }
+    const close = runs[closeAt];
+    for (let p = open.at; p < close.at + close.len; p += 1) chars[p] = " ";
+    i = closeAt + 1;
+  }
+  return chars.join("");
+};
+
+/**
  * 1 ファイル分のリンク先（行番号つき）と、フェンスが閉じていなければその開始行。
  *
  * フェンスの開閉は**ファイル全体にまたがる状態**なので、閉じ忘れると**それ以降のリンクが
@@ -97,6 +130,8 @@ const linksOf = (file) => {
         return;
       }
       if (fence !== null) return;
+      // 以降はコードスパンを潰した行で見る（生の行はフェンス判定にだけ使う）。
+      const text = maskCodeSpans(line);
       const push = (target) => out.push({ target, line: i + 1 });
       // 参照スタイルの定義: `[label]: target`。CommonMark は 3 個までの字下げ、
       // `<…>` 囲み、末尾のタイトル（`"…"` / `'…'` / `(…)`）を許す。狭く書くと**通るのに
@@ -104,7 +139,7 @@ const linksOf = (file) => {
       // （何でも許すと `[注]: これは説明です` のような散文を拾って誤検出になる）。
       const def =
         /^\s{0,3}\[[^\]]+\]:\s*(<[^>]*>|\S+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*$/.exec(
-          line,
+          text,
         );
       if (def) push(def[1].replace(/^<|>$/g, ""));
       // inline の相対リンク: `](./x.md)` / `](../x.md)`
@@ -113,7 +148,7 @@ const linksOf = (file) => {
       // inline リンク自体は markdownlint の MD054 が禁止しているので、取りこぼしても
       // 無検査にはならない（.changeset / CHANGELOG.md は MD054 の対象外だが、
       // そこに書かれる相対リンクは実測 0 件）。
-      for (const m of line.matchAll(/\]\((\.{1,2}\/[^)\s]+)\)/g)) push(m[1]);
+      for (const m of text.matchAll(/\]\((\.{1,2}\/[^)\s]+)\)/g)) push(m[1]);
     });
   return { links: out, unclosedFenceAt: fence === null ? 0 : fence.line };
 };
