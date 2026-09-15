@@ -122,6 +122,19 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
     expect(() => defineFields(bad)).toThrow(PortersConfigError);
   });
 
+  it("skips a resource key whose declaration is undefined", () => {
+    // Callers build declarations conditionally (`job: wantJob ? decl : undefined`). The key is
+    // then present with no value, and treating that as a declaration would put an empty catalog
+    // on the client — every custom field of that resource would silently stop resolving.
+    const fields = defineFields({
+      candidate: (f) => ({ U_score: f.number() }),
+      job: undefined,
+    });
+
+    expect(Object.keys(fields)).toEqual(["candidate"]);
+    expect(fields.candidate).toEqual({ U_score: "Number" });
+  });
+
   it("uses the config error category", () => {
     try {
       defineFields({ candidate: (f) => ({ bad: f.number() }) });

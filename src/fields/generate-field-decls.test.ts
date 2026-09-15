@@ -201,6 +201,25 @@ describe("generateFieldDecls", () => {
       );
     });
 
+    // Regenerating has to produce the same text (that is why declarations are sorted), so the
+    // comments follow the same rule — otherwise Field Read's order decides the diff.
+    it("orders the comments by alias, not by the order Field Read returned them", async () => {
+      const source = sourceOf({
+        job: [
+          { P_Alias: "Job.U_zulu", P_Type: 99 },
+          { P_Alias: "Job.U_alpha", P_Type: 16 },
+          { P_Alias: "Job.U_mike", P_Type: 11 },
+        ],
+      });
+
+      const src = await generateFieldDecls(source, ["job"]);
+      const commented = [...src.matchAll(/^ {4}\/\/ (U_[A-Za-z0-9_]+):/gm)].map(
+        (m) => m[1],
+      );
+
+      expect(commented).toEqual(["U_alpha", "U_mike", "U_zulu"]);
+    });
+
     it("still uses the parameterless form when only comments remain", async () => {
       const source = sourceOf({ job: [{ P_Alias: "Job.U_new", P_Type: 99 }] });
 
