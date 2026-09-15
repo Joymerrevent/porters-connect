@@ -188,10 +188,11 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
 
 ## More Information
 
-- **未実装**: 決定 5 の検査（`pnpm check:findings` ／ `scripts/check-findings-index.mjs`）は入っていない
-  （2026-09-15 時点）。台帳の分割（`docs/reviews/rv/NNNN-*.md`・44 件）とメタ行の書式は実装済みで、
-  index との対応は**人が見ている**状態。決定そのものは有効なので、やるなら
-  [`scripts/check-release-invariants.mjs`][ci] と同じ形で足す。
+- **その後**: 決定 5 の検査は、[ADR-0053][0053] で ADR 索引の検査と**1 本に統合**された。
+  名前は `pnpm check:findings` / `scripts/check-findings-index.mjs` ではなく
+  **`pnpm check:index` / `scripts/check-doc-index.mjs`** で、その `TARGETS` に `findings` として
+  載っている。検査の中身（(a) 1 対 1・(b) 重要度 / 観点 / 状態の一致・(c) 状態の語彙）と
+  CI の置き場所（常時実行ブロック）は決定どおり。
 
 - 現行の運用と様式: [SKILL.md][skill]／[report-format][fmt]。**両方とも本決定に合わせて更新が要る**（実施時の合意事項 8）。
 - 検査の前例: [`scripts/check-release-invariants.mjs`][ci]（`pnpm check:release`・CI の常時実行ステップ・
@@ -215,3 +216,4 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
 [skill]: ../../.claude/skills/project-review/SKILL.md
 [lv]: ../live-verification.md
 [rm]: ../roadmap.md
+[0053]: 0053-adr-index-split.md
