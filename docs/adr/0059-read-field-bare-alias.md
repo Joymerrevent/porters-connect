@@ -52,7 +52,8 @@ Recruiter.U_[Name]  （Recruiter - Field List）
 つまり `field` エントリの外側は**そのリソースの接頭辞に必ず一致する**。
 
 さらに **Attachment は接頭辞を持たず**（`FileName` / `ContentType` … — [ADR-0018][adr18]、`attachment.ts:81` は既に bare）、
-**Phase も持たない**（`Id` / `Resource` / `ResourceId` — 未実装）。接頭辞付きは全体の共通形ですらない。
+**Phase も持たない**（`Id` / `Resource` / `ResourceId` — 起票時は未実装。**その後** [ADR-0061][adr61] で
+接頭辞なしのまま実装された）。接頭辞付きは全体の共通形ですらない。
 
 ### 何が起きているか
 
@@ -245,3 +246,4 @@ await t.job.search({ field: ["Job.P_Client(Client.P_Id)"] }); // ← コンパ�
 [adr55]: 0055-partition-binding-guard.md
 [adr58]: 0058-reference-expansion-read.md
 [0074]: 0074-custom-field-declaration-required.md
+[adr61]: 0061-phase-resource-surface.md

@@ -64,7 +64,8 @@
 | Process  | `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` | Client / Recruiter / Job / Candidate / Resume |
 | Resume   | `P_Candidate`                                                     | Candidate                                     |
 
-参照先 5 種のうち **Recruiter は未実装リソース**（[2026-08-16 の棚卸し][run816] (a) 参照）。
+参照先 5 種のうち **Recruiter は未実装リソース**（[2026-08-16 の棚卸し][run816] (a) 参照。
+**その後** [ADR-0060][0060] D1 で実装され、いまは `P_Recruiter` も展開できる）。
 また **Candidate の alias 接頭辞は `Person`**（`candidate.ts:64`）で、Field Type 記事も
 「Write の場合、`Person.P_Id` の値のみを指定することができます」と書く。
 **`{参照先リソース名}.{alias}` という素朴な組み立ては Candidate で外れる**。
