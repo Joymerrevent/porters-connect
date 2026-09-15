@@ -1,12 +1,13 @@
 # 76. Phase の Read クエリから `keywords` / `itemstate` を外す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-15
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [エンドポイント × 機能マトリクス][coverage]（V1）の表 B で見つかったずれ（[LV-25][lv]）の決着。
-> **出典が挙げていないパラメータを、ライブラリが送れてしまう**という形。起票のみ（`proposed`）。
-> 実装は accept 後・別 PR。
+> **出典が挙げていないパラメータを、ライブラリが送れてしまう**という形。
+>
+> **decider が案A を選択し `accepted`（2026-09-15）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -76,7 +77,7 @@ t.phase.of("client").search({ itemstate: "all", condition: { Id: { eq: 1 } } })
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案A**。
+採用: **案A**（型から外し、実行時は素通りのまま）。
 
 理由: 出典の割れ方（11/11 対 0/6）は、これが編集上の省略ではないことをほぼ決めている。
 一方で「弾かれる」と確定したわけでもないので、**型では止めつつ、実行時の逃げ道は残す**のが、
