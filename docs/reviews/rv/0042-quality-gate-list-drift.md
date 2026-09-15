@@ -1,7 +1,7 @@
 # RV-42 🟢 品質ゲートの一覧が 4 箇所に分散して腐る
 
 - 重要度: 🟢 ／ 観点: プロセス / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -55,6 +55,43 @@ change-review 2 巡目（2026-09-12）。1 巡目では「`gates.sh` に `check:
 
 ## 処置
 
-**止めどきの規則により見送り**（`.claude/skills/change-review/SKILL.md` §7）。
-`package.json` のスクリプトを足す変更は CI の形に触るので、
-`docs/concepts-pages`（ドキュメントの PR）に混ぜずに独立して行う。
+**一本化した**（2026-09-15）。推奨どおり pattern script で束ねた。
+
+```json
+"check": "pnpm run \"/^check:(?!publish$)[^:]+$/\""
+```
+
+`check:publish` は**束ねない** — `dist` を見るので build 前だと「ファイルが無い」で落ちる
+だけで検査にならず、古い `dist` が残っていれば逆に**嘘の緑**になる。build の後に別で回す
+（順序は実測して決めた。下記「検証」）。
+
+そのうえで**一覧を持っていた 4 箇所すべてから列挙を消した**:
+
+| 場所                                             | どうしたか                                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `.github/workflows/ci.yml`                       | 個別 7 ステップ → `pnpm check` の 1 ステップ                                 |
+| `CONTRIBUTING.md`                                | 5 ゲートの列挙 → `pnpm check` の 1 行 ＋ CI が足すもの（shellcheck / audit） |
+| `.claude/skills/project-review/scripts/gates.sh` | `check` と `check:publish` を追加（個別の `check:*` は並べない）             |
+| `.claude/skills/change-review/SKILL.md`          | 個別 `check:*` の列挙 → `pnpm check`                                         |
+
+**CI も置き換えた**のが台帳の推奨から踏み込んだ点。列挙を CI 側に残すと、今度は
+「`pnpm check` にあるのに CI では走らない」という**逆向きのズレ**が起きる（`check:docs` /
+`check:links` / `check:api` が各所の一覧から漏れていたのと同じ形）。個別ステップの
+値打ちだった「どのゲートで落ちたかが一覧で分かる」は失うが、束ねると**全部走ってから
+まとめて赤くなる**ので往復は減る。各検査の「なぜ常時実行か」はステップのコメントに残した。
+
+`CONTRIBUTING.md` にはゲートの**件数も書かない**（増えたときに数字だけ古くなる）。
+なお本エントリの一覧表は**当時の事実の記録**なので残してある（現在の一覧ではない）。
+
+## 検証
+
+**束ねが効くこと**（2026-09-15 実測）: `pnpm check` は 7 本（`check:release` / `check:index` /
+`check:docs` / `check:links` / `check:mentions` / `check:api` / `check:shell`）を**並列**で回して
+1.5 秒。壊れリンクを 1 本仕込むとバンドルの終了コードは **1**（1 本落ちれば赤になる）。
+
+**`check:publish` を束ねない理由の裏取り**: `dist` を退避して回すと
+`pkg.main is ./dist/index.js but the file does not exist` で終了コード **1**。
+＝build 前に回しても検査にならない。
+
+**ゲート全体**: `bash .claude/skills/project-review/scripts/gates.sh` で
+**8 ゲートすべて pass**（1011 tests・coverage 100%／branch 99.05%）。
