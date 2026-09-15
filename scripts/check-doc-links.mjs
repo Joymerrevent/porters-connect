@@ -6,7 +6,7 @@
 // このセッションで手動チェックを 2 回走らせ、**2 回とも実際に壊れたリンクが出た**
 // （ADR-0070 の移設で 7 本／兄弟ファイル間の相対リンク）。人がやると忘れるので機械に渡す。
 //
-// 何を見るか: 参照スタイルの定義（`[label]: path`）と inline の相対リンク（`](./path)`）。
+// 何を見るか: 参照スタイルの定義（`[label]: path`）と inline のリンク（`](path)`）。
 // 外部 URL とページ内アンカー（`#…`）は対象外。アンカー付きのパスはファイル部分だけ見る。
 // コードフェンスの中と**インラインのコードスパン**は**説明のための例**なので見ない
 // （リンクの書き方を説明する文章が、説明しただけで壊れリンクとして報告されるのを防ぐ）。
@@ -35,6 +35,46 @@ const SENTINELS = ["README.md", "docs/usage/index.md"];
 // `.gitignore` が育つたびに検査の盲点が黙って広がる。増やすときはここに書き足す＝
 // 「何を見ないことにしたか」がコードに残る。
 const IGNORABLE_TARGET_PREFIXES = ["tmp/"];
+
+// inline リンクの宛先として「リンクとして成立する形」と見なす拡張子。
+//
+// なぜ allowlist なのか: inline の宛先は**散文と見分けが付かない**。リポジトリには
+// `](…)` のように「リンクではないのに `](…)` の形をした散文」が実在するので、
+// 何でも拾うと壊れリンクとして誤検出する（RV-38）。`./` `../` で始まる形は宛先だと
+// 断定できるので無条件に拾い、それ以外は**拡張子で絞る**。
+//
+// 中身の根拠（実測 2026-09-15）: リポジトリ内のリンク先の拡張子は `.md` 1399 /
+// `.mjs` 5 / `.ts` 2 ／ 残りはディレクトリ指し（16 件・すべて `./` `../` 付き）。
+// 将来出てきそうな隣接だけを足してある。**ここに無い拡張子は `./` を付けたときだけ
+// 検査される**＝「何を見ないことにしたか」がコードに残る形にしている。
+const LINK_EXTENSIONS = new Set([
+  "md",
+  "ts",
+  "mts",
+  "cts",
+  "tsx",
+  "js",
+  "mjs",
+  "cjs",
+  "json",
+  "yml",
+  "yaml",
+  "sh",
+  "txt",
+  "svg",
+  "png",
+]);
+
+// inline の宛先を拾うか。散文を巻き込まないための門。
+const isLinkShaped = (target) => {
+  // 明示的な相対パスとページ内アンカーは、リンク以外の解釈が無い。
+  if (/^\.{1,2}\//.test(target) || target.startsWith("#")) return true;
+  const path = target.split("#")[0];
+  // パスに使える字だけで出来ていること（空白・読点・角括弧・三点リーダを弾く）。
+  if (!/^[A-Za-z0-9._~@%+/-]+$/.test(path)) return false;
+  const ext = /\.([A-Za-z0-9]+)$/.exec(path)?.[1].toLowerCase();
+  return ext !== undefined && LINK_EXTENSIONS.has(ext);
+};
 
 // **追跡済み ＋ 未追跡（gitignore 対象を除く）**。`git ls-files` だけでは
 // **新しく書いたページが検査されない** — いちばん必要なときに効かない形になる（実際に踏んだ）。
@@ -142,13 +182,17 @@ const linksOf = (file) => {
           text,
         );
       if (def) push(def[1].replace(/^<|>$/g, ""));
-      // inline の相対リンク: `](./x.md)` / `](../x.md)`
-      // **`./` で始まらない形は拾わない**。`](…)` や `]([Field Alias],…)` のような
-      // 「リンクではない散文」が実在し（実測 2 箇所）、広げると誤検出になるため。
-      // inline リンク自体は markdownlint の MD054 が禁止しているので、取りこぼしても
-      // 無検査にはならない（.changeset / CHANGELOG.md は MD054 の対象外だが、
-      // そこに書かれる相対リンクは実測 0 件）。
-      for (const m of text.matchAll(/\]\((\.{1,2}\/[^)\s]+)\)/g)) push(m[1]);
+      // inline のリンク: `](./x.md)` / `](x.md)` / `](./x.md "Title")` / `](<./x.md>)`。
+      // 宛先の形は定義側と揃える（`<…>` 囲み・末尾タイトルの 3 形）。**どれを拾うかは
+      // `isLinkShaped` が決める**＝散文を巻き込まずに `./` 無しとタイトル付きを拾う（RV-38）。
+      // inline リンク自体は markdownlint の MD054 が禁止しているので人が書く文書には
+      // 出ないが、`MD054` の対象外（CHANGELOG.md / .changeset/）を守るのはここ。
+      for (const m of text.matchAll(
+        /\]\(\s*(<[^>]*>|[^()\s]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g,
+      )) {
+        const target = m[1].replace(/^<|>$/g, "");
+        if (isLinkShaped(target)) push(target);
+      }
     });
   return { links: out, unclosedFenceAt: fence === null ? 0 : fence.line };
 };

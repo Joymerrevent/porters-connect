@@ -156,22 +156,42 @@ describe("inline リンク", () => {
     expectRejected(run({ "a.md": "[x](./gone.md)\n" }), "a.md:1 -> ./gone.md");
   });
 
-  it("`./` を付けない形は見ない（RV-38）", () => {
-    // 広げると「リンクではない散文」を拾うため、今は取りこぼす側を選んでいる。
-    expectAccepted(run({ "a.md": "[x](gone.md)\n" }));
+  it("`./` を付けない形も見る（RV-38）", () => {
+    expectAccepted(run({ "a.md": "[x](b.md)\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x](gone.md)\n" }), "a.md:1 -> gone.md");
+    expectRejected(
+      run({ "docs/a.md": "[x](usage/gone.md)\n" }),
+      "docs/a.md:1 -> usage/gone.md",
+    );
   });
 
-  it("タイトル付きは見ない（RV-38）", () => {
-    expectAccepted(run({ "a.md": '[x](./gone.md "T")\n' }));
+  it("タイトル付き（3 形すべて）と `<…>` 囲みも見る（RV-38）", () => {
+    for (const title of ['"T"', "'T'", "(T)"]) {
+      expectAccepted(
+        run({ "a.md": `[x](./b.md ${title})\n`, "b.md": "# B\n" }),
+      );
+      expectRejected(run({ "a.md": `[x](./gone.md ${title})\n` }), "./gone.md");
+    }
+    expectAccepted(run({ "a.md": "[x](<./b.md>)\n", "b.md": "# B\n" }));
+    expectRejected(run({ "a.md": "[x](<./gone.md>)\n" }), "./gone.md");
+  });
+
+  it("allowlist に無い拡張子は `./` を付けたときだけ見る（RV-38）", () => {
+    expectRejected(run({ "a.md": "[x](./gone.docx)\n" }), "./gone.docx");
+    expectAccepted(run({ "a.md": "[x](gone.docx)\n" }));
   });
 
   it("リンクではない散文を拾わない", () => {
+    // `./` 無しを拾うようにしたので（RV-38）、ここが誤検出の境目になる。
+    // いずれもリポジトリに実在する形。
     expectAccepted(
       run({
         "a.md": [
           "見出し `Field Alias` の説明: `condition`",
           "文章の途中に ](…) が出てくる形",
           "項目一覧 ]([Field Alias],[Field Alias]...) の形",
+          "拡張子の無い語 ](candidate) の形",
+          "読点を含む形 ](a, b) の形",
           "",
         ].join("\n"),
       }),
