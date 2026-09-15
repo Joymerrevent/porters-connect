@@ -95,6 +95,12 @@ type ErrorCategory =
 | config   | —（defineFields/オプション不正）                | config     | ❌（同期 throw）           |
 | 任意     | 上記以外                                        | unknown    | ❌                         |
 
+> **訂正（[RV-3][rv3] / [ADR-0044][0044]・2026-08-09）**: 表の **http「レート超過」→ `rateLimit`** は
+> この形では起きない。PORTERS はレート超過時に 429 を返さず**接続を切る**ため、実際は
+> `PortersNetworkError`（`category: "network"`・retryable）に倒れる。`rateLimit` が produce されるのは
+> **HTTP 429 を観測できたときだけ**（前段のプロキシ等が返した場合・[ADR-0044][0044] の status 写像）。
+> 分類の枠組み（2 系統＋HTTP を 1 モデルに正規化する）という決定そのものは変わらない。
+
 **トークン期限切れの自動回復**: resource `401`/`402`・auth `400`（Access Token 期限切れ）は
 ライブラリが内部で Refresh して**自動再試行**（[OAuth の ADR] で詳細）。**再認証が本当に必要なときだけ**
 （Refresh も失効＝auth `401` 等）`category: "auth"` を throw する。
@@ -156,7 +162,14 @@ type ErrorCategory =
 - 前提/依存: [ADR-0005][0005]（throw・`PortersError`）、[resource-api][rapi]（Result Code）、[authentication][auth]（認証エラー）。
 - 後続: リトライ/スロットリング機構（詳細設計）、OAuth の ADR（トークン自動回復）。
 - 関連: [[0005-public-api-shape]]。
+- **その後**: 「起動前に検出したい場合は Field Read と突き合わせる**任意の事前検証**（opt-in・将来の dev ツール）」は
+  [ADR-0069][0069] で実装済み（`verifyFields` / `readCustomCatalog` / `generateFieldDecls`）。
+  `httpStatus` を応答由来のエラーに必ず載せる配線は [ADR-0044][0044]（RV-13）。
+  なお本文の型スケッチにある **`raw?: { code; message }` は実装されていない**（PORTERS の文言は `message` に載る）。
 
 [0005]: 0005-public-api-shape.md
+[rv3]: ../reviews/rv/0003-unreachable-ratelimit-category.md
+[0044]: 0044-http-status-handling.md
+[0069]: 0069-tenant-field-catalog-tooling.md
 [rapi]: ../usage/reference/resource-api/README.md
 [auth]: ../usage/reference/authentication-api/README.md

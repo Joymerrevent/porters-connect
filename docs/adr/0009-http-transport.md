@@ -7,6 +7,11 @@
 > [ADR-0005][0005] で「transport は注入可能・既定は fetch ベース」と外形を確定済み。本 ADR は
 > **既定実装を何で作るか**（fetch / ky / …）の詳細設計。案1（fetch）で `accepted`（2026-06-14）。
 > 切替の影響は `src/http` の `Transport` インターフェース 1 点に閉じる（下記 Consequences）。
+>
+> **訂正（2026-06-20）**: 本文の「**Node 18+**」「`engines: >=18`」は現在の値ではない。0.2.0 で
+> **最低 Node を 20 に引き上げた**（Node 18 が EOL・開発ツールチェーン（vitest / eslint）が非対応。
+> `engines: ">=20"`・ビルド target `node20`。[requirements][prd] R-14 も Node 20+）。
+> 既定トランスポートを標準 `fetch` にするという決定は変わらない。
 
 ## Context and Problem Statement
 
