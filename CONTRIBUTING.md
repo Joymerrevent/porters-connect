@@ -23,15 +23,26 @@
 
 ```sh
 pnpm install
-pnpm typecheck     # tsc --noEmit
+pnpm typecheck     # tsc --noEmit（src と test）
 pnpm test          # vitest
 pnpm lint          # eslint + markdownlint
 pnpm format:check  # prettier
+pnpm check         # ドキュメント・リリース・シェルの検査（check:* を一括）
 pnpm build         # tsup
+pnpm check:publish # 公開物の検査（dist を見るので build の後）
 pnpm sandbox       # オフラインのサンプル実行
 ```
 
-提出前に **すべての品質ゲート（typecheck / lint / format:check / test / build）が green** であることを確認してください。CI でも同じゲートが走ります。
+提出前に **上のコマンド（`install` と `sandbox` を除く）がすべて green** であることを確認してください（件数を書かないのは、増えたときに数字だけ古くなるのを避けるためです）。
+
+`pnpm check` は `package.json` の `check:*` を**パターンで束ねた**もので、ドキュメントの
+リンク・索引・コード例・リファレンス生成物・リリース連動文書・シェルの検査が入っています。
+**この文書にゲートの一覧を書かない**のは意図したもので、検査が増えるたびに写した一覧が
+古くなり「手元は緑・CI で赤」を生むためです（`pnpm check` の中身を知りたいときは
+`package.json` の `check:*` を見てください）。
+
+CI は同じものを走らせ、さらに `shellcheck`（`.sh` の静的解析）と
+`pnpm audit --prod --audit-level high`（公開依存の high 以上）を足します。
 
 ### テストの書き分け（モック / フェイク）
 
