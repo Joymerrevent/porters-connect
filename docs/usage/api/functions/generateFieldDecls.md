@@ -8,7 +8,7 @@
 
 > **generateFieldDecls**(`source`, `resources`, `options?`): `Promise`\<`string`\>
 
-Defined in: [src/fields/generate-field-decls.ts:119](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L119)
+Defined in: [src/fields/generate-field-decls.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L122)
 
 Read the given resources' custom fields and print a `defineFields` call for them.
 

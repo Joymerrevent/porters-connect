@@ -71,10 +71,10 @@
   意味のある assertion** で担保し、将来 **mutation testing（Stryker）** で補強しうる。大規模では
   diff/patch coverage＋ratchet が主流だが、本ライブラリの性質では全ロジック網羅が適切。
 - 関連: [[0002-ground-design-in-live-api-docs]], [[0013-coding-conventions-class-vs-function]]。
-- **その後**: 除外リストの「**プレースホルダ** `src/fields/**`」は現状と合わない。`src/fields/` には
+- **その後**: 除外リストの「**プレースホルダ** `src/fields/**`」はもう実態と合わない。`src/fields/` には
   `defineFields`（[ADR-0023][0023]）と `verifyFields` / `generateFieldDecls` / `readCustomCatalog`
-  （[ADR-0069][0069]）の実ロジックが入っており、**本 ADR の閾値がこの領域に効いていない**
-  （除外を外して実測すると 2 ファイルが閾値割れ）。指摘は [RV-44][rv44]。
+  （[ADR-0069][0069]）の実ロジックが入っている。一時この領域に本 ADR の閾値が効いていなかったが、
+  **[RV-44][rv44] で除外を外し、通っていなかった 2 経路にテストを足して計測対象に戻した**。
   計測対象は「ロジックを持つ実ファイルだけ」という決定そのものは不変。
 
 [prd]: ../design/requirements.md
