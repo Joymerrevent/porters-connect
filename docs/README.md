@@ -13,6 +13,7 @@
 | ------------------------------ | -------------------------------------- |
 | [ADR][adr]                     | 設計判断の記録（なぜそうなっているか） |
 | [基本設計・要件][design]       | モジュール構成・要件定義               |
+| [機能網羅マトリクス][coverage] | エンドポイント × 機能（V1 の測定対象） |
 | [ロードマップ][roadmap]        | 次に何をやるか                         |
 | [レビュー指摘台帳][findings]   | 指摘と処置の記録                       |
 | [ライブ検証][lv]               | 契約後に実機で確かめる仮定             |
@@ -23,6 +24,7 @@
 
 [adr]: adr/index.md
 [design]: design/basic-design.md
+[coverage]: design/endpoint-coverage.md
 [fake]: fake-server-runbook.md
 [findings]: reviews/findings.md
 [lv]: live-verification.md

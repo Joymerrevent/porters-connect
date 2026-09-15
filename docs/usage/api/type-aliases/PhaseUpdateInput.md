@@ -8,6 +8,6 @@
 
 > **PhaseUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/phase.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L93)
+Defined in: [src/resources/phase.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L103)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

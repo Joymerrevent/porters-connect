@@ -59,6 +59,7 @@
 | [RV-42][rv42] | 🟢     | プロセス / DX                 | fixed   | 品質ゲートの一覧が 4 箇所に分散して腐る                                           |
 | [RV-43][rv43] | 🟡     | フェイルセーフ / API 忠実性   | fixed   | スロットルが client 単位で、テナント別 client を作ると自制が分裂する              |
 | [RV-44][rv44] | 🟡     | テスト厳密性                  | fixed   | coverage / mutation が `src/fields/**` を除外したままで実ロジックが測られていない |
+| [RV-45][rv45] | 🟢     | 機能網羅 / ドキュメント       | open    | Attachment だけ `searchAll` が無く、無い理由も残っていない                        |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -111,3 +112,4 @@
 [rv42]: rv/0042-quality-gate-list-drift.md
 [rv43]: rv/0043-throttle-scoped-per-client.md
 [rv44]: rv/0044-fields-excluded-from-coverage.md
+[rv45]: rv/0045-attachment-search-all-absent.md
