@@ -5,6 +5,61 @@
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-15
+
+**カスタム項目を「宣言してから使う」に揃えた版**です。**破壊的変更**（`field` が未宣言の
+`U_` / `A_` を受け付けなくなります）を含みます。逃げ道として `rawValue` を用意しました。
+
+### Added
+
+- **`rawValue`** — 宣言していない項目の値を、レコードから**そのまま**読み出します（[ADR-0074][adr74]）。
+
+  ```ts
+  import { rawValue } from "@joymerrevent/porters-connect";
+  import type { CandidateSearchQuery } from "@joymerrevent/porters-connect";
+
+  const page = await t.candidate.search({
+    field: ["P_Name", "U_memo"] as CandidateSearchQuery["field"],
+  });
+  const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
+  ```
+
+  応答に無ければ `undefined`、スカラでなければ（`Option` / `User` / `Image` の入れ子）`null`、
+  あれば生の文字列を返します。**変換はしません**ので、日時は PORTERS の書式
+  （`2026/09/10 12:00:00`）のままです。宣言できる項目は宣言してください — こちらは逃げ道です。
+
+### Changed
+
+- **（破壊的）`field` が未宣言のカスタム項目を受け付けなくなりました**（[ADR-0074][adr74]）。
+  カスタム項目を使う入口は 4 つ（`field` / `condition` / `order` / 書き込み）あり、**`field` だけが
+  宣言なしの `U_` / `A_` を受けていました**。しかも受け取り側の型には出ないため、
+  **要求はできるのに読めない**という非対称が残っていました。
+
+  ```ts
+  await t.candidate.search({ field: ["U_memo"] });
+  //                                 ^^^^^^^^ 型エラーになります
+  ```
+
+  直し方は**宣言**です（`defineFields`）。項目 1 つなら 1 行で済み、テナントの項目からは
+  `generateFieldDecls` で生成できます。宣言すると綴りが検査され、値も宣言した Data Type で
+  変換されます。**実行時の挙動は変えていません** — 型を外せば送れますし、応答に知らない項目が
+  混ざっても落ちません。宣言せずに触る必要があるときは、上記の `rawValue` を使ってください。
+
+- **（型のみ）宣言の違うクライアントを関数に渡せなくなりました**。`TenantScope<typeof fields>` は
+  その宣言のスコープだけを受け取ります。以前は型が通ってしまい、`number` と型が言う値に生の
+  文字列が入ることがありました。どの宣言でも受ける関数は `TenantScope<DeclaredCatalogs>` と
+  書けます（これまでどおり）。
+
+- **使い方ドキュメントで、読み取りと書き込みの非対称を揃えました**。`Option` / `User` /
+  `System[Reference]` / `Image` / `Link` は Read と Write で形が違うため、同じ項目の往復に
+  読み替えが要ります。ガイドと[正典（PORTERS API の事実）][ref]の双方を、出典に突き合わせて
+  埋めました。パッケージの中身は変わりません。
+
+- **`src/fields` が品質ゲートの対象に戻りました**（[RV-44][rv44]）。カバレッジとミューテーションの
+  除外リストに、プレースホルダだった頃の `src/fields/**` が残っていました。宣言 DSL と
+  テナントカタログの照合はすでに実ロジックなので、計測対象に戻し、見つかった抜けを埋めています。
+  こちらもパッケージの中身は変わりません。
+
 ## [0.15.1] - 2026-09-13
 
 **開発・CI まわりだけの版**です。**公開されるパッケージの中身（`dist`）は 0.15.0 と同一**で、
@@ -737,14 +792,18 @@
 [adr63]: docs/adr/0063-idempotency-guard-scope.md
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
 [rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
+[rv44]: docs/reviews/rv/0044-fields-excluded-from-coverage.md
 [write-constraints]: docs/usage/concepts/limits.md
 [adr68]: docs/adr/0068-api-reference-tooling.md
 [adr69]: docs/adr/0069-tenant-field-catalog-tooling.md
 [adr73]: docs/adr/0073-throttle-sharing.md
+[adr74]: docs/adr/0074-custom-field-declaration-required.md
 [lv]: docs/live-verification.md
+[ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.13.0...v0.14.0
