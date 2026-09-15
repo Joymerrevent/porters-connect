@@ -113,6 +113,7 @@ const classify = (
   // Stryker disable next-line ConditionalExpression,BlockStatement: equivalent — falling through builds the same entry via `dataType === undefined`
   if (fieldType === null) {
     return {
+      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
       kind: "undeclarable",
       entry: { alias, fieldType, reason: "unknown-field-type" },
     };
@@ -121,18 +122,21 @@ const classify = (
   const dataType = dataTypeOfFieldType(fieldType);
   if (dataType === undefined) {
     return {
+      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
       kind: "undeclarable",
       entry: { alias, fieldType, reason: "unknown-field-type" },
     };
   }
   if (dataType === null) {
     return {
+      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
       kind: "undeclarable",
       entry: { alias, fieldType, label, reason: "no-data-type" },
     };
   }
   if (!isDeclarable(dataType)) {
     return {
+      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
       kind: "undeclarable",
       entry: { alias, fieldType, label, reason: "not-declarable" },
     };

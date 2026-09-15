@@ -76,15 +76,9 @@ ADR の棚卸し（1 ファイルずつ現状と突き合わせる作業・2026-
 lines とも **100%**、branches 98.64%（最も低い `verify-fields.ts` で 94.44% ＝ 閾値 90 を満たす）。
 リポジトリ全体でも statements / functions / lines 100%・branches 99.05%。
 
-**mutation**（`pnpm exec stryker run`）: 全体スコアは **95.75**（break 閾値 95）。
-除外を外した直後は 95.11 で、下記の穴を埋めて 95.75 に戻した。`src/fields` は 97.91（281 killed）。
-
-| ファイル                  | mutation score | 生存 |
-| ------------------------- | -------------- | ---- |
-| `define-fields.ts`        | 100.00         | 0    |
-| `verify-fields.ts`        | 100.00         | 0    |
-| `generate-field-decls.ts` | 97.73          | 2    |
-| `tenant-catalog.ts`       | 93.75          | 4    |
+**mutation**（`pnpm exec stryker run`）: 全体スコアは **95.99**（break 閾値 95）。
+除外を外した直後は 95.11、テストの穴を埋めて 95.75、同値変異を除外して 95.99。
+**`src/fields` は 4 ファイルとも 100.00**（279 killed / 生存 0）。
 
 生き残った変異を潰すために足したテスト（＝mutation が見つけた実際の穴）:
 
@@ -96,11 +90,19 @@ lines とも **100%**、branches 98.64%（最も低い `verify-fields.ts` で 94
   （そうでないと 1 件の宣言不能項目が全部の欠落を免罪する）
 - `assertFieldsMatch` のメッセージが**1 件 1 行**であること
 
-**残る 6 件は同値変異**（テストの穴ではない）。`classify` の `kind: "undeclarable"` を別の文字列に
-しても、呼び出し側は `=== "declarable"` しか見ないため振る舞いが変わらない（4 件）。整列の
-`a < b` を `a <= b` にしても、alias は重複しないため結果が変わらない（2 件）。
-`fieldType === null` の早期 return だけは、フォールスルーしても同じエントリを作る＝同値と分かる形なので
-`// Stryker disable next-line` に理由を書いて除外した（[ADR-0015][adr15] の「真の同値変異のみ」）。
+テストで潰せない **7 件は同値変異**（テストの穴ではない）。テストを書いても殺せない＝殺せた
+としても振る舞いの違いを検査していないことになるので、**理由を添えて Stryker から除外**した
+（[ADR-0015][adr15]「真の同値変異のみに限定」）。
+
+| 場所                                             | なぜ同値か                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `tenant-catalog.ts` の `fieldType === null` 分岐 | フォールスルーしても `dataType === undefined` 側が**同じエントリ**を作る（2 件）     |
+| `tenant-catalog.ts` の `kind: "undeclarable"`    | 呼び出し側は `=== "declarable"` しか見ないので、別の値でも同じ経路（4 件）           |
+| `generate-field-decls.ts` の整列 `a < b`         | alias は重複しないので、`<=` にしても並びが変わらない（2 件・うち 1 件は行ごと除外） |
+
+除外は**行単位**（`// Stryker disable next-line <Mutator>: 理由`）に絞り、同じ行にある他の変異や
+隣の `reason` 文字列は対象のまま残している。整列の 1 件だけはチェーンの途中で行指定が効かないため、
+その文にかぎって `disable` / `restore` で囲んだ。
 
 [adr14]: ../../adr/0014-test-coverage-policy.md
 [adr15]: ../../adr/0015-mutation-testing.md
