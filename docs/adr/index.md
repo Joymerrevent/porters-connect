@@ -86,7 +86,7 @@
 | [0072][0072] | 入門を「契約済みの読者」から始める（`start/` の並べ直し）        | プロセス | accepted   | —     |
 | [0073][0073] | スロットルの共有単位（client ごとをやめ、注入できるようにする）  | 詳細設計 | accepted   | —     |
 | [0074][0074] | 未宣言のカスタム項目を `field` からも外す（宣言必須へ揃える）    | 詳細設計 | accepted   | —     |
-| [0075][0075] | Attachment に `searchAll` を足す（本体は一覧に流さない）         | 詳細設計 | proposed   | —     |
+| [0075][0075] | Attachment に `searchAll` を足す（本体は一覧に流さない）         | 詳細設計 | accepted   | —     |
 | [0076][0076] | Phase の Read クエリから `keywords` / `itemstate` を外す         | 詳細設計 | accepted   | —     |
 
 [readme]: README.md

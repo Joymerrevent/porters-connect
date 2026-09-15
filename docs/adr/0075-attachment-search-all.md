@@ -1,12 +1,14 @@
 # 75. Attachment に `searchAll` を足す（本体は一覧に流さない）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-15
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [エンドポイント × 機能マトリクス][coverage]（V1）の表 D で見つかった [RV-45][rv45] の決着。
 > **Read を持つ 17 エンドポイントのうち、置けるのに `searchAll` が無いのは Attachment だけ**で、
-> 置かない判断をした記録も無い。起票のみ（`proposed`）。実装は accept 後・別 PR。
+> 置かない判断をした記録も無い。
+>
+> **decider が案A を選択し `accepted`（2026-09-16）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -119,7 +121,7 @@ new XMLParser({ parseTagValue: false }).parse(xml); // 130MB -> ~800ms / heapUse
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案A**。
+採用: **案A**（`searchAll` を足し、走査では本体を運ばせない）。
 
 理由: PORTERS 側の前提（`start` ／ `Total`）が揃っていて、部品（`paginate`）も既にある以上、
 「置けない」ではなく「置いていない」だけであり、語彙を 1 つ揃える利得が大きい。
@@ -191,6 +193,9 @@ new XMLParser({ parseTagValue: false }).parse(xml); // 130MB -> ~800ms / heapUse
   一括書き込みの拒否）／ [ADR-0022][0022]（Option に `start` が無いこと）
 - 未確定: [LV-24][lv]（`requestType` / `resource` は必須か ＝ 本体の選び方が `field` か `requestType` か）／
   [LV-4][lv]（Read の既定項目）
+- フォローアップ（**未決**）: `search` 単発の本体付き 200 件にも同じ危険がある（上記の実測は
+  `searchAll` 固有ではない）。警告を出すか、件数に上限を設けるかは**本 ADR では決めていない**。
+  必要になったら別に起票する。
 - 反映（accept 後・別 PR）: `src/resources/attachment.ts`（`searchAll` ＋ 案A ならガード）、
   co-located テスト、`docs/usage/index.md` の表、`docs/usage/howto/attachments.md`、
   マトリクスの表 D、[RV-45][rv45] の処置、CHANGELOG（minor・追加）
