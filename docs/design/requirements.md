@@ -3,7 +3,7 @@
 - ステータス: draft
 - 日付: 2026-06-13
 - オーナー: jun.shiromoto (Joymerrevent)
-- 位置づけ: `docs/history/SPEC_v1.md` は素案（superseded 予定）。設計の正は本 PRD・[docs/adr][adr]・[docs/reference][ref]。
+- 位置づけ: `docs/history/SPEC_v1.md` は素案（superseded 予定）。設計の正は本 PRD・[docs/adr][adr]・[docs/usage/reference][ref]。
 - 対象: **第1層（TypeScript ラッパー）の v1**。第2層 MCP・第3層配布(Docker)・CLI は対象外（将来）。
 
 ## 1. 課題（Problem Statement）
@@ -144,12 +144,12 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 2. **MVP コア**: Candidate の Write、Job / Client / Process / Resume、Attachment（ファイル）。自動ページング・サイズガード・構造化エラーを通す。
 3. **仕上げ**: 日本語 docs（よくあるエラー）・サンドボックス（R-17）・カスタム項目（R-16）・README（対応バージョン/非公式/契約必須）。
 
-> 実 API 接続は契約環境が用意できてから PoC で検証。それまでは [docs/reference][ref] の XML 例を fixture にする。
+> 実 API 接続は契約環境が用意できてから PoC で検証。それまでは [docs/usage/reference][ref] の XML 例を fixture にする。
 
 ## 関連
 
 - 設計判断: [docs/adr][adr]（ADR-0001 ADR運用 / 0002 接地方針 / 0003 Attachment を MVP に）
-- API 事実: [docs/reference][ref]（認証・形式・制限・リソース・型・Write・落とし穴・用語）
+- API 事実: [docs/usage/reference][ref]（認証・形式・制限・リソース・型・Write・落とし穴・用語）
 
 [adr]: ../adr/README.md
 [adr10]: ../adr/0010-retry-throttle.md

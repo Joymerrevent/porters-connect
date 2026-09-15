@@ -16,7 +16,7 @@ description: >-
 
 ## このスキルの前提（なぜこの形か）
 
-- **正典は `docs/`**（CLAUDE.md 冒頭）。要件=`docs/design/`、決定=`docs/adr/`、API 事実=`docs/reference/`。レビューの判断は記憶や一般論ではなく**この正典に接地**させる。特に API 挙動の指摘は `docs/reference/`（または `tmp/porters-docs/` の原典）を必ず引く。
+- **正典は `docs/`**（CLAUDE.md 冒頭）。要件=`docs/design/`、決定=`docs/adr/`、API 事実=`docs/usage/reference/`。レビューの判断は記憶や一般論ではなく**この正典に接地**させる。特に API 挙動の指摘は `docs/usage/reference/`（または `tmp/porters-docs/` の原典）を必ず引く。
 - このライブラリの**存在理由**は PORTERS 固有の罠（XML/独自 OAuth/UTC/削除 API 無し/リクエスト長/レート制限/ホスト非公開）を正しく隠すこと（CLAUDE.md「PORTERS API 固有の注意点」）。だから **API 忠実性が最重要観点**。
 - 設計哲学は**フェイルセーフ**＝壊れたとき安全側に倒れる。良い実装ほどこの観点で評価が上がる。
 
@@ -53,14 +53,14 @@ description: >-
 
 毎回この順で当てる。**指摘ゼロの観点も「問題なし」と記録**する（次回の退行検知のため）。各観点の括弧内は接地すべき正典。
 
-### 1. API 忠実性（最重要・`docs/reference/`）
+### 1. API 忠実性（最重要・`docs/usage/reference/`）
 
 実装が PORTERS の実挙動と一致するか。**コードの自然な読みと正典がズレていないか**を疑う。代表的な確認点:
 
 - **Read の `field` 既定挙動**: 現行 App は `field` 省略時 `{Resource}.P_Id` のみ返る（docs `115010010367`）。`search`/`get` が full record を返す前提のコード・README 例になっていないか。
 - **XML 入出力の対称性**: Option（`string[]`）、User/Reference（ID のみ Write）、DateTime/Date の ISO⇄PORTERS 変換（`src/xml/`, `src/util/datetime.ts`）。Read で取れた値を Write に戻せるか（round-trip）。
-- **OAuth 独自仕様**: `X-porters-hrbc-oauth-token`、`code`/`code_direct`、認証コード 30 秒、トークン有効期限の**単位（ms）**（`docs/reference/authentication-api/token.md`）。
-- **制限**: リクエスト長 ~15000 文字、200 件分割、レート Read 2000/Write 500/分（`docs/reference/resource-api/README.md`）。スロットル既定値が正典と一致するか。
+- **OAuth 独自仕様**: `X-porters-hrbc-oauth-token`、`code`/`code_direct`、認証コード 30 秒、トークン有効期限の**単位（ms）**（`docs/usage/reference/authentication-api/token.md`）。
+- **制限**: リクエスト長 ~15000 文字、200 件分割、レート Read 2000/Write 500/分（`docs/usage/reference/resource-api/README.md`）。スロットル既定値が正典と一致するか。
 - **削除 API を生やしていないか**、**ホスト名ハードコードが無いか**。
 - 契約が無いと断定できない仮定は `docs/live-verification.md` の LV と対応させ、台帳では重複させず LV を参照。
 

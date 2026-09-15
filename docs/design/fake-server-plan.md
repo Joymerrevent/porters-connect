@@ -9,7 +9,7 @@
 
 - 目的: 契約なしで **L1 結合テスト**と **L2（MCP・案A）e2e** をオフライン化。まず**この repo の開発**に効かせ、後に N2（利用者の無改造アプリ検証）へ。
 - 忠実度: **案B「ある程度忠実」** = **契約面は高忠実**（XML ワイヤ形状／独自 OAuth／エラー語彙／制約トリガ／状態あり CRUD 往復）・**業務面は浅い**。
-- 接地: **`docs/reference` が正**。黙っている挙動は**明示的な仮定**として実装コメント＋ [live-verification][lv] に LV 項目化。
+- 接地: **`docs/usage/reference` が正**。黙っている挙動は**明示的な仮定**として実装コメント＋ [live-verification][lv] に LV 項目化。
 - 注入を第一級: 決定的に 400（サイズ）・429（レート）・特定 result code・遅延を出せる。
 - 配置: **in-repo・dev-only**（`test/fake/`＝`src/` の外）。既存設定で**公開 tarball 非同梱**（`files` は `dist` のみ）・**カバレッジ 100% 対象外**（include は `src/**`）。ただし**フェイク自身のテストは書く**（正しく振る舞う担保）。
 - 再利用（in-repo の利点）: ワイヤ形状は**ライブラリ内部を直接 import**して二重管理を断つ — `src/xml/encode`（`buildWriteXml`/`encodeField`/`encodeWriteItem`）・`src/xml/parser`（`parseResourcePage`/`parseWriteResult`/`parseAuthentication` の**形**に合わせる）・`src/xml/decode`（`decodeField`）・`test/fixtures/**`。受信 write XML の解釈は同梱の `fast-xml-parser` を使う。
@@ -220,7 +220,7 @@
 
 - 決定: [ADR-0043][adr43]（フェイクサーバー設計）／[ADR-0024][adr24]（`createMockTransport`＝N1・本フェイクは N2 follow-up）
 - 手を動かす: [フェイクサーバー 手動確認 手順書][runbook]（curl だけで認証 → CRUD → マスタ → 制約・注入まで叩く）
-- 全体像: [roadmap][rm]（「いま着手」）／ API 事実: [docs/reference][ref]／ 契約後検証: [live-verification][lv]
+- 全体像: [roadmap][rm]（「いま着手」）／ API 事実: [docs/usage/reference][ref]／ 契約後検証: [live-verification][lv]
 
 [adr43]: ../adr/0043-local-fake-server.md
 [runbook]: ../fake-server-runbook.md

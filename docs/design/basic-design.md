@@ -3,7 +3,7 @@
 - ステータス: draft
 - 日付: 2026-06-13
 - 位置づけ: [要件定義（PRD）][prd] の要件を、確定済み ADR（[0002][a2]・[0003][a3]・[0004][a4]–[0008][a8]）の決定で具体化した**全体像**。
-  各決定の**根拠は ADR**、**API の事実**は [docs/reference][ref]、**SPEC_v1 は素案（superseded）**。本書は合成（重複させず ADR にリンク）。
+  各決定の**根拠は ADR**、**API の事実**は [docs/usage/reference][ref]、**SPEC_v1 は素案（superseded）**。本書は合成（重複させず ADR にリンク）。
 
 ## 1. アーキテクチャ全体像
 
@@ -101,7 +101,7 @@ accessor 呼び出し
 
 ## 5. ドメイン／型モデル（[ADR-0004][a4]）
 
-- **標準 `P_` = 同梱の静的型**（[docs/reference][ref] から生成可）。**カスタム `U_`/`A_` = 利用者が宣言（builder）→ 型導出＋実行時検証**。
+- **標準 `P_` = 同梱の静的型**（[docs/usage/reference][ref] から生成可）。**カスタム `U_`/`A_` = 利用者が宣言（builder）→ 型導出＋実行時検証**。
 - Read/Write で表現が非対称（Option/参照/User/Link/Image）。**値エンコードの詳細は XML パース/シリアライズ ADR（詳細設計）**。
 - 未宣言/未知項目はクラッシュさせず安全側（§6 エラーモデル）。
 
@@ -122,7 +122,7 @@ accessor 呼び出し
 ## 8. 横断方針
 
 - **上限内に自制する／フェイルセーフ**：自前スロットリング（1 分 Read2000/Write500）、retryable のみ指数バックオフ、リクエスト ~15000 字ガード。
-  - ※ 数値は理解のための目安。**正典は [docs/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
+  - ※ 数値は理解のための目安。**正典は [docs/usage/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
 - **機密情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
   - **アクセスポイント**：URL 組立は 1 関数（`http/access-point.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
@@ -150,7 +150,7 @@ accessor 呼び出し
 - 要件: [requirements.md][prd]
 - 決定（基本設計）: [ADR 一覧][adr]（[0003][a3] Attachment MVP / [0004][a4] 型モデル / [0005][a5] 公開API / [0006][a6] エラー / [0007][a7] OAuth / [0008][a8] マルチテナント）
 - 決定（詳細設計）: [0009][a9] HTTP / [0010][a10] リトライ・スロットル / [0011][a11] XML / [0012][a12] トークン更新
-- API 事実: [docs/reference][ref]
+- API 事実: [docs/usage/reference][ref]
 
 [prd]: requirements.md
 [adr]: ../adr/README.md
