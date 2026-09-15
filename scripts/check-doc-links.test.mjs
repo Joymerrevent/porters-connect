@@ -265,16 +265,96 @@ describe("コードフェンス", () => {
 });
 
 describe("アンカー", () => {
-  it("ファイル部分だけを見る（RV-39）", () => {
-    expectAccepted(
-      run({ "a.md": "[x]: ./b.md#gone\n", "b.md": "# B\n" }),
-      // 見出しが無くても通る。
-    );
-    expectRejected(run({ "a.md": "[x]: ./gone.md#B\n" }), "./gone.md#B");
+  it("リンク先の見出しの実在まで見る（RV-39）", () => {
+    expectAccepted(run({ "a.md": "[x]: ./b.md#b\n", "b.md": "# B\n" }));
+    const r = run({ "a.md": "[x]: ./b.md#gone\n", "b.md": "# B\n" });
+    expectRejected(r, "見出しが見つかりません");
+    expect(r.out).toContain("a.md:1 -> ./b.md#gone");
   });
 
-  it("同一ページ内アンカーは対象外（RV-39）", () => {
-    expectAccepted(run({ "a.md": "[x]: #gone\n" }));
+  it("ファイルが無いときは見出しではなくファイルを報告する", () => {
+    const r = run({ "a.md": "[x]: ./gone.md#b\n" });
+    expectRejected(r, "リンク先が見つかりません");
+    expect(r.out).not.toContain("見出しが見つかりません");
+  });
+
+  it("同一ページ内アンカーも同じ経路で見る（RV-39）", () => {
+    expectAccepted(run({ "a.md": "# A\n\n[x]: #a\n" }));
+    expectRejected(run({ "a.md": "# A\n\n[x]: #gone\n" }), "a.md:3 -> #gone");
+  });
+
+  it("GitHub の slug 規則に合わせる（句読点を落としてから空白を `-` に）", () => {
+    // 実在するリンクの形。`()` を落としたあと空白 2 つが `--` になる。
+    expectAccepted(
+      run({
+        "a.md":
+          "## LV-17 Phase の User 項目を `()` 付きで要求できるか\n\n[x]: #lv-17-phase-の-user-項目を--付きで要求できるか\n",
+      }),
+    );
+    // `[` `]` は落ちる／大文字は小文字になる。
+    expectAccepted(
+      run({
+        "a.md":
+          "## LV-10 System[Reference] Read の入れ子タグ\n\n[x]: #lv-10-systemreference-read-の入れ子タグ\n",
+      }),
+    );
+  });
+
+  it("見出しの中のリンクは表示テキストで slug を作る", () => {
+    expectAccepted(
+      run({
+        "a.md":
+          "## [ADR-0048][adr] の改訂\n\n[x]: #adr-0048-の改訂\n[adr]: ./b.md\n",
+        "b.md": "# B\n",
+      }),
+    );
+  });
+
+  it("同じ見出しが 2 つあれば 2 つ目は `-1`（GitHub の重複規則）", () => {
+    expectAccepted(
+      run({ "a.md": "## 概要\n\n## 概要\n\n[x]: #概要\n[y]: #概要-1\n" }),
+    );
+    expectRejected(run({ "a.md": "## 概要\n\n[y]: #概要-1\n" }), "#概要-1");
+  });
+
+  it("percent-encoded なアンカーも戻して突き合わせる", () => {
+    expectAccepted(
+      run({
+        "a.md": `# 概要\n\n[x]: #${encodeURIComponent("概要")}\n`,
+      }),
+    );
+  });
+
+  it("フェンスの中の `#` は見出しにしない", () => {
+    expectRejected(
+      run({ "a.md": "```sh\n# 見出しではない\n```\n\n[x]: #見出しではない\n" }),
+      "見出しが見つかりません",
+    );
+  });
+
+  it("明示アンカー（`<a id=…>`）も宛先として認める", () => {
+    expectAccepted(run({ "a.md": '<a id="ここ"></a>\n\n[x]: #ここ\n' }));
+  });
+
+  it("setext 見出しも拾う（多く拾う側に倒す）", () => {
+    expectAccepted(run({ "a.md": "概要\n===\n\n[x]: #概要\n" }));
+  });
+
+  it("md 以外とディレクトリのアンカーは見ない", () => {
+    expectAccepted(
+      run({
+        "a.md": "[x]: ./b.mjs#L10\n[y]: ./docs/usage#anything\n",
+        "b.mjs": "// code\n",
+      }),
+    );
+  });
+
+  it("近い見出しを候補として出す", () => {
+    const r = run({
+      "a.md": "## Decision Outcome\n\n[x]: #decision-outcomes\n",
+    });
+    expectRejected(r, "見出しが見つかりません");
+    expect(r.out).toContain("近い見出し: #decision-outcome");
   });
 });
 
