@@ -9,6 +9,12 @@
 > （`pnpm check:findings` を CI の常時実行ブロックに置く）。実施は本 ADR とは別 PR。
 > 起票時の推奨は案D（状態を持たない index）だったが、**議論中の実測で案C のコスト見積もりが過大と判明**し、
 > 「一覧で状態が見える」利点をほぼ同じコストで取れるため案C（改）を採る。経緯は下記「議論中に得た実測」。
+>
+> **Amended by [ADR-0053][0053]（2026-08-16）**: 決定 5 の検査は、ADR 索引の検査と**1 本に統合**された。
+> 名前は `pnpm check:findings` / `scripts/check-findings-index.mjs` ではなく
+> **`pnpm check:index` / `scripts/check-doc-index.mjs`**（その `TARGETS` に `findings` として載る）。
+> 検査の中身（(a) 1 対 1・(b) 重要度 / 観点 / 状態の一致・(c) 状態の語彙）と CI の置き場所
+> （常時実行ブロック）は決定どおり。**本文中の `check:findings` はこの名前に読み替える。**
 
 ## Context and Problem Statement
 
@@ -188,11 +194,8 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
 
 ## More Information
 
-- **その後**: 決定 5 の検査は、[ADR-0053][0053] で ADR 索引の検査と**1 本に統合**された。
-  名前は `pnpm check:findings` / `scripts/check-findings-index.mjs` ではなく
-  **`pnpm check:index` / `scripts/check-doc-index.mjs`** で、その `TARGETS` に `findings` として
-  載っている。検査の中身（(a) 1 対 1・(b) 重要度 / 観点 / 状態の一致・(c) 状態の語彙）と
-  CI の置き場所（常時実行ブロック）は決定どおり。
+- **統合先**: 決定 5 の検査は [ADR-0053][0053] で ADR 索引の検査と 1 本になった（冒頭の注記）。
+  実体は [`scripts/check-doc-index.mjs`][dc]（`pnpm check:index`）。
 
 - 現行の運用と様式: [SKILL.md][skill]／[report-format][fmt]。**両方とも本決定に合わせて更新が要る**（実施時の合意事項 8）。
 - 検査の前例: [`scripts/check-release-invariants.mjs`][ci]（`pnpm check:release`・CI の常時実行ステップ・
@@ -217,3 +220,4 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
 [lv]: ../live-verification.md
 [rm]: ../roadmap.md
 [0053]: 0053-adr-index-split.md
+[dc]: ../../scripts/check-doc-index.mjs
