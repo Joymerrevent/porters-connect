@@ -40,13 +40,23 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 無かった**（オフセット走査は後から汎用 factory に入った）ので、**横展開のときに素通りした**と見ている。
 意図して外した記録はどこにも無い。
 
-**危険は 1 つある。** `field` に `Content`（Base64 の本体）を並べた全件走査は、
-1 ページ 200 件 × 最大 ~14M 文字を、ページごとにメモリへ載せる。
-[ADR-0041][0041] 軸5 が Attachment の一括書き込みを対象外にしたのと同じ形の危険である。
+**PORTERS は複数件でも本体を返す。** 出典の `requestType` は**リクエスト単位のスイッチ**で、
+`0` なら `<Content>` に Base64 が付き、`1` なら付かない。`count`（1〜200）とは独立していて、
+「本体付きは 1 件だけ」といった制限は書かれていない。つまり `requestType=0&count=200` は
+**200 件ぶんの本体**を 1 応答で返す（1 ファイル 10MB まで — Write 記事）。
+**できないから塞ぐ、という話ではない。**
+
+**危険はそこにある。** 本体付きの全件走査は、1 ページ 200 件 × 最大 ~14M 文字をページごとに
+メモリへ載せる。[ADR-0041][0041] 軸5 が Attachment の一括書き込みを対象外にしたのと同じ形である。
 
 ただし**同じ危険は今日の `search` にもある** — `search({ field: [… "Content"], count: 200 })` は
 書ける。`searchAll` が新しく作る危険ではなく、**その繰り返しを自動化する**点が違う
 （総ページ数を呼び出し側が決めない）。
+
+**本体の選び方は二択**（全件に付ける / 全件に付けない）で、「この 3 件だけ本体」は出典の語彙に無い。
+なお**ライブラリは今 `requestType` を送っておらず**、`field` に `Content` を並べるかどうかで
+決めている（[LV-24][lv]）。どちらが実際に効くかは未確認なので、本 ADR の案は
+**語彙に依存しない形**（「本体を運ぶか運ばないか」）で書く。
 
 問い: **`searchAll` を足すか。足すなら、本体付きの全件走査を許すか。**
 
@@ -64,7 +74,9 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 
 ## Considered Options
 
-- 案A: **`searchAll` を足し、`field` に `Content` があれば拒否する**（実行時に `PortersConfigError`）
+- 案A: **`searchAll` を足し、本体は運ばせない** — 走査は常に本体なし（出典の語彙なら `requestType=1`、
+  いまの実装の語彙なら `field` から `Content` を外す）。本体を要求されたら実行時に `PortersConfigError`
+  で `get(id)` へ誘導する
 - 案B: `searchAll` を足す（制限なし）
 - 案C: 足さない。理由を明文化する（[ADR-0041][0041] 軸5 と同じ「本体が巨大なので一気に扱わせない」）
 - 案D: `searchAll` を足し、Attachment だけページサイズを小さくする（例 50 件）
@@ -87,6 +99,8 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 - Bad: 実行時ガードが 1 つ増える（[ADR-0064][0064] の `guardNoImageInBulk` と同じ形）。
   型では止まらない（`AttachmentSearchQuery.field` は bespoke ゆえ `string[]` のままなので、
   リテラル型に狭めるのは別の変更になる）。
+- Neutral: 「本体を運ばない」という言い方は**語彙に依存しない**ので、[LV-24][lv] がどちらに
+  転んでも決定は変わらない（実装が `field` を外すか `requestType=1` を送るかが変わるだけ）。
 - Neutral: [LV-24][lv] が「出典どおり」と確定したら、`search` と `searchAll` は**一緒に**直る
   （`resource` を束ねる形になれば両方が同じ受け口を通る）。先に足しても直す量は増えない。
 
@@ -107,7 +121,7 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 
 ## Pros and Cons of the Options
 
-### 案A（足す ＋ `Content` を拒否）
+### 案A（足す ＋ 本体は運ばせない）
 
 - Good: 語彙が揃い、かつ「一覧に本体を流さない」線が破れない。
 - Good: エラーメッセージで `get(id)` へ誘導できる（塞ぐだけで終わらない）。
@@ -139,7 +153,8 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 - 前提: [ADR-0018][0018]（Attachment の bespoke な設計）／ [ADR-0020][0020]（Read `field` の既定）／
   [ADR-0041][0041] 軸5（Attachment の一括書き込みは対象外）／ [ADR-0064][0064]（Image の既定と
   一括書き込みの拒否）／ [ADR-0022][0022]（Option に `start` が無いこと）
-- 未確定: [LV-24][lv]（`requestType` / `resource` は必須か）／ [LV-4][lv]（Read の既定項目）
+- 未確定: [LV-24][lv]（`requestType` / `resource` は必須か ＝ 本体の選び方が `field` か `requestType` か）／
+  [LV-4][lv]（Read の既定項目）
 - 反映（accept 後・別 PR）: `src/resources/attachment.ts`（`searchAll` ＋ 案A ならガード）、
   co-located テスト、`docs/usage/index.md` の表、`docs/usage/howto/attachments.md`、
   マトリクスの表 D、[RV-45][rv45] の処置、CHANGELOG（minor・追加）
