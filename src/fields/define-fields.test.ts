@@ -122,6 +122,33 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
     expect(() => defineFields(bad)).toThrow(PortersConfigError);
   });
 
+  it("rejects an alias that merely contains U_ / A_ (the rule is a prefix)", () => {
+    // `P_SubU_score` is a standard field. Matching U_ anywhere would take it for a custom one,
+    // and the declaration would then shadow a built-in field with the wrong Data Type.
+    expect(() =>
+      defineFields({ candidate: (f) => ({ P_SubU_score: f.number() }) }),
+    ).toThrow(/must start with "U_" or "A_"/);
+  });
+
+  it("names the unknown key and the accepted resources when the key is a typo", () => {
+    // The message is the only guidance a caller gets here: the typo itself, and what was expected.
+    const bad = {
+      candiate: (f: { number: () => { dataType: "Number" } }) => ({
+        U_x: f.number(),
+      }),
+    } as unknown as FieldDecls;
+
+    try {
+      defineFields(bad);
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      const err = e as PortersConfigError;
+      expect(err.message).toContain('unknown resource "candiate"');
+      expect(err.message).toContain("candidate, job");
+      expect(err.category).toBe("config");
+    }
+  });
+
   it("skips a resource key whose declaration is undefined", () => {
     // Callers build declarations conditionally (`job: wantJob ? decl : undefined`). The key is
     // then present with no value, and treating that as a declaration would put an empty catalog

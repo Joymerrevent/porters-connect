@@ -110,6 +110,7 @@ const classify = (
   | { readonly kind: "declarable"; readonly dataType: CustomDataType }
   | { readonly kind: "undeclarable"; readonly entry: UndeclarableField } => {
   // A row with no Field Type at all: PORTERS gave us nothing to map, so we invent nothing.
+  // Stryker disable next-line ConditionalExpression,BlockStatement: equivalent — falling through builds the same entry via `dataType === undefined`
   if (fieldType === null) {
     return {
       kind: "undeclarable",
