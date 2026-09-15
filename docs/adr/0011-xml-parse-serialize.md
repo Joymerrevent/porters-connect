@@ -90,6 +90,11 @@ Read 応答（[resource-api][rapi]）は `<{Resource} Total Count Start><Code>0<
 - 前提/依存: [ADR-0004][0004]（型モデル）、[ADR-0005][0005]（XML 非露出）、[ADR-0006][0006]（未知/不一致の surface）、[resource-api][rapi]（Read XML）、[field-data-types][fdt]、[write-format][wf]、[requirements][prd]（R-4/R-10）。
 - 後続: Write エンコード詳細・型別網羅（MVP）。
 - 関連: [[0004-field-type-model]], [[0005-public-api-shape]]。
+- **その後**: 「後続（MVP）」に挙げた **`Image` / `Link` / `Reference`・Option 複数・全 Write エンコードは
+  いずれも実装済み**（Option を常に `string[]` で返す形は [ADR-0017][0017]、`System[Reference]` の
+  展開読みは [ADR-0058][0058]、`Link` / `Image` は [ADR-0064][0064]）。
+  「未知 alias を生のまま落とさない」も維持されており、宣言していない項目の値は
+  [ADR-0074][0074] の `rawValue()` で読む。
 
 [prd]: ../design/requirements.md
 [rapi]: ../usage/reference/resource-api/README.md
@@ -98,3 +103,7 @@ Read 応答（[resource-api][rapi]）は `<{Resource} Total Count Start><Code>0<
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md
+[0017]: 0017-option-read-shape.md
+[0058]: 0058-reference-expansion-read.md
+[0064]: 0064-link-image-types.md
+[0074]: 0074-custom-field-declaration-required.md
