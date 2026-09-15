@@ -15,6 +15,11 @@
 > 要約表ベースで**各マスタのクエリ・パラメータを取りこぼしていた**。**軸2 のクエリ**（汎用 `SearchQuery` 流用・
 > `get(id)` 提供）と**軸4 の `current()` 意味論**（request_type=0＝ログイン中）を ADR-0022 が実 Read API に接地し直す
 > （各マスタ bespoke クエリ・`get(id)` 不在・`current()` は OAuth 方式依存）。軸1/軸3/軸5 と読み取り専用の核は不変。
+>
+> **Amended by [ADR-0040][0040] / [ADR-0055][0055]（2026-08-24）**: 軸1 で決めた露出のうち、
+> **`porters.user` / `porters.field` / `porters.option` は `porters.tenant(id)` 配下に移った**
+> （3 種とも `partition` を要求するため）。client 直下に残るのは partition を取らない
+> `porters.partition`（discovery）と `porters.auth` だけ。データ系と同じ単数形・読み取り専用という核は不変。
 
 ## Context and Problem Statement
 
@@ -181,3 +186,5 @@ PRD [R-3][prd]（Must-Have / P0）は、MVP データ系リソースに加えて
 [0019]: 0019-static-resource-types.md
 [0020]: 0020-read-field-default.md
 [0022]: 0022-master-read-query-surface.md
+[0040]: 0040-multitenancy-surface-impl.md
+[0055]: 0055-partition-binding-guard.md

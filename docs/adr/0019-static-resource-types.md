@@ -99,8 +99,14 @@ field 選択は実行時。選択で型を絞る案は将来 P1）。
 - 関連実装: `src/resources/resource.ts`（`createResource` / `Resource` / `ResourceItem` / `ResourceInput`）、
   各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`（`DataType` / `FieldValue`）、`src/xml/encode.ts`（`WriteValue`）。
 - 将来（P1）: field 選択での返り値型の絞り込み（[ADR-0005][0005] SD-3）・`U_`/`A_` の型注入（SD-2 defineFields）。
+- **その後**: 「将来（P1）」の 2 つは片方だけ進んだ。**`U_`/`A_` の型注入は [ADR-0023][0023] で実装済み**
+  （宣言したカスタム項目が静的カタログに合流し、Read / Write / `condition` / `order` に型付きで出る。
+  未宣言の扱いは [ADR-0074][0074] で「宣言必須」に揃い、生値は `rawValue()` で読む）。
+  一方 **`field` 選択での返り値型の絞り込みは現在も未実装**（案U1・SD-3 簡易のまま）。
 
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0016]: 0016-field-type-granularity.md
 [0017]: 0017-option-read-shape.md
+[0023]: 0023-custom-field-declaration-dsl.md
+[0074]: 0074-custom-field-declaration-required.md

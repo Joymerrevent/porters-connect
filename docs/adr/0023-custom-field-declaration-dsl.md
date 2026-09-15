@@ -76,6 +76,9 @@
 - **D6 対象スコープ**: データリソース 5 種（candidate / job / client / process / resume）。
   Attachment（専用アクセサ・カタログ非利用）とマスタ Read（Partition / User / Field / Option・読み取り専用）
   は対象外。Attachment のカスタム項目は将来課題。
+  **その後**: [ADR-0060][0060]（全リソース網羅）で実装が広がり、いまの `CustomFieldResource` は
+  **11 種**（上記 5 種 ＋ recruiter / contact / opportunity / activity / contract / sales）。
+  Attachment とマスタ Read が対象外なのは不変。
 - **D7 マージ意味論**: 各リソース工場で `{ ...静的FIELDS, ...custom }` を実行時マージし、型は
   `静的カタログ & C` で表す（`U_`/`A_` は `P_` と衝突しないので交差が正しい）。カスタムは
   `requiredOnCreate` に入らない（常に任意）。書き込み可否は declared Data Type が決める（既存 `WritableKeys`）。
@@ -114,6 +117,15 @@
 - 関連実装: `src/fields/`（新規 DSL）、`src/resources/*.ts`（工場のマージ）、`src/client.ts`（ジェネリック化）。
 - follow-up（本 ADR スコープ外）: 値レベルの実行時検証 ／ ライブ Field Read 検証・宣言雛形生成（[ADR-0004][0004] P2）
   ／ Attachment・Reference・Image 型のカスタム項目。
+- **その後**（この follow-up がどうなったか）:
+  - **宣言雛形生成・ライブ検証** → [ADR-0069][0069] で実装（`generateFieldDecls` / `verifyFields` /
+    `readCustomCatalog`）。
+  - **Image / Link 型のカスタム項目** → [ADR-0064][0064] で実装（標準項目にこの 2 型は無く、宣言が唯一の入口）。
+  - **値レベルの実行時検証** → [RV-36][rv36] で**形の食い違いだけ**を surface するところまで実装
+    （宣言型と実データが categorical に違えば `validation` で落とす）。桁数・必須・選択肢の妥当性は
+    PORTERS に委ねたまま。
+  - **未宣言のカスタム項目** → [ADR-0074][0074] で `field` も宣言必須に揃え、逃げ道に `rawValue` を用意。
+  - **Attachment のカスタム項目** は未着手。
 
 [prd]: ../design/requirements.md
 [0004]: 0004-field-type-model.md
@@ -122,3 +134,7 @@
 [0006]: 0006-error-model.md
 [0016]: 0016-field-type-granularity.md
 [0019]: 0019-static-resource-types.md
+[0060]: 0060-full-resource-coverage-direction.md
+[0069]: 0069-tenant-field-catalog-tooling.md
+[0074]: 0074-custom-field-declaration-required.md
+[rv36]: ../reviews/rv/0036-write-value-validation-partial.md

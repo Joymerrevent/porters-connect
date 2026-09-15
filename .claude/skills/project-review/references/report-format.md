@@ -38,7 +38,7 @@ docs/reviews/
 
 ## 根拠
 
-`file:line` と正典（`docs/reference/` / ADR / PRD）の該当箇所を**対にして**書く。
+`file:line` と正典（`docs/usage/reference/` / ADR / PRD）の該当箇所を**対にして**書く。
 実測したなら入力と結果も。
 
 ## 影響

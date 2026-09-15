@@ -123,10 +123,13 @@
   `docs/howto/handle-failures.md`（例外の届き方の記述）・該当テスト。
 - 関連: [ADR-0024][adr24]（Transport の同契約）／[ADR-0005][adr5]（公開 API の形）／[ADR-0006][adr6]（エラーモデル）／
   [ADR-0038][adr38]（Read クエリ＝ガードの出所）。
+- **その後**: 本文の例にある `porters.candidate.*` は、[ADR-0055][adr55] 以降 `porters.tenant(id).candidate.*`
+  （partition は `tenant(id)` で一度だけ束ねる）。同期 throw と reject の契約そのものは変わらない。
 
 [findings]: ../reviews/findings.md
 [guide]: ../usage/howto/handle-failures.md
 [adr5]: 0005-public-api-shape.md
 [adr6]: 0006-error-model.md
 [adr24]: 0024-mock-transport.md
+[adr55]: 0055-partition-binding-guard.md
 [adr38]: 0038-read-query-surface-impl.md

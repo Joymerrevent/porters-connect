@@ -41,7 +41,7 @@ git diff --stat develop...HEAD
 ```
 
 - 比較基点は既定で `develop`（このリポジトリの開発本流）。リリース系なら `main`。
-- **正典を引く**: 関係する ADR（[docs/adr/index.md][adrindex]）、`docs/design/`、`docs/reference/`、`CLAUDE.md`。判断は記憶や一般論ではなく、ここに接地させる。
+- **正典を引く**: 関係する ADR（[docs/adr/index.md][adrindex]）、`docs/design/`、`docs/usage/reference/`、`CLAUDE.md`。判断は記憶や一般論ではなく、ここに接地させる。
 - **ADR の決定と実装が食い違っていないかを最初に見る。** 文書やプロンプトが主張している性質（「〜の権限は渡していない」「〜で守られる」）が**事実か**を確かめる。前回のレビューで実際に出た指摘がこの型だった。
 - **変更の種類を判定し、対象別ファイルを開く**（複数にまたがる PR なら全部）。バグクラスも具体的な検証手も対象ごとに違う:
   - シェル / GitHub Actions → [targets/shell-ci.md][shell]

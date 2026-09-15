@@ -81,7 +81,7 @@ grep -rn "VERIFY(live)" src test
 - **現在の対応 / 仮定**: 各リソースの「新規必須」列どおり型で必須化（ADR-0019 W2）
 - **不確実な理由**: 当初は「通常必須」止まりの推測で P_Owner のみにしていた
 - **コード箇所**: `src/resources/*.ts`（`REQUIRED_ON_CREATE`）
-- **確認方法**: docs/reference `resources/*.md`「新規必須」列
+- **確認方法**: docs/usage/reference `resources/*.md`「新規必須」列
 - **状態**: 確定
 - **確認結果**: reference で解決（Candidate=`P_Owner`／Job=+`P_Client`,`P_Recruiter`／Client=`P_Owner`／Process=関連6（`P_Client`/`P_Recruiter`/`P_Job`/`P_Candidate`/`P_Resume`）／Resume=+`P_Candidate`）。P_Id は System[Id]＝lib 供給で除外
 

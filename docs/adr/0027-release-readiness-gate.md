@@ -102,6 +102,9 @@
 - ツール: [publint][publint] ／ [are-the-types-wrong][attw]。
 - 0.2.0 実測: publint=All good／attw=node16(CJS) ⚠️（ESM-only の設計どおり）。
 - 既存の手動レビュー観点（`.claude` の project-review スキル）を一部自動化・補完する位置づけ。
+- **その後**: 「見送り（任意・将来）」に置いた 4 つのうち 2 つは入った。**link check** は
+  `pnpm check:links`（`scripts/check-doc-links.mjs`）として、**Actions の SHA ピン留め**は
+  全ワークフローで実施済み。install スモークと tarball 検査は見送りのまま。
 
 [adr25]: 0025-release-automation.md
 [adr26]: 0026-changelog-format.md
