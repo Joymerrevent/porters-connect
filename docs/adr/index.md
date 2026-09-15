@@ -88,6 +88,7 @@
 | [0074][0074] | 未宣言のカスタム項目を `field` からも外す（宣言必須へ揃える）    | 詳細設計 | accepted   | —     |
 | [0075][0075] | Attachment に `searchAll` を足す（本体は一覧に流さない）         | 詳細設計 | accepted   | —     |
 | [0076][0076] | Phase の Read クエリから `keywords` / `itemstate` を外す         | 詳細設計 | accepted   | —     |
+| [0077][0077] | Attachment の本体は `get` でだけ運ぶ（`search` も本体なしに）    | 詳細設計 | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -167,3 +168,4 @@
 [0074]: 0074-custom-field-declaration-required.md
 [0075]: 0075-attachment-search-all.md
 [0076]: 0076-phase-read-query-surface.md
+[0077]: 0077-attachment-content-via-get-only.md

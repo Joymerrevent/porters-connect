@@ -193,9 +193,15 @@ new XMLParser({ parseTagValue: false }).parse(xml); // 130MB -> ~800ms / heapUse
   一括書き込みの拒否）／ [ADR-0022][0022]（Option に `start` が無いこと）
 - 未確定: [LV-24][lv]（`requestType` / `resource` は必須か ＝ 本体の選び方が `field` か `requestType` か）／
   [LV-4][lv]（Read の既定項目）
-- フォローアップ（**未決**）: `search` 単発の本体付き 200 件にも同じ危険がある（上記の実測は
+- フォローアップ: ~~（**未決**）`search` 単発の本体付き 200 件にも同じ危険がある（上記の実測は
   `searchAll` 固有ではない）。警告を出すか、件数に上限を設けるかは**本 ADR では決めていない**。
-  必要になったら別に起票する。
+  必要になったら別に起票する。~~
+  **訂正（2026-09-16）**: このフォローアップは [ADR-0077][0077] で決着した（`search` からも
+  本体を外し、本体は `get(id)` だけにする）。**本 ADR の決定は変わらない** — 0077 は
+  「走査では本体を運ばせない」という同じ線を `search` 単発へ広げたもの。
+  なお本 ADR が理由に挙げた「`search` は件数を呼び出し側が決めている」は、0077 で
+  **1 件あたりの大きさは誰も事前に知れない**（Attachment にサイズの項目が無い）という
+  事実により退けられている。
 - 反映（accept 後・別 PR）: `src/resources/attachment.ts`（`searchAll` ＋ 案A ならガード）、
   co-located テスト、`docs/usage/index.md` の表、`docs/usage/howto/attachments.md`、
   マトリクスの表 D、[RV-45][rv45] の処置、CHANGELOG（minor・追加）
@@ -208,3 +214,4 @@ new XMLParser({ parseTagValue: false }).parse(xml); // 130MB -> ~800ms / heapUse
 [0022]: 0022-master-read-query-surface.md
 [0041]: 0041-bulk-write-surface-impl.md
 [0064]: 0064-link-image-types.md
+[0077]: 0077-attachment-content-via-get-only.md
