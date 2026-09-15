@@ -124,9 +124,20 @@ CHANGELOG の作り方:
 - 関連プロセス ADR: [ADR-0013][p13]（規約）/ [ADR-0014][p14]（カバレッジ）/ [ADR-0015][p15]（ミューテーション）。
 - 結合論点: ブランチ戦略（git-flow ⇄ GitHub-flow）。重くなれば別 ADR 化。
 - follow-up: 採用後の `NPM_TOKEN` 設定・npm provenance・(必要なら) Renovate/Dependabot との連携。
+- **その後**: 「実装フォローアップ」に並べた項目は、それぞれ後続の決定で形が変わった。
+  **CHANGELOG は changesets に生成させない**（[ADR-0026][p26]・`changelog: false` ＝ Keep a Changelog を手書き）。
+  **publish は `changesets/action` ＋ `NPM_TOKEN` ではなく、タグ起点の GitHub Release ＋ npm の OIDC
+  trusted publishing**（[ADR-0029][p29]・`tag.yml` / `release.yml`。`NPM_TOKEN` は発行していない）。
+  **back-merge は手動**（[ADR-0030][p30]）を経て **PR 経由**（[ADR-0062][p62]）へ。リリース前ゲートは
+  [ADR-0027][p27]。changesets を採用し git-flow を維持する、という決定そのものは不変。
 
 [cl]: ../../CHANGELOG.md
 [rm]: ../roadmap.md
 [p13]: 0013-coding-conventions-class-vs-function.md
 [p14]: 0014-test-coverage-policy.md
 [p15]: 0015-mutation-testing.md
+[p26]: 0026-changelog-format.md
+[p27]: 0027-release-readiness-gate.md
+[p29]: 0029-release-tag-automation.md
+[p30]: 0030-backmerge-method.md
+[p62]: 0062-backmerge-via-pull-request.md

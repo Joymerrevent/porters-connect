@@ -11,6 +11,11 @@
 >
 > **decider が 6 論点すべて推奨案どおり選択し `accepted`（2026-09-10）**。論点4 には検査④
 > （コード例がコンパイルする）を追加した。実装は accept 後・別 PR。
+>
+> **Amended by [ADR-0071][0071]（2026-09-12）**: 本 ADR は 4 層を **`docs/` 直下**に置いたが、
+> 利用者向けは **`docs/usage/` の 1 箇所**にまとめ直された（`docs/usage/index.md` と
+> `start/` / `concepts/` / `howto/` / `reference/` / `api/`）。本文中の `docs/start/…` などは
+> `docs/usage/…` と読み替える。4 層・各層の役割・検査①〜④という本 ADR の核は不変。
 
 ## Context and Problem Statement
 
@@ -346,5 +351,6 @@ README に残すのは**リソース名の一覧表と「操作は共通」の 1
 [0035]: 0035-usage-documentation-structure.md
 [0068]: 0068-api-reference-tooling.md
 [0072]: 0072-start-contract-first.md
+[0071]: 0071-usage-docs-single-root.md
 [adr-readme]: README.md
 [rm]: ../roadmap.md

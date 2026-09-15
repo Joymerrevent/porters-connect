@@ -116,11 +116,19 @@ follow-up（コアと分離した別パッケージ）。案2 は公式の軸に
   [ADR-0006][0006]（`PortersConfigError`）。
 - 関連実装: `src/http/mock-transport.ts`（新規）、`src/http/index.ts`（barrel）、`src/index.ts`（公開 export）、
   `examples/offline-sandbox.ts`（書き換え）。
+- **その後**: D7 が follow-up に送った「ローカル フェイクサーバー（N2）」は [ADR-0043][0043] で設計され、
+  **1 つの挙動コア ＋ 2 アダプタ**（インプロセス Fake `Transport` ／ 起動できる HTTP サーバー）として
+  `test/fake/` に入っている（`pnpm fake:serve`・[runbook][fake-runbook]）。`http://localhost` へ向けるための
+  scheme 設定は [ADR-0047][0047] が切り出した。**別パッケージ（`@joymerrevent/porters-mock-server`）への
+  昇格は保留**（外部消費が要るときまで・0043 D-提供形態）。D1〜D6 は本 ADR のまま。
 - follow-up（本 ADR スコープ外）: **ローカル フェイクサーバー（N2・別パッケージ・別 ADR）**、
   XML/フィクスチャ生成ヘルパー、`/testing` サブパス分離、宣言的ルートマップの薄い糖衣。
 
 [prd]: ../design/requirements.md
 [ref]: ../usage/reference/README.md
+[0043]: 0043-local-fake-server.md
+[0047]: 0047-access-point-scheme.md
+[fake-runbook]: ../fake-server-runbook.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md
 [0009]: 0009-http-transport.md
