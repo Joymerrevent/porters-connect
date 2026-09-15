@@ -77,9 +77,13 @@
 - 後続: ✅ score 閾値の CI 強制は実装・運用済み（上記）。以降はフル 100% 維持を前提に、緩めば
   CI が落ちる。新たな等価変異が出たときのみ `// Stryker disable` を追加する。
 - 関連: [[0014-test-coverage-policy]], [[0013-coding-conventions-class-vs-function]]。
+- **その後**: 「[ADR-0014][0014] と同様にバレル/型/**プレースホルダ**/テストを除外」は
+  `stryker.config.json` の `!src/fields/**` として残っているが、`src/fields/` はもうプレースホルダではない
+  （[RV-44][rv44]）。mutation score がカスタム項目まわりを見ていない状態。
 
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0013]: 0013-coding-conventions-class-vs-function.md
 [0014]: 0014-test-coverage-policy.md
+[rv44]: ../reviews/rv/0044-fields-excluded-from-coverage.md
 [pr12]: https://github.com/Joymerrevent/porters-connect/pull/12
 [pr13]: https://github.com/Joymerrevent/porters-connect/pull/13
