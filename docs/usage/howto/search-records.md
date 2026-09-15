@@ -25,7 +25,7 @@ const page = await t.candidate.search({
 for await (const c of t.candidate.searchAll({
   condition: { P_Name: { part: "山田" } },
 })) {
-  // …
+  console.log(c.P_Id, c.P_Name);
 }
 ```
 
@@ -51,21 +51,21 @@ await t.candidate.search({ field: ["P_Id", "P_Name"] });
 await t.candidate.search({ field: [] }); // total だけ見たい
 ```
 
-**間違いはコンパイル時に止まります**。`field` はカタログ済みの alias
-（標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）か、
-未宣言のカスタム項目（`U_` / `A_` で始まる名前）しか受け付けません。
+**間違いはコンパイル時に止まります**。`field` が受け付けるのは**カタログ済みの alias** だけです
+（標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）。
 
 <!-- doccheck: expect-error -->
 
 ```ts
-await t.candidate.search({ field: ["U_memo"] }); // OK（未宣言カスタムも引ける）
 await t.candidate.search({ field: ["P_Nmae"] }); // ✗ 型エラー（綴り間違い）
 await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（接頭辞は書かない）
+await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言していないカスタム項目）
 ```
 
 綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
-型で受けることでそこを手前に引き上げています。未宣言のカスタム項目は `U_` 以降の綴りまでは検査できないので、
-よく使うものは [`defineFields`][custom-fields] で宣言してください（宣言すれば綴りも検査されます）。
+型で受けることでそこを手前に引き上げています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
+綴りまで検査されます（[ADR-0074][adr74]）。宣言せずに触る必要があるときの逃げ道は
+[カスタム項目][custom-fields]にあります。
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
 > 型が `値 | null | undefined` になっているのはこのためです。
@@ -133,6 +133,40 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 > 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です
 > （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装なので、
 > 外れた場合に直すのは要求側の文字列だけです。
+
+### ユーザー型は `expand` に書きません
+
+`P_Owner` のような**ユーザー型**（Data Type は `User`）は、`field` に名前を書くだけで
+**最初から入れ子**で返ります。括弧はライブラリが付けるので、書き方を覚える必要はありません。
+
+```ts
+const page = await t.job.search({ field: ["P_Position", "P_Owner"] });
+const owner = page.items[0]?.P_Owner;
+console.log(owner?.P_Id, owner?.P_Name, owner?.P_Mail);
+```
+
+送られるのはこの形です（`field` を省略したときの既定でも同じ形で要求されます）。
+
+```text
+field=Job.P_Position,Job.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)
+```
+
+参照型との違いは 3 つです。
+
+|          | ユーザー型（`P_Owner`）  | 参照型（`P_Client`）                |
+| -------- | ------------------------ | ----------------------------------- |
+| 既定     | **最初から入れ子**で返る | **ID だけ**返る                     |
+| 書き方   | `field` に名前を書くだけ | `expand` に欲しい項目を書く         |
+| 部分指定 | **できない**（4 つ固定） | できる（`["P_Id", "P_Name"]` など） |
+
+**4 つ固定**は PORTERS の制約です（`User.P_Id` / `P_Type` / `P_Name` / `P_Mail` 以外は参照
+できません — [Resource API 概要][rapi]）。`expand` に書こうとすると型エラーになります。
+
+<!-- doccheck: expect-error -->
+
+```ts
+await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // ✗ expand は参照型だけ
+```
 
 ## `image` — 画像の中身も読む
 
@@ -348,6 +382,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [adr57]: ../../adr/0057-itemstate-existing-explicit.md
 [adr58]: ../../adr/0058-reference-expansion-read.md
 [adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr74]: ../../adr/0074-custom-field-declaration-required.md
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
 [lv]: ../../live-verification.md

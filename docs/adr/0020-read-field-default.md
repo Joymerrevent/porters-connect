@@ -107,11 +107,18 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
 - 依存/関連: [ADR-0005][0005]（公開 API・SD-3）／[ADR-0019][0019]（カタログ SoT）／[ADR-0011][0011]（decode の User/Reference/Option 形）／[ADR-0016][0016]（DataType）。
 - 関連実装: `src/resources/resource.ts`（`buildReadUrl` / `search` / `searchAll` / `get` / `SearchQuery`）、各 `src/resources/*.ts` のカタログ、`src/xml/decode.ts`、`src/resources/attachment.ts`（bespoke・`DEFAULT_FIELDS` でメタデータ既定）。
 - フォローアップ: accept 後に実装 PR（既定 field 生成・`get` の field 対応・RV-2 の fixture/テスト是正）。
+- **その後**: 軸4「`U_` / `A_` は既定 field の対象外」は現在の挙動ではない。[ADR-0023][0023] で
+  **宣言済みのカスタム項目が静的カタログに合流**したため、既定 field（`resource.ts` の `defaultFields`）にも
+  含まれて送られる。**未宣言**の `U_` / `A_` は逆に [ADR-0074][0074] で `field` に書けなくなった
+  （応答に来た値は `rawValue()` で読む）。「省略時はカタログ導出の既定 field・`field: []` で主キーのみ」
+  という決定そのものは不変。
 
 [0005]: 0005-public-api-shape.md
 [0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md
 [0019]: 0019-static-resource-types.md
+[0023]: 0023-custom-field-declaration-dsl.md
+[0074]: 0074-custom-field-declaration-required.md
 [ref-read]: ../usage/reference/resource-api/README.md
 [src-mitigation]: ../../tmp/porters-docs/txt/115010010367-2015-07-01-Read系APIのfieldパラメータがセットされなかった場合の挙動-緩和措置あり.md
 [findings]: ../reviews/findings.md

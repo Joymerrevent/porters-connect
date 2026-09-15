@@ -203,6 +203,20 @@ describe("verifyFields", () => {
         },
       ]);
     });
+
+    // The exemption above is per alias. If it were not, a single undeclarable field in the
+    // tenant would excuse every missing declaration on that resource.
+    it("still reports a missing field when a different one is undeclarable", async () => {
+      const fields = defineFields({ job: (f) => ({ U_gone: f.number() }) });
+      const source = sourceOf({ job: [{ P_Alias: "Job.U_ref", P_Type: 16 }] });
+
+      const report = await verifyFields(source, fields);
+
+      expect(report.missing).toEqual([
+        { resource: "job", alias: "U_gone", declared: "Number" },
+      ]);
+      expect(report.undeclarable).toHaveLength(1);
+    });
   });
 
   it("reads every field by default so unused ones are not called missing", async () => {
@@ -308,6 +322,8 @@ describe("assertFieldsMatch", () => {
       expect(err.message).toContain(
         "job.U_gone: declared Number, not in the tenant",
       );
+      // One finding per line: run together, a report of several fields is unreadable.
+      expect(err.message).toMatch(/\n {2}job\.U_gone:/);
       expect(err.hint).toContain("generateFieldDecls");
     }
   });

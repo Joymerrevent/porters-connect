@@ -18,8 +18,9 @@ PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで�
 `U_` / `A_` は**テナントごとに違う**ので、同梱できません。だから宣言する仕組みがあります
 （[ADR-0004][adr4]）。**宣言したものがカタログに加わる**、という関係です。
 
-> **`U_` / `A_` は宣言しなくても動きます。** ただし型が付かず、`field` を明示しないと
-> **要求すらされません**。詳しくは[カスタム項目][custom-fields]にあります。
+> **`U_` / `A_` は宣言してから使います。** 宣言していない alias は `field` / `condition` /
+> `order` / 書き込みのどこに書いても型エラーです（[ADR-0074][adr74]）。実行時は寛容なままなので、
+> cast で型を外せば呼べます。詳しくは[カスタム項目][custom-fields]にあります。
 
 ## 接頭辞は書かない
 
@@ -94,8 +95,10 @@ PORTERS 自身が注意している点です。
 > — [gotchas][gotchas]（出典記事からの転記）
 
 つまり**宣言した alias が今のテナントに実在するとは限りません**。宣言と実物を突き合わせる
-手段があります（[`verifyFields`][custom-fields]）。ずれていると読み取りが黙って `null` を
-返す形で壊れるので、ここは機械に確かめさせてください。
+手段があります（[`verifyFields`][custom-fields]）。Data Type がずれていると読み取りは
+`PortersResourceError`（`category: "validation"`）で落ち、形が同じスカラどうしのずれ
+（`SinglelineText` を `Number` と宣言した、など）に至っては `NaN` が入るだけで気づけません。
+ここは機械に確かめさせてください。
 
 ## 関連
 
@@ -111,6 +114,7 @@ PORTERS 自身が注意している点です。
 [adr19]: ../../adr/0019-static-resource-types.md
 [adr56]: ../../adr/0056-deleted-flag-typing.md
 [adr59]: ../../adr/0059-read-field-bare-alias.md
+[adr74]: ../../adr/0074-custom-field-declaration-required.md
 [custom-fields]: ../howto/custom-fields.md
 [datetime]: datetime.md
 [fdt]: ../reference/resource-api/field-data-types.md

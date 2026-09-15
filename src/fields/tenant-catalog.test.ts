@@ -172,6 +172,35 @@ describe("readCustomCatalog", () => {
     });
   });
 
+  it("records a display name only when the row carries one", async () => {
+    // generateFieldDecls prints this name as a trailing comment, so taking a null/absent
+    // `P_Name` for a name would emit `// null` into the file it tells people to commit.
+    const source = sourceOf([
+      { P_Alias: "U_score", P_Type: 3, P_Name: "適性スコア" },
+      { P_Alias: "U_memo", P_Type: 1, P_Name: null },
+      { P_Alias: "U_note", P_Type: 1 },
+    ]);
+
+    const catalog = await readCustomCatalog(source, "candidate");
+
+    // toStrictEqual, not toEqual: a `U_note: undefined` entry has to fail here, since that is
+    // exactly what recording an absent name would produce.
+    expect(catalog.names).toStrictEqual({ U_score: "適性スコア" });
+  });
+
+  it("treats U_ / A_ as a prefix, not a substring", async () => {
+    // A standard alias that happens to contain `U_` is still a standard field; picking it up
+    // would put a built-in field in the custom catalog (and `defineFields` rejects it anyway).
+    const source = sourceOf([
+      { P_Alias: "Person.P_SubU_score", P_Type: 3 },
+      { P_Alias: "Person.U_score", P_Type: 3 },
+    ]);
+
+    const catalog = await readCustomCatalog(source, "candidate");
+
+    expect(catalog.fields).toEqual({ U_score: "Number" });
+  });
+
   it("skips a row with no alias — there is nothing to match or report", async () => {
     const source = sourceOf([
       { P_Alias: null, P_Type: 3 },

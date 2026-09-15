@@ -186,6 +186,9 @@ D3 の `Link` / `Image` は [PRD R-4][prd] の積み残しで、**カスタム�
 - **関連**: [[0035-usage-documentation-structure]]（ドキュメントの型）／[[0058-reference-expansion-read]]（Sales で効く）／
   [[0023-custom-field-declaration-dsl]]（`Link` / `Image` の露出先）／[[0004-field-type-model]]・[[0016-field-type-granularity]]（型の粒度）。
 - **台帳**: [findings][findings] の open は [RV-22][rv22] のみ（契約待ち）＝本 ADR の妨げにならない。
+- **その後**: 本 ADR の **D1〜D5 はすべて完了**した（データ系 13/13 は 0.12.0、マスタ項目は 0.13.0、
+  `Link` / `Image` を入れてデータ型 17/17 は 0.14.0）。本文の「未実装 7 リソース」「10 / 17」は
+  起票時（2026-08-30）の実測であり、現在地の正は [roadmap][roadmap]（`1.0.0` の完成条件 V1〜V6）。
 - accepted 後の反映先: [索引][index]・[roadmap][roadmap]（「🧭 方針」「いま何をやるか」「📊 完成度」。
   陳腐化していた (d) 行の訂正もここで入れる）・`CLAUDE.md`（リソースのフェーズ記述）。
   **実装は別 PR**（ADR と実装は分ける）。

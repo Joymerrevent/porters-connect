@@ -30,6 +30,11 @@ client 側に既定の Partition を置く形にはしていません。既定�
 ```ts
 const tokyo = porters.tenant(1);
 const osaka = porters.tenant(2);
+
+// 同じ呼び出しでも、行き先の Partition が違う
+const tokyoCount = (await tokyo.candidate.search({ field: [] })).total;
+const osakaCount = (await osaka.candidate.search({ field: [] })).total;
+console.log(tokyoCount, osakaCount);
 ```
 
 テナントごとに**カスタム項目の構成が違う**場合や、**トークンを分けたい**場合は client 自体を

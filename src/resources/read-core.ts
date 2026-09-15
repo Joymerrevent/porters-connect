@@ -16,6 +16,7 @@ import {
   type FieldValue,
 } from "../xml/decode";
 import { parseResourcePage, type RawItem } from "../xml/parser";
+import { asRecord } from "../xml/raw";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
@@ -49,12 +50,42 @@ export type EmptyCatalog = Record<never, never>;
 
 /**
  * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
- * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). Custom
- * `U_`/`A_` aliases are not in the catalog, so they are not typed here (access via a cast until
- * the declaration DSL lands — ADR-0005 SD-2); at runtime they still pass through as raw values.
+ * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). An alias the
+ * catalog does not know is not typed here — declare it with `defineFields` (ADR-0023) to get it
+ * typed and converted. At runtime such a field still passes through as a raw value; read it with
+ * {@link rawValue} (ADR-0074 D2).
  */
 export type ReadRecord<F extends FieldCatalog> = {
   [K in keyof F]?: DecodedValue<F[K]> | null;
+};
+
+/**
+ * Read a field the catalog does not know (ADR-0074 D2) — the named escape hatch for a value that
+ * arrived without a declaration: through a cast in `field`, inside an expanded reference record,
+ * or because PORTERS returned a field that was not asked for.
+ *
+ * Returns what the record actually holds, unconverted:
+ *
+ * - `undefined` — the alias is not on the record (it was never returned)
+ * - `null` — it is there but not a scalar (PORTERS sends a nested node for Option / User / Image)
+ * - `string` — the raw text, exactly as PORTERS sent it
+ *
+ * **No conversion happens.** A date comes back in PORTERS' own format (`2026/09/10 12:00:00`), not
+ * ISO 8601, and a number comes back as text. Declare the field with `defineFields` to get the
+ * converted, typed value instead — this is the escape hatch, not the normal path.
+ *
+ * @example
+ * const page = await t.candidate.search({ field: ["P_Name"] });
+ * const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
+ */
+export const rawValue = (
+  record: unknown,
+  alias: string,
+): string | null | undefined => {
+  const rec = asRecord(record);
+  if (rec === undefined || !(alias in rec)) return undefined;
+  const value = rec[alias];
+  return typeof value === "string" ? value : null;
 };
 
 /**
@@ -104,17 +135,21 @@ const readFieldEntry = (
     : qualify(prefix, alias);
 
 /**
- * What a Read `field` entry may name (ADR-0059): a catalogued alias — every standard `P_` field
- * plus the custom fields declared with `defineFields` (ADR-0023) — or an undeclared tenant custom
- * field, admitted by the `U_`/`A_` naming rule `defineFields` already enforces at runtime.
+ * What a Read `field` entry may name (ADR-0059 / ADR-0074 D1): a **catalogued** alias — every
+ * standard `P_` field plus the custom fields declared with `defineFields` (ADR-0023). An
+ * undeclared `U_`/`A_` alias is **not** accepted: `condition`, `order` and the Write inputs have
+ * always required a declaration, and ADR-0074 D1 brings `field` in line, so custom fields follow
+ * one rule — declare, then use.
  *
  * Aliases are **bare**: the resource's prefix (`Person.` for Candidate) is a constant the
  * descriptor knows, so the library adds it. That makes `condition` / `order` / `field` one
  * vocabulary and turns a typo (`P_Nmae`) or a hand-written prefix into a compile error instead of
  * a request that quietly returns nothing.
+ *
+ * The runtime stays permissive (ADR-0074): an alias that arrives through a cast is still sent, and
+ * a response field the catalog does not know still decodes — read it with {@link rawValue}.
  */
-export type ReadFieldAlias<F extends FieldCatalog> =
-  (keyof F & string) | `U_${string}` | `A_${string}`;
+export type ReadFieldAlias<F extends FieldCatalog> = keyof F & string;
 
 /**
  * Map caller-supplied bare aliases onto the wire form, the same assembly the default list uses.

@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-09-09
+- 最終更新: 2026-09-15
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -14,8 +14,10 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.15.0**（2026-09-13）で、宣言と実物のズレを黙って飲み込まなくした版。
-品質ゲートは全 green（**988 tests**・coverage は perFile 100%）。
+**最新は 0.15.1**（2026-09-13）＝ 0.15.0（宣言と実物のズレを黙って飲み込まなくした版）に
+開発・CI だけの修正を足したもので、`dist` の中身は 0.15.0 と同一。
+品質ゲートは全 green（**1004 tests**・coverage は perFile 100%。ただし `src/fields/**` は
+計測対象外のまま＝[RV-44][rv44]）。
 
 **次の向き先は「第1層ライブラリの完成」**（2026-09-09・stakeholder）。第2層 MCP サーバーは
 **保留・凍結**した（下記「凍結」節）。
@@ -55,7 +57,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 >
 > **⚠️ V2 の定義を差し替えた**（2026-09-10・stakeholder）。旧文言は「公開 API が 1 つ残らず
 > **リファレンス**に載っている」で、これは **API 記号のリファレンス**（TypeDoc の生成物）を指す読み方になり、
-> 実際にそう実装された（[ADR-0068][adr68]・`docs/api` 176 頁）。だが stakeholder の意図は
+> 実際にそう実装された（[ADR-0068][adr68]・`docs/usage/api` 176 頁）。だが stakeholder の意図は
 > **「使い方の HOWTO ドキュメント」**（<https://jestjs.io/ja/> や <https://nextjs.org/docs> のような
 > 説明サイトの元になる原稿）だった。**記号リファレンスは達成済みだが V2 ではない** ので、
 > 下記「完了」節へ移し、V2 は使い方ドキュメントの条件に置き換えた。
@@ -83,7 +85,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 - [x] ✅ **API 記号リファレンスの実装**（[ADR-0068][adr68]）— **完了・未リリース**（2026-09-10）。
       **V2 ではない**（上記の注記）が、それ自体は価値があるので残す — Jest / Next.js も
       API Reference 節を持つ構成で、将来の説明サイトの 1 節として使える。自動生成 ＋ CI ゲートなので
-      保守コストはほぼゼロ。TypeDoc + `typedoc-plugin-markdown` で `docs/api/`（176 ページ）に
+      保守コストはほぼゼロ。TypeDoc + `typedoc-plugin-markdown` で `docs/usage/api/`（176 ページ）に
       生成してコミットし、`pnpm check:api` が再生成差分を検査する。着手時の 4 点は実測して確定
       （ADR に記録）— **ソースリンクは `gitRevision: "main"`**（SHA 埋め込みだと 175/176 ファイルが
       毎コミットで変わるが、ブランチ名なら定義位置が動いた 2 ファイルだけ）
@@ -295,10 +297,10 @@ Contract / Sales の `Currency` は **Data Type が `Number`** なので新し�
 > **MCP が露出できるのは第1層が持つものだけ**＝未実装 7 リソースはそのまま MCP の穴になる。
 > 排他ではなく**順序の問題**として、第1層を先に広げる。0033 は [ADR-0060][adr60] で **superseded**。
 
-**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/howto/authenticate.md`）／
+**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/usage/howto/authenticate.md`）／
 F-2 Read クエリ（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0）／
-F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/howto/multi-tenant.md`）／
-F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/howto/bulk-write.md`）。
+F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/usage/howto/multi-tenant.md`）／
+F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/usage/howto/bulk-write.md`）。
 
 横断監査 [2026-06-22-03][rv3] の検出ドリフト RV-10〜12 はすべて `fixed`（RV-11 は [ADR-0036][adr36] で refresh 挙動を amend）。
 
@@ -558,6 +560,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [run816]: reviews/2026-08-16-01.md
 [adr]: adr/README.md
 [findings]: reviews/findings.md
+[rv44]: reviews/rv/0044-fields-excluded-from-coverage.md
 [rv36]: reviews/rv/0036-write-value-validation-partial.md
 [rv37]: reviews/rv/0037-field-read-missing-process.md
 [adr-readme]: adr/README.md

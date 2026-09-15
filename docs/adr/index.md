@@ -85,6 +85,7 @@
 | [0071][0071] | 利用者向けドキュメントを `docs/usage/` の 1 箇所にまとめる       | プロセス | accepted   | —     |
 | [0072][0072] | 入門を「契約済みの読者」から始める（`start/` の並べ直し）        | プロセス | accepted   | —     |
 | [0073][0073] | スロットルの共有単位（client ごとをやめ、注入できるようにする）  | 詳細設計 | accepted   | —     |
+| [0074][0074] | 未宣言のカスタム項目を `field` からも外す（宣言必須へ揃える）    | 詳細設計 | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -161,3 +162,4 @@
 [0071]: 0071-usage-docs-single-root.md
 [0072]: 0072-start-contract-first.md
 [0073]: 0073-throttle-sharing.md
+[0074]: 0074-custom-field-declaration-required.md

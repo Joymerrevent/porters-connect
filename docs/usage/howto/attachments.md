@@ -12,6 +12,11 @@ await t.attachment.create(file); // 追加 → 採番された id
 await t.attachment.update(900, { fileName: "new.pdf" }); // 差し替え
 ```
 
+**作成と更新で受ける項目が違います。** `create` は 5 項目すべてが必須、`update` は
+`contentType` / `fileName` / `content` の 3 つだけが任意です。**付け先（`resource` /
+`resourceId`）は更新の入力型に入れていません** — 付け替えができると PORTERS が公表していないので、
+できることにしていません。
+
 `delete` はありません（[削除 API が無いということ][no-delete]）。
 
 ## 追加する
@@ -29,7 +34,10 @@ const id = await t.attachment.create({
 ```
 
 **`resource` は数値**です。型は `number` なので、間違った番号もコンパイルは通ります
-（`resourceId` の取り違えと同じく、実行するまで分かりません）。
+（`resourceId` の取り違えと同じく、実行するまで分かりません）。しかも
+**付け先は `update` で変えられません**（上記）。間違えたら正しい先に作り直すことになり、
+**間違えたほうは消せません**（[削除 API が無いということ][no-delete]）。付ける前に
+`resource` と `resourceId` を確かめてください。
 
 | リソース  | 値  | リソース  | 値  | リソース    | 値  |
 | --------- | --- | --------- | --- | ----------- | --- |

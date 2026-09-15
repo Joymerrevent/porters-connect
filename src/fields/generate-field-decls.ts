@@ -82,6 +82,7 @@ const resourceBlock = (
   includeNames: boolean,
 ): string => {
   const entries = Object.entries(catalog.fields).sort(([a], [b]) =>
+    // Stryker disable next-line EqualityOperator: equivalent — object keys are unique, so the tie branch cannot occur
     a < b ? -1 : 1,
   );
   const declarations = entries.map(([alias, dataType]) => {
@@ -89,9 +90,11 @@ const resourceBlock = (
     const comment = name === undefined ? "" : ` // ${name}`;
     return `    ${alias}: f.${BUILDER_METHOD[dataType]}(),${comment}`;
   });
+  // Stryker disable EqualityOperator: equivalent — one alias appears once per resource, so the tie branch cannot occur
   const notes = [...catalog.undeclarable]
     .sort((a, b) => (a.alias < b.alias ? -1 : 1))
     .map((entry) => `    // ${entry.alias}: ${undeclarableNote(entry)}`);
+  // Stryker restore EqualityOperator
   const body = [...declarations, ...notes];
   // No declarable fields means the builder argument would be unused, which trips a lint rule in
   // the consuming project — so emit the parameterless form.

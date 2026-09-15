@@ -5,7 +5,7 @@ PORTERS のテナントは、標準項目（`P_`）に加えて**テナント固
 
 カスタム項目は**テナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。
 代わりに、**利用側が `defineFields` で宣言する**と、その項目が読み書きの型に現れるようになります
-（[ADR-0004][adr4] のハイブリッド方式／宣言 DSL の詳細設計は [ADR-0023][adr23]）。
+（[ADR-0004][adr4] のハイブリッド方式／`defineFields` の詳細設計は [ADR-0023][adr23]）。
 
 ## 3 行で
 
@@ -35,44 +35,122 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 
 ## 宣言しないとどうなるか
 
-**エラーにはなりません。** カタログに無い alias は、読み取りでは**生の文字列**、
-書き込みでは**テキストとして**そのまま通ります。つまり宣言は「動かすため」ではなく
-**型と値の変換を効かせるため**のものです。
+**型が受け付けません。** 宣言していないカスタム項目は、`field` / `condition` / `order` /
+書き込みのどこに書いてもコンパイルエラーです。カスタム項目は**宣言してから使う** — 入口は
+この 1 つです（[ADR-0074][adr74]）。
 
-宣言しない場合との違いは 3 つあります。
+**実行時は変わりません。** 型を外せば送れますし（後述の逃げ道）、応答に知らない項目が混ざっても
+落ちません。止めているのは型で、狙いは 2 つ — **値の変換を効かせること**と、**綴りを機械に
+検査させること**です。
 
-|            | 宣言しない                      | 宣言する                                                                              |
-| ---------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| 型         | 現れない（`as` で cast が要る） | `Candidate` / `CreateInput` / `UpdateInput` / `SearchQuery` に現れる                  |
-| 読み取り値 | 生の文字列                      | Data Type どおり（`Number` → `number`、`Option` → `string[]`、`DateTime` → ISO 8601） |
-| 既定 field | 送られない（明示指定が要る）    | `field` 省略時に**自動で要求される**（[ADR-0020][adr20]）                             |
+宣言の有無で何が変わるかを、実物が `Number` のカスタム項目 `U_score`（値は 80）で並べます。
+読み取った 1 件を、下の表では `c` と呼びます。
 
-3 つ目が実務では効きます。宣言していないカスタム項目は、`field` を明示しない限り
-**そもそも取得されません**。
+<!-- doccheck: fields -->
 
-なお `field` に書くだけなら宣言は要りません（`U_` / `A_` で始まる名前は未宣言でも通ります）。
-ただし**宣言していないと `U_` 以降の綴りは検査されない**ので、
-取得漏れを型で防ぎたいものはここで宣言してください（[ADR-0059][adr59]）。
+```ts
+const page = await t.candidate.search({ field: ["P_Name", "U_score"] });
+const c = page.items[0]; // ← 表の `c`
+```
+
+### 読み取り
+
+|     | 宣言しない                                                                                                                                                           | 宣言する                                                                            |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 型  | **受け付けない。** `field: ["U_score"]` がコンパイルエラーになり、`c.U_score` も読めない                                                                             | **付く。** `field` に書けて、`c.U_score` が `number \| null \| undefined` になる    |
+| 値  | cast で型を外して読むと、**文字列の `"80"`**。変換されないので、日時は `"2026/09/10 12:00:00"`（PORTERS の書式）のまま、`Option` / `User` / `Image` は `null` になる | **数値の `80`。** 日時は ISO 8601、`Option` は選択された alias の配列（`string[]`） |
+
+### 書き込み
+
+|     | 宣言しない                                                                                                                                       | 宣言する                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| 型  | **受け付けない。** `t.candidate.update(10001, { U_score: 80 })` がコンパイルエラーになる                                                         | **付く。** `{ U_score: 80 }` が通り、`{ U_score: "80" }` は型エラーになる                                   |
+| 値  | cast で型を外して送ると、**文字列にしてそのまま送られる**。ISO 8601 の日時は `2026-09-10` のまま送られ、配列は `"a,b"` という 1 本の文字列になる | **Data Type に合わせて変換して送る。** 日時は `2026/09/10` に、`Option` は子要素に、`Image` は 3 要素になる |
+
+読み取りにはもう 1 つ、**そもそも要求されるかどうか**の差があります。宣言するとその項目が
+`field` 省略時の既定に入り、何も書かなくても返ってきます（[ADR-0020][adr20]）。
+**書き込みにこの差はありません** — `create` / `update` に書いた項目だけが送られるので、
+宣言しても送られる項目は変わりません。
+
+### 逃げ道 — 宣言せずに読み書きする
+
+宣言していない項目に触る必要があるなら、**cast で型を外せば呼べます**。実行時は今までどおり通ります。
+
+```ts
+import { rawValue } from "@joymerrevent/porters-connect";
+import type {
+  CandidateSearchQuery,
+  CandidateUpdateInput,
+} from "@joymerrevent/porters-connect";
+
+// 読み取り: field に入れるのは cast、受け取るのは rawValue
+const page = await t.candidate.search({
+  field: ["P_Name", "U_score"] as CandidateSearchQuery["field"],
+});
+const raw = rawValue(page.items[0], "U_score"); // "80"（文字列。変換されない）
+
+// 書き込み: 入力の型を外す（日時や Option はこの形では壊れる）
+await t.candidate.update(10001, { U_score: 80 } as CandidateUpdateInput);
+```
+
+`rawValue` は**レコードが持っているものをそのまま返します** — 応答に無ければ `undefined`、
+入れ子（`Option` / `User` / `Image`）なら `null`、あれば生の文字列です。変換はしません。
+
+**毎回こう書くくらいなら宣言してください。** 型を外すと、綴りの検査も値の変換も効きません。
+
+**宣言しても必須項目は増えません。** `create` が必須にするのは各リソースの標準項目だけで
+（Candidate なら `P_Owner`。一覧は[書き込みの制約][write-constraints]）、宣言したカスタム項目は
+つねに任意です。ビルダーにも必須を宣言する手段はありません。
+
+ただし **PORTERS 側では項目を入力必須に設定できます**。その状態は Field Read の `P_Required`
+（`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まらず、
+PORTERS が弾きます**。必須で運用している項目があるなら、`t.field.search({ resource: "candidate" })`
+で `P_Required` を見て、アプリ側で確かめてください。
+
+入口はどれも同じ扱いです。`U_hiredOn` を宣言していなければ、**4 つとも型エラー**になります。
+
+<!-- doccheck: expect-error -->
+
+```ts
+await t.candidate.search({ field: ["U_hiredOn"] }); // ← 型エラー
+await t.candidate.search({ condition: { U_hiredOn: { ge: "2026-01-01" } } }); // ← 型エラー
+await t.candidate.search({ order: [{ U_hiredOn: "desc" }] }); // ← 型エラー
+await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラー
+```
+
+綴り間違いも同じところで止まります。`U_hiredOn` を `U_hireOn` と書けば、宣言していても
+コンパイルエラーです（[ADR-0059][adr59]）。
+
+型を外したときは、**書き込みのほうが危ない**です。読み取りは変換されない文字列が来るだけですが、
+書き込みはその値がそのまま PORTERS に届きます。受理されるかどうかは PORTERS 次第で、ライブラリは
+検知しません。
+
+宣言していないと **`U_` 以降の綴りも検査されません**。取得漏れを型で防ぎたい項目は、
+ここで宣言してください（[ADR-0059][adr59]）。
 
 ## 宣言できる型
 
 ビルダー `f` のメソッドが、そのまま Data Type に対応します。
 
-| メソッド             | Data Type                                     | 読み取り値                                                      |
-| -------------------- | --------------------------------------------- | --------------------------------------------------------------- |
-| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        |
-| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        |
-| `f.multilineText()`  | `MultilineText`                               | `string`                                                        |
-| `f.mail()`           | `Mail`                                        | `string`                                                        |
-| `f.telephone()`      | `Telephone`                                   | `string`                                                        |
-| `f.url()`            | `URL`                                         | `string`                                                        |
-| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            |
-| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  |
-| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            |
-| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  |
-| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            |
-| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） |
-| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        |
+| メソッド             | Data Type                                     | 読み取り値                                                      | 書き込み値                                           |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        | `number`                                             |
+| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        | `string`                                             |
+| `f.multilineText()`  | `MultilineText`                               | `string`                                                        | `string`                                             |
+| `f.mail()`           | `Mail`                                        | `string`                                                        | `string`                                             |
+| `f.telephone()`      | `Telephone`                                   | `string`                                                        | `string`                                             |
+| `f.url()`            | `URL`                                         | `string`                                                        | `string`                                             |
+| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            | `string`（ISO 8601）                                 |
+| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  | `string`（ISO 8601・UTC `…Z`）                       |
+| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            | `string`（ISO 8601 の生年月日）                      |
+| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  | `string[]`（選択する alias）                         |
+| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            | `number`（ユーザーの ID だけ）                       |
+| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） | `{ FileName, ContentType, Content }`（3 つとも必須） |
+| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        | `number`（参照先の ID だけ）                         |
+
+**`User` / `Link` / `Image` は読み書きが対称ではありません**。読み取りは入れ子で返りますが、
+書き込みは `User` / `Link` が ID ひとつだけ、`Image` は 3 要素そろって必要です
+（日時は読み書きとも ISO 8601 で、PORTERS 形式との変換はライブラリがやります）。
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
 `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
@@ -91,6 +169,13 @@ v1 未対応としていたものを実装しました）。標準項目にこ�
 ```ts
 const fields = defineFields({
   resume: (f) => ({ U_photo: f.image(), U_contact: f.link() }),
+});
+
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
 });
 
 // Read: 既定は FileName だけ。中身は image で明示的に取りに行きます。
@@ -161,8 +246,14 @@ catalog.undeclarable; // 宣言では表せない項目（理由つき）
 
 ## 宣言がテナントと合っているか確かめる
 
-宣言と実物がずれると**黙って壊れます**。実物が Option の項目を `f.singlelineText()` と宣言すると、
-読み取りは例外も警告も出さずに `null` を返し、「その項目は空だった」と区別が付きません。
+宣言と実物がずれると読み取りが壊れます。実物が Option の項目を `f.singlelineText()` と宣言すると、
+読み取りは **`PortersResourceError`（`category: "validation"`）で落ちます** — 入れ子が来るはずの
+ところにスカラが来た（またはその逆）は、宣言が違うことしか意味しないためです（[RV-36][rv36]）。
+
+**落ちないずれ方もあります。** 形が同じスカラどうし（実物 `SinglelineText` を `f.number()` と
+宣言した、など）は検知できず、`Number(値)` の結果＝**`NaN` が入ります**。`Link` は
+形そのものが判別子なので検査対象外で、同じく `NaN` になります。
+
 [ハマりどころ][gotchas]のとおり **Alias のズレは PORTERS の運用で起きます**（環境間のコピー・
 項目の変更削除）。だから確かめる手段が要ります。
 
@@ -175,13 +266,13 @@ if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていま
 
 レポートは 5 つに分かれます。
 
-| 区分           | 意味                                     | 深刻度                             |
-| -------------- | ---------------------------------------- | ---------------------------------- |
-| `typeMismatch` | 実在するが Data Type が違う              | **最悪**（黙って `null` になる側） |
-| `missing`      | 宣言したがテナントに無い                 | 高                                 |
-| `unverifiable` | そのリソースのカタログを**読めなかった** | 中（無いのか読めないのかは別）     |
-| `undeclared`   | テナントにあるが宣言していない           | 低（素通しで動く＝現状どおり）     |
-| `undeclarable` | 存在するが宣言では表せない               | 情報                               |
+| 区分           | 意味                                     | 深刻度                                      |
+| -------------- | ---------------------------------------- | ------------------------------------------- |
+| `typeMismatch` | 実在するが Data Type が違う              | **最悪**（読み取りが落ちるか `NaN` になる） |
+| `missing`      | 宣言したがテナントに無い                 | 高                                          |
+| `unverifiable` | そのリソースのカタログを**読めなかった** | 中（無いのか読めないのかは別）              |
+| `undeclared`   | テナントにあるが宣言していない           | 低（素通しで動く＝現状どおり）              |
+| `undeclarable` | 存在するが宣言では表せない               | 情報                                        |
 
 **`verifyFields` は投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、落とすかどうかは利用側が決めます。起動時に落としたいなら 1 行足します。
@@ -235,14 +326,17 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 - **宣言と実データの食い違い**は、読み取り時に `validation` で surface します
   （[ADR-0006][adr6]／黙って `null` にしません）。事前に知りたいなら上記 `verifyFields` です。
-- **日時の書式**は書き込み時に検査します。日時だけは**変換する**（ISO 8601 ⇄ PORTERS 形式）ので、
-  変換できない値は送れないためです。他の型は変換が無いので検査しません — この非対称は意図したものです。
+- **日時の書式**は**読み書きとも**検査します。日時だけは**変換する**（ISO 8601 ⇄ PORTERS 形式）ので、
+  変換できない値は送れず、読めもしないためです。他の型は変換が無いので検査しません — この非対称は
+  意図したものです。
 - **値の妥当性**（桁数・必須・選択肢に存在するか等）は検査せず、PORTERS 側に委ねます。
   手前で厳しく弾くと、サーバーが受け付ける値をライブラリが落としてしまう可能性があるためです
   （安全側ではなく危険側に倒れる）。
 
 食い違いの検出は**形の違いだけ**に絞っています（スカラが来るべき所に入れ子、またはその逆）。
 それより細かい違いは許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
+**スカラどうしのずれは形では捕まらない**ので、`f.number()` と宣言した項目が実はテキストなら
+`NaN` になります（気づけないのはここだけ＝`verifyFields` の出番）。
 詳しくは[エラーハンドリング ガイド][error-handling]にあります（[RV-36][rv36] で実装済み）。
 
 ## 複数テナントで項目が違う場合
@@ -273,14 +367,21 @@ const t = clientFor(myFields).tenant(partition);
 そのとき型をどう書くかで、**カスタム項目が残るかどうか**が変わります。
 
 ```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
 import type {
   DeclaredCatalogs,
-  PortersClient,
   TenantScope,
 } from "@joymerrevent/porters-connect";
 
 const fields = defineFields({
   candidate: (f) => ({ U_score: f.number() }),
+});
+
+const porters = new PortersClient({
+  host: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
 });
 
 // (1) 自分の宣言で受ける — カスタム項目が型付きのまま
@@ -290,8 +391,17 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
 };
 
 // (2) どの宣言のクライアントでも受ける
-const listPartitions = (porters: PortersClient<DeclaredCatalogs>) =>
-  porters.partition.search();
+const listPartitions = (client: PortersClient<DeclaredCatalogs>) =>
+  client.partition.search();
+
+// 呼ぶ側
+const t = porters.tenant(123);
+for (const c of await topScorers(t)) {
+  console.log(c.P_Name, c.U_score); // string | null | undefined / number | null | undefined
+}
+
+const partitions = await listPartitions(porters);
+console.log(partitions.items.map((p) => p.P_Name));
 ```
 
 **(2) はカスタム項目が返り値の型に出ません。** `DeclaredCatalogs` は「何か宣言されているかも
@@ -326,6 +436,40 @@ const wide = async (t: TenantScope<DeclaredCatalogs>) => {
 
 `typeof porters` で書く手もありますが、**値が先に無いと書けません**。関数を別ファイルに
 切り出すなら、上の型名で書くほうが素直です。
+
+### 宣言が違うクライアントは渡せません
+
+`TenantScope<typeof fields>` は**その宣言のスコープだけ**を受け取ります。`U_score` を宣言して
+いないクライアントの `tenant()` を渡すと型エラーです。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
+import type { TenantScope } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({ candidate: (f) => ({ U_score: f.number() }) });
+const other = defineFields({
+  candidate: (f) => ({ U_memo: f.singlelineText() }),
+});
+
+const topScorers = async (t: TenantScope<typeof fields>) => {
+  const page = await t.candidate.search({ field: ["U_score"] });
+  return page.items[0]?.U_score;
+};
+
+const porters = new PortersClient({ host, appId, appSecret, fields: other });
+void topScorers(porters.tenant(1)); // ✗ 型エラー：U_score を宣言していない
+```
+
+カタログの alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
+スコープの型も違います**（[ADR-0074][adr74] D1）。(2) の `TenantScope<DeclaredCatalogs>` が
+どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**広いカタログ**だから
+です。狭いものは広いほうへ渡せる、という向きだけが通ります。
+
+それでも**宣言はプロジェクトに 1 か所置いて export する**のが素直です
+（`generateFieldDecls` の出力先がその置き場になります）。宣言が複数要るなら、クライアントと
+それを受ける関数を同じモジュールに閉じます。
 
 ### 設定を切り出すときも同じ
 
@@ -379,13 +523,14 @@ const score = async () => {
 
 ## 関連
 
-- 決定: [ADR-0023][adr23]（宣言 DSL の詳細設計）／[ADR-0004][adr4]（型モデル）
+- 決定: [ADR-0023][adr23]（`defineFields` の詳細設計）／[ADR-0004][adr4]（型モデル）
 - 型の由来: [ADR-0016][adr16]（Data Type の粒度）／[ADR-0017][adr17]（Option は常に `string[]`）
 - 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
 - ほかの目的から探す: [目次][index]
 
 [adr4]: ../../adr/0004-field-type-model.md
+[adr74]: ../../adr/0074-custom-field-declaration-required.md
 [adr16]: ../../adr/0016-field-type-granularity.md
 [adr17]: ../../adr/0017-option-read-shape.md
 [adr20]: ../../adr/0020-read-field-default.md

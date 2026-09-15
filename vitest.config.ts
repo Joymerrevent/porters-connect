@@ -1,7 +1,9 @@
 import { defineConfig } from "vitest/config";
 
 // Coverage policy: ADR-0014 (all logic exercised). Only files with real logic
-// are measured; barrels / type-only / placeholders / tests are excluded.
+// are measured; barrels / type-only / tests are excluded. `src/fields/**` used to be
+// excluded as a placeholder — it holds real logic since ADR-0023 / ADR-0069, so it is
+// measured like everything else (RV-44).
 export default defineConfig({
   test: {
     coverage: {
@@ -12,7 +14,6 @@ export default defineConfig({
         "src/**/index.ts",
         "src/**/types.ts",
         "src/types/**",
-        "src/fields/**",
         "**/*.test.ts",
       ],
       // ADR-0014: all logic exercised. perFile=true で「各ファイル」に閾値を適用

@@ -11,6 +11,12 @@
 > （汎用 Read 流用・`current()`=request_type=0=ログイン中）と食い違うと判明。本 ADR は **ADR-0021 の軸2（クエリ）・
 > 軸4（current）を実 Read API に接地して amend** する。ADR-0021 の軸1（単数形＋`tenant` 改名）・軸3（Option 再帰フラット化）・
 > 軸5（カタログ駆動 decode）・読み取り専用という核は据え置く。コードへの反映は ADR-0021 のフォローアップ実装 PR に織り込む。
+>
+> **Amended by [ADR-0040][0040] / [ADR-0055][0055]（2026-08-24）**: 本文が前提にしている
+> 「`partition` は client/per-call の既定から供給」は現在の形ではない。partition は
+> **`tenant(id)` で一度だけ束ねる**（client 既定も per-call 引数も無い）ので、User / Field / Option は
+> `tenant(id)` 配下、`partition` を取らない Partition マスタだけが client 直下にある。
+> 各マスタ bespoke クエリ・`get(id)` 不在・`current()` の意味論という本 ADR の核は不変。
 
 ## Context and Problem Statement
 
@@ -125,6 +131,8 @@ partition+field 前提、カタログ既定 field）を流用する」、軸4 �
 [0011]: 0011-xml-parse-serialize.md
 [0008]: 0008-multitenancy-partition.md
 [0007]: 0007-oauth-public-surface.md
+[0040]: 0040-multitenancy-surface-impl.md
+[0055]: 0055-partition-binding-guard.md
 [0002]: 0002-ground-design-in-live-api-docs.md
 [bd]: ../design/basic-design.md
 [lv]: ../live-verification.md

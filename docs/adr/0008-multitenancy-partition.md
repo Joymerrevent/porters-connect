@@ -10,6 +10,13 @@
 > **Amended by [ADR-0021][0021]（2026-06-17）**: 本文中のテナント・スコープ関数 `porters.partition(id)` は、
 > マスタ Read アクセサ `porters.partition` との命名衝突を避けるため **`porters.tenant(id)` に改名**された
 > （決定の根拠は ADR-0021 軸1）。以下の本文は当時の記録としてそのまま残す。
+>
+> **Amended by [ADR-0040][0040] / [ADR-0055][0055]（2026-08-24）**: 「案1 を土台に」とした
+> **呼び出し毎の `partition` 指定も client 既定値も、いまは無い**。0040 が per-call 引数を設けない決定
+> （案1c）をし、0055 が client 既定を廃したため、partition を渡す道は **`tenant(id)` の 1 本**になった
+> （束ねられていない呼び出しを型の上で作れなくするため）。あわせて「`TokenProvider` が partition 文脈を
+> 受け取れるようにする」は **0040 軸4（案4a）で遅延**され、現在の `getAccessToken` は partition を取らない
+> （[LV-13][lv13] の実機確認待ち）。案2 ＋ 案3 を提供する・マッピングは利用側の責務、という核は不変。
 
 ## Context and Problem Statement
 
@@ -110,3 +117,6 @@ PORTERS の構造（[authentication][auth] / [gotchas][gotchas]）:
 [0005]: 0005-public-api-shape.md
 [0007]: 0007-oauth-public-surface.md
 [0021]: 0021-master-read-resources.md
+[0040]: 0040-multitenancy-surface-impl.md
+[0055]: 0055-partition-binding-guard.md
+[lv13]: ../live-verification.md

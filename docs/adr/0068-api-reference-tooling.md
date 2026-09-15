@@ -407,8 +407,14 @@ SHA をブランチ名に替えるだけで churn は 175 → 2 に落ちる。�
 - 関連: [ADR-0035][adr35]（使い方ドキュメントの構造＝ README と guide の役割分担）／
   [roadmap][rm] の `1.0.0` 完成条件 **V2**。
 - 版の実測は 2026-09-09 時点。採択時に再確認する。
+- **その後**: 本 ADR が作ったのは **API 記号のリファレンス**で、`1.0.0` 完成条件 V2 が求めていた
+  「使い方のドキュメント」ではなかったと後に判明し、V2 の定義は差し替えられた（[ADR-0070][adr70]・
+  [roadmap][rm] の V2 注記）。記号リファレンスを生成・コミットするという決定は据え置きで、
+  **出力先は `docs/api/` から `docs/usage/api/` へ移った**（[ADR-0071][adr71]）。
 
 [adr35]: 0035-usage-documentation-structure.md
+[adr70]: 0070-usage-documentation-architecture.md
+[adr71]: 0071-usage-docs-single-root.md
 [rm]: ../roadmap.md
 [rv24]: ../reviews/findings.md
 [rv27]: ../reviews/findings.md

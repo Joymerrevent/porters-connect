@@ -82,6 +82,11 @@ PORTERS は[gotchas][gotchas] / [result-codes][rc] の通り:
 - 前提/依存: [ADR-0006][0006]（retryable 判定）、[result-codes][rc]、[gotchas][gotchas]（上限・429 無し）、[requirements][prd]（R-7）、[HTTP トランスポート ADR][0009]。
 - 後続（MVP）: 並行度制御・single-flight・分散協調。
 - 関連: [[0006-error-model]], [[0009-http-transport]]。
+- **その後**: (1) **冪等性ガードの条件**は [ADR-0063][0063]（2026-09-03）で「**送信済み ＋ 結果が不明**」に
+  限定された。トークン取得や送信前ガードで落ちた場合、および HTTP 429（処理前に拒否）は対象外＝
+  retryable なら通常どおりバックオフで再送される。(2) 「単一プロセス前提＝多インスタンスでは上限保証が弱い」は
+  [ADR-0073][0073]（2026-09-13）で一段進み、スロットルは **client ごとでなくホストごと**（プロセス内で共有）になった。
+  プロセスを跨ぐ協調は `throttle` を注入して利用者側で組む（Redis 等）。
 
 [prd]: ../design/requirements.md
 [gotchas]: ../usage/reference/gotchas.md
@@ -89,3 +94,5 @@ PORTERS は[gotchas][gotchas] / [result-codes][rc] の通り:
 [0006]: 0006-error-model.md
 [0009]: 0009-http-transport.md
 [0012]: 0012-token-cache-refresh.md
+[0063]: 0063-idempotency-guard-scope.md
+[0073]: 0073-throttle-sharing.md

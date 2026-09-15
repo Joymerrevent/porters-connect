@@ -36,6 +36,7 @@ grep -rn "VERIFY(live)" src test
 | LV-21 | Link を condition / order に使えるか                | 未確認 |
 | LV-22 | Image の値を消す書き方                              | 未確認 |
 | LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
+| LV-24 | Attachment Read の必須パラメータ                    | 未確認 |
 
 ---
 
@@ -80,7 +81,7 @@ grep -rn "VERIFY(live)" src test
 - **現在の対応 / 仮定**: 各リソースの「新規必須」列どおり型で必須化（ADR-0019 W2）
 - **不確実な理由**: 当初は「通常必須」止まりの推測で P_Owner のみにしていた
 - **コード箇所**: `src/resources/*.ts`（`REQUIRED_ON_CREATE`）
-- **確認方法**: docs/reference `resources/*.md`「新規必須」列
+- **確認方法**: docs/usage/reference `resources/*.md`「新規必須」列
 - **状態**: 確定
 - **確認結果**: reference で解決（Candidate=`P_Owner`／Job=+`P_Client`,`P_Recruiter`／Client=`P_Owner`／Process=関連6（`P_Client`/`P_Recruiter`/`P_Job`/`P_Candidate`/`P_Resume`）／Resume=+`P_Candidate`）。P_Id は System[Id]＝lib 供給で除外
 
@@ -362,6 +363,24 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: 仮定が外れた場合の倒れ方は**安全側**（広く共有＝叩きすぎない）。App 単位だと判明したら、
   鍵にホスト＋App ID を採る改定になる。超過側へは倒れない
 
+## LV-24 Attachment Read の必須パラメータ（`requestType` / `resource`）
+
+- **現在の対応 / 仮定**: `search` が送るのは `partition` / `field` / `condition` / `count` / `start` の
+  5 つ。本体（`Content`）を取るかどうかは **`field` に `Content` を並べるか**で決めている（[ADR-0018][a18]）
+- **不確実な理由**: Attachment - Read の Input Variables は **`requestType`（`0` = Content あり /
+  `1` = なし）と `resource` を必須 ●** に挙げ、**`field` / `condition` を挙げていない**
+  （[reference の Read パラメータ節][ref-attachment]）。出典どおりなら、いまのリクエストは必須
+  パラメータを欠いており、本体の取り方も違う。データ系リソースと同じ語彙で組み立てたまま、
+  Attachment 固有の Input Variables に合わせていない
+- **コード箇所**: `src/resources/attachment.ts`（`buildAttachmentReadUrl` / `search` / `get`）
+- **確認方法**: 実 Read に (1) いまの形、(2) `requestType` / `resource` を足した形 を投げ、
+  どちらが通るか（欠けると Result Code 100 / 101 が返るか）と、`field` / `condition` が
+  受け付けられるかを見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: [LV-3][lv3]（`Id:eq` 条件）／[LV-4][lv4]（既定項目）と同じ経路。出典どおりだと分かれば
+  公開サーフェス（`AttachmentSearchQuery`）の改定になるので、**ADR が要る**
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -392,3 +411,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [lv10]: #lv-10-systemreference-read-の入れ子タグ
 [a64]: adr/0064-link-image-types.md
 [adr73]: adr/0073-throttle-sharing.md
+[a18]: adr/0018-attachment-design.md
+[ref-attachment]: usage/reference/resource-api/resources/attachment.md
+[lv3]: #lv-3-attachment-の-get-条件
+[lv4]: #lv-4-attachment-read-の既定項目

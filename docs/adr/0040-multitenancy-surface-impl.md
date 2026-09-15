@@ -10,6 +10,12 @@
 > **詳細設計**。**公開 API の骨子（3 つの渡し方・`tenant(id)` 命名）は ADR-0008/0021/0005 で確定済み**で再決定しない。
 > 本 ADR は **partition の渡し方（per-call 引数 か `tenant(id)` スコープ集約 か）・`tenant(id)` の戻り形と露出範囲・
 > partition 解決・テナント別トークン seam を今開くか・配置・semver** を現行コードに接地して詰める。[[0033-post-mvp-direction]] 案F-3。
+>
+> **Amended by [ADR-0055][0055]（2026-08-24）**: 本 ADR の **2 層解決**（`tenant(id)` スコープ →
+> client 既定の partition）は、client 側の既定を**廃した**ため 1 層に縮んだ。partition は `tenant(id)` で
+> 一度だけ束ねる形になっている（「どの partition に書いたか分からない書き込み」を作らないため）。
+> 以下の本文は当時の記録としてそのまま残す。
+>
 > **decider 承認により `accepted`（2026-06-29）**: 軸1＝**案1c**（per-call 引数を設けず `tenant(id)` スコープ＋client 既定の 2 層に集約）、
 > 軸4＝**案4a**（テナント別トークン seam は遅延・案3 と scope で両対応）を採用（下記 Decision Outcome）。
 > **反映（basic-design/JSDoc/CHANGELOG/roadmap・実装）は accept 後に別 PR で行う**（[[0033-post-mvp-direction]] 案F の進め方・ADR 先行 → 実装）。
@@ -149,3 +155,4 @@ partition の渡し方を **3 つ**（案1 呼び出し毎指定＋client 既定
 [lv]: ../live-verification.md
 [adr]: README.md
 [adr33]: 0033-post-mvp-direction.md
+[0055]: 0055-partition-binding-guard.md
