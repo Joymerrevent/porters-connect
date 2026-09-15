@@ -1,7 +1,7 @@
 # RV-44 🟡 coverage / mutation が `src/fields/**` を除外したままで、実ロジック 4 本が測られていない
 
 - 重要度: 🟡 ／ 観点: テスト厳密性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -55,7 +55,52 @@ ADR の棚卸し（1 ファイルずつ現状と突き合わせる作業・2026-
 
 ## 処置
 
-—
+**(a) を採用**（2026-09-15）。`vitest.config.ts` の `exclude` と `stryker.config.json` の `mutate` から
+`src/fields/**` を外し、計測対象に戻した。除外理由を書いていた `vitest.config.ts` の
+コメントも実態に合わせた（「プレースホルダだったが ADR-0023 / ADR-0069 以降は実ロジック」）。
+
+戻す前に、閾値を割っていた 2 経路にテストを足した。
+
+- `define-fields.ts` — 値が `undefined` のリソースキーを読み飛ばす経路。条件付きで宣言を組む
+  （`job: wantJob ? decl : undefined`）呼び出しで通る道で、空カタログを載せるとそのリソースの
+  カスタム項目が静かに解決されなくなる
+- `generate-field-decls.ts` — 宣言できない項目のコメントを alias 順に並べる整列。宣言側を整列して
+  いる理由（再生成で同じ文面になる）がコメント側にも要る
+
+計測対象に戻したことで **mutation もこの領域を初めて見るようになり**、生き残った変異のうち
+テストの穴だったものを潰した（下記「検証」）。
+
+## 検証
+
+**coverage**（`pnpm test:coverage`・perFile 閾値つき）: `src/fields` は statements / functions /
+lines とも **100%**、branches 98.64%（最も低い `verify-fields.ts` で 94.44% ＝ 閾値 90 を満たす）。
+リポジトリ全体でも statements / functions / lines 100%・branches 99.05%。
+
+**mutation**（`pnpm exec stryker run`）: 全体スコアは **95.75**（break 閾値 95）。
+除外を外した直後は 95.11 で、下記の穴を埋めて 95.75 に戻した。`src/fields` は 97.91（281 killed）。
+
+| ファイル                  | mutation score | 生存 |
+| ------------------------- | -------------- | ---- |
+| `define-fields.ts`        | 100.00         | 0    |
+| `verify-fields.ts`        | 100.00         | 0    |
+| `generate-field-decls.ts` | 97.73          | 2    |
+| `tenant-catalog.ts`       | 93.75          | 4    |
+
+生き残った変異を潰すために足したテスト（＝mutation が見つけた実際の穴）:
+
+- `defineFields` の alias 規則が**前方一致**であること（`P_SubU_score` は custom ではない）と、
+  未知のリソースキーのときにメッセージが**打ち間違いと候補一覧**を含み `category: "config"` であること
+- `readCustomCatalog` が `P_Name` の無い行で `names` に**エントリを作らない**こと
+  （作ると `generateFieldDecls` が `// null` と書き出す）と、alias 規則が前方一致であること
+- `verifyFields` の「宣言済みだが宣言不能な項目を missing と呼ばない」判定が**alias ごと**であること
+  （そうでないと 1 件の宣言不能項目が全部の欠落を免罪する）
+- `assertFieldsMatch` のメッセージが**1 件 1 行**であること
+
+**残る 6 件は同値変異**（テストの穴ではない）。`classify` の `kind: "undeclarable"` を別の文字列に
+しても、呼び出し側は `=== "declarable"` しか見ないため振る舞いが変わらない（4 件）。整列の
+`a < b` を `a <= b` にしても、alias は重複しないため結果が変わらない（2 件）。
+`fieldType === null` の早期 return だけは、フォールスルーしても同じエントリを作る＝同値と分かる形なので
+`// Stryker disable next-line` に理由を書いて除外した（[ADR-0015][adr15] の「真の同値変異のみ」）。
 
 [adr14]: ../../adr/0014-test-coverage-policy.md
 [adr15]: ../../adr/0015-mutation-testing.md
