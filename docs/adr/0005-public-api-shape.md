@@ -6,6 +6,14 @@
 
 > 案1 ＋ SD 全採用で `accepted`（2026-06-13）。エラーの**型詳細**は別 ADR（エラーモデル）、
 > XML の値エンコードは別 ADR（XML パース/シリアライズ）で詰める。本 ADR は**外から見える形**を確定。
+>
+> **Amended by [ADR-0040][0040] / [ADR-0055][0055]（2026-08-24）**: 本文の例にある
+> **client の `partition` オプションと `porters.candidate.*` という呼び出し形は、現在の公開 API ではない**。
+> partition は `porters.tenant(id)` で一度だけ束ね、その戻り値（`TenantScope`）からリソースを呼ぶ
+> （client 既定の partition は廃止＝「どの partition に書いたか分からない書き込み」を作らないため）。
+> 同じく本文の例のうち **`field` の既定は「`P_Id` のみ」ではなくカタログ導出の全項目**
+> （[ADR-0020][0020]）、**`host` は必須で既定値を持たない**（書式検証は [ADR-0048][0048]）。
+> 案1（名前空間アクセサ）・SD-1〜SD-3 という本 ADR の核は不変。以下の本文は当時の記録としてそのまま残す。
 
 ## Context and Problem Statement
 
@@ -153,3 +161,7 @@ try {
 
 [0004]: 0004-field-type-model.md
 [prd]: ../design/requirements.md
+[0020]: 0020-read-field-default.md
+[0040]: 0040-multitenancy-surface-impl.md
+[0048]: 0048-access-point-host-validation.md
+[0055]: 0055-partition-binding-guard.md

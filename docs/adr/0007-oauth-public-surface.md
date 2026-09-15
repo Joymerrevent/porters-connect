@@ -6,6 +6,16 @@
 
 > 案4 ＋ SD 全採用で `accepted`（2026-06-13）。`connect()` は任意（`ensureAuthenticated()`）。
 > トークンの**キャッシュ/更新の内部機構**は詳細設計、**マルチテナント/パーティション選択は別 ADR**。
+>
+> **Amended by [ADR-0034][0034]（2026-06-23）**: 本文の **`porters.auth.revoke(scopes)` は実装されていない**。
+> サーバ側の権限削除はブラウザ操作しか無いため、0034 SD-4 が **`revokeUrl()`（`response_type=remove` の URL 生成）**
+> と **`clearTokens()`（ローカルの cache / `TokenStore` を忘れる）** の 2 つに分解した。ほかの
+> `authorizationUrl` / `exchangeAuthorizationCode` / `ensureAuthenticated` / `getToken` は本 ADR のまま。
+>
+> **Amended by [ADR-0040][0040] / [ADR-0055][0055]（2026-08-24）**: 本文の例にある
+> `await porters.candidate.search(...)` は現在 **`porters.tenant(id).candidate.search(...)`**。
+> また `host` は**必須で既定値を持たない**（例の「既定 …porterscloud.com」は正典 reference の代表値であって
+> ライブラリの既定ではない）。案4（注入可能ストラテジ）と SD-1〜SD-6 の核は不変。
 
 ## Context and Problem Statement
 
@@ -161,3 +171,6 @@ interface TokenStore {
 [prd]: ../design/requirements.md
 [0005]: 0005-public-api-shape.md
 [0006]: 0006-error-model.md
+[0034]: 0034-oauth-public-surface-impl.md
+[0040]: 0040-multitenancy-surface-impl.md
+[0055]: 0055-partition-binding-guard.md
