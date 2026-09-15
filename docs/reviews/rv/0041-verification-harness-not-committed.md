@@ -1,7 +1,7 @@
 # RV-41 🟢 検証ハーネスが gitignore 下にあり、履歴が挙げる証拠を再現できない
 
 - 重要度: 🟢 ／ 観点: プロセス / テスト厳密性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -41,10 +41,34 @@ change-review 2 巡目（2026-09-12）。コミット済みの中身にハーネ
 
 ## 処置
 
-**止めどきの規則により見送り**（`.claude/skills/change-review/SKILL.md` §7）。
-テストを足すのは新しいコードなので、それ自体が再レビューを呼ぶ。
-リンク検査に次に手を入れるとき（[RV-38][rv38] / [RV-40][rv40]）に同じ PR で入れるのが自然。
+**残した**（2026-09-15）。推奨どおり受理/棄却を vitest のテストにした
+（`scripts/check-doc-links.test.mjs`・**38 ケース**）。置き場所は**スクリプトの隣**＝
+co-located（[basic-design][bd] §2「UT は co-located」と同じ規律）。`scripts/` に初めて置く
+テストなので、以降ここに増やす。
 
+検証の形は**スクリプトを実際に起動する**: 一時 git リポジトリに md を書き、そこを cwd にして
+`node scripts/check-doc-links.mjs` を回し、終了コードと出力で見る。実在判定が `git ls-files` に
+依存する（OS の大文字小文字差を避けるための設計）ので、**関数を切り出して呼ぶ形では
+本番と同じ形にならない**。
+
+最初のコミットで**穴も現状のまま固定**し、後続の 3 コミットで期待を反転させた＝
+差分がそのまま挙動変更の証拠になる（[RV-38][rv38] / [RV-39][rv39] / [RV-40][rv40]）。
+
+失われかけていた「**なぜその形なのか**」は、これで実行可能な形になった — たとえば
+「inline を広げると散文を拾う」は、実在する 2 種の散文を**受理ケース**として置いてある。
+
+**残っている範囲**: テストが付いたのは `check-doc-links.mjs` だけで、他の `scripts/*.mjs` は
+今も 0 本（それぞれカナリアや番人で自分を守っている状態は変わらない）。置き場所が決まったので、
+次に検査を触るときに同じ形で足せる。
+
+## 検証
+
+`pnpm vitest run scripts/check-doc-links.test.mjs` で 38 ケース green（実行 3 秒）。
+CI では `pnpm test`（＝ `vitest run`）に自動で入る（vitest 既定の `**/*.test.?(c|m)[jt]s`）。
+coverage の計測対象は `src/**` なので閾値には影響しない。
+
+[bd]: ../../design/basic-design.md
+[rv39]: 0039-link-check-ignores-anchors.md
 [recipes]: ../../../.claude/skills/change-review/references/verification-recipes.md
 [rv38]: 0038-link-check-inline-forms.md
 [rv40]: 0040-link-check-inline-code-spans.md
