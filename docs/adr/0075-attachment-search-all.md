@@ -53,6 +53,42 @@ GET https://{host}/v1/attachment?partition=&requestType=&resource=&resourceId=&i
 書ける。`searchAll` が新しく作る危険ではなく、**その繰り返しを自動化する**点が違う
 （総ページ数を呼び出し側が決めない）。
 
+### 200 件を本体付きで取ると何が起きるか（実測 2026-09-15）
+
+応答は**丸ごと 1 本の文字列**になってから DOM ごとパースされる（`await res.text()` →
+`fast-xml-parser`。ストリーミングは無い）。Node 24 / 64bit で計測した。
+
+| 1 ファイル | 200 件の応答 | パース時間 | heapUsed | rss   |
+| ---------- | ------------ | ---------- | -------- | ----- |
+| 250KB      | 65MB         | 433ms      | 153MB    | 323MB |
+| 500KB      | 130MB        | 802ms      | 378MB    | 521MB |
+
+**山は応答の 2〜3 倍**（生の文字列 ＋ パース後の木）。ここから 4 つ出てくる。
+
+1. **読めない大きさがある。** V8 の文字列上限は `MAX_STRING_LENGTH` = 536,870,888 文字（512MiB）。
+   Base64 は元の約 4/3 なので、**1 ファイルが 2MB を超えると 200 件は文字列にできない**
+   （`RangeError: Invalid string length`）。出典は 1 ファイル **10MB** まで許すので、
+   上限に届く組み合わせは普通に作れる。
+2. **メモリ。** 1MB のファイル 200 件（応答 267MB）で heap は 700MB 前後になる。
+   1 プロセスで複数テナントを回すサーバーでは、1 回の一覧が他の処理を巻き込む。
+3. **時間と既定のタイムアウト。** 既定の transport タイムアウトは 30 秒
+   （`createFetchTransport`）。数百 MB を 30 秒で受け切るには 100Mbps 超の実効帯域が要る。
+4. **失敗が再送される。** 1 と 3 はどちらも `PortersNetworkError`（`retryable: true`）になり、
+   既定の `maxRetries: 3` で**最大 4 回**、毎回数百 MB を取り直してから同じ理由で落ちる。
+
+**いま守りは無い。** 送信側は長さ（約 15000 文字）とアップロード本体（~14M 文字）を見ているが、
+**応答側の大きさを見る仕組みはどこにも無い**。
+
+再現方法（`tmp/` に置いて `node --max-old-space-size=3000` で実行）:
+
+```js
+import { XMLParser } from "fast-xml-parser";
+const b64 = "A".repeat(Math.round((500 * 1024 * 4) / 3)); // 500KB のファイル 1 つ分
+const item = `<Item><Id>1</Id><Content>${b64}</Content></Item>`;
+const xml = `<Attachment Total="200" Count="200" Start="0"><Code>0</Code>${item.repeat(200)}</Attachment>`;
+new XMLParser({ parseTagValue: false }).parse(xml); // 130MB -> ~800ms / heapUsed ~378MB
+```
+
 **本体の選び方は二択**（全件に付ける / 全件に付けない）で、「この 3 件だけ本体」は出典の語彙に無い。
 なお**ライブラリは今 `requestType` を送っておらず**、`field` に `Content` を並べるかどうかで
 決めている（[LV-24][lv]）。どちらが実際に効くかは未確認なので、本 ADR の案は
