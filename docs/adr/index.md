@@ -91,6 +91,7 @@
 | [0078][0078] | アクセスポイントを `hostname` と `port` に分ける                 | 基本設計 | accepted           | —     |
 | [0079][0079] | リソースの指定は数値のまま、名前との変換を公開する               | 詳細設計 | accepted           | —     |
 | [0077][0077] | 既定 transport のタイムアウトを利用者が変えられるようにする      | 詳細設計 | accepted           | —     |
+| [0080][0080] | URL パラメータのリソースは `of()` で束ねる（0022 の Field を改訂） | 詳細設計 | proposed           | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -172,4 +173,5 @@
 [0076]: 0076-phase-read-query-surface.md
 [0078]: 0078-hostname-port-split.md
 [0079]: 0079-resource-by-name.md
+[0080]: 0080-resource-parameter-binding.md
 [0077]: 0077-fetch-transport-timeout.md
