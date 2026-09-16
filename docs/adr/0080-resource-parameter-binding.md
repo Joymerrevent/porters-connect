@@ -1,11 +1,13 @@
 # 80. URL パラメータのリソースは `of()` で束ねる（[ADR-0022][adr22] の Field の形を改訂）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0079][adr79]（項目の値は数値のまま）の議論から分かれた論点。あちらは**値の型**、
-> こちらは**受け口の形**を決める。起票のみ（`proposed`）。実装は accept 後・別 PR。
+> こちらは**受け口の形**を決める。
+>
+> **decider が案A を選択し `accepted`（2026-09-16）。** 実装は accept 後・別 PR（0.18.0）。
 
 ## Context and Problem Statement
 
@@ -52,7 +54,7 @@ PORTERS が **`resource` を URL パラメータで要求する**エンドポイ
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案A**。
+採用: **案A**（ライブラリが URL パラメータとして送るリソースは `of()` で束ねる）。
 
 理由: 規則が「**ライブラリが URL パラメータとして送るリソースは `of()` で束ねる**」の 1 文になり、
 マスタ 4 種の見た目が割れる理由も**性質の差**で説明できる（必須の `resource` を持つのは Field だけ）。
