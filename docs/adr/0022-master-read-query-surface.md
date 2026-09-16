@@ -17,6 +17,12 @@
 > **`tenant(id)` で一度だけ束ねる**（client 既定も per-call 引数も無い）ので、User / Field / Option は
 > `tenant(id)` 配下、`partition` を取らない Partition マスタだけが client 直下にある。
 > 各マスタ bespoke クエリ・`get(id)` 不在・`current()` の意味論という本 ADR の核は不変。
+>
+> **改訂（2026-09-16）**: 本 ADR が決めた 4 マスタのクエリのうち、**Field の受け口の形だけ**が
+> [ADR-0080][adr80] で変わった（`t.field.search({ resource })` → `t.field.of(resource).search()`）。
+> **クエリの語彙を実 Read API に接地するという決定は変わらない** — `resource` / `active` を取ること
+> も、`condition` / `get(id)` を持たないことも本 ADR のままである。Partition / User / Option は
+> 何も変わらない。
 
 ## Context and Problem Statement
 
@@ -142,3 +148,4 @@ partition+field 前提、カタログ既定 field）を流用する」、軸4 �
 [src-user]: ../../tmp/porters-docs/txt/115012160288-User-Read.md
 [src-field]: ../../tmp/porters-docs/txt/115012160308-Field-Read.md
 [src-option]: ../../tmp/porters-docs/txt/115012160328-Option-Read.md
+[adr80]: 0080-resource-parameter-binding.md

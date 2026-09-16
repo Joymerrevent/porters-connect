@@ -52,7 +52,7 @@ describe("partition master", () => {
   it("reads Process's catalog — the resource RV-37 could not select", async () => {
     const { porters } = setup();
 
-    const page = await porters.tenant(1).field.search({ resource: "process" });
+    const page = await porters.tenant(1).field.of("process").search();
 
     // `P_ResourceType` echoes the Value the fake resolved the request to, so 7 here means the
     // selector really travelled as 7 (the link RV-37 had broken).
@@ -120,9 +120,7 @@ describe("field master", () => {
   it("introspects a resource's catalog", async () => {
     const { porters } = setup();
 
-    const page = await porters
-      .tenant(1)
-      .field.search({ resource: "candidate" });
+    const page = await porters.tenant(1).field.of("candidate").search();
 
     const byAlias = new Map(page.items.map((f) => [f.P_Alias, f]));
     expect(byAlias.get("Person.P_Name")?.P_Type).toBe(1); // SinglelineText
@@ -137,7 +135,7 @@ describe("field master", () => {
   it("reads a different resource's catalog", async () => {
     const { porters } = setup();
 
-    const page = await porters.tenant(1).field.search({ resource: "job" });
+    const page = await porters.tenant(1).field.of("job").search();
 
     expect(page.items.map((f) => f.P_Alias)).toContain("Job.P_Position");
     expect(page.items.every((f) => f.P_ResourceType === 3)).toBe(true);
@@ -147,9 +145,7 @@ describe("field master", () => {
     const { porters } = setup();
 
     const aliases = [];
-    for await (const f of porters
-      .tenant(1)
-      .field.searchAll({ resource: "client" })) {
+    for await (const f of porters.tenant(1).field.of("client").searchAll()) {
       aliases.push(f.P_Alias);
     }
 

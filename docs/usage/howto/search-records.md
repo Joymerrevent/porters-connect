@@ -346,12 +346,12 @@ Partition / User / Field / Option の 4 つは**読み取り専用のマスタ**
 別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
 公開しているためです。
 
-| アクセサ            | リソース          | メソッド                           | 主なクエリ                                    |
-| ------------------- | ----------------- | ---------------------------------- | --------------------------------------------- |
-| `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
-| `t.user`            | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
-| `t.field`           | Field（項目定義） | `search` / `searchAll`             | `resource`（必須）/ `active`                  |
-| `t.option`          | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`                 |
+| アクセサ            | リソース          | メソッド                            | 主なクエリ                                    |
+| ------------------- | ----------------- | ----------------------------------- | --------------------------------------------- |
+| `porters.partition` | Partition         | `search` / `searchAll`              | `requestType`（1 = アクセス可能な一覧・既定） |
+| `t.user`            | User              | `search` / `searchAll` / `current`  | `requestType` / `userType` / `field`          |
+| `t.field`           | Field（項目定義） | `of(resource).search` / `searchAll` | リソースを先に束ねる ／ `active`              |
+| `t.option`          | Option（選択肢）  | `search`                            | `alias` / `level` / `enabled`                 |
 
 ```ts
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
@@ -361,7 +361,7 @@ const partitions = await porters.partition.search();
 const me = await t.user.current();
 
 // Job の項目定義（U_ / A_ のカスタム項目を含む）
-const fields = await t.field.search({ resource: "job" });
+const fields = await t.field.of("job").search();
 
 // 選択肢マスタ。入れ子のツリーを深さ優先でフラットにして返す
 const options = await t.option.search({ alias: "Option.P_Gender" });

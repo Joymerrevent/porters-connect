@@ -88,10 +88,7 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
   ["partition.search", () => porters.partition.search()],
   ["user.search", () => porters.tenant(1).user.search()],
   ["user.current", () => porters.tenant(1).user.current()],
-  [
-    "field.search",
-    () => porters.tenant(1).field.search({ resource: "candidate" }),
-  ],
+  ["field.search", () => porters.tenant(1).field.of("candidate").search()],
   ["option.search", () => porters.tenant(1).option.search()],
   // OAuth surface (the string-returning authorizationUrl / revokeUrl are deliberately absent —
   // they return no Promise, so synchronous throwing is correct there).
