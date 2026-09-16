@@ -4,7 +4,11 @@
 // out of resources/ (parse/encode live in xml/). Standard `P_` fields use the catalog;
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
 
-import { PortersResourceError, resourceError } from "../errors";
+import {
+  PortersConfigError,
+  PortersResourceError,
+  resourceError,
+} from "../errors";
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { DataType } from "../xml/decode";
 import {
@@ -158,16 +162,18 @@ export type ResourceConfig<
 export type EmptyImages = Record<never, never>;
 
 /**
- * A query with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
+ * An object with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
  * (excess-property checking); a variable that happens to carry the key still assigns. Re-declaring
- * each removed key as `?: never` closes that hole, so `search(query)` fails whichever way the
- * object was built. The runtime is unaffected: the key can still arrive through a cast (ADR-0074).
+ * each removed key as `?: never` closes that hole, so the call fails whichever way the object was
+ * built — including `create({ ...recordFromRead })`, which is how the binding actually gets
+ * contradicted in practice (RV-47).
  *
- * Only the **endpoint-level** exclusions (`Unsupported`) get this treatment. `searchAll` keeps a
- * plain `Omit` for `count` / `start`: those are not "PORTERS does not take this", they are
- * "the walk decides them", and tightening that is a different decision from ADR-0076.
+ * Used for two different exclusions: query keys the endpoint does not take (`Unsupported` —
+ * ADR-0076) and write aliases the accessor itself fills (`Bound` — ADR-0061 / ADR-0080).
+ * `searchAll` keeps a plain `Omit` for `count` / `start`: those are not "PORTERS does not take
+ * this", they are "the walk decides them", and tightening that is a different decision.
  */
-type WithoutQueryKeys<Q, K extends keyof Q> = Omit<Q, K> & {
+type Without<T, K extends keyof T> = Omit<T, K> & {
   [P in K]?: never;
 };
 
@@ -191,12 +197,19 @@ export type Resource<
    * PORTERS accepts it at all.
    */
   Unsupported extends keyof SearchQuery<F, R> = never,
+  /**
+   * Write aliases **the accessor itself fills**, so a caller cannot supply them (ADR-0061 / RV-47).
+   * `t.phase.of("client")` binds `Resource`; passing it again could only mean contradicting the
+   * binding, and a phase written to the wrong resource cannot be deleted (there is no delete API).
+   * `never` — the default — means the caller supplies every writable field.
+   */
+  Bound extends WritableKeys<F> = never,
 > = {
   search<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: WithoutQueryKeys<SearchQuery<F, R>, Unsupported> & {
+    query?: Without<SearchQuery<F, R>, Unsupported> & {
       expand?: E;
       image?: I;
     },
@@ -206,10 +219,7 @@ export type Resource<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: Omit<
-      WithoutQueryKeys<SearchQuery<F, R>, Unsupported>,
-      "count" | "start"
-    > & {
+    query?: Omit<Without<SearchQuery<F, R>, Unsupported>, "count" | "start"> & {
       expand?: E;
       image?: I;
     },
@@ -227,9 +237,17 @@ export type Resource<
     options?: { expand?: E; image?: I },
   ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined>;
   /** Create one record; resolves to the newly assigned id. */
-  create(input: CreateInput<F, Req>): Promise<number>;
+  create(
+    input: Without<
+      CreateInput<F, Req>,
+      Extract<Bound, keyof CreateInput<F, Req>>
+    >,
+  ): Promise<number>;
   /** Update one record by id; resolves to that id. */
-  update(id: number, input: UpdateInput<F>): Promise<number>;
+  update(
+    id: number,
+    input: Without<UpdateInput<F>, Extract<Bound, keyof UpdateInput<F>>>,
+  ): Promise<number>;
   /**
    * Create many records in one call (ADR-0041 / F-4). Auto-batched to ≤200 records and under the
    * request size cap. **Not atomic** — inspect the {@link BulkWriteResult}: per-record failures are
@@ -237,13 +255,21 @@ export type Resource<
    * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
    * duplicate creates. Empty input sends no request.
    */
-  createMany(inputs: CreateInput<F, Req>[]): Promise<BulkWriteResult>;
+  createMany(
+    inputs: Without<
+      CreateInput<F, Req>,
+      Extract<Bound, keyof CreateInput<F, Req>>
+    >[],
+  ): Promise<BulkWriteResult>;
   /**
    * Update many records by id in one call (ADR-0041 / F-4). Auto-batched like {@link createMany};
    * per-record failures are returned in the {@link BulkWriteResult}, not thrown.
    */
   updateMany(
-    items: { id: number; fields: UpdateInput<F> }[],
+    items: {
+      id: number;
+      fields: Without<UpdateInput<F>, Extract<Bound, keyof UpdateInput<F>>>;
+    }[],
   ): Promise<BulkWriteResult>;
 };
 
@@ -487,13 +513,28 @@ export const createResource = <
   // create forces P_Id=-1 (non-idempotent: a retry would duplicate); update forces
   // the target id (idempotent: re-applying the same write is safe). Forcing P_Id
   // after the spread means a caller-supplied P_Id never overrides it.
-  // `async` so encoding failures reject rather than throw synchronously (ADR-0046).
-  // Fields the resource itself contributes to every record (Phase's `Resource` — ADR-0061).
-  // Spread first so a caller can never shadow the binding they did not choose.
-  const withDefaults = (item: WriteItem): WriteItem => ({
-    ...config.writeDefaults,
-    ...item,
-  });
+  // Fields the accessor itself contributes to every record (Phase's `Resource` — ADR-0061).
+  //
+  // The binding is **authoritative**: a caller who supplies one of these aliases can only be
+  // contradicting it, so we refuse the write rather than pick a winner (RV-47). Silently dropping
+  // the caller's value would be the other failure — a setting that looks applied and is not
+  // (RV-10). The spread puts the defaults **last** as well, so even a value that reached here
+  // through some other path cannot override the binding.
+  const boundAliases = Object.keys(config.writeDefaults ?? {});
+  const withDefaults = (item: WriteItem): WriteItem => {
+    // `?: never` は `undefined` を許すので、**値が入っているときだけ**弾く（型と実行時を揃える）。
+    const supplied = boundAliases.filter((alias) => item[alias] !== undefined);
+    if (supplied.length > 0) {
+      throw new PortersConfigError(
+        `${config.name}: ${supplied.join(", ")} is set by the accessor and cannot be written`,
+        {
+          category: "config",
+          hint: `The accessor already binds ${supplied.join(", ")} (e.g. t.phase.of("client")). Drop it from the input, or bind a different resource.`,
+        },
+      );
+    }
+    return { ...item, ...config.writeDefaults };
+  };
 
   const write = async (
     item: WriteItem,

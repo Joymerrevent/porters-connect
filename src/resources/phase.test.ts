@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PortersConfigError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { DepartmentRef, FieldValue, UserRef } from "../xml/decode";
@@ -149,12 +150,14 @@ describe("createPhaseAccessor — write", () => {
     expect(req.url).toBe("https://h.test/v1/phase?partition=12");
     expect(req.body).toBe(
       "<Phase><Item>" +
-        // The binding comes first and cannot be shadowed by the caller.
-        "<Resource>5</Resource>" +
         "<ResourceId>20001</ResourceId>" +
         "<Phase><Opt_Contacted/></Phase>" +
         "<Date>2026/08/30 03:04:05</Date>" +
         "<Id>-1</Id>" +
+        // 束ねた値は**最後**に置く。呼び出し側が渡してきたら弾くので順序は本来どうでもよいが、
+        // 何かがガードを迂回しても上書きされない側に倒しておく（RV-47）。タグの順序は
+        // PORTERS 側で意味を持たない。
+        "<Resource>5</Resource>" +
         "</Item></Phase>",
     );
     expect(spec).toEqual({ write: true, idempotent: false });
@@ -165,11 +168,69 @@ describe("createPhaseAccessor — write", () => {
     await phases(calls, WRITE_OK).update(10014, { Memo: "追記" });
     expect(calls[0].req.body).toBe(
       "<Phase><Item>" +
-        "<Resource>5</Resource>" +
         "<Memo>追記</Memo>" +
         "<Id>10014</Id>" +
+        "<Resource>5</Resource>" +
         "</Item></Phase>",
     );
+  });
+
+  // RV-47: 束ねた値は**権威**。忘れられないだけでなく、矛盾させられない。
+  // 現実的な経路は「読んだレコードを展開して作り直す」形で、これは型でも実行時でも止める。
+  it("束ねた `Resource` を渡したら、送らずに落とす（create）", async () => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await phases(calls, WRITE_OK).create({
+        ResourceId: 20001,
+        Resource: 3, // Job。束ねているのは Client（5）
+      } as never);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).category).toBe("config");
+    expect((err as PortersConfigError).message).toContain("Resource");
+    expect((err as PortersConfigError).hint).toContain("of(");
+    // 送信前に止まる＝間違ったリソースに Phase が付くことはない（Phase に削除 API は無い）。
+    expect(calls).toHaveLength(0);
+  });
+
+  it("update でも同じ（黙って捨てない）", async () => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await phases(calls, WRITE_OK).update(10014, { Resource: 3 } as never);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("一括でも同じ（1 件でも混じれば送らない）", async () => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await phases(calls, WRITE_OK).createMany([
+        { ResourceId: 20001 },
+        { ResourceId: 20002, Resource: 3 },
+      ] as never);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("`Resource: undefined` は通る（型が許している形と揃える）", async () => {
+    const calls: Call[] = [];
+    await phases(calls, WRITE_OK).create({
+      ResourceId: 20001,
+      Resource: undefined,
+    });
+    // 束ねた値がそのまま乗る。
+    expect(calls[0]?.req.body).toContain("<Resource>5</Resource>");
   });
 
   // ADR-0076: 型からは外したが、**実行時は素通りのまま**にしてある。契約を持つ人が cast で
