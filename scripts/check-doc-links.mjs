@@ -207,6 +207,20 @@ const linksOf = (file) => {
   return { links: out, unclosedFenceAt };
 };
 
+// 見出しから HTML タグを落とす。GitHub は**描画後のテキスト**で slug を作るので、
+// 落とし終わった状態（タグが 1 つも残らない）まで繰り返す。1 回で済ませると
+// `<<a>b>` のような重なりで `<b>` が残り、GitHub の結果とずれる
+// （CodeQL の js/incomplete-multi-character-sanitization も同じ形を指摘する）。
+const HTML_TAG = /<[!/a-z][^>]*>/gi;
+const stripHtmlTags = (text) => {
+  let out = text;
+  for (;;) {
+    const next = out.replace(HTML_TAG, "");
+    if (next === out) return out;
+    out = next;
+  }
+};
+
 // 見出しから GitHub 互換の slug を作る。
 //
 // 規則は GitHub の実装（github-slugger）に合わせる: 描画後のテキストを小文字化し、
@@ -215,12 +229,13 @@ const linksOf = (file) => {
 // 二重ハイフンになる**。リポジトリに実在するアンカー 8 件すべてでこの規則を突合済み
 // （2026-09-15）。
 const slugOf = (heading) =>
-  heading
-    // GitHub は描画後のテキストで slug を作るので、リンク・画像は表示テキストに畳む。
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
-    .replace(/<[!/a-z][^>]*>/gi, "")
+  stripHtmlTags(
+    heading
+      // GitHub は描画後のテキストで slug を作るので、リンク・画像は表示テキストに畳む。
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1"),
+  )
     .trim()
     .toLowerCase()
     // 落とす集合は github-slugger（GitHub 自身の実装）と同じ＝ASCII の句読点と制御文字。
