@@ -92,6 +92,7 @@
 | [0078][0078] | アクセスポイントを `hostname` と `port` に分ける                   | 基本設計 | accepted           | —     |
 | [0079][0079] | リソースの指定は数値のまま、名前との変換を公開する                 | 詳細設計 | accepted           | —     |
 | [0080][0080] | URL パラメータのリソースは `of()` で束ねる（0022 の Field を改訂） | 詳細設計 | accepted           | —     |
+| [0081][0081] | Attachment の Read を出典の語彙に合わせる（0018 を改訂）           | 詳細設計 | accepted           | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -174,4 +175,5 @@
 [0078]: 0078-hostname-port-split.md
 [0079]: 0079-resource-by-name.md
 [0080]: 0080-resource-parameter-binding.md
+[0081]: 0081-attachment-read-parameters.md
 [0077]: 0077-fetch-transport-timeout.md
