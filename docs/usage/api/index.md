@@ -194,4 +194,6 @@
 - [generateFieldDecls](functions/generateFieldDecls.md)
 - [rawValue](functions/rawValue.md)
 - [readCustomCatalog](functions/readCustomCatalog.md)
+- [resourceNameOf](functions/resourceNameOf.md)
+- [resourceValueOf](functions/resourceValueOf.md)
 - [verifyFields](functions/verifyFields.md)
