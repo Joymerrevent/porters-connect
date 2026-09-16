@@ -82,32 +82,31 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 検査は各アクセサを実際に呼び、組み立てられた URL のパラメータ集合が下表と**一致する**ことを見る
 （載せ忘れも、余分な送信も、どちらも落ちる）。
 
-| エンドポイント    | partition | count | start | field         | condition     | keywords      | order | itemstate     |
-| ----------------- | --------- | ----- | ----- | ------------- | ------------- | ------------- | ----- | ------------- |
-| `/v1/partition`   | —         | 送る  | 送る  | —             | —             | —             | —     | —             |
-| `/v1/user`        | 送る      | 送る  | 送る  | 送る          | —             | —             | —     | —             |
-| `/v1/field`       | 送る      | 送る  | 送る  | —             | —             | —             | —     | —             |
-| `/v1/option`      | 送る      | 送る  | —     | —             | —             | —             | —     | —             |
-| `/v1/candidate`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/job`         | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/client`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/recruiter`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/contact`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/resume`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/process`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/activity`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/contract`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/sales`       | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/opportunity` | 送る      | 送る  | 送る  | 送る          | 送る          | 送る          | 送る  | 送る          |
-| `/v1/phase`       | 送る      | 送る  | 送る  | 送る          | 送る          | 送る ⚠️ LV-25 | 送る  | 送る ⚠️ LV-25 |
-| `/v1/attachment`  | 送る      | 送る  | 送る  | 送る ⚠️ LV-24 | 送る ⚠️ LV-24 | —             | —     | —             |
+| エンドポイント    | partition | count | start | field         | condition     | keywords | order | itemstate |
+| ----------------- | --------- | ----- | ----- | ------------- | ------------- | -------- | ----- | --------- |
+| `/v1/partition`   | —         | 送る  | 送る  | —             | —             | —        | —     | —         |
+| `/v1/user`        | 送る      | 送る  | 送る  | 送る          | —             | —        | —     | —         |
+| `/v1/field`       | 送る      | 送る  | 送る  | —             | —             | —        | —     | —         |
+| `/v1/option`      | 送る      | 送る  | —     | —             | —             | —        | —     | —         |
+| `/v1/candidate`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/job`         | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/client`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/recruiter`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/contact`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/resume`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/process`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/activity`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/contract`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/sales`       | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/opportunity` | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
+| `/v1/phase`       | 送る      | 送る  | 送る  | 送る          | 送る          | —        | 送る  | —         |
+| `/v1/attachment`  | 送る      | 送る  | 送る  | 送る ⚠️ LV-24 | 送る ⚠️ LV-24 | —        | —     | —         |
 
-**ずれているセルは 4 つ、どれも Phase と Attachment にある。**
+**ずれているセルは 2 つ**（どちらも Attachment）。Phase の 2 つは [ADR-0076][adr76] で解消した。
 
-- **Phase の `keywords` / `itemstate`** — 出典の Phase - Read は Input Variables にこの 2 つを挙げて
-  いないが、ライブラリの Phase は汎用 factory に載っている（[ADR-0061][adr61]）ので `SearchQuery` を
-  そのまま受け、渡されれば送る。**PORTERS が無視するのか弾くのかが分かっていない**ので
-  [LV-25][lv] を起票した。
+- ~~**Phase の `keywords` / `itemstate`**~~ — **解消**（[ADR-0076][adr76]）。汎用 factory に
+  「このエンドポイントは取らないキー」を表す型引数を足し、Phase の公開型から 2 つを外した。
+  PORTERS が受け付けるかどうかは未確認のまま（[LV-25][lv]）だが、**既定では送らない**側に倒れた。
 - **Attachment の `field` / `condition`** — 出典の Attachment - Read はどちらも挙げていない。
   ライブラリは `field` で本体（`Content`）を取るかどうかを決め（[ADR-0020][adr20]）、
   `get(id)` は `condition` で 1 件に絞る（[ADR-0018][adr18]）。既存の [LV-3][lv] / [LV-4][lv] が
@@ -230,6 +229,7 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [roadmap]: ../roadmap.md
 [adr60]: ../adr/0060-full-resource-coverage-direction.md
 [adr61]: ../adr/0061-phase-resource-surface.md
+[adr76]: ../adr/0076-phase-read-query-surface.md
 [adr41]: ../adr/0041-bulk-write-surface-impl.md
 [adr64]: ../adr/0064-link-image-types.md
 [adr42]: ../adr/0042-supported-version-policy.md

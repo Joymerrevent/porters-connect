@@ -190,13 +190,13 @@ const MAXIMAL_READ = {
   start: 0,
 };
 
-// Phase の alias は接頭辞なし（ADR-0061）なので、同じ内容を `Id` で書く。
+// Phase の alias は接頭辞なし（ADR-0061）なので、同じ内容を `Id` で書く。`keywords` /
+// `itemstate` は**入っていない** — Phase - Read が挙げていないので型が受け付けない（ADR-0076）。
+// ここに足すと型検査で落ちる＝表 B の 2 セルが「送らない」であることが型でも固定されている。
 const MAXIMAL_PHASE_READ = {
   field: ["Id" as const],
   condition: { Id: { eq: 1 } },
   order: [{ Id: "asc" as const }],
-  keywords: ["x"],
-  itemstate: "existing" as const,
   count: 5,
   start: 0,
 };
