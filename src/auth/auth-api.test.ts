@@ -50,14 +50,14 @@ type Over = { appId?: string; appSecret?: string; scopes?: Scope[] };
 // keys use presence (`in`) so a test can force a value to `undefined`.
 const withDefault = (transport: Transport, over: Over = {}) => {
   const provider = createDefaultTokenProvider({
-    accessPoint: { host: "example.test" },
+    accessPoint: { hostname: "example.test" },
     appId: over.appId ?? "app",
     appSecret: over.appSecret ?? "secret",
     transport,
     now: () => 1000,
   });
   return createAuthApi({
-    accessPoint: { host: "example.test" },
+    accessPoint: { hostname: "example.test" },
     appId: "appId" in over ? over.appId : "app",
     appSecret: "appSecret" in over ? over.appSecret : "secret",
     scopes: "scopes" in over ? over.scopes : ["candidate_r"],
@@ -187,7 +187,7 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
       getAccessToken: () => Promise.resolve("CUSTOM"),
     };
     return createAuthApi({
-      accessPoint: { host: "example.test" },
+      accessPoint: { hostname: "example.test" },
       appId: "app",
       appSecret: "secret",
       scopes: ["candidate_r"],
@@ -224,13 +224,13 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
   it("defaults the clock to Date.now when `now` is not provided", async () => {
     const { transport } = recording(defaultBodies);
     const provider = createDefaultTokenProvider({
-      accessPoint: { host: "example.test" },
+      accessPoint: { hostname: "example.test" },
       appId: "app",
       appSecret: "secret",
       transport,
     });
     const auth = createAuthApi({
-      accessPoint: { host: "example.test" },
+      accessPoint: { hostname: "example.test" },
       appId: "app",
       appSecret: "secret",
       scopes: ["candidate_r"],

@@ -29,7 +29,7 @@ const serve = async (
   });
   running = server;
   const porters = new PortersClient({
-    host: "fake.test", // unchanged app config — only the transport points elsewhere
+    hostname: "fake.test", // unchanged app config — only the transport points elsewhere
     appId: "app-id",
     appSecret: "app-secret",
     transport: server.transport(),
@@ -156,7 +156,7 @@ describe("the fake over HTTP", () => {
 // reaches the fake by changing configuration only — the same two values it would set from the
 // environment — with no transport swap and no library patch in between.
 describe("an unmodified app, pointed at the fake by configuration alone", () => {
-  it("connects with host + scheme: http, and says so once", async () => {
+  it("connects with hostname + port + scheme: http, and says so once", async () => {
     const server = await startFakeServer({
       users: [OWNER],
       log: () => undefined,
@@ -166,7 +166,9 @@ describe("an unmodified app, pointed at the fake by configuration alone", () => 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     const porters = new PortersClient({
-      host: new URL(server.url).host, // what PORTERS_HOST would carry: `127.0.0.1:<port>`
+      // PORTERS_HOST が運ぶのはサーバー名だけ。ポートは別項目（ADR-0078）。
+      hostname: new URL(server.url).hostname,
+      port: Number(new URL(server.url).port),
       scheme: "http",
       appId: "app-id",
       appSecret: "app-secret",

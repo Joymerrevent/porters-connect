@@ -17,7 +17,7 @@ import { createMockTransport } from "../../src/http/mock-transport";
 // deterministic, and it makes the auth surface fail too, which the auto-answered default would not.
 const setup = () =>
   new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     scopes: ["candidate_r"],

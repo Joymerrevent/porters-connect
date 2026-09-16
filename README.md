@@ -54,7 +54,7 @@ npm i @joymerrevent/porters-connect
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。ハードコード禁止
+  hostname: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。ハードコード禁止
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });

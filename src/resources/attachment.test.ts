@@ -29,7 +29,7 @@ const stub = (body: string, calls: Call[]): Requester => ({
 const resource = (calls: Call[], body: string) =>
   createAttachmentResource({
     requester: stub(body, calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 
@@ -266,7 +266,7 @@ describe("createAttachmentResource — default field (ADR-0020)", () => {
           return Promise.resolve(parse(bodies[calls.length - 1] ?? ""));
         },
       },
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     });
 

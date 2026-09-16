@@ -348,7 +348,7 @@ const createProbeClient = (
     },
   };
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     scopes: ["candidate_r"],

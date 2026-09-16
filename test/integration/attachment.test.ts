@@ -12,7 +12,7 @@ import { createFakeTransport } from "../fake/index";
 const setup = () => {
   const fake = createFakeTransport();
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport: fake,

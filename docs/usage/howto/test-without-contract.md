@@ -21,7 +21,7 @@ import {
 } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host: "test.invalid",
+  hostname: "test.invalid",
   appId: "test",
   appSecret: "test",
   transport: createMockTransport((req) =>
@@ -60,7 +60,7 @@ await porters.tenant(1).job.search();
 const sent: { method: string; url: string; body?: string }[] = [];
 
 const porters = new PortersClient({
-  host: "test.invalid",
+  hostname: "test.invalid",
   appId: "test",
   appSecret: "test",
   transport: createMockTransport((req) => {
@@ -85,7 +85,7 @@ console.log(last?.body?.includes("山田 太郎")); // true
 
 ```ts
 const porters = new PortersClient({
-  host: "test.invalid",
+  hostname: "test.invalid",
   appId: "test",
   appSecret: "test",
   transport: createMockTransport(() => ({
@@ -119,7 +119,7 @@ import {
 
 const clientWith = (xml: string) =>
   new PortersClient({
-    host: "test.invalid",
+    hostname: "test.invalid",
     appId: "t",
     appSecret: "t",
     transport: createMockTransport((req) =>
@@ -157,12 +157,12 @@ describe("候補者の取得", () => {
 ローカルのフェイクは `http` で動きます。`scheme: "http"` は**明示したときだけ**有効で、
 平文になるので毎プロセス 1 回警告が出ます（抑止は専用の env のみ＝**許可と沈黙は別**）。
 
-**ライブラリは `host` / `scheme` を環境変数から読みません**（設定の出所を明示にするため）。
+**ライブラリは `hostname` / `port` / `scheme` を環境変数から読みません**（設定の出所を明示にするため）。
 env で本番とローカルを切り替えたいときは、アプリ側で渡してください。
 
 ```ts
 const forLocal = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",

@@ -7,7 +7,7 @@
  * 契約なしで実 HTTP を喋るので、curl でも別プロセス（MCP サーバー等）からでも叩けます。
  * ライブラリからは**設定だけ**で繋げます（ADR-0047・フェーズ6＝アプリ無改造）:
  *
- *   new PortersClient({ host: "127.0.0.1:4010", scheme: "http",
+ *   new PortersClient({ hostname: "127.0.0.1", port: 4010, scheme: "http",
  *     appId: "a", appSecret: "s", partition: 1 });
  *
  * `scheme: "http"` は毎プロセス 1 回警告します（抑止は PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1）。
@@ -50,7 +50,7 @@ console.log(`  auth      /v1/oauth (code_direct), /v1/token`);
 console.log(`  resources ${routes.join(", ")}`);
 console.log(`  seeded    2 candidates, 2 users, 1 option tree`);
 console.log(
-  `  connect   new PortersClient({ host: "${new URL(server.url).host}", scheme: "http" })`,
+  `  connect   new PortersClient({ hostname: "${new URL(server.url).hostname}", port: ${new URL(server.url).port}, scheme: "http" })`,
 );
 console.log(
   `  try       curl -s "${server.url}/v1/oauth?app_id=demo&response_type=code_direct"`,

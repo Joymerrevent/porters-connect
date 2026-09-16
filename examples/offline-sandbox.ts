@@ -5,7 +5,7 @@
  *
  * 公開ヘルパー `createMockTransport` にモック XML を返させるだけで、型付き search / get /
  * create を実際に動かせます（OAuth/トークンは自動応答）。実利用では `transport` を渡さず
- * （既定の fetch）、host/appId/appSecret を設定するだけです。import 元はこのリポジトリ内の
+ * （既定の fetch）、hostname/appId/appSecret を設定するだけです。import 元はこのリポジトリ内の
  * 都合で `../src` ですが、配布版では `@joymerrevent/porters-connect` から import します。
  */
 import {
@@ -22,7 +22,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
+  hostname: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
   appId: "demo",
   appSecret: "demo",
   fields,

@@ -18,7 +18,7 @@ import type { FakeTransportOptions } from "../fake/types";
 const setup = (options: FakeTransportOptions = {}) => {
   const fake = createFakeTransport(options);
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport: fake,

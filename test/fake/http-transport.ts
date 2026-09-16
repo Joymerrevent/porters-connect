@@ -2,10 +2,10 @@
 // phase 5).
 //
 // Since phase 6 (ADR-0047) the library can be aimed at the fake by configuration alone —
-// `host` + `scheme: "http"` — which is the way an unmodified app should connect. This Transport
+// `hostname` + `port` + `scheme: "http"` — which is the way an unmodified app should connect. This Transport
 // stays for the cases that setting cannot cover: rewriting scheme + authority on the way out and
 // delegating to the normal fetch transport, so everything above it (throttle, retry, auth, XML)
-// runs untouched while the app keeps whatever `host` it was configured with.
+// runs untouched while the app keeps whatever `hostname` it was configured with.
 
 import { createFetchTransport } from "../../src/http/fetch-transport";
 import type { Transport } from "../../src/http/types";
@@ -31,13 +31,13 @@ const rewrite = (url: string, baseUrl: string): string => {
  * Build a {@link Transport} that forwards every request to `baseUrl`, keeping path, query, headers
  * and body as the library wrote them.
  *
- * Prefer `new PortersClient({ host, scheme: "http" })` (ADR-0047) when the app may be configured;
+ * Prefer `new PortersClient({ hostname, port, scheme: "http" })` (ADR-0047) when the app may be configured;
  * reach for this when it may not.
  *
  * @example
  * const server = await startFakeServer();
  * const porters = new PortersClient({
- *   host: "fake.test", // still whatever the app configures — only the transport is swapped
+ *   hostname: "fake.test", // still whatever the app configures — only the transport is swapped
  *   transport: createForwardingTransport({ baseUrl: server.url }),
  * });
  */

@@ -21,7 +21,7 @@ const OWNER = {
 const setup = (options: FakeTransportOptions = {}) => {
   const fake = createFakeTransport({ users: [OWNER], ...options });
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport: fake,
@@ -140,7 +140,7 @@ describe("candidate round-trip against the fake server", () => {
     const fake = createFakeTransport({ users: [OWNER] });
     const urls: string[] = [];
     const porters = new PortersClient({
-      host: "fake.test",
+      hostname: "fake.test",
       appId: "app-id",
       appSecret: "app-secret",
       transport: {
@@ -174,7 +174,7 @@ describe("candidate round-trip against the fake server", () => {
   it("round-trips a declared custom field (defineFields)", async () => {
     const fake = createFakeTransport({ users: [OWNER] });
     const porters = new PortersClient({
-      host: "fake.test",
+      hostname: "fake.test",
       appId: "app-id",
       appSecret: "app-secret",
       transport: fake,
@@ -328,7 +328,7 @@ describe("error paths against the fake server", () => {
   it("rejects an unknown partition with Result Code 404", async () => {
     const fake = createFakeTransport();
     const porters = new PortersClient({
-      host: "fake.test",
+      hostname: "fake.test",
       appId: "app-id",
       appSecret: "app-secret",
       transport: fake,

@@ -52,15 +52,16 @@ export const createThrottle = (opts: ThrottleOptions = {}): Throttle => {
 };
 
 /**
- * Hands out one {@link Throttle} per host (ADR-0073). The key is the bare host of the access point
- * (lower-cased — a host is case-insensitive), so every client aimed at the same PORTERS shares a
- * bucket while a local fake on another host keeps its own.
+ * Hands out one {@link Throttle} per **destination** (ADR-0073). The key is the access point's
+ * authority — hostname, plus `:port` when one is configured (ADR-0078) — lower-cased, since a host
+ * name is case-insensitive. Every client aimed at the same PORTERS shares a bucket, while a local
+ * fake on another name **or another port** keeps its own.
  *
  * State lives in a factory (ADR-0013); the process-wide instance is built from it below.
  */
 export type ThrottleRegistry = {
-  /** The bucket for `host`, created on first use and reused afterwards. */
-  forHost(host: string): Throttle;
+  /** The bucket for `authority`, created on first use and reused afterwards. */
+  forAuthority(authority: string): Throttle;
   /** Drop every bucket (test seam). */
   reset(): void;
 };
@@ -70,8 +71,10 @@ export const createThrottleRegistry = (
 ): ThrottleRegistry => {
   const buckets = new Map<string, Throttle>();
   return {
-    forHost: (host) => {
-      const key = host.toLowerCase();
+    forAuthority: (authority) => {
+      // 大小を畳むのが目的で、どちらへ畳むかは結果に効かない（`toUpperCase` でも同じ）。
+      // Stryker disable next-line MethodExpression: equivalent — どちらの case fold でも同じキーになる
+      const key = authority.toLowerCase();
       const known = buckets.get(key);
       if (known !== undefined) return known;
       const created = make();
@@ -82,15 +85,15 @@ export const createThrottleRegistry = (
   };
 };
 
-// "One limit per host" is exactly one registry for the whole program.
+// "One limit per destination" is exactly one registry for the whole program.
 const processRegistry = createThrottleRegistry();
 
 /**
- * The process-wide bucket for `host`. A client uses this unless the caller injected its own
- * {@link Throttle} — see `PortersClientOptions.throttle`.
+ * The process-wide bucket for `authority` (`hostname` or `hostname:port` — ADR-0078). A client uses
+ * this unless the caller injected its own {@link Throttle} — see `PortersClientOptions.throttle`.
  */
-export const sharedThrottleFor = (host: string): Throttle =>
-  processRegistry.forHost(host);
+export const sharedThrottleFor = (authority: string): Throttle =>
+  processRegistry.forAuthority(authority);
 
 /** Test seam: drop every shared bucket. Not part of the published API. */
 export const resetSharedThrottles = (): void => processRegistry.reset();

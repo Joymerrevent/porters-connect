@@ -16,7 +16,7 @@ const fields = defineFields({
   candidate: (f) => ({ U_score: f.number(), U_source: f.option() }),
 });
 
-const porters = new PortersClient({ host, appId, appSecret, fields });
+const porters = new PortersClient({ hostname, appId, appSecret, fields });
 const t = porters.tenant(partition);
 ```
 
@@ -172,7 +172,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -346,7 +346,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 ```ts
 const clientFor = (fields: DefinedFields) =>
-  new PortersClient({ host, appId, appSecret, fields });
+  new PortersClient({ hostname, appId, appSecret, fields });
 
 // partition は tenant(id) で束ねます（ADR-0055）
 const t = clientFor(myFields).tenant(partition);
@@ -378,7 +378,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -458,7 +458,12 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
   return page.items[0]?.U_score;
 };
 
-const porters = new PortersClient({ host, appId, appSecret, fields: other });
+const porters = new PortersClient({
+  hostname,
+  appId,
+  appSecret,
+  fields: other,
+});
 void topScorers(porters.tenant(1)); // ✗ 型エラー：U_score を宣言していない
 ```
 
@@ -484,7 +489,7 @@ const fields = defineFields({
 });
 
 const options: PortersClientOptions<typeof fields> = {
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -507,7 +512,7 @@ const fields = defineFields({
 });
 
 const bare: PortersClientOptions = {
-  host: "xxxxx.example.com",
+  hostname: "xxxxx.example.com",
   appId: "a",
   appSecret: "s",
   fields, // 代入は通る

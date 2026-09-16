@@ -92,7 +92,7 @@ import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
 
 // バッチには控えめな枠を割り当てる（Web アプリ側に余らせる）
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   throttle: createThrottle({ readPerMin: 500, writePerMin: 100 }),

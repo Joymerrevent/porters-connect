@@ -197,28 +197,35 @@ try {
 > **モックを手書きしている場合**（`createMockTransport`）は、**リソース名のルート要素と `<Code>`** を含めてください。
 > `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>…</Candidate>` のように、実際の応答と同じ形にします。
 
-## アクセスポイントの書式（[ADR-0048][adr-0048] / [ADR-0049][adr-0049]）
+## アクセスポイントの書式（[ADR-0048][adr-0048] / [ADR-0078][adr-0078]）
 
-`host` は**ホスト（＋必要ならポート）だけ**を表します。スキーム・パス・userinfo・空白を含む値は、
-**接続を試みる前に** `PortersConfigError`（`category: "config"`）で拒否されます。
+`hostname` は**サーバー名だけ**を表します。**ポートは別項目**（`port`）で、スキーム・パス・
+userinfo・空白を含む値は、**接続を試みる前に** `PortersConfigError`（`category: "config"`）で
+拒否されます。
 
 ```ts
-new PortersClient({ host: "xxxxx.example.com" }); // ✅
-new PortersClient({ host: "127.0.0.1:4010", scheme: "http" }); // ✅ ポートは host に含める
-new PortersClient({ host: "xxxxx.example.com:443" }); // ✅ 冗長でも通る
-new PortersClient({ host: "https://xxxxx.example.com" }); // ❌ PortersConfigError
-new PortersClient({ host: "" }); // ❌ （env 未設定を押し通した場合）
-new PortersClient({ host: "xxxxx.example.com/gw" }); // ❌ パス prefix は対象外（ADR-0047）
+new PortersClient({ hostname: "xxxxx.example.com" }); // ✅ 契約で渡されるのはこの形
+new PortersClient({ hostname: "127.0.0.1", port: 4010, scheme: "http" }); // ✅ ポートは別項目
+new PortersClient({ hostname: "[::1]", port: 4010, scheme: "http" }); // ✅ IPv6 は角括弧付き
+new PortersClient({ hostname: "127.0.0.1:4010" }); // ❌ ポートは `port` へ
+new PortersClient({ hostname: "https://xxxxx.example.com" }); // ❌ PortersConfigError
+new PortersClient({ hostname: "" }); // ❌ （env 未設定を押し通した場合）
+new PortersClient({ hostname: "xxxxx.example.com/gw" }); // ❌ パス prefix は対象外（ADR-0047）
+new PortersClient({ hostname: "a.test", port: 0 }); // ❌ port は 1〜65535 の整数
 ```
+
+**ポートを `hostname` に書いても黙って落とされません。** 素通しすると「指定したつもりで
+既定ポートに送られる」ことになるので、構築時に弾きます（[ADR-0078][adr-0078]）。
 
 検証しない場合、これらは**例外にならず別のホスト名として解決可能な URL に化け**、
 App ID / App Secret がそこへ実際に送られる（または直しようのない設定ミスが `network` として
 延々リトライされる）ためです。**曖昧な設定で黙って別の宛先へ繋がない**のが本ライブラリの契約です。
 
-**ポートはどれでも書けます**（`:8080` も、冗長な `:443` も通ります — [ADR-0049][adr-0049]）。
-既知の制限は 1 つだけです（エラーの `hint` にも出ます）。
+**`port` はどの値でも書けます**（`8080` も、冗長な `443` も通ります）。既知の制限は 2 つです
+（どちらもエラーの `hint` に出ます）。
 
-- **非 ASCII のホストは punycode 表記**で渡してください（`xn--...`）。
+- **非 ASCII のサーバー名は punycode 表記**で渡してください（`xn--...`）。
+- **IPv6 は角括弧付き**で渡してください（`[::1]`）。裸のコロンはポートの書き忘れと区別が付きません。
 
 なお**パス prefix 付きのゲートウェイ**（`https://gw/porters/v1/...`）は [ADR-0047][adr-0047] で対象外と決めており、
 本検証はその決定を実行時にも明示するものです。
@@ -241,26 +248,26 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 
 ## 症状 → 原因 → 対処（早見表）
 
-| 症状                                      | 系統 / code                | category     | 対処                                                                        |
-| ----------------------------------------- | -------------------------- | ------------ | --------------------------------------------------------------------------- |
-| `PortersAuthError` が出て処理が止まる     | 認証 `401`                 | `auth`       | Refresh Token 失効。**初回ブラウザ `code` 付与**をその Company DB で再実施  |
-| 認証で `app_id` / `secret` 系のエラー     | 認証 `104` / `105`         | `auth`       | App ID / App Secret を確認（`.env`・ハードコード禁止）                      |
-| データ取得で権限エラー                    | リソース `403`             | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認              |
-| `partition` が見つからない                | リソース `404`             | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                              |
-| 作成・更新で値が弾かれる                  | リソース `100`〜`116`      | `validation` | パラメータ・書式・型・日時・Option を見直す                                 |
-| 宣言したカスタム項目で `validation`       | リソース `100`             | `validation` | その partition に項目が実在するか `t.field.search` で確認                   |
-| `itemstate` / `version` 不正              | リソース `133` / `146`     | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                 |
-| 重複・依存で作成/削除できない             | リソース `301`/`303`/`304` | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                      |
-| IP 制限 / アプリ権限不足                  | リソース `406` / `601`     | `permission` | IP アドレス申請／アプリ権限の申請                                           |
-| 登録最大件数超過                          | リソース `500`             | `validation` | 件数を減らす／200 件以下のバッチに分割                                      |
-| `PortersConfigError`（送信前）            | サイズ超過                 | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）        |
-| `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正       | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                      |
-| **読み取りで宣言型と実データが食い違う**  | —（応答の形が違う）        | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す    |
-| **書き込み・condition の日時が変換不能**  | —（渡した値の書式）        | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）                |
-| `new PortersClient(...)` がその場で落ちる | `host` / `scheme` の書式   | `config`     | `host` は**ホスト名（＋ポート）だけ**（下記）                               |
-| `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）   | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                      |
-| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）             | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）         |
-| `resource response root is …` が出る      | —（200 ＋ 別物のボディ）   | `unknown`    | 中間装置が代わりに応答している。`host` と経路を確認（[ADR-0051][adr-0051]） |
+| 症状                                      | 系統 / code                           | category     | 対処                                                                            |
+| ----------------------------------------- | ------------------------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `PortersAuthError` が出て処理が止まる     | 認証 `401`                            | `auth`       | Refresh Token 失効。**初回ブラウザ `code` 付与**をその Company DB で再実施      |
+| 認証で `app_id` / `secret` 系のエラー     | 認証 `104` / `105`                    | `auth`       | App ID / App Secret を確認（`.env`・ハードコード禁止）                          |
+| データ取得で権限エラー                    | リソース `403`                        | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認                  |
+| `partition` が見つからない                | リソース `404`                        | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                                  |
+| 作成・更新で値が弾かれる                  | リソース `100`〜`116`                 | `validation` | パラメータ・書式・型・日時・Option を見直す                                     |
+| 宣言したカスタム項目で `validation`       | リソース `100`                        | `validation` | その partition に項目が実在するか `t.field.search` で確認                       |
+| `itemstate` / `version` 不正              | リソース `133` / `146`                | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                     |
+| 重複・依存で作成/削除できない             | リソース `301`/`303`/`304`            | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                          |
+| IP 制限 / アプリ権限不足                  | リソース `406` / `601`                | `permission` | IP アドレス申請／アプリ権限の申請                                               |
+| 登録最大件数超過                          | リソース `500`                        | `validation` | 件数を減らす／200 件以下のバッチに分割                                          |
+| `PortersConfigError`（送信前）            | サイズ超過                            | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）            |
+| `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正                  | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                          |
+| **読み取りで宣言型と実データが食い違う**  | —（応答の形が違う）                   | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す        |
+| **書き込み・condition の日時が変換不能**  | —（渡した値の書式）                   | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）                    |
+| `new PortersClient(...)` がその場で落ちる | `hostname` / `port` / `scheme` の書式 | `config`     | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                        |
+| `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）              | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                          |
+| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）                        | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）             |
+| `resource response root is …` が出る      | —（200 ＋ 別物のボディ）              | `unknown`    | 中間装置が代わりに応答している。`hostname` と経路を確認（[ADR-0051][adr-0051]） |
 
 ## 宣言型と実データの食い違い（`validation`）
 
@@ -372,7 +379,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 [adr-0046]: ../../adr/0046-guard-error-contract.md
 [adr-0047]: ../../adr/0047-access-point-scheme.md
 [adr-0048]: ../../adr/0048-access-point-host-validation.md
-[adr-0049]: ../../adr/0049-host-port-roundtrip.md
+[adr-0078]: ../../adr/0078-hostname-port-split.md
 [adr-0050]: ../../adr/0050-auth-http-status-handling.md
 [adr-0051]: ../../adr/0051-read-envelope-identification.md
 [lv]: ../../live-verification.md
