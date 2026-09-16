@@ -114,8 +114,26 @@ const porters = new PortersClient({
 タイムアウトの外側で、実際に送る直前からタイマーが回ります）。
 
 **効いてくるのは大きな添付です。** 添付の本体は最大 10MB（[添付ファイル][attachments]）で、
-細い回線では 30 秒に収まらないことがあります。いまのところ**この値は公開 API から変えられません**
-（`Transport` を自分で実装して差し替えることはできます）。
+細い回線では 30 秒に収まらないことがあります。**延ばせます** — 既定の transport を自分で組んで
+渡してください。
+
+```ts
+import {
+  PortersClient,
+  createFetchTransport,
+} from "@joymerrevent/porters-connect";
+
+const porters = new PortersClient({
+  host,
+  appId,
+  appSecret,
+  transport: createFetchTransport({ timeoutMs: 120_000 }), // 2 分
+});
+```
+
+`timeoutMs` は**正の整数（ミリ秒）**だけを受けます。`0` は「無制限」ではなく**即中断**なので、
+構築時に `PortersConfigError` で弾かれます。短くすることもできます（対話的なツールで待たせたく
+ないときなど）。
 
 ## PORTERS に委ねるもの（型では止めません）
 

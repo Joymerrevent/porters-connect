@@ -1,7 +1,7 @@
 # RV-46 🟡 既定 30 秒のタイムアウトを公開 API から変えられない
 
 - 重要度: 🟡 ／ 観点: 公開サーフェス / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -64,6 +64,40 @@ new PortersClient({
 
 **公開 API の追加**なので、どれを採るにしても ADR を起こしてから実装する。
 
+## 処置
+
+**公開した**（2026-09-16・[ADR-0077][adr77] 案A）。推奨どおり `createFetchTransport` と
+`FetchTransportOptions` を `src/index.ts` から export した。設定の置き場所が transport を作る側の
+1 つに決まるので、案B（`PortersClient` に `timeoutMs`）が抱える「transport を渡したときに
+どちらが勝つか」は生まれない。既定は **30 秒のまま**据え置いた。
+
+```ts
+new PortersClient({
+  host,
+  appId,
+  appSecret,
+  transport: createFetchTransport({ timeoutMs: 120_000 }),
+});
+```
+
+**起票時に残した論点（`0` / 負値）も決めた。** `timeoutMs` は**正の整数だけ**を受け、
+それ以外は**構築時に** `PortersConfigError` で弾く。`AbortSignal.timeout(0)` は即中断するので、
+`0` を通すと全リクエストが `network` エラーになり「サーバーが落ちている」と読めてしまう
+＝ 設定ミスが別の診断に化ける。手前で弾くのは `count` の範囲（[RV-28][rv28]）や
+`host` の書式（[ADR-0048][adr48]）と同じ線。
+
+## 検証
+
+co-located テストで 4 つ固定した — signal が渡ること、**応答本文の受信が終わらなければ
+その signal で中断する**こと（ヘッダは即返る応答で確認＝本文まで見ている）、
+`0` / 負値 / 小数 / `NaN` は構築時に落ちること、省略すれば通ること。
+ドキュメントは [上限][limits]（延ばし方と `0` を受けない理由）と
+[添付ファイル][attachments]（大きなファイルのとき）に書いた。
+
+[adr77]: ../../adr/0077-fetch-transport-timeout.md
+[adr48]: ../../adr/0048-access-point-host-validation.md
+[rv28]: 0028-count-range-unvalidated.md
+[attachments]: ../../usage/howto/attachments.md
 [adr73]: ../../adr/0073-throttle-sharing.md
 [adr75]: ../../adr/0075-attachment-search-all.md
 [adr6]: ../../adr/0006-error-model.md

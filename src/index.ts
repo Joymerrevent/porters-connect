@@ -38,6 +38,11 @@ export type { Throttle, ThrottleOptions } from "./http";
 // Mock transport for offline evaluation / unit tests (R-17 / ADR-0024).
 export { createMockTransport } from "./http";
 export type { MockHandler, MockReply, MockTransportOptions } from "./http";
+
+// The default transport, so the per-request timeout can be changed without hand-writing a
+// `Transport` (ADR-0077). Raise it to read a large attachment over a slow link (ADR-0075).
+export { createFetchTransport } from "./http";
+export type { FetchTransportOptions } from "./http";
 // `Scheme` is the access-point URL scheme accepted by `PortersClientOptions.scheme` (ADR-0047).
 export type { PartitionId, Scheme, Scope } from "./types";
 
