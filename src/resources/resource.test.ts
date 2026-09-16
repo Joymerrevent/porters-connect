@@ -679,3 +679,41 @@ describe("createResource — Write", () => {
     );
   });
 });
+
+// RV-47: `writeDefaults` はアクセサが埋める項目で、呼び出し側は上書きできない。
+// Phase は 1 項目（`Resource`）だけだが、機構は複数を扱えるのでここで押さえる。
+describe("createResource — 束ねた書き込み項目（RV-47）", () => {
+  const BOUND_CONFIG = {
+    ...CONFIG,
+    writeDefaults: { P_Name: "bound", P_Owner: 5 },
+  } as const;
+
+  const bound = (calls: Call[], ...bodies: string[]) =>
+    createResource(BOUND_CONFIG, {
+      requester: stub(bodies.length > 0 ? bodies : [WRITE_OK()], calls),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    });
+
+  it("渡されなければ、束ねた値が全部乗る", async () => {
+    const calls: Call[] = [];
+    await bound(calls).create({});
+    expect(calls[0]?.req.body).toContain("<W.P_Name>bound</W.P_Name>");
+    expect(calls[0]?.req.body).toContain("<W.P_Owner>5</W.P_Owner>");
+  });
+
+  it("複数を渡したら、両方を名指しして落とす", async () => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await bound(calls).create({ P_Name: "mine", P_Owner: 9 });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    // どれが問題かが全部出る（1 つ直したらもう 1 つで落ちる、を避ける）。
+    expect((err as PortersConfigError).message).toContain("P_Name, P_Owner");
+    expect((err as PortersConfigError).hint).toContain("P_Name, P_Owner");
+    expect(calls).toHaveLength(0);
+  });
+});
