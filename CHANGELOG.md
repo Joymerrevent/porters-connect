@@ -5,6 +5,92 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-16
+
+**添付ファイルの運び方を決め、出典に無いパラメータを型から外した版**です。**破壊的変更を 2 つ**
+含みます（添付の本体は `get` でだけ取れる／Phase の Read から `keywords` / `itemstate` が消える）。
+
+### Added
+
+- **`t.attachment.searchAll()`** — 200 件を超える添付を、`start` を自分で回さずに順に見られます
+  （[ADR-0075][adr75]）。ほかの 15 エンドポイントと同じ語彙になりました。
+
+  ```ts
+  for await (const a of t.attachment.searchAll({
+    condition: { "Resource:eq": "17" },
+  })) {
+    console.log(a.fileName, a.contentType);
+  }
+  ```
+
+  流れるのは**メタデータだけ**なので、全部を歩いてもファイル本体はダウンロードされません。
+
+- **`createFetchTransport`** — 既定の transport を公開しました（[ADR-0077][adr77]）。
+  1 リクエストのタイムアウト（既定 **30 秒**）を変えられます。
+
+  ```ts
+  import {
+    PortersClient,
+    createFetchTransport,
+  } from "@joymerrevent/porters-connect";
+
+  const porters = new PortersClient({
+    host,
+    appId,
+    appSecret,
+    transport: createFetchTransport({ timeoutMs: 120_000 }), // 2 分
+  });
+  ```
+
+  この 30 秒は**接続から本文の受信完了まで**で、**1 リクエストごと**に数えます（自動リトライを
+  含めると最悪 `maxRetries + 1` 倍）。レートの待ち時間は含みません。`timeoutMs` は**正の整数**だけを
+  受け、`0`（＝即中断で「無制限」ではない）は構築時に `PortersConfigError` で弾きます。
+  これまで変えるには `Transport` の自前実装が必要で、`PortersNetworkError` への分類まで
+  書き直すことになっていました。
+
+- 公開した型: `AttachmentMetaField` / `AttachmentWalkQuery` / `FetchTransportOptions`。
+
+### Changed
+
+- **（破壊的）添付の本体（`content`）は `get` でだけ取れます**（[ADR-0075][adr75]）。
+  `search` / `searchAll` の `field` に `"Content"` は書けません。
+
+  ```ts
+  await t.attachment.search({ field: ["Id", "Content"] });
+  //                                       ^^^^^^^^^ 型エラーになります
+  const file = await t.attachment.get(900); // 本体はこちら
+  ```
+
+  1 ページは最大 200 件で、PORTERS は 1 ファイル 10MB まで許します。本体を混ぜた一覧は
+  **読める大きさを越えることがあります** — 1 ファイル 2MB 超 × 200 件で V8 の文字列上限
+  （536,870,888 文字）に当たり、`RangeError` になって再送しても直りません。しかも Attachment は
+  **ファイルサイズを返さない**ので、「何件までなら安全か」を呼び出し側が判断することもできません。
+  そこで件数ではなく**メソッド**で分けました。型を外して渡した場合も、送信前に
+  `PortersConfigError` で止まります。
+
+- **（破壊的）Phase の Read クエリから `keywords` / `itemstate` が消えました**（[ADR-0076][adr76]）。
+  PORTERS の `Phase - Read` はこの 2 つを Input Variables に挙げていません。Read 記事 17 本を
+  数えると、共通語彙のデータ系 11 本は両方を載せ、**Phase / Attachment / マスタ 4 種は 1 本も
+  載せていません**（11/11 対 0/6）ので、記事側の省略ではなく**エンドポイントごとに取るものが
+  違う**と読めます。出典に無いパラメータは、無視されるのではなく **Read 全体を失敗させうる**
+  （Result Code 100 / 102）ため、型の側で閉じました。
+
+  ```ts
+  await t.phase.of("client").search({ keywords: ["山田"] });
+  //                                  ^^^^^^^^ 型エラーになります
+  ```
+
+  **実行時は変えていません**。cast すれば今までどおり送られます（契約環境で「実は受け付ける」と
+  分かったときに確かめられるように残しました）。
+
+- **エンドポイント × 機能のマトリクスを起こしました**。PORTERS が取るものとライブラリが送るものを
+  表に並べ、**reference ↔ 表 ↔ 実装を両方向で突き合わせる検査**（94 件）を足しています。
+  ずれているセルには必ず根拠（ADR / ライブ検証）が要る形で、今回の 2 つの破壊的変更も
+  この表から出てきました。パッケージの中身は変わりません。
+
+- **既定 30 秒のタイムアウトをドキュメントに明文化しました**（[上限][limits]・[失敗の扱い][failures]）。
+  これまでどこにも書かれていませんでした。パッケージの中身は変わりません。
+
 ## [0.16.0] - 2026-09-15
 
 **カスタム項目を「宣言してから使う」に揃えた版**です。**破壊的変更**（`field` が未宣言の
@@ -798,11 +884,17 @@
 [adr69]: docs/adr/0069-tenant-field-catalog-tooling.md
 [adr73]: docs/adr/0073-throttle-sharing.md
 [adr74]: docs/adr/0074-custom-field-declaration-required.md
+[adr75]: docs/adr/0075-attachment-search-all.md
+[adr76]: docs/adr/0076-phase-read-query-surface.md
+[adr77]: docs/adr/0077-fetch-transport-timeout.md
+[limits]: docs/usage/concepts/limits.md
+[failures]: docs/usage/howto/handle-failures.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
 [unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...HEAD
+[0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.14.0...v0.15.0
