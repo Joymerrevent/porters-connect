@@ -22,7 +22,7 @@ const setup = (options: FakeTransportOptions = {}) => {
     },
   };
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport,

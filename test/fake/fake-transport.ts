@@ -114,7 +114,7 @@ const header = (req: TransportRequest, name: string): string | undefined => {
  *
  * @example
  * const fake = createFakeTransport();
- * const porters = new PortersClient({ host: "fake.test", appId: "a", appSecret: "s",
+ * const porters = new PortersClient({ hostname: "fake.test", appId: "a", appSecret: "s",
  *   partition: 1, transport: fake });
  * const id = await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
  * fake.control.failNext({ kind: "resultCode", code: 403 }); // next call fails deterministically

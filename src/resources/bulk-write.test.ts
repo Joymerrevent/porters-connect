@@ -77,7 +77,7 @@ const resource = (requester: Requester) =>
       fields: FIELDS,
       requiredOnCreate: REQUIRED,
     },
-    { requester, accessPoint: { host: "h.test" }, partition: 7 },
+    { requester, accessPoint: { hostname: "h.test" }, partition: 7 },
   );
 
 // Tiny records + short prefix so 200 fit under the size cap — exercises the 200-count boundary
@@ -95,7 +95,7 @@ const smallResource = (requester: Requester) =>
       fields: SMALL,
       requiredOnCreate: ["P_A"] as const,
     },
-    { requester, accessPoint: { host: "h.test" }, partition: 7 },
+    { requester, accessPoint: { hostname: "h.test" }, partition: 7 },
   );
 
 // Exact per-request budget for the `resource` above (must match runBulkWrite's math), and a helper
@@ -104,7 +104,7 @@ const smallResource = (requester: Requester) =>
 const FIELD_MAP = new Map(Object.entries(FIELDS));
 const BUDGET =
   MAX_REQUEST_LENGTH -
-  buildWriteUrl({ host: "h.test" }, 7, "candidate").length -
+  buildWriteUrl({ hostname: "h.test" }, 7, "candidate").length -
   "<Candidate></Candidate>".length;
 const sentLen = (memo: string): number =>
   encodeWriteItem("Person", FIELD_MAP, { P_Owner: 1, P_Memo: memo, P_Id: -1 })
@@ -306,7 +306,7 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
 // 従う必要があり、例示テストは代表的な境界を 1 点ずつ突いているだけ。レコード長がばらつく
 // 現実の入力で上限を破らないことは、値を機械に選ばせないと確かめられない。
 describe("bulk write の分割: 不変条件（property-based）", () => {
-  const WRITE_URL = buildWriteUrl({ host: "h.test" }, 7, "candidate");
+  const WRITE_URL = buildWriteUrl({ hostname: "h.test" }, 7, "candidate");
   const ENVELOPE = "<Candidate></Candidate>".length;
 
   it("どの入力でも上限を破らず、順序と件数が保たれる", async () => {

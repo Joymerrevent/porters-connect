@@ -6,6 +6,7 @@ import type {
   TokenStore,
 } from "./auth";
 import {
+  authorityOf,
   createFetchTransport,
   createRequester,
   sharedThrottleFor,
@@ -59,15 +60,24 @@ import type { PartitionId, Scheme, Scope } from "./types";
 /** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
 export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /**
-   * API host. Required and supplied via `PORTERS_HOST` — never hard-code it.
-   * (A representative value lives in docs/usage/reference.) May carry a port — `localhost:4010`.
+   * API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
+   * (A representative value lives in docs/usage/reference.)
    *
-   * The **host and nothing else**: no scheme, no path, no userinfo, no whitespace. A value like
-   * `https://xxxxx.example.com` is rejected at construction with a {@link PortersConfigError}
-   * rather than silently addressing a different host (ADR-0048). Any port is fine — including a
-   * redundant `:443` (ADR-0049). Write a non-ASCII host in punycode.
+   * The **name and nothing else**: no port, no scheme, no path, no userinfo, no whitespace
+   * (ADR-0078). PORTERS issues a server name and speaks https, so a port never arrives with it;
+   * when you need one (a local fake, a proxy) pass {@link PortersClientOptions.port}. A value
+   * like `https://xxxxx.example.com` or `a.test:4010` is rejected at construction with a
+   * {@link PortersConfigError} rather than silently addressing something else (ADR-0048).
+   * Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
    */
-  host: string;
+  hostname: string;
+  /**
+   * Port of the access point (ADR-0078). **Omit it for PORTERS** — the contract gives you a name
+   * and the scheme decides the port. Set it only for a local fake server or a proxy:
+   * `{ hostname: "127.0.0.1", port: 4010, scheme: "http" }`. An integer 1–65535; anything else
+   * is rejected at construction.
+   */
+  port?: number;
   /**
    * URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
    * local fake server or a trusted tunnel: it sends every request — the OAuth token header
@@ -86,7 +96,7 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
   /**
-   * Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this host**,
+   * Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this destination**,
    * so several clients aimed at the same PORTERS add up to one limit instead of one each.
    *
    * Pass your own to opt out of that sharing, to run different limits, or to coordinate across
@@ -141,7 +151,7 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
  * explicitly, exactly once, so "unbound" is not a state this API can be in.
  *
  * @example
- * const porters = new PortersClient({ host, appId, appSecret });
+ * const porters = new PortersClient({ hostname, appId, appSecret });
  * await porters.auth.ensureAuthenticated();   // App-level
  * const t = porters.tenant(123);              // bind the partition once
  * const page = await t.candidate.search();
@@ -173,16 +183,19 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
 
   constructor(options: PortersClientOptions<C>) {
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
-    // renders it. Checked once here too (ADR-0048): a malformed `host` is a configuration
+    // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
     // problem, so it fails where the configuration was handed over — before any credential can
     // be posted to whatever the wrong value happens to resolve to. Plain http warns loudly
     // (once per process) — allowing it never silences it.
     const accessPoint: AccessPoint = {
-      host: options.host,
+      hostname: options.hostname,
+      port: options.port,
       scheme: options.scheme,
     };
     validateAccessPoint(accessPoint);
-    warnIfInsecureScheme(options.scheme, options.host);
+    // The warning names the destination, port included — two access points that differ only by
+    // port are different destinations (ADR-0078).
+    warnIfInsecureScheme(options.scheme, authorityOf(accessPoint));
     const transport = options.transport ?? createFetchTransport();
     // Custom strategy (案3) takes over token supply; otherwise the default transparent
     // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
@@ -213,10 +226,10 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     const requester = createRequester({
       transport,
       auth,
-      // Per host, not per client (ADR-0073): building a client per tenant is something the guides
+      // Per destination, not per client (ADR-0073): building a client per tenant is something the guides
       // recommend, and a bucket each would let the process issue N times the limit — silently
       // (RV-43). An injected throttle takes over entirely, sharing included.
-      throttle: options.throttle ?? sharedThrottleFor(accessPoint.host),
+      throttle: options.throttle ?? sharedThrottleFor(authorityOf(accessPoint)),
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;
@@ -255,8 +268,13 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     this.partition = createPartitionResource({ requester, accessPoint });
   }
 
-  /** The configured API host. */
-  get host(): string {
-    return this.#accessPoint.host;
+  /** The configured API server name (no port — see {@link PortersClient.port}). */
+  get hostname(): string {
+    return this.#accessPoint.hostname;
+  }
+
+  /** The configured port, or `undefined` when the scheme's own port is used (ADR-0078). */
+  get port(): number | undefined {
+    return this.#accessPoint.port;
   }
 }

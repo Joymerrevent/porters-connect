@@ -26,7 +26,7 @@ const resource = (calls: Call[], body: string) =>
   createCandidateResource(
     {
       requester: stub(body, calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     },
     custom,
@@ -78,7 +78,7 @@ describe("custom fields — PortersClient generic typing", () => {
     const fields = defineFields({
       candidate: (f) => ({ U_score: f.number(), U_tags: f.option() }),
     });
-    const porters = new PortersClient({ host: "h.test", fields });
+    const porters = new PortersClient({ hostname: "h.test", fields });
     expect(porters).toBeInstanceOf(PortersClient); // construct OK + uses the value
 
     type Rec = NonNullable<
@@ -104,7 +104,7 @@ describe("custom fields — PortersClient generic typing", () => {
   });
 
   it("leaves a client without `fields` unchanged (no custom keys)", () => {
-    const plain = new PortersClient({ host: "h.test" });
+    const plain = new PortersClient({ hostname: "h.test" });
     expect(plain).toBeInstanceOf(PortersClient);
     type Rec = NonNullable<
       Awaited<ReturnType<ReturnType<typeof plain.tenant>["candidate"]["get"]>>

@@ -102,7 +102,8 @@ const CONVENTIONAL = `
 // このライブラリの値
 const porters: PortersClient;
 const t: TenantScope;
-const host: string;
+const hostname: string;
+const port: number;
 const appId: string;
 const appSecret: string;
 const partition: number;

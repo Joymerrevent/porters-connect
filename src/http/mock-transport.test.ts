@@ -94,7 +94,7 @@ describe("createMockTransport", () => {
 
   it("drives a PortersClient fully offline (auth auto-answered + resource decoded)", async () => {
     const porters = new PortersClient({
-      host: "sandbox.invalid",
+      hostname: "sandbox.invalid",
       appId: "demo",
       appSecret: "demo",
       transport: createMockTransport((r) =>
@@ -112,7 +112,7 @@ describe("createMockTransport", () => {
 
   it("surfaces the unmocked-route error through the client as a PortersError", async () => {
     const porters = new PortersClient({
-      host: "sandbox.invalid",
+      hostname: "sandbox.invalid",
       appId: "demo",
       appSecret: "demo",
       transport: createMockTransport(() => undefined),

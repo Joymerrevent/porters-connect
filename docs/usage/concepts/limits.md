@@ -74,7 +74,7 @@ import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
 
 // 共有から降りる／別の上限で走らせる
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   throttle: createThrottle({ readPerMin: 500 }),
@@ -124,7 +124,7 @@ import {
 } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host,
+  hostname,
   appId,
   appSecret,
   transport: createFetchTransport({ timeoutMs: 120_000 }), // 2 分

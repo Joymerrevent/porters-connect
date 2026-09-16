@@ -58,7 +58,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 const res = (calls: Call[], ...bodies: string[]) =>
   createResource(CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [OK], calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 
@@ -274,7 +274,7 @@ const EXPANDED = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P
 const gadget = (calls: Call[], ...bodies: string[]) =>
   createResource(GADGET_CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [EXPANDED], calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 
@@ -307,7 +307,7 @@ const ALBUM_PAGE =
 const album = (calls: Call[], ...bodies: string[]) =>
   createResource(ALBUM_CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [ALBUM_PAGE], calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 
@@ -553,7 +553,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     });
     const items = await collect(
@@ -570,7 +570,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(2, [1, 2]), page(2, [])], calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     });
     const items = await collect(r.searchAll());
@@ -582,7 +582,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(5, []), page(5, [])], calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     });
     const items = await collect(r.searchAll());
@@ -594,7 +594,7 @@ describe("createResource — searchAll", () => {
     const calls: Call[] = [];
     const r = createResource(CONFIG, {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     });
     // 入れ子の値だけを書き換える経路も見る（浅いコピーでは塞がらない側 — RV-32 案(c)）。

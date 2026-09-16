@@ -11,7 +11,7 @@ PORTERS のデータは **Partition** という単位に分かれています。
 `tenant(id)` です**（[ADR-0055][adr55]）。
 
 ```ts
-const porters = new PortersClient({ host, appId, appSecret });
+const porters = new PortersClient({ hostname, appId, appSecret });
 
 // ✗ porters.candidate は無い
 const t = porters.tenant(123); // ← ここで Partition を束ねる

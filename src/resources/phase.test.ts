@@ -54,7 +54,7 @@ const stub = (body: string, calls: Call[]): Requester => ({
 const phases = (calls: Call[], body: string) =>
   createPhaseAccessor({
     requester: stub(body, calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   }).of("client");
 
@@ -112,7 +112,7 @@ describe("createPhaseAccessor — the bound resource", () => {
     const calls: Call[] = [];
     const deps = {
       requester: stub(READ_OK, calls),
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       partition: 12,
     };
     const accessor = createPhaseAccessor(deps);

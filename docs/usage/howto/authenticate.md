@@ -29,7 +29,7 @@ API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照して�
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST!,
+  hostname: process.env.PORTERS_HOST!,
   appId: process.env.PORTERS_APP_ID!,
   appSecret: process.env.PORTERS_APP_SECRET!,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
@@ -114,7 +114,7 @@ const tokenStore: TokenStore = {
 };
 
 const porters = new PortersClient({
-  host,
+  hostname,
   appId,
   appSecret,
   scopes: ["candidate_r"],
@@ -174,7 +174,7 @@ const auth: TokenProvider = {
 };
 
 // トークンは自前供給なので appId / appSecret は不要
-const porters = new PortersClient({ host, auth });
+const porters = new PortersClient({ hostname, auth });
 ```
 
 > 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。

@@ -36,7 +36,7 @@ const OWNER = {
 const setup = () => {
   const fake = createFakeTransport({ users: [OWNER, { P_Id: 7 }] });
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport: fake,

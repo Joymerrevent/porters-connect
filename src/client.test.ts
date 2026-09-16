@@ -32,7 +32,7 @@ const mockClient = (): PortersClient => {
     send: () => Promise.resolve({ status: 200, body: candidateXml }),
   };
   return new PortersClient({
-    host: "example.test",
+    hostname: "example.test",
     transport,
     auth: { getAccessToken: () => Promise.resolve("TKN") },
   });
@@ -66,9 +66,15 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(c?.P_Id).toBe(10001);
   });
 
-  it("wires defaults (no transport/auth injected) and exposes host", () => {
-    const c = new PortersClient({ host: "default.test" });
-    expect(c.host).toBe("default.test");
+  it("wires defaults (no transport/auth injected) and exposes hostname / port", () => {
+    const c = new PortersClient({ hostname: "default.test" });
+    expect(c.hostname).toBe("default.test");
+    // 既定は scheme のポート＝ undefined（ADR-0078）。
+    expect(c.port).toBeUndefined();
+
+    const local = new PortersClient({ hostname: "127.0.0.1", port: 4010 });
+    expect(local.hostname).toBe("127.0.0.1");
+    expect(local.port).toBe(4010);
   });
 
   // Drives the *default* auth provider (no `auth` injected) through a mock
@@ -96,7 +102,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
   it("threads host / appId / appSecret と tenant(id) の partition を配線する", async () => {
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({
-      host: "wired.test",
+      hostname: "wired.test",
       appId: "AID",
       appSecret: "SEC",
       transport,
@@ -119,7 +125,8 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({
-      host: "127.0.0.1:4010",
+      hostname: "127.0.0.1",
+      port: 4010,
       scheme: "http",
       appId: "AID",
       transport,
@@ -149,7 +156,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     expect(
       () =>
         new PortersClient({
-          host: "https://xxxxx.example.com",
+          hostname: "https://xxxxx.example.com",
           scheme: "http",
           appId: "AID",
           appSecret: "SECRET",
@@ -169,7 +176,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
 
   it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {
     const { transport, calls } = recordingTransport();
-    const client = new PortersClient({ host: "h.test", transport });
+    const client = new PortersClient({ hostname: "h.test", transport });
     await client.tenant(999).candidate.search();
 
     const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
@@ -190,7 +197,7 @@ describe("PortersClient + job (E2E, mock transport)", () => {
       send: () => Promise.resolve({ status: 200, body: jobXml }),
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -214,7 +221,7 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -243,7 +250,7 @@ describe("PortersClient + recruiter (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -270,7 +277,7 @@ describe("PortersClient + contact (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -297,7 +304,7 @@ describe("PortersClient + opportunity (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -323,7 +330,7 @@ describe("PortersClient + activity (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -350,7 +357,7 @@ describe("PortersClient + contract (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -376,7 +383,7 @@ describe("PortersClient + phase (E2E, mock transport)", () => {
       },
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -400,7 +407,7 @@ describe("PortersClient + process (E2E, mock transport)", () => {
       send: () => Promise.resolve({ status: 200, body: processXml }),
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -422,7 +429,7 @@ describe("PortersClient + resume (E2E, mock transport)", () => {
       send: () => Promise.resolve({ status: 200, body: resumeXml }),
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -443,7 +450,7 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
       send: () => Promise.resolve({ status: 200, body: attachmentXml }),
     };
     const client = new PortersClient({
-      host: "example.test",
+      hostname: "example.test",
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -470,7 +477,7 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
 
   const tenantClient = (transport: Transport): PortersClient =>
     new PortersClient({
-      host: "t.test", // client default
+      hostname: "t.test", // client default
       transport,
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
@@ -518,12 +525,12 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
   });
 });
 
-// ADR-0073 / RV-43: バケットは client ごとではなくホストごと。ガイドが勧めるとおりに
-// テナント別 client を立てても、合計が 1 つの上限に収まることを pin する。
-describe("PortersClient のスロットル（ホスト共有・注入）", () => {
-  const clientFor = (host: string, throttle?: Throttle): PortersClient =>
+// ADR-0073 / RV-43: バケットは client ごとではなく**宛先**ごと（ADR-0078 以降はホスト名＋ポート）。
+// ガイドが勧めるとおりにテナント別 client を立てても、合計が 1 つの上限に収まることを pin する。
+describe("PortersClient のスロットル（宛先ごとに共有・注入）", () => {
+  const clientFor = (hostname: string, throttle?: Throttle): PortersClient =>
     new PortersClient({
-      host,
+      hostname,
       throttle,
       transport: {
         send: (req) =>

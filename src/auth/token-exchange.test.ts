@@ -35,7 +35,7 @@ const setup = (
   return {
     calls,
     deps: {
-      accessPoint: { host: "h.test" },
+      accessPoint: { hostname: "h.test" },
       appId: "APP",
       appSecret: "SECRET",
       transport,

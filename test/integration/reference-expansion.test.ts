@@ -17,7 +17,7 @@ const setup = () => {
     users: [{ P_Id: 5, P_Name: "採用 花子" }],
   });
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     transport: fake,
