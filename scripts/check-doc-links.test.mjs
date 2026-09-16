@@ -300,6 +300,13 @@ describe("アンカー", () => {
     );
   });
 
+  it("見出しの HTML タグは残らず落ちる（重なっていても）", () => {
+    // GitHub は描画後のテキストで slug を作るので、タグは 1 つも残らない。
+    // 1 回だけ落とすと `<<a>b>` が `<b>` になって食い違う。
+    expectAccepted(run({ "a.md": "## A<span>B</span>C\n\n[x]: #abc\n" }));
+    expectAccepted(run({ "a.md": "## A<<a>b>C\n\n[x]: #ac\n" }));
+  });
+
   it("見出しの中のリンクは表示テキストで slug を作る", () => {
     expectAccepted(
       run({
