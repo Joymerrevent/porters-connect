@@ -89,6 +89,7 @@
 | [0075][0075] | Attachment に `searchAll` を足し、本体は `get` でだけ運ぶ        | 詳細設計 | accepted           | —     |
 | [0076][0076] | Phase の Read クエリから `keywords` / `itemstate` を外す         | 詳細設計 | accepted           | —     |
 | [0078][0078] | アクセスポイントを `hostname` と `port` に分ける                 | 基本設計 | accepted           | —     |
+| [0079][0079] | リソースの指定を名前に揃える（Activity / Attachment）            | 詳細設計 | proposed           | —     |
 | [0077][0077] | 既定 transport のタイムアウトを利用者が変えられるようにする      | 詳細設計 | accepted           | —     |
 
 [readme]: README.md
@@ -170,4 +171,5 @@
 [0075]: 0075-attachment-search-all.md
 [0076]: 0076-phase-read-query-surface.md
 [0078]: 0078-hostname-port-split.md
+[0079]: 0079-resource-by-name.md
 [0077]: 0077-fetch-transport-timeout.md
