@@ -1,12 +1,13 @@
 # 78. アクセスポイントを `hostname` と `port` に分ける
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0047][adr47]（scheme を設定可能に）／[ADR-0048][adr48]（`host` の書式検証）／
 > [ADR-0049][adr49]（既定ポートを落とさない）で作った**アクセスポイントの形**を見直す。
-> 起票のみ（`proposed`）。実装は accept 後・別 PR。
+> **decider が案1 を選択し `accepted`（2026-09-16）。** 実装は accept 後・別 PR
+> （**0.17.0 の後＝0.18.0**）。
 
 ## Context and Problem Statement
 
@@ -73,11 +74,23 @@ scheme?: "https" | "http";
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案1**。
+採用: **案1**（`hostname` ＋ `port` に分け、`host` は廃止する）。
 
 理由: 名前と契約値が一致し、**二重指定が構造的に起きない**（`hostname` にポートを書けば
 検証で落ちる）。案2 の移行期間は、その期間ずっと「`host` と `hostname`＋`port` のどちらが勝つか」を
 抱えることになり、いちばん避けたい形を自分で作る。`0.x` のうちなら一発で切り替えられる。
+
+**派生する小さな論点は実装時に確定する**（決定そのものは変わらない）。起案時点の方針:
+
+| 論点          | 方針                                                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| 公開ゲッター  | `PortersClient#hostname` と `#port` の 2 本に割る。合成した authority は**内部に留める**              |
+| `port` の検証 | 1〜65535 の整数。範囲外は構築時に `PortersConfigError`（[RV-28][rv28] と同じく手前で弾く）            |
+| IPv6          | **角括弧付き**（`[::1]`）を受ける。裸のコロンは弾き、hint で「ポートは `port` へ／IPv6 は括る」と言う |
+| env           | `.env.example` に `PORTERS_PORT` を足す（ライブラリは env を読まないので、あくまで書式の取り決め）    |
+
+**[ADR-0049][adr49] は実装 PR で `superseded by 0078` にする**（それまでは現行の挙動を説明している
+文書なので、いま倒さない）。
 
 ### Consequences
 
