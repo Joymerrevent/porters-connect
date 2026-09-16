@@ -157,6 +157,20 @@ export type ResourceConfig<
  */
 export type EmptyImages = Record<never, never>;
 
+/**
+ * A query with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
+ * (excess-property checking); a variable that happens to carry the key still assigns. Re-declaring
+ * each removed key as `?: never` closes that hole, so `search(query)` fails whichever way the
+ * object was built. The runtime is unaffected: the key can still arrive through a cast (ADR-0074).
+ *
+ * Only the **endpoint-level** exclusions (`Unsupported`) get this treatment. `searchAll` keeps a
+ * plain `Omit` for `count` / `start`: those are not "PORTERS does not take this", they are
+ * "the walk decides them", and tightening that is a different decision from ADR-0076.
+ */
+type WithoutQueryKeys<Q, K extends keyof Q> = Omit<Q, K> & {
+  [P in K]?: never;
+};
+
 // Every Read method takes the same shape: the query's `expand` / `image` are captured as `E` / `I`
 // (`const` type parameters, so the alias lists stay literal) and the record type widens accordingly
 // (ADR-0058 / ADR-0064). Omitting them leaves both at the empty default, which collapses back to
@@ -165,19 +179,37 @@ export type Resource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
+  /**
+   * Query keys **this endpoint does not take** (ADR-0076). The common Read vocabulary is not
+   * universal: PORTERS lists `keywords` / `itemstate` for the 11 common data resources and for
+   * none of the others, so a resource on this factory can say which of them its own endpoint
+   * leaves out. `never` — the default — means "takes the whole vocabulary".
+   *
+   * Sending a parameter the endpoint does not list can fail the *whole* Read (Result Code 100 /
+   * 102), so the safe side is not to offer it. The runtime stays permissive (ADR-0074): a key
+   * forced in through a cast is still sent, which is how a live contract can test whether
+   * PORTERS accepts it at all.
+   */
+  Unsupported extends keyof SearchQuery<F, R> = never,
 > = {
   search<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: SearchQuery<F, R> & { expand?: E; image?: I },
+    query?: WithoutQueryKeys<SearchQuery<F, R>, Unsupported> & {
+      expand?: E;
+      image?: I;
+    },
   ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>>;
   /** Auto-paginating search: yields every matching record (200 per page). */
   searchAll<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: Omit<SearchQuery<F, R>, "count" | "start"> & {
+    query?: Omit<
+      WithoutQueryKeys<SearchQuery<F, R>, Unsupported>,
+      "count" | "start"
+    > & {
       expand?: E;
       image?: I;
     },
