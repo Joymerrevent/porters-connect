@@ -60,7 +60,7 @@
 | [RV-43][rv43] | 🟡     | フェイルセーフ / API 忠実性     | fixed   | スロットルが client 単位で、テナント別 client を作ると自制が分裂する              |
 | [RV-44][rv44] | 🟡     | テスト厳密性                    | fixed   | coverage / mutation が `src/fields/**` を除外したままで実ロジックが測られていない |
 | [RV-45][rv45] | 🟢     | 機能網羅 / ドキュメント         | fixed   | Attachment だけ `searchAll` が無く、無い理由も残っていない                        |
-| [RV-46][rv46] | 🟡     | 公開サーフェス / フェイルセーフ | open    | 既定 30 秒のタイムアウトを公開 API から変えられない                               |
+| [RV-46][rv46] | 🟡     | 公開サーフェス / フェイルセーフ | fixed   | 既定 30 秒のタイムアウトを公開 API から変えられない                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 

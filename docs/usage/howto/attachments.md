@@ -89,6 +89,13 @@ for await (const a of t.attachment.searchAll({
 }
 ```
 
+本体が大きいと、既定の **30 秒**（1 リクエストあたり）に収まらないことがあります。
+その場合は transport を組んで延ばしてください（[上限][limits]）。
+
+```ts
+transport: createFetchTransport({ timeoutMs: 120_000 });
+```
+
 `condition` は**ゆるい形**（`{ "Id:eq": "123" }`）です。Attachment は Data Type のカタログを
 持たないので、ほかのリソースのような型付き条件にはなっていません。
 
