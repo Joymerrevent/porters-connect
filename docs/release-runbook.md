@@ -47,6 +47,31 @@
   - ※ PR タイトルは commitlint の検査対象（base≠`main`・[ADR-0039][adr39]）＝ `chore: …` の形にする。
   - ※ 完全自動化（案I・GitHub App）は未導入（`GITHUB_TOKEN` は保護ブランチへ直 push 不可）。
 
+### squash でマージしてしまったとき（0.17.0 で実施）
+
+`main` への PR を **merge commit ではなく squash** でマージすると、`main` から `develop` の各コミットが
+辿れなくなり、**以降の back-merge が毎回競合する**（§2 の注記）。GitHub のマージボタンは**前回選んだ
+方式を覚えている**ので、release PR でも squash のまま押してしまうことがある。
+
+**publish 前なら巻き戻せる。** 0.17.0 で実際に行った手順:
+
+1. **先に被害範囲を確認する** — GitHub Release と npm を見る。Release が未作成なら publish は
+   起きていない（publish の引き金は Release・§4）。`npm view … version` が前版のままであること
+2. **退避を取る** — `git branch backup/squash-X.Y.Z <squash コミット>`
+3. **タグを消す** — `tag.yml` が squash コミットに `vX.Y.Z` を付けているので
+   `git push --delete origin vX.Y.Z`（ローカルも `git tag -d`）
+4. **`main` の保護を一時的に緩める** — force-push は `allow_force_pushes: false` で**管理者でも拒否**される。
+   Settings → Branches → `main` → **Allow force pushes** をオン（API なら
+   `gh api -X PUT repos/…/branches/main/protection --input <現行設定＋force_push true>`）
+5. **巻き戻す** — `git push --force-with-lease=main:<squash コミット> origin <前版のマージコミット>:main`
+6. **保護を元に戻す**（必須チェック・レビュー設定も含めて元の値に戻ったことを確認する）
+7. **release ブランチを push し直して PR を作り直す** — マージ済み PR は再利用できない。
+   マージは **Create a merge commit** を選ぶ
+8. マージ後、`tag.yml` が `vX.Y.Z` を付け直す
+
+**publish 済みなら巻き戻さない。** npm は上書き不可なので、履歴の形だけを直す（`release/X.Y.Z` を
+もう一度 PR に出して merge commit でマージする＝差分ゼロのマージコミットで親子関係を復元する）。
+
 ## 3. GitHub Release を作成（＝publish の意図的ゲート）
 
 自動作成された `vX.Y.Z` タグから **GitHub Release を作る**。これが publish の引き金（出すタイミングを人が握る）。
@@ -75,16 +100,22 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.16.0**（npm latest・`v0.16.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  **7 files / 686.3 kB**・2026-09-15）。**累計 22 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 20 版**が
-  この半自動フロー）。changeset **1 枚**を消費した minor リリース。**破壊的変更**
+- ✅ 最新公開: **0.17.0**（npm latest・`v0.17.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **7 files / 705.2 kB**・2026-09-16）。**累計 23 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 21 版**が
+  この半自動フロー）。changeset **3 枚**を消費した minor リリース。**破壊的変更を 2 つ**含む
+  （添付の本体は `get` でだけ取れる・[ADR-0075][adr75] ／ Phase の Read から `keywords` / `itemstate` が
+  消える・[ADR-0076][adr76]）。あわせて `searchAll` と `createFetchTransport` を公開した。
+  - **この版は `main` へ squash でマージしてしまい、巻き戻してやり直した**（下記「squash でマージして
+    しまったとき」）。publish 前だったので実害は無し。
+- ✅ 直前の **0.16.0**（npm latest・`v0.16.0` タグ・**7 files / 686.3 kB**・2026-09-15）。
+  changeset **1 枚**を消費した minor リリース。**破壊的変更**
   （`field` が未宣言のカスタム項目を受け付けなくなる・[ADR-0074][adr74]）を含み、
   逃げ道として `rawValue` を公開した。
   - **publish 直後の `npm view` は前版を返す**。Release ワークフローが green でも、npm は
     `Your package is being processed and may take a few minutes to become available.` と返しており、
     レジストリへの反映に数分かかる。**伝播待ちと publish 失敗は外から見ると同じ**なので、
     慌てて再実行せず、ワークフローのログで `+ @joymerrevent/porters-connect@X.Y.Z` を確認してから待つ。
-- ✅ 直前の **0.15.1**（2026-09-13・7 files / 676.8 kB）は開発・CI だけの patch リリースで、
+- ✅ **0.15.1**（2026-09-13・7 files / 676.8 kB）は開発・CI だけの patch リリースで、
   `dist` の中身は 0.15.0 と同一（開発用依存の脆弱性 5 件と Actions の権限を整理した版）。
   - **この版も §5 の後追い記録が行われておらず**、本書の「最新公開」も [roadmap][rm] の公開済み行も
     0.15.0 のままだった（0.13.0 と同じ取りこぼし）。0.16.0 の記録と併せて追いつかせた。
@@ -197,3 +228,5 @@ override が先、changesets の導入が翌日という順序だったため、
 [findings]: reviews/findings.md
 [adr73]: adr/0073-throttle-sharing.md
 [adr74]: adr/0074-custom-field-declaration-required.md
+[adr75]: adr/0075-attachment-search-all.md
+[adr76]: adr/0076-phase-read-query-surface.md
