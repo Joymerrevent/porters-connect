@@ -158,14 +158,15 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/sales`       | あり   | あり                 | あり |
 | `/v1/opportunity` | あり   | あり                 | あり |
 | `/v1/phase`       | あり   | あり                 | あり |
-| `/v1/attachment`  | あり   | なし ⚠️ RV-45        | あり |
+| `/v1/attachment`  | あり   | あり                 | あり |
 
 - **マスタ 4 種に `get` が無い**のは [ADR-0022][adr22] の決定（主キー検索の語彙を持たないので、
   `condition` で 1 件に絞る形が作れない）。`t.user.current()` は自己同定で、`get` の代わりではない。
 - **`/v1/option` の `searchAll`** は PORTERS 側に `start` が無いので置けない（表 A）。
   ページングの無い Read なので `search` が全件返す。
-- **`/v1/attachment` の `searchAll`** だけは理由が記録されていない。`start` は取れるので置けるはずで、
-  置かない判断をした記録も無い（[RV-45][rv45]）。
+- **`/v1/attachment` の `searchAll`** は [ADR-0075][adr75] で足した（[RV-45][rv45] は fixed）。
+  走査は**メタデータだけ**で、ファイル本体（`Content`）は `get(id)` でしか運ばない — 200 件ぶんの
+  本体は V8 の文字列上限を越えて読めないため（根拠と実測は ADR にある）。
 
 ## 表 E — Write エンドポイント × 機能
 
@@ -240,6 +241,7 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [refcat]: ../../test/integration/reference-catalog.test.ts
 [adr22]: ../adr/0022-master-read-query-surface.md
 [rv45]: ../reviews/rv/0045-attachment-search-all-absent.md
+[adr75]: ../adr/0075-attachment-search-all.md
 [rapi]: ../usage/reference/resource-api/README.md
 [r-partition]: ../usage/reference/resource-api/resources/partition.md
 [r-user]: ../usage/reference/resource-api/resources/user.md

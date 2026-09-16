@@ -8,7 +8,7 @@
 
 > **AttachmentCreate** = `object`
 
-Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L88)
+Defined in: [src/resources/attachment.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L98)
 
 Fields for creating an Attachment. `content` is the Base64 file body.
 
@@ -18,7 +18,7 @@ Fields for creating an Attachment. `content` is the Base64 file body.
 
 > **content**: `string`
 
-Defined in: [src/resources/attachment.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L93)
+Defined in: [src/resources/attachment.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L103)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/resources/attachment.ts:93](https://github.com/Joymerrevent/por
 
 > **contentType**: `string`
 
-Defined in: [src/resources/attachment.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L91)
+Defined in: [src/resources/attachment.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L101)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/attachment.ts:91](https://github.com/Joymerrevent/por
 
 > **fileName**: `string`
 
-Defined in: [src/resources/attachment.ts:92](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L92)
+Defined in: [src/resources/attachment.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L102)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [src/resources/attachment.ts:92](https://github.com/Joymerrevent/por
 
 > **resource**: `number`
 
-Defined in: [src/resources/attachment.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L89)
+Defined in: [src/resources/attachment.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L99)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [src/resources/attachment.ts:89](https://github.com/Joymerrevent/por
 
 > **resourceId**: `number`
 
-Defined in: [src/resources/attachment.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L90)
+Defined in: [src/resources/attachment.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L100)

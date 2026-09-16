@@ -220,10 +220,12 @@ export type {
 export type {
   Attachment,
   AttachmentCreate,
+  AttachmentMetaField,
   AttachmentPage,
   AttachmentResource,
   AttachmentSearchQuery,
   AttachmentUpdate,
+  AttachmentWalkQuery,
 } from "./resources";
 
 // Master Read resources (read-only — ADR-0021/0022).

@@ -3,11 +3,12 @@
 添付は **Attachment** という専用リソースです。ほかのリソースとは形が違います
 （接頭辞なし・中身は Base64・`createMany` が無い）ので、ここだけ別に説明します。
 
-## 4 つのメソッド
+## 5 つのメソッド
 
 ```ts
-await t.attachment.search(); // 一覧（既定では本体を含まない）
-await t.attachment.get(900); // 1 件（本体つき）
+await t.attachment.search(); // 一覧（本体は含まない）
+await t.attachment.searchAll(); // 200 件を超える一覧を順に（本体は含まない）
+await t.attachment.get(900); // 1 件（**本体つき — 本体はここだけ**）
 await t.attachment.create(file); // 追加 → 採番された id
 await t.attachment.update(900, { fileName: "new.pdf" }); // 差し替え
 ```
@@ -60,14 +61,31 @@ const page = await t.attachment.search({
 for (const a of page.items) console.log(a.fileName, a.contentType);
 ```
 
-一覧で本体まで返すと、**ファイル全部をダウンロードすることになる**からです。本体が要るときは
-`get` を使うか、`field` に `"Content"` を明示します。
+一覧で本体まで返すと、**ファイル全部をダウンロードすることになる**からです。
+**本体を取れるのは `get` だけ**で、`search` / `searchAll` の `field` に `"Content"` は書けません
+（[ADR-0075][adr75]）。1 ページは最大 200 件なので、本体を混ぜると 1 回の応答が
+**読める大きさを越える**ことがあります（1 ファイル 2MB 超 × 200 件で、文字列の上限に当たって
+`RangeError` になります）。Attachment はファイルサイズを返さないので、「何件までなら安全か」を
+呼び出し側が判断することもできません。
 
 ```ts
 const one = await t.attachment.get(900);
 if (one?.content) {
   const bytes = base64ToBytes(one.content);
   console.log(bytes.length);
+}
+```
+
+200 件を超える添付を順に見るときは `searchAll` が使えます。こちらも**メタデータだけ**が流れるので、
+全部を歩いても本体はダウンロードされません。要るファイルだけ `get` で取ってください。
+
+```ts
+for await (const a of t.attachment.searchAll({
+  condition: { "Resource:eq": "17" },
+})) {
+  if (a.id === null || !a.fileName?.endsWith(".pdf")) continue;
+  const file = await t.attachment.get(a.id); // 本体はここで 1 件ずつ
+  if (file?.content) console.log(file.fileName, file.content.length);
 }
 ```
 
@@ -97,6 +115,7 @@ await t.attachment.create({ ...file, content: base64 });
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
 - ほかの目的から探す: [目次][index]
 
+[adr75]: ../../adr/0075-attachment-search-all.md
 [bulk-write]: bulk-write.md
 [handle-failures]: handle-failures.md
 [limits]: ../concepts/limits.md
