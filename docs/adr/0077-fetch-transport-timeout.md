@@ -1,11 +1,13 @@
 # 77. 既定 transport のタイムアウトを利用者が変えられるようにする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [RV-46][rv46] の決着。**塞いだなら別の道を用意する**という話で、
-> [ADR-0075][adr75]（添付の本体は `get(id)` でだけ運ぶ）の直後に出てきた。起票のみ（`proposed`）。
+> [ADR-0075][adr75]（添付の本体は `get(id)` でだけ運ぶ）の直後に出てきた。
+>
+> **decider が案A を選択し `accepted`（2026-09-16）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -61,7 +63,7 @@ PORTERS は 1 ファイル 10MB まで許すので、細い回線では 30 秒�
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案A**。
+採用: **案A**（`createFetchTransport` と `FetchTransportOptions` を公開する）。
 
 理由: `createThrottle` と**同じ形**で開くので、覚えることが増えない。設定の置き場所が
 1 つ（transport を作る側）に決まるので、案B / 案C が抱える「どちらが勝つか」が生まれない。

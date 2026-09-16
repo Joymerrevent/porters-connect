@@ -88,7 +88,7 @@
 | [0074][0074] | 未宣言のカスタム項目を `field` からも外す（宣言必須へ揃える）    | 詳細設計 | accepted   | —     |
 | [0075][0075] | Attachment に `searchAll` を足し、本体は `get` でだけ運ぶ        | 詳細設計 | accepted   | —     |
 | [0076][0076] | Phase の Read クエリから `keywords` / `itemstate` を外す         | 詳細設計 | accepted   | —     |
-| [0077][0077] | 既定 transport のタイムアウトを利用者が変えられるようにする      | 詳細設計 | proposed   | —     |
+| [0077][0077] | 既定 transport のタイムアウトを利用者が変えられるようにする      | 詳細設計 | accepted   | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
