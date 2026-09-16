@@ -1,11 +1,13 @@
 # 79. リソースの指定を名前に揃える（`Activity.P_Resource` / `Attachment.resource`）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > [ADR-0061][adr61] が `t.phase.of("client")` を名前にしたときに残した論点。
-> 起票のみ（`proposed`）。実装は accept 後・別 PR。
+>
+> **decider が案1b ＋ 案2b ＋ 案3a を選択し `accepted`（2026-09-16）。** 変換関数は**両方向とも公開**する。
+> 実装は accept 後・別 PR（0.18.0）。
 
 ## Context and Problem Statement
 
@@ -70,14 +72,43 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 - 案3a: **型は名前だけ・`as` で数値も通る**（実行時は素通り — [ADR-0074][adr74] と同じ線）
 - 案3b: 型で `ResourceName | number` の両方を許す
 
+**軸4: `condition` をどうするか**（accept 時に追加）
+
+- 案4a: `condition` も名前で受ける（型付きクエリ側にも項目単位の override を通す）
+- 案4b: **`condition` は数値のまま**。公開する変換関数で書く
+
 ## Decision Outcome
 
-**未決（`proposed`）。** 起案時点の推奨は **案1b ＋ 案2a ＋ 案3a**。
+採用: **案1b ＋ 案2b ＋ 案3a ＋ 案4b**。`Activity.P_Resource` と `Attachment.resource` を
+**読みも書きも名前**にし、表に無い値は数値のまま返す。逃げ道は `as`。`condition` は数値のままで、
+**変換関数を両方向とも公開する**（`resourceValueOf(name)` / `resourceNameOf(value)`）。
 
-理由: 数値で受けている 2 箇所を同時に直せば、**このライブラリで「どのリソースか」を書く場所は
-すべて名前**になる（軸1）。読みを数値のままにするのは、**応答は PORTERS が決める値**であって
-ライブラリの語彙ではないから — 表に無い値が返ってきたときに `null` にも例外にもしたくない（軸2）。
-逃げ道を型ではなく `as` に置くのは、**普通に書けば正しく、外したい人だけが外せる**形を保つため（軸3）。
+理由: 数値を人が書く／読む場所が無くなる（軸1・軸2）。**読みも名前にすると、この項目の意味が
+ライブラリの中で 1 つに揃う** — 書きだけ名前にすると、同じ項目が**書くときは名前・読むときは
+数値**になり、ライブラリ自身が読み書きの非対称を新しく作ることになる。表に無い値を数値のまま
+通すので、PORTERS がリソースを増やしても壊れない。
+
+`condition` を数値のままにするのは、**クエリの型が Data Type から導出される**仕組みだからで、
+そこへ項目単位の例外を持ち込むと機構が 2 つに増える。`resourceValueOf("candidate")` と書けば
+読めるので、関数 1 つで足りる。
+
+```ts
+await t.activity.create({ P_Resource: "candidate", P_ResourceId: 10001, … });
+const a = (await t.activity.get(1))!;
+a.P_Resource; // "candidate" | … | number（表に無い値はそのまま）
+
+await t.activity.search({
+  condition: { P_Resource: { eq: resourceValueOf("candidate") } },
+});
+```
+
+### 実装の制約（accept 時に確認）
+
+**独自の Data Type は足せない。** `DataType` の集合は「PORTERS の Data Type と一致する」ことを
+検査で固定してある（[ADR-0060][adr60] D3 の型集合突合）ので、`"Resource"` のような
+ライブラリ発の型を union に足すとその検査が落ちる。したがってこの振る舞いは
+**項目単位の override**（descriptor が「この項目はリソース参照」と宣言し、decode と encode の
+双方が同じ表を使う）として実装する — [ADR-0061][adr61] が「機構が別」と書いた形。
 
 ### Consequences
 
@@ -87,8 +118,9 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 - Bad: **破壊的変更**。`P_Resource: 1` / `resource: 1` と書いているコードは名前に直す。
 - Bad: 汎用 factory に**項目単位で書き込み値の型を差し替える仕掛け**が増える
   （`Activity.P_Resource` はカタログ項目なので、Phase の `of()` のようには解けない）。
-- Neutral: 読み（`P_Resource` / `resource`）は数値のまま ＝ **読みと書きで形が違う**。
-  Option / User / System[Reference] と同じ非対称で、[alias と Data Type][aliases] に並べる。
+- Bad: 読みの型が `ResourceName | number` の union になる。**表に無い値が来たときだけ**分岐が要る。
+- Neutral: `condition` は数値のまま ＝ 同じ項目でも**書き込みは名前・検索は数値**になる。
+  `resourceValueOf()` で書けるが、[alias と Data Type][aliases] に 1 行足して説明する。
 
 ## 信じている入力
 
@@ -121,13 +153,26 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 ### 案2a（読みは数値のまま）
 
 - Good: 表に無い値が来ても壊れない。応答の値を作り替えない。
-- Bad: 読みと書きで形が違う（ドキュメントで説明が要る）。
+- Bad: 読みと書きで形が違う。**ライブラリ自身が非対称を新しく作る**ことになる。
+- Bad: 読んだ人には `19` が何か分からない（「数値は分からない」は読みにも同じだけ当てはまる）。
 
 ### 案2b（読みも名前・未知は数値）
 
-- Good: 読みも書きも名前で扱える。
-- Bad: 型が `ResourceName | number` になり、**どちらが来るかは実行時にしか分からない**。
-  分岐を利用者に強いるわりに、得るものは表記の統一だけ。
+- Good: 読みも書きも名前。**この項目の意味が decode と encode で 1 つに揃う**ので、
+  仕掛けも 1 つで済む。
+- Good: 表に無い値は数値のまま通るので、PORTERS がリソースを増やしても壊れない。
+- Bad: 型が `ResourceName | number` になり、未知の値が来たときは利用者が分岐する。
+
+### 案4b（`condition` は数値のまま ＋ 変換関数）
+
+- Good: 型付きクエリの機構（Data Type から導出）に例外を持ち込まない。
+- Good: 公開する関数は `condition` 以外でも効く（`rawValue` で受けた生の値、カスタム項目の番号）。
+- Bad: 同じ項目が、書き込みでは名前・検索では数値という非対称を残す。
+
+### 案4a（`condition` も名前）
+
+- Good: どこでも名前で書ける。
+- Bad: 項目単位の override をクエリ側にも通すことになり、**機構が 2 つに増える**。
 
 ### 案3a（型は名前・`as` で逃げる）
 
@@ -145,7 +190,8 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 - 前提: [ADR-0022][adr22]（`field.search` の `resource` が名前）／ [ADR-0018][adr18]（Attachment の
   bespoke な入力）／ [ADR-0059][adr59]（綴りを機械が検査する）／ [ADR-0074][adr74]（型で塞ぎ、
   実行時は寛容にした先例）
-- 反映（accept 後・別 PR）: `src/resources/resource.ts`（項目単位の書き込み値の差し替え）、
+- 反映（accept 後・別 PR）: `src/resources/resource.ts`（項目単位の decode / encode 差し替え）、
+  `src/resources/resource-list.ts`（`resourceValueOf` / `resourceNameOf` を公開）、`src/index.ts`、
   `src/resources/activity.ts`、`src/resources/attachment.ts`、co-located テスト、
   `docs/usage/howto/attachments.md`（「数値です」の警告が不要になる）、
   `docs/usage/concepts/aliases.md`（読みと書きの非対称に 1 行）、CHANGELOG（**Breaking**）
@@ -155,6 +201,7 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 [adr18]: 0018-attachment-design.md
 [adr59]: 0059-read-field-bare-alias.md
 [adr74]: 0074-custom-field-declaration-required.md
+[adr60]: 0060-full-resource-coverage-direction.md
 [attachments]: ../usage/howto/attachments.md
 [aliases]: ../usage/concepts/aliases.md
 [roadmap]: ../roadmap.md
