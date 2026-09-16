@@ -37,6 +37,7 @@ grep -rn "VERIFY(live)" src test
 | LV-22 | Image の値を消す書き方                              | 未確認 |
 | LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
 | LV-24 | Attachment Read の必須パラメータ                    | 未確認 |
+| LV-25 | Phase Read に keywords / itemstate を送れるか       | 未確認 |
 
 ---
 
@@ -381,6 +382,25 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: [LV-3][lv3]（`Id:eq` 条件）／[LV-4][lv4]（既定項目）と同じ経路。出典どおりだと分かれば
   公開サーフェス（`AttachmentSearchQuery`）の改定になるので、**ADR が要る**
 
+## LV-25 Phase Read に `keywords` / `itemstate` を送れるか
+
+- **現在の対応 / 仮定**: **送らない**。Phase の公開型からこの 2 つを外した（[ADR-0076][a76]）。
+  汎用 factory に「このエンドポイントは取らないキー」を表す型引数を足し、Phase に適用してある。
+  **実行時は素通りのまま**なので、cast すれば送れる（`src/resources/phase.test.ts` に固定）
+- **不確実な理由**: Phase - Read の Input Variables は `partition` / `resource` / `resourceId` /
+  `id` / `field` / `condition` / `order` / `count` / `start` を挙げ、**`keywords` と `itemstate` を
+  挙げていない**（[reference の Read パラメータ節][ref-phase]）。出典どおりなら、渡した呼び出しは
+  無視されるか Result Code で弾かれる。**どちらなのかは実機でしか分からない**
+- **コード箇所**: `src/resources/phase.ts`（`PhaseSearchQuery` / `PhaseResource`）
+- **確認方法**: cast して `keywords=` / `itemstate=` を付けた Read を投げ、結果が変わるか・
+  Result Code（100 / 102 / 133 など）が返るかを見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: **受け付けられると分かったら型に戻す**（追加なので非破壊）。弾かれると分かったら
+  現状のままでよい。[LV-15][lv15] は `itemstate=existing` を明示送信できるかという別の問い
+  （共通語彙の 11 リソースについて）。マトリクスの該当セルは
+  [エンドポイント × 機能][coverage] の表 B
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -405,6 +425,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a57]: adr/0057-itemstate-existing-explicit.md
 [a58]: adr/0058-reference-expansion-read.md
 [a61]: adr/0061-phase-resource-surface.md
+[a76]: adr/0076-phase-read-query-surface.md
 [a20]: adr/0020-read-field-default.md
 [a60]: adr/0060-full-resource-coverage-direction.md
 [lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
@@ -415,3 +436,6 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [ref-attachment]: usage/reference/resource-api/resources/attachment.md
 [lv3]: #lv-3-attachment-の-get-条件
 [lv4]: #lv-4-attachment-read-の既定項目
+[ref-phase]: usage/reference/resource-api/resources/phase.md
+[lv15]: #lv-15-itemstateexisting-を明示送信して受け付けられるか
+[coverage]: design/endpoint-coverage.md

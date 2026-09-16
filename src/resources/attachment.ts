@@ -10,7 +10,7 @@ import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { appendPaging } from "./read-core";
+import { appendPaging, paginateOnce } from "./read-core";
 import {
   buildWriteUrl,
   firstWriteResultId,
@@ -25,31 +25,34 @@ const MAX_CONTENT_CHARS = 14_000_000;
 // here: the Read response's root element and the Write error's resource context (ADR-0051).
 const ATTACHMENT_RESOURCE = "Attachment";
 
+/** The file body. Only `get` carries it (ADR-0075) — see {@link AttachmentSearchQuery.field}. */
+const CONTENT = "Content";
+
+/**
+ * Every Attachment field **except** the body: what a listing may ask for (ADR-0075).
+ * These are the aliases `search` / `searchAll` accept.
+ */
+export type AttachmentMetaField =
+  "Id" | "Resource" | "ResourceId" | "ContentType" | "FileName";
+
+const META_FIELDS: AttachmentMetaField[] = [
+  "Id",
+  "Resource",
+  "ResourceId",
+  "ContentType",
+  "FileName",
+];
+
 /**
  * Every Attachment field name, in wire order. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds its Attachment table from this list rather than a copy that could drift.
  * Not re-exported from `src/index.ts`, so it stays out of the published API.
  */
-export const ATTACHMENT_FIELD_NAMES = [
-  "Id",
-  "Resource",
-  "ResourceId",
-  "ContentType",
-  "FileName",
-  "Content",
-];
+export const ATTACHMENT_FIELD_NAMES = [...META_FIELDS, CONTENT];
 
-// Default for search() when `field` is omitted (ADR-0020): metadata only — exclude the (large,
-// up to ~14MB Base64) `Content` so listing attachments doesn't download every file body. Fetch
-// `Content` explicitly via `field` or per-record via get(). Mirrors PORTERS' Image default
-// (FileName only). `field: []` still opts into the API-native primary-key-only response.
-const DEFAULT_FIELDS = [
-  "Id",
-  "Resource",
-  "ResourceId",
-  "ContentType",
-  "FileName",
-];
+// Default for search() when `field` is omitted (ADR-0020): metadata only. `field: []` still opts
+// into the API-native primary-key-only response.
+const DEFAULT_FIELDS = META_FIELDS;
 
 /** A decoded Attachment. A field is `null` unless it was returned (see `field`). */
 export type Attachment = {
@@ -73,16 +76,23 @@ export type AttachmentPage = {
 
 export type AttachmentSearchQuery = {
   /**
-   * Output fields. **Omit** to fetch metadata by default (Id / Resource / ResourceId /
-   * ContentType / FileName) — the large Base64 `Content` is excluded so listing doesn't download
-   * every file body (ADR-0020); request `["Content", …]` or use `get()` for the body. Pass `[]`
-   * for the API-native primary-key-only response. A non-empty list is sent verbatim.
+   * Output fields — **metadata only**. Omit for all five (Id / Resource / ResourceId /
+   * ContentType / FileName), or pass `[]` for the API-native primary-key-only response.
+   *
+   * The file body is **not** on this list: a listing never carries it, whatever the count
+   * (ADR-0075). Read a body with {@link AttachmentResource.get}, one record at a time.
    */
-  field?: string[];
+  field?: AttachmentMetaField[];
   condition?: Record<string, string>;
   count?: number;
   start?: number;
 };
+
+/** A walking Read: `count` / `start` are the walk's to decide. */
+export type AttachmentWalkQuery = Omit<
+  AttachmentSearchQuery,
+  "count" | "start"
+>;
 
 /** Fields for creating an Attachment. `content` is the Base64 file body. */
 export type AttachmentCreate = {
@@ -102,6 +112,16 @@ export type AttachmentUpdate = {
 
 export type AttachmentResource = {
   search(query?: AttachmentSearchQuery): Promise<AttachmentPage>;
+  /**
+   * Auto-paginating search: yields every matching attachment (200 per page). Metadata only —
+   * the body stays behind {@link AttachmentResource.get} (ADR-0075), so walking every attachment
+   * in a partition never drags the files along with it.
+   */
+  searchAll(query?: AttachmentWalkQuery): AsyncIterable<Attachment>;
+  /**
+   * Read one attachment **with its body** (`content`). This is the only method that carries it:
+   * one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable (ADR-0075).
+   */
   get(id: number): Promise<Attachment | undefined>;
   /** Create an Attachment; resolves to the newly assigned id. */
   create(input: AttachmentCreate): Promise<number>;
@@ -117,10 +137,17 @@ export type AttachmentResource = {
 // and `resource` as **required**, and lists neither `field` nor `condition` — this builder sends
 // neither required parameter and decides Content by `field`. See docs/live-verification.md (LV-24;
 // LV-3 / LV-4 cover the same call).
+type ReadParams = {
+  field?: readonly string[];
+  condition?: Record<string, string>;
+  count?: number;
+  start?: number;
+};
+
 const buildAttachmentReadUrl = (
   accessPoint: AccessPoint,
   partition: number,
-  q: AttachmentSearchQuery,
+  q: ReadParams,
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -151,6 +178,26 @@ const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
 const tag = (name: string, value: string | number): string =>
   `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
+/**
+ * Refuse a listing that asks for the body (ADR-0075). The type already leaves `Content` out, so
+ * reaching here means a cast — and the failure it prevents is not a small one: 200 records with
+ * bodies is up to ~2.7G characters, past V8's own string limit (a `RangeError` no retry can fix).
+ * Same shape as the bulk-write Image guard (ADR-0064): name the alias, point at the way that works.
+ */
+const guardNoContentInListing = (
+  field: readonly string[] | undefined,
+  method: string,
+): void => {
+  if (field?.includes(CONTENT) !== true) return;
+  throw new PortersConfigError(
+    `${method} cannot request "${CONTENT}": a listing never carries the file body`,
+    {
+      category: "config",
+      hint: "Read the body one record at a time with get(id); search/searchAll return metadata (fileName, contentType, …).",
+    },
+  );
+};
+
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 const guardContent = (content: string | undefined): void => {
   if (content !== undefined && content.length > MAX_CONTENT_CHARS) {
@@ -164,18 +211,14 @@ const guardContent = (content: string | undefined): void => {
 export const createAttachmentResource = (
   deps: ResourceDeps,
 ): AttachmentResource => {
-  // `field` omitted -> metadata default (no Content); `[]` -> API-native primary key only;
-  // a provided list is sent verbatim (ADR-0020). `async` for the exception contract (ADR-0046).
-  const search = async (
-    query: AttachmentSearchQuery = {},
-  ): Promise<AttachmentPage> =>
+  // The one Read path. `field` is `readonly string[]` here rather than the public metadata-only
+  // type, because `get` reaches it with `Content` on the list — that is the single place the body
+  // is allowed (ADR-0075), and it does not go through the public guard.
+  const read = (params: ReadParams): Promise<AttachmentPage> =>
     deps.requester.request(
       {
         method: "GET",
-        url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, {
-          ...query,
-          field: query.field ?? DEFAULT_FIELDS,
-        }),
+        url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, params),
         headers: {},
       },
       (body) => {
@@ -189,11 +232,35 @@ export const createAttachmentResource = (
       },
     );
 
+  // `field` omitted -> metadata default; `[]` -> API-native primary key only; a provided list is
+  // sent verbatim (ADR-0020). `async` for the exception contract (ADR-0046).
+  const search = async (
+    query: AttachmentSearchQuery = {},
+  ): Promise<AttachmentPage> => {
+    guardNoContentInListing(query.field, "search");
+    return read({ ...query, field: query.field ?? DEFAULT_FIELDS });
+  };
+
+  // Offset walk over the same Read (ADR-0075). The query is read once, before the first page, so
+  // mutating the object mid-iteration cannot change a later page (RV-32).
+  const searchAll = (
+    query: AttachmentWalkQuery = {},
+  ): AsyncIterable<Attachment> =>
+    paginateOnce(() => {
+      guardNoContentInListing(query.field, "searchAll");
+      const field = query.field ?? DEFAULT_FIELDS;
+      const condition = query.condition;
+      return (count, start) => read({ field, condition, count, start });
+    });
+
+  // The only path that carries the body (ADR-0075): one record, so the response stays within a
+  // size PORTERS' own 10MB-per-file limit keeps readable.
+  //
   // VERIFY(live): Attachment has no alias prefix; the `Id:eq` condition and requesting all
   // fields (incl. Content) are taken from the field list, not a live contract.
   // See docs/live-verification.md (LV-3, LV-4).
   const get = async (id: number): Promise<Attachment | undefined> => {
-    const page = await search({
+    const page = await read({
       field: ATTACHMENT_FIELD_NAMES,
       condition: { "Id:eq": String(id) },
       count: 1,
@@ -244,5 +311,5 @@ export const createAttachmentResource = (
     return write(inner, true);
   };
 
-  return { search, get, create, update };
+  return { search, searchAll, get, create, update };
 };

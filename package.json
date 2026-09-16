@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -69,6 +69,7 @@
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",
+    "check": "pnpm run \"/^check:(?!publish$)[^:]+$/\"",
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm",
     "check:release": "node scripts/check-release-invariants.mjs",
     "check:index": "node scripts/check-doc-index.mjs",

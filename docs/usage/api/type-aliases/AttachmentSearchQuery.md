@@ -8,7 +8,7 @@
 
 > **AttachmentSearchQuery** = `object`
 
-Defined in: [src/resources/attachment.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L74)
+Defined in: [src/resources/attachment.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L77)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/attachment.ts:74](https://github.com/Joymerrevent/por
 
 > `optional` **condition?**: `Record`\<`string`, `string`\>
 
-Defined in: [src/resources/attachment.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L82)
+Defined in: [src/resources/attachment.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L86)
 
 ***
 
@@ -24,20 +24,21 @@ Defined in: [src/resources/attachment.ts:82](https://github.com/Joymerrevent/por
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/attachment.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L83)
+Defined in: [src/resources/attachment.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L87)
 
 ***
 
 ### field?
 
-> `optional` **field?**: `string`[]
+> `optional` **field?**: [`AttachmentMetaField`](AttachmentMetaField.md)[]
 
-Defined in: [src/resources/attachment.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L81)
+Defined in: [src/resources/attachment.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L85)
 
-Output fields. **Omit** to fetch metadata by default (Id / Resource / ResourceId /
-ContentType / FileName) — the large Base64 `Content` is excluded so listing doesn't download
-every file body (ADR-0020); request `["Content", …]` or use `get()` for the body. Pass `[]`
-for the API-native primary-key-only response. A non-empty list is sent verbatim.
+Output fields — **metadata only**. Omit for all five (Id / Resource / ResourceId /
+ContentType / FileName), or pass `[]` for the API-native primary-key-only response.
+
+The file body is **not** on this list: a listing never carries it, whatever the count
+(ADR-0075). Read a body with [AttachmentResource.get](AttachmentResource.md#get), one record at a time.
 
 ***
 
@@ -45,4 +46,4 @@ for the API-native primary-key-only response. A non-empty list is sent verbatim.
 
 > `optional` **start?**: `number`
 
-Defined in: [src/resources/attachment.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L84)
+Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L88)

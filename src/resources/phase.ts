@@ -24,6 +24,7 @@
 import {
   createResource,
   type CreateInput,
+  type EmptyReferences,
   type FieldCatalog,
   type ReadRecord,
   type Resource,
@@ -82,7 +83,26 @@ export const PHASE_DESCRIPTOR = {
 /** A decoded Phase entry: known aliases, each requested field `value | null`. */
 export type Phase = ReadRecord<typeof FIELDS>;
 export type PhasePage = ResourcePage<typeof FIELDS>;
-export type PhaseSearchQuery = SearchQuery<typeof FIELDS>;
+// Phase - Read does not list `keywords` / `itemstate` among its Input Variables — and that is not
+// an editorial omission: of the 17 Read articles, the 11 common data resources list both (in the
+// URL template *and* the table) and Phase / Attachment / the 4 masters list neither (ADR-0076).
+// Sending an unlisted parameter can fail the whole Read (Result Code 100 / 102), so the query type
+// leaves them out.
+//
+// VERIFY(live): whether PORTERS ignores them or rejects the call is still unknown (LV-25 in
+// docs/live-verification.md). The runtime is unchanged — a key forced in through a cast is still
+// sent — so a live contract can settle it without patching the library. If PORTERS accepts them,
+// putting them back is additive.
+type PhaseUnsupportedQuery = "keywords" | "itemstate";
+
+/**
+ * Phase's Read query: the common vocabulary **minus `keywords` / `itemstate`**, which
+ * `Phase - Read` does not list (ADR-0076).
+ */
+export type PhaseSearchQuery = Omit<
+  SearchQuery<typeof FIELDS>,
+  PhaseUnsupportedQuery
+> & { [K in PhaseUnsupportedQuery]?: never };
 
 /** Fields for `create`: `ResourceId` required (`Id` and `Resource` are supplied for you). */
 export type PhaseCreateInput = CreateInput<
@@ -92,10 +112,15 @@ export type PhaseCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type PhaseUpdateInput = UpdateInput<typeof FIELDS>;
 
-/** The Phase accessor for one bound resource — same shape as every other resource. */
+/**
+ * The Phase accessor for one bound resource — the same shape as every other resource, except that
+ * `search` / `searchAll` do not take `keywords` / `itemstate` (ADR-0076).
+ */
 export type PhaseResource = Resource<
   typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof REQUIRED_ON_CREATE)[number],
+  EmptyReferences,
+  PhaseUnsupportedQuery
 >;
 
 /**

@@ -171,4 +171,31 @@ describe("createPhaseAccessor — write", () => {
         "</Item></Phase>",
     );
   });
+
+  // ADR-0076: 型からは外したが、**実行時は素通りのまま**にしてある。契約を持つ人が cast で
+  // 実機を試せること（＝ LV-25 を確定させる手段）が残っているかを、ここで固定する。
+  // 型を締めたついでに実行時まで塞ぐと、この経路が黙って消える。
+  it("keywords / itemstate は cast すれば送れる（実行時は素通り・LV-25）", async () => {
+    const calls: Call[] = [];
+    await phases(calls, READ_OK).search({
+      field: ["Id"],
+      keywords: ["山田"],
+      itemstate: "all",
+    } as unknown as Parameters<ReturnType<typeof phases>["search"]>[0]);
+
+    const url = new URL(calls[0]?.req.url ?? "");
+    expect(url.searchParams.get("keywords")).toBe("山田");
+    expect(url.searchParams.get("itemstate")).toBe("all");
+  });
+
+  it("既定の search はそのどちらも載せない", async () => {
+    const calls: Call[] = [];
+    await phases(calls, READ_OK).search({ field: ["Id"] });
+
+    const url = new URL(calls[0]?.req.url ?? "");
+    expect(url.searchParams.has("keywords")).toBe(false);
+    expect(url.searchParams.has("itemstate")).toBe(false);
+    // 出典が挙げる `resource` は変わらず載る（ADR-0061）。
+    expect(url.searchParams.get("resource")).toBe("5");
+  });
 });

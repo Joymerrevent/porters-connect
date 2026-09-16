@@ -150,7 +150,7 @@ bash .claude/skills/change-review/scripts/per-commit-gates.sh
   bash .claude/skills/project-review/scripts/gates.sh
   ```
 
-  個別には `pnpm typecheck` / `lint` / `format:check` / `test:coverage` / `build`、加えて `check:shell`・`check:index`・`check:release`・`check:publish`。
+  個別に回すなら `pnpm typecheck` / `lint` / `format:check` / `test:coverage` / `build` と、**`pnpm check`**（ドキュメント・リリース・シェルの検査を一括。`package.json` の `check:*` をパターンで束ねたもの）。`check:publish` は dist を見るので build の後。**個別の `check:*` を並べた一覧は持たない** — 検査が増えると一覧だけ古くなる（RV-42）。
 - **`pnpm check:shell`** は `.sh` と `.github/workflows/*.yml` を検査する（`.claude/` 配下の `.sh` も対象）。シェルを触る変更では必ず回す — 理由は [targets/shell-ci.md][shell]。
 - **pre-commit（lint-staged）は絶対パスを渡す**ので、markdownlint の `ignores`（`.claude` を含む）を迂回する。md を触る変更の検証は、この起動の形で再現する（`lint-staged.config.mjs` を読むこと）。
 - **md のリンクは参照スタイル**（`MD054`）。commitlint は件名の先頭大文字を弾く。

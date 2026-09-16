@@ -55,21 +55,21 @@
 `porters.tenant(id)` で束ねたスコープ（`t`）の下にあります。**メソッドは行ごとに違う**ので、
 呼べるものはこの表で確かめてください。
 
-| アクセサ        | リソース       | メソッド                                             | 備考                                                                 |
-| --------------- | -------------- | ---------------------------------------------------- | -------------------------------------------------------------------- |
-| `t.candidate`   | 個人連絡先     | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.job`         | JOB            | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.client`      | 企業           | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.recruiter`   | 企業担当者     | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.contact`     | コンタクト     | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.opportunity` | 商談管理       | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.activity`    | アクティビティ | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.contract`    | 契約           | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.sales`       | 成約・売上     | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.process`     | 選考プロセス   | `search` / `searchAll` / `get` / `create` / `update` | Job × Resume で一意（重複は Result Code `301`）                      |
-| `t.resume`      | レジュメ       | `search` / `searchAll` / `get` / `create` / `update` |                                                                      |
-| `t.attachment`  | 添付ファイル   | `search` / `get` / `create` / `update`               | **`searchAll` なし**。`condition` は `{ "Id:eq": "123" }` のゆるい形 |
-| `t.phase`       | フェーズ履歴   | `search` / `searchAll` / `get` / `create` / `update` | **`t.phase.of("candidate")` のように上位リソースを先に束ねる**       |
+| アクセサ        | リソース       | メソッド                                             | 備考                                                                            |
+| --------------- | -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `t.candidate`   | 個人連絡先     | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.job`         | JOB            | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.client`      | 企業           | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.recruiter`   | 企業担当者     | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.contact`     | コンタクト     | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.opportunity` | 商談管理       | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.activity`    | アクティビティ | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.contract`    | 契約           | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.sales`       | 成約・売上     | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.process`     | 選考プロセス   | `search` / `searchAll` / `get` / `create` / `update` | Job × Resume で一意（重複は Result Code `301`）                                 |
+| `t.resume`      | レジュメ       | `search` / `searchAll` / `get` / `create` / `update` |                                                                                 |
+| `t.attachment`  | 添付ファイル   | `search` / `searchAll` / `get` / `create` / `update` | **本体は `get` でしか取れない**。`condition` は `{ "Id:eq": "123" }` のゆるい形 |
+| `t.phase`       | フェーズ履歴   | `search` / `searchAll` / `get` / `create` / `update` | **`t.phase.of("candidate")` のように上位リソースを先に束ねる**                  |
 
 データ系 13 種はすべて **`create` と `update` を持ち、`delete` は持ちません**（[削除 API が無いということ][no-delete]）。
 200 件を超えてまとめて書く **`createMany` / `updateMany`** も持ちます（**`t.attachment` だけ例外で、
