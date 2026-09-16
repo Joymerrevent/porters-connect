@@ -14,11 +14,12 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.16.0**（2026-09-15）＝ カスタム項目を「宣言してから使う」に揃えた版で、
-**破壊的変更**（`field` が未宣言の `U_` / `A_` を受け付けない・[ADR-0074][adr74]）を含み、
-逃げ道に `rawValue` を公開した。
-品質ゲートは全 green（**1143 tests**・coverage は perFile 100%・mutation 95.99。
-`src/fields/**` も計測対象に戻した＝[RV-44][rv44] fixed）。
+**最新は 0.17.0**（2026-09-16）＝ 添付ファイルの運び方を決め、出典に無いパラメータを型から外した版。
+**破壊的変更を 2 つ**含む（添付の本体は `get` でだけ運ぶ・[ADR-0075][adr75] ／ Phase の Read から
+`keywords` / `itemstate` を外す・[ADR-0076][adr76]）。あわせて `t.attachment.searchAll()` と
+`createFetchTransport`（タイムアウト・[ADR-0077][adr77]）を公開した。
+**どちらの破壊的変更も V1 のマトリクスから出てきた**（表 D の「理由の無い空白」と、表 B のずれ）。
+品質ゲートは全 green（**1159 tests**・coverage は perFile 100%・mutation 96.17）。
 
 **次の向き先は「第1層ライブラリの完成」**（2026-09-09・stakeholder）。第2層 MCP サーバーは
 **保留・凍結**した（下記「凍結」節）。
@@ -399,8 +400,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.16.0`**（npm latest・2026-09-15 にレジストリで確認・**7 files / 686.3 kB**）。**全 22 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.17.0`**（npm latest・2026-09-16 にレジストリで確認・**7 files / 705.2 kB**）。**全 23 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -415,7 +416,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.14.0 で `Link` / `Image` に対応＝ Data Type 17/17（D3）、
       **0.15.0 で宣言と実物のズレを surface（RV-36・破壊的）＋ スロットルをホスト共有に（[ADR-0073][adr73]・RV-43）**、
       0.15.1 で開発用依存の脆弱性 5 件と Actions の権限を整理（`dist` は 0.15.0 と同一）、
-      **0.16.0 でカスタム項目を宣言必須に揃え（[ADR-0074][adr74]・破壊的）＋ 逃げ道の `rawValue` を公開**）。
+      **0.16.0 でカスタム項目を宣言必須に揃え（[ADR-0074][adr74]・破壊的）＋ 逃げ道の `rawValue` を公開**、
+      **0.17.0 で添付の本体を `get` に寄せ（[ADR-0075][adr75]・破壊的）＋ Phase の Read から出典に無い 2 つを外し
+      （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -586,7 +589,6 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [run816]: reviews/2026-08-16-01.md
 [adr]: adr/README.md
 [findings]: reviews/findings.md
-[rv44]: reviews/rv/0044-fields-excluded-from-coverage.md
 [rv36]: reviews/rv/0036-write-value-validation-partial.md
 [rv37]: reviews/rv/0037-field-read-missing-process.md
 [adr-readme]: adr/README.md
