@@ -8,7 +8,9 @@ import type {
   CandidateUpdateInput,
 } from "./candidate";
 import type { JobResource, JobSearchQuery } from "./job";
+import type { PhaseResource } from "./phase";
 import type { ProcessCreateInput } from "./process";
+import type { ItemState } from "./query";
 
 // The Read shapes a Job accessor resolves to, at three levels of expansion. `declare` keeps these
 // purely type-level: nothing is constructed or called at runtime. The `_` prefix says so — they
@@ -259,6 +261,41 @@ describe("image — Image 項目のサブタグを選ぶ（ADR-0064）", () => {
   it("Link は 3 形の union で読める＝テナント設定と食い違いようがない", () => {
     expectTypeOf<Plain["items"][number]["U_link"]>().toEqualTypeOf<
       number | UserRef | DepartmentRef | null | undefined
+    >();
+  });
+});
+
+// Phase は汎用 factory に載っているが、PORTERS の Phase - Read は共通語彙の全部を取るわけでは
+// ない（ADR-0076）。型の側で何が閉じているかを固定する — ここが緩むと「出典に無いパラメータを
+// 送れる型」に戻る。
+declare const _phase: PhaseResource;
+type PhaseQuery = NonNullable<Parameters<typeof _phase.search>[0]>;
+type PhaseWalkQuery = NonNullable<Parameters<typeof _phase.searchAll>[0]>;
+
+describe("Phase の Read クエリ（ADR-0076）", () => {
+  it("keywords / itemstate は受け付けない（undefined しか入らない）", () => {
+    expectTypeOf<PhaseQuery["keywords"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<PhaseQuery["itemstate"]>().toEqualTypeOf<undefined>();
+    // searchAll も同じ。走査の入口だけ緩い、という非対称を作らない。
+    expectTypeOf<PhaseWalkQuery["keywords"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<PhaseWalkQuery["itemstate"]>().toEqualTypeOf<undefined>();
+  });
+
+  it("出典が挙げる残りはそのまま使える", () => {
+    expectTypeOf<PhaseQuery>().toHaveProperty("field");
+    expectTypeOf<PhaseQuery>().toHaveProperty("condition");
+    expectTypeOf<PhaseQuery>().toHaveProperty("order");
+    expectTypeOf<PhaseQuery>().toHaveProperty("count");
+    expectTypeOf<PhaseQuery>().toHaveProperty("start");
+  });
+
+  it("共通語彙の 11 リソースは今までどおり keywords / itemstate を取る", () => {
+    // 締めたのは Phase だけ、という境界をここで押さえる（全部に広がったら落ちる）。
+    expectTypeOf<JobSearchQuery["keywords"]>().toEqualTypeOf<
+      string[] | undefined
+    >();
+    expectTypeOf<JobSearchQuery["itemstate"]>().toEqualTypeOf<
+      ItemState | undefined
     >();
   });
 });

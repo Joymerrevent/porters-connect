@@ -384,20 +384,22 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 
 ## LV-25 Phase Read に `keywords` / `itemstate` を送れるか
 
-- **現在の対応 / 仮定**: Phase は汎用 factory に載っている（[ADR-0061][a61]）ので `SearchQuery` を
-  そのまま受け、`keywords` / `itemstate` が渡されればそのまま URL に載せる
+- **現在の対応 / 仮定**: **送らない**。Phase の公開型からこの 2 つを外した（[ADR-0076][a76]）。
+  汎用 factory に「このエンドポイントは取らないキー」を表す型引数を足し、Phase に適用してある。
+  **実行時は素通りのまま**なので、cast すれば送れる（`src/resources/phase.test.ts` に固定）
 - **不確実な理由**: Phase - Read の Input Variables は `partition` / `resource` / `resourceId` /
   `id` / `field` / `condition` / `order` / `count` / `start` を挙げ、**`keywords` と `itemstate` を
   挙げていない**（[reference の Read パラメータ節][ref-phase]）。出典どおりなら、渡した呼び出しは
-  無視されるか Result Code で弾かれる。弾かれる場合は検索そのものが失敗する
-- **コード箇所**: `src/resources/phase.ts`（`PhaseSearchQuery`）
-- **確認方法**: 実 Read に `keywords=` / `itemstate=` を付けて投げ、結果が変わるか・
-  Result Code（100 / 133 など）が返るかを見る
+  無視されるか Result Code で弾かれる。**どちらなのかは実機でしか分からない**
+- **コード箇所**: `src/resources/phase.ts`（`PhaseSearchQuery` / `PhaseResource`）
+- **確認方法**: cast して `keywords=` / `itemstate=` を付けた Read を投げ、結果が変わるか・
+  Result Code（100 / 102 / 133 など）が返るかを見る
 - **状態**: 未確認
 - **確認結果**: —
-- **関連**: 弾かれると分かれば `PhaseSearchQuery` からこの 2 つを外す改定になるので **ADR が要る**。
-  [LV-15][lv15] は `itemstate=existing` を明示送信できるかという別の問い。
-  マトリクスの該当セルは [エンドポイント × 機能][coverage] の表 B
+- **関連**: **受け付けられると分かったら型に戻す**（追加なので非破壊）。弾かれると分かったら
+  現状のままでよい。[LV-15][lv15] は `itemstate=existing` を明示送信できるかという別の問い
+  （共通語彙の 11 リソースについて）。マトリクスの該当セルは
+  [エンドポイント × 機能][coverage] の表 B
 
 ## 運用
 
@@ -423,6 +425,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a57]: adr/0057-itemstate-existing-explicit.md
 [a58]: adr/0058-reference-expansion-read.md
 [a61]: adr/0061-phase-resource-surface.md
+[a76]: adr/0076-phase-read-query-surface.md
 [a20]: adr/0020-read-field-default.md
 [a60]: adr/0060-full-resource-coverage-direction.md
 [lv17]: #lv-17-phase-の-user-項目を--付きで要求できるか
