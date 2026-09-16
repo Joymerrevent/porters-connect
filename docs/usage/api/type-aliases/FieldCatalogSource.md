@@ -21,16 +21,30 @@ The slice of a `tenant(id)` scope this tooling needs. Structural on purpose: pas
 
 Defined in: [src/fields/tenant-catalog.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L24)
 
-#### searchAll()
+#### of()
 
-> **searchAll**(`query`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>
+> **of**(`resource`): `object`
 
 ##### Parameters
 
-###### query
+###### resource
+
+[`CustomFieldResource`](CustomFieldResource.md)
+
+##### Returns
+
+`object`
+
+###### searchAll()
+
+> **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>
+
+###### Parameters
+
+###### query?
 
 `Omit`\<[`FieldSearchQuery`](FieldSearchQuery.md), `"count"` \| `"start"`\>
 
-##### Returns
+###### Returns
 
 `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>

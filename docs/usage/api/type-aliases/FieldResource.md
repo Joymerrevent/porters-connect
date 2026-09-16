@@ -8,19 +8,21 @@
 
 > **FieldResource** = `object`
 
-Defined in: [src/resources/field.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L71)
+Defined in: [src/resources/field.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L75)
+
+The Field accessor for one bound resource.
 
 ## Methods
 
 ### search()
 
-> **search**(`query`): `Promise`\<[`FieldPage`](FieldPage.md)\>
+> **search**(`query?`): `Promise`\<[`FieldPage`](FieldPage.md)\>
 
-Defined in: [src/resources/field.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L72)
+Defined in: [src/resources/field.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L76)
 
 #### Parameters
 
-##### query
+##### query?
 
 [`FieldSearchQuery`](FieldSearchQuery.md)
 
@@ -32,15 +34,15 @@ Defined in: [src/resources/field.ts:72](https://github.com/Joymerrevent/porters-
 
 ### searchAll()
 
-> **searchAll**(`query`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>
+> **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>
 
-Defined in: [src/resources/field.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L74)
+Defined in: [src/resources/field.ts:78](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L78)
 
 Auto-paginating search: yields every field of the resource.
 
 #### Parameters
 
-##### query
+##### query?
 
 `Omit`\<[`FieldSearchQuery`](FieldSearchQuery.md), `"count"` \| `"start"`\>
 

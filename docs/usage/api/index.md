@@ -69,6 +69,7 @@
 - [ExpandedReadRecord](type-aliases/ExpandedReadRecord.md)
 - [FetchTransportOptions](type-aliases/FetchTransportOptions.md)
 - [Field](type-aliases/Field.md)
+- [FieldAccessor](type-aliases/FieldAccessor.md)
 - [FieldBuilder](type-aliases/FieldBuilder.md)
 - [FieldCatalogSource](type-aliases/FieldCatalogSource.md)
 - [FieldDecls](type-aliases/FieldDecls.md)

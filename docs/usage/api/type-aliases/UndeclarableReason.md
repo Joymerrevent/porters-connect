@@ -8,6 +8,6 @@
 
 > **UndeclarableReason** = `"unknown-field-type"` \| `"no-data-type"` \| `"not-declarable"`
 
-Defined in: [src/fields/tenant-catalog.ts:32](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L32)
+Defined in: [src/fields/tenant-catalog.ts:34](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L34)
 
 Why a tenant custom field cannot be expressed as a declaration (ADR-0069 論点4).
