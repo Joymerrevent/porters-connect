@@ -21,6 +21,9 @@ PORTERS への問い合わせを増やさず**自己解決**できるよう、�
 > **2 系統は番号が重複し意味が違います**（例: `401` は認証では Refresh Token 失効、リソースでは
 > Access Token 期限切れ）。`instanceof` で系統を大別してから `code` を見てください。
 
+**タイムアウトは `PortersNetworkError` で届きます。** 既定は **1 リクエスト 30 秒**で、本文の
+ダウンロードが終わるまでを数えます（大きな添付で効いてきます — [上限][limits]）。
+
 ## 例外の届き方（[ADR-0046][adr-0046]）
 
 **`Promise` を返す公開メソッドは、いかなる理由でも同期 throw しません。**
@@ -365,6 +368,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 [rv36]: ../../reviews/rv/0036-write-value-validation-partial.md
 [custom-fields]: custom-fields.md
 [adr-0044]: ../../adr/0044-http-status-handling.md
+[limits]: ../concepts/limits.md
 [adr-0046]: ../../adr/0046-guard-error-contract.md
 [adr-0047]: ../../adr/0047-access-point-scheme.md
 [adr-0048]: ../../adr/0048-access-point-host-validation.md
