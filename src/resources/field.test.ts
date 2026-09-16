@@ -3,7 +3,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import {
-  createFieldResource,
+  createFieldAccessor,
   type FieldSearchQuery,
   type ResourceType,
 } from "./field";
@@ -36,7 +36,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 });
 
 const res = (calls: Call[], ...bodies: string[]) =>
-  createFieldResource({
+  createFieldAccessor({
     requester: stub(bodies.length > 0 ? bodies : [TWO], calls),
     accessPoint: { hostname: "h.test" },
     partition: 12,
@@ -48,10 +48,10 @@ const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
   return out;
 };
 
-describe("createFieldResource", () => {
+describe("createFieldAccessor", () => {
   it("maps the resource selector to its Value code and defaults active=-1", async () => {
     const calls: Call[] = [];
-    const fields = (await res(calls).search({ resource: "job" })).items;
+    const fields = (await res(calls).of("job").search()).items;
     const url = calls[0].req.url;
     expect(url).toContain("https://h.test/v1/field?");
     expect(url).toContain("partition=12");
@@ -67,8 +67,7 @@ describe("createFieldResource", () => {
 
   it("passes a different resource code, active, count and start through", async () => {
     const calls: Call[] = [];
-    await res(calls).search({
-      resource: "candidate",
+    await res(calls).of("candidate").search({
       active: 1,
       count: 2,
       start: 5,
@@ -82,12 +81,12 @@ describe("createFieldResource", () => {
 
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
-    const r = createFieldResource({
+    const r = createFieldAccessor({
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const items = await collect(r.searchAll({ resource: "job" }));
+    const items = await collect(r.of("job").searchAll());
     expect(items.map((f) => f.P_Id)).toEqual([1, 2, 3]);
     expect(calls[0].req.url).toContain("count=200");
     expect(calls[1].req.url).toContain("start=2");
@@ -95,18 +94,14 @@ describe("createFieldResource", () => {
 
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
-    const r = createFieldResource({
+    const r = createFieldAccessor({
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const query: Omit<FieldSearchQuery, "count" | "start"> = {
-      resource: "job",
-      active: 1,
-    };
-    for await (const item of r.searchAll(query)) {
+    const query: Omit<FieldSearchQuery, "count" | "start"> = { active: 1 };
+    for await (const item of r.of("job").searchAll(query)) {
       expect(item.P_Id).toBeGreaterThan(0);
-      query.resource = "candidate";
       query.active = 0;
     }
     expect(calls).toHaveLength(2);
