@@ -1,4 +1,4 @@
-# 79. リソースの指定を名前に揃える（`Activity.P_Resource` / `Attachment.resource`）
+# 79. リソースの指定は数値のまま、名前との変換を公開する
 
 - Status: accepted
 - Date: 2026-09-16
@@ -6,8 +6,9 @@
 
 > [ADR-0061][adr61] が `t.phase.of("client")` を名前にしたときに残した論点。
 >
-> **decider が案1b ＋ 案2b ＋ 案3a を選択し `accepted`（2026-09-16）。** 変換関数は**両方向とも公開**する。
-> 実装は accept 後・別 PR（0.18.0）。
+> **decider が案1c ＋ 変換関数の公開を選択し `accepted`（2026-09-16）。** 実装は accept 後・別 PR。
+>
+> 起案時の推奨は「名前に揃える」だったが、**議論の中で退けた**。理由は Decision Outcome に書いた。
 
 ## Context and Problem Statement
 
@@ -22,186 +23,149 @@ PORTERS は「どのリソースか」を**非連続な数値**で表す（Resou
 
 **同じ概念を、ライブラリは 4 箇所で受けている。そのうち 2 つは名前、2 つは数値**（実測 2026-09-16）。
 
-| 受け口                              | いまの型                        | 由来                   |
-| ----------------------------------- | ------------------------------- | ---------------------- |
-| `t.field.search({ resource })`      | **名前**（`ResourceName`）      | [ADR-0022][adr22]      |
-| `t.phase.of(resource)`              | **名前**（`ResourceName`）      | [ADR-0061][adr61] 案5b |
-| `t.activity.create({ P_Resource })` | **数値**（カタログの `Number`） | 汎用 factory の既定    |
-| `t.attachment.create({ resource })` | **数値**（bespoke の `number`） | [ADR-0018][adr18]      |
+| 受け口                              | いまの型                        | 何か                           |
+| ----------------------------------- | ------------------------------- | ------------------------------ |
+| `t.field.search({ resource })`      | **名前**（`ResourceName`）      | **パラメータ**（`?resource=`） |
+| `t.phase.of(resource)`              | **名前**（`ResourceName`）      | **パラメータ**（`?resource=`） |
+| `t.activity.create({ P_Resource })` | **数値**（カタログの `Number`） | **項目の値**                   |
+| `t.attachment.create({ resource })` | **数値**（bespoke の `number`） | **項目の値**                   |
 
 **数値のままだと、間違いがコンパイルを通る。** `6` のような欠番も、`9`（Recruiter）と `11`（Sales）の
-取り違えも、`number` 型には区別が付かない。ADR-0061 が名前を選んだ理由もそこだった。
+取り違えも、`number` 型には区別が付かない。**Attachment ではその間違いが取り返しの付かない形で残る** —
+付け先は `update` で変えられず、削除 API も無い（[添付ファイル][attachments]）。
 
-**Attachment では、その間違いが取り返しの付かない形で残る。** 付け先（`resource` / `resourceId`）は
-`update` で変えられず、**削除 API も無い**。利用者向けドキュメントにもそう書いてある。
-
-> **`resource` は数値**です。型は `number` なので、間違った番号もコンパイルは通ります…
-> しかも**付け先は `update` で変えられません**。間違えたら正しい先に作り直すことになり、
-> **間違えたほうは消せません**（[添付ファイル][attachments]）。
-
-**機構は揃っている。** 名前 → 数値の対応表（`RESOURCE_VALUES`）は既にあり、`field` と `phase` が
-使っている。足りないのは**カタログ項目（`Activity.P_Resource`）の書き込み値の型を、項目単位で
-差し替える仕掛け**だけ — [ADR-0061][adr61] が「機構が別」と書いて先送りしたところ。
-
-問い: **どこまで名前で受けるか。読み側はどうするか。**
+問い: **項目の値も名前で受けるか。受けないなら、間違いをどう減らすか。**
 
 ## Decision Drivers
 
-- **綴りを機械が検査する**（[ADR-0059][adr59] が `field` で、[ADR-0061][adr61] が `of()` で立てた基準）。
-- **取り返しの付かない間違いを型で止める**（Attachment は作り直しても消せない）。
-- **語彙が 1 つであること**: 同じ「どのリソースか」を、ある場所では名前・ある場所では数値で書かせない。
-- **逃げ道**: PORTERS が将来リソースを増やしたとき、型が古くても呼べること。
-- **移行コスト**: 公開型が変わる（破壊的）。
+- **宣言が嘘をつかないこと**: このライブラリは「宣言してから使う・**宣言した Data Type どおりの値**に
+  なる」で通してきた（[ADR-0004][adr4] / [ADR-0023][adr23] / [ADR-0074][adr74]）。
+- **PORTERS に無い型を発明しないこと**（[ADR-0016][adr16] / [ADR-0060][adr60] D3 の型集合突合）。
+- **綴りを機械が検査する**（[ADR-0059][adr59] / [ADR-0061][adr61] が立てた基準）。
+- **取り返しの付かない間違いを減らす**（Attachment は作り直しても消せない）。
+- **PORTERS の更新で利用者を止めないこと**: 値の集合は PORTERS が持っていて、増える。
 
 ## Considered Options
 
-**軸1: どこまで名前にするか**
-
-- 案1a: `Activity.P_Resource` だけ（ロードマップの元の論点）
-- 案1b: **`Activity.P_Resource` ＋ `Attachment.resource`**（数値で受けている残り全部）
-- 案1c: 何もしない（数値のまま・ドキュメントで注意する）
-
-**軸2: 読み側をどうするか**
-
-- 案2a: **読みは数値のまま**（書きだけ名前）
-- 案2b: 読みも名前に畳む。表に無い値は数値のまま返す（`ResourceName | number`）
-- 案2c: 読みも名前だけにし、表に無い値はエラー
-
-**軸3: 逃げ道**
-
-- 案3a: **型は名前だけ・`as` で数値も通る**（実行時は素通り — [ADR-0074][adr74] と同じ線）
-- 案3b: 型で `ResourceName | number` の両方を許す
-
-**軸4: `condition` をどうするか**（accept 時に追加）
-
-- 案4a: `condition` も名前で受ける（型付きクエリ側にも項目単位の override を通す）
-- 案4b: **`condition` は数値のまま**。公開する変換関数で書く
+- 案1a: `Activity.P_Resource` だけ名前で受ける
+- 案1b: `Activity.P_Resource` ＋ `Attachment.resource` を名前で受ける
+- 案1c: **項目の値は数値のまま。名前 ⇄ 数値の変換関数を公開する**
+- 案1d: 案1c ＋ **Resource List に無い値を送信前に弾く**
 
 ## Decision Outcome
 
-採用: **案1b ＋ 案2b ＋ 案3a ＋ 案4b**。`Activity.P_Resource` と `Attachment.resource` を
-**読みも書きも名前**にし、表に無い値は数値のまま返す。逃げ道は `as`。`condition` は数値のままで、
-**変換関数を両方向とも公開する**（`resourceValueOf(name)` / `resourceNameOf(value)`）。
+採用: **案1c**。`Activity.P_Resource` と `Attachment.resource` は**数値のまま**にし、
+**`resourceValueOf(name)` / `resourceNameOf(value)` を両方向とも公開する**。
+`t.field.search({ resource })` と `t.phase.of()` は**名前のまま**変えない。
 
-理由: 数値を人が書く／読む場所が無くなる（軸1・軸2）。**読みも名前にすると、この項目の意味が
-ライブラリの中で 1 つに揃う** — 書きだけ名前にすると、同じ項目が**書くときは名前・読むときは
-数値**になり、ライブラリ自身が読み書きの非対称を新しく作ることになる。表に無い値を数値のまま
-通すので、PORTERS がリソースを増やしても壊れない。
+境界は 1 文で言える。
 
-`condition` を数値のままにするのは、**クエリの型が Data Type から導出される**仕組みだからで、
-そこへ項目単位の例外を持ち込むと機構が 2 つに増える。`resourceValueOf("candidate")` と書けば
-読めるので、関数 1 つで足りる。
+> **パラメータは名前で受ける。項目の値は、宣言した Data Type どおり（数値）。**
 
-```ts
-await t.activity.create({ P_Resource: "candidate", P_ResourceId: 10001, … });
-const a = (await t.activity.get(1))!;
-a.P_Resource; // "candidate" | … | number（表に無い値はそのまま）
+`field.search` / `phase.of` が受けるのは URL に載る**パラメータ**（`?resource=1`）で、Data Type を
+持たない ＝ 突き合わせる宣言が無いので、名前にしても矛盾しない。`Activity.P_Resource` と
+`Attachment.resource` は**項目の値**で、前者はカタログが `Number` と宣言している。
 
-await t.activity.search({
-  condition: { P_Resource: { eq: resourceValueOf("candidate") } },
-});
-```
+### なぜ「名前に揃える」を退けたか
 
-### 実装の制約（accept 時に確認）
+起案時は名前を推し、decider も一度は選んだ。次の 3 点で覆した。
 
-**独自の Data Type は足せない。** `DataType` の集合は「PORTERS の Data Type と一致する」ことを
-検査で固定してある（[ADR-0060][adr60] D3 の型集合突合）ので、`"Resource"` のような
-ライブラリ発の型を union に足すとその検査が落ちる。したがってこの振る舞いは
-**項目単位の override**（descriptor が「この項目はリソース参照」と宣言し、decode と encode の
-双方が同じ表を使う）として実装する — [ADR-0061][adr61] が「機構が別」と書いた形。
+1. **宣言が嘘をつく。** カタログは `P_Resource: "Number"` と書いてある。そこへ名前を受ける特例を
+   足すと、**宣言と実際の値の形が食い違う**。このライブラリの土台（宣言してから使う）と衝突する。
+2. **カスタム項目と割れる。** テナントが自前で登録先を持つとき、宣言できるのは `Number` だけ
+   （`defineFields({ activity: { U_target: "Number" } })`）。標準項目だけ名前にすると、
+   **同じ「`Number` と宣言した項目」で挙動が割れる**。利用者はその非対称を選べない。
+3. **一律の変換ではなく、項目単位の特例になる。** 日時（`DateTime` → ISO 8601）や Option
+   （入れ子 → alias の配列）は **Data Type 単位の規則**で例外が無い。今回は「`Number` は数値。
+   ただしこの 2 項目だけ名前」＝**規則ではなく特例**で、性質が違う。
+   きちんと表すなら `"Resource"` のような Data Type が要るが、それは PORTERS に無く、
+   D3 の型集合突合とも噛み合わない（`null` は「PORTERS が型を与えていない」**事実の記録**であって、
+   ライブラリ発の型ではない）。
+
+### なぜ「無い値を弾く」を採らなかったか（案1d）
+
+**値の集合は PORTERS が持っていて、増える**（Contact `27` は後から増えた）。ライブラリが持つのは
+その**スナップショット**なので、allowlist で弾くと「PORTERS が追加 → **ライブラリが追随するまで
+利用者が使えない**」になる。塞いでいる側が悪い止め方で、未知の Result Code を捨てない
+（[ADR-0044][adr44]）・未宣言の項目も実行時は素通り（[ADR-0074][adr74]）と同じ線に反する。
+
+加えて、案1c の眼目は「この項目をただの `Number` に戻す」ことなので、**この項目だけ値の範囲を見る
+ガード**を足すと、取り除いたはずの特例を別の形で持ち込むことになる（他の `Number` 項目は誰も
+検証していない）。
 
 ### Consequences
 
-- Good: 欠番（`6`）も取り違え（Recruiter 9 / Sales 11）もコンパイルで止まる。
-- Good: Attachment の**取り返しの付かない間違い**が、型で止まるようになる。
-- Good: `field` / `phase` / `activity` / `attachment` の語彙が 1 つになる。
-- Bad: **破壊的変更**。`P_Resource: 1` / `resource: 1` と書いているコードは名前に直す。
-- Bad: 汎用 factory に**項目単位で書き込み値の型を差し替える仕掛け**が増える
-  （`Activity.P_Resource` はカタログ項目なので、Phase の `of()` のようには解けない）。
-- Bad: 読みの型が `ResourceName | number` の union になる。**表に無い値が来たときだけ**分岐が要る。
-- Neutral: `condition` は数値のまま ＝ 同じ項目でも**書き込みは名前・検索は数値**になる。
-  `resourceValueOf()` で書けるが、[alias と Data Type][aliases] に 1 行足して説明する。
+- Good: 宣言（`Number`）と値の形が一致する。**カスタム項目と標準項目が同じ規則**で動く。
+- Good: PORTERS に無い型を足さない。D3 の型集合突合もそのまま。
+- Good: PORTERS がリソースを増やしても、利用者は**その日から**新しい番号を渡せる。
+- Good: 名前で書きたい場面は関数で書ける。`condition` でもそのまま使える
+  （`{ P_Resource: { eq: resourceValueOf("candidate") } }`）。
+- Bad: **型では間違いを止められない**。`P_Resource: 6` も `resource: 9`（Recruiter のつもりで
+  Sales）もコンパイルを通る。Attachment では取り返しが付かないままになる。
+- Neutral: 「どのリソースか」を書く場所が、パラメータ（名前）と項目の値（数値）で分かれる。
+  上の 1 文の規則をドキュメントに書いて説明する。
+
+**Bad をどう埋めるか**: 型でもガードでもなく**書き方**で埋める。利用者向けドキュメントの例を
+すべて `resourceValueOf("candidate")` にし、素の数値リテラルを例示しない。添付ファイルのページには
+「間違えると消せない」という既存の警告を残す。
 
 ## 信じている入力
 
-| 値                       | 出どころ                 | 誰が書けるか | 守り方                                                                                   | 取れなかったら       | 誤っていたら                               |
-| ------------------------ | ------------------------ | ------------ | ---------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------ |
-| 名前 → 数値の対応表      | PORTERS の Resource List | PORTERS 社   | 仕組み（`RESOURCE_VALUES` は descriptor の `path` をキーに書いてある＝リネームで壊れる） | —                    | 表が増えたら型も増える（追加なので非破壊） |
-| 呼び出し側が書く名前     | 人                       | —            | 仕組み（型）。`as` で数値も通る                                                          | 省略＝項目を送らない | 綴り違いはコンパイルで止まる               |
-| 応答の `P_Resource` の値 | PORTERS の応答           | —            | 仕組みは無い（数値のまま返す）                                                           | 欠けていれば `null`  | 表に無い値でも壊れない（案2a の利点）      |
+| 値                       | 出どころ                 | 誰が書けるか | 守り方                                                                             | 取れなかったら       | 誤っていたら                  |
+| ------------------------ | ------------------------ | ------------ | ---------------------------------------------------------------------------------- | -------------------- | ----------------------------- |
+| 名前 → 数値の対応表      | PORTERS の Resource List | PORTERS 社   | 仕組み（`RESOURCE_VALUES` は descriptor の `path` をキーに書く＝リネームで壊れる） | —                    | 表が増えたら足す（非破壊）    |
+| 呼び出し側が書く数値     | 人                       | —            | **仕組みは無い**（散文＝ドキュメントの書き方で誘導する）                           | 省略＝項目を送らない | PORTERS が Result Code で返す |
+| 応答の `P_Resource` の値 | PORTERS の応答           | —            | 仕組みは無い（数値のまま返す）                                                     | 欠けていれば `null`  | 表に無い値でも壊れない        |
 
-**PORTERS がリソースを増やす**のはありうる（Contact 27 は後から増えた）。そのとき型が古くても、
-案3a なら `as` で呼べる — **止まるのは型だけで、実行時は塞がない**。
+**「守り方が散文だけ」の行が 1 つ残る**のは、この決定が引き受けたものである。機械で守るには
+allowlist か独自 Data Type が要り、どちらも上記の理由で採らなかった。
 
 ## Pros and Cons of the Options
 
-### 案1b（Activity ＋ Attachment）
+### 案1c（数値のまま ＋ 変換関数）
 
-- Good: 数値で書く場所が無くなる。取り返しの付かない間違いを最も減らす。
-- Bad: 破壊的変更が 2 箇所に及ぶ（ただし利用者の直し方は同じ）。
+- Good: 宣言と一致。カスタム項目と同じ規則。新しい型が要らない。PORTERS の更新で止まらない。
+- Good: 実装が小さい（関数 2 つの公開と、公開 API への追加）。
+- Bad: 型では間違いを止められない。関数を使うかは利用者次第。
+
+### 案1b（Activity ＋ Attachment を名前に）
+
+- Good: 欠番も取り違えもコンパイルで止まる。取り返しの付かない間違いを型で防げる。
+- Bad: 宣言（`Number`）と値の形が食い違う。カスタム項目は同じにできない。
+- Bad: 項目単位の特例が増え、`condition` は数値のままなので**同じ項目で語彙が割れる**。
 
 ### 案1a（Activity だけ）
 
 - Good: 変更が小さい。
-- Bad: **Attachment のほうが痛い間違い**（消せない）なのに、そちらが数値のまま残る。
+- Bad: 1b の欠点をそのまま抱えたうえ、**痛い間違いが起きる Attachment が数値のまま残る**。
 
-### 案1c（何もしない）
+### 案1d（1c ＋ 無い値を弾く）
 
-- Good: 何も壊さない。
-- Bad: 「`of()` は名前・`P_Resource` は数値」の非対称が残り、説明し続けることになる。
-
-### 案2a（読みは数値のまま）
-
-- Good: 表に無い値が来ても壊れない。応答の値を作り替えない。
-- Bad: 読みと書きで形が違う。**ライブラリ自身が非対称を新しく作る**ことになる。
-- Bad: 読んだ人には `19` が何か分からない（「数値は分からない」は読みにも同じだけ当てはまる）。
-
-### 案2b（読みも名前・未知は数値）
-
-- Good: 読みも書きも名前。**この項目の意味が decode と encode で 1 つに揃う**ので、
-  仕掛けも 1 つで済む。
-- Good: 表に無い値は数値のまま通るので、PORTERS がリソースを増やしても壊れない。
-- Bad: 型が `ResourceName | number` になり、未知の値が来たときは利用者が分岐する。
-
-### 案4b（`condition` は数値のまま ＋ 変換関数）
-
-- Good: 型付きクエリの機構（Data Type から導出）に例外を持ち込まない。
-- Good: 公開する関数は `condition` 以外でも効く（`rawValue` で受けた生の値、カスタム項目の番号）。
-- Bad: 同じ項目が、書き込みでは名前・検索では数値という非対称を残す。
-
-### 案4a（`condition` も名前）
-
-- Good: どこでも名前で書ける。
-- Bad: 項目単位の override をクエリ側にも通すことになり、**機構が 2 つに増える**。
-
-### 案3a（型は名前・`as` で逃げる）
-
-- Good: 普通に書けば正しい。逃げ道は残る。
-- Bad: 逃げるときの書き方が `as` で、読みやすくはない。
-
-### 案3b（`ResourceName | number` を型で許す）
-
-- Good: 逃げ道が型の中にある。
-- Bad: **数値がいつまでも正規の書き方として残る**ので、揃えた意味が薄れる。
+- Good: 欠番（`6`）は送信前に止まる。
+- Bad: **PORTERS が増やした番号も止まる**。ライブラリが追随するまで利用者が使えない。
+- Bad: 取り除いたはずの「項目単位の特例」を、ガードという別の形で持ち込む。
 
 ## More Information
 
 - 発端: [ロードマップ][roadmap]の「要 ADR」／ [ADR-0061][adr61] 案5b（`of()` を名前にしたときの残件）
 - 前提: [ADR-0022][adr22]（`field.search` の `resource` が名前）／ [ADR-0018][adr18]（Attachment の
-  bespoke な入力）／ [ADR-0059][adr59]（綴りを機械が検査する）／ [ADR-0074][adr74]（型で塞ぎ、
-  実行時は寛容にした先例）
-- 反映（accept 後・別 PR）: `src/resources/resource.ts`（項目単位の decode / encode 差し替え）、
-  `src/resources/resource-list.ts`（`resourceValueOf` / `resourceNameOf` を公開）、`src/index.ts`、
-  `src/resources/activity.ts`、`src/resources/attachment.ts`、co-located テスト、
-  `docs/usage/howto/attachments.md`（「数値です」の警告が不要になる）、
-  `docs/usage/concepts/aliases.md`（読みと書きの非対称に 1 行）、CHANGELOG（**Breaking**）
+  bespoke な入力）／ [ADR-0004][adr4]・[ADR-0023][adr23]・[ADR-0074][adr74]（宣言してから使う）／
+  [ADR-0016][adr16]・[ADR-0060][adr60] D3（Data Type の集合は PORTERS と一致）／
+  [ADR-0044][adr44]（未知の値を捨てない）
+- 反映（accept 後・別 PR）: `src/resources/resource-list.ts`（`resourceValueOf` / `resourceNameOf`）、
+  `src/index.ts`（公開）、co-located テスト、`docs/usage/howto/attachments.md` と
+  `docs/usage/concepts/aliases.md`（**パラメータは名前・項目の値は数値**という規則と、
+  例を関数で書く形に）、CHANGELOG（minor・**追加のみ**）
 
 [adr61]: 0061-phase-resource-surface.md
 [adr22]: 0022-master-read-query-surface.md
 [adr18]: 0018-attachment-design.md
 [adr59]: 0059-read-field-bare-alias.md
 [adr74]: 0074-custom-field-declaration-required.md
+[adr23]: 0023-custom-field-declaration-dsl.md
+[adr4]: 0004-field-type-model.md
+[adr16]: 0016-field-type-granularity.md
+[adr44]: 0044-http-status-handling.md
 [adr60]: 0060-full-resource-coverage-direction.md
 [attachments]: ../usage/howto/attachments.md
-[aliases]: ../usage/concepts/aliases.md
 [roadmap]: ../roadmap.md
