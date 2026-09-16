@@ -230,6 +230,26 @@ await t.candidate.search({
 await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 ```
 
+### リソース種別で絞る（`resourceValueOf`）
+
+アクティビティのように「どのリソースに付いているか」を持つ項目は、**数値**で絞ります。
+値は非連続（Candidate `1` / Job `3` / Client `5` / Recruiter `9` / Sales `11` …）で、
+数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**（[ADR-0079][adr79]）。
+
+```ts
+import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
+
+const page = await t.activity.search({
+  condition: { P_Resource: { eq: resourceValueOf("candidate") } },
+});
+resourceNameOf(page.items[0]?.P_Resource ?? 0); // "candidate" | … | number
+```
+
+`resourceNameOf` は**知らない数値をそのまま返します**。Resource List は PORTERS のもので増えるため、
+知らない値をエラーにせずデータとして通します。
+
+考え方は[alias と Data Type][aliases]の「どのリソースか」の節にまとめてあります。
+
 ## `order` — 並び順
 
 `[{ 項目: "asc" | "desc" }]` の配列で、**先頭から優先**されます。
@@ -375,6 +395,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - ほかの目的から探す: [目次][index]
 
 [adr5]: ../../adr/0005-public-api-shape.md
+[adr79]: ../../adr/0079-resource-by-name.md
 [aliases]: ../concepts/aliases.md
 [adr20]: ../../adr/0020-read-field-default.md
 [adr38]: ../../adr/0038-read-query-surface-impl.md
