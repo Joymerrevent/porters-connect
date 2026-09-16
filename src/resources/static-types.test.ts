@@ -289,6 +289,23 @@ describe("Phase の Read クエリ（ADR-0076）", () => {
     expectTypeOf<PhaseQuery>().toHaveProperty("start");
   });
 
+  it("`Resource` は書き込み入力に出ない（of() が埋めるため・RV-47）", () => {
+    type PhaseCreate = NonNullable<Parameters<typeof _phase.create>[0]>;
+    type PhaseUpdate = NonNullable<Parameters<typeof _phase.update>[1]>;
+    // `?: never` なので、**変数で渡しても**通らない（`create({ ...phaseFromRead })` が現実の経路）。
+    expectTypeOf<PhaseCreate["Resource"]>().toEqualTypeOf<undefined>();
+    expectTypeOf<PhaseUpdate["Resource"]>().toEqualTypeOf<undefined>();
+    // 呼び出し側が埋める項目はそのまま。
+    expectTypeOf<PhaseCreate>().toHaveProperty("ResourceId");
+    expectTypeOf<PhaseCreate>().toHaveProperty("Memo");
+  });
+
+  it("束ねの無いリソースは今までどおり全部書ける", () => {
+    // 締めたのは Phase だけ、という境界を押さえる（全部に広がったら落ちる）。
+    expectTypeOf<CandidateCreateInput>().toHaveProperty("P_Name");
+    expectTypeOf<CandidateUpdateInput>().toHaveProperty("P_Name");
+  });
+
   it("共通語彙の 11 リソースは今までどおり keywords / itemstate を取る", () => {
     // 締めたのは Phase だけ、という境界をここで押さえる（全部に広がったら落ちる）。
     expectTypeOf<JobSearchQuery["keywords"]>().toEqualTypeOf<
