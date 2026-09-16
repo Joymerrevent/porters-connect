@@ -67,6 +67,30 @@ PORTERS が **`resource` を URL パラメータで要求する**エンドポイ
 > - **項目の値のリソース** → 宣言した Data Type どおり（**数値**）。名前で書くなら `resourceValueOf()`
 > - **ライブラリ自身が指すリソース**（宣言・ツール・アクセサ） → **名前**（規則の外・PORTERS に触れない）
 
+### 束ねた値は**権威**であり、上書きできない
+
+`of()` は「このアクセサはどのリソースの話か」を決める。だから**束ねた値と矛盾する書き込みは
+受け付けない** — 入力の型から外し、キャストで渡されたら `PortersConfigError` で弾く。
+
+**いまの Phase はそうなっていない**（[RV-47][rv47]・実測 2026-09-16）。`Resource` は書き込み可能な
+カタログ項目として入力型に残っており、実行時も `{ ...writeDefaults, ...item }` の順で
+**呼び出し側が勝つ**。`t.phase.of("client")` から Job（`3`）の Phase が書けてしまう。
+[ADR-0061][adr61] 案2a が約束したのは「忘れられない」で、「**矛盾させられない**」は未達だった。
+本 ADR の実装でここも塞ぐ。
+
+### Scope — 項目の値としてのリソースは対象にしない
+
+規則は **URL パラメータのリソース**に効く。`Activity.P_Resource` のように**レコードごとに違う値**は
+対象外で、[ADR-0079][adr79] のとおり項目の値（数値）のまま扱う。
+
+理由は「**1 回の呼び出しで 1 つに決まるか**」。Phase / Attachment は決まる（PORTERS がパラメータで
+要求している）。Activity は決まらない — 1 回の検索で**求職者のアクティビティと JOB のものが混ざる**のが
+普通で、アクセサ単位で束ねる前提が成り立たない。`t.activity.of("candidate")` を作ると、
+PORTERS に無い絞り込みをライブラリが発明することにもなる。
+
+書式もその区別に沿っている。**接頭辞なしの `Resource`**（Phase / Attachment）は呼び出し全体の文脈で、
+**`Activity.P_Resource`** はレコードのデータである。
+
 ### Consequences
 
 - Good: 同じ概念が 1 つの形になる。`t.phase.of("client")` と `t.field.of("candidate")` が並ぶ。
@@ -76,8 +100,10 @@ PORTERS が **`resource` を URL パラメータで要求する**エンドポイ
 - Bad: マスタ 4 種の見た目が割れる（Field だけ `of()`）。理由は説明できるが、覚えることは増える。
 - Neutral: `readCustomCatalog` / `generateFieldDecls` の**公開シグネチャは変わらない**
   （リソース名を受けるのは同じで、内部の呼び方だけ変わる）。
-- Neutral: `of()` が束ねるものの重さが Phase と Field で違う（書き込み項目も埋める／読みのパラメータだけ）。
-  **同じ名前で違う重さ**を許容する。
+- Neutral: `of()` が効く**場所の数**はエンドポイントで違う — Phase は読みの `?resource=` と書きの
+  `<Resource>` の **2 か所**、Field は読みのパラメータ **1 か所**、Attachment は確定すれば 2 か所。
+  これは不揃いではなく、**PORTERS がその値を要求する場所の数**がそのまま出たもの。`of()` の意味を
+  「このアクセサはどのリソースの話か。PORTERS がその値を要る所すべてに使う」と読めば、差は結果になる。
 
 ## 信じている入力
 
@@ -129,4 +155,5 @@ PORTERS が **`resource` を URL パラメータで要求する**エンドポイ
 [adr49]: 0049-host-port-roundtrip.md
 [coverage]: ../design/endpoint-coverage.md
 [lv]: ../live-verification.md
+[rv47]: ../reviews/rv/0047-phase-binding-overridable.md
 [roadmap]: ../roadmap.md
