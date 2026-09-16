@@ -1,6 +1,6 @@
 # 49. `host` の書式検証で既定ポートを落とさない（[ADR-0048][adr48] 機構2 の改訂）
 
-- Status: accepted
+- Status: superseded by 0078
 - Date: 2026-08-12
 - Deciders: jun.shiromoto (Joymerrevent)
 - Implemented: 0.7.0
@@ -9,6 +9,12 @@
 > **既定ポート付きの `host`（`a.test:443`）を通さない**ことが判明した。ADR-0048 自身の Decision Drivers
 > 「**既存の正しい設定を壊さない**」と衝突するため、**判定機構だけを差し替えるか**を決める。
 > **decider が案C を選択し `accepted`（2026-08-12）**。実装は accept 後・別 PR。
+>
+> **⚠️ [ADR-0078][adr78] で superseded（2026-09-16）。** 本 ADR が守っていたのは
+> 「`host` にポートが入っていても落とさない」ことだった。0078 で **`hostname` と `port` を
+> 分けた**ので、`hostname` にポートは入らなくなり、probe scheme が解いていた問題そのものが
+> 無くなった（いまの検証は「ポートが紛れていたら弾く」側に変わっている）。
+> **当時の決定は正しく、前提のほうが変わった。**
 
 ## Context and Problem Statement
 
@@ -176,3 +182,4 @@
 [adr6]: 0006-error-model.md
 [adr47]: 0047-access-point-scheme.md
 [adr48]: 0048-access-point-host-validation.md
+[adr78]: 0078-hostname-port-split.md
