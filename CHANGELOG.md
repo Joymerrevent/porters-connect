@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-18
+
+**CJS からの入口を開け、Node の下限を 22.12 に上げた版**です。**破壊的変更を 1 つ**含みます
+（`engines.node` の引き上げ）。
+
+`require()` は `ERR_PACKAGE_PATH_NOT_EXPORTED`、TypeScript は `TS1479` — 0.18.0 まで、CJS からは
+**実行時もコンパイル時も入口がありませんでした**。別実体（dual）を配るのではなく、`require` 条件を
+**同じ ESM 実体**に向けて塞いでいます（[ADR-0082][adr82]）。
+
 ### Added
 
 - **CJS（`require`）から読めるようになりました**（[ADR-0082][adr82]）。
@@ -1057,7 +1066,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...v0.16.0
