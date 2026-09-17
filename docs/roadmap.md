@@ -149,11 +149,12 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 ### 要 ADR（起票から）
 
 - [x] ✅ **`Activity.P_Resource` を名前で受けるか** — [ADR-0079][adr79] で決着（2026-09-16・
-      **数値のまま ＋ 変換関数の公開**）。派生して [ADR-0080][adr80]（URL パラメータのリソースは
-      `of()` で束ねる）を起票中。
+      **数値のまま ＋ 変換関数の公開**）。派生した [ADR-0080][adr80]（URL パラメータのリソースは
+      `of()` で束ねる）・[ADR-0081][adr81]（Attachment の Read を出典の語彙に）も accepted・実装済み。
       起票時の問い（「`of()` は名前・`P_Resource` は数値」の非対称をどうするか）への答えは、
       **非対称ではなく役割の違いだった** — パラメータのリソースは名前で束ね、項目の値は
-      宣言した Data Type どおり（数値）。
+      宣言した Data Type どおり（数値）。`resource` を URL で取る 3 本（Field / Phase / Attachment）は
+      すべて `of()` に揃った。
 
 ### ⏸ 凍結（当面やらない）
 
@@ -602,6 +603,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr78]: adr/0078-hostname-port-split.md
 [adr79]: adr/0079-resource-by-name.md
 [adr80]: adr/0080-resource-parameter-binding.md
+[adr81]: adr/0081-attachment-read-parameters.md
 [adr76]: adr/0076-phase-read-query-surface.md
 [rv45]: reviews/rv/0045-attachment-search-all-absent.md
 [rv46]: reviews/rv/0046-fetch-timeout-not-configurable.md
