@@ -59,7 +59,7 @@ jobs:
       # `pnpm check` は `package.json` の `check:*` をパターンで束ねたもの＝**一覧はここに
       # 写さない**。個別のステップに並べると、検査を足したときに CI だけ古くなる
       # （実際 `check:docs` / `check:links` / `check:api` は各所の一覧から漏れていた）。
-      # `check:publish` だけは `dist` を見るので束ねず、build の後で回す。
+      # `check:publish` と `check:cjs` だけは `dist` を見るので束ねず、build の後で回す。
       #
       # 中身と、いずれも**コード変更の有無に関わらず常時実行**する理由:
       #   check:release  リリース連動文書の整合（ADR-0027）。README/CHANGELOG の変更も拾う
@@ -123,9 +123,21 @@ jobs:
         run: pnpm build
 
       # 公開物の正当性（exports/files/types）と型解決（ADR-0027）。build 後に検査。
+      # attw は `require` 条件が ESM に解決される形を FalseCJS と報告するので ignore している
+      # （Node の require(esm) を織り込まず「dynamic import only」と判定するため）。publint も
+      # 同じ形に warning を出すが exit 0（`.d.cts` は default import の interop が曖昧、の指摘。
+      # 公開 API に default export が無いので実害は無い）。**静的判定を落とした分は次のステップで
+      # 実際に叩いて埋める**（ADR-0082）。
       - name: Check publish (publint + attw)
         if: steps.changes.outputs.code == 'true'
         run: pnpm check:publish
+
+      # CJS の入口を**実行して**確かめる（ADR-0082）。`require()` が通ること・`instanceof` が
+      # ESM/CJS をまたぐこと・CJS の TS 利用者（module: node16）がコンパイルできること。
+      # 0.18.0 まで CJS から入口が無かったのは、誰も叩いていなかったから。
+      - name: Check CJS entry (require + node16 types)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm check:cjs
 
       # 公開依存（prod）の high 以上のみブロックする狭いゲート（フェイルセーフ）。
       - name: Audit (production deps, high+)
