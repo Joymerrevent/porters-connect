@@ -163,6 +163,8 @@ env で本番とローカルを切り替えたいときは、アプリ側で渡�
 ```ts
 const forLocal = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
+  // ポートは `hostname` に書けません（書くと構築時に落ちます）。env も 1 本ずつ分けます
+  port: process.env.PORTERS_PORT ? Number(process.env.PORTERS_PORT) : undefined,
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
@@ -170,9 +172,12 @@ const forLocal = new PortersClient({
 ```
 
 ```sh
-PORTERS_HOST=127.0.0.1:4010 PORTERS_SCHEME=http node app.js  # ローカルのフェイクへ
-PORTERS_HOST=xxxxx.example.com node app.js                   # 本番（未設定なら https）
+PORTERS_HOST=127.0.0.1 PORTERS_PORT=4010 PORTERS_SCHEME=http node app.js  # ローカルのフェイクへ
+PORTERS_HOST=xxxxx.example.com node app.js                                # 本番（未設定なら https・既定ポート）
 ```
+
+**本番側に `PORTERS_PORT` は要りません。** PORTERS が契約時に通知するのは**サーバー名だけ**で、
+ポートはどの記事にも出てきません（[アクセスポイント][limits]）。
 
 ## 関連
 
@@ -184,6 +189,7 @@ PORTERS_HOST=xxxxx.example.com node app.js                   # 本番（未設�
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
 [handle-failures]: handle-failures.md
+[limits]: ../concepts/limits.md
 [prereq]: ../start/prerequisites.md
 [start]: ../index.md
 [index]: ../index.md
