@@ -142,7 +142,9 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 ### 判断待ち（決めれば着手できる）
 
 - [x] ✅ **v1 で CJS 出力まで出すか** — [ADR-0082][adr82] で決着（2026-09-18・**別実体は配らず
-      `require` 条件を ESM に向ける ＋ Node の下限を 22.12 に上げる**）。実装は別 PR。
+      `require` 条件を ESM に向ける ＋ Node の下限を 22.12 に上げる**）。**実装済み**（2026-09-18・
+      `exports` の `require` 条件／`engines >=22.12.0`／`dist/index.d.cts`／入口を実行して叩く
+      `check:cjs`／CI マトリクスから Node 20 を外した）。
       測り直して分かったのは「CJS 出力が要るか」ではなく、**いまは CJS から入口が無い**
       （`ERR_PACKAGE_PATH_NOT_EXPORTED` / `TS1479`）ということだった。
 - [ ] **Sales の `create` 必須を ADR にするか** — 参照 6 項目を必須にしない判断は既存方針の適用に留めたが、
@@ -243,14 +245,14 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 TODO は役割ごとに分かれている。**本書が入口**で、詳細は各正典にある。
 
-| ファイル                      | 何の TODO か                                       | いまの状態                                      |
-| ----------------------------- | -------------------------------------------------- | ----------------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 2・要 ADR 0（＝V3）        |
-| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件** ✅                             |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **実装待ちの ADR は 1 件**（[ADR-0082][adr82]） |
-| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜25 が未確認（契約待ち）                   |
-| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手         |
-| [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）                |
+| ファイル                      | 何の TODO か                                       | いまの状態                               |
+| ----------------------------- | -------------------------------------------------- | ---------------------------------------- |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 2・要 ADR 0（＝V3） |
+| [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件** ✅                      |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **実装待ちの ADR は 0 件** ✅            |
+| [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜25 が未確認（契約待ち）            |
+| [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
+| [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）         |
 
 > GitHub Issues は使っていない（現在 0 件）。TODO の正典は上記のとおり `docs/` 配下にある。
 
@@ -493,6 +495,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。**default branch=main にも反映済み**＝main で走る）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
+      → **2026-09-18 に 22/24 へ**（下限 `>=22.12.0`・[ADR-0082][adr82]。Node 20 は 2026-04-30 に EOL）
 - [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
 - [x] **依存更新の熟成期間（cooldown）7 日**＝公開直後の版は取り込まない。入口は Dependabot `cooldown`（npm は minor/patch 7 日・major 14 日／Actions は 7 日）、出口は pnpm `minimumReleaseAge: 10080`（手元の `pnpm add` / `pnpm update` も守る）。悪性リリースは概ね数時間〜数日で発見・削除されるため**防御の本体は「時間」**。**cooldown は version updates のみに効き security updates は素通り**＝待っても脆弱性の穴は開かない＝フェイルセーフ
 
@@ -520,7 +523,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - ~~MVP 外リソースの R/W~~ → **主軸に昇格**（[ADR-0060][adr60] D1。上記「いま何をやるか」を参照）
 - CLI / Docker 配布 / 公開プレイグラウンド
 - ~~CJS 出力~~ — **解決**（[ADR-0082][adr82]）。将来送りでも未決でもなく、**`require` 条件で
-  解決する**（別実体は配らない）。3 か所の食い違いは実装 PR で揃える
+  解決する**（別実体は配らない）。CLAUDE.md・[PRD §6・§8][prd]・本書の食い違いも揃えた（2026-09-18）
 - `defineFields` follow-up（[ADR-0023][adr23]）: 値レベルの厳格な実行時検証・テナント実在チェック・Field Read からの宣言雛形生成・Attachment / Reference / Image 型のカスタム項目
 
 ## 🔌 ライブ検証（契約環境が必要・契約後タスク）

@@ -155,6 +155,8 @@
   なお **changesets v3 は Node `^22.11 || ^24 || >=26`** を要求する。`.node-version` は 22 なので
   通常の開発・CI では問題ないが、**Node 20 では `changeset` コマンドが動かない**
   （install 自体は通る＝ test マトリクスの Node 20 ジョブは影響なし）。
+  → **2026-09-18 にこの制約は消えた**。[ADR-0082][adr82] で `engines` を `>=22.12.0` に上げ、
+  test マトリクスからも Node 20 を外したため、下限が changesets の要求を満たす。
 
 > 📌 **「v3」が 2 つ出てくるので注意**（読み違えやすい）。
 >
@@ -211,7 +213,8 @@ override が先、changesets の導入が翌日という順序だったため、
 | changesets の版上げ（採用） | override 不要＝解決器が宣言範囲を検査し、**非互換なら install が落ちる**  |
 
 「壊れたときに安全側へ倒れる」で選ぶなら後者。代償は「Node 20 で `changeset` が動かない」だけで、
-`.node-version` は 22・`release.yml` も同ファイル参照のため実害はない。
+`.node-version` は 22・`release.yml` も同ファイル参照のため実害はない
+（その代償も [ADR-0082][adr82] で下限を 22.12 に上げた時点で消えた）。
 `pnpm patch` で `safeLoad` を書き換える案は、同じ修正を上流の公開版で得られるのに自前の patch ファイルを
 恒久的に抱えることになるため、上記 override 案に劣る＝検討から外した。
 
@@ -228,6 +231,7 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
 [adr30]: adr/0030-backmerge-method.md
+[adr82]: adr/0082-module-format-and-node-baseline.md
 [adr39]: adr/0039-commitlint-release-range.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr62]: adr/0062-backmerge-via-pull-request.md

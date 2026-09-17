@@ -12,6 +12,10 @@
 > **最低 Node を 20 に引き上げた**（Node 18 が EOL・開発ツールチェーン（vitest / eslint）が非対応。
 > `engines: ">=20"`・ビルド target `node20`。[requirements][prd] R-14 も Node 20+）。
 > 既定トランスポートを標準 `fetch` にするという決定は変わらない。
+>
+> **訂正（2026-09-18）**: 上の「Node 20」も現在の値ではない。[ADR-0082][adr82] で
+> **`engines: ">=22.12.0"`・ビルド target `node22`** に上げた（`require` 条件を ESM 実体へ
+> 向ける形が Node の `require(esm)` に載るため／Node 20 は 2026-04-30 に EOL）。
 
 ## Context and Problem Statement
 
@@ -90,6 +94,7 @@ PORTERS 固有の制約（[gotchas][gotchas] / [resource-api][rapi] / [headers][
 - 関連: [[0005-public-api-shape]]。
 
 [prd]: ../design/requirements.md
+[adr82]: 0082-module-format-and-node-baseline.md
 [rapi]: ../usage/reference/resource-api/README.md
 [headers]: ../usage/reference/authentication-api/headers.md
 [gotchas]: ../usage/reference/gotchas.md
