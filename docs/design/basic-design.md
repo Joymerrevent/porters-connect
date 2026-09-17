@@ -60,7 +60,8 @@ const porters = new PortersClient({
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
   fields: myFields, // defineFields の宣言（任意）
-  tokenStore, // 任意（注入）。transport も同様に差し替えられる
+  tokenStore, // 任意（注入）
+  transport, // 任意（注入・既定は createFetchTransport）
 });
 const t = porters.tenant(1); // partition は tenant(id) だけで束ねる（ADR-0055）
 

@@ -140,6 +140,7 @@ const kv: {
 };
 const req: { user: string };
 const tokenStore: TokenStore;
+const transport: Transport;
 const lookupPartitionForUser: (user: string) => Promise<number>;
 const query: CandidateSearchQuery;
 const inputs: CandidateCreateInput[];
