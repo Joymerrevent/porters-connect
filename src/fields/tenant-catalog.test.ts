@@ -1,34 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 import type { Field, FieldSearchQuery } from "../resources/field";
+import type { CustomFieldResource } from "./define-fields";
 import { readCustomCatalog, type FieldCatalogSource } from "./tenant-catalog";
 
 // A Field Read stub. Records the queries it was asked, so the `active` default is testable.
 const sourceOf = (
   rows: readonly Partial<Field>[],
 ): FieldCatalogSource & {
-  readonly queries: Omit<FieldSearchQuery, "count" | "start">[];
+  readonly queries: {
+    resource: CustomFieldResource;
+    query: Omit<FieldSearchQuery, "count" | "start"> | undefined;
+  }[];
 } => {
-  const queries: Omit<FieldSearchQuery, "count" | "start">[] = [];
+  // `of()` で束ねたリソースと、各 searchAll に渡されたクエリを記録する（ADR-0080）。
+  const queries: {
+    resource: CustomFieldResource;
+    query: Omit<FieldSearchQuery, "count" | "start"> | undefined;
+  }[] = [];
   return {
     queries,
     field: {
-      searchAll: (query) => {
-        queries.push(query);
-        // A sync generator satisfies `AsyncIterable` here via `Symbol.asyncIterator` only if we
-        // wrap it, so build the async iterator explicitly — there is nothing to await.
-        let i = 0;
-        return {
-          [Symbol.asyncIterator]: () => ({
-            next: () =>
-              Promise.resolve(
-                i < rows.length
-                  ? { done: false as const, value: rows[i++] }
-                  : { done: true as const, value: undefined },
-              ),
-          }),
-        };
-      },
+      of: (resource) => ({
+        searchAll: (query) => {
+          queries.push({ resource, query });
+          // A sync generator satisfies `AsyncIterable` here via `Symbol.asyncIterator` only if we
+          // wrap it, so build the async iterator explicitly — there is nothing to await.
+          let i = 0;
+          return {
+            [Symbol.asyncIterator]: () => ({
+              next: () =>
+                Promise.resolve(
+                  i < rows.length
+                    ? { done: false as const, value: rows[i++] }
+                    : { done: true as const, value: undefined },
+                ),
+            }),
+          };
+        },
+      }),
     },
   };
 };
@@ -96,7 +106,9 @@ describe("readCustomCatalog", () => {
 
     // -1 = every field. Narrowing to 1 here would make a later comparison call an existing but
     // unused field "missing" — a false alarm (ADR-0069, accept 時の決定).
-    expect(source.queries).toEqual([{ resource: "job", active: -1 }]);
+    expect(source.queries).toEqual([
+      { resource: "job", query: { active: -1 } },
+    ]);
   });
 
   it("passes an explicit active through", async () => {
@@ -104,7 +116,7 @@ describe("readCustomCatalog", () => {
 
     await readCustomCatalog(source, "job", { active: 1 });
 
-    expect(source.queries).toEqual([{ resource: "job", active: 1 }]);
+    expect(source.queries).toEqual([{ resource: "job", query: { active: 1 } }]);
   });
 
   describe("fields it cannot declare are reported, never dropped (論点4)", () => {

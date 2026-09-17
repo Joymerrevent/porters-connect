@@ -74,9 +74,13 @@ Defined in: [src/client.ts:130](https://github.com/Joymerrevent/porters-connect/
 
 ### field
 
-> `readonly` **field**: [`FieldResource`](FieldResource.md)
+> `readonly` **field**: [`FieldAccessor`](FieldAccessor.md)
 
-Defined in: [src/client.ts:141](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L141)
+Defined in: [src/client.ts:146](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L146)
+
+Field master Read, reached through the resource whose catalog you want:
+`t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
+once (ADR-0080).
 
 ***
 
@@ -100,7 +104,7 @@ Defined in: [src/client.ts:128](https://github.com/Joymerrevent/porters-connect/
 
 > `readonly` **option**: [`OptionResource`](OptionResource.md)
 
-Defined in: [src/client.ts:142](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L142)
+Defined in: [src/client.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L147)
 
 ***
 

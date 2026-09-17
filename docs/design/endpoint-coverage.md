@@ -121,7 +121,7 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/partition`  | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 到達できる Partition の一覧）                      |
 | `/v1/user`       | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 全ユーザー。`current()` は 0）                     |
 | `/v1/user`       | `user_type`    | ○       | 送る                 | `userType`（既定 -1 = すべて）                                             |
-| `/v1/field`      | `resource`     | ●       | 送る                 | `resource`（必須。リソース名で受けて数値に直す）                           |
+| `/v1/field`      | `resource`     | ●       | 送る                 | `t.field.of("candidate")` が 1 回束ねる（[ADR-0080][adr80]）               |
 | `/v1/field`      | `active`       | ○       | 送る                 | `active`（既定 -1 = すべて）                                               |
 | `/v1/option`     | `alias`        | ○       | 送る                 | `alias`                                                                    |
 | `/v1/option`     | `level`        | ○       | 送る                 | `level`（既定 -1 = すべての階層）                                          |
@@ -231,6 +231,7 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [adr60]: ../adr/0060-full-resource-coverage-direction.md
 [adr61]: ../adr/0061-phase-resource-surface.md
 [adr76]: ../adr/0076-phase-read-query-surface.md
+[adr80]: ../adr/0080-resource-parameter-binding.md
 [adr41]: ../adr/0041-bulk-write-surface-impl.md
 [adr64]: ../adr/0064-link-image-types.md
 [adr42]: ../adr/0042-supported-version-policy.md

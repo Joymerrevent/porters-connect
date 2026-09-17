@@ -77,12 +77,12 @@
 
 マスタ 4 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
 
-| アクセサ            | リソース                | メソッド                           | 備考                                                          |
-| ------------------- | ----------------------- | ---------------------------------- | ------------------------------------------------------------- |
-| `porters.partition` | Partition（Company DB） | `search` / `searchAll`             | **client 直下**（`tenant()` を通さない唯一の読み取り）        |
-| `t.user`            | User                    | `search` / `searchAll` / `current` | `current()` は自己同定（`code_direct` ではアプリ自身の User） |
-| `t.field`           | Field（項目定義）       | `search` / `searchAll`             | `resource` が必須                                             |
-| `t.option`          | Option（選択肢）        | `search`                           | **`searchAll` なし**（API に `start` が無いため）             |
+| アクセサ            | リソース                | メソッド                            | 備考                                                          |
+| ------------------- | ----------------------- | ----------------------------------- | ------------------------------------------------------------- |
+| `porters.partition` | Partition（Company DB） | `search` / `searchAll`              | **client 直下**（`tenant()` を通さない唯一の読み取り）        |
+| `t.user`            | User                    | `search` / `searchAll` / `current`  | `current()` は自己同定（`code_direct` ではアプリ自身の User） |
+| `t.field`           | Field（項目定義）       | `of(resource).search` / `searchAll` | **`t.field.of("candidate")` のようにリソースを先に束ねる**    |
+| `t.option`          | Option（選択肢）        | `search`                            | **`searchAll` なし**（API に `start` が無いため）             |
 
 引数・戻り値・項目の一覧は [公開 API の全記号][api] が正典です。クエリの書き方は
 [検索][search-records]、添付の扱いは[添付ファイル][attachments]にあります。

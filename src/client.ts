@@ -19,7 +19,7 @@ import {
   createAttachmentResource,
   createCandidateResource,
   createClientResource,
-  createFieldResource,
+  createFieldAccessor,
   createJobResource,
   createOptionResource,
   createPartitionResource,
@@ -38,7 +38,7 @@ import type {
   AttachmentResource,
   CandidateResource,
   ClientResource,
-  FieldResource,
+  FieldAccessor,
   JobResource,
   OptionResource,
   PartitionResource,
@@ -138,7 +138,12 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
   readonly attachment: AttachmentResource;
   readonly user: UserResource;
-  readonly field: FieldResource;
+  /**
+   * Field master Read, reached through the resource whose catalog you want:
+   * `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
+   * once (ADR-0080).
+   */
+  readonly field: FieldAccessor;
   readonly option: OptionResource;
 };
 
@@ -259,7 +264,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentResource(deps),
         user: createUserResource(deps),
-        field: createFieldResource(deps),
+        field: createFieldAccessor(deps),
         option: createOptionResource(deps),
       };
     };

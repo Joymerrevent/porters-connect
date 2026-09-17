@@ -251,6 +251,7 @@ export type {
 export type {
   Field,
   FieldPage,
+  FieldAccessor,
   FieldResource,
   FieldSearchQuery,
   ResourceType,

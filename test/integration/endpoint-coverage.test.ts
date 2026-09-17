@@ -265,10 +265,10 @@ const PROBES: Probe[] = [
   },
   {
     endpoint: "/v1/field",
-    accessor: ({ t }) => t.field,
+    // `resource` は URL パラメータなので `of()` で束ねる（ADR-0080）。Phase と同じ形。
+    accessor: ({ t }) => t.field.of("candidate"),
     read: ({ t }) =>
-      t.field.search({
-        resource: "candidate",
+      t.field.of("candidate").search({
         active: -1,
         count: 5,
         start: 0,

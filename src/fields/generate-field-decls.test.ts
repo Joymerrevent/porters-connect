@@ -13,21 +13,23 @@ const sourceOf = (
   return {
     queries,
     field: {
-      searchAll: (query) => {
-        queries.push(query);
-        const rows = byResource[query.resource] ?? [];
-        let i = 0;
-        return {
-          [Symbol.asyncIterator]: () => ({
-            next: () =>
-              Promise.resolve(
-                i < rows.length
-                  ? { done: false as const, value: rows[i++] }
-                  : { done: true as const, value: undefined },
-              ),
-          }),
-        };
-      },
+      of: (resource) => ({
+        searchAll: (query) => {
+          queries.push({ resource, query });
+          const rows = byResource[resource] ?? [];
+          let i = 0;
+          return {
+            [Symbol.asyncIterator]: () => ({
+              next: () =>
+                Promise.resolve(
+                  i < rows.length
+                    ? { done: false as const, value: rows[i++] }
+                    : { done: true as const, value: undefined },
+                ),
+            }),
+          };
+        },
+      }),
     },
   };
 };
@@ -102,7 +104,7 @@ describe("generateFieldDecls", () => {
 
     // Opposite of verifyFields: a template of fields nobody uses is noise, and there is no
     // "missing" report here to be falsified (ADR-0069, accept 時の決定).
-    expect(source.queries).toEqual([{ resource: "job", active: 1 }]);
+    expect(source.queries).toEqual([{ resource: "job", query: { active: 1 } }]);
   });
 
   it("passes an explicit active through", async () => {
@@ -110,7 +112,9 @@ describe("generateFieldDecls", () => {
 
     await generateFieldDecls(source, ["job"], { active: -1 });
 
-    expect(source.queries).toEqual([{ resource: "job", active: -1 }]);
+    expect(source.queries).toEqual([
+      { resource: "job", query: { active: -1 } },
+    ]);
   });
 
   it("reads each resource once, names included", async () => {
