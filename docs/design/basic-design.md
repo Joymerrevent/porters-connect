@@ -53,44 +53,51 @@ src/
 
 ```ts
 const porters = new PortersClient({
-  host, // 必須（PORTERS_HOST 経由・ハードコード禁止）。代表値 api-hrbc-jp.porterscloud.com は参考
-  scheme, // 任意（既定 "https"）。"http" はローカルのフェイク等でのみ・毎プロセス警告（ADR-0047）
+  hostname, // 必須（PORTERS_HOST 経由・ハードコード禁止）。サーバー名のみ（ADR-0078）
+  port, // 任意。ローカルのフェイク等でのみ。PORTERS には要らない（ADR-0078）
+  scheme: "https", // 既定。"http" はローカルのフェイク等でのみ・毎プロセス警告（ADR-0047）
   appId,
   appSecret,
   scopes: ["candidate_r", "candidate_w", "user_r", "option_r"],
-  partition, // 既定 partition（マルチテナントは porters.tenant(id) で束ねる・ADR-0040）
   fields: myFields, // defineFields の宣言（任意）
-  tokenStore,
-  transport, // 任意（注入）
+  tokenStore, // 任意（注入）。transport も同様に差し替えられる
 });
+const t = porters.tenant(1); // partition は tenant(id) だけで束ねる（ADR-0055）
 
-const page = await porters.candidate.search({
-  field,
-  condition,
-  order,
-  keywords, // フリーワード（Option 型項目は対象外）
-  itemstate, // 状態フィルタ。delete API は無く、削除済みは itemstate で Read
-  count,
-  start,
+const page = await t.candidate.search({
+  field: ["P_Id", "P_Name"],
+  condition: { P_Name: { part: "山田" } },
+  order: [{ P_Id: "desc" }],
+  keywords: ["山田"], // フリーワード（Option 型項目は対象外）
+  itemstate: "existing", // 状態フィルタ。delete API は無く、削除済みは itemstate で Read
+  count: 200,
+  start: 0,
 });
-const one = await porters.candidate.get(id);
-await porters.candidate.create(input); // P_Id=-1 は内部付与
-await porters.candidate.update(id, input); // delete は無い
-for await (const c of porters.candidate.searchAll({ condition })) {
+const one = await t.candidate.get(id);
+await t.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" }); // P_Id=-1 は内部付与
+await t.candidate.update(id, { P_Name: "山田 花子" }); // delete は無い
+for await (const c of t.candidate.searchAll({
+  condition: { P_Owner: { eq: 5 } },
+})) {
   /* 200件刻み自動 */
 }
 
-const t = porters.tenant(123); // マルチテナント・スコープ（ADR-0008／改名 ADR-0021／実装 ADR-0040）
+// PORTERS が `resource=` を URL で要求するものは of() で 1 回束ねる（ADR-0080 / ADR-0081）
+await t.phase.of("client").search({ condition: { ResourceId: { eq: 20001 } } });
+await t.field.of("candidate").search({ active: 1 });
+await t.attachment.of("resume").get(id); // 添付の本体は get だけ（ADR-0075）
 ```
 
 - アクセサ＝名前空間型付き。返り値は型付きオブジェクト（XML 非露出）。エラーは throw（§6 エラーモデル）。
+- **partition を取るアクセサは `tenant(id)` の下にしか生えない**（[ADR-0055][a55]）。未束縛のまま
+  呼ぶという状態を型で存在させない＝ガードではなく設計で防ぐ。
 
 ## 4. リクエストのライフサイクル
 
 ```text
 accessor 呼び出し
   → 入力検証（fields/クエリ。不正は PortersConfigError を同期 throw）
-  → partition 解決（tenant スコープ / client 既定の 2 層・ADR-0040）
+  → partition 解決（tenant(id) スコープの 1 層のみ・ADR-0040 / ADR-0055）
   → トークン取得（TokenProvider：既定は code_direct＋キャッシュ、失効時 Refresh）
   → リクエスト組み立て（Read=クエリ / Write=XML、サイズ ~15000字 ガード）
   → transport 送信（自前スロットリングで分散、retryable は指数バックオフ）
@@ -162,6 +169,7 @@ accessor 呼び出し
 [a6]: ../adr/0006-error-model.md
 [a7]: ../adr/0007-oauth-public-surface.md
 [a8]: ../adr/0008-multitenancy-partition.md
+[a55]: ../adr/0055-partition-binding-guard.md
 [a9]: ../adr/0009-http-transport.md
 [a10]: ../adr/0010-retry-throttle.md
 [a11]: ../adr/0011-xml-parse-serialize.md
