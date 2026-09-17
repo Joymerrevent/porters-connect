@@ -346,12 +346,12 @@ Partition / User / Field / Option の 4 つは**読み取り専用のマスタ**
 別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
 公開しているためです。
 
-| アクセサ            | リソース          | メソッド                            | 主なクエリ                                    |
-| ------------------- | ----------------- | ----------------------------------- | --------------------------------------------- |
-| `porters.partition` | Partition         | `search` / `searchAll`              | `requestType`（1 = アクセス可能な一覧・既定） |
-| `t.user`            | User              | `search` / `searchAll` / `current`  | `requestType` / `userType` / `field`          |
-| `t.field`           | Field（項目定義） | `of(resource).search` / `searchAll` | リソースを先に束ねる ／ `active`              |
-| `t.option`          | Option（選択肢）  | `search`                            | `alias` / `level` / `enabled`                 |
+| アクセサ            | リソース          | メソッド                           | 主なクエリ                                    |
+| ------------------- | ----------------- | ---------------------------------- | --------------------------------------------- |
+| `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
+| `t.user`            | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
+| `t.field`           | Field（項目定義） | `search` / `searchAll`             | `active`（先に `of("candidate")` で束ねる）   |
+| `t.option`          | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`                 |
 
 ```ts
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
