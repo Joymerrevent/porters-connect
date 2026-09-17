@@ -22,9 +22,11 @@ import {
  */
 export type FieldCatalogSource = {
   readonly field: {
-    searchAll(
-      query: Omit<FieldSearchQuery, "count" | "start">,
-    ): AsyncIterable<Field>;
+    of(resource: CustomFieldResource): {
+      searchAll(
+        query?: Omit<FieldSearchQuery, "count" | "start">,
+      ): AsyncIterable<Field>;
+    };
   };
 };
 
@@ -163,8 +165,7 @@ export const readCustomCatalog = async (
   const fields: Record<string, CustomDataType> = {};
   const undeclarable: UndeclarableField[] = [];
   const names: Record<string, string> = {};
-  for await (const row of source.field.searchAll({
-    resource,
+  for await (const row of source.field.of(resource).searchAll({
     active: options.active ?? -1,
   })) {
     // Every `ReadRecord` field is optional, and a null/absent alias cannot be matched to

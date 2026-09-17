@@ -14,11 +14,12 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.16.0**（2026-09-15）＝ カスタム項目を「宣言してから使う」に揃えた版で、
-**破壊的変更**（`field` が未宣言の `U_` / `A_` を受け付けない・[ADR-0074][adr74]）を含み、
-逃げ道に `rawValue` を公開した。
-品質ゲートは全 green（**1143 tests**・coverage は perFile 100%・mutation 95.99。
-`src/fields/**` も計測対象に戻した＝[RV-44][rv44] fixed）。
+**最新は 0.17.0**（2026-09-16）＝ 添付ファイルの運び方を決め、出典に無いパラメータを型から外した版。
+**破壊的変更を 2 つ**含む（添付の本体は `get` でだけ運ぶ・[ADR-0075][adr75] ／ Phase の Read から
+`keywords` / `itemstate` を外す・[ADR-0076][adr76]）。あわせて `t.attachment.searchAll()` と
+`createFetchTransport`（タイムアウト・[ADR-0077][adr77]）を公開した。
+**どちらの破壊的変更も V1 のマトリクスから出てきた**（表 D の「理由の無い空白」と、表 B のずれ）。
+品質ゲートは全 green（**1159 tests**・coverage は perFile 100%・mutation 96.17）。
 
 **次の向き先は「第1層ライブラリの完成」**（2026-09-09・stakeholder）。第2層 MCP サーバーは
 **保留・凍結**した（下記「凍結」節）。
@@ -39,7 +40,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 | --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **マトリクス作成・検査あり**（[表 A〜G][coverage]）。残るずれ 8 セル ＝ ADR 決着 2・ライブ検証待ち 6（すべて Attachment） |
 | V2  | **使い方のドキュメント完成**           | 「入門（順に読む）→ 考え方 → 目的別 HOWTO」が揃い、**読者の目的から引ける**こと。検査は [ADR-0070][adr70] の 5 つ                          | **達成**（4 層 ＋ 検査①〜⑤ ＋ README を入口に絞る ＋ `docs/usage/` への集約）                                             |
-| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち 3・要 ADR 1・**open 0** ✅                                                                           |
+| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち 3・要 ADR 0・**open 0** ✅                                                                           |
 | V4  | **残る未確認はライブ検証だけ**         | `grep -rn "VERIFY(live)" src test` の結果が [live-verification][lv] のエントリと 1:1 で対応する                                            | LV-1〜25（25 件）                                                                                                         |
 | V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の全エントリが「状態: **確定**」                                                                                   | **0 / 25**（契約待ち）                                                                                                    |
 | V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                                                                                              |
@@ -131,10 +132,10 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 - [x] ✅ **既定 transport の公開（タイムアウトを変えられるように）**（[ADR-0077][adr77]）—
       **実装済み・未リリース**（2026-09-16）。`createFetchTransport` / `FetchTransportOptions` を
       公開し、`timeoutMs` は正の整数だけを構築時に検証する。既定は 30 秒のまま。[RV-46][rv46] は **fixed**
-- [ ] **アクセスポイントを `hostname` ＋ `port` に分ける**（[ADR-0078][adr78]・accepted）—
-      **0.18.0 で実装**（0.17.0 には混ぜない）。**破壊的**。契約で渡されるのはサーバー名で、
-      ポートはローカルのフェイク／プロキシ用。影響は 51 ファイル（うちテスト 42）＋ ドキュメント 8 本 ＋ env。
-      [ADR-0049][adr49] は実装時に supersede にする
+- [x] ✅ **アクセスポイントを `hostname` ＋ `port` に分ける**（[ADR-0078][adr78]）— **実装済み・未リリース**
+      （2026-09-16）。**破壊的**（`host` は無くなる）。`hostname` にポートが混ざったら構築時に弾き、
+      `port` は 1〜65535 の整数を検証する。スロットルのバケットは**宛先ごと**（名前＋ポート）になった。
+      [ADR-0049][adr49] は **superseded by 0078**（`:443` を守る probe scheme は役目を終えた）
 - [ ] （任意）**README 英語版**（日本語ファースト → 英語）
 
 ### 判断待ち（決めれば着手できる）
@@ -147,9 +148,13 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 要 ADR（起票から）
 
-- [ ] **`Activity.P_Resource` を名前で受けるか** — [ADR-0061][adr61] の案5b で `t.phase.of()` は名前になったが、
-      あちらは**カタログ項目**なので機構が別（項目単位で書き込み値の型を差し替える）。
-      揃えないなら「`of()` は名前・`P_Resource` は数値」の非対称が残る
+- [x] ✅ **`Activity.P_Resource` を名前で受けるか** — [ADR-0079][adr79] で決着（2026-09-16・
+      **数値のまま ＋ 変換関数の公開**）。派生した [ADR-0080][adr80]（URL パラメータのリソースは
+      `of()` で束ねる）・[ADR-0081][adr81]（Attachment の Read を出典の語彙に）も accepted・実装済み。
+      起票時の問い（「`of()` は名前・`P_Resource` は数値」の非対称をどうするか）への答えは、
+      **非対称ではなく役割の違いだった** — パラメータのリソースは名前で束ね、項目の値は
+      宣言した Data Type どおり（数値）。`resource` を URL で取る 3 本（Field / Phase / Attachment）は
+      すべて `of()` に揃った。
 
 ### ⏸ 凍結（当面やらない）
 
@@ -399,8 +404,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.16.0`**（npm latest・2026-09-15 にレジストリで確認・**7 files / 686.3 kB**）。**全 22 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.17.0`**（npm latest・2026-09-16 にレジストリで確認・**7 files / 705.2 kB**）。**全 23 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -415,7 +420,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.14.0 で `Link` / `Image` に対応＝ Data Type 17/17（D3）、
       **0.15.0 で宣言と実物のズレを surface（RV-36・破壊的）＋ スロットルをホスト共有に（[ADR-0073][adr73]・RV-43）**、
       0.15.1 で開発用依存の脆弱性 5 件と Actions の権限を整理（`dist` は 0.15.0 と同一）、
-      **0.16.0 でカスタム項目を宣言必須に揃え（[ADR-0074][adr74]・破壊的）＋ 逃げ道の `rawValue` を公開**）。
+      **0.16.0 でカスタム項目を宣言必須に揃え（[ADR-0074][adr74]・破壊的）＋ 逃げ道の `rawValue` を公開**、
+      **0.17.0 で添付の本体を `get` に寄せ（[ADR-0075][adr75]・破壊的）＋ Phase の Read から出典に無い 2 つを外し
+      （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -586,7 +593,6 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [run816]: reviews/2026-08-16-01.md
 [adr]: adr/README.md
 [findings]: reviews/findings.md
-[rv44]: reviews/rv/0044-fields-excluded-from-coverage.md
 [rv36]: reviews/rv/0036-write-value-validation-partial.md
 [rv37]: reviews/rv/0037-field-read-missing-process.md
 [adr-readme]: adr/README.md
@@ -595,6 +601,9 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr75]: adr/0075-attachment-search-all.md
 [adr77]: adr/0077-fetch-transport-timeout.md
 [adr78]: adr/0078-hostname-port-split.md
+[adr79]: adr/0079-resource-by-name.md
+[adr80]: adr/0080-resource-parameter-binding.md
+[adr81]: adr/0081-attachment-read-parameters.md
 [adr76]: adr/0076-phase-read-query-surface.md
 [rv45]: reviews/rv/0045-attachment-search-all-absent.md
 [rv46]: reviews/rv/0046-fetch-timeout-not-configurable.md

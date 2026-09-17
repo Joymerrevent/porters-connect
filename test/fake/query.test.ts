@@ -15,7 +15,9 @@ const ctx = { prefix: PREFIX, fields: new Map(Object.entries(FIELDS)) };
 
 const parse = (query: Parameters<typeof buildReadUrl>[3]) =>
   parseReadQuery(
-    new URL(buildReadUrl({ host: "fake.test" }, 1, "candidate", query, ctx)),
+    new URL(
+      buildReadUrl({ hostname: "fake.test" }, 1, "candidate", query, ctx),
+    ),
     PREFIX,
   );
 

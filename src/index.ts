@@ -158,6 +158,8 @@ export type {
 } from "./resources";
 /** The resource names `t.phase.of(...)` accepts (ADR-0061 案5b). */
 export type { ResourceName } from "./resources";
+// 名前 ⇄ 数値の変換（ADR-0079）。項目の値は数値のままなので、名前で書く／読むときに使う。
+export { resourceNameOf, resourceValueOf } from "./resources";
 export type {
   Sales,
   SalesCreateInput,
@@ -224,8 +226,8 @@ export type {
 } from "./resources";
 export type {
   Attachment,
+  AttachmentAccessor,
   AttachmentCreate,
-  AttachmentMetaField,
   AttachmentPage,
   AttachmentResource,
   AttachmentSearchQuery,
@@ -249,6 +251,7 @@ export type {
 export type {
   Field,
   FieldPage,
+  FieldAccessor,
   FieldResource,
   FieldSearchQuery,
   ResourceType,

@@ -230,6 +230,26 @@ await t.candidate.search({
 await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 ```
 
+### リソース種別で絞る（`resourceValueOf`）
+
+アクティビティのように「どのリソースに付いているか」を持つ項目は、**数値**で絞ります。
+値は非連続（Candidate `1` / Job `3` / Client `5` / Recruiter `9` / Sales `11` …）で、
+数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**（[ADR-0079][adr79]）。
+
+```ts
+import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
+
+const page = await t.activity.search({
+  condition: { P_Resource: { eq: resourceValueOf("candidate") } },
+});
+resourceNameOf(page.items[0]?.P_Resource ?? 0); // "candidate" | … | number
+```
+
+`resourceNameOf` は**知らない数値をそのまま返します**。Resource List は PORTERS のもので増えるため、
+知らない値をエラーにせずデータとして通します。
+
+考え方は[alias と Data Type][aliases]の「どのリソースか」の節にまとめてあります。
+
 ## `order` — 並び順
 
 `[{ 項目: "asc" | "desc" }]` の配列で、**先頭から優先**されます。
@@ -326,12 +346,12 @@ Partition / User / Field / Option の 4 つは**読み取り専用のマスタ**
 別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
 公開しているためです。
 
-| アクセサ            | リソース          | メソッド                           | 主なクエリ                                    |
-| ------------------- | ----------------- | ---------------------------------- | --------------------------------------------- |
-| `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
-| `t.user`            | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
-| `t.field`           | Field（項目定義） | `search` / `searchAll`             | `resource`（必須）/ `active`                  |
-| `t.option`          | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`                 |
+| アクセサ            | リソース          | メソッド                            | 主なクエリ                                    |
+| ------------------- | ----------------- | ----------------------------------- | --------------------------------------------- |
+| `porters.partition` | Partition         | `search` / `searchAll`              | `requestType`（1 = アクセス可能な一覧・既定） |
+| `t.user`            | User              | `search` / `searchAll` / `current`  | `requestType` / `userType` / `field`          |
+| `t.field`           | Field（項目定義） | `of(resource).search` / `searchAll` | リソースを先に束ねる ／ `active`              |
+| `t.option`          | Option（選択肢）  | `search`                            | `alias` / `level` / `enabled`                 |
 
 ```ts
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
@@ -341,7 +361,7 @@ const partitions = await porters.partition.search();
 const me = await t.user.current();
 
 // Job の項目定義（U_ / A_ のカスタム項目を含む）
-const fields = await t.field.search({ resource: "job" });
+const fields = await t.field.of("job").search();
 
 // 選択肢マスタ。入れ子のツリーを深さ優先でフラットにして返す
 const options = await t.option.search({ alias: "Option.P_Gender" });
@@ -375,6 +395,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - ほかの目的から探す: [目次][index]
 
 [adr5]: ../../adr/0005-public-api-shape.md
+[adr79]: ../../adr/0079-resource-by-name.md
 [aliases]: ../concepts/aliases.md
 [adr20]: ../../adr/0020-read-field-default.md
 [adr38]: ../../adr/0038-read-query-surface-impl.md

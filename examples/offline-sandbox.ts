@@ -5,7 +5,7 @@
  *
  * 公開ヘルパー `createMockTransport` にモック XML を返させるだけで、型付き search / get /
  * create を実際に動かせます（OAuth/トークンは自動応答）。実利用では `transport` を渡さず
- * （既定の fetch）、host/appId/appSecret を設定するだけです。import 元はこのリポジトリ内の
+ * （既定の fetch）、hostname/appId/appSecret を設定するだけです。import 元はこのリポジトリ内の
  * 都合で `../src` ですが、配布版では `@joymerrevent/porters-connect` から import します。
  */
 import {
@@ -22,7 +22,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
+  hostname: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
   appId: "demo",
   appSecret: "demo",
   fields,
@@ -94,8 +94,8 @@ const newId = await t.candidate.create({
 console.log("■ create -> id:", newId);
 
 // 4) 添付ファイル（Content は Base64。バイト列の変換ヘルパー同梱）
-const attachmentId = await t.attachment.create({
-  resource: 1,
+//    添付は「どのリソースの」が必須なので、of() で 1 回束ねる（ADR-0080 / ADR-0081）
+const attachmentId = await t.attachment.of("candidate").create({
   resourceId: 10001,
   contentType: "text/plain",
   fileName: "memo.txt",

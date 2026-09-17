@@ -5,6 +5,140 @@
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-17
+
+**「どのリソースか」の受け取り方を 1 つの規則に揃えた版**です。**破壊的変更を 4 つ**含みます
+（アクセスポイントの `host` 廃止／束ねた項目は書き込み入力から外れる／Field マスタの Read が
+`of()` 経由に／添付の Read が PORTERS の語彙に）。
+
+PORTERS が `resource=` を **URL パラメータで必須**に要求するエンドポイントは 3 つ（Field / Phase /
+Attachment）あるのに、受け口の形が 3 つとも違っていました。**パラメータのリソースは `of(name)` で
+束ね、項目の値は宣言した Data Type どおり（数値）**という線を引き、3 本とも `of()` に揃えています。
+
+### Added
+
+- **`resourceValueOf` / `resourceNameOf`** — リソース名と数値を相互変換します（[ADR-0079][adr79]）。
+
+  ```ts
+  import {
+    resourceNameOf,
+    resourceValueOf,
+  } from "@joymerrevent/porters-connect";
+
+  await t.activity.create({
+    P_Owner: 5,
+    P_Title: "一次面談",
+    P_Resource: resourceValueOf("candidate"), // 1
+    P_ResourceId: 10001,
+  });
+
+  resourceNameOf(17); // "resume"
+  ```
+
+  PORTERS のリソース番号は**非連続**です（Candidate `1` / Job `3` / Client `5` / Recruiter `9` /
+  Sales `11` / …）。欠番も取り違えも数値リテラルでは気づけないので、名前から引いてください。
+  `resourceNameOf` は**知らない数値をそのまま返します**（`ResourceName | number`）— Resource List は
+  PORTERS のもので増えるため（Contact `27` は後から増えました）、知らない値はエラーにせず
+  データとして通します。
+
+- 公開した型: `AttachmentAccessor` / `FieldAccessor`（`ResourceName` は 0.17.0 から公開済みで、
+  `of()` に渡す名前の型です）。
+
+### Changed
+
+- **（破壊的）アクセスポイントが `hostname` と `port` に分かれました**（[ADR-0078][adr78]）。
+  **`host` は無くなります。**
+
+  ```ts
+  // これまで
+  new PortersClient({ host: "xxxxx.example.com", appId, appSecret });
+  new PortersClient({ host: "127.0.0.1:4010", scheme: "http" });
+
+  // これから
+  new PortersClient({ hostname: "xxxxx.example.com", appId, appSecret });
+  new PortersClient({ hostname: "127.0.0.1", port: 4010, scheme: "http" });
+  ```
+
+  **契約で渡される値にポートは無い**からです。PORTERS の記事は `{Request Host}` を「該当の
+  **サーバー名**を入れてください」と説明し、ポート表記はどの記事にも出てきません。一方 URL 仕様では
+  `host` は**ポートを含む**名前で、含まないのが `hostname` です。名前と中身を揃えました。
+
+  - **`hostname` にポートを書くと構築時に落ちます**（`PortersConfigError`）。素通しすると
+    「指定したつもりで既定ポートに送られる」ので、黙って落とさずに弾きます
+  - **`port` は 1〜65535 の整数**。省略すれば scheme の既定ポートです。使うのはローカルの
+    フェイクサーバーやプロキシに向けるときだけで、PORTERS には要りません
+  - **IPv6 は角括弧付き**で渡します（`hostname: "[::1]"`）
+  - `PortersClient` のゲッターも `host` → **`hostname` / `port`** の 2 本になります
+  - スロットルのバケット（[ADR-0073][adr73]）は**宛先ごと**になりました。同じ名前でもポートが
+    違えば別のバケットです
+
+- **（破壊的）添付ファイルの Read が PORTERS の語彙に揃いました**（[ADR-0081][adr81]）。
+
+  ```ts
+  // これまで
+  await t.attachment.search({ condition: { "ResourceId:eq": "10001" } });
+  await t.attachment.create({ resource: 17, resourceId: 10001, ...file });
+
+  // これから
+  const files = t.attachment.of("resume"); // resource を 1 回束ねる
+  await files.search({ resourceId: 10001 });
+  await files.get(900);
+  await files.create({ resourceId: 10001, ...file }); // resource は束ねた値
+  ```
+
+  PORTERS の `Attachment - Read` が取るのは `requestType` / `resource` / `resourceId` / `id` で、
+  **`field` と `condition` は挙げられていません**。ライブラリは逆で、**必須の 2 つを送らず、
+  記載の無い 2 つを送っていました**。出典どおりなら添付の読み取りは実環境で常に失敗するので、
+  出典に一致する側へ倒しました。
+
+  - `create` の入力から **`resource` が消えました**。付け先を取り違えても添付は消せないので、
+    書ける場所を減らしています
+  - 本体（`content`）を運ぶかは引き続き**メソッドが決めます**（`get` だけが運びます。
+    PORTERS 側では `requestType` です）
+  - **絞れるのは `resourceId`（1 レコードの添付）と `id`（1 件）だけ**で、ファイル名などでの
+    検索はできません（PORTERS が提供していません）。名前で探すときは `searchAll` で歩きながら
+    絞ってください
+  - **出典どおりの形が実機で通るかは未確認**です（契約環境でのみ確かめられます）
+
+- **（破壊的）Field マスタの Read が `of()` でリソースを束ねる形になりました**（[ADR-0080][adr80]）。
+
+  ```ts
+  // これまで
+  await t.field.search({ resource: "candidate", active: 1 });
+
+  // これから
+  await t.field.of("candidate").search({ active: 1 });
+  ```
+
+  同じ形の Phase は以前から `t.phase.of("client")` で束ねていたので、**URL パラメータのリソースは
+  `of()` で束ねる**という 1 つの規則に揃えました。`readCustomCatalog` / `verifyFields` /
+  `generateFieldDecls` の**引数は変わりません**。`porters.partition` / `t.user` / `t.option` も
+  変わりません — この 3 つは `resource=` を取らないためです。
+
+- **（破壊的）アクセサが束ねた項目は、書き込み入力から外れます**。
+
+  `t.phase.of("client")` は「このアクセサは企業の Phase を扱う」という宣言です。これまでは
+  `Resource` を書き込み入力に渡せてしまい、**束ねた値を上書きできました** — `of("client")` から
+  JOB（`3`）の Phase が書ける状態でした。
+
+  ```ts
+  const phase = (await t.phase.of("client").get(10014))!;
+  await t.phase.of("client").create({ ...phase, Date: "2026-09-17T00:00:00Z" });
+  // 読みのレコードは `Resource` を持つため、これまでは束ねた値が黙って上書きされていました
+  ```
+
+  型で外したうえ、キャストで渡した場合も**送信前に** `PortersConfigError` で止めます（黙って
+  捨てません）。Phase に削除 API は無いので、間違ったリソースに付いた履歴は消せません。
+
+- **エンドポイント × 機能のマトリクスのずれが無くなりました**。0.17.0 で起こした表は
+  **4 セルが食い違った状態**で出しましたが（Phase の 2 つ・Attachment の 2 つ）、本版で
+  **すべて解消**しています。パッケージの中身は変わりません。
+
+### Removed
+
+- **`AttachmentMetaField`** — 0.17.0 で公開した型ですが、添付の Read から `field` が無くなった
+  ため役目を終えました（[ADR-0081][adr81]）。
+
 ## [0.17.0] - 2026-09-16
 
 **添付ファイルの運び方を決め、出典に無いパラメータを型から外した版**です。**破壊的変更を 2 つ**
@@ -887,13 +1021,18 @@
 [adr75]: docs/adr/0075-attachment-search-all.md
 [adr76]: docs/adr/0076-phase-read-query-surface.md
 [adr77]: docs/adr/0077-fetch-transport-timeout.md
+[adr78]: docs/adr/0078-hostname-port-split.md
+[adr79]: docs/adr/0079-resource-by-name.md
+[adr80]: docs/adr/0080-resource-parameter-binding.md
+[adr81]: docs/adr/0081-attachment-read-parameters.md
 [limits]: docs/usage/concepts/limits.md
 [failures]: docs/usage/howto/handle-failures.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.0...v0.15.1

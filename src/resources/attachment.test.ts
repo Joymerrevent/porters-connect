@@ -3,11 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError, PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import {
-  createAttachmentResource,
-  type AttachmentSearchQuery,
-  type AttachmentWalkQuery,
-} from "./attachment";
+import { createAttachmentAccessor } from "./attachment";
 
 const READ_OK =
   `<?xml version="1.0"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
@@ -26,41 +22,173 @@ const stub = (body: string, calls: Call[]): Requester => ({
   },
 });
 
-const resource = (calls: Call[], body: string) =>
-  createAttachmentResource({
+// The accessor bound to Resume (17) — the resource attachments most obviously hang off.
+const files = (calls: Call[], body: string) =>
+  createAttachmentAccessor({
     requester: stub(body, calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
-  });
+  }).of("resume");
 
-describe("createAttachmentResource — decode", () => {
+const paramsOf = (calls: Call[], i = 0): URLSearchParams =>
+  new URL(calls[i]?.req.url ?? "").searchParams;
+
+describe("createAttachmentAccessor — decode", () => {
   it("decodes the fixed fields (ids -> number, rest -> string)", async () => {
     const calls: Call[] = [];
-    const a = (await resource(calls, READ_OK).search()).items[0];
+    const a = (await files(calls, READ_OK).get(11111)) ?? undefined;
     expect(calls[0].req.method).toBe("GET");
-    expect(a.id).toBe(11111);
-    expect(a.resource).toBe(17);
-    expect(a.resourceId).toBe(10001);
-    expect(a.contentType).toBe("application/pdf");
-    expect(a.fileName).toBe("cv.pdf");
-    expect(a.content).toBe("QUJD"); // Base64
+    expect(a?.id).toBe(11111);
+    expect(a?.resource).toBe(17);
+    expect(a?.resourceId).toBe(10001);
+    expect(a?.contentType).toBe("application/pdf");
+    expect(a?.fileName).toBe("cv.pdf");
+    expect(a?.content).toBe("QUJD"); // Base64
   });
 
   it("maps an absent field to null", async () => {
     const calls: Call[] = [];
     const body = `<Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>5</Id></Item></Attachment>`;
-    const a = (await resource(calls, body).search()).items[0];
+    const a = (await files(calls, body).search()).items[0];
     expect(a.id).toBe(5);
     expect(a.resource).toBeNull();
     expect(a.content).toBeNull();
   });
 });
 
-describe("createAttachmentResource — write", () => {
-  it("create POSTs bare-tag XML, bypasses the size guard, returns the id", async () => {
+// ADR-0081: Attachment Read takes its own Input Variables — `requestType` / `resource` /
+// `resourceId` / `id` — and neither `field` nor `condition` exists. ADR-0080 binds `resource`.
+describe("createAttachmentAccessor — Read parameters (ADR-0080 / ADR-0081)", () => {
+  it("of(name) sends the bound resource's number on every Read", async () => {
     const calls: Call[] = [];
-    const id = await resource(calls, WRITE_OK).create({
-      resource: 17,
+    const accessor = createAttachmentAccessor({
+      requester: stub(READ_EMPTY, calls),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    });
+
+    await accessor.of("resume").search();
+    await accessor.of("candidate").search();
+
+    expect(paramsOf(calls, 0).get("resource")).toBe("17");
+    expect(paramsOf(calls, 1).get("resource")).toBe("1");
+  });
+
+  it("search is a listing: requestType=1, no id", async () => {
+    const calls: Call[] = [];
+    await files(calls, READ_EMPTY).search();
+    const params = paramsOf(calls);
+    expect(params.get("partition")).toBe("12");
+    expect(params.get("requestType")).toBe("1");
+    expect(params.has("id")).toBe(false);
+    expect(params.has("resourceId")).toBe(false);
+    // 出典に無いパラメータは送らない（送ると Read 全体が落ちうる）。
+    expect(params.has("field")).toBe(false);
+    expect(params.has("condition")).toBe(false);
+  });
+
+  it("search narrows to one record with resourceId, and pages", async () => {
+    const calls: Call[] = [];
+    await files(calls, READ_EMPTY).search({
+      resourceId: 10001,
+      count: 5,
+      start: 10,
+    });
+    const params = paramsOf(calls);
+    expect(params.get("resourceId")).toBe("10001");
+    expect(params.get("count")).toBe("5");
+    expect(params.get("start")).toBe("10");
+  });
+
+  it("get is the only Read with the body: requestType=0 for one id", async () => {
+    const calls: Call[] = [];
+    const one = await files(calls, READ_EMPTY).get(7);
+    expect(one).toBeUndefined();
+    const params = paramsOf(calls);
+    expect(params.get("requestType")).toBe("0");
+    expect(params.get("id")).toBe("7");
+    expect(params.get("resource")).toBe("17");
+    expect(params.has("resourceId")).toBe(false);
+  });
+
+  it("searchAll walks 200 at a time and carries resourceId on every page", async () => {
+    // 1 ページ目は 200 件のうち 2 件（Total=3）、2 ページ目で残り 1 件。
+    const page = (ids: number[], total: number, start: number): string =>
+      `<?xml version="1.0"?><Attachment Total="${total}" Count="${ids.length}" Start="${start}">` +
+      `<Code>0</Code>` +
+      ids
+        .map((id) => `<Item><Id>${id}</Id><FileName>f${id}</FileName></Item>`)
+        .join("") +
+      `</Attachment>`;
+    const bodies = [page([1, 2], 3, 0), page([3], 3, 2)];
+    const calls: Call[] = [];
+    const walker = createAttachmentAccessor({
+      requester: {
+        request: (req, parse, spec) => {
+          calls.push({ req, spec });
+          return Promise.resolve(parse(bodies[calls.length - 1] ?? ""));
+        },
+      },
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("resume");
+
+    const seen: (number | null)[] = [];
+    for await (const a of walker.searchAll({ resourceId: 10001 }))
+      seen.push(a.id);
+
+    expect(seen).toEqual([1, 2, 3]);
+    expect(calls).toHaveLength(2);
+    expect(paramsOf(calls, 0).get("count")).toBe("200");
+    expect(paramsOf(calls, 0).get("start")).toBe("0");
+    expect(paramsOf(calls, 1).get("start")).toBe("2");
+    for (const i of [0, 1]) {
+      // 走査でも本体は運ばない（本体は get の担当 — ADR-0075）。
+      expect(paramsOf(calls, i).get("requestType")).toBe("1");
+      expect(paramsOf(calls, i).get("resourceId")).toBe("10001");
+    }
+  });
+
+  it("searchAll without a resourceId reads the whole resource", async () => {
+    const calls: Call[] = [];
+    for await (const _ of files(calls, READ_EMPTY).searchAll()) break;
+    expect(paramsOf(calls).has("resourceId")).toBe(false);
+  });
+
+  // RV-32: the query is read once, before the first page, so mutating it mid-walk cannot change
+  // a later page.
+  it("searchAll reads its query once", async () => {
+    const calls: Call[] = [];
+    const body = (ids: number[], total: number, start: number): string =>
+      `<?xml version="1.0"?><Attachment Total="${total}" Count="${ids.length}" Start="${start}">` +
+      `<Code>0</Code>` +
+      ids.map((id) => `<Item><Id>${id}</Id></Item>`).join("") +
+      `</Attachment>`;
+    const bodies = [body([1], 2, 0), body([2], 2, 1)];
+    const walker = createAttachmentAccessor({
+      requester: {
+        request: (req, parse, spec) => {
+          calls.push({ req, spec });
+          return Promise.resolve(parse(bodies[calls.length - 1] ?? ""));
+        },
+      },
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("resume");
+
+    const query = { resourceId: 10001 };
+    for await (const _ of walker.searchAll(query)) {
+      query.resourceId = 99999;
+    }
+
+    expect(paramsOf(calls, 1).get("resourceId")).toBe("10001");
+  });
+});
+
+describe("createAttachmentAccessor — write", () => {
+  it("create POSTs bare-tag XML with the bound Resource, bypasses the size guard", async () => {
+    const calls: Call[] = [];
+    const id = await files(calls, WRITE_OK).create({
       resourceId: 10001,
       contentType: "application/msword",
       fileName: "履歴書.doc",
@@ -87,9 +215,26 @@ describe("createAttachmentResource — write", () => {
     });
   });
 
+  it("create fills Resource from the binding, not from a fixed value", async () => {
+    const calls: Call[] = [];
+    await createAttachmentAccessor({
+      requester: stub(WRITE_OK, calls),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    })
+      .of("candidate")
+      .create({
+        resourceId: 1,
+        contentType: "image/png",
+        fileName: "f.png",
+        content: "QQ==",
+      });
+    expect(calls[0].req.body).toContain("<Resource>1</Resource>");
+  });
+
   it("update sends only the target id + provided fields, idempotently", async () => {
     const calls: Call[] = [];
-    const id = await resource(calls, WRITE_OK).update(22222, {
+    const id = await files(calls, WRITE_OK).update(22222, {
       fileName: "renamed.doc",
     });
     expect(id).toBe(22222);
@@ -103,13 +248,25 @@ describe("createAttachmentResource — write", () => {
     });
   });
 
+  it("update can replace contentType + content (re-upload)", async () => {
+    const calls: Call[] = [];
+    await files(calls, WRITE_OK).update(22222, {
+      contentType: "image/png",
+      content: "QkFTRTY0",
+    });
+    expect(calls[0].req.body).toBe(
+      "<Attachment><Item><Id>22222</Id>" +
+        "<ContentType>image/png</ContentType>" +
+        "<Content>QkFTRTY0</Content></Item></Attachment>",
+    );
+  });
+
   it("maps a non-zero per-Item Code to a PortersResourceError", async () => {
     const calls: Call[] = [];
     const body = `<Attachment><Item><Id>0</Id><Code>403</Code></Item></Attachment>`;
     let err: unknown;
     try {
-      await resource(calls, body).create({
-        resource: 17,
+      await files(calls, body).create({
         resourceId: 1,
         contentType: "image/png",
         fileName: "f.png",
@@ -125,186 +282,14 @@ describe("createAttachmentResource — write", () => {
     );
     expect((err as PortersResourceError).context?.resource).toBe("Attachment");
   });
-
-  it("update can replace contentType + content (re-upload)", async () => {
-    const calls: Call[] = [];
-    await resource(calls, WRITE_OK).update(22222, {
-      contentType: "image/png",
-      content: "QkFTRTY0",
-    });
-    expect(calls[0].req.body).toBe(
-      "<Attachment><Item><Id>22222</Id>" +
-        "<ContentType>image/png</ContentType>" +
-        "<Content>QkFTRTY0</Content></Item></Attachment>",
-    );
-  });
-
-  it("get(id) requests all fields with an Id condition against /v1/attachment", async () => {
-    const calls: Call[] = [];
-    const one = await resource(calls, READ_EMPTY).get(7);
-    expect(one).toBeUndefined();
-    const url = decodeURIComponent(calls[0].req.url);
-    expect(url).toContain("https://h.test/v1/attachment?");
-    expect(url).toContain("Id:eq=7");
-    expect(url).toContain(
-      "field=Id,Resource,ResourceId,ContentType,FileName,Content",
-    );
-  });
-
-  it("search() passes loose condition / count / start through (no prefix)", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search({
-      condition: { "Id:eq": "3" },
-      count: 5,
-      start: 10,
-    });
-    const url = decodeURIComponent(calls[0].req.url);
-    expect(url).toContain("condition=Id:eq=3");
-    expect(url).toContain("count=5");
-    expect(url).toContain("start=10");
-  });
 });
 
-describe("createAttachmentResource — default field (ADR-0020)", () => {
-  // Exact field param via URL parsing — `ContentType` contains the substring "Content",
-  // so a naive `toContain`/`not.toContain` can't tell metadata from the body field.
-  const fieldOf = (url: string): string | null =>
-    new URL(url).searchParams.get("field");
-
-  it("search() defaults to metadata fields, excluding the large Content body", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search();
-    expect(fieldOf(calls[0].req.url)).toBe(
-      "Id,Resource,ResourceId,ContentType,FileName",
-    );
-  });
-
-  it("field: [] opts into the API-native primary-key-only response", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search({ field: [] });
-    expect(fieldOf(calls[0].req.url)).toBeNull();
-  });
-
-  it("a provided metadata field list is sent verbatim", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search({ field: ["Id", "FileName"] });
-    expect(fieldOf(calls[0].req.url)).toBe("Id,FileName");
-  });
-
-  // ADR-0075: 一覧は本体を運ばない。型では `Content` を並べられないので、ここに来るのは cast
-  // した呼び出しだけ。それでも止める — 200 件ぶんの本体は V8 の文字列上限を越え、再送しても
-  // 直らない `RangeError` になるため。
-  it("cast して Content を頼んでも search は送らずに落とす", async () => {
-    const calls: Call[] = [];
-    let err: unknown;
-    try {
-      await resource(calls, READ_EMPTY).search({
-        field: ["Id", "Content"],
-      } as unknown as AttachmentSearchQuery);
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(PortersConfigError);
-    expect((err as PortersConfigError).category).toBe("config");
-    expect((err as PortersConfigError).message).toContain("Content");
-    // どちらの入口で落ちたかがメッセージで分かること。
-    expect((err as PortersConfigError).message).toContain("search");
-    expect((err as PortersConfigError).hint).toContain("get(id)");
-    // 送信前に止まる＝リクエストは 1 本も出ていない。
-    expect(calls).toHaveLength(0);
-  });
-
-  it("searchAll も同じ理由で止める（走査の入口だけ緩い、を作らない）", async () => {
-    const calls: Call[] = [];
-    let err: unknown;
-    try {
-      const walk = resource(calls, READ_EMPTY).searchAll({
-        field: ["Content"],
-      } as unknown as AttachmentWalkQuery);
-      for await (const _ of walk) break;
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(PortersConfigError);
-    expect((err as PortersConfigError).message).toContain("searchAll");
-    expect(calls).toHaveLength(0);
-  });
-
-  it("空の condition は condition= を載せない（空文字を送らない）", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search({ condition: {} });
-    expect(new URL(calls[0]?.req.url ?? "").searchParams.has("condition")).toBe(
-      false,
-    );
-  });
-
-  it("複数の condition はカンマで繋ぐ（AND 指定）", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_EMPTY).search({
-      condition: { "Resource:eq": "17", "ResourceId:eq": "10001" },
-    });
-    expect(new URL(calls[0]?.req.url ?? "").searchParams.get("condition")).toBe(
-      "Resource:eq=17,ResourceId:eq=10001",
-    );
-  });
-
-  it("searchAll は 200 件ずつ歩き、返った件数だけ start を進める", async () => {
-    // 1 ページ目は 200 件のうち 2 件（Total=3）、2 ページ目で残り 1 件。
-    const page = (ids: number[], total: number, start: number): string =>
-      `<?xml version="1.0"?><Attachment Total="${total}" Count="${ids.length}" Start="${start}">` +
-      `<Code>0</Code>` +
-      ids
-        .map((id) => `<Item><Id>${id}</Id><FileName>f${id}</FileName></Item>`)
-        .join("") +
-      `</Attachment>`;
-    const bodies = [page([1, 2], 3, 0), page([3], 3, 2)];
-    const calls: Call[] = [];
-    const walker = createAttachmentResource({
-      requester: {
-        request: (req, parse, spec) => {
-          calls.push({ req, spec });
-          return Promise.resolve(parse(bodies[calls.length - 1] ?? ""));
-        },
-      },
-      accessPoint: { host: "h.test" },
-      partition: 12,
-    });
-
-    const seen: (number | null)[] = [];
-    for await (const a of walker.searchAll()) seen.push(a.id);
-
-    expect(seen).toEqual([1, 2, 3]);
-    expect(calls).toHaveLength(2);
-    const first = new URL(calls[0]?.req.url ?? "").searchParams;
-    const second = new URL(calls[1]?.req.url ?? "").searchParams;
-    expect(first.get("count")).toBe("200");
-    expect(first.get("start")).toBe("0");
-    expect(second.get("start")).toBe("2");
-    // 走査でも既定はメタデータだけ（本体は get の担当）。
-    expect(fieldOf(calls[0]?.req.url ?? "")).toBe(
-      "Id,Resource,ResourceId,ContentType,FileName",
-    );
-  });
-
-  it("get は本体まで取る（唯一の経路）", async () => {
-    const calls: Call[] = [];
-    await resource(calls, READ_OK).get(900);
-    expect(fieldOf(calls[0].req.url)).toBe(
-      "Id,Resource,ResourceId,ContentType,FileName,Content",
-    );
-    expect(new URL(calls[0].req.url).searchParams.get("condition")).toBe(
-      "Id:eq=900",
-    );
-  });
-});
-
-describe("createAttachmentResource — 10MB guard", () => {
+describe("createAttachmentAccessor — 10MB guard", () => {
   it("rejects content over the ~10MB limit before sending", async () => {
     const calls: Call[] = [];
     let err: unknown;
     try {
-      await resource(calls, WRITE_OK).create({
-        resource: 17,
+      await files(calls, WRITE_OK).create({
         resourceId: 1,
         contentType: "image/png",
         fileName: "big.png",
@@ -322,8 +307,7 @@ describe("createAttachmentResource — 10MB guard", () => {
 
   it("allows content exactly at the limit through", async () => {
     const calls: Call[] = [];
-    const id = await resource(calls, WRITE_OK).create({
-      resource: 17,
+    const id = await files(calls, WRITE_OK).create({
       resourceId: 1,
       contentType: "image/png",
       fileName: "ok.png",
@@ -331,5 +315,19 @@ describe("createAttachmentResource — 10MB guard", () => {
     });
     expect(id).toBe(22222);
     expect(calls).toHaveLength(1);
+  });
+
+  it("guards an update's content too", async () => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await files(calls, WRITE_OK).update(1, {
+        content: "A".repeat(14_000_001),
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect(calls).toHaveLength(0);
   });
 });

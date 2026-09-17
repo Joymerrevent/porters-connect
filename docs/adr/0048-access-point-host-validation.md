@@ -8,6 +8,9 @@
 > [findings][findings] **RV-17** の是正案。`host` は検証されないまま URL に連結されるため、書式を誤ると
 > 例外ではなく**別ホスト宛の実リクエスト**になる。[ADR-0047][adr47] で `scheme` が独立し `host` の意味が
 > 「ホスト（＋ポート）のみ」と確定した今、その契約を**実行時にも強制するか**を決める。
+>
+> **訂正（2026-09-16）**: 本文の `host` は、いまの公開 API では **`hostname`（＋別項目の `port`）**
+> を指す（[ADR-0078][adr78]）。**検証するという決定は変わらない** — 検証する値の形だけが変わった。
 > **decider が案A ＋ 機構2 を選択し `accepted`（2026-08-11）**。実装は accept 後・別 PR。
 
 ## Context and Problem Statement
@@ -182,3 +185,4 @@ decider が 2026-08-11 に選択。
 [adr9]: 0009-http-transport.md
 [adr46]: 0046-guard-error-contract.md
 [adr47]: 0047-access-point-scheme.md
+[adr78]: 0078-hostname-port-split.md

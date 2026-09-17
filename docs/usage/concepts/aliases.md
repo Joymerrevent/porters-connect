@@ -78,6 +78,43 @@ id だけを送ります。ライブラリはそれを型で分けています�
 `Option` が常に配列なのは、単一選択でも複数選択でも PORTERS が同じ形で返すからです
 （[ADR-0017][adr17]）。選択が無ければ `null` です。
 
+## 「どのリソースか」は 2 通りで現れる
+
+PORTERS は「どのリソースか」を**非連続な数値**で表します（Candidate `1` / Job `3` / Client `5` /
+Process `7` / Recruiter `9` / Sales `11` / Contract `13` / Resume `17` / Activity `19` /
+Opportunity `25` / Contact `27`）。この値は**2 つの立場**で出てきて、ライブラリでの書き方が違います。
+
+| 立場                                           | 例                                            | ライブラリ                                |
+| ---------------------------------------------- | --------------------------------------------- | ----------------------------------------- |
+| **呼び出し全体**が何の話か（URL パラメータ）   | Phase / Field / Attachment の `resource=`     | **名前で束ねる** — `t.phase.of("client")` |
+| **そのレコード**が何に付いているか（項目の値） | `Activity.P_Resource`、`Field.P_ResourceType` | **数値**（宣言した Data Type どおり）     |
+
+分かれ目は「**1 回の呼び出しで 1 つに決まるか**」です。Phase の履歴は「どのリソースのものか」を
+決めてから読みますが、アクティビティの一覧は**求職者のものと JOB のものが混ざる**のが普通なので、
+レコードごとの値になります。
+
+**数値を書く／読むときは、変換関数を使ってください**（[ADR-0079][adr79]）。欠番（`6`）や
+取り違え（Recruiter `9` と Sales `11`）は数値リテラルだと気づけません。
+
+```ts
+import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
+
+await t.activity.create({
+  P_Owner: 5,
+  P_Title: "一次面談",
+  P_Resource: resourceValueOf("candidate"), // 1
+  P_ResourceId: 10001,
+});
+
+const found = await t.activity.search({
+  condition: { P_Resource: { eq: resourceValueOf("candidate") } },
+});
+resourceNameOf(found.items[0]?.P_Resource ?? 0); // "candidate" | … | number
+```
+
+`resourceNameOf` は、**知らない数値をそのまま返します**。Resource List は PORTERS のもので増える
+ので（Contact `27` は後から増えました）、知らない値はデータとして通します。
+
 ## 型が無い項目もある
 
 PORTERS が Data Type を与えていない項目があります。reference で `ー` と書かれているもので、
@@ -109,6 +146,7 @@ PORTERS 自身が注意している点です。
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 
 [adr4]: ../../adr/0004-field-type-model.md
+[adr79]: ../../adr/0079-resource-by-name.md
 [adr16]: ../../adr/0016-field-type-granularity.md
 [adr17]: ../../adr/0017-option-read-shape.md
 [adr19]: ../../adr/0019-static-resource-types.md

@@ -227,6 +227,11 @@ type Probe = {
   accessor: (c: Ctx) => object;
   /** 渡せるものを全部渡して Read する。 */
   read: (c: Ctx) => Promise<unknown>;
+  /**
+   * 1 回では送り切れないパラメータがあるときの 2 本目（Attachment の `id` — `get` だけが送り、
+   * 一覧は `resourceId` しか送らない）。検査は 2 本の**合計**を表と突き合わせる。
+   */
+  alsoRead?: (c: Ctx) => Promise<unknown>;
   /** Write する（Read 専用のマスタには無い）。 */
   write?: (c: Ctx) => Promise<unknown>;
 };
@@ -265,10 +270,10 @@ const PROBES: Probe[] = [
   },
   {
     endpoint: "/v1/field",
-    accessor: ({ t }) => t.field,
+    // `resource` は URL パラメータなので `of()` で束ねる（ADR-0080）。Phase と同じ形。
+    accessor: ({ t }) => t.field.of("candidate"),
     read: ({ t }) =>
-      t.field.search({
-        resource: "candidate",
+      t.field.of("candidate").search({
         active: -1,
         count: 5,
         start: 0,
@@ -304,15 +309,13 @@ const PROBES: Probe[] = [
   },
   {
     endpoint: "/v1/attachment",
-    accessor: ({ t }) => t.attachment,
+    accessor: ({ t }) => t.attachment.of("candidate"),
     read: ({ t }) =>
-      t.attachment.search({
-        field: ["Id"],
-        condition: { "Id:eq": "1" },
-        count: 5,
-        start: 0,
-      }),
-    write: ({ t }) => t.attachment.update(SEEDED_ID, {}),
+      t.attachment
+        .of("candidate")
+        .search({ resourceId: SEEDED_ID, count: 5, start: 0 }),
+    alsoRead: ({ t }) => t.attachment.of("candidate").get(SEEDED_ID),
+    write: ({ t }) => t.attachment.of("candidate").update(SEEDED_ID, {}),
   },
 ];
 
@@ -348,7 +351,7 @@ const createProbeClient = (
     },
   };
   const porters = new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     scopes: ["candidate_r"],
@@ -508,8 +511,17 @@ describe("V1 マトリクス: 表 B / 表 C ↔ 実装（ライブラリが送�
     "$endpoint の Read が組み立てる URL が表どおり（過不足なし）",
     async (probe) => {
       const { ctx, params } = createProbeClient();
-      const actual = await params(probe.endpoint, () => probe.read(ctx));
-      expect(actual).toEqual(expectedParams(probe.endpoint));
+      const sent = await params(probe.endpoint, () => probe.read(ctx));
+      // 2 本目がある場合の合計。載せ忘れも余分な送信も、この 1 つの一致で落ちる。
+      const also = probe.alsoRead
+        ? await params(
+            probe.endpoint,
+            () => probe.alsoRead?.(ctx) ?? Promise.resolve(),
+          )
+        : [];
+      expect([...new Set([...sent, ...also])].sort()).toEqual(
+        expectedParams(probe.endpoint),
+      );
     },
   );
 });

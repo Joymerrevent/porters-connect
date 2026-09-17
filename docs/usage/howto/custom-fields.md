@@ -16,7 +16,7 @@ const fields = defineFields({
   candidate: (f) => ({ U_score: f.number(), U_source: f.option() }),
 });
 
-const porters = new PortersClient({ host, appId, appSecret, fields });
+const porters = new PortersClient({ hostname, appId, appSecret, fields });
 const t = porters.tenant(partition);
 ```
 
@@ -104,7 +104,7 @@ await t.candidate.update(10001, { U_score: 80 } as CandidateUpdateInput);
 
 ただし **PORTERS 側では項目を入力必須に設定できます**。その状態は Field Read の `P_Required`
 （`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まらず、
-PORTERS が弾きます**。必須で運用している項目があるなら、`t.field.search({ resource: "candidate" })`
+PORTERS が弾きます**。必須で運用している項目があるなら、`t.field.of("candidate").search()`
 で `P_Required` を見て、アプリ側で確かめてください。
 
 入口はどれも同じ扱いです。`U_hiredOn` を宣言していなければ、**4 つとも型エラー**になります。
@@ -172,7 +172,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -294,7 +294,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 生の項目定義が見たいときは `t.field` がそのまま使えます。
 
 ```ts
-for await (const f of t.field.searchAll({ resource: "candidate" })) {
+for await (const f of t.field.of("candidate").searchAll()) {
   console.log(f.P_Alias, f.P_Name, f.P_Type); // 例: Person.U_score, 適性スコア, 3
 }
 ```
@@ -346,7 +346,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 ```ts
 const clientFor = (fields: DefinedFields) =>
-  new PortersClient({ host, appId, appSecret, fields });
+  new PortersClient({ hostname, appId, appSecret, fields });
 
 // partition は tenant(id) で束ねます（ADR-0055）
 const t = clientFor(myFields).tenant(partition);
@@ -378,7 +378,7 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -458,7 +458,12 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
   return page.items[0]?.U_score;
 };
 
-const porters = new PortersClient({ host, appId, appSecret, fields: other });
+const porters = new PortersClient({
+  hostname,
+  appId,
+  appSecret,
+  fields: other,
+});
 void topScorers(porters.tenant(1)); // ✗ 型エラー：U_score を宣言していない
 ```
 
@@ -484,7 +489,7 @@ const fields = defineFields({
 });
 
 const options: PortersClientOptions<typeof fields> = {
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   fields,
@@ -507,7 +512,7 @@ const fields = defineFields({
 });
 
 const bare: PortersClientOptions = {
-  host: "xxxxx.example.com",
+  hostname: "xxxxx.example.com",
   appId: "a",
   appSecret: "s",
   fields, // 代入は通る

@@ -26,7 +26,7 @@ npm i @joymerrevent/porters-connect
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
@@ -40,23 +40,29 @@ const porters = new PortersClient({
 
 ```ts
 const withScopes = new PortersClient({
-  host: process.env.PORTERS_HOST ?? "",
+  hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
   scopes: ["partition_r", "candidate_r", "user_r", "option_r"],
 });
 ```
 
-## `host` は**ホスト名だけ**
+## `hostname` は**サーバー名だけ**
 
-スキームやパスを混ぜると、**構築した瞬間に `PortersConfigError` で落ちます**。
+契約で渡されるのは**サーバー名**です（PORTERS の記事も「該当のサーバー名を入れてください」と
+書いています）。スキーム・パス・**ポート**を混ぜると、**構築した瞬間に `PortersConfigError` で
+落ちます**。
 
-| 書き方                        | どうなるか              |
-| ----------------------------- | ----------------------- |
-| `"xxxxx.example.com"`         | ✓                       |
-| `"xxxxx.example.com:8443"`    | ✓（ポートは付けてよい） |
-| `"https://xxxxx.example.com"` | ✗ 構築時に落ちる        |
-| `"xxxxx.example.com/v1"`      | ✗ 構築時に落ちる        |
+| 書き方                                  | どうなるか           |
+| --------------------------------------- | -------------------- |
+| `hostname: "xxxxx.example.com"`         | ✓                    |
+| `hostname: "127.0.0.1", port: 4010`     | ✓（ポートは別項目）  |
+| `hostname: "xxxxx.example.com:8443"`    | ✗ ポートは `port` へ |
+| `hostname: "https://xxxxx.example.com"` | ✗ 構築時に落ちる     |
+| `hostname: "xxxxx.example.com/v1"`      | ✗ 構築時に落ちる     |
+
+**`port` は普段要りません。** PORTERS は名前と https で届くので、使うのはローカルの
+フェイクサーバーやプロキシに向けるときだけです。
 
 **黙って別のホストを叩くより、起動時に落ちるほうが安全**だからです。平文の `http` は
 `scheme: "http"` を**明示したときだけ**使えて、毎プロセス 1 回警告が出ます

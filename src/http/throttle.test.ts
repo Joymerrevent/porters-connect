@@ -156,40 +156,40 @@ describe("createThrottleRegistry (per-host buckets, ADR-0073)", () => {
 
   it("同じホストには同じバケットを返す", () => {
     const { registry, made } = counting();
-    const a = registry.forHost("xxxxx.example.com");
-    const b = registry.forHost("xxxxx.example.com");
+    const a = registry.forAuthority("xxxxx.example.com");
+    const b = registry.forAuthority("xxxxx.example.com");
     expect(b).toBe(a);
     expect(made()).toBe(1);
   });
 
   it("違うホストには別のバケットを返す", () => {
     const { registry, made } = counting();
-    const a = registry.forHost("xxxxx.example.com");
-    const b = registry.forHost("127.0.0.1:4010");
+    const a = registry.forAuthority("xxxxx.example.com");
+    const b = registry.forAuthority("127.0.0.1:4010");
     expect(b).not.toBe(a);
     expect(made()).toBe(2);
   });
 
   it("ホスト名の大小は無視する（ホストは case-insensitive）", () => {
     const { registry, made } = counting();
-    const a = registry.forHost("XXXXX.Example.COM");
-    const b = registry.forHost("xxxxx.example.com");
+    const a = registry.forAuthority("XXXXX.Example.COM");
+    const b = registry.forAuthority("xxxxx.example.com");
     expect(b).toBe(a);
     expect(made()).toBe(1);
   });
 
   it("ポートが違えば別のバケット（別の宛先だから）", () => {
     const { registry } = counting();
-    expect(registry.forHost("localhost:4010")).not.toBe(
-      registry.forHost("localhost:4011"),
+    expect(registry.forAuthority("localhost:4010")).not.toBe(
+      registry.forAuthority("localhost:4011"),
     );
   });
 
   it("reset() で忘れる（テスト用の継ぎ目）", () => {
     const { registry, made } = counting();
-    const before = registry.forHost("xxxxx.example.com");
+    const before = registry.forAuthority("xxxxx.example.com");
     registry.reset();
-    expect(registry.forHost("xxxxx.example.com")).not.toBe(before);
+    expect(registry.forAuthority("xxxxx.example.com")).not.toBe(before);
     expect(made()).toBe(2);
   });
 });

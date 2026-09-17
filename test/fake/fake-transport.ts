@@ -114,7 +114,7 @@ const header = (req: TransportRequest, name: string): string | undefined => {
  *
  * @example
  * const fake = createFakeTransport();
- * const porters = new PortersClient({ host: "fake.test", appId: "a", appSecret: "s",
+ * const porters = new PortersClient({ hostname: "fake.test", appId: "a", appSecret: "s",
  *   partition: 1, transport: fake });
  * const id = await porters.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
  * fake.control.failNext({ kind: "resultCode", code: 403 }); // next call fails deterministically
@@ -257,7 +257,13 @@ export const createFakeTransport = (
     };
 
   const handleRead = (url: URL, resource: FakeResource): TransportResponse => {
-    const query = parseReadQuery(url, resource.descriptor.prefix);
+    // Attachment reads its own Input Variables (ADR-0081); everything else the common ones.
+    const parsed = resource.readQuery?.(url);
+    if (parsed?.ok === false) {
+      return resourceError(resource, parsed.code, parsed.message);
+    }
+    const query =
+      parsed?.query ?? parseReadQuery(url, resource.descriptor.prefix);
     const { items, total } = runReadQuery(
       store.list(resource.descriptor.path),
       query,

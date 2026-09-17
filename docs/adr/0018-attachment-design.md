@@ -8,6 +8,12 @@
 > バイパス＋10MB ガード** で accepted（2026-06-16）。実装（`resources/attachment.ts`・`util/base64.ts`・
 > requester のフラグ・公開型）は別 PR で反映する。
 > [ADR-0003][0003]（MVP に Attachment）・[ADR-0005][0005]（公開 API）・[ADR-0011][0011]（XML）・basic-design §9 を具体化する。
+>
+> **改訂（2026-09-17・[ADR-0081][0081]）**: 下記のうち **Read のパラメータだけ**が差し替わった。
+> 本 ADR は reference を整備する前に書かれ、Read を他リソースと同じ `field` / `condition` で
+> 組み立てたが、出典の `Attachment - Read` はどちらも挙げていない。いまは `requestType` /
+> `resource` / `resourceId` / `id` を送る。**(1) 専用アクセサ・(2) Base64 string＋util・
+> (3) 15000 バイパス＋10MB ガードは有効のまま。**
 
 ## Context and Problem Statement
 
@@ -58,7 +64,13 @@ MVP 最後のリソース Attachment（添付ファイル）は、他の 5 リ�
 - **(2) → 案2C**。Attachment の値型は **Base64 `string`**（薄い・依存なし・portable）。加えて `util` に **`bytesToBase64` / `base64ToBytes`（依存なしクロスプラットフォーム純関数）を opt-in 提供**し、人に優しさを保つ。`Uint8Array` 直接受け口（案2B）はコアに入れず将来 opt-in 可。
 - **(3) → 案3A**。`RequestSpec` にフラグ（例 `unboundedBody`）を足し **Attachment Write は 15000 ガードをスキップ**。代わりに Attachment アクセサで **Content が約 10MB を超える送信を `PortersConfigError` で弾く**（正しい閾値でフェイルセーフ）。
 
-補足（軽微）: Read は標準の `field` で制御（`Content` は大きいので必要時に要求）、decode は passthrough（全項目文字列）。`Resource` は**種別コードを passthrough**（Resource List は docs 参照。名前↔コードの enum は将来）。
+補足（軽微）: ~~Read は標準の `field` で制御（`Content` は大きいので必要時に要求）~~、decode は passthrough（全項目文字列）。`Resource` は**種別コードを passthrough**（Resource List は docs 参照。名前↔コードの enum は将来）。
+
+> **訂正（[ADR-0081][0081]）**: Read の制御は `field` ではなく出典の `requestType`（`0` = 本体あり /
+> `1` = なし）で、どちらを送るかは**メソッドが決める**（`get` / `search`。[ADR-0075][0075]）。
+> `Resource` を passthrough する点は変わらないが、**どのリソースの添付かは `of(name)` で束ねる**
+> ようになり、`create` の入力から `resource` は消えた（[ADR-0080][0080]）。「名前 ↔ コードの enum は将来」は
+> [ADR-0079][0079] の `resourceValueOf` / `resourceNameOf` で実現している。
 
 ### Consequences
 
@@ -91,6 +103,10 @@ MVP 最後のリソース Attachment（添付ファイル）は、他の 5 リ�
 - 出典: Attachment Read/Write・Mime Type List（`docs/reference/resource-api/resources/attachment.md`）。10MB/ファイル・FileName 255 バイト以内。
 - 反映（accepted 後）: `resources/attachment.ts`（専用）・`util/base64.ts`（opt-in）・`http/requester.ts`（ガードのフラグ）・公開 API に Attachment 型。
 
+[0075]: 0075-attachment-search-all.md
+[0079]: 0079-resource-by-name.md
+[0080]: 0080-resource-parameter-binding.md
+[0081]: 0081-attachment-read-parameters.md
 [0003]: 0003-add-attachment-to-mvp.md
 [0005]: 0005-public-api-shape.md
 [0011]: 0011-xml-parse-serialize.md

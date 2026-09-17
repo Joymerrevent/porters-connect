@@ -21,7 +21,7 @@ partition の前提は [認証 & マルチテナント設計][bd] を参照し�
 相手が 1 partition なら、**起動時に一度束ねて使い回します**。以降は `t` をクライアントのように扱えます。
 
 ```ts
-const porters = new PortersClient({ host, appId, appSecret });
+const porters = new PortersClient({ hostname, appId, appSecret });
 const t = porters.tenant(Number(process.env.PORTERS_PARTITION));
 
 await t.candidate.search({ condition: { P_Name: { part: "山田" } } });
@@ -48,7 +48,7 @@ const t = porters.tenant(partition);
 
 await t.candidate.search(query); // partition=<partition> で送信
 const job = await t.job.get(jobId);
-await t.attachment.create(file);
+await t.attachment.of("resume").create(file);
 ```
 
 - 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
@@ -68,7 +68,7 @@ await t.attachment.create(file);
 ```ts
 // partition ごとに別のトークン置き場を与える＝トークンが混ざらない
 const clientFor = (tokenStore: TokenStore) =>
-  new PortersClient({ host, appId, appSecret, tokenStore });
+  new PortersClient({ hostname, appId, appSecret, tokenStore });
 
 const t = clientFor(tokenStore).tenant(partition);
 ```

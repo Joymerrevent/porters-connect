@@ -58,7 +58,7 @@ const stub = (body: string, calls: Call[]): Requester => ({
 const resource = (calls: Call[], body: string) =>
   createProcessResource({
     requester: stub(body, calls),
-    accessPoint: { host: "h.test" },
+    accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 

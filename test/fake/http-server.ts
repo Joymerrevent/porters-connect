@@ -12,7 +12,7 @@
 //
 // http, not https: the fake needs no certificate, and self-signed TLS was explicitly rejected
 // (ADR-0043 D-アクセスポイント / ADR-0047). Since phase 6 the library reaches it by configuration
-// alone — `new PortersClient({ host: "127.0.0.1:<port>", scheme: "http" })`; the transport swap in
+// alone — `new PortersClient({ hostname: "127.0.0.1", port: <port>, scheme: "http" })`; the transport swap in
 // `http-transport.ts` remains for apps whose configuration cannot be touched.
 
 import { createServer, type IncomingMessage, type Server } from "node:http";

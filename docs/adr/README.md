@@ -74,9 +74,12 @@
 
 ### 【詳細設計】
 
-- **未起票の論点はなし**（HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／
-  トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／マスタ Read は
-  すべて起票済み。各々の状態は [索引][index] を参照）。
+- **未起票の論点はなし**（ここへ挙げていた「必須の `resource` をどう束ねるか」は
+  [0080][0080]（URL パラメータのリソースは `of()` で束ねる）と [0081][0081]（Attachment の Read を
+  出典の語彙に）で決着・実装済み。Field / Phase / Attachment の 3 本が `of()` に揃った）。
+- 上記以外の未起票の論点はなし（HTTP トランスポート／リトライ・スロットリング／XML パース・
+  シリアライズ／トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／
+  マスタ Read はすべて起票済み。各々の状態は [索引][index] を参照）。
 
 ### ADR を起こさずに決着した論点（記録）
 
@@ -109,6 +112,8 @@
 [0007]: 0007-oauth-public-surface.md
 [0008]: 0008-multitenancy-partition.md
 [0038]: 0038-read-query-surface-impl.md
+[0080]: 0080-resource-parameter-binding.md
+[0081]: 0081-attachment-read-parameters.md
 [0042]: 0042-supported-version-policy.md
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md

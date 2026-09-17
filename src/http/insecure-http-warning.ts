@@ -28,7 +28,7 @@ export type InsecureSchemeWarner = {
    * (and for no scheme at all), and while {@link SUPPRESS_INSECURE_HTTP_WARNING_ENV} is set to
    * anything other than `0` / `false` / empty.
    */
-  warn(scheme: Scheme | undefined, host: string): void;
+  warn(scheme: Scheme | undefined, authority: string): void;
   /** Forget that the warning was emitted (test seam). */
   reset(): void;
 };
@@ -36,13 +36,13 @@ export type InsecureSchemeWarner = {
 export const createInsecureSchemeWarner = (): InsecureSchemeWarner => {
   let warned = false;
   return {
-    warn: (scheme, host) => {
+    warn: (scheme, authority) => {
       // Suppression is checked before the latch is set: a warning nobody saw is not one delivered,
       // so dropping the env var later must still produce it.
       if (scheme !== "http" || warned || suppressed()) return;
       warned = true;
       console.warn(
-        `[porters-connect] scheme: "http" — requests to ${host} (the OAuth token header included) ` +
+        `[porters-connect] scheme: "http" — requests to ${authority} (the OAuth token header included) ` +
           "are sent in cleartext. Use https unless this is a local fake server or a trusted tunnel. " +
           `Set ${SUPPRESS_INSECURE_HTTP_WARNING_ENV}=1 to silence this warning.`,
       );
@@ -59,8 +59,8 @@ const processWarner = createInsecureSchemeWarner();
 /** Warn (once per process) that the configured access point is plain http. */
 export const warnIfInsecureScheme = (
   scheme: Scheme | undefined,
-  host: string,
-): void => processWarner.warn(scheme, host);
+  authority: string,
+): void => processWarner.warn(scheme, authority);
 
 /** Test seam: clear the once-per-process latch. Not part of the published API. */
 export const resetInsecureSchemeWarning = (): void => processWarner.reset();

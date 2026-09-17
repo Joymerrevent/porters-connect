@@ -3,7 +3,7 @@
 // Dev-only by construction: this lives outside `src/`, so it ships in no tarball (`files` = dist)
 // and is not coverage-measured (vitest coverage include = `src/**`) — yet it is still tested, so
 // the fake itself stays trustworthy. It implements the public `Transport` seam, which means the
-// library runs against it completely unchanged: no HTTP, no TLS, no `host` rewiring (the startable
+// library runs against it completely unchanged: no HTTP, no TLS, no `hostname` rewiring (the startable
 // HTTP server adapter is phase 5 of the plan).
 
 import type { Transport } from "../../src/http/types";

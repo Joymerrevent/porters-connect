@@ -17,7 +17,7 @@ import { createMockTransport } from "../../src/http/mock-transport";
 // deterministic, and it makes the auth surface fail too, which the auto-answered default would not.
 const setup = () =>
   new PortersClient({
-    host: "fake.test",
+    hostname: "fake.test",
     appId: "app-id",
     appSecret: "app-secret",
     scopes: ["candidate_r"],
@@ -67,13 +67,12 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
         .candidate.updateMany([{ id: 1, fields: { P_Name: "x" } }]),
   ],
   // Attachment (bespoke accessor, its own 10MB guard)
-  ["attachment.search", () => porters.tenant(1).attachment.search()],
-  ["attachment.get", () => porters.tenant(1).attachment.get(1)],
+  ["attachment.search", () => porters.tenant(1).attachment.of("job").search()],
+  ["attachment.get", () => porters.tenant(1).attachment.of("job").get(1)],
   [
     "attachment.create (10MB guard)",
     () =>
-      porters.tenant(1).attachment.create({
-        resource: 3,
+      porters.tenant(1).attachment.of("job").create({
         resourceId: 1,
         contentType: "text/plain",
         fileName: "big.txt",
@@ -82,16 +81,14 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
   ],
   [
     "attachment.update (10MB guard)",
-    () => porters.tenant(1).attachment.update(1, { content: OVER_10MB }),
+    () =>
+      porters.tenant(1).attachment.of("job").update(1, { content: OVER_10MB }),
   ],
   // Master Read
   ["partition.search", () => porters.partition.search()],
   ["user.search", () => porters.tenant(1).user.search()],
   ["user.current", () => porters.tenant(1).user.current()],
-  [
-    "field.search",
-    () => porters.tenant(1).field.search({ resource: "candidate" }),
-  ],
+  ["field.search", () => porters.tenant(1).field.of("candidate").search()],
   ["option.search", () => porters.tenant(1).option.search()],
   // OAuth surface (the string-returning authorizationUrl / revokeUrl are deliberately absent —
   // they return no Promise, so synchronous throwing is correct there).

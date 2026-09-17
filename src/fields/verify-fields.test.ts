@@ -11,22 +11,24 @@ const sourceOf = (
   byResource: Readonly<Record<string, readonly Partial<Field>[] | Error>>,
 ): FieldCatalogSource => ({
   field: {
-    searchAll: (query) => {
-      const rows = byResource[query.resource] ?? [];
-      let i = 0;
-      return {
-        [Symbol.asyncIterator]: () => ({
-          next: () =>
-            rows instanceof Error
-              ? Promise.reject(rows)
-              : Promise.resolve(
-                  i < rows.length
-                    ? { done: false as const, value: rows[i++] }
-                    : { done: true as const, value: undefined },
-                ),
-        }),
-      };
-    },
+    of: (resource) => ({
+      searchAll: () => {
+        const rows = byResource[resource] ?? [];
+        let i = 0;
+        return {
+          [Symbol.asyncIterator]: () => ({
+            next: () =>
+              rows instanceof Error
+                ? Promise.reject(rows)
+                : Promise.resolve(
+                    i < rows.length
+                      ? { done: false as const, value: rows[i++] }
+                      : { done: true as const, value: undefined },
+                  ),
+          }),
+        };
+      },
+    }),
   },
 });
 
@@ -223,36 +225,40 @@ describe("verifyFields", () => {
     const queries: unknown[] = [];
     const source: FieldCatalogSource = {
       field: {
-        searchAll: (query) => {
-          queries.push(query);
-          return {
-            [Symbol.asyncIterator]: () => ({
-              next: () =>
-                Promise.resolve({ done: true as const, value: undefined }),
-            }),
-          };
-        },
+        of: (resource) => ({
+          searchAll: (query) => {
+            queries.push({ resource, query });
+            return {
+              [Symbol.asyncIterator]: () => ({
+                next: () =>
+                  Promise.resolve({ done: true as const, value: undefined }),
+              }),
+            };
+          },
+        }),
       },
     };
 
     await verifyFields(source, defineFields({ job: () => ({}) }));
 
-    expect(queries).toEqual([{ resource: "job", active: -1 }]);
+    expect(queries).toEqual([{ resource: "job", query: { active: -1 } }]);
   });
 
   it("passes an explicit active through", async () => {
     const queries: unknown[] = [];
     const source: FieldCatalogSource = {
       field: {
-        searchAll: (query) => {
-          queries.push(query);
-          return {
-            [Symbol.asyncIterator]: () => ({
-              next: () =>
-                Promise.resolve({ done: true as const, value: undefined }),
-            }),
-          };
-        },
+        of: (resource) => ({
+          searchAll: (query) => {
+            queries.push({ resource, query });
+            return {
+              [Symbol.asyncIterator]: () => ({
+                next: () =>
+                  Promise.resolve({ done: true as const, value: undefined }),
+              }),
+            };
+          },
+        }),
       },
     };
 
@@ -260,7 +266,7 @@ describe("verifyFields", () => {
       active: 1,
     });
 
-    expect(queries).toEqual([{ resource: "job", active: 1 }]);
+    expect(queries).toEqual([{ resource: "job", query: { active: 1 } }]);
   });
 
   it("accepts a plain catalog map, not only a branded declaration", async () => {
