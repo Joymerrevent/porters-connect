@@ -82,62 +82,66 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 検査は各アクセサを実際に呼び、組み立てられた URL のパラメータ集合が下表と**一致する**ことを見る
 （載せ忘れも、余分な送信も、どちらも落ちる）。
 
-| エンドポイント    | partition | count | start | field         | condition     | keywords | order | itemstate |
-| ----------------- | --------- | ----- | ----- | ------------- | ------------- | -------- | ----- | --------- |
-| `/v1/partition`   | —         | 送る  | 送る  | —             | —             | —        | —     | —         |
-| `/v1/user`        | 送る      | 送る  | 送る  | 送る          | —             | —        | —     | —         |
-| `/v1/field`       | 送る      | 送る  | 送る  | —             | —             | —        | —     | —         |
-| `/v1/option`      | 送る      | 送る  | —     | —             | —             | —        | —     | —         |
-| `/v1/candidate`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/job`         | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/client`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/recruiter`   | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/contact`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/resume`      | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/process`     | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/activity`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/contract`    | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/sales`       | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/opportunity` | 送る      | 送る  | 送る  | 送る          | 送る          | 送る     | 送る  | 送る      |
-| `/v1/phase`       | 送る      | 送る  | 送る  | 送る          | 送る          | —        | 送る  | —         |
-| `/v1/attachment`  | 送る      | 送る  | 送る  | 送る ⚠️ LV-24 | 送る ⚠️ LV-24 | —        | —     | —         |
+| エンドポイント    | partition | count | start | field | condition | keywords | order | itemstate |
+| ----------------- | --------- | ----- | ----- | ----- | --------- | -------- | ----- | --------- |
+| `/v1/partition`   | —         | 送る  | 送る  | —     | —         | —        | —     | —         |
+| `/v1/user`        | 送る      | 送る  | 送る  | 送る  | —         | —        | —     | —         |
+| `/v1/field`       | 送る      | 送る  | 送る  | —     | —         | —        | —     | —         |
+| `/v1/option`      | 送る      | 送る  | —     | —     | —         | —        | —     | —         |
+| `/v1/candidate`   | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/job`         | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/client`      | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/recruiter`   | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/contact`     | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/resume`      | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/process`     | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/activity`    | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/contract`    | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/sales`       | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/opportunity` | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
+| `/v1/phase`       | 送る      | 送る  | 送る  | 送る  | 送る      | —        | 送る  | —         |
+| `/v1/attachment`  | 送る      | 送る  | 送る  | —     | —         | —        | —     | —         |
 
-**ずれているセルは 2 つ**（どちらも Attachment）。Phase の 2 つは [ADR-0076][adr76] で解消した。
+**ずれているセルは無い**。V1 で見つかった 4 つはすべて解消した。
 
 - ~~**Phase の `keywords` / `itemstate`**~~ — **解消**（[ADR-0076][adr76]）。汎用 factory に
   「このエンドポイントは取らないキー」を表す型引数を足し、Phase の公開型から 2 つを外した。
   PORTERS が受け付けるかどうかは未確認のまま（[LV-25][lv]）だが、**既定では送らない**側に倒れた。
-- **Attachment の `field` / `condition`** — 出典の Attachment - Read はどちらも挙げていない。
-  ライブラリは `field` で本体（`Content`）を取るかどうかを決め（[ADR-0020][adr20]）、
-  `get(id)` は `condition` で 1 件に絞る（[ADR-0018][adr18]）。既存の [LV-3][lv] / [LV-4][lv] が
-  この 2 つの前提をそのまま指している。
+- ~~**Attachment の `field` / `condition`**~~ — **解消**（[ADR-0081][adr81]）。出典の
+  Attachment - Read はどちらも挙げていない。本体を取るかどうかは出典どおり `requestType` で決め、
+  1 件への絞り込みは `id` / `resourceId` で書くようにして、両方とも送らなくなった（表 C）。
+  出典の形が実機で通るかは [LV-24][lv] で確かめる。
 
 ## 表 C — エンドポイント固有の Read パラメータ
 
 共通表に無い、そのエンドポイントだけのパラメータ。
 
-| エンドポイント   | パラメータ     | PORTERS | ライブラリ           | 根拠・備考                                                                 |
-| ---------------- | -------------- | ------- | -------------------- | -------------------------------------------------------------------------- |
-| `/v1/partition`  | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 到達できる Partition の一覧）                      |
-| `/v1/user`       | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 全ユーザー。`current()` は 0）                     |
-| `/v1/user`       | `user_type`    | ○       | 送る                 | `userType`（既定 -1 = すべて）                                             |
-| `/v1/field`      | `resource`     | ●       | 送る                 | `t.field.of("candidate")` が 1 回束ねる（[ADR-0080][adr80]）               |
-| `/v1/field`      | `active`       | ○       | 送る                 | `active`（既定 -1 = すべて）                                               |
-| `/v1/option`     | `alias`        | ○       | 送る                 | `alias`                                                                    |
-| `/v1/option`     | `level`        | ○       | 送る                 | `level`（既定 -1 = すべての階層）                                          |
-| `/v1/option`     | `enabled`      | ○       | 送る                 | `enabled`（既定 -1 = すべて）                                              |
-| `/v1/phase`      | `resource`     | ●       | 送る                 | `t.phase.of("client")` が 1 回束ねる（[ADR-0061][adr61] 案2a）             |
-| `/v1/phase`      | `resourceId`   | ○       | 送らない ⛔ ADR-0061 | `condition: { ResourceId: … }` で書く（出典も or 検索は condition と言う） |
-| `/v1/phase`      | `id`           | ○       | 送らない ⛔ ADR-0061 | 同上。`get(id)` も `condition` で 1 件に絞る                               |
-| `/v1/attachment` | `requestType`  | ●       | 送らない ⚠️ LV-24    | 本体を取るかを `field` で決めており、このパラメータを送っていない          |
-| `/v1/attachment` | `resource`     | ●       | 送らない ⚠️ LV-24    | 必須と書かれているが送っていない。絞り込みは `condition` で書く            |
-| `/v1/attachment` | `resourceId`   | ○       | 送らない ⚠️ LV-3     | `condition: { "ResourceId:eq": "…" }` で書く                               |
-| `/v1/attachment` | `id`           | ○       | 送らない ⚠️ LV-3     | `get(id)` は `condition: { "Id:eq": "…" }`                                 |
+| エンドポイント   | パラメータ     | PORTERS | ライブラリ           | 根拠・備考                                                                      |
+| ---------------- | -------------- | ------- | -------------------- | ------------------------------------------------------------------------------- |
+| `/v1/partition`  | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 到達できる Partition の一覧）                           |
+| `/v1/user`       | `request_type` | ●       | 送る                 | `requestType`（既定 1 = 全ユーザー。`current()` は 0）                          |
+| `/v1/user`       | `user_type`    | ○       | 送る                 | `userType`（既定 -1 = すべて）                                                  |
+| `/v1/field`      | `resource`     | ●       | 送る                 | `t.field.of("candidate")` が 1 回束ねる（[ADR-0080][adr80]）                    |
+| `/v1/field`      | `active`       | ○       | 送る                 | `active`（既定 -1 = すべて）                                                    |
+| `/v1/option`     | `alias`        | ○       | 送る                 | `alias`                                                                         |
+| `/v1/option`     | `level`        | ○       | 送る                 | `level`（既定 -1 = すべての階層）                                               |
+| `/v1/option`     | `enabled`      | ○       | 送る                 | `enabled`（既定 -1 = すべて）                                                   |
+| `/v1/phase`      | `resource`     | ●       | 送る                 | `t.phase.of("client")` が 1 回束ねる（[ADR-0061][adr61] 案2a）                  |
+| `/v1/phase`      | `resourceId`   | ○       | 送らない ⛔ ADR-0061 | `condition: { ResourceId: … }` で書く（出典も or 検索は condition と言う）      |
+| `/v1/phase`      | `id`           | ○       | 送らない ⛔ ADR-0061 | 同上。`get(id)` も `condition` で 1 件に絞る                                    |
+| `/v1/attachment` | `requestType`  | ●       | 送る                 | 本体を運ぶかはメソッドが決める（`get` は 0、`search` は 1 — [ADR-0075][adr75]） |
+| `/v1/attachment` | `resource`     | ●       | 送る                 | `t.attachment.of("resume")` が 1 回束ねる（[ADR-0080][adr80]）                  |
+| `/v1/attachment` | `resourceId`   | ○       | 送る                 | `search({ resourceId })` — 1 レコードの添付だけに絞る                           |
+| `/v1/attachment` | `id`           | ○       | 送る                 | `get(id)` が送る（一覧側は送らない）                                            |
+
+**`/v1/attachment` の 4 つは 1 回の呼び出しでは出揃わない** — `resourceId` は一覧だけ、`id` は
+`get` だけが送る。検査は 2 本（`search` と `get`）の**合計**が上表と一致することを見る。
 
 ## 表 D — Read の操作（公開メソッド）
 
 パラメータではなく**呼べるもの**。`get` は「主キーで 1 件取る」の意味で、PORTERS 側に専用の
-エンドポイントは無く `condition` で 1 件に絞る。`searchAll` はオフセット式ページングの自動化なので、
+エンドポイントは無く `condition` で 1 件に絞る（[Attachment][r-attachment] だけは `id` パラメータを
+持つので、そちらで絞る — 表 C）。`searchAll` はオフセット式ページングの自動化なので、
 `start` を取らないエンドポイントには置けない。
 
 | エンドポイント    | search | searchAll            | get  |
@@ -166,7 +170,8 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
   ページングの無い Read なので `search` が全件返す。
 - **`/v1/attachment` の `searchAll`** は [ADR-0075][adr75] で足した（[RV-45][rv45] は fixed）。
   走査は**メタデータだけ**で、ファイル本体（`Content`）は `get(id)` でしか運ばない — 200 件ぶんの
-  本体は V8 の文字列上限を越えて読めないため（根拠と実測は ADR にある）。
+  本体は V8 の文字列上限を越えて読めないため（根拠と実測は ADR にある）。この「運ぶ／運ばない」は
+  出典の `requestType` そのもので、`search` / `searchAll` が 1、`get` が 0 を送る（表 C）。
 
 ## 表 E — Write エンドポイント × 機能
 
@@ -235,14 +240,13 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [adr41]: ../adr/0041-bulk-write-surface-impl.md
 [adr64]: ../adr/0064-link-image-types.md
 [adr42]: ../adr/0042-supported-version-policy.md
-[adr20]: ../adr/0020-read-field-default.md
-[adr18]: ../adr/0018-attachment-design.md
 [adr16]: ../adr/0016-field-type-granularity.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md
 [refcat]: ../../test/integration/reference-catalog.test.ts
 [adr22]: ../adr/0022-master-read-query-surface.md
 [rv45]: ../reviews/rv/0045-attachment-search-all-absent.md
 [adr75]: ../adr/0075-attachment-search-all.md
+[adr81]: ../adr/0081-attachment-read-parameters.md
 [rapi]: ../usage/reference/resource-api/README.md
 [r-partition]: ../usage/reference/resource-api/resources/partition.md
 [r-user]: ../usage/reference/resource-api/resources/user.md

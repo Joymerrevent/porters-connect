@@ -8,37 +8,27 @@
 
 > **AttachmentSearchQuery** = `object`
 
-Defined in: [src/resources/attachment.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L77)
+Defined in: [src/resources/attachment.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L76)
 
 ## Properties
-
-### condition?
-
-> `optional` **condition?**: `Record`\<`string`, `string`\>
-
-Defined in: [src/resources/attachment.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L86)
-
-***
 
 ### count?
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/attachment.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L87)
+Defined in: [src/resources/attachment.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L83)
 
 ***
 
-### field?
+### resourceId?
 
-> `optional` **field?**: [`AttachmentMetaField`](AttachmentMetaField.md)[]
+> `optional` **resourceId?**: `number`
 
-Defined in: [src/resources/attachment.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L85)
+Defined in: [src/resources/attachment.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L82)
 
-Output fields — **metadata only**. Omit for all five (Id / Resource / ResourceId /
-ContentType / FileName), or pass `[]` for the API-native primary-key-only response.
-
-The file body is **not** on this list: a listing never carries it, whatever the count
-(ADR-0075). Read a body with [AttachmentResource.get](AttachmentResource.md#get), one record at a time.
+Narrow to one record's attachments — the id **within the bound resource**
+(`t.attachment.of("resume")` -> a `Resume.P_Id`). Omit to read the whole resource's
+attachments.
 
 ***
 
@@ -46,4 +36,4 @@ The file body is **not** on this list: a listing never carries it, whatever the 
 
 > `optional` **start?**: `number`
 
-Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L88)
+Defined in: [src/resources/attachment.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L84)

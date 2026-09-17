@@ -455,7 +455,7 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
       auth: { getAccessToken: () => Promise.resolve("TKN") },
     });
 
-    const page = await client.tenant(999).attachment.search();
+    const page = await client.tenant(999).attachment.of("resume").search();
     expect(page.items[0]?.id).toBe(11111); // Id -> number, via the wired accessor
     expect(page.items[0]?.fileName).toBe("cv.pdf");
   });
@@ -507,7 +507,7 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     const rec = recording();
     const t = tenantClient(rec.transport).tenant(42);
     await t.candidate.search(); // data resource
-    await t.attachment.search(); // bespoke Attachment
+    await t.attachment.of("resume").search(); // bespoke Attachment
     await t.user.search(); // master Read
     expect(rec.calls).toHaveLength(3);
     for (const c of rec.calls) expect(c.url).toContain("partition=42");

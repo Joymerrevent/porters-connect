@@ -64,15 +64,15 @@ describe("request length (~15000 characters)", () => {
     const { porters } = setup();
     const content = "A".repeat(MAX_REQUEST_LENGTH * 2);
 
-    const id = await porters.tenant(1).attachment.create({
-      resource: 3,
+    const files = porters.tenant(1).attachment.of("job");
+    const id = await files.create({
       resourceId: 10001,
       contentType: "text/plain",
       fileName: "big.txt",
       content,
     });
 
-    expect((await porters.tenant(1).attachment.get(id))?.content).toBe(content);
+    expect((await files.get(id))?.content).toBe(content);
   });
 
   it("guards the keyword length client-side too", async () => {

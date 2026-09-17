@@ -94,8 +94,8 @@ const newId = await t.candidate.create({
 console.log("■ create -> id:", newId);
 
 // 4) 添付ファイル（Content は Base64。バイト列の変換ヘルパー同梱）
-const attachmentId = await t.attachment.create({
-  resource: 1,
+//    添付は「どのリソースの」が必須なので、of() で 1 回束ねる（ADR-0080 / ADR-0081）
+const attachmentId = await t.attachment.of("candidate").create({
   resourceId: 10001,
   contentType: "text/plain",
   fileName: "memo.txt",

@@ -16,7 +16,7 @@ import {
 } from "./http";
 import type { AccessPoint, Throttle, Transport } from "./http";
 import {
-  createAttachmentResource,
+  createAttachmentAccessor,
   createCandidateResource,
   createClientResource,
   createFieldAccessor,
@@ -35,7 +35,7 @@ import {
   createUserResource,
 } from "./resources";
 import type {
-  AttachmentResource,
+  AttachmentAccessor,
   CandidateResource,
   ClientResource,
   FieldAccessor,
@@ -136,7 +136,12 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly phase: PhaseAccessor;
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
-  readonly attachment: AttachmentResource;
+  /**
+   * Attachments, reached through the resource they belong to: `t.attachment.of("resume")`.
+   * PORTERS requires that `resource` on every Attachment Read, and the same value fills the
+   * `<Resource>` field on write, so it is bound once (ADR-0080 / ADR-0081).
+   */
+  readonly attachment: AttachmentAccessor;
   readonly user: UserResource;
   /**
    * Field master Read, reached through the resource whose catalog you want:
@@ -262,7 +267,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         phase: createPhaseAccessor(deps),
         process: createProcessResource(deps, customFor("process")),
         resume: createResumeResource(deps, customFor("resume")),
-        attachment: createAttachmentResource(deps),
+        attachment: createAttachmentAccessor(deps),
         user: createUserResource(deps),
         field: createFieldAccessor(deps),
         option: createOptionResource(deps),

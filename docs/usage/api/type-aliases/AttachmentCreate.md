@@ -8,9 +8,10 @@
 
 > **AttachmentCreate** = `object`
 
-Defined in: [src/resources/attachment.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L98)
+Defined in: [src/resources/attachment.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L97)
 
-Fields for creating an Attachment. `content` is the Base64 file body.
+Fields for creating an Attachment. `content` is the Base64 file body; the resource it attaches
+to comes from `of(name)` and cannot be given here (ADR-0080 / ADR-0081).
 
 ## Properties
 
@@ -18,7 +19,7 @@ Fields for creating an Attachment. `content` is the Base64 file body.
 
 > **content**: `string`
 
-Defined in: [src/resources/attachment.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L103)
+Defined in: [src/resources/attachment.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L102)
 
 ***
 
@@ -26,7 +27,7 @@ Defined in: [src/resources/attachment.ts:103](https://github.com/Joymerrevent/po
 
 > **contentType**: `string`
 
-Defined in: [src/resources/attachment.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L101)
+Defined in: [src/resources/attachment.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L100)
 
 ***
 
@@ -34,15 +35,7 @@ Defined in: [src/resources/attachment.ts:101](https://github.com/Joymerrevent/po
 
 > **fileName**: `string`
 
-Defined in: [src/resources/attachment.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L102)
-
-***
-
-### resource
-
-> **resource**: `number`
-
-Defined in: [src/resources/attachment.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L99)
+Defined in: [src/resources/attachment.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L101)
 
 ***
 
@@ -50,4 +43,6 @@ Defined in: [src/resources/attachment.ts:99](https://github.com/Joymerrevent/por
 
 > **resourceId**: `number`
 
-Defined in: [src/resources/attachment.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L100)
+Defined in: [src/resources/attachment.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L99)
+
+The record's id within the bound resource.

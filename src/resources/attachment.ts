@@ -1,5 +1,10 @@
-// Attachment accessor (ADR-0018, bespoke): Read (search / get) + Write (create / update)
-// for file attachments. Attachment is unlike the other resources — no alias prefix, fixed
+// Attachment accessor (ADR-0018, bespoke): Read (search / searchAll / get) + Write
+// (create / update) for file attachments.
+//
+// The Read vocabulary is the source's, not the common one (ADR-0081): `resource` (bound by
+// `of(name)` — ADR-0080), `requestType` (0 = with the file body, 1 = without — decided by the
+// method, ADR-0075), `resourceId` and `id`. There is no `field` and no `condition`: the article
+// lists neither, and what they were standing in for now has a parameter of its own. Attachment is unlike the other resources — no alias prefix, fixed
 // short field names (Id / Resource / ResourceId / ContentType / FileName / Content), and
 // `Content` is the Base64 file body (up to 10MB). It does not fit the generic factory but
 // reuses the requester, parsers, and `firstWriteResultId`. Turn raw bytes into the Base64
@@ -11,6 +16,7 @@ import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
 import { appendPaging, paginateOnce } from "./read-core";
+import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 import {
   buildWriteUrl,
   firstWriteResultId,
@@ -25,34 +31,27 @@ const MAX_CONTENT_CHARS = 14_000_000;
 // here: the Read response's root element and the Write error's resource context (ADR-0051).
 const ATTACHMENT_RESOURCE = "Attachment";
 
-/** The file body. Only `get` carries it (ADR-0075) — see {@link AttachmentSearchQuery.field}. */
-const CONTENT = "Content";
-
 /**
- * Every Attachment field **except** the body: what a listing may ask for (ADR-0075).
- * These are the aliases `search` / `searchAll` accept.
+ * `requestType` — Attachment Read's own switch for whether the file body comes back
+ * (source: `0` 添付ファイル本体を含む / `1` 含まない). The method decides it, never the caller:
+ * `get` sends `0`, `search` / `searchAll` send `1` (ADR-0075).
  */
-export type AttachmentMetaField =
-  "Id" | "Resource" | "ResourceId" | "ContentType" | "FileName";
-
-const META_FIELDS: AttachmentMetaField[] = [
-  "Id",
-  "Resource",
-  "ResourceId",
-  "ContentType",
-  "FileName",
-];
+const WITH_CONTENT = "0";
+const WITHOUT_CONTENT = "1";
 
 /**
  * Every Attachment field name, in wire order. Exported for in-repo dev tooling — the fake server
  * (ADR-0043) builds its Attachment table from this list rather than a copy that could drift.
  * Not re-exported from `src/index.ts`, so it stays out of the published API.
  */
-export const ATTACHMENT_FIELD_NAMES = [...META_FIELDS, CONTENT];
-
-// Default for search() when `field` is omitted (ADR-0020): metadata only. `field: []` still opts
-// into the API-native primary-key-only response.
-const DEFAULT_FIELDS = META_FIELDS;
+export const ATTACHMENT_FIELD_NAMES = [
+  "Id",
+  "Resource",
+  "ResourceId",
+  "ContentType",
+  "FileName",
+  "Content",
+];
 
 /** A decoded Attachment. A field is `null` unless it was returned (see `field`). */
 export type Attachment = {
@@ -76,14 +75,11 @@ export type AttachmentPage = {
 
 export type AttachmentSearchQuery = {
   /**
-   * Output fields — **metadata only**. Omit for all five (Id / Resource / ResourceId /
-   * ContentType / FileName), or pass `[]` for the API-native primary-key-only response.
-   *
-   * The file body is **not** on this list: a listing never carries it, whatever the count
-   * (ADR-0075). Read a body with {@link AttachmentResource.get}, one record at a time.
+   * Narrow to one record's attachments — the id **within the bound resource**
+   * (`t.attachment.of("resume")` -> a `Resume.P_Id`). Omit to read the whole resource's
+   * attachments.
    */
-  field?: AttachmentMetaField[];
-  condition?: Record<string, string>;
+  resourceId?: number;
   count?: number;
   start?: number;
 };
@@ -94,9 +90,12 @@ export type AttachmentWalkQuery = Omit<
   "count" | "start"
 >;
 
-/** Fields for creating an Attachment. `content` is the Base64 file body. */
+/**
+ * Fields for creating an Attachment. `content` is the Base64 file body; the resource it attaches
+ * to comes from `of(name)` and cannot be given here (ADR-0080 / ADR-0081).
+ */
 export type AttachmentCreate = {
-  resource: number;
+  /** The record's id within the bound resource. */
   resourceId: number;
   contentType: string;
   fileName: string;
@@ -108,6 +107,22 @@ export type AttachmentUpdate = {
   contentType?: string;
   fileName?: string;
   content?: string;
+};
+
+/**
+ * Attachments are reached through the resource they belong to (ADR-0080 / ADR-0081):
+ *
+ * ```ts
+ * const files = t.attachment.of("resume");
+ * await files.search({ resourceId: 10006 }); // メタデータだけ
+ * await files.get(900); // 本体つき
+ * ```
+ *
+ * PORTERS requires `resource=` on every Attachment Read, and the same value goes into the
+ * `<Resource>` field on write — one binding, both places, exactly like `t.phase.of(...)`.
+ */
+export type AttachmentAccessor = {
+  of(resource: ResourceName): AttachmentResource;
 };
 
 export type AttachmentResource = {
@@ -129,35 +144,38 @@ export type AttachmentResource = {
   update(id: number, input: AttachmentUpdate): Promise<number>;
 };
 
-// Bespoke Read URL (ADR-0018): Attachment has no alias prefix and no Data-Type catalog, so it keeps
-// the loose `condition` (`{ "Id:eq": "123" }`) and stays off the typed data-resource builder
-// (ADR-0038). itemstate/order/keywords do not apply to Attachment.
-//
-// VERIFY(live): the Attachment - Read article lists `requestType` (0 = with Content, 1 = without)
-// and `resource` as **required**, and lists neither `field` nor `condition` — this builder sends
-// neither required parameter and decides Content by `field`. See docs/live-verification.md (LV-24;
-// LV-3 / LV-4 cover the same call).
 type ReadParams = {
-  field?: readonly string[];
-  condition?: Record<string, string>;
+  /** `0` = with the file body, `1` = without (source: `requestType`). */
+  requestType: typeof WITH_CONTENT | typeof WITHOUT_CONTENT;
+  /** The bound resource's numeric Value code. */
+  resource: number;
+  resourceId?: number;
+  id?: number;
   count?: number;
   start?: number;
 };
 
+// Bespoke Read URL (ADR-0018 / ADR-0081): Attachment's Input Variables are its own — `requestType`
+// and `resource` are required, `resourceId` / `id` narrow the result, and there is no `field` or
+// `condition` to build.
+//
+// VERIFY(live): this is the source's form, which the library has never actually sent (the previous
+// shape used `field` / `condition` instead). Whether it is accepted as documented is LV-24 in
+// docs/live-verification.md.
 const buildAttachmentReadUrl = (
   accessPoint: AccessPoint,
   partition: number,
-  q: ReadParams,
+  p: ReadParams,
 ): string => {
-  const p = new URLSearchParams();
-  p.set("partition", String(partition));
-  if (q.field && q.field.length > 0) p.set("field", q.field.join(","));
-  if (q.condition) {
-    const conds = Object.entries(q.condition).map(([k, v]) => `${k}=${v}`);
-    if (conds.length > 0) p.set("condition", conds.join(","));
-  }
-  appendPaging(p, q.count, q.start);
-  return apiUrl(accessPoint, "attachment", p);
+  const params = new URLSearchParams();
+  params.set("partition", String(partition));
+  params.set("requestType", p.requestType);
+  params.set("resource", String(p.resource));
+  if (p.resourceId !== undefined)
+    params.set("resourceId", String(p.resourceId));
+  if (p.id !== undefined) params.set("id", String(p.id));
+  appendPaging(params, p.count, p.start);
+  return apiUrl(accessPoint, "attachment", params);
 };
 
 const numOrNull = (v: unknown): number | null => {
@@ -178,26 +196,6 @@ const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
 const tag = (name: string, value: string | number): string =>
   `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
-/**
- * Refuse a listing that asks for the body (ADR-0075). The type already leaves `Content` out, so
- * reaching here means a cast — and the failure it prevents is not a small one: 200 records with
- * bodies is up to ~2.7G characters, past V8's own string limit (a `RangeError` no retry can fix).
- * Same shape as the bulk-write Image guard (ADR-0064): name the alias, point at the way that works.
- */
-const guardNoContentInListing = (
-  field: readonly string[] | undefined,
-  method: string,
-): void => {
-  if (field?.includes(CONTENT) !== true) return;
-  throw new PortersConfigError(
-    `${method} cannot request "${CONTENT}": a listing never carries the file body`,
-    {
-      category: "config",
-      hint: "Read the body one record at a time with get(id); search/searchAll return metadata (fileName, contentType, …).",
-    },
-  );
-};
-
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 const guardContent = (content: string | undefined): void => {
   if (content !== undefined && content.length > MAX_CONTENT_CHARS) {
@@ -208,108 +206,107 @@ const guardContent = (content: string | undefined): void => {
   }
 };
 
-export const createAttachmentResource = (
+export const createAttachmentAccessor = (
   deps: ResourceDeps,
-): AttachmentResource => {
-  // The one Read path. `field` is `readonly string[]` here rather than the public metadata-only
-  // type, because `get` reaches it with `Content` on the list — that is the single place the body
-  // is allowed (ADR-0075), and it does not go through the public guard.
-  const read = (params: ReadParams): Promise<AttachmentPage> =>
-    deps.requester.request(
-      {
-        method: "GET",
-        url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, params),
-        headers: {},
-      },
-      (body) => {
-        const page = parseResourcePage(body, ATTACHMENT_RESOURCE);
-        return {
-          items: page.items.map(decodeAttachment),
-          total: page.total,
-          count: page.count,
-          start: page.start,
-        };
-      },
-    );
+): AttachmentAccessor => ({
+  of: (resourceName) => {
+    // One binding, two places PORTERS wants it: `resource=` on every Read and the `<Resource>`
+    // field on write (ADR-0080). Neither can be forgotten, and neither can be contradicted —
+    // the write input has no `resource` at all.
+    const resource = RESOURCE_VALUES[resourceName];
 
-  // `field` omitted -> metadata default; `[]` -> API-native primary key only; a provided list is
-  // sent verbatim (ADR-0020). `async` for the exception contract (ADR-0046).
-  const search = async (
-    query: AttachmentSearchQuery = {},
-  ): Promise<AttachmentPage> => {
-    guardNoContentInListing(query.field, "search");
-    return read({ ...query, field: query.field ?? DEFAULT_FIELDS });
-  };
+    const read = (params: ReadParams): Promise<AttachmentPage> =>
+      deps.requester.request(
+        {
+          method: "GET",
+          url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, params),
+          headers: {},
+        },
+        (body) => {
+          const page = parseResourcePage(body, ATTACHMENT_RESOURCE);
+          return {
+            items: page.items.map(decodeAttachment),
+            total: page.total,
+            count: page.count,
+            start: page.start,
+          };
+        },
+      );
 
-  // Offset walk over the same Read (ADR-0075). The query is read once, before the first page, so
-  // mutating the object mid-iteration cannot change a later page (RV-32).
-  const searchAll = (
-    query: AttachmentWalkQuery = {},
-  ): AsyncIterable<Attachment> =>
-    paginateOnce(() => {
-      guardNoContentInListing(query.field, "searchAll");
-      const field = query.field ?? DEFAULT_FIELDS;
-      const condition = query.condition;
-      return (count, start) => read({ field, condition, count, start });
-    });
+    // A listing never carries bodies (ADR-0075): `requestType=1`. `async` for the exception
+    // contract (ADR-0046).
+    const search = async (
+      query: AttachmentSearchQuery = {},
+    ): Promise<AttachmentPage> =>
+      read({ ...query, requestType: WITHOUT_CONTENT, resource });
 
-  // The only path that carries the body (ADR-0075): one record, so the response stays within a
-  // size PORTERS' own 10MB-per-file limit keeps readable.
-  //
-  // VERIFY(live): Attachment has no alias prefix; the `Id:eq` condition and requesting all
-  // fields (incl. Content) are taken from the field list, not a live contract.
-  // See docs/live-verification.md (LV-3, LV-4).
-  const get = async (id: number): Promise<Attachment | undefined> => {
-    const page = await read({
-      field: ATTACHMENT_FIELD_NAMES,
-      condition: { "Id:eq": String(id) },
-      count: 1,
-    });
-    return page.items[0];
-  };
+    // Offset walk over the same Read. The query is read once, before the first page, so mutating
+    // the object mid-iteration cannot change a later page (RV-32).
+    const searchAll = (
+      query: AttachmentWalkQuery = {},
+    ): AsyncIterable<Attachment> =>
+      paginateOnce(() => {
+        const resourceId = query.resourceId;
+        return (count, start) =>
+          read({
+            requestType: WITHOUT_CONTENT,
+            resource,
+            resourceId,
+            count,
+            start,
+          });
+      });
 
-  const write = (inner: string, idempotent: boolean): Promise<number> =>
-    deps.requester.request(
-      {
-        method: "POST",
-        url: buildWriteUrl(deps.accessPoint, deps.partition, "attachment"),
-        headers: {},
-        body: `<Attachment><Item>${inner}</Item></Attachment>`,
-      },
-      (body) => firstWriteResultId(body, "attachment", ATTACHMENT_RESOURCE),
-      { write: true, idempotent, unboundedBody: true },
-    );
+    // The only path that carries the body: `requestType=0` for one `id`. One record at a time is
+    // a size PORTERS' own 10MB-per-file limit keeps readable (ADR-0075).
+    const get = async (id: number): Promise<Attachment | undefined> => {
+      const page = await read({ requestType: WITH_CONTENT, resource, id });
+      return page.items[0];
+    };
 
-  // create forces Id=-1 (non-idempotent). All fields are required.
-  // `async` so the 10MB guard rejects instead of throwing synchronously (ADR-0046) — the guard
-  // itself is unchanged, and still runs before anything is sent.
-  const create = async (input: AttachmentCreate): Promise<number> => {
-    guardContent(input.content);
-    const inner =
-      tag("Id", -1) +
-      tag("Resource", input.resource) +
-      tag("ResourceId", input.resourceId) +
-      tag("ContentType", input.contentType) +
-      tag("FileName", input.fileName) +
-      tag("Content", input.content);
-    return write(inner, false);
-  };
+    const write = (inner: string, idempotent: boolean): Promise<number> =>
+      deps.requester.request(
+        {
+          method: "POST",
+          url: buildWriteUrl(deps.accessPoint, deps.partition, "attachment"),
+          headers: {},
+          body: `<Attachment><Item>${inner}</Item></Attachment>`,
+        },
+        (body) => firstWriteResultId(body, "attachment", ATTACHMENT_RESOURCE),
+        { write: true, idempotent, unboundedBody: true },
+      );
 
-  // update targets the id (idempotent). Resource / ResourceId can't change; only the
-  // provided fields are sent.
-  const update = async (
-    id: number,
-    input: AttachmentUpdate,
-  ): Promise<number> => {
-    guardContent(input.content);
-    let inner = tag("Id", id);
-    if (input.contentType !== undefined) {
-      inner += tag("ContentType", input.contentType);
-    }
-    if (input.fileName !== undefined) inner += tag("FileName", input.fileName);
-    if (input.content !== undefined) inner += tag("Content", input.content);
-    return write(inner, true);
-  };
+    // create forces Id=-1 (non-idempotent) and fills `Resource` from the binding.
+    // `async` so the 10MB guard rejects instead of throwing synchronously (ADR-0046).
+    const create = async (input: AttachmentCreate): Promise<number> => {
+      guardContent(input.content);
+      const inner =
+        tag("Id", -1) +
+        tag("Resource", resource) +
+        tag("ResourceId", input.resourceId) +
+        tag("ContentType", input.contentType) +
+        tag("FileName", input.fileName) +
+        tag("Content", input.content);
+      return write(inner, false);
+    };
 
-  return { search, searchAll, get, create, update };
-};
+    // update targets the id (idempotent). Resource / ResourceId can't change; only the
+    // provided fields are sent.
+    const update = async (
+      id: number,
+      input: AttachmentUpdate,
+    ): Promise<number> => {
+      guardContent(input.content);
+      let inner = tag("Id", id);
+      if (input.contentType !== undefined) {
+        inner += tag("ContentType", input.contentType);
+      }
+      if (input.fileName !== undefined)
+        inner += tag("FileName", input.fileName);
+      if (input.content !== undefined) inner += tag("Content", input.content);
+      return write(inner, true);
+    };
+
+    return { search, searchAll, get, create, update };
+  },
+});

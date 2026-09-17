@@ -48,7 +48,7 @@ const t = porters.tenant(partition);
 
 await t.candidate.search(query); // partition=<partition> で送信
 const job = await t.job.get(jobId);
-await t.attachment.create(file);
+await t.attachment.of("resume").create(file);
 ```
 
 - 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /

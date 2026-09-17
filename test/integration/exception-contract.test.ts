@@ -67,13 +67,12 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
         .candidate.updateMany([{ id: 1, fields: { P_Name: "x" } }]),
   ],
   // Attachment (bespoke accessor, its own 10MB guard)
-  ["attachment.search", () => porters.tenant(1).attachment.search()],
-  ["attachment.get", () => porters.tenant(1).attachment.get(1)],
+  ["attachment.search", () => porters.tenant(1).attachment.of("job").search()],
+  ["attachment.get", () => porters.tenant(1).attachment.of("job").get(1)],
   [
     "attachment.create (10MB guard)",
     () =>
-      porters.tenant(1).attachment.create({
-        resource: 3,
+      porters.tenant(1).attachment.of("job").create({
         resourceId: 1,
         contentType: "text/plain",
         fileName: "big.txt",
@@ -82,7 +81,8 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
   ],
   [
     "attachment.update (10MB guard)",
-    () => porters.tenant(1).attachment.update(1, { content: OVER_10MB }),
+    () =>
+      porters.tenant(1).attachment.of("job").update(1, { content: OVER_10MB }),
   ],
   // Master Read
   ["partition.search", () => porters.partition.search()],

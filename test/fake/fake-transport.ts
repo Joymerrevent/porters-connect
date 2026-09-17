@@ -257,7 +257,13 @@ export const createFakeTransport = (
     };
 
   const handleRead = (url: URL, resource: FakeResource): TransportResponse => {
-    const query = parseReadQuery(url, resource.descriptor.prefix);
+    // Attachment reads its own Input Variables (ADR-0081); everything else the common ones.
+    const parsed = resource.readQuery?.(url);
+    if (parsed?.ok === false) {
+      return resourceError(resource, parsed.code, parsed.message);
+    }
+    const query =
+      parsed?.query ?? parseReadQuery(url, resource.descriptor.prefix);
     const { items, total } = runReadQuery(
       store.list(resource.descriptor.path),
       query,
