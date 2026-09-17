@@ -137,6 +137,8 @@ const lookupPartitionForUser: (user: string) => Promise<number>;
 const query: CandidateSearchQuery;
 const inputs: CandidateCreateInput[];
 const file: AttachmentCreate;
+// of(name) で束ねた添付アクセサ（添付の例はこの名前で受ける）
+const files: AttachmentResource;
 `;
 
 /**

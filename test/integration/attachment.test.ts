@@ -22,12 +22,18 @@ const setup = () => {
 
 const CONTENT = bytesToBase64(new TextEncoder().encode("hello, PORTERS"));
 
+// Attachments hang off the resource they belong to, so every call goes through `of(name)`
+// (ADR-0080 / ADR-0081). Job (3) here, matching the `resourceId` below.
+const files = (porters: PortersClient) =>
+  porters.tenant(1).attachment.of("job");
+
 const attach = (
   porters: PortersClient,
-  overrides: Partial<Parameters<TenantScope["attachment"]["create"]>[0]> = {},
+  overrides: Partial<
+    Parameters<ReturnType<TenantScope["attachment"]["of"]>["create"]>[0]
+  > = {},
 ): Promise<number> =>
-  porters.tenant(1).attachment.create({
-    resource: 3,
+  files(porters).create({
     resourceId: 10001,
     contentType: "text/plain",
     fileName: "memo.txt",
@@ -40,7 +46,7 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
 
     const id = await attach(porters);
-    const found = await porters.tenant(1).attachment.get(id);
+    const found = await files(porters).get(id);
 
     expect(found).toEqual({
       id,
@@ -56,11 +62,11 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
     await attach(porters);
 
-    const page = await porters.tenant(1).attachment.search();
+    const page = await files(porters).search();
 
     expect(page.total).toBe(1);
     expect(page.items[0]?.fileName).toBe("memo.txt");
-    // ADR-0020: listing must not download every file body.
+    // ADR-0075: a listing must not download every file body — `requestType=1`.
     expect(page.items[0]?.content).toBeNull();
   });
 
@@ -68,9 +74,9 @@ describe("attachment round-trip", () => {
     const { porters } = setup();
     const id = await attach(porters);
 
-    await porters.tenant(1).attachment.update(id, { fileName: "renamed.txt" });
+    await files(porters).update(id, { fileName: "renamed.txt" });
 
-    const found = await porters.tenant(1).attachment.get(id);
+    const found = await files(porters).get(id);
     expect(found?.fileName).toBe("renamed.txt");
     expect(found?.contentType).toBe("text/plain"); // untouched
     expect(found?.content).toBe(CONTENT); // untouched
@@ -84,7 +90,31 @@ describe("attachment round-trip", () => {
 
     const id = await attach(porters, { content: big });
 
-    expect((await porters.tenant(1).attachment.get(id))?.content).toBe(big);
+    expect((await files(porters).get(id))?.content).toBe(big);
+  });
+
+  // ADR-0080 / ADR-0081: `resource=` は必須で、束ねた値が効いていなければ他リソースの添付まで
+  // 見えてしまう。「絞れているつもり」が一番危ないので、越境しないことを明示的に見る。
+  it("of(name) narrows the listing to that resource's attachments", async () => {
+    const { porters } = setup();
+    await attach(porters); // job / 10001
+
+    const mine = await files(porters).search();
+    const other = await porters.tenant(1).attachment.of("candidate").search();
+
+    expect(mine.total).toBe(1);
+    expect(other.total).toBe(0);
+  });
+
+  it("resourceId narrows the listing to one record", async () => {
+    const { porters } = setup();
+    await attach(porters); // resourceId 10001
+    await attach(porters, { resourceId: 20002, fileName: "other.txt" });
+
+    const one = await files(porters).search({ resourceId: 20002 });
+
+    expect(one.total).toBe(1);
+    expect(one.items[0]?.fileName).toBe("other.txt");
   });
 
   it("keeps its own id sequence, separate from the data resources", async () => {

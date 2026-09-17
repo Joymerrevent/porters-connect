@@ -15,8 +15,8 @@ grep -rn "VERIFY(live)" src test
 | ----- | --------------------------------------------------- | ------ |
 | LV-1  | Option 末端 alias の接頭辞                          | 未確認 |
 | LV-2  | OptionRoot ラッパーの有無                           | 未確認 |
-| LV-3  | Attachment の get 条件                              | 未確認 |
-| LV-4  | Attachment Read の既定項目                          | 未確認 |
+| LV-3  | Attachment の get 条件                              | 解消   |
+| LV-4  | Attachment Read の既定項目                          | 解消   |
 | LV-5  | リソース毎の create 必須項目                        | 確定   |
 | LV-6  | Field `P_ReferTo` の入れ子形                        | 未確認 |
 | LV-7  | User `current()` の実挙動                           | 未確認 |
@@ -61,21 +61,22 @@ grep -rn "VERIFY(live)" src test
 
 ## LV-3 Attachment の get 条件
 
-- **現在の対応 / 仮定**: `Id:eq=<id>` で 1 件取得
-- **不確実な理由**: Attachment は接頭辞無し・条件 alias を実機未確認
+- **現在の対応 / 仮定**: ~~`Id:eq=<id>` で 1 件取得~~ → **`?id=<id>`**（出典の専用パラメータ）
+- **不確実な理由**: ~~Attachment は接頭辞無し・条件 alias を実機未確認~~
 - **コード箇所**: `src/resources/attachment.ts`（`get`）
-- **確認方法**: 実 Read で `Id` 条件が通るか
-- **状態**: 未確認
-- **確認結果**: —
+- **状態**: 解消（[ADR-0081][a81]）
+- **確認結果**: **確かめる必要が無くなった。** `condition` を送らなくなったので、
+  「`Id:eq` 条件が通るか」という問い自体が消えた。1 件の指定は出典の `id` パラメータで行う
+  （通るかどうかは LV-24 に含まれる）
 
 ## LV-4 Attachment Read の既定項目
 
-- **現在の対応 / 仮定**: `get` は 6 項目を明示要求
-- **不確実な理由**: `field` 未指定時に `Content` を返すか未確認
+- **現在の対応 / 仮定**: ~~`get` は 6 項目を明示要求~~ → **`field` を送らない**
+- **不確実な理由**: ~~`field` 未指定時に `Content` を返すか未確認~~
 - **コード箇所**: `src/resources/attachment.ts`（`get`）
-- **確認方法**: `field` 未指定時の出力
-- **状態**: 未確認
-- **確認結果**: —
+- **状態**: 解消（[ADR-0081][a81]）
+- **確認結果**: **確かめる必要が無くなった。** 本体の有無は `field` ではなく出典の
+  `requestType`（`0` / `1`）で決まるので、「`field` 未指定時に何が返るか」は問いでなくなった
 
 ## LV-5 リソース毎の create 必須項目
 
@@ -366,21 +367,22 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 
 ## LV-24 Attachment Read の必須パラメータ（`requestType` / `resource`）
 
-- **現在の対応 / 仮定**: `search` が送るのは `partition` / `field` / `condition` / `count` / `start` の
-  5 つ。本体（`Content`）を取るかどうかは **`field` に `Content` を並べるか**で決めている（[ADR-0018][a18]）
-- **不確実な理由**: Attachment - Read の Input Variables は **`requestType`（`0` = Content あり /
-  `1` = なし）と `resource` を必須 ●** に挙げ、**`field` / `condition` を挙げていない**
-  （[reference の Read パラメータ節][ref-attachment]）。出典どおりなら、いまのリクエストは必須
-  パラメータを欠いており、本体の取り方も違う。データ系リソースと同じ語彙で組み立てたまま、
-  Attachment 固有の Input Variables に合わせていない
+- **現在の対応 / 仮定**: **出典どおりに送る**（[ADR-0081][a81]）。`search` / `searchAll` は
+  `partition` / `requestType=1` / `resource` [/ `resourceId`] / `count` / `start`、`get` は
+  `partition` / `requestType=0` / `resource` / `id`。`field` と `condition` は送らない
+- **不確実な理由**: Attachment - Read の Input Variables（[reference の Read パラメータ節][ref-attachment]）は
+  2019 年の記事で、**そのとおりに送って通るかを実機で確かめていない**。合わせる前の形
+  （`field` / `condition`）も未検証だったので、**未検証の形を、出典に一致する未検証の形に
+  置き換えた**のが現状。記事が古ければ、必要のない `of()` の束ねを利用者に強いていることになる
 - **コード箇所**: `src/resources/attachment.ts`（`buildAttachmentReadUrl` / `search` / `get`）
-- **確認方法**: 実 Read に (1) いまの形、(2) `requestType` / `resource` を足した形 を投げ、
-  どちらが通るか（欠けると Result Code 100 / 101 が返るか）と、`field` / `condition` が
-  受け付けられるかを見る
+- **確認方法**: 実 Read に (1) いまの形、(2) `field` / `condition` を足した形 を投げ、
+  どちらが通るか（必須が欠けると Result Code 100 / 101 が返るか）を見る。あわせて
+  `requestType=0` が本当に `Content` を載せ、`1` が載せないことを確かめる
 - **状態**: 未確認
 - **確認結果**: —
-- **関連**: [LV-3][lv3]（`Id:eq` 条件）／[LV-4][lv4]（既定項目）と同じ経路。出典どおりだと分かれば
-  公開サーフェス（`AttachmentSearchQuery`）の改定になるので、**ADR が要る**
+- **関連**: 出典に合わせたことで [LV-3][lv3]（`Id:eq` 条件）／[LV-4][lv4]（既定項目）は
+  問いごと消えた。倒れ方は**安全側ではない** — 記事が正しければ通り、古ければ通らないので、
+  実機で 1 回叩けば必ず分かる（気づけない誤りではない）
 
 ## LV-25 Phase Read に `keywords` / `itemstate` を送れるか
 
@@ -432,7 +434,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [lv10]: #lv-10-systemreference-read-の入れ子タグ
 [a64]: adr/0064-link-image-types.md
 [adr73]: adr/0073-throttle-sharing.md
-[a18]: adr/0018-attachment-design.md
+[a81]: adr/0081-attachment-read-parameters.md
 [ref-attachment]: usage/reference/resource-api/resources/attachment.md
 [lv3]: #lv-3-attachment-の-get-条件
 [lv4]: #lv-4-attachment-read-の既定項目

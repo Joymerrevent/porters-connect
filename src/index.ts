@@ -226,8 +226,8 @@ export type {
 } from "./resources";
 export type {
   Attachment,
+  AttachmentAccessor,
   AttachmentCreate,
-  AttachmentMetaField,
   AttachmentPage,
   AttachmentResource,
   AttachmentSearchQuery,

@@ -29,6 +29,10 @@ import {
 import type { ResourceDescriptor } from "../../src/resources/resource";
 import type { DataType } from "../../src/xml/decode";
 import {
+  parseAttachmentReadQuery,
+  type AttachmentReadQuery,
+} from "./attachment-read";
+import {
   readField,
   readOption,
   readPartition,
@@ -50,6 +54,12 @@ export type FakeResource = {
   master?: MasterReadHandler;
   /** Partition Read discovers partitions, so it is the one route that sends no `partition`. */
   partitionless?: boolean;
+  /**
+   * A resource whose Read takes its **own** Input Variables instead of the common
+   * `field` / `condition` vocabulary (Attachment — ADR-0081). It still reads from the same store,
+   * so the hook translates the URL into the generic query rather than answering by itself.
+   */
+  readQuery?: (url: URL) => AttachmentReadQuery;
 };
 
 // Attachment's Data Types, for read encoding only. The library decodes Attachment by hand
@@ -107,6 +117,7 @@ export const FAKE_RESOURCES: ReadonlyMap<string, FakeResource> = new Map([
       descriptor: ATTACHMENT_DESCRIPTOR,
       idAlias: "Id",
       unboundedWrite: true,
+      readQuery: parseAttachmentReadQuery,
     },
   ],
   // Master reads (ADR-0021/0022): read-only, bespoke queries, no `condition` / `get(id)`.

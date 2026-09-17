@@ -3,19 +3,35 @@
 添付は **Attachment** という専用リソースです。ほかのリソースとは形が違います
 （接頭辞なし・中身は Base64・`createMany` が無い）ので、ここだけ別に説明します。
 
+## まず、どのリソースの添付かを束ねる
+
+Attachment の Read は **どのリソースの添付か（`resource`）が必須**です（[Attachment の項目と
+Mime Type][ref-attachment]）。ライブラリはこれを `of()` で 1 回だけ受け取り、以降のすべての
+呼び出しに載せます（[ADR-0080][adr80]）。
+
+```ts
+const files = t.attachment.of("resume"); // 履歴書に付く添付
+```
+
+名前はアクセサと同じ綴り（`"candidate"` / `"job"` / …）です。番号ではなく名前なので、
+打ち間違いはコンパイルエラーになります。
+
+束ねた値は**作成時の付け先にもなります** — `create` に `resource` はありません。
+別のリソースに付けたければ、別の `of()` から作ってください。
+
 ## 5 つのメソッド
 
 ```ts
-await t.attachment.search(); // 一覧（本体は含まない）
-await t.attachment.searchAll(); // 200 件を超える一覧を順に（本体は含まない）
-await t.attachment.get(900); // 1 件（**本体つき — 本体はここだけ**）
-await t.attachment.create(file); // 追加 → 採番された id
-await t.attachment.update(900, { fileName: "new.pdf" }); // 差し替え
+await files.search(); // 一覧（本体は含まない）
+await files.searchAll(); // 200 件を超える一覧を順に（本体は含まない）
+await files.get(900); // 1 件（**本体つき — 本体はここだけ**）
+await files.create(file); // 追加 → 採番された id
+await files.update(900, { fileName: "new.pdf" }); // 差し替え
 ```
 
-**作成と更新で受ける項目が違います。** `create` は 5 項目すべてが必須、`update` は
-`contentType` / `fileName` / `content` の 3 つだけが任意です。**付け先（`resource` /
-`resourceId`）は更新の入力型に入れていません** — 付け替えができると PORTERS が公表していないので、
+**作成と更新で受ける項目が違います。** `create` は 4 項目すべてが必須、`update` は
+`contentType` / `fileName` / `content` の 3 つだけが任意です。**付け先（`resourceId`）は
+更新の入力型に入れていません** — 付け替えができると PORTERS が公表していないので、
 できることにしていません。
 
 `delete` はありません（[削除 API が無いということ][no-delete]）。
@@ -25,8 +41,7 @@ await t.attachment.update(900, { fileName: "new.pdf" }); // 差し替え
 ```ts
 import { bytesToBase64 } from "@joymerrevent/porters-connect";
 
-const id = await t.attachment.create({
-  resource: 1, // どのリソースに付けるか（数値。下の表）
+const id = await t.attachment.of("candidate").create({
   resourceId: 10001, // そのレコードの id
   contentType: "application/pdf",
   fileName: "履歴書.pdf",
@@ -34,42 +49,33 @@ const id = await t.attachment.create({
 });
 ```
 
-**`resource` は数値**です。型は `number` なので、間違った番号もコンパイルは通ります
-（`resourceId` の取り違えと同じく、実行するまで分かりません）。しかも
+**`resourceId` は数値で、型は `number`** です。間違った id もコンパイルは通ります。しかも
 **付け先は `update` で変えられません**（上記）。間違えたら正しい先に作り直すことになり、
 **間違えたほうは消せません**（[削除 API が無いということ][no-delete]）。付ける前に
-`resource` と `resourceId` を確かめてください。
-
-| リソース  | 値  | リソース  | 値  | リソース    | 値  |
-| --------- | --- | --------- | --- | ----------- | --- |
-| Candidate | 1   | Recruiter | 9   | Activity    | 19  |
-| Job       | 3   | Sales     | 11  | Opportunity | 25  |
-| Client    | 5   | Contract  | 13  | Contact     | 27  |
-| Process   | 7   | Resume    | 17  |             |     |
-
-正典は[リソース一覧][res-list]の `Value` 列です。
+`of()` の名前と `resourceId` を確かめてください。
 
 ## 読むときは、本体が付いてこない
 
-**`search` は既定で本体（`content`）を返しません。** メタ情報
+**`search` は本体（`content`）を返しません。** メタ情報
 （`id` / `resource` / `resourceId` / `contentType` / `fileName`）だけです。
 
 ```ts
-const page = await t.attachment.search({
-  condition: { "ResourceId:eq": "10001" },
-});
+const page = await files.search({ resourceId: 10001 }); // 1 レコードの添付だけ
 for (const a of page.items) console.log(a.fileName, a.contentType);
 ```
 
 一覧で本体まで返すと、**ファイル全部をダウンロードすることになる**からです。
-**本体を取れるのは `get` だけ**で、`search` / `searchAll` の `field` に `"Content"` は書けません
-（[ADR-0075][adr75]）。1 ページは最大 200 件なので、本体を混ぜると 1 回の応答が
-**読める大きさを越える**ことがあります（1 ファイル 2MB 超 × 200 件で、文字列の上限に当たって
-`RangeError` になります）。Attachment はファイルサイズを返さないので、「何件までなら安全か」を
-呼び出し側が判断することもできません。
+**本体を取れるのは `get` だけ**です（[ADR-0075][adr75]）。1 ページは最大 200 件なので、
+本体を混ぜると 1 回の応答が**読める大きさを越える**ことがあります（1 ファイル 2MB 超 × 200 件で、
+文字列の上限に当たって `RangeError` になります）。Attachment はファイルサイズを返さないので、
+「何件までなら安全か」を呼び出し側が判断することもできません。
+
+この「本体を運ぶか」は PORTERS 側では `requestType` というパラメータで、ライブラリは
+**メソッドから決めます** — `search` / `searchAll` が `1`（本体なし）、`get` が `0`（本体あり）です。
+呼び出し側が選ぶものではありません。
 
 ```ts
-const one = await t.attachment.get(900);
+const one = await files.get(900);
 if (one?.content) {
   const bytes = base64ToBytes(one.content);
   console.log(bytes.length);
@@ -80,11 +86,9 @@ if (one?.content) {
 全部を歩いても本体はダウンロードされません。要るファイルだけ `get` で取ってください。
 
 ```ts
-for await (const a of t.attachment.searchAll({
-  condition: { "Resource:eq": "17" },
-})) {
+for await (const a of files.searchAll()) {
   if (a.id === null || !a.fileName?.endsWith(".pdf")) continue;
-  const file = await t.attachment.get(a.id); // 本体はここで 1 件ずつ
+  const file = await files.get(a.id); // 本体はここで 1 件ずつ
   if (file?.content) console.log(file.fileName, file.content.length);
 }
 ```
@@ -96,14 +100,35 @@ for await (const a of t.attachment.searchAll({
 transport: createFetchTransport({ timeoutMs: 120_000 });
 ```
 
-`condition` は**ゆるい形**（`{ "Id:eq": "123" }`）です。Attachment は Data Type のカタログを
-持たないので、ほかのリソースのような型付き条件にはなっていません。
+## 絞り込めるのは「どのレコードの添付か」だけ
+
+Attachment の Read が取る絞り込みは `resourceId`（1 レコードの添付）と `id`（1 件）だけで、
+**ファイル名や Mime Type での検索はできません**（PORTERS が提供していません — [ADR-0081][adr81]）。
+名前で探したいときは、`searchAll` で歩きながら絞ってください（上の例）。
+
+読み取った `a.resource` は**数値**で返ります（PORTERS のリソース番号）。名前に戻すなら
+`resourceNameOf` が使えます。
+
+```ts
+import { resourceNameOf } from "@joymerrevent/porters-connect";
+
+resourceNameOf(17); // "resume"
+```
+
+| リソース  | 値  | リソース  | 値  | リソース    | 値  |
+| --------- | --- | --------- | --- | ----------- | --- |
+| Candidate | 1   | Recruiter | 9   | Activity    | 19  |
+| Job       | 3   | Sales     | 11  | Opportunity | 25  |
+| Client    | 5   | Contract  | 13  | Contact     | 27  |
+| Process   | 7   | Resume    | 17  |             |     |
+
+正典は[リソース一覧][res-list]の `Value` 列です。
 
 ## 上限は 10MB、送信前に弾かれる
 
 ```ts
 // PortersConfigError: attachment content is 14000001 characters, over the ~10MB file limit
-await t.attachment.create({ ...file, content: base64 });
+await files.create({ ...file, content: base64 });
 ```
 
 `category` は `config` です。通常の「リクエストが長すぎる」ガード（約 15000 文字）は
@@ -123,6 +148,8 @@ await t.attachment.create({ ...file, content: base64 });
 - ほかの目的から探す: [目次][index]
 
 [adr75]: ../../adr/0075-attachment-search-all.md
+[adr80]: ../../adr/0080-resource-parameter-binding.md
+[adr81]: ../../adr/0081-attachment-read-parameters.md
 [bulk-write]: bulk-write.md
 [handle-failures]: handle-failures.md
 [limits]: ../concepts/limits.md

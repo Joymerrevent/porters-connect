@@ -34,9 +34,13 @@ Defined in: [src/client.ts:129](https://github.com/Joymerrevent/porters-connect/
 
 ### attachment
 
-> `readonly` **attachment**: [`AttachmentResource`](AttachmentResource.md)
+> `readonly` **attachment**: [`AttachmentAccessor`](AttachmentAccessor.md)
 
-Defined in: [src/client.ts:139](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L139)
+Defined in: [src/client.ts:144](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L144)
+
+Attachments, reached through the resource they belong to: `t.attachment.of("resume")`.
+PORTERS requires that `resource` on every Attachment Read, and the same value fills the
+`<Resource>` field on write, so it is bound once (ADR-0080 / ADR-0081).
 
 ***
 
@@ -76,7 +80,7 @@ Defined in: [src/client.ts:130](https://github.com/Joymerrevent/porters-connect/
 
 > `readonly` **field**: [`FieldAccessor`](FieldAccessor.md)
 
-Defined in: [src/client.ts:146](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L146)
+Defined in: [src/client.ts:151](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L151)
 
 Field master Read, reached through the resource whose catalog you want:
 `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
@@ -104,7 +108,7 @@ Defined in: [src/client.ts:128](https://github.com/Joymerrevent/porters-connect/
 
 > `readonly` **option**: [`OptionResource`](OptionResource.md)
 
-Defined in: [src/client.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L147)
+Defined in: [src/client.ts:152](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L152)
 
 ***
 
@@ -155,4 +159,4 @@ Defined in: [src/client.ts:131](https://github.com/Joymerrevent/porters-connect/
 
 > `readonly` **user**: [`UserResource`](UserResource.md)
 
-Defined in: [src/client.ts:140](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L140)
+Defined in: [src/client.ts:145](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L145)
