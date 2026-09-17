@@ -13,6 +13,14 @@ import { fileURLToPath } from "node:url";
 const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 // `vX.Y.Z` 形式のタグだけを baseline 候補にする（注釈・他形式タグは無視）。
 const TAG_RE = /^v(\d+\.\d+\.\d+)$/;
+// `engines.node` は `>=X[.Y[.Z]]` の形だけを受け付ける。ADR-0082 で下限を `>=22.12.0` に
+// 上げたが、**丸めた `>=22` は 22.0〜22.11 に対して嘘になる**（`require(esm)` が無い）。
+// だからバッジ側も丸めずに突き合わせる＝ここは major だけを採らない。
+const MIN_NODE_RE = /^>=(\d+(?:\.\d+){0,2})$/;
+
+// `engines.node` から下限の版を採る。読めなければ undefined（呼び出し側でエラーにする）。
+export const minNodeOf = (enginesNode) =>
+  MIN_NODE_RE.exec(String(enginesNode ?? "").trim())?.[1];
 
 export const isValidSemver = (v) => SEMVER_RE.test(v);
 
@@ -45,11 +53,12 @@ export const checkRelease = ({
   version,
   changelog,
   readme,
-  minNode,
+  enginesNode,
   baseline,
   releaseContext,
 }) => {
   const errors = [];
+  const minNode = minNodeOf(enginesNode);
 
   // (1) semver 形式検証（常時・ADR-0031）。
   const versionOk = isValidSemver(version);
@@ -67,7 +76,13 @@ export const checkRelease = ({
   }
 
   // README の Node バッジが engines.node と一致するか（engines を上げたらバッジも、の漏れ防止）。
-  if (minNode) {
+  // 読めない `engines.node` は **skip せずエラー**にする。黙って飛ばすと「検査したつもりで
+  // 一度も走っていない」状態＝バッジのドリフトを永久に見逃す（fail-open）。
+  if (minNode == null) {
+    errors.push(
+      `package.json の engines.node "${String(enginesNode)}" が \`>=X.Y.Z\` の形ではありません（README バッジと突き合わせられません）。`,
+    );
+  } else {
     if (!readme.includes(`Node >= ${minNode}`)) {
       errors.push(
         `README の Node バッジ alt が "Node >= ${minNode}" と一致しません（engines.node: >=${minNode}）。`,
@@ -108,7 +123,6 @@ const readTags = () => {
 const main = () => {
   const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   const pkg = JSON.parse(read("package.json"));
-  const minNode = String(pkg.engines?.node ?? "").match(/(\d+)/)?.[1];
   const baseline = maxTagVersion(readTags());
   // base=main の PR でのみ単調増加(2)を検査する（ADR-0032）。GitHub Actions の
   // pull_request では GITHUB_BASE_REF にマージ先ブランチ名が入る。push/local では空。
@@ -118,7 +132,7 @@ const main = () => {
     version: pkg.version,
     changelog: read("CHANGELOG.md"),
     readme: read("README.md"),
-    minNode,
+    enginesNode: pkg.engines?.node,
     baseline,
     releaseContext,
   });

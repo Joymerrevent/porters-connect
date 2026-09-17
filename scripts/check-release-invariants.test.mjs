@@ -5,6 +5,7 @@ import {
   compareSemver,
   isValidSemver,
   maxTagVersion,
+  minNodeOf,
 } from "./check-release-invariants.mjs";
 
 // 文書が整合し版番号も正当な「全部 OK」の入力（各テストで一部だけ崩す）。
@@ -12,8 +13,8 @@ import {
 const ok = {
   version: "0.2.0",
   changelog: "## [0.2.0]\n- something",
-  readme: "Node >= 20 ... node-%3E%3D20-brightgreen",
-  minNode: "20",
+  readme: "Node >= 22.12.0 ... node-%3E%3D22.12.0-brightgreen",
+  enginesNode: ">=22.12.0",
   baseline: "0.2.0",
   releaseContext: true,
 };
@@ -60,6 +61,22 @@ describe("maxTagVersion (ADR-0031)", () => {
   it("falls back to 0.0.0 when there is no tag (初回 publish 前)", () => {
     expect(maxTagVersion([])).toBe("0.0.0");
     expect(maxTagVersion(["nightly", "latest"])).toBe("0.0.0");
+  });
+});
+
+describe("minNodeOf (ADR-0082)", () => {
+  it("keeps the minimum as written (丸めない)", () => {
+    expect(minNodeOf(">=22.12.0")).toBe("22.12.0");
+    expect(minNodeOf(">=22")).toBe("22");
+    expect(minNodeOf(" >=20.19.0 ")).toBe("20.19.0");
+  });
+
+  it("returns undefined for ranges it cannot read", () => {
+    // 読めない形は undefined → checkRelease 側でエラーにする（skip しない）。
+    expect(minNodeOf("^22.12.0")).toBeUndefined();
+    expect(minNodeOf(">=22.12.0 <25")).toBeUndefined();
+    expect(minNodeOf("")).toBeUndefined();
+    expect(minNodeOf(undefined)).toBeUndefined();
   });
 });
 
@@ -127,9 +144,17 @@ describe("checkRelease (ADR-0027 + ADR-0031)", () => {
     expect(errors.some((e) => e.includes("Node バッジ URL"))).toBe(true);
   });
 
-  it("skips the Node badge check when minNode is absent", () => {
-    expect(
-      checkRelease({ ...ok, minNode: undefined, readme: "no badge" }),
-    ).toEqual([]);
+  it("flags a badge that rounds the minimum (ADR-0082)", () => {
+    // engines が ">=22.12.0" なのにバッジが ">=22" ＝ 22.0〜22.11 に対して嘘になる。
+    const errors = checkRelease({
+      ...ok,
+      readme: "Node >= 22 ... node-%3E%3D22-brightgreen",
+    });
+    expect(errors.some((e) => e.includes("Node バッジ URL"))).toBe(true);
+  });
+
+  it("flags an engines.node it cannot read instead of skipping (fail-safe)", () => {
+    const errors = checkRelease({ ...ok, enginesNode: "^22.12.0" });
+    expect(errors.some((e) => e.includes("engines.node"))).toBe(true);
   });
 });
