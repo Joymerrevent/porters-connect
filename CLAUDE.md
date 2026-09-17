@@ -20,7 +20,7 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
 ## 技術スタック
 
 - 言語：TypeScript（strict）
-- ランタイム：Node.js 20+（ESM 前提、可能なら CJS も出力）
+- ランタイム：Node.js 22.12+（ESM 実体 1 本。CJS へは `require` 条件で同じ実体を見せる。ADR-0082）
 - ビルド：tsup
 - テスト：vitest
 - 実行：tsx
