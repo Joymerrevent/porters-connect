@@ -1,8 +1,10 @@
 name: Test
 
-# 対応 Node（22=engines の下限 / 24=Active LTS）でテストを回し互換性を担保。
+# 対応 Node（22=engines の下限＝Maintenance LTS / 24=Active LTS / 26=Current）でテストを回し
+# 互換性を担保。**下限・Active LTS・Current の 3 段**を保つ（どれを落としても、上げた利用者か
+# 下限に留まる利用者のどちらかが未検査になる）。
 # 下限が 22.12 なのは Node の `require(esm)` が既定で有効な最小の版だから（ADR-0082）。
-# 20 は EOL（2026-04-30）につき外した。
+# 20 は EOL（2026-04-30）につき外した — 減らしたのは EOL の 1 本だけで、段は減らしていない。
 # 非必須チェックなので docs-only は paths-ignore で素直に skip（runner すら起動しない・ADR-0028）。
 on:
   pull_request:
@@ -25,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
