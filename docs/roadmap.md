@@ -160,7 +160,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
       必須）は型で止めず、`●` だけを `create` の必須にする**）。問いは Sales 固有ではなく
       「`※` を公開の入力型でどう扱うか」だった＝規則はリソース横断で 1 つ。**実装の変更は無い**
       （現状の明文化）。反映＝ADR 番号を実装コメントとガイドに書き足すのみ・別 PR。
-- [ ] **成功指標の数値化タイミング**（PRD [§8][prd]・[stakeholder]）
+- [ ] **成功指標の数値化タイミング**（PRD [§8][prd]・[stakeholder]）— **起票済み**（2026-09-18・
+      [ADR-0084][adr84]・`proposed`）。実測したら**ベースラインとみなせる実利用が 1 件も無かった**
+      （npm の DL はミラー由来＝publish 日に山／star 1／外部からの Issue・PR 0）。論点は
+      「いつ数値化するか」ではなく「この未決をどう閉じるか」。推奨は**数値目標を置かず
+      マイルストーンで見る**。**決定は decider 待ち。**
 
 ### 要 ADR（起票から）
 
@@ -628,6 +632,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr81]: adr/0081-attachment-read-parameters.md
 [adr82]: adr/0082-module-format-and-node-baseline.md
 [adr83]: adr/0083-conditionally-required-fields.md
+[adr84]: adr/0084-success-metrics-measurement.md
 [adr76]: adr/0076-phase-read-query-surface.md
 [rv45]: reviews/rv/0045-attachment-search-all-absent.md
 [rv46]: reviews/rv/0046-fetch-timeout-not-configurable.md
