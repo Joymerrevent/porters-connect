@@ -63,10 +63,12 @@
 
 ### 【要件定義】
 
-- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-08-09 の棚卸しで残るのは 2 件**：
-  「成功指標の数値化タイミング」[stakeholder]／「v1 で CJS 出力まで出すか」[eng]。
-  （バージョン表記は [0042][0042]、サンドボックス R-17 は P1 のまま出荷、npm スコープ/組織は公開実績で決着。
-  「1 App トークンで複数 partition」は実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
+- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-09-18 時点で残るのは 1 件**：
+  「成功指標の数値化タイミング」[stakeholder]。
+  （2026-08-09 の棚卸しでは 2 件だった。「v1 で CJS 出力まで出すか」[eng] は [0082][0082] として
+  起票・accepted・実装済み＝ここには残さない。バージョン表記は [0042][0042]、サンドボックス R-17 は
+  P1 のまま出荷、npm スコープ/組織は公開実績で決着。「1 App トークンで複数 partition」は
+  実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
 
 ### 【基本設計】
 
@@ -115,6 +117,7 @@
 [0080]: 0080-resource-parameter-binding.md
 [0081]: 0081-attachment-read-parameters.md
 [0042]: 0042-supported-version-policy.md
+[0082]: 0082-module-format-and-node-baseline.md
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md
 [0071]: 0071-usage-docs-single-root.md
