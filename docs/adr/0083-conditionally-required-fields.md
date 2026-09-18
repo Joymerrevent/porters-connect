@@ -1,6 +1,6 @@
-# 83. 条件付き必須（`※`）を公開の入力型でどう扱うか（Sales の参照 6 項目）
+# 83. 条件付き必須（`※`）は型で止めず、無条件必須（`●`）だけを `create` の必須にする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-18
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,7 +8,11 @@
 > **実装は既に入っている**（`P_Owner` のみ必須）。決めるのは**その形を公開型の規則として確定させるか**で、
 > 変えるなら破壊的変更になる。
 >
-> `1.0.0` の完成条件 V3（判断待ちが 0 になるまで進めない）の 2 件目。**決定は decider 待ち。**
+> **decider が案A を選択し `accepted`（2026-09-18）。** 実装の変更は無い（案A は現状の明文化）。
+> 反映＝本 ADR の番号を実装のコメントとガイドに書き足すところまでで、accept 後・別 PR。
+>
+> `1.0.0` の完成条件 V3（判断待ちが 0 になるまで進めない）の 2 件目。残りは「成功指標の数値化
+> タイミング」の 1 件。
 
 ## Context and Problem Statement
 
@@ -74,7 +78,8 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 
 ## Decision Outcome
 
-**未決（`proposed`）。** 推奨は**案A**。
+採用: **案A** — **`●`（無条件必須）だけを型の必須にし、`※`（条件付き必須）はサーバーに委ねる**。
+規則はリソース横断で 1 つ: **`REQUIRED_ON_CREATE` に入れてよいのは出典の「新規必須」列が `●` の項目だけ**。
 
 理由は上の非対称性に尽きる。`※` の条件は[出典][limits]の散文から起こしたもので**実機未確認**であり、
 その未確認の規則を公開型に焼き付けると、**誤っていたときに利用者が回避できない**。
@@ -97,7 +102,7 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 > **導かれてはいる**が、どちらも `※` を名指ししていない。公開型の形を決めているのが
 > **コードのコメントだけ**という状態を `1.0.0` に持ち込まないための起票。
 
-### Consequences（案A を採る場合）
+### Consequences
 
 - Good: 公開型が**出典の `●` 列と 1:1** になる。判断の余地が入らず、リソースが増えても同じ規則で決まる。
 - Good: 未確認の規則を契約に焼き付けない。実機で条件が判明したら、**その時点で**締めるか決められる。
@@ -156,9 +161,11 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 - 現状の実装: `src/resources/sales.ts`（`REQUIRED_ON_CREATE` と冒頭コメント）
 - 利用者向けの説明: [書き込みの制約][limits]（依存の連鎖の図・`create` の必須一覧）
 - 実機確認: [LV-5][lv]（`●` の列は確定。`※` の正確な条件は未確認のまま）
-- accept されたら: **実装の変更は無い**（案A の場合）。反映先は本 ADR の番号を
-  `src/resources/sales.ts` のコメントと[書き込みの制約][limits]に書き足すところまで。
-  案B〜D を採る場合は破壊的変更として別 PR。
+- 反映（accept 後・別 PR）: **実装の変更は無い**。本 ADR の番号を `src/resources/sales.ts` の
+  冒頭コメントと[書き込みの制約][limits]に書き足し、「なぜ 6 項目を必須にしないか」の根拠を
+  コメントから ADR へ移す。
+- **`※` の条件が実機で確定したら**（[LV-5][lv] の隣に置いた未確認事項）、案C を選び直す余地はある。
+  緩い → 厳しいは破壊的変更になるので、そのときは新しい ADR を起こして本 ADR を supersede する。
 
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr19]: 0019-static-resource-types.md
