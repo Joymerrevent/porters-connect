@@ -94,6 +94,7 @@
 | [0080][0080] | URL パラメータのリソースは `of()` で束ねる（0022 の Field を改訂） | 詳細設計 | accepted           | —     |
 | [0081][0081] | Attachment の Read を出典の語彙に合わせる（0018 を改訂）           | 詳細設計 | accepted           | —     |
 | [0082][0082] | CJS は `require` 条件で解決し、Node の下限を 22 に上げる           | 基本設計 | accepted           | —     |
+| [0083][0083] | 条件付き必須（`※`）は型で止めず `●` だけを必須にする               | 詳細設計 | accepted           | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -179,3 +180,4 @@
 [0081]: 0081-attachment-read-parameters.md
 [0077]: 0077-fetch-transport-timeout.md
 [0082]: 0082-module-format-and-node-baseline.md
+[0083]: 0083-conditionally-required-fields.md
