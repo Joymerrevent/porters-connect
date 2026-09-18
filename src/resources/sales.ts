@@ -4,16 +4,15 @@
 // (ADR-0019). Sales ties the whole chain together — it references Client, Recruiter, Job,
 // Contract, Candidate and Resume, and every one of them is expandable (ADR-0058).
 //
-// **Why the six references are not in `requiredOnCreate`.** PORTERS marks them `※`, not `●`
-// (docs/usage/reference resources/sales.md), and the Write article spells out what the `※` means:
-// they are required *conditionally*, as a dependency chain —
+// **Why the six references are not in `requiredOnCreate`** — ADR-0083 draws the line: only the
+// `●` (unconditionally required) column becomes a type-level requirement, and PORTERS marks
+// these six `※` (conditionally required) in docs/usage/reference resources/sales.md. The `※`
+// here is a dependency chain —
 //   Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 // (setting a lower resource requires its upper ones), plus P_Candidate and P_Resume must be
-// given together on create. A flat required-list cannot express that, and guessing "all six
-// are required" would reject calls the server accepts. Being stricter than the server fails
-// to the *unsafe* side here — the caller cannot work around a client-side rejection, but a
-// server-side one comes back as a typed error they can act on. So the library sends what it
-// is given and lets PORTERS arbitrate; the rule is documented in docs/usage/concepts/limits.md.
+// given together on create. A flat required-list cannot express that, so the library sends what
+// it is given and lets PORTERS arbitrate. The chain is spelled out for callers in
+// docs/usage/concepts/limits.md; why we do not encode it is in ADR-0083.
 // VERIFY(live): the exact conditions are doc-only until a contract environment confirms them.
 //
 // `P_ClientOwner` / `P_RecruiterOwner` / `P_JobOwner` / `P_CandidateOwner` / `P_ResumeOwner`
@@ -112,8 +111,8 @@ export type SalesSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
 /**
  * Fields for `create`: only `P_Owner` is unconditionally required. The six references are
- * required *conditionally* (a dependency chain PORTERS validates server-side) — see the
- * module comment and docs/usage/concepts/limits.md.
+ * required *conditionally* (a dependency chain PORTERS validates server-side), so they stay
+ * optional here (ADR-0083) — see the module comment and docs/usage/concepts/limits.md.
  */
 export type SalesCreateInput = CreateInput<
   typeof FIELDS,
