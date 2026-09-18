@@ -25,6 +25,9 @@ description: >-
 1. **下調べ（接地）** — まず現状を掴む。これを飛ばすと指摘が宙に浮く。
    - `git log --oneline -15` / `git status` で直近の変化を把握。
    - `CLAUDE.md`、`docs/adr/index.md`（決定の索引。運用は `docs/adr/README.md`）、`docs/live-verification.md`（契約待ちの既知仮定）に目を通す。
+   - **普及シグナルを控える**（[ADR-0084][adr84]）— `gh api repos/Joymerrevent/porters-connect/traffic/popular/referrers`
+     と `.../traffic/views` を取り、スナップショットに貼る。**GitHub は直近 14 日ぶんしか残さない**ので、
+     ここで控えないと「ブログ経由の流入が出た」という**発火に後から気づけない**（PRD §7 の遅行指標）。
    - **前回の台帳 `docs/reviews/findings.md`（索引）を必ず読む**（無ければ初回）。
      **状態が `open` の行の本体 `docs/reviews/rv/NNNN-*.md` を開いて再評価する**のが今回の仕事の半分
      （`fixed` の分まで全部読む必要はない＝1 件 1 ファイルにした理由）。
@@ -124,3 +127,4 @@ description: >-
 - サブエージェントの乱用をしない。観点が多くても 1 セッションで順に当てれば足りる（ユーザーが明示要望した場合を除く）。
 
 [adr52]: ../../../docs/adr/0052-findings-register-layout.md
+[adr84]: ../../../docs/adr/0084-success-metrics-measurement.md
