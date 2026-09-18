@@ -62,6 +62,12 @@
 | [RV-45][rv45] | 🟢     | 機能網羅 / ドキュメント         | fixed   | Attachment だけ `searchAll` が無く、無い理由も残っていない                        |
 | [RV-46][rv46] | 🟡     | 公開サーフェス / フェイルセーフ | fixed   | 既定 30 秒のタイムアウトを公開 API から変えられない                               |
 | [RV-47][rv47] | 🟡     | フェイルセーフ / 型安全         | fixed   | `t.phase.of()` の束ねを、呼び出し側が上書きできる                                 |
+| [RV-48][rv48] | 🔴     | API 忠実性 / フェイルセーフ     | open    | Option の選択肢 alias が検証されずタグ名になり、書き込み XML を注入できる         |
+| [RV-49][rv49] | 🟡     | フェイルセーフ / 公開サーフェス | open    | `createThrottle` の上限値を検証せず、容量 0 で永久に待ち続ける                    |
+| [RV-50][rv50] | 🟡     | プロセス / フェイルセーフ       | open    | LV と `VERIFY(live)` の対応が双方向で崩れ、未登録の仮定が残っている               |
+| [RV-51][rv51] | 🟢     | ドキュメント / DX               | open    | 生成した公開 API リファレンスに日本語が混ざる                                     |
+| [RV-52][rv52] | 🟢     | ドキュメント / 計画             | open    | `1.0.0` の条件 V5 が定義上満たせず、LV の件数表記も実態とずれている               |
+| [RV-53][rv53] | 🟢     | テスト厳密性 / プロセス         | open    | `engines` の下限 22.12 を CI が一度も走らせていない                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -117,3 +123,9 @@
 [rv45]: rv/0045-attachment-search-all-absent.md
 [rv46]: rv/0046-fetch-timeout-not-configurable.md
 [rv47]: rv/0047-phase-binding-overridable.md
+[rv48]: rv/0048-option-alias-xml-injection.md
+[rv49]: rv/0049-throttle-options-unvalidated.md
+[rv50]: rv/0050-live-verification-traceability-broken.md
+[rv51]: rv/0051-japanese-in-generated-api-reference.md
+[rv52]: rv/0052-lv-gate-definition-unsatisfiable.md
+[rv53]: rv/0053-engines-floor-untested.md
