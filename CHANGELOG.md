@@ -5,6 +5,40 @@
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-18
+
+**CJS からの入口を開け、Node の下限を 22.12 に上げた版**です。**破壊的変更を 1 つ**含みます
+（`engines.node` の引き上げ）。
+
+`require()` は `ERR_PACKAGE_PATH_NOT_EXPORTED`、TypeScript は `TS1479` — 0.18.0 まで、CJS からは
+**実行時もコンパイル時も入口がありませんでした**。別実体（dual）を配るのではなく、`require` 条件を
+**同じ ESM 実体**に向けて塞いでいます（[ADR-0082][adr82]）。
+
+### Added
+
+- **CJS（`require`）から読めるようになりました**（[ADR-0082][adr82]）。
+
+  ```js
+  const { PortersClient } = require("@joymerrevent/porters-connect");
+  ```
+
+  配るのは **ESM の 1 ファイルのまま**で、`require` 条件を同じ実体に向けています
+  （Node の `require(esm)`）。**CJS 用の別ファイルは配りません** — 実体が 2 つあると
+  ESM 側と CJS 側で別のクラスが読まれ、`catch (e) { if (e instanceof PortersError) … }` が
+  `false` になって素通りするためです。型は `dist/index.d.cts` を同梱しているので、
+  `moduleResolution: node16` の CJS 利用者もそのまま書けます。
+
+  0.18.0 までは `exports` が `import` 条件しか持たず、`require()` は
+  `ERR_PACKAGE_PATH_NOT_EXPORTED`、TypeScript は `TS1479` で**入口そのものがありません**でした。
+
+### Changed
+
+- **（破壊的）Node.js 22.12 以上が必要になりました**（[ADR-0082][adr82]）。`engines.node` が
+  `>=20` → `>=22.12.0` です。`require` 条件を ESM 実体に向ける形は Node の `require(esm)` に
+  載っており、これが既定で有効なのは **22.12.0 以降**だからです（22.0〜22.11 では
+  `ERR_REQUIRE_ESM`）。丸めて `>=22` と書くとその範囲に対して嘘になるため、成立する最小の形で
+  宣言しています。Node 20 は **2026-04-30 に EOL** で、テストの Node マトリクスからも外しました。
+
 ## [0.18.0] - 2026-09-17
 
 **「どのリソースか」の受け取り方を 1 つの規則に揃えた版**です。**破壊的変更を 4 つ**含みます
@@ -1025,13 +1059,15 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr79]: docs/adr/0079-resource-by-name.md
 [adr80]: docs/adr/0080-resource-parameter-binding.md
 [adr81]: docs/adr/0081-attachment-read-parameters.md
+[adr82]: docs/adr/0082-module-format-and-node-baseline.md
 [limits]: docs/usage/concepts/limits.md
 [failures]: docs/usage/howto/handle-failures.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.15.1...v0.16.0

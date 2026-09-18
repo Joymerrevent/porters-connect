@@ -100,14 +100,21 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.17.0**（npm latest・`v0.17.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  **7 files / 705.2 kB**・2026-09-16）。**累計 23 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 21 版**が
-  この半自動フロー）。changeset **3 枚**を消費した minor リリース。**破壊的変更を 2 つ**含む
+- ✅ 最新公開: **0.18.0**（npm latest・`v0.18.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **7 files / 727.9 kB**・2026-09-17）。**累計 24 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 22 版**が
+  この半自動フロー）。changeset **5 枚**を消費した minor リリース。**破壊的変更を 4 つ**含む
+  （アクセスポイントの `host` 廃止・[ADR-0078][adr78] ／ 束ねた項目は書き込み入力から外れる・[RV-47][rv47] ／
+  Field マスタの Read が `of()` 経由・[ADR-0080][adr80] ／ 添付の Read が出典の語彙・[ADR-0081][adr81]）。
+  あわせて `resourceValueOf` / `resourceNameOf` を公開した。
+  - **4 つの変更を 1 版にまとめた**のは、どれも「`resource` をどう受けるか」という同じ問いから
+    出てきたため。破壊的変更を小出しにするより、**利用者が 1 回だけ直せば済む**ほうを採った。
+- ✅ 直前の **0.17.0**（npm latest・`v0.17.0` タグ・**7 files / 705.2 kB**・2026-09-16）。
+  changeset **3 枚**を消費した minor リリース。**破壊的変更を 2 つ**含む
   （添付の本体は `get` でだけ取れる・[ADR-0075][adr75] ／ Phase の Read から `keywords` / `itemstate` が
   消える・[ADR-0076][adr76]）。あわせて `searchAll` と `createFetchTransport` を公開した。
   - **この版は `main` へ squash でマージしてしまい、巻き戻してやり直した**（下記「squash でマージして
     しまったとき」）。publish 前だったので実害は無し。
-- ✅ 直前の **0.16.0**（npm latest・`v0.16.0` タグ・**7 files / 686.3 kB**・2026-09-15）。
+- ✅ **0.16.0**（npm latest・`v0.16.0` タグ・**7 files / 686.3 kB**・2026-09-15）。
   changeset **1 枚**を消費した minor リリース。**破壊的変更**
   （`field` が未宣言のカスタム項目を受け付けなくなる・[ADR-0074][adr74]）を含み、
   逃げ道として `rawValue` を公開した。
@@ -148,6 +155,8 @@
   なお **changesets v3 は Node `^22.11 || ^24 || >=26`** を要求する。`.node-version` は 22 なので
   通常の開発・CI では問題ないが、**Node 20 では `changeset` コマンドが動かない**
   （install 自体は通る＝ test マトリクスの Node 20 ジョブは影響なし）。
+  → **2026-09-18 にこの制約は消えた**。[ADR-0082][adr82] で `engines` を `>=22.12.0` に上げ、
+  test マトリクスからも Node 20 を外したため、下限が changesets の要求を満たす。
 
 > 📌 **「v3」が 2 つ出てくるので注意**（読み違えやすい）。
 >
@@ -204,7 +213,8 @@ override が先、changesets の導入が翌日という順序だったため、
 | changesets の版上げ（採用） | override 不要＝解決器が宣言範囲を検査し、**非互換なら install が落ちる**  |
 
 「壊れたときに安全側へ倒れる」で選ぶなら後者。代償は「Node 20 で `changeset` が動かない」だけで、
-`.node-version` は 22・`release.yml` も同ファイル参照のため実害はない。
+`.node-version` は 22・`release.yml` も同ファイル参照のため実害はない
+（その代償も [ADR-0082][adr82] で下限を 22.12 に上げた時点で消えた）。
 `pnpm patch` で `safeLoad` を書き換える案は、同じ修正を上流の公開版で得られるのに自前の patch ファイルを
 恒久的に抱えることになるため、上記 override 案に劣る＝検討から外した。
 
@@ -221,6 +231,7 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr26]: adr/0026-changelog-format.md
 [adr29]: adr/0029-release-tag-automation.md
 [adr30]: adr/0030-backmerge-method.md
+[adr82]: adr/0082-module-format-and-node-baseline.md
 [adr39]: adr/0039-commitlint-release-range.md
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
@@ -230,3 +241,7 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr74]: adr/0074-custom-field-declaration-required.md
 [adr75]: adr/0075-attachment-search-all.md
 [adr76]: adr/0076-phase-read-query-surface.md
+[adr78]: adr/0078-hostname-port-split.md
+[adr80]: adr/0080-resource-parameter-binding.md
+[adr81]: adr/0081-attachment-read-parameters.md
+[rv47]: reviews/rv/0047-phase-binding-overridable.md

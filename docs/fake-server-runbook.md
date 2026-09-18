@@ -1,11 +1,14 @@
 # フェイクサーバー 手動確認 手順書（curl・ライブラリ不使用）
 
-- ステータス: living（フェーズ6 時点の実装に対して**全コマンド実行検証済み**・2026-08-10）
+- ステータス: living（**全コマンド実行検証済み**・2026-08-10／**0.18.0 で変わった箇所を再実行して確認**・2026-09-17）
 - 位置づけ: ローカルのフェイク PORTERS サーバー（[ADR-0043][adr43]）を、**ライブラリを介さず curl だけ**で叩いて
   挙動を目視確認するための手順書。ワイヤ形状の正は [docs/reference][ref]、設計判断の正は ADR-0043、
   実装の進捗は [フェイクサーバー実装計画][plan]。
 - 用途: 「ライブラリが悪いのか、フェイクが悪いのか、そもそも API の形がそうなのか」を切り分けるとき／
   MCP サーバー等の別プロセスから叩く前の疎通確認／新しいリソースを足したときの手触り確認。
+- **curl の例があるのは 5 リソース**（Candidate / Job / Client / Process / Resume）＋ Attachment ＋
+  マスタ 4 種。フェイクは 13 リソース全部に答えるので、**例が無い＝使えない、ではない**
+  （接頭辞を差し替えれば同じ形で叩ける。例外は §1 の表にある 3 つだけ）。
 
 ---
 
@@ -21,7 +24,7 @@ pnpm fake:serve       # 127.0.0.1:4010 で起動（PORT=5000 pnpm fake:serve で
 ```text
 fake PORTERS server listening on http://127.0.0.1:4010
   auth      /v1/oauth (code_direct), /v1/token
-  resources /v1/candidate, /v1/job, /v1/client, /v1/process, /v1/resume, /v1/attachment, /v1/partition, /v1/user, /v1/field, /v1/option
+  resources /v1/candidate, /v1/job, /v1/client, /v1/recruiter, /v1/contact, /v1/opportunity, /v1/activity, /v1/contract, /v1/sales, /v1/phase, /v1/process, /v1/resume, /v1/attachment, /v1/partition, /v1/user, /v1/field, /v1/option
   seeded    2 candidates, 2 users, 1 option tree
 ```
 
@@ -60,15 +63,15 @@ BASE=http://127.0.0.1:4010
   - **接続が切れる（curl exit code 52 / `http_code=000`）** … レート上限超過による**強制切断**（§6.3）
 - **alias 接頭辞はリソースごとに違う**:
 
-  | リソース   | path               | 接頭辞       | 例                    |
-  | ---------- | ------------------ | ------------ | --------------------- |
-  | Candidate  | `/v1/candidate`    | `Person`     | `Person.P_Name`       |
-  | Job        | `/v1/job`          | `Job`        | `Job.P_Name`          |
-  | Client     | `/v1/client`       | `Client`     | `Client.P_Name`       |
-  | Process    | `/v1/process`      | `Process`    | `Process.P_Candidate` |
-  | Resume     | `/v1/resume`       | `Resume`     | `Resume.P_Name`       |
-  | Attachment | `/v1/attachment`   | **なし**     | `FileName`            |
-  | マスタ4種  | `/v1/partition` 他 | 各リソース名 | `User.P_Name`         |
+  **例外は 3 つだけ**で、残りは path と同じ名前が接頭辞になる。
+
+  | リソース             | path               | 接頭辞                      | 例                             |
+  | -------------------- | ------------------ | --------------------------- | ------------------------------ |
+  | Candidate            | `/v1/candidate`    | **`Person`**（path と違う） | `Person.P_Name`                |
+  | Phase                | `/v1/phase`        | **なし**（主キーも `Id`）   | `ResourceId`                   |
+  | Attachment           | `/v1/attachment`   | **なし**（主キーも `Id`）   | `FileName`                     |
+  | ほかのデータ系 10 種 | `/v1/job` 他       | リソース名                  | `Job.P_Name` / `Sales.P_Owner` |
+  | マスタ4種            | `/v1/partition` 他 | 各リソース名                | `User.P_Name`                  |
 
 ---
 
@@ -323,17 +326,24 @@ CONTENT=$(printf '職務経歴書のダミー' | base64)
 curl -s -X POST "$BASE/v1/attachment?partition=1" "${W[@]}" --data-binary \
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Attachment><Item><Id>-1</Id><Resource>1</Resource><ResourceId>10001</ResourceId><FileName>resume.txt</FileName><ContentType>text/plain</ContentType><Content>$CONTENT</Content></Item></Attachment>"
 
+# 本体つきで 1 レコードぶん読む（requestType=0）
 curl -s -G "${A[@]}" "$BASE/v1/attachment" -d partition=1 \
-  --data-urlencode "field=Id,ResourceId,FileName,ContentType,Content" \
-  --data-urlencode "condition=ResourceId:eq=10001"
+  -d requestType=0 -d resource=1 -d resourceId=10001
 ```
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>10001</Id><ResourceId>10001</ResourceId><FileName>resume.txt</FileName><ContentType>text/plain</ContentType><Content>6IG35YuZ57WM5q205pu444Gu44OA44Of44O8</Content></Item></Attachment>
+<?xml version="1.0" encoding="UTF-8"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>10001</Id><Resource>1</Resource><ResourceId>10001</ResourceId><ContentType>text/plain</ContentType><FileName>resume.txt</FileName><Content>6IG35YuZ57WM5q205pu444Gu44OA44Of44O8</Content></Item></Attachment>
 ```
 
 - **接頭辞が無い**（`<FileName>`。`<Attachment.FileName>` ではない）。主キーも `P_Id` ではなく **`Id`**。
-- `Resource` は添付先リソースの数値コード（candidate=1 / job=3 / client=5 / resume=17）、`ResourceId` はその ID。
+- **Read の語彙がほかと違う**（[ADR-0081][adr81]）。`field` / `condition` は**受け付けない**
+  （必須が欠けると `<Code>100</Code>`）。取るのは次の 4 つ:
+  - `requestType` **必須** — `0` 本体あり / `1` 本体なし（一覧）
+  - `resource` **必須** — 添付先リソースの数値コード（candidate=1 / job=3 / client=5 / resume=17）
+  - `resourceId` 任意 — 1 レコードの添付だけに絞る
+  - `id` 任意 — 1 件だけ
+- 一覧は `-d requestType=1 -d resource=1` で引く（`Content` が返らない＝ファイルを全部
+  ダウンロードしない・[ADR-0075][adr75]）。
 - `Content` は **Base64**。§6.1 の ~15000 字上限は **Attachment だけ免除**される。
 
 ---
@@ -507,13 +517,14 @@ pnpm exec tsx tmp/fake-control.ts     # 127.0.0.1:4011 で起動。別ターミ�
 同じサーバに、**アプリ側は設定 2 つだけ**で繋がる（[ADR-0047][adr47]・コード変更不要）:
 
 ```ts
-new PortersClient({
-  host: "127.0.0.1:4010",
+const porters = new PortersClient({
+  hostname: "127.0.0.1", // ポートは別項目（`hostname` に書くと構築時に落ちる）
+  port: 4010,
   scheme: "http",
   appId: "a",
   appSecret: "s",
-  partition: 1,
 });
+const t = porters.tenant(1); // partition は tenant(id) で束ねる
 ```
 
 `scheme: "http"` はプロセスごとに 1 回警告する（抑止は env `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` のみ）。
@@ -529,6 +540,8 @@ new PortersClient({
 - 契約後に実機確認する項目: [live-verification][lv]（LV-9 長さ・レート超過の応答／LV-10 Reference の入れ子／LV-11 Write 失敗の code／LV-12 Field Read の表記）
 
 [adr43]: adr/0043-local-fake-server.md
+[adr81]: adr/0081-attachment-read-parameters.md
+[adr75]: adr/0075-attachment-search-all.md
 [adr47]: adr/0047-access-point-scheme.md
 [adr22]: adr/0022-master-read-query-surface.md
 [plan]: design/fake-server-plan.md

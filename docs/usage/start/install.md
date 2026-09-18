@@ -14,8 +14,25 @@ npm i @joymerrevent/porters-connect
 # yarn add @joymerrevent/porters-connect
 ```
 
-**Node.js 20 以上・ESM 前提**です。型定義（`.d.ts`）は同梱しているので、TypeScript なら
-追加の `@types` は要りません。
+**Node.js 22.12 以上**が要ります。型定義は同梱しているので、TypeScript なら追加の
+`@types` は要りません。
+
+### CJS から `require` する
+
+ESM（`import`）で書いているなら、この節は読み飛ばして構いません。
+
+配っているのは **ESM の 1 ファイルだけ**です。CJS からも、同じファイルを `require` で読みます。
+
+```js
+const { PortersClient } = require("@joymerrevent/porters-connect");
+```
+
+Node が `require()` で ESM を読めるのは **22.12 以降**です（下限をここに置いているのはそのため。
+22.0〜22.11 では `ERR_REQUIRE_ESM` で落ちます）。
+
+**CJS 用の別ファイルは配りません。** 実体が 2 つあると ESM 側と CJS 側で**別のクラス**が読まれ、
+`catch (e) { if (e instanceof PortersError) … }` が `false` になって**握りつぶしではなく素通り**
+します（[ADR-0082][adr82]）。実体が 1 つなら、どちらから読んでも同じクラスです。
 
 ## クライアントを作成する
 
@@ -86,6 +103,7 @@ URL の組み立てはライブラリ内の 1 箇所に閉じているので、�
 **[認証を通して、疎通を確認する][s-auth]** — 初回の権限付与を済ませて、
 「本当に繋がった」ことを確かめます。
 
+[adr82]: ../../adr/0082-module-format-and-node-baseline.md
 [s-auth]: authenticate.md
 [s-prereq]: prerequisites.md
 [s-read]: first-read.md

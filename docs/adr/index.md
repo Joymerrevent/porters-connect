@@ -93,6 +93,7 @@
 | [0079][0079] | リソースの指定は数値のまま、名前との変換を公開する                 | 詳細設計 | accepted           | —     |
 | [0080][0080] | URL パラメータのリソースは `of()` で束ねる（0022 の Field を改訂） | 詳細設計 | accepted           | —     |
 | [0081][0081] | Attachment の Read を出典の語彙に合わせる（0018 を改訂）           | 詳細設計 | accepted           | —     |
+| [0082][0082] | CJS は `require` 条件で解決し、Node の下限を 22 に上げる           | 基本設計 | accepted           | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -177,3 +178,4 @@
 [0080]: 0080-resource-parameter-binding.md
 [0081]: 0081-attachment-read-parameters.md
 [0077]: 0077-fetch-transport-timeout.md
+[0082]: 0082-module-format-and-node-baseline.md

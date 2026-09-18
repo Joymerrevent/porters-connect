@@ -1,6 +1,6 @@
 # @joymerrevent/porters-connect
 
-[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 20][node-badge] [![OpenSSF Scorecard][scorecard-badge]][scorecard] [![OpenSSF Best Practices][bp-badge]][bp]
+[![npm version][npm-badge]][npm] [![License: MIT][mit-badge]][mit] ![Node >= 22.12.0][node-badge] [![OpenSSF Scorecard][scorecard-badge]][scorecard] [![OpenSSF Best Practices][bp-badge]][bp]
 
 PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**扱うための、
 [Joymerrevent（ジョイメリベント）][joymerrevent] 製の **非公式（unofficial）** ラッパーです。
@@ -35,7 +35,8 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
 
 揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
-あります。実行環境は Node.js 20 以上（ESM）で、型定義は同梱です。
+あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。配るのは ESM 1 本ですが、
+CJS からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
 
 契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
 （[契約なしでテストを書きたい][test-without-contract]）。
@@ -144,7 +145,7 @@ console.log(page.total, page.items[0]?.P_Name);
 [npm-badge]: https://img.shields.io/npm/v/@joymerrevent/porters-connect
 [mit]: ./LICENSE
 [mit-badge]: https://img.shields.io/badge/License-MIT-blue.svg
-[node-badge]: https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg
+[node-badge]: https://img.shields.io/badge/node-%3E%3D22.12.0-brightgreen.svg
 [scorecard]: https://scorecard.dev/viewer/?uri=github.com/Joymerrevent/porters-connect
 [scorecard-badge]: https://api.scorecard.dev/projects/github.com/Joymerrevent/porters-connect/badge
 [bp]: https://www.bestpractices.dev/projects/14611
@@ -160,6 +161,7 @@ console.log(page.total, page.items[0]?.P_Name);
 [c-no-delete]: docs/usage/concepts/no-delete.md
 [c-partition]: docs/usage/concepts/partition.md
 [s-auth]: docs/usage/start/authenticate.md
+[s-cjs]: docs/usage/start/install.md#cjs-から-require-する
 [s-prereq]: docs/usage/start/prerequisites.md
 [test-without-contract]: docs/usage/howto/test-without-contract.md
 [docs-index]: docs/usage/index.md

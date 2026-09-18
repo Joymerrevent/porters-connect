@@ -91,7 +91,7 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 - **R-11 機密情報を漏らさない**: App ID/Secret/トークンを**ログ・エラー・スナップショットに出さない**。設定は環境変数/引数から受け取り、リポジトリにコミットしない（`.env.example` のみ）。
 - **R-12 差し替え可能なトランスポート（モック）**: HTTP 層を注入可能にし、**契約なしでもモック XML で全機能をテスト/評価**できる。ライブラリ自身のテストもこれで行う。
 - **R-13 型安全の徹底**: 公開サーフェスに `any` を撒かない。リソース・スコープ・レスポンスを型で表現。
-- **R-14 ランタイム/配布**: TypeScript(strict) / ESM / Node 20+ / MIT。`X-P-ConnectAPI-Version: 2` を既定送信し、**対応 PORTERS / API バージョンを README・コードに明記**。
+- **R-14 ランタイム/配布**: TypeScript(strict) / ESM / Node 22.12+ / MIT（CJS からは `require` 条件で同じ ESM 実体を読む・[ADR-0082][adr82]）。`X-P-ConnectAPI-Version: 2` を既定送信し、**対応 PORTERS / API バージョンを README・コードに明記**。
 - **R-15 言語方針**: 公開サーフェス（型名・メソッド名・public JSDoc・エラー既定文）は英語、内部コメントは日本語可。**README/docs は日本語ファースト**。
 
 ### Nice-to-Have（P1）— あると強いが核は無くても回る
@@ -103,7 +103,8 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 ### Future Considerations（P2）— v1 では作らないが設計で潰さない
 
 - 第2層 MCP（公開ツール `search_candidates` 等）。第1層を内部呼び出しするだけにできる API 設計にしておく。
-- MVP 外リソースの全 R/W、CJS 出力、CLI、Docker 配布、公開プレイグラウンド。
+- MVP 外リソースの全 R/W、CLI、Docker 配布、公開プレイグラウンド。
+  （**CJS 出力は P2 から外れた** — 別実体は配らず `require` 条件で解決する形に決着・[ADR-0082][adr82]）
 
 ## 7. 成功指標（Success Metrics）※数値目標はベースライン取得後に設定
 
@@ -127,11 +128,13 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 
 > 決着したものは**消さずに「（解決済み）」を付けて残す**（判断の経緯を保つ）。実機がないと確定しない項目は
 > [live-verification][lv] へ移す。**2026-08-09 時点で本当に未決なのは 2 件**（成功指標の数値化タイミング・CJS 出力）。
+> **2026-09-18 に CJS が決着したので、残る未決は成功指標の数値化タイミングの 1 件**（[ADR-0082][adr82]）。
 
 - [stakeholder] 成功指標の**数値化のタイミング**（ベースライン＝最初の実利用が出てから設定する想定で良いか）。
 - （解決済み）**サンドボックス(R-17)** は **P1 のまま出荷**して決着（[ADR-0024][adr24] の `createMockTransport` ＋ `pnpm sandbox` を v0.1.0 に同梱）。P0 への引き上げは不要だった。
 - （解決済み）**対応 PORTERS / API バージョン表記**は [ADR-0042][adr42] で確定＝**Connect API Version を契約の正**（`X-P-ConnectAPI-Version: 2` 前提）、製品 8.x/9.x は参考情報。
-- [eng] v1 で **CJS 出力**まで出すか（ESM のみで開始し P2 か）。
+- （解決済み）v1 で **CJS 出力**まで出すか — [ADR-0082][adr82] で決着（2026-09-18）。**別実体は配らず**、
+  `require` 条件を同じ ESM 実体に向ける（Node の `require(esm)`）。あわせて `engines.node` を `>=22.12.0` に上げた。
 - （移送）**1 つの App トークンで複数 partition を叩けるか** は実機でしか確定しないため、[live-verification][lv] **LV-13** に移した（`tenant(id)`／F-3 が同一トークンのまま partition を差し替える実装＝この仮定の上に立つ）。設計は両対応なのでリリースはブロックしない。
 - （解決済み）トークンストア・初回 code グラントの扱いは ADR-0007 で確定。
 - （解決済み）**npm スコープ/組織** `@joymerrevent` / GitHub `Joymerrevent` は確定（`@joymerrevent/porters-connect` を 0.6.2 まで公開済み・README の「非公式」「契約必須」注記も整備済み）。
@@ -160,5 +163,6 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 [adr47]: ../adr/0047-access-point-scheme.md
 [adr48]: ../adr/0048-access-point-host-validation.md
 [adr42]: ../adr/0042-supported-version-policy.md
+[adr82]: ../adr/0082-module-format-and-node-baseline.md
 [lv]: ../live-verification.md
 [ref]: ../usage/reference/README.md

@@ -44,8 +44,15 @@ import { join, relative, resolve, sep } from "node:path";
 
 // 検査対象。ADR / レビュー台帳 / 生成物は対象外 — 決定の記録や生成物のコードは
 // 「動くこと」を約束していない（README とガイドは約束している）。
+//
+// living な手順書・設計書（`docs/*.md` と `docs/design/`）も対象に入れる。実測（2026-09-17）では
+// この 2 つに 2 ブロックしか無いのに、**どちらも 2〜5 版ぶん古かった**（`host` は 0.18.0 で消え、
+// `partition` を PortersClient に渡す形は 0.10.0 で消えている）。読者が少ない文書ほど、
+// 壊れても誰も気づかない。
 const MARKDOWN_ROOTS = [
   "README.md",
+  "docs/*.md",
+  "docs/design/**/*.md",
   "docs/usage/index.md",
   "docs/usage/start/**/*.md",
   "docs/usage/concepts/**/*.md",
@@ -133,6 +140,7 @@ const kv: {
 };
 const req: { user: string };
 const tokenStore: TokenStore;
+const transport: Transport;
 const lookupPartitionForUser: (user: string) => Promise<number>;
 const query: CandidateSearchQuery;
 const inputs: CandidateCreateInput[];

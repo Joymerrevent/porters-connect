@@ -14,12 +14,13 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.17.0**（2026-09-16）＝ 添付ファイルの運び方を決め、出典に無いパラメータを型から外した版。
-**破壊的変更を 2 つ**含む（添付の本体は `get` でだけ運ぶ・[ADR-0075][adr75] ／ Phase の Read から
-`keywords` / `itemstate` を外す・[ADR-0076][adr76]）。あわせて `t.attachment.searchAll()` と
-`createFetchTransport`（タイムアウト・[ADR-0077][adr77]）を公開した。
-**どちらの破壊的変更も V1 のマトリクスから出てきた**（表 D の「理由の無い空白」と、表 B のずれ）。
-品質ゲートは全 green（**1159 tests**・coverage は perFile 100%・mutation 96.17）。
+**最新は 0.18.0**（2026-09-17）＝「どのリソースか」の受け取り方を 1 つの規則に揃えた版。
+**破壊的変更を 4 つ**含む（アクセスポイントの `host` 廃止・[ADR-0078][adr78] ／ 束ねた項目は書き込み
+入力から外れる・[RV-47][rv47] ／ Field マスタの Read が `of()` 経由・[ADR-0080][adr80] ／ 添付の Read が
+出典の語彙・[ADR-0081][adr81]）。あわせて `resourceValueOf` / `resourceNameOf` を公開した。
+**4 つとも「`resource` をどう受けるか」という同じ問いから出てきた**ので 1 版にまとめた
+（利用者が直すのは 1 回で済む）。V1 のマトリクスのずれは**これでゼロ**になった。
+品質ゲートは全 green（**1191 tests**・coverage は perFile 100%・mutation 96.26）。
 
 **次の向き先は「第1層ライブラリの完成」**（2026-09-09・stakeholder）。第2層 MCP サーバーは
 **保留・凍結**した（下記「凍結」節）。
@@ -40,7 +41,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 | --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **マトリクス作成・検査あり**（[表 A〜G][coverage]）。残るずれ 8 セル ＝ ADR 決着 2・ライブ検証待ち 6（すべて Attachment） |
 | V2  | **使い方のドキュメント完成**           | 「入門（順に読む）→ 考え方 → 目的別 HOWTO」が揃い、**読者の目的から引ける**こと。検査は [ADR-0070][adr70] の 5 つ                          | **達成**（4 層 ＋ 検査①〜⑤ ＋ README を入口に絞る ＋ `docs/usage/` への集約）                                             |
-| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち 3・要 ADR 0・**open 0** ✅                                                                           |
+| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | 着手可能 3・判断待ち **2**・要 ADR 0・**open 0** ✅                                                                       |
 | V4  | **残る未確認はライブ検証だけ**         | `grep -rn "VERIFY(live)" src test` の結果が [live-verification][lv] のエントリと 1:1 で対応する                                            | LV-1〜25（25 件）                                                                                                         |
 | V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の全エントリが「状態: **確定**」                                                                                   | **0 / 25**（契約待ち）                                                                                                    |
 | V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                                                                                              |
@@ -140,8 +141,12 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 判断待ち（決めれば着手できる）
 
-- [ ] **v1 で CJS 出力まで出すか**（PRD [§8][prd]・[eng]）— **V3 の対象**（判断待ちが 0 になるまで
-      `1.0.0` に進めない）。CLAUDE.md は「ESM 前提・可能なら CJS も出力」と書いており、現状は **ESM のみ**
+- [x] ✅ **v1 で CJS 出力まで出すか** — [ADR-0082][adr82] で決着（2026-09-18・**別実体は配らず
+      `require` 条件を ESM に向ける ＋ Node の下限を 22.12 に上げる**）。**実装済み**（2026-09-18・
+      `exports` の `require` 条件／`engines >=22.12.0`／`dist/index.d.cts`／入口を実行して叩く
+      `check:cjs`／CI マトリクスから Node 20 を外した）。
+      測り直して分かったのは「CJS 出力が要るか」ではなく、**いまは CJS から入口が無い**
+      （`ERR_PACKAGE_PATH_NOT_EXPORTED` / `TS1479`）ということだった。
 - [ ] **Sales の `create` 必須を ADR にするか** — 参照 6 項目を必須にしない判断は既存方針の適用に留めたが、
       公開型 `SalesCreateInput` の形に効く。形式化するなら要起票
 - [ ] **成功指標の数値化タイミング**（PRD [§8][prd]・[stakeholder]）
@@ -230,11 +235,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 待ち（自分では進められない）
 
-| 待ちの種類   | 中身                                                                                                |
-| ------------ | --------------------------------------------------------------------------------------------------- |
-| **契約待ち** | ライブ検証 **LV-1〜25**（[live-verification][lv]）。0.x のブロッカーではないが **`1.0.0` の V5**    |
-| **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09） |
-| **判断待ち** | 上記「判断待ち」節を参照（CJS 出力・Sales の必須・成功指標の数値化）＝ **V3**                       |
+| 待ちの種類   | 中身                                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| **契約待ち** | ライブ検証 **LV-1〜25**（[live-verification][lv]）。0.x のブロッカーではないが **`1.0.0` の V5**     |
+| **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09）  |
+| **判断待ち** | 上記「判断待ち」節を参照（Sales の必須・成功指標の数値化）＝ **V3**。CJS は [ADR-0082][adr82] で決着 |
 
 ### TODO の見取り図（どこを見れば何が分かるか）
 
@@ -242,9 +247,9 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 
 | ファイル                      | 何の TODO か                                       | いまの状態                               |
 | ----------------------------- | -------------------------------------------------- | ---------------------------------------- |
-| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 3・要 ADR 1（＝V3） |
+| **本書**（roadmap）           | **次に何をやるか**（着手可能 / 判断待ち / 要 ADR） | 着手可能 3・判断待ち 2・要 ADR 0（＝V3） |
 | [findings][findings]          | レビュー指摘の処置台帳（RV-N）                     | **open は 0 件** ✅                      |
-| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **実装待ちの ADR は 0 件**               |
+| [docs/adr][adr]               | 【accept 済み・実装済み】＋論点バックログ          | **実装待ちの ADR は 0 件** ✅            |
 | [live-verification][lv]       | 契約取得後に実機確認する仮定（LV-N）               | LV-1〜25 が未確認（契約待ち）            |
 | [フェイク実装計画][fake-plan] | フェイクサーバーのフェーズ別チェックリスト         | フェーズ0〜6 完了・フェーズ7 のみ未着手  |
 | [release-runbook][rb]         | リリース手順のチェックリスト                       | 毎回使う手順書（常時 unchecked）         |
@@ -404,8 +409,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.17.0`**（npm latest・2026-09-16 にレジストリで確認・**7 files / 705.2 kB**）。**全 23 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.18.0`**（npm latest・2026-09-17 にレジストリで確認・**7 files / 727.9 kB**）。**全 24 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -422,7 +427,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.15.1 で開発用依存の脆弱性 5 件と Actions の権限を整理（`dist` は 0.15.0 と同一）、
       **0.16.0 でカスタム項目を宣言必須に揃え（[ADR-0074][adr74]・破壊的）＋ 逃げ道の `rawValue` を公開**、
       **0.17.0 で添付の本体を `get` に寄せ（[ADR-0075][adr75]・破壊的）＋ Phase の Read から出典に無い 2 つを外し
-      （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**）。
+      （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**、
+      **0.18.0 で URL パラメータのリソースを `of()` に揃え（[ADR-0080][adr80] / [ADR-0081][adr81]・破壊的）
+      ＋ アクセスポイントを `hostname` / `port` に分割（[ADR-0078][adr78]・破壊的）**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -488,6 +495,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] CodeQL（コードスキャン）ワークフロー（`codeql.yml`。**default branch=main にも反映済み**＝main で走る）
 - [x] commitlint の CI ジョブ（`commitlint.yml`。PR のコミット範囲＋PR タイトルを検査・リリース PR は範囲限定。[ADR-0039][adr39]）
 - [x] テスト Node マトリクス（20/22/24）＋ **最低 Node を 20 に引き上げ**（18 は EOL・vitest/eslint が非対応のため。engines/README/CLAUDE.md/CHANGELOG 反映）
+      → **2026-09-18 に 22/24/26 へ**（下限 `>=22.12.0`・[ADR-0082][adr82]。Node 20 は 2026-04-30 に EOL。
+      下限＝Maintenance LTS / Active LTS / Current の**3 段は維持**する）
 - [x] OpenSSF Scorecard ワークフロー（`scorecard.yml`・週次＋`main` push＋branch_protection_rule／SARIF を code scanning へ＋OpenSSF 公開・README バッジ）／全ワークフローの Actions を**コミット SHA にピン留め**（版コメントで Dependabot が SHA＋版を追従更新＝両立）。サプライチェーン強靭化＝フェイルセーフ。既存 `github-actions` Dependabot 設定で追従（設定変更不要）
 - [x] **依存更新の熟成期間（cooldown）7 日**＝公開直後の版は取り込まない。入口は Dependabot `cooldown`（npm は minor/patch 7 日・major 14 日／Actions は 7 日）、出口は pnpm `minimumReleaseAge: 10080`（手元の `pnpm add` / `pnpm update` も守る）。悪性リリースは概ね数時間〜数日で発見・削除されるため**防御の本体は「時間」**。**cooldown は version updates のみに効き security updates は素通り**＝待っても脆弱性の穴は開かない＝フェイルセーフ
 
@@ -514,8 +523,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - フェイクサーバーの **package 昇格・配布**（`@joymerrevent/porters-fake`・フェーズ7・需要が出てから）
 - ~~MVP 外リソースの R/W~~ → **主軸に昇格**（[ADR-0060][adr60] D1。上記「いま何をやるか」を参照）
 - CLI / Docker 配布 / 公開プレイグラウンド
-- ~~CJS 出力~~ — **ここに置いたままだが、PRD [§8][prd] では「v1 で出すか」が未決**のまま＝
-  将来送りと未決が食い違っている。`1.0.0` の完成条件を決めるときに**どちらかへ寄せる**
+- ~~CJS 出力~~ — **解決**（[ADR-0082][adr82]）。将来送りでも未決でもなく、**`require` 条件で
+  解決する**（別実体は配らない）。CLAUDE.md・[PRD §6・§8][prd]・本書の食い違いも揃えた（2026-09-18）
 - `defineFields` follow-up（[ADR-0023][adr23]）: 値レベルの厳格な実行時検証・テナント実在チェック・Field Read からの宣言雛形生成・Attachment / Reference / Image 型のカスタム項目
 
 ## 🔌 ライブ検証（契約環境が必要・契約後タスク）
@@ -603,7 +612,9 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr78]: adr/0078-hostname-port-split.md
 [adr79]: adr/0079-resource-by-name.md
 [adr80]: adr/0080-resource-parameter-binding.md
+[rv47]: reviews/rv/0047-phase-binding-overridable.md
 [adr81]: adr/0081-attachment-read-parameters.md
+[adr82]: adr/0082-module-format-and-node-baseline.md
 [adr76]: adr/0076-phase-read-query-surface.md
 [rv45]: reviews/rv/0045-attachment-search-all-absent.md
 [rv46]: reviews/rv/0046-fetch-timeout-not-configurable.md
