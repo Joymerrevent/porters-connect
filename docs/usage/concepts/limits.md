@@ -159,6 +159,11 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 ライブラリの `create` が必須にしているのは **`P_Owner` だけ**です。
 6 項目を一律必須にすると、`P_Client` だけを指定する正当な呼び出しまで弾いてしまいます。
 
+これは Sales だけの扱いではありません。**型で必須にするのは `●`（無条件で必須）の項目だけ**で、
+`※`（条件付き必須）は PORTERS に委ねる、というのが全リソース共通の規則です（[ADR-0083][adr83]）。
+**型が緩い側に倒してある**のは、こちらの誤りなら往復 1 回と型付きエラーで済むからです
+（型で弾かれると、利用者の側に回避手段がありません）。
+
 ### Phase 関連項目の更新
 
 `P_Phase` / `P_PhaseDate` / `P_PhaseMemo` は、**現在の最新フェーズに対する条件**を満たす必要があります
@@ -175,7 +180,8 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 
 ## リソースごとの「新規必須」
 
-型が要求する項目です。`P_Id` はライブラリが供給するため入力型には現れません。
+型が要求する項目です。出典の「新規必須」列が **`●`** のものだけが並びます（`※` は上記のとおり
+委ねる側・[ADR-0083][adr83]）。`P_Id` はライブラリが供給するため入力型には現れません。
 
 | リソース      | `create` の必須                                                               |
 | ------------- | ----------------------------------------------------------------------------- |
@@ -201,7 +207,7 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 - エラーの受け取り方: [エラー処理ガイド][error-handling]
 - 一括書き込み: [一括書き込みガイド][bulk]
 - 決定: [ADR-0041][adr41]（一括書き込み）／[ADR-0045][adr45]（Write 応答のルート `<Code>`）／
-  [ADR-0046][adr46]（送信前ガードは reject で届く）
+  [ADR-0046][adr46]（送信前ガードは reject で届く）／[ADR-0083][adr83]（`※` は型で止めない）
 - 契約後に実機確認する項目: [live-verification][lv]（`※` の正確な条件はドキュメント由来で未確認）
 
 [write-format]: ../reference/resource-api/write-format.md
@@ -211,6 +217,7 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [adr41]: ../../adr/0041-bulk-write-surface-impl.md
 [adr45]: ../../adr/0045-write-response-root-code.md
 [adr46]: ../../adr/0046-guard-error-contract.md
+[adr83]: ../../adr/0083-conditionally-required-fields.md
 [adr59]: ../../adr/0059-read-field-bare-alias.md
 [adr64]: ../../adr/0064-link-image-types.md
 [lv]: ../../live-verification.md
