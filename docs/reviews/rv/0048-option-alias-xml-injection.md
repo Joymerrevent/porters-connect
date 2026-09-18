@@ -96,6 +96,10 @@ Option の read 値が `string[]`・write 値も `string[]` で対称なのを�
 
 ## 処置
 
-—
+**未完了**（状態は `open`）。[ADR-0085][adr85] として起票した（`proposed`・決定待ち）。
+推奨は案A（XML Name 検証）＋ 値が要素名になる境界すべてに置く案。
+accept 後に実装 ＋ 回帰試験を別 PR で行う（[ADR ＋ 実装は別 PR][adr1]）。
 
+[adr1]: ../../adr/0001-record-architecture-decisions.md
+[adr85]: ../../adr/0085-option-alias-validation.md
 [lv]: ../../live-verification.md
