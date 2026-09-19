@@ -68,7 +68,8 @@ export type WriteItem = Record<string, WriteValue>;
 // from the static Write input so they cannot be set (ADR-0016 promise, realized in ADR-0019).
 // `System[Department]` も除外する: PORTERS は Phase / User でこの型を**読み**に出すだけで、
 // 書けるのか・書けるとしてどの形（`Department.P_Id`？）かを公表していない。推測した形を送るより
-// **書けないことにしておく**ほうが安全側（ADR-0061 案3a の注意）。VERIFY(live): 契約後に確認する。
+// **書けないことにしておく**ほうが安全側（ADR-0061 案3a の注意）。
+// VERIFY(live): 書けるのか・書けるならどの形かを契約後に確認する — docs/live-verification.md（LV-29）。
 export type WritableDataType = Exclude<
   DataType,
   "System[Id]" | "System[DateTime]" | "System[Department]"

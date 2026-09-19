@@ -164,6 +164,10 @@ const processRegistry = createThrottleRegistry();
  * The process-wide bucket for `authority` (`hostname` or `hostname:port` — ADR-0078). A client uses
  * this unless the caller injected its own {@link Throttle} — see `PortersClientOptions.throttle`.
  */
+// VERIFY(live): the reference states the per-minute caps but never says **what they are counted
+// per** — App, contract, or host. Host is assumed because a host is issued per contract, so
+// "host ≒ contract" — docs/live-verification.md (LV-23). The assumption fails safe (sharing more
+// widely means calling less), so if it turns out to be per-App the key gains the App id.
 export const sharedThrottleFor = (authority: string): Throttle =>
   processRegistry.forAuthority(authority);
 

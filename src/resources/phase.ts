@@ -19,7 +19,7 @@
 // because that is what the generic factory sends for all 13 resources. PORTERS' own Phase sample
 // requests them **bare** (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the
 // parenthesised form for this resource. The response shape is the same either way, so if the
-// parenthesised form is rejected, the fix is the request string only. See docs/live-verification.md.
+// parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
 import {
   createResource,
