@@ -96,10 +96,17 @@ Option の read 値が `string[]`・write 値も `string[]` で対称なのを�
 
 ## 処置
 
-**未完了**（状態は `open`）。[ADR-0085][adr85] として起票した（`proposed`・決定待ち）。
-推奨は案A（XML Name 検証）＋ 値が要素名になる境界すべてに置く案。
-accept 後に実装 ＋ 回帰試験を別 PR で行う（[ADR ＋ 実装は別 PR][adr1]）。
+**未完了**（状態は `open` — 決定は済み、実装が残っている）。
+
+[ADR-0085][adr85] として起票し、**decider が案A ＋ 論点2 (ii) を選択して `accepted`（2026-09-19）**。
+決まったのは「**XML Name として妥当かを検証して弾く**」と「**値が要素名になる境界すべてに置く**」
+（Option の alias ＋ `encodeItem` の item キー）。エラーは `PortersConfigError` ＋
+`category: "validation"`（[ADR-0006][adr6]）で、送信前に reject（[ADR-0046][adr46]）。
+
+残りは実装 ＋ 回帰試験で、**別 PR**（[ADR-0001][adr1]）。`fixed` にするのはそのとき。
 
 [adr1]: ../../adr/0001-record-architecture-decisions.md
+[adr6]: ../../adr/0006-error-model.md
+[adr46]: ../../adr/0046-guard-error-contract.md
 [adr85]: ../../adr/0085-option-alias-validation.md
 [lv]: ../../live-verification.md
