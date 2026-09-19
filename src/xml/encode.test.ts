@@ -377,7 +377,15 @@ describe("要素名になる値の検証（ADR-0085 / RV-48）", () => {
       // どの項目の、どの値が悪いのかが分からないと直せない。
       expect(err.message).toContain("P_Phase");
       expect(err.message).toContain("a<b");
-      expect(err.hint).toBeDefined();
+      // **どちらの境界で落ちたか**も要る。選択肢 alias と項目 alias は直し方が違う
+      // （前者は値を、後者は入力オブジェクトのキーを疑う）。
+      expect(err.message).toContain("option alias");
+      // hint は「何が正しい形か」と「正しい値をどこから得るか」を言う。全文ではなく
+      // その 2 つが残っているかだけを見る（文言の言い換えで落ちないように）。
+      expect(err.hint).toContain("XML Name");
+      expect(err.hint).toContain("t.option");
+      // 失敗した工程。エラーを分類して扱う利用者はここを見る（ADR-0006）。
+      expect(err.context?.operation).toBe("encode");
     }
   });
 
@@ -406,6 +414,8 @@ describe("要素名になる値の検証（ADR-0085 / RV-48）", () => {
       '{"P_Name></Person.P_Name><Person.P_Id>999</Person.P_Id><Person.P_Name":"x"}',
     ) as Record<string, unknown>;
     expect(() => write([untrusted])).toThrow(PortersConfigError);
+    // 選択肢 alias 側と取り違えないこと（直すのは入力オブジェクトのキーのほう）。
+    expect(() => write([untrusted])).toThrow(/field alias/);
   });
 
   it("同じ文字列でも、本文の位置なら従来どおり通る（過剰に締めていない）", () => {

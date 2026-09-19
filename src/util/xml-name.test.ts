@@ -17,6 +17,36 @@ describe("isXmlName", () => {
     expect(isXmlName(value)).toBe(true);
   });
 
+  // NameStartChar は範囲の**寄せ集め**で、1 つ落としても ASCII と日本語しか試さない限り
+  // 気づけない（実際、最初この試験が無くて範囲を消す変異が生き残った）。各範囲から
+  // 1 文字ずつ当てて、どの範囲も効いていることを押さえる。
+  it.each([
+    ["\u00C0", "À — #xC0-#xD6"],
+    ["\u00F8", "ø — #xF8-#x2FF の下端側"],
+    ["\u0259", "ə — #xF8-#x2FF"],
+    ["\u0372", "Ͳ — #x370-#x37D"],
+    ["\u03A9", "Ω — #x37F-#x1FFF（ギリシャ）"],
+    ["\u0416", "Ж — #x37F-#x1FFF（キリル）"],
+    ["\u200C", "ZWNJ — #x200C-#x200D"],
+    ["\u2180", "ↀ — #x2070-#x218F"],
+    ["\u2C00", "Ⰰ — #x2C00-#x2FEF"],
+    ["\u3042", "あ — #x3001-#xD7FF"],
+    ["\uF900", "豈 — #xF900-#xFDCF"],
+    ["\uFDF0", "ﷰ — #xFDF0-#xFFFD"],
+  ])("accepts %j as a NameStartChar (%s)", (value) => {
+    expect(isXmlName(value)).toBe(true);
+  });
+
+  // NameChar だけにある範囲（先頭には置けないが 2 文字目以降なら通る）。
+  it.each([
+    ["\u00B7", "· — 中黒"],
+    ["\u0301", "結合アキュート — #x300-#x36F"],
+    ["\u203F", "‿ — #x203F-#x2040"],
+  ])("accepts %j only after the first character (%s)", (value) => {
+    expect(isXmlName(`a${value}`)).toBe(true);
+    expect(isXmlName(value)).toBe(false);
+  });
+
   it.each([
     ["", "空文字"],
     ["1leading", "数字始まりは NameStartChar ではない"],
