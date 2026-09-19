@@ -8,4 +8,4 @@
 
 > **ActivityPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/activity.ts:78](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L78)
+Defined in: [src/resources/activity.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L79)

@@ -105,6 +105,11 @@ const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
 // answers a fieldless User Read with 4 of the 17 fields, so leaving `field` off would hand back a
 // record whose type promises 17 and whose other 13 are silently `null` — the shape of RV-1.
 // `field: []` still opts into the API-native answer (those 4), like `[]` does elsewhere.
+//
+// VERIFY(live): the source says which fields `field` accepts but never shows **all 17 listed at
+// once**, and the two `User`-typed ones go out parenthesised because that is what the shared
+// assembly sends — docs/live-verification.md (LV-18). If a particular field is rejected, drop it
+// from this default rather than from the catalog: `field` can still name it explicitly.
 const DEFAULT_FIELDS = Object.keys(FIELDS) as ReadFieldAlias<typeof FIELDS>[];
 
 // Paging is left out on purpose — see `field.ts` / RV-32.
