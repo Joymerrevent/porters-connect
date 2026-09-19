@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { PortersConfigError } from "../errors/index";
+
 import {
   createThrottle,
   createThrottleRegistry,
@@ -210,5 +212,119 @@ describe("sharedThrottleFor (process-wide registry)", () => {
     await expect(
       sharedThrottleFor("xxxxx.example.com").take(false),
     ).resolves.toBeUndefined();
+  });
+});
+
+// RV-49。容量 0 のバケットは「1 ミリ秒ごとに起きて token を待つ」ループになり、**永久に返らない**。
+// 上限を下げて優しく叩くのは createThrottle を公開した目的そのもの（ADR-0073）なので、
+// そこで無言のハングに倒れるのは安全側ではない。構築時に落とす。
+describe("createThrottle の設定検証（RV-49）", () => {
+  it("readPerMin 1 は既定の safety で容量 0 になるので弾く", () => {
+    // これが現実に踏む経路。1 も 0.9 も単体では妥当で、積の floor(0.9)=0 だけが問題。
+    expect(() => createThrottle({ readPerMin: 1 })).toThrow(PortersConfigError);
+  });
+
+  it("弾くときは何が起きるかと、どう直すかを言う", () => {
+    try {
+      createThrottle({ readPerMin: 1 });
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(PortersConfigError);
+      const err = e as PortersConfigError;
+      expect(err.category).toBe("config");
+      // どの設定が悪いのか。
+      expect(err.message).toContain("readPerMin");
+      // 「待ち続ける」と分かること。数値だけ出しても症状に結び付かない。
+      expect(err.message).toContain("wait forever");
+      // 積の実値を出す（1 × 0.9 = 0.9）。ここが割り算などになっていたら意味が変わる。
+      expect(err.message).toContain("floor(0.9) = 0");
+      // safety 0.9 なら 2 以上にすれば通る、と具体値で示す。
+      expect(err.hint).toContain("at least 2");
+      // 「まったく通さない」を表現したい人の行き先も示す（許可と沈黙を分ける）。
+      expect(err.hint).toContain("never resolves");
+    }
+  });
+
+  it.each([
+    ["safety 0", { safety: 0 }],
+    ["safety が負", { safety: -1 }],
+    ["safety が 1 超", { safety: 1.5 }],
+    ["safety が NaN", { safety: Number.NaN }],
+  ])("%s を弾く", (_label, opts) => {
+    expect(() => createThrottle(opts)).toThrow(/safety must be/);
+  });
+
+  it("safety のエラーも category と直し方を持つ", () => {
+    try {
+      createThrottle({ safety: 0 });
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      const err = e as PortersConfigError;
+      expect(err.category).toBe("config");
+      // 0 を「余裕なし」と読んだ人に、何を指定する値なのかを言う。
+      expect(err.hint).toContain("fraction of the limit");
+      expect(err.hint).toContain("0.9");
+    }
+  });
+
+  it.each([
+    ["0", { readPerMin: 0 }],
+    ["負", { readPerMin: -1 }],
+    ["小数", { readPerMin: 10.5 }],
+    ["NaN", { readPerMin: Number.NaN }],
+    ["Infinity", { readPerMin: Number.POSITIVE_INFINITY }],
+  ])("readPerMin が %s なら弾く", (_label, opts) => {
+    expect(() => createThrottle(opts)).toThrow(/readPerMin must be/);
+  });
+
+  it("上限そのものが不正なときのエラーも category と既定値を持つ", () => {
+    try {
+      createThrottle({ readPerMin: 0 });
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      const err = e as PortersConfigError;
+      expect(err.category).toBe("config");
+      // 「分あたりの件数」だと分かること＋既定値。単位を取り違えると直せない。
+      expect(err.hint).toContain("per minute");
+      expect(err.hint).toContain("2000");
+    }
+  });
+
+  it("writePerMin も同じように見る（read だけ守っても意味がない）", () => {
+    expect(() => createThrottle({ writePerMin: 1 })).toThrow(
+      /writePerMin 1 with safety/,
+    );
+    expect(() => createThrottle({ writePerMin: 0 })).toThrow(
+      /writePerMin must be/,
+    );
+  });
+
+  it("safety を上げれば小さい上限も通る（境界）", () => {
+    // floor(1 * 1) = 1 ＝ ちょうど 1 トークン。通るべき最小の組み合わせ。
+    expect(() => createThrottle({ readPerMin: 1, safety: 1 })).not.toThrow();
+    // floor(2 * 0.9) = 1。hint が案内する「at least 2」がほんとうに通ることの確認。
+    expect(() => createThrottle({ readPerMin: 2 })).not.toThrow();
+  });
+
+  it("既定の設定は通る", () => {
+    expect(() => createThrottle()).not.toThrow();
+  });
+
+  it("通る最小の容量（1）は待つだけで、止まりっぱなしにはならない", async () => {
+    // 弾く／弾かないの境界のすぐ内側。ここが「待つ」で済むことを示せて初めて、
+    // 弾いているのは「待つ」ではなく「永久に返らない」設定だと言える。
+    vi.useFakeTimers();
+    let t = 0;
+    const throttle = createThrottle({
+      readPerMin: 1,
+      safety: 1,
+      now: () => t,
+    });
+    await throttle.take(false); // 容量 1 ＝ 1 個目は即座に通る
+    const pending = throttle.take(false); // 2 個目は待つ
+    t = 60_000; // 1 分で 1 トークン戻る
+    await vi.advanceTimersByTimeAsync(60_000);
+    await pending; // 返る＝ハングではない
+    vi.useRealTimers();
   });
 });

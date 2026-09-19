@@ -1,7 +1,7 @@
 # RV-49 🟡 `createThrottle` の上限値を検証せず、容量 0 で永久に待ち続ける
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / 公開サーフェス
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -82,8 +82,54 @@ ADR を要する決定というより明確な欠陥の修正**。念のため�
 
 ## 処置
 
-—
+**完了。****ADR は起こしていない** — 決定は既に accepted で出ていた（[ADR-0077][adr77] が
+公開 factory の数値オプションを構築時に検証すると決め、[ADR-0006][adr6] がエラー型を、
+[ADR-0047][adr47] が「許可と沈黙を分ける」ことを決めている）。新しい決定は 1 つも生じず、
+**0077 の未適用の片側を埋めるだけ**なので、判断とその根拠を
+[ADR README の「ADR を起こさずに決着した論点」][adrreadme]に記録した（2026-09-19）。
 
+実装（`src/http/throttle.ts`）:
+
+- `safety` は `0 < safety <= 1`、`readPerMin` / `writePerMin` は正の整数。
+- **`floor(上限 × safety) >= 1`** — これが本体。入力だけ見ると、現実に踏む経路
+  （上限を下げたい人）がそのまま通り抜ける。
+- `PortersConfigError` ＋ `category: "config"`。同期 factory なので同期 throw でよい
+  （`createFetchTransport` と同じ。[ADR-0046][adr46] は Promise を返すメソッドの契約）。
+- **「1 件も通さない」は `createThrottle` では表現できない**ことにした。必要なら `take()` が
+  解決しない `Throttle` を渡すのが正しい道で、`hint` がそこへ案内する。
+
+あわせて書き込みの制約ガイドに節を 1 つ、changeset（patch）を 1 件。
+
+## 検証
+
+**指摘の再現手順をそのまま実行して、3 つとも即座にエラーになることを確認した**（実測）:
+
+| 入力                | 以前                 | 現在                                                                                                 |
+| ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| `{ readPerMin: 1 }` | 2 秒経っても返らない | `readPerMin 1 with safety 0.9 leaves no capacity (floor(0.9) = 0), so every call would wait forever` |
+| `{ safety: 0 }`     | 同じ                 | `safety must be greater than 0 and at most 1, got 0`                                                 |
+| `{ readPerMin: 0 }` | 同じ                 | `readPerMin must be a positive integer, got 0`                                                       |
+
+`src/http/throttle.test.ts` の「`createThrottle` の設定検証（RV-49）」が固定しているもの:
+
+- `{ readPerMin: 1 }`（**積だけが 0 になる現実の経路**）を弾く。
+- エラーの `category`、**積の実値**（`floor(0.9) = 0` — 掛け算が割り算等に変わると意味が変わる）、
+  直し方（`at least 2`）、逃げ道の案内（`never resolves`）。
+- `safety` の 4 パターン・上限の 5 パターン（0 / 負 / 小数 / NaN / Infinity）。
+- `writePerMin` も同じ扱い（read だけ守っても意味がない）。
+- **通る最小の容量（1）は「待つ」だけで済む** — `safety: 1` で 1 件通し、2 件目は待ち、
+  1 分進めると返る。ここが示せて初めて、弾いているのは「待つ」ではなく
+  「永久に返らない」設定だと言える。
+- 既定の設定は通る。
+
+品質ゲートは全 green（**1264 tests**・coverage perFile 100/99.21/100/100）。
+mutation は `throttle.ts` が 90.00 → **98.75**で、残る 1 件は既存の
+`resetSharedThrottles`（テスト用の継ぎ目）＝**今回の追加ぶんの survivor は 0**。
+リポジトリ全体は **96.35**（閾値 95・RV-48 の実施時点は 96.29）。
+
+[adrreadme]: ../../adr/README.md
+[adr6]: ../../adr/0006-error-model.md
+[adr46]: ../../adr/0046-guard-error-contract.md
 [adr47]: ../../adr/0047-access-point-scheme.md
 [adr73]: ../../adr/0073-throttle-sharing.md
 [adr77]: ../../adr/0077-fetch-transport-timeout.md

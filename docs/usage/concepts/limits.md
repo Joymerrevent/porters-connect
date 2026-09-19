@@ -25,6 +25,7 @@
 | **画像の mime が 4 種以外**         | 送信前       | `PortersConfigError`                                      |
 | **一括書き込みに画像が混ざる**      | 送信前       | `PortersConfigError`（単発 `create` / `update` へ）       |
 | **alias が XML の名前として不正**   | 送信前       | `PortersConfigError`（選択肢 alias・項目 alias）          |
+| **スロットルの上限が範囲外**        | 構築時       | `PortersConfigError`（`createThrottle`・下記の表）        |
 
 ### 選択肢 alias・項目 alias の形
 
@@ -106,6 +107,32 @@ const porters = new PortersClient({
 
 `Throttle` は `take(write: boolean): Promise<void>` の 1 メソッドだけなので、Redis などに載せれば
 **プロセスを跨いだ協調**も書けます。ライブラリはそこまでやりません（月次と同じ線引き）。
+
+#### 指定できる値
+
+**範囲外は `createThrottle()` を呼んだ時点で `PortersConfigError`** になります（待たされません）。
+
+| オプション                   | 範囲                                 | 既定       | 弾かれる例                         |
+| ---------------------------- | ------------------------------------ | ---------- | ---------------------------------- |
+| `readPerMin` / `writePerMin` | **正の整数**                         | 2000 / 500 | `0` ／ `-1` ／ `10.5` ／ `NaN`     |
+| `safety`                     | **0 より大きく 1 以下**              | 0.9        | `0` ／ `-1` ／ `1.5`               |
+| （組み合わせ）               | **`floor(上限 × safety)` が 1 以上** | —          | `{ readPerMin: 1 }`（既定 safety） |
+
+最後の行が曲者です。**`readPerMin: 1` も `safety: 0.9` も単体ではおかしくないので、
+積を見ないと捕まりません。**
+
+```ts
+createThrottle({ readPerMin: 1 }); // PortersConfigError（floor(1 × 0.9) = 0）
+createThrottle({ readPerMin: 2 }); // OK（floor(1.8) = 1）
+createThrottle({ readPerMin: 1, safety: 1 }); // OK（floor(1) = 1）
+```
+
+容量 0 のバケットは 1 トークンも溜まらないため、弾かなければ**すべての呼び出しが永久に待ちます**。
+各オプションの詳細は [`ThrottleOptions`][api-throttle-options] を参照してください。
+
+**「1 件も通さない」を表現したいなら、そのための `Throttle` を自分で渡してください**
+（`take()` が解決しない実装）。上限 0 を黙って受け付けて待ち続けるのは、
+「許可した」と「黙った」を混ぜる形なので避けています。
 
 ### 超えたときに何が返るか
 
@@ -252,3 +279,4 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [multi-tenant]: ../howto/multi-tenant.md
 [custom-fields]: ../howto/custom-fields.md
 [adr73]: ../../adr/0073-throttle-sharing.md
+[api-throttle-options]: ../api/type-aliases/ThrottleOptions.md
