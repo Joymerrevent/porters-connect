@@ -6,6 +6,7 @@
 import { PortersConfigError } from "../errors/index";
 import { qualify } from "../util/alias";
 import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
+import { isXmlName } from "../util/xml-name";
 import type { DataType, ImageSubField } from "./decode";
 
 /**
@@ -113,6 +114,34 @@ const escapeXml = (s: string): string =>
     c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;",
   );
 
+/**
+ * The one place a caller-supplied string is allowed to become an **element name** (ADR-0085).
+ *
+ * Two boundaries reach it — an Option's selected alias and a Write item's field alias — and both
+ * are checked the same way: valid XML `Name`, or the write is refused before it is sent.
+ *
+ * **Escaping cannot do this job.** `escapeXml` above neutralises the *content* position, but a
+ * name has no escape: `&lt;` is not an element called `<`, it is invalid XML. So the only safe
+ * handling of a name that is not a `Name` is to refuse it — which is why this throws rather than
+ * sanitising (ADR-0085 案D を棄却した理由).
+ *
+ * `PortersConfigError` + `category: "validation"` because the value came from the caller, not
+ * PORTERS (ADR-0006). Every caller is `async`, so this arrives as a rejection (ADR-0046).
+ */
+const assertTagName = (name: string, kind: string, alias: string): void => {
+  if (isXmlName(name)) return;
+  throw new PortersConfigError(
+    `${alias}: ${kind} ${JSON.stringify(name)} is not a valid XML element name`,
+    {
+      category: "validation",
+      // PORTERS writes this value as a tag (`<FieldAlias><OptionAlias/></FieldAlias>`), so an
+      // arbitrary string cannot be sent. Say that, and say where a real one comes from.
+      hint: "PORTERS writes it as an XML element name, so it must be a valid XML Name (letters, digits, `_`, `-`, `.`, no spaces or markup). Option aliases come from the Option master (`t.option`) or the field's option list in the reference.",
+      context: { operation: "encode" },
+    },
+  );
+};
+
 // Image is the only Data Type whose value is an object. One handed to any *other* type can only
 // arrive through a cast, and `String({…})` would put a useless "[object Object]" on the wire — so
 // serialize it visibly instead and let PORTERS reject it, with the value still readable in the error.
@@ -196,7 +225,11 @@ export const encodeField = (
     // selection (fail-safe).
     case "Option":
       return (Array.isArray(value) ? value : [text(value)])
-        .map((alias) => `<${alias}/>`)
+        .map((selected) => {
+          // 選択肢 alias は**要素名になる**（write-format.md）。ここが ADR-0085 の主目的。
+          assertTagName(selected, "option alias", alias);
+          return `<${selected}/>`;
+        })
         .join("");
     // System[DateTime] (registration/update) is Write-restricted by PORTERS; we still
     // serialize it identically — rejecting the write is the input type's job (SD-3).
@@ -247,6 +280,11 @@ const encodeItem = (
   for (const [alias, value] of Object.entries(item)) {
     // null / undefined -> omit (leave unchanged); "" is kept (clears a Text field).
     if (value === null || value === undefined) continue;
+    // 項目 alias も要素名になる（ADR-0085 論点2 (ii)）。型は `WritableKeys<F>` に絞っているが、
+    // excess property check はフレッシュなリテラルにしか効かないので、`JSON.parse(...) as …` で
+    // 組み立てた入力なら任意のキーが実行時に届く。接頭辞はライブラリの定数で、それ自体が Name なら
+    // `{prefix}.{alias}` も Name になる＝検証すべきは呼び出し側の値である alias のほう。
+    assertTagName(alias, "field alias", alias);
     const type = fields.get(alias);
     const inner =
       type === undefined || type === null

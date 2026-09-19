@@ -19,6 +19,10 @@ import type { ResourceDeps, ResourceDescriptor } from "./resource";
 const FIELDS = {
   P_Id: "System[Id]",
   P_Name: "SinglelineText",
+  // VERIFY(live): LV-26。選択肢 alias は Write でタグ名になるので ADR-0085 が XML Name を要求するが、
+  // ここは**スカラのテキスト**として読むだけで、読めた値がその範囲に収まる保証は無い
+  // （Read 応答の入れ子タグ名から来る値は定義上 Name — 保証が効かないのはこの経路だけ）。
+  // docs/live-verification.md（LV-26）。
   P_Alias: "SinglelineText",
   P_ParentId: "Number",
   P_Type: "Number",

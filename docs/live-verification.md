@@ -38,6 +38,7 @@ grep -rn "VERIFY(live)" src test
 | LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
 | LV-24 | Attachment Read の必須パラメータ                    | 未確認 |
 | LV-25 | Phase Read に keywords / itemstate を送れるか       | 未確認 |
+| LV-26 | Option マスタの `P_Alias` は XML Name に収まるか    | 未確認 |
 
 ---
 
@@ -403,6 +404,29 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   （共通語彙の 11 リソースについて）。マトリクスの該当セルは
   [エンドポイント × 機能][coverage] の表 B
 
+## LV-26 Option マスタの `P_Alias` は XML Name の範囲に収まるか
+
+- **現在の対応 / 仮定**: **収まる前提**。[ADR-0085][a85] で、Option の選択肢 alias が
+  **XML の `Name` として妥当か**を送信前に検証して弾くようにした。正規の alias はすべて通る、
+  という前提の上に立っている
+- **不確実な理由**: 選択肢 alias には**出どころが 2 つ**あり、片方にしか保証が無い。
+  **Read の応答**から来た値は入れ子タグの名前そのもの（`decodeOption` は `Object.keys` を返す）
+  なので、定義上 `Name` である。いっぽう **Option マスタ**（`t.option` の `P_Alias`）は
+  **スカラのテキスト**として読まれるので、同じ保証が効かない。
+  出典は alias の書式をどこにも定義していない（[LV-1][lv1] は接頭辞すら未確定）ため、
+  **テナントが作った選択肢の alias が `Name` から外れうるか**が分からない
+- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/encode.ts`（`assertTagName`）／
+  `src/resources/option.ts`（`P_Alias` を `SinglelineText` として読む側）
+- **確認方法**: 実テナントの Option マスタを `t.option.search()` で全件読み、
+  `P_Alias` が 1 件残らず `isXmlName` を通るかを確かめる。**記号や空白を含む alias を
+  作れるかも併せて見る**（UI 側で作れてしまうなら、その alias を持つレコードは書けない）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 外れた場合、**倒れ方は安全側**（書けないだけで、壊れたデータは送らない）。
+  ただし「書けない正規の選択肢がある」ことになるので、そのときは検証の範囲ではなく
+  **PORTERS がその alias をどう wire に載せているか**を調べ直す。
+  なお [LV-1][lv1] が確定しても本件は解けない（接頭辞の有無と文字集合は別の問い）
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
@@ -441,3 +465,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [ref-phase]: usage/reference/resource-api/resources/phase.md
 [lv15]: #lv-15-itemstateexisting-を明示送信して受け付けられるか
 [coverage]: design/endpoint-coverage.md
+[a85]: adr/0085-option-alias-validation.md
+[lv1]: #lv-1-option-末端-alias-の接頭辞
