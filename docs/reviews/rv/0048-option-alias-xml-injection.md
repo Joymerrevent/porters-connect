@@ -1,7 +1,7 @@
 # RV-48 🔴 Option の選択肢 alias が検証されずタグ名になり、書き込み XML を注入できる
 
 - 重要度: 🔴 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -96,17 +96,47 @@ Option の read 値が `string[]`・write 値も `string[]` で対称なのを�
 
 ## 処置
 
-**未完了**（状態は `open` — 決定は済み、実装が残っている）。
+**完了。** [ADR-0085][adr85] として起票し、**decider が案A ＋ 論点2 (ii) を選択して `accepted`**
+（2026-09-19）。決まったのは「**XML Name として妥当かを検証して弾く**」と
+「**値が要素名になる境界すべてに置く**」。
 
-[ADR-0085][adr85] として起票し、**decider が案A ＋ 論点2 (ii) を選択して `accepted`（2026-09-19）**。
-決まったのは「**XML Name として妥当かを検証して弾く**」と「**値が要素名になる境界すべてに置く**」
-（Option の alias ＋ `encodeItem` の item キー）。エラーは `PortersConfigError` ＋
-`category: "validation"`（[ADR-0006][adr6]）で、送信前に reject（[ADR-0046][adr46]）。
+実施は次の 4 つ:
 
-残りは実装 ＋ 回帰試験で、**別 PR**（[ADR-0001][adr1]）。`fixed` にするのはそのとき。
+1. `src/util/xml-name.ts` — XML 1.0 の `Name` production を出典の順に写した判定
+   （`isXmlName`）。`util/` は依存ゼロの葉なので、判定だけを置きエラーは作らない。
+2. `src/xml/encode.ts` — `assertTagName` を 1 箇所に置き、**2 つの境界**から呼ぶ。
+   Option の選択肢 alias（`encodeField` の `case "Option"`）と、項目 alias（`encodeItem`）。
+   エラーは `PortersConfigError` ＋ `category: "validation"`（[ADR-0006][adr6]）で、
+   呼び出し元はすべて `async` なので reject として届く（[ADR-0046][adr46]）。
+3. [LV-26][lv] の起票 ＋ `src/resources/option.ts` に番号つき `VERIFY(live)`。
+   Option マスタの `P_Alias` だけはスカラ読みで保証が効かないため。
+4. 書き込みの制約ガイド（`docs/usage/concepts/limits.md`）に節を 1 つ ＋ changeset（patch）。
 
-[adr1]: ../../adr/0001-record-architecture-decisions.md
+## 検証
+
+**指摘の払い出しそのものが弾かれることを pin した。** `src/xml/encode.test.ts` の
+「要素名になる値の検証（ADR-0085 / RV-48）」が次を固定している:
+
+- 本指摘の**実測で使った payload** を Option の alias から弾く。
+- エラーが `PortersConfigError` ＋ `category: "validation"` で、**どの項目のどの値か**を名指す。
+- 空白 / 数字始まり / 空文字 / `>` `/` `&` を含む alias を弾く（6 ケース）。
+- **正規の alias は通る** — `Option.P_東京` を含む。過剰に締めていないことの固定で、
+  ここが締まると round-trip（[ADR-0017][adr17]）が壊れる。
+- **項目 alias も同じ検証を通る**（論点2 (ii)）。`JSON.parse(...) as …` で型検査を通り抜ける
+  実際の形で固定している。
+- **同じ文字列でも本文の位置なら従来どおり通る**（エスケープ経路は塞いでいない）。
+- property-based: **どんな alias を渡しても `<Item>` は増やせない**。
+  生の文字列で数えている — パースして数えると、パーサ自身の都合（予約名の拒否）が混ざって
+  不変条件がぼやけるため。
+
+`src/util/xml-name.test.ts` は判定そのものを 28 ケースで固定（境界＝同じ文字でも
+先頭かどうかで可否が変わること、`u` フラグが要るサロゲートペア、
+`\u00D7` / `\u037E` のような Unicode 範囲の穴を含む）。
+
+品質ゲートは全 green（**1234 tests**・coverage は perFile 100/99.2/100/100）。
+
 [adr6]: ../../adr/0006-error-model.md
+[adr17]: ../../adr/0017-option-read-shape.md
 [adr46]: ../../adr/0046-guard-error-contract.md
 [adr85]: ../../adr/0085-option-alias-validation.md
 [lv]: ../../live-verification.md
