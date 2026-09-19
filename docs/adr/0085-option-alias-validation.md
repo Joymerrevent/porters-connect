@@ -13,36 +13,109 @@
 
 ## Context and Problem Statement
 
+### 正典の形
+
 PORTERS の Write で Option 型の項目は `<FieldAlias><OptionAlias/></FieldAlias>` という形を採る
 （[write-format][wf]「**Option**: `<FieldAlias><OptionAlias/></FieldAlias>`。複数選択は Option Alias を
 並べる。**末端 Alias のみ**」）。つまり**選択肢の alias が要素名になる**のが正典の形である。
+他の Data Type は値が要素の**中身**になるので、Option だけが例外的な位置に値を置く。
 
 ライブラリはこれを `src/xml/encode.ts:197-200` でそのまま実装している。
 
 ```ts
 case "Option":
   return (Array.isArray(value) ? value : [text(value)])
-    .map((alias) => `<${alias}/>`)
+    .map((alias) => `<${alias}/>`)   // alias がそのまま要素名になる
     .join("");
 ```
 
-問題は、この `alias` が**呼び出し側から来た値そのまま**で、検証もエスケープもされない点である。
-Option の書き込み値は [ADR-0017][adr17] の読み書き対称性から `string[]` なので、
-**cast なしで任意の文字列が要素名の位置に入る**。
+`alias` は**呼び出し側から来た値そのまま**で、検証もエスケープもされない。Option の書き込み値は
+[ADR-0017][adr17] の読み書き対称性から `string[]` なので、**cast なしで任意の文字列が要素名の位置に入る**。
 
-実測（公開 API 経由・cast なし）では、`<Item>` を閉じて開き直す文字列を渡すと
-**well-formed な XML に別レコードを名指す `<Item>` が注入できた**（入力と出力は [RV-48][rv48] に記録）。
-他の Data Type はすべて `scalar()`（= `escapeXml`）を通るので、**ここが唯一の経路**である。
+### 何が起きるか
 
-同じ形の経路がもう 1 つある。`encodeItem`（`src/xml/encode.ts:255`）の
-`const tag = qualify(prefix, alias)` で、`alias` は呼び出し側オブジェクトのキーである。
-型は `WritableKeys<F>` に絞っているが、excess property check は**フレッシュなリテラルにしか効かない**ので
-`create(JSON.parse(body) as CandidateCreateInput)` では任意のキーが通る。
+候補者のフェーズを更新する、ごく普通のコード。`phase` は外から来た文字列とする
+（選択肢を選ばせるフォーム、CSV 取り込み、ロードマップが向かっている MCP サーバーのツール引数など）。
 
-**エスケープでは解けない。** 要素名に実体参照は書けない（`&lt;` は要素名として不正）。
+```ts
+await t.candidate.update(10001, { P_Phase: [phase] });
+```
+
+**`phase` が正常な値のとき**（実測）:
+
+```xml
+<Candidate><Item><Person.P_Phase><Option.P_Applied/></Person.P_Phase><Person.P_Id>10001</Person.P_Id></Item></Candidate>
+```
+
+PORTERS が見る `Item` は 1 件。`Person.P_Id` は `10001`＝更新先も意図どおり。
+
+**`phase` に次の 1 行が入っていたとき**（実測。`update` は例外を投げず、正常に解決する）:
+
+```text
+Option.P_Applied/></Person.P_Phase><Person.P_Id>999</Person.P_Id></Item><Item><Person.P_Name>pwned</Person.P_Name><Person.P_Phase><Option.P_Applied
+```
+
+送信される XML:
+
+```xml
+<Candidate><Item><Person.P_Phase><Option.P_Applied/></Person.P_Phase><Person.P_Id>999</Person.P_Id></Item><Item><Person.P_Name>pwned</Person.P_Name><Person.P_Phase><Option.P_Applied/></Person.P_Phase><Person.P_Id>10001</Person.P_Id></Item></Candidate>
+```
+
+`XMLValidator` は **well-formed** と判定する（＝ PORTERS は問題なく解釈できる）。
+PORTERS が見る `Item` は **1 件から 2 件に増えている**:
+
+| #   | 内容                                                                       | 結果                                                               |
+| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | `Person.P_Phase` = `Option.P_Applied` ／ **`Person.P_Id` = 999**           | **呼び出し側が指定した 10001 ではなく、レコード 999 が更新される** |
+| 2   | **`Person.P_Name` = `pwned`** ／ `Person.P_Phase` ／ `Person.P_Id` = 10001 | 10001 には**頼んでいない項目**（氏名）が書き込まれる               |
+
+つまり 1 つの文字列で、**(a) 書き込み先を攻撃者が選んだレコードにすり替え**、
+**(b) 本来の対象に別項目を書き足す**、の 2 つが同時に起きる。
+`update()` は成功として返るので、**呼び出し側には何も分からない**。
+削除 API が無いので、書き換わった 999 を元に戻す手段もライブラリ側には無い。
+
+### なぜエスケープでは解けないのか
+
+同じ文字列を「本文になる項目」と「タグ名になる項目」に渡して比べると分かる（どちらも実測）。
+
+```ts
+const s = "</Person.P_Name><Person.P_Id>999</Person.P_Id><Person.P_Name>";
+```
+
+`P_Name`（`SinglelineText`）＝ **本文**の位置 — 正しく無害化される:
+
+```xml
+<Person.P_Name>&lt;/Person.P_Name&gt;&lt;Person.P_Id&gt;999&lt;/Person.P_Id&gt;&lt;Person.P_Name&gt;</Person.P_Name>
+```
+
+`P_Phase`（`Option`）＝ **タグ名**の位置 — そのまま構造になる:
+
+```xml
+<Person.P_Phase><</Person.P_Name><Person.P_Id>999</Person.P_Id><Person.P_Name>/></Person.P_Phase>
+```
+
+**エスケープの実装は正しく、Option だけがその経路を通っていない。**
+そして**要素名は原理的にエスケープできない** — 実体参照は文字データの表記であり、
+`<&lt;foo/>` は要素名が `&lt;foo` という意味にはならず、単に不正な XML になる。
 したがって取れる手は「**検証して弾く**」だけで、これは挙動変更になる。
 
-問い: **呼び出し側の値が要素名になる境界で、何を受け入れ、何を弾くか。**
+### 同じ形の経路がもう 1 つある
+
+`encodeItem`（`src/xml/encode.ts:255`）の `const tag = qualify(prefix, alias)` で、
+`alias` は**呼び出し側オブジェクトのキー**である。型は `WritableKeys<F>` に絞っているが、
+excess property check は**フレッシュなリテラルにしか効かない**ので、次は型検査を通る:
+
+```ts
+const input = JSON.parse(body) as CandidateCreateInput; // キーは実行時には何でもありうる
+await t.candidate.create(input);
+```
+
+Option 経路より条件は厳しい（リテラルで書く限り型が壁になる）が、**原因は同一**＝
+「呼び出し側の値が要素名になる」。
+
+### 問い
+
+**呼び出し側の値が要素名になる境界で、何を受け入れ、何を弾くか。**
 
 ## Decision Drivers
 
