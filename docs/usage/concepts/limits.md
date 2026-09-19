@@ -24,6 +24,29 @@
 | **画像のファイル名が 255 バイト超** | 送信前       | `PortersConfigError`（文字数ではなくバイト数）            |
 | **画像の mime が 4 種以外**         | 送信前       | `PortersConfigError`                                      |
 | **一括書き込みに画像が混ざる**      | 送信前       | `PortersConfigError`（単発 `create` / `update` へ）       |
+| **alias が XML の名前として不正**   | 送信前       | `PortersConfigError`（選択肢 alias・項目 alias）          |
+
+### 選択肢 alias・項目 alias の形
+
+PORTERS は Option の値を**タグ名**として書きます（`<FieldAlias><OptionAlias/></FieldAlias>`）。
+文字列が XML の構造そのものになる場所なので、**XML の名前として書ける形か**を送信前に検査します。
+
+```ts
+// フォーム・取り込み・ツール引数などから来た、信頼できない文字列
+declare const userInput: string;
+
+await t.candidate.update(10001, { P_Phase: ["Option.P_Applied"] }); // OK
+await t.candidate.update(10001, { P_Phase: [userInput] }); // 不正なら PortersConfigError
+```
+
+- 通るのは **XML の `Name`**（英数字・`_`・`-`・`.`・日本語など。先頭に数字や `-` は置けない）。
+  出典が alias の書式を定めていないので、**XML が許すものはすべて許します**。
+- 選択肢 alias を**外から受け取る**なら（フォーム・取り込み・ツール引数）、この検査が
+  最後の砦になります。検査が無いと、値が XML の構造として解釈され、
+  **意図しないレコードが書き換わります**。
+- 正しい alias の出どころは **Option マスタ**（`t.option`）か、リファレンスの選択肢一覧です。
+- 同じ検査が**項目 alias**（書き込み入力のキー）にもかかります。`JSON.parse` した
+  オブジェクトをそのまま渡す場合、型はキーを検査しきれないためです。
 
 ### 画像（`Image` 型のカスタム項目）
 
