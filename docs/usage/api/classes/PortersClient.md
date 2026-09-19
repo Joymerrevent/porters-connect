@@ -108,7 +108,7 @@ per-partition token, construct a dedicated PortersClient per tenant (ADR-0008 �
 
 > **get** **hostname**(): `string`
 
-Defined in: [src/client.ts:282](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L282)
+Defined in: [src/client.ts:288](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L288)
 
 The configured API server name (no port — see [PortersClient.port](#port)).
 
@@ -124,7 +124,7 @@ The configured API server name (no port — see [PortersClient.port](#port)).
 
 > **get** **port**(): `number` \| `undefined`
 
-Defined in: [src/client.ts:287](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L287)
+Defined in: [src/client.ts:293](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L293)
 
 The configured port, or `undefined` when the scheme's own port is used (ADR-0078).
 
