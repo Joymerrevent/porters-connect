@@ -8,7 +8,7 @@
 
 > **ThrottleOptions** = `object`
 
-Defined in: [src/http/throttle.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L17)
+Defined in: [src/http/throttle.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L19)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/http/throttle.ts:17](https://github.com/Joymerrevent/porters-co
 
 > `optional` **now?**: () => `number`
 
-Defined in: [src/http/throttle.ts:22](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L22)
+Defined in: [src/http/throttle.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L37)
 
 #### Returns
 
@@ -28,7 +28,11 @@ Defined in: [src/http/throttle.ts:22](https://github.com/Joymerrevent/porters-co
 
 > `optional` **readPerMin?**: `number`
 
-Defined in: [src/http/throttle.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L18)
+Defined in: [src/http/throttle.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L25)
+
+Reads allowed per minute before headroom. Default 2000 (PORTERS' own cap). A positive
+integer, and **`readPerMin * safety` must still leave at least one token** — see
+[ThrottleOptions.safety](#safety).
 
 ***
 
@@ -36,9 +40,14 @@ Defined in: [src/http/throttle.ts:18](https://github.com/Joymerrevent/porters-co
 
 > `optional` **safety?**: `number`
 
-Defined in: [src/http/throttle.ts:21](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L21)
+Defined in: [src/http/throttle.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L36)
 
-Fraction of the limit to actually use (headroom). Default 0.9.
+Fraction of the limit to actually use (headroom). Default 0.9. Greater than 0, at most 1.
+
+The bucket holds `floor(limit * safety)` tokens, so a small limit and a small `safety`
+multiply into **zero capacity** — `{ readPerMin: 1 }` at the default 0.9 already does.
+A bucket that can never hold a token would make every call wait forever, so the
+combination is rejected at construction rather than hanging (RV-49).
 
 ***
 
@@ -46,4 +55,6 @@ Fraction of the limit to actually use (headroom). Default 0.9.
 
 > `optional` **writePerMin?**: `number`
 
-Defined in: [src/http/throttle.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L19)
+Defined in: [src/http/throttle.ts:27](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L27)
+
+Writes allowed per minute before headroom. Default 500. Same rules as `readPerMin`.
