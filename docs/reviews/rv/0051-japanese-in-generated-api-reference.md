@@ -1,7 +1,7 @@
 # RV-51 🟢 生成した公開 API リファレンスに日本語が混ざる
 
 - 重要度: 🟢 ／ 観点: ドキュメント / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -64,7 +64,43 @@ CLAUDE.md は「**公開サーフェス（型名・メソッド名・public API 
 
 ## 処置
 
-—
+**完了。**推奨の 2 つを行った。
+
+1. **出どころの JSDoc を直した**（生成物を直しても再生成で戻るので恒久化しない）:
+   - 「accept 時の決定」→ `decided on accept`（`verify-fields.ts` / `tenant-catalog.ts` /
+     `generate-field-decls.ts` — ADR の議事の言い回しがそのまま流れていた）
+   - `AttachmentAccessor` の `@example` のコメント 2 行を英語に
+   - `src/index.ts` の日本語コメント 1 件も英語に（JSDoc ではないので生成物には出ないが、
+     周囲 6 件がすべて英語で揃っている公開サーフェスのファイルなので）
+2. **検査を `check:api` に足した**（`kanaLines`）。生成物が最新であることを確かめた**後**に見る
+   — 古い生成物の日本語を報告しても、再生成で消えるかもしれないため。
+
+検査を書くにあたり、`scripts/check-api-reference.mjs` に CLI ガードを足して `main()` に包んだ。
+export した関数をテストから import したときに typedoc が走ってしまうため
+（他の `check:*` と同じ形に揃えた）。
+
+## 検証
+
+**実際に出どころの JSDoc へ日本語を入れて生成し、検査が落ちることを確かめた**（実測）:
+
+```text
+公開 API リファレンスに日本語（かな）が混ざっています。
+公開サーフェスの JSDoc は英語です（CLAUDE.md）。**生成物ではなく出どころの JSDoc** を直してください:
+
+  type-aliases/Option.md:13: ひらがなを一時的に混ぜる。A decoded Option (one choice). …
+```
+
+合成入力に対する試験は `scripts/check-api-reference.test.mjs`（7 ケース）:
+ひらがな・カタカナ・長音符を拾い、複数ファイル / 複数行をすべて挙げ、行番号は 1 始まり。
+
+**漢字を拾わないことも試験で固定した。** ADR の節番号（`案5b` / `論点4`）は
+**日本語 ADR の節を指す引用キー**で、英訳すると参照先を辿れなくなる。日本語のサンプル値
+（`面談`）も同様。ここを弾くと「直しようのない指摘」になるので、意図的に対象外にしている。
+
+実測: 生成物の日本語（かな）は **0 件**。`pnpm check:api` は
+`API リファレンスは最新です（187 ファイル・日本語の混入なし）` を出す。
+
+品質ゲートは全 green（**1294 tests**）。
 
 [adr68]: ../../adr/0068-api-reference-tooling.md
 [rv30]: 0030-generic-constraint-types-unexported.md
