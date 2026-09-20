@@ -24,6 +24,10 @@ const server = await startFakeServer({
     { P_Id: 1, P_Name: "API アプリ", P_Mail: "app@example.invalid" },
     { P_Id: 5, P_Name: "採用 花子", P_Mail: "hanako@example.com" },
   ],
+  departments: [
+    { P_Id: 1, P_Name: "営業部" },
+    { P_Id: 2, P_Name: "人事部", P_Hidden: "1" },
+  ],
   optionTree: [
     {
       alias: "Option.P_PersonPhase",
@@ -48,7 +52,7 @@ const routes = [...FAKE_RESOURCES.keys()].map((path) => `/v1/${path}`);
 console.log(`fake PORTERS server listening on ${server.url}`);
 console.log(`  auth      /v1/oauth (code_direct), /v1/token`);
 console.log(`  resources ${routes.join(", ")}`);
-console.log(`  seeded    2 candidates, 2 users, 1 option tree`);
+console.log(`  seeded    2 candidates, 2 users, 2 departments, 1 option tree`);
 console.log(
   `  connect   new PortersClient({ hostname: "${new URL(server.url).hostname}", port: ${new URL(server.url).port}, scheme: "http" })`,
 );

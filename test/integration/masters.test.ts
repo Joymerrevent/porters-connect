@@ -1,6 +1,6 @@
-// L1 integration for the master reads (ADR-0043 phase 3 / ADR-0021/0022). These four have their
-// own query vocabulary — no `condition`, no `get(id)`, only User takes `field` — and `request_type`
-// means different things depending on the OAuth method. The fake authenticates like `code_direct`,
+// L1 integration for the master reads (ADR-0043 phase 3 / ADR-0021/0022). These five have their
+// own query vocabulary — no `condition`, no `get(id)`, only User and Department take `field` — and
+// `request_type` means different things depending on the OAuth method. The fake authenticates like `code_direct`,
 // which is the library's default, so that is the behaviour these tests pin.
 
 import { describe, expect, it } from "vitest";
@@ -220,6 +220,55 @@ describe("option master", () => {
     const options = await porters.tenant(1).option.search();
 
     expect(options.map((o) => o.P_Alias)).toEqual(["Option.P_Applied"]);
+  });
+});
+
+describe("department master", () => {
+  const DEPARTMENTS = [
+    { P_Id: 1, P_Name: "営業部" },
+    { P_Id: 2, P_Name: "人事部", P_Hidden: "1", P_SortNo: "5" },
+  ];
+
+  it("lists the partition's departments with every catalogued field", async () => {
+    const { porters } = setup({ departments: DEPARTMENTS });
+
+    const page = await porters.tenant(1).department.search();
+
+    expect(page.total).toBe(2);
+    expect(page.items.map((d) => d.P_Name)).toEqual(["営業部", "人事部"]);
+    // The 4 fields a Link / `User.P_Department` reference cannot reach are readable here.
+    expect(page.items[1]).toMatchObject({ P_Hidden: 1, P_SortNo: 5 });
+    expect(page.items[0]?.P_RegistrationDate).toBe("2026-01-01T00:00:00Z");
+  });
+
+  it("is empty unless seeded — PORTERS lists nothing by default", async () => {
+    const { porters } = setup();
+
+    const page = await porters.tenant(1).department.search();
+
+    expect(page.total).toBe(0);
+    expect(page.items).toEqual([]);
+  });
+
+  it("pages with searchAll", async () => {
+    const { porters } = setup({
+      departments: [1, 2, 3].map((id) => ({ P_Id: id })),
+    });
+
+    const seen = [];
+    for await (const d of porters.tenant(1).department.searchAll()) {
+      seen.push(d.P_Id);
+    }
+
+    expect(seen).toEqual([1, 2, 3]);
+  });
+
+  it("requires the partition like every master but Partition itself", async () => {
+    const { porters } = setup({ departments: DEPARTMENTS, partitions: [1] });
+
+    await expect(porters.tenant(99).department.search()).rejects.toMatchObject({
+      code: 404,
+    });
   });
 });
 
