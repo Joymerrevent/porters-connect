@@ -43,6 +43,7 @@ grep -rn "VERIFY(live)" src test
 | LV-28 | Sales の `※` 依存連鎖が実際にどう判定されるか            | 未確認 |
 | LV-29 | `System[Department]` は書けるか・書けるならどの形か      | 未確認 |
 | LV-30 | Department Read で 6 項目すべてを `field` に並べられるか | 未確認 |
+| LV-31 | 時分型の Read が秒 `00` 以外を返すことがあるか           | 未確認 |
 
 ---
 
@@ -502,6 +503,21 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: [LV-18][lv18]（User の同型）／ スコープが `user_r` で足りるか（出典の Scope 節は `user_r` だけを
   挙げる）は同じ呼び出しで一緒に分かる
 
+## LV-31 時分型の Read が秒 `00` 以外を返すことがあるか
+
+- **現在の対応 / 仮定**: **秒を落とさない**。`decodeTimeOfDay` は秒が `00` なら `"HH:mm"`、それ以外なら
+  `"HH:mm:ss"` を返す（[ADR-0086][a86]）。どちらに転んでも値が欠けない側に倒してある
+- **不確実な理由**: 出典（[時分型のお知らせ][src-tod]）は「`[yyyy/mm/dd HH:MM:SS]` の書式で出力されます」と
+  秒付きの書式を示すが、画面の入力は時分だけ（00:00〜47:59）。**秒が常に `00` か**は書かれていない。
+  常に `00` なら `"HH:mm"` だけを返す単純な契約にできるが、断定せずに保持している
+- **コード箇所**: `src/util/time-of-day.ts`（`decodeTimeOfDay` の秒の分岐）
+- **確認方法**: 時分型のカスタム項目を持つ環境で、画面から入力した値を Read し、秒が `00` 以外で返る例が
+  あるか（API で `1970/01/01 09:00:30` を Write したときに保持されるかも含む）を確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 常に `00` と分かっても契約は変えない（`"HH:mm:ss"` の分岐が単に通らなくなるだけ）。
+  `00` 以外があると分かれば、ガイドに「秒が付くことがある」を明記する
+
 ## 状態の意味
 
 **3 値。`未確認` だけが「まだやることが残っている」状態**で、残る 2 つはどちらも終端です。
@@ -569,3 +585,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [a17]: adr/0017-option-read-shape.md
 [a83]: adr/0083-conditionally-required-fields.md
 [lv18]: #lv-18-user-read-で拡張-13-項目を-field-に並べられるか
+[a86]: adr/0086-time-of-day-fields.md
+[src-tod]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497

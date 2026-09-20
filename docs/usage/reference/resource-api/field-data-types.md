@@ -70,11 +70,13 @@
 **既存連携への影響**（出典の注意）: 管理者が時分型項目を足すと、Field Read 上は年月日時分型に見えるため、
 任意の日時を書き込んだ連携が **Code 103** で落ちる。どの項目が時分型かは環境の管理者に確認するしかない。
 
-**このライブラリでの扱い（2026-09-20 時点・未対応）**: ライブラリは FT-12 を UTC の DateTime として
-ISO 8601 に正規化する（[ADR-0011][adr11]）。時分型の値をそのまま通すと Read は `1970-01-01T09:00:00Z`
-の形で届き（値は欠けない）、Write は **`Z` 付きの ISO** で渡せば `1970/01/01 09:00:00` に戻る。
-ただし**オフセット付き（`+09:00` など）で渡すと UTC に換算されて値がずれる**。宣言で時分型と
-明示する手段（`defineFields` の builder）は無い → [roadmap][roadmap]（要 ADR）。
+**このライブラリでの扱い**（[ADR-0086][adr86]）: **型は増やさない**。時分型も `dateTime()` で宣言し、
+値は ISO（`1970-01-01T09:00:00Z`）のまま読み書きする（[ADR-0011][adr11] の正規化はタイムゾーン演算を
+しない書式変換なので、値は欠けない）。基準日の規則は `decodeTimeOfDay`（ISO → `"HH:mm"`・基準日以外は
+`PortersConfigError`・秒 ≠ 00 は保持）／ `encodeTimeOfDay`（`"HH:mm[:ss]"` 00:00〜47:59 → ISO・
+範囲外は送信前に `PortersConfigError`）が閉じ込める。**どの項目が時分型かは利用者の責務**（API から
+判別できないため）。`generateFieldDecls` は FT-12 の行に注記を出す。使い方は
+[概念: 日時は UTC][concept-dt] の「時分型」節。
 
 ## 設計メモ（ライブラリ側の決定）
 
@@ -91,7 +93,8 @@ ISO 8601 に正規化する（[ADR-0011][adr11]）。時分型の値をそのま
 [write-format-md]: write-format.md
 [res-department]: resources/department.md
 [time-only]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
-[roadmap]: ../../../roadmap.md
+[adr86]: ../../../adr/0086-time-of-day-fields.md
+[concept-dt]: ../../concepts/datetime.md
 [prd]: ../../../design/requirements.md
 [adr11]: ../../../adr/0011-xml-parse-serialize.md
 [adr16]: ../../../adr/0016-field-type-granularity.md
