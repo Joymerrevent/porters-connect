@@ -10,8 +10,8 @@
 //   2) カタログにある項目が、すべて reference に存在する（綴り間違い・幻の項目の検出）
 //   3) Field Type → Data Type の対応が一致する（型を取り違えていないか）
 //
-// 対象はデータ系 12 種 ＋ マスタ 4 種（ADR-0060 D2 で拡張）。マスタは 2 通りに分かれる:
-//   - **User** は reference が Field Type 列を持つので、データ系とまったく同じ検査に載せる。
+// 対象はデータ系 12 種 ＋ マスタ 5 種（ADR-0060 D2 で拡張・Department は 0.20.0）。マスタは 2 通りに分かれる:
+//   - **User / Department** は reference が Field Type 列を持つので、データ系とまったく同じ検査に載せる。
 //   - **Field / Option / Partition** は reference（＝ Read 記事の出力表）に**型の列が無い**ので、
 //     項目の有無だけを両方向で検査する。型の対応は突き合わせる相手がいない。
 // Attachment だけは接頭辞なしの bespoke で「カタログ＝reference の全項目」が成り立たないため対象外。
@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
+import { DEPARTMENT_DESCRIPTOR } from "../../src/resources/department";
 import { FIELD_DESCRIPTOR } from "../../src/resources/field";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
@@ -95,7 +96,13 @@ const readReferenceFields = (path: string, prefix: string): RefField[] => {
   return rows;
 };
 
-const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
+// `atLeast`: 「表を読めている」の下限。表の形が変わって 0 件になったら素通りするので行数で押さえる。
+// データ系はどれも 10 行を超えるが、Department は出典が 6 項目しか無い。
+const TARGETS: {
+  descriptor: ResourceDescriptor;
+  doc: string;
+  atLeast?: number;
+}[] = [
   { descriptor: CANDIDATE_DESCRIPTOR, doc: "candidate" },
   { descriptor: JOB_DESCRIPTOR, doc: "job" },
   { descriptor: CLIENT_DESCRIPTOR, doc: "client" },
@@ -108,8 +115,9 @@ const TARGETS: { descriptor: ResourceDescriptor; doc: string }[] = [
   { descriptor: PHASE_DESCRIPTOR, doc: "phase" },
   { descriptor: PROCESS_DESCRIPTOR, doc: "process" },
   { descriptor: RESUME_DESCRIPTOR, doc: "resume" },
-  // マスタで唯一 Field Type 列を持つ（出典が Field List 記事なので型が載っている）。
+  // Field Type 列を持つマスタ（出典が Field List 記事なので型が載っている）。
   { descriptor: USER_DESCRIPTOR, doc: "user" },
+  { descriptor: DEPARTMENT_DESCRIPTOR, doc: "department", atLeast: 5 },
 ];
 
 // 型の列を持たないマスタ（出典が Read 記事の出力表＝ Tag と Definition しかない）。
@@ -126,7 +134,7 @@ const EMPTY_CELL = "—";
 
 describe.each(TARGETS)(
   "reference ↔ カタログ: $descriptor.name",
-  ({ descriptor, doc }) => {
+  ({ descriptor, doc, atLeast = 10 }) => {
     const fields = readReferenceFields(
       `docs/usage/reference/resource-api/resources/${doc}.md`,
       descriptor.prefix,
@@ -136,8 +144,8 @@ describe.each(TARGETS)(
 
     it("reference の表を読めている（前提の自己チェック）", () => {
       // 表の形が変わって 0 件になったら、以下の検査が素通りしてしまうので先に固定する。
-      expect(fields.length).toBeGreaterThan(10);
-      expect(valued.length).toBeGreaterThan(10);
+      expect(fields.length).toBeGreaterThan(atLeast);
+      expect(valued.length).toBeGreaterThan(atLeast);
     });
 
     it("値を持つ標準項目がすべてカタログにある（取りこぼしの検出）", () => {

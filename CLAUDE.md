@@ -53,7 +53,8 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
 
 ## リソース（公式 API List 準拠）
 
-- マスタ系：Partition / User / Field / Option
+- マスタ系：Partition / User / Field / Option / Department（Department は 2025/03 追加・Read のみ・
+  スコープは `user_r`。公式 API List 記事にはまだ載っていない）
 - データ系：Client / Recruiter / Contact / Job / Candidate / Resume / Process / Activity / Contract / Sales / Opportunity / Phase / Attachment
 
 MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume → Attachment**（**実装済み**）。
@@ -80,6 +81,7 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
   （保守者が読めること＝フェイルセーフ優先。海外コントリビュータは契約ゲートで実質入れない）。実行時 i18n はしない。
 - README / ドキュメント / ブログは**日本語ファースト →（後で）英語**（読者は国内の開発者）。
+- **シェル（`.sh` ／ ワークフローの `run:`）では変数を `${var}` で括る**：`$var` の直後に全角文字が続くと bash が全角の先頭バイトまで変数名として読み、`set -u` の下でその行が落ちる（日本語のメッセージを書くと自然に生まれる形で、実際に 2 度踏んだ）。壊れるのが**異常を報告する行**に偏る＝報告せず死ぬので緑に見える。`pnpm check:shell`（`scripts/check-shell-identifiers.mjs`）で機械的に弾く。
 
 ---
 

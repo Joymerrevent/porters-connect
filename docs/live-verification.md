@@ -11,37 +11,39 @@ grep -rn "VERIFY(live)" src test
 
 ## サマリー
 
-| #     | 項目                                                | 状態   |
-| ----- | --------------------------------------------------- | ------ |
-| LV-1  | Option 末端 alias の接頭辞                          | 未確認 |
-| LV-2  | OptionRoot ラッパーの有無                           | 未確認 |
-| LV-3  | Attachment の get 条件                              | 解消   |
-| LV-4  | Attachment Read の既定項目                          | 解消   |
-| LV-5  | リソース毎の create 必須項目                        | 確定   |
-| LV-6  | Field `P_ReferTo` の入れ子形                        | 未確認 |
-| LV-7  | User `current()` の実挙動                           | 未確認 |
-| LV-8  | Partition Read の partition 非送信                  | 未確認 |
-| LV-9  | 制約違反時の HTTP 応答（長さ/レート）               | 未確認 |
-| LV-10 | System[Reference] Read の入れ子タグ                 | 未確認 |
-| LV-11 | Write 失敗時の Result Code（対象なし/200 件超）     | 未確認 |
-| LV-12 | Field Read の P_Alias 表記と System 系の Field Type | 未確認 |
-| LV-13 | 1 App トークンで複数 partition を叩けるか           | 未確認 |
-| LV-14 | `P_Deleted` の wire 形と出現条件                    | 未確認 |
-| LV-15 | `itemstate=existing` を明示送信して受け付けられるか | 未確認 |
-| LV-16 | Candidate 参照を展開するときの alias 接頭辞         | 未確認 |
-| LV-17 | Phase の User 項目を `()` 付きで要求できるか        | 未確認 |
-| LV-18 | User Read で拡張 13 項目を field に並べられるか     | 未確認 |
-| LV-19 | Link の User / Department 応答の入れ子形            | 未確認 |
-| LV-20 | Image のサブタグを field に括弧で並べる記法         | 未確認 |
-| LV-21 | Link を condition / order に使えるか                | 未確認 |
-| LV-22 | Image の値を消す書き方                              | 未確認 |
-| LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
-| LV-24 | Attachment Read の必須パラメータ                    | 未確認 |
-| LV-25 | Phase Read に keywords / itemstate を送れるか       | 未確認 |
-| LV-26 | Option マスタの `P_Alias` は XML Name に収まるか    | 未確認 |
-| LV-27 | 複数人を持てる `User` 項目の応答形                  | 未確認 |
-| LV-28 | Sales の `※` 依存連鎖が実際にどう判定されるか       | 未確認 |
-| LV-29 | `System[Department]` は書けるか・書けるならどの形か | 未確認 |
+| #     | 項目                                                     | 状態   |
+| ----- | -------------------------------------------------------- | ------ |
+| LV-1  | Option 末端 alias の接頭辞                               | 未確認 |
+| LV-2  | OptionRoot ラッパーの有無                                | 未確認 |
+| LV-3  | Attachment の get 条件                                   | 解消   |
+| LV-4  | Attachment Read の既定項目                               | 解消   |
+| LV-5  | リソース毎の create 必須項目                             | 確定   |
+| LV-6  | Field `P_ReferTo` の入れ子形                             | 未確認 |
+| LV-7  | User `current()` の実挙動                                | 未確認 |
+| LV-8  | Partition Read の partition 非送信                       | 未確認 |
+| LV-9  | 制約違反時の HTTP 応答（長さ/レート）                    | 未確認 |
+| LV-10 | System[Reference] Read の入れ子タグ                      | 未確認 |
+| LV-11 | Write 失敗時の Result Code（対象なし/200 件超）          | 未確認 |
+| LV-12 | Field Read の P_Alias 表記と System 系の Field Type      | 未確認 |
+| LV-13 | 1 App トークンで複数 partition を叩けるか                | 未確認 |
+| LV-14 | `P_Deleted` の wire 形と出現条件                         | 未確認 |
+| LV-15 | `itemstate=existing` を明示送信して受け付けられるか      | 未確認 |
+| LV-16 | Candidate 参照を展開するときの alias 接頭辞              | 未確認 |
+| LV-17 | Phase の User 項目を `()` 付きで要求できるか             | 未確認 |
+| LV-18 | User Read で拡張 13 項目を field に並べられるか          | 未確認 |
+| LV-19 | Link の User / Department 応答の入れ子形                 | 未確認 |
+| LV-20 | Image のサブタグを field に括弧で並べる記法              | 未確認 |
+| LV-21 | Link を condition / order に使えるか                     | 未確認 |
+| LV-22 | Image の値を消す書き方                                   | 未確認 |
+| LV-23 | レート上限は何単位か（App / 契約 / ホスト）              | 未確認 |
+| LV-24 | Attachment Read の必須パラメータ                         | 未確認 |
+| LV-25 | Phase Read に keywords / itemstate を送れるか            | 未確認 |
+| LV-26 | Option マスタの `P_Alias` は XML Name に収まるか         | 未確認 |
+| LV-27 | 複数人を持てる `User` 項目の応答形                       | 未確認 |
+| LV-28 | Sales の `※` 依存連鎖が実際にどう判定されるか            | 未確認 |
+| LV-29 | `System[Department]` は書けるか・書けるならどの形か      | 未確認 |
+| LV-30 | Department Read で 6 項目すべてを `field` に並べられるか | 未確認 |
+| LV-31 | 時分型の Read が秒 `00` 以外を返すことがあるか           | 未確認 |
 
 ---
 
@@ -483,6 +485,39 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: 書けると分かったら型に足す（追加なので**非破壊**）。書けないと分かったら現状のままでよい。
   「意図的に塞いだ穴」として[エンドポイント × 機能][coverage]の表に ADR 番号つきで載っている
 
+## LV-30 Department Read で 6 項目すべてを `field` に並べられるか
+
+- **現在の対応 / 仮定**: **並べて送る**。Department のカタログは reference の全 6 項目を持ち、`field`
+  省略時は [ADR-0020][a20] どおり**カタログ全項目**を要求する（User の [LV-18][lv18] と同じ形）
+- **不確実な理由**: 記事は「指定できる Field は Department - Field List を参照」とするが、サンプルは
+  `Department.P_Id,Department.P_Name` の 2 項目だけ。残る 4 項目（`P_Hidden` / `P_SortNo` /
+  `P_RegistrationDate` / `P_UpdateDate`）は Field List が「Resource API での Read 時に、参照取得することは
+  できません」と注記するもので、これは Link／`User.P_Department` の **参照経由**の話＝ Department Read
+  自体の制約ではないと読んでいる（User の拡張 13 項目と同じ読み方）。**6 項目を 1 度に並べた例は無い**
+- **コード箇所**: `src/resources/department.ts`（`DEFAULT_FIELDS` ＝ カタログ全項目）
+- **確認方法**: `GET /v1/department?partition=…&field=<6 項目>` を投げ、**HTTP 200 ＋ ルート `<Code>0`** と
+  各項目の値が返ることを確認する。特定の項目で落ちるなら **`DEFAULT_FIELDS` から外して `field` 明示時のみ
+  送る**（カタログからは外さない）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: [LV-18][lv18]（User の同型）／ スコープが `user_r` で足りるか（出典の Scope 節は `user_r` だけを
+  挙げる）は同じ呼び出しで一緒に分かる
+
+## LV-31 時分型の Read が秒 `00` 以外を返すことがあるか
+
+- **現在の対応 / 仮定**: **秒を落とさない**。`decodeTimeOfDay` は秒が `00` なら `"HH:mm"`、それ以外なら
+  `"HH:mm:ss"` を返す（[ADR-0086][a86]）。どちらに転んでも値が欠けない側に倒してある
+- **不確実な理由**: 出典（[時分型のお知らせ][src-tod]）は「`[yyyy/mm/dd HH:MM:SS]` の書式で出力されます」と
+  秒付きの書式を示すが、画面の入力は時分だけ（00:00〜47:59）。**秒が常に `00` か**は書かれていない。
+  常に `00` なら `"HH:mm"` だけを返す単純な契約にできるが、断定せずに保持している
+- **コード箇所**: `src/util/time-of-day.ts`（`decodeTimeOfDay` の秒の分岐）
+- **確認方法**: 時分型のカスタム項目を持つ環境で、画面から入力した値を Read し、秒が `00` 以外で返る例が
+  あるか（API で `1970/01/01 09:00:30` を Write したときに保持されるかも含む）を確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 常に `00` と分かっても契約は変えない（`"HH:mm:ss"` の分岐が単に通らなくなるだけ）。
+  `00` 以外があると分かれば、ガイドに「秒が付くことがある」を明記する
+
 ## 状態の意味
 
 **3 値。`未確認` だけが「まだやることが残っている」状態**で、残る 2 つはどちらも終端です。
@@ -549,3 +584,6 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [rv50]: reviews/rv/0050-live-verification-traceability-broken.md
 [a17]: adr/0017-option-read-shape.md
 [a83]: adr/0083-conditionally-required-fields.md
+[lv18]: #lv-18-user-read-で拡張-13-項目を-field-に並べられるか
+[a86]: adr/0086-time-of-day-fields.md
+[src-tod]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497

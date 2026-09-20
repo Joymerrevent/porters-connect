@@ -40,6 +40,7 @@ describe("fake server wiring", () => {
       "contact",
       "contract",
       // masters (read-only)
+      "department",
       "field",
       "job",
       "opportunity",
@@ -59,7 +60,7 @@ describe("fake server wiring", () => {
     // Only the masters carry a bespoke read handler; only Partition takes no `partition`.
     expect(
       [...FAKE_RESOURCES.values()].filter((r) => r.master !== undefined).length,
-    ).toBe(4);
+    ).toBe(5);
     expect(
       [...FAKE_RESOURCES.values()].filter((r) => r.partitionless).length,
     ).toBe(1);
