@@ -1,7 +1,7 @@
 # RV-54 🟡 予約名の alias は書けるのに読めず、その例外が PortersError の外に出る
 
 - 重要度: 🟡 ／ 観点: エラーモデル / API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -83,10 +83,52 @@ message        : [SECURITY] Invalid name: "prototype" is a reserved JavaScript k
 
 ## 処置
 
-—
+**完了（案 (a)）。** 読み取り側で `PortersError` に包むようにした。**挙動変更は無く**、
+既存の決定（[ADR-0006][adr6]）を適用しただけなので ADR は起こしていない
+（[RV-36][rv36] の処置とまったく同じ形）。
 
-[adr2]: ../../adr/0002-ground-design-in-live-api-docs.md
+`src/xml/parser.ts` に `parseXml` を足し、3 つの入口すべてを通した:
+
+| 入口                  | 包む先                 |
+| --------------------- | ---------------------- |
+| `parseResourcePage`   | `PortersResourceError` |
+| `parseWriteResult`    | `PortersResourceError` |
+| `parseAuthentication` | `PortersAuthError`     |
+
+**各入口が既に持っていた「unparseable …」のエラーに合流させた**のが設計の要点。
+パーサが拒否したのも、XML が壊れているのも、利用者から見れば同じ「読めない」なので、
+新しいエラーを作らずに済む。パーサ自身の説明は `cause` に残す（消すと原因に辿り着けない）。
+
+**案 (b)（書き込み側でも弾く）は入れていない。** (a) が入ったことで踏んだときに何が
+起きたか分かるようになったので、実例が出てから決めれば足りる（PORTERS が受け付ける値を
+JS パーサの都合で拒否する判断は [ADR-0002][adr2] との兼ね合いがあり、要 ADR のまま）。
+
+## 検証
+
+**指摘の表と同じ入力で、4 経路すべてが系統内に収まることを確かめた**（実測）:
+
+| 入力                                | 結果                                            |
+| ----------------------------------- | ----------------------------------------------- |
+| Read・Option の選択肢が `prototype` | `PortersResourceError` / `unknown` / cause あり |
+| Read・`__proto__`                   | 同上                                            |
+| Write・`constructor`                | 同上                                            |
+| 認証・`prototype`                   | `PortersAuthError` / `unknown` / cause あり     |
+
+`src/xml/parser.test.ts` の「パーサが拒否するタグ名（RV-54）」が固定しているもの:
+
+- 予約名 3 つそれぞれで、**`PortersError` のインスタンスであること**（ここが指摘の本体）・
+  サブクラス・`category`・メッセージ・`cause` にパーサの説明が残ること。
+- Write と認証も同じ扱い（系統は違う）。
+- **接頭辞が付けば読める**（`Person.prototype`）＝締めすぎていないことの固定。
+  ここが落ちると、予約語を含むふつうの項目名が読めなくなる。
+- 予約名でない似た名前（`toString`）は従来どおり。
+- 壊れた XML も同じ経路で包まれる。
+
+品質ゲートは全 green（**1302 tests**・coverage perFile 100/99.21/100/100）。
+`parser.ts` の mutation は **100.00**（survivor 0）。
+
 [adr6]: ../../adr/0006-error-model.md
+[adr2]: ../../adr/0002-ground-design-in-live-api-docs.md
 [adr85]: ../../adr/0085-option-alias-validation.md
 [guide]: ../../usage/howto/handle-failures.md
 [rv36]: 0036-write-value-validation-partial.md
