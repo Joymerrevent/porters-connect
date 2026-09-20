@@ -97,6 +97,7 @@
 | [0083][0083] | 条件付き必須（`※`）は型で止めず `●` だけを必須にする               | 詳細設計 | accepted           | —     |
 | [0084][0084] | 成功指標は数値目標を置かずマイルストーンで測る                     | 要件定義 | accepted           | —     |
 | [0085][0085] | 呼び出し側の値がタグ名になる境界で XML Name を検証する             | 基本設計 | accepted           | —     |
+| [0086][0086] | DateTime の時分型は型を増やさず、変換関数で扱う                    | 基本設計 | accepted           | —     |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -185,3 +186,4 @@
 [0083]: 0083-conditionally-required-fields.md
 [0084]: 0084-success-metrics-measurement.md
 [0085]: 0085-option-alias-validation.md
+[0086]: 0086-time-of-day-fields.md
