@@ -5,6 +5,68 @@
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-09-20
+
+**定期レビューで見つけた 7 件を塞いだ版**です。破壊的変更はありません。公開 API の形は変わらず、
+**壊れたときの倒れ方**が変わります。
+
+いちばん重いのは **Option の選択肢 alias から書き込み XML を注入できた**こと。PORTERS は Option の値を
+**タグ名**として書くため（`<FieldAlias><OptionAlias/></FieldAlias>`）、その値を検証していないと
+**呼び出し側が指定していないレコードが書き換わり**ます。要素名はエスケープできないので、検証して弾く形にしました
+（[ADR-0085][adr85]）。
+
+### Security
+
+- **Option の選択肢 alias と書き込み項目 alias を、XML の名前として妥当か検証するようになりました**
+  （[ADR-0085][adr85]）。公開型が `string[]` なので cast なしで到達でき、`<Item>` を閉じて開き直す文字列を
+  渡すと **well-formed な XML に別レコードを名指す `<Item>` を注入**できていました（更新先が
+  すり替わる／頼んでいない項目が書き足される）。
+
+  ```ts
+  await t.candidate.update(10001, { P_Phase: [userInput] });
+  // 不正なら送信前に PortersConfigError（category: "validation"）
+  ```
+
+  通るのは **XML の `Name`**（英数字・`_`・`-`・`.`・日本語など。先頭に数字や `-` は置けません）。
+  出典が alias の書式を定めていないので**XML が許すものはすべて許します** — `Option.P_東京` のような
+  alias も従来どおり書けます。**本文になる値（テキスト項目など）の扱いは変わりません。**
+
+### Fixed
+
+- **`createThrottle` が実質 0 件の上限を受け付けて永久に待つのをやめました**。バケットのトークンは
+  `floor(上限 × safety)` 個で、既定 `safety` は 0.9。そのため `createThrottle({ readPerMin: 1 })` は
+  容量 0 になり、**すべての呼び出しが返らなく**なっていました（例外もログも無し）。
+
+  ```ts
+  createThrottle({ readPerMin: 1 }); // PortersConfigError（floor(1 × 0.9) = 0）
+  createThrottle({ readPerMin: 2 }); // OK（floor(1.8) = 1）
+  ```
+
+  `readPerMin` / `writePerMin` は**正の整数**、`safety` は **0 より大きく 1 以下**。加えて
+  **積が 1 以上**であることを見ます。「1 件も通さない」は `take()` が解決しない `Throttle` を
+  自分で渡してください。
+
+- **XML の解析に失敗したとき、例外が必ず `PortersError` になるようになりました**。
+  `fast-xml-parser` は `prototype` / `constructor` / `__proto__` をタグ名として拒否します。
+  これらは妥当な XML Name なので書き込みは通り、**読み取りだけ**が素の `Error` で落ちていました
+  — `catch (e) { if (e instanceof PortersError) … }` に**引っかからず**、アプリの最上位まで
+  素通りします。Read は `PortersResourceError`、認証は `PortersAuthError` に包み、パーサ自身の
+  説明は `cause` に残します。壊れた XML も同じ経路になりました。
+
+- **公開 API リファレンス**（`docs/usage/api/`）に残っていた日本語を英語に直しました。
+  公開サーフェスの JSDoc は英語、README とガイドは日本語ファースト、という切り分けは変わりません。
+
+### Changed
+
+- **CI が `engines` の下限そのものを走らせるようになりました**。`engines.node` は `>=22.12.0` を
+  約束していますが、テストの Node マトリクスは `22`（その時点の 22 系最新に解決される）だったため、
+  **22.12.0 は一度も走っていません**でした。Node 22.12.0 で動かしている場合、そのバージョンが
+  実際に検証されるようになります。
+
+- 内部の検査を 2 本増やしました（利用者への影響はありません）。契約後に実機確認する仮定と
+  コード側のコメントの対応を双方向で見る検査と、リファレンスへの日本語混入を見る検査です。
+  前者では**コードに仮定があるのに一覧に無いもの**が 3 件見つかり、起票しました。
+
 ## [0.19.0] - 2026-09-18
 
 **CJS からの入口を開け、Node の下限を 22.12 に上げた版**です。**破壊的変更を 1 つ**含みます
@@ -1062,11 +1124,13 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr82]: docs/adr/0082-module-format-and-node-baseline.md
 [limits]: docs/usage/concepts/limits.md
 [failures]: docs/usage/howto/handle-failures.md
+[adr85]: docs/adr/0085-option-alias-validation.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...HEAD
+[0.19.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
