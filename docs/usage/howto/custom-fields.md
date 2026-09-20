@@ -240,6 +240,9 @@ export const myFields = defineFields({
   生成物はリポジトリにコミットされることが多く、テナントの業務語彙が混ざるのは既定にしたくないためです。
 - **ライブラリが宣言できない型はコメントで残ります**（消しません）。「テナントに無い」と
   読み違えないようにするためです。
+- **Field Type 12 の行には注記が付きます**（`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と
+  同じ `12` で、Field Read からは区別できないためです。その項目が時刻だけを持つなら、読み書きで
+  `decodeTimeOfDay` / `encodeTimeOfDay` を当ててください（[日時は UTC][datetime]）。
 
 宣言を作る前に中身だけ見たいときは、`readCustomCatalog` が「alias → Data Type」を返します。
 

@@ -75,6 +75,12 @@ const undeclarableNote = (entry: UndeclarableField): string => {
   return `${type} is system-managed — standard fields cover it, custom declarations do not`;
 };
 
+// Field Read reports a time-of-day (時分型) field as Field Type 12, the same as a date-time, so the
+// generated declaration can only be `dateTime()`. The note is the one place a declaration is born,
+// so it is where the caller is told to look (ADR-0086 案3b).
+const TIME_OF_DAY_NOTE =
+  "FT-12: a time-of-day field has this same Field Type — if this one holds a clock time, use decodeTimeOfDay / encodeTimeOfDay";
+
 // One resource's block. Sorted by alias so regenerating produces the same text rather than
 // reshuffling a committed file.
 const resourceBlock = (
@@ -87,7 +93,11 @@ const resourceBlock = (
   );
   const declarations = entries.map(([alias, dataType]) => {
     const name = includeNames ? catalog.names[alias] : undefined;
-    const comment = name === undefined ? "" : ` // ${name}`;
+    const notes = [
+      ...(name === undefined ? [] : [name]),
+      ...(dataType === "DateTime" ? [TIME_OF_DAY_NOTE] : []),
+    ];
+    const comment = notes.length === 0 ? "" : ` // ${notes.join(" — ")}`;
     return `    ${alias}: f.${BUILDER_METHOD[dataType]}(),${comment}`;
   });
   // Stryker disable EqualityOperator: equivalent — one alias appears once per resource, so the tie branch cannot occur
