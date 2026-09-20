@@ -53,7 +53,8 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
 
 ## リソース（公式 API List 準拠）
 
-- マスタ系：Partition / User / Field / Option
+- マスタ系：Partition / User / Field / Option / **Department**（2025/03 追加・Read のみ・スコープは `user_r`。
+  公式 API List 記事にはまだ載っていない。**未実装**＝ `docs/roadmap.md` の「着手可能」）
 - データ系：Client / Recruiter / Contact / Job / Candidate / Resume / Process / Activity / Contract / Sales / Opportunity / Phase / Attachment
 
 MVP 優先順：**OAuth → Candidate → Job → Client → Process → Resume → Attachment**（**実装済み**）。
