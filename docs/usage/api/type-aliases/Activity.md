@@ -8,6 +8,6 @@
 
 > **Activity** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/activity.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L77)
+Defined in: [src/resources/activity.ts:78](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L78)
 
 A decoded Activity (an action logged against another record): known `P_` fields, each `value | null`.

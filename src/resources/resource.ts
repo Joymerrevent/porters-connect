@@ -151,7 +151,11 @@ export type ResourceConfig<
   R extends ReferenceMap = EmptyReferences,
 > = ResourceDescriptor<F, R> &
   ResourceBindings & {
-    /** Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). */
+    /**
+     * Aliases required on `create` (PORTERS new-record requirements — ADR-0019 W2). Only the
+     * aliases PORTERS marks `●` (unconditionally required) belong here; `※` (conditionally
+     * required) fields stay optional and PORTERS arbitrates them (ADR-0083).
+     */
     requiredOnCreate: Req;
   };
 

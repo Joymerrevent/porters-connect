@@ -63,10 +63,12 @@
 
 ### 【要件定義】
 
-- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-08-09 の棚卸しで残るのは 2 件**：
-  「成功指標の数値化タイミング」[stakeholder]／「v1 で CJS 出力まで出すか」[eng]。
-  （バージョン表記は [0042][0042]、サンドボックス R-17 は P1 のまま出荷、npm スコープ/組織は公開実績で決着。
-  「1 App トークンで複数 partition」は実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
+- PRD オープン論点（[requirements §8][prd]）の確定 — **2026-09-18 時点で残るのは 1 件**：
+  「成功指標の数値化タイミング」[stakeholder]。
+  （2026-08-09 の棚卸しでは 2 件だった。「v1 で CJS 出力まで出すか」[eng] は [0082][0082] として
+  起票・accepted・実装済み＝ここには残さない。バージョン表記は [0042][0042]、サンドボックス R-17 は
+  P1 のまま出荷、npm スコープ/組織は公開実績で決着。「1 App トークンで複数 partition」は
+  実機確認事項のため [live-verification][lv-doc] LV-13 へ移送）
 
 ### 【基本設計】
 
@@ -92,6 +94,17 @@
   **教訓**: 「未起票の論点」に見えるものが、既存 ADR の**未実装**であることがある。
   起票する前に既存 ADR を検索する。
 
+- **スロットルの上限値の検証**（[RV-49][rv49]）— **ADR 不要と判断**（2026-09-19）。
+  `createThrottle` が `floor(上限 × safety) = 0` を受け付けて永久に待つ欠陥だが、
+  **決定は既に accepted で出ている**: [ADR-0077][0077]（公開 factory の数値オプションは
+  構築時に検証し、`0` のように「無効」と読める値を弾く）／[ADR-0006][0006]（呼び出し側由来は
+  `PortersConfigError`）／[ADR-0047][0047]（許可と沈黙を分ける＝「1 件も通さない」を
+  黙って受けない）。新しい決定は 1 つも生じず、**0077 の未適用の片側**を埋めるだけ
+  （[RV-25][rv25] が [ADR-0048][0048] に対してそうだったのと同じ形）。
+  実装は [RV-49][rv49] の処置として行った。
+  **教訓**: 「公開 factory の数値オプション」は 2 つあり（`timeoutMs` と上限値）、
+  片方だけ検証されていた。**同じ種類の継ぎ目が複数あるなら、決定は全部に当てたか確かめる。**
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
@@ -102,6 +115,11 @@
 [lv-doc]: ../live-verification.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [0011]: 0011-xml-parse-serialize.md
+[0047]: 0047-access-point-scheme.md
+[0048]: 0048-access-point-host-validation.md
+[0077]: 0077-fetch-transport-timeout.md
+[rv25]: ../reviews/rv/0025-partition-default-zero.md
+[rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
 [0002]: 0002-ground-design-in-live-api-docs.md
@@ -115,6 +133,7 @@
 [0080]: 0080-resource-parameter-binding.md
 [0081]: 0081-attachment-read-parameters.md
 [0042]: 0042-supported-version-policy.md
+[0082]: 0082-module-format-and-node-baseline.md
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md
 [0071]: 0071-usage-docs-single-root.md

@@ -8,4 +8,4 @@
 
 > **SalesSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/sales.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L111)
+Defined in: [src/resources/sales.ts:112](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L112)

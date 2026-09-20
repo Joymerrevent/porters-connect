@@ -70,6 +70,9 @@ jobs:
       #   check:docs     README / ガイドの TS コード例が今の公開 API でコンパイルするか
       #                  （ADR-0070 検査④）。`new PortersClient({ …, partition })` は
       #                  0.10.0 以来 19 日間壊れていた
+      #   check:lv       live-verification の LV とコードの VERIFY(live) の**双方向**の対応
+      #                  （RV-50）。番号の無いマーカーは、対応するエントリが無くても
+      #                  気づけない＝表に無い仮定が契約後の確認リストから漏れる
       #   check:mentions 公開記号が入門か目的別のどこかから辿れるか（ADR-0070 検査③）
       #   check:api      docs/usage/api（TypeDoc 生成物）が今のソースと一致するか（ADR-0068）。
       #                  JSDoc だけの変更でも差分が出る
@@ -117,6 +120,14 @@ jobs:
       - name: Test (coverage)
         if: steps.changes.outputs.code == 'true'
         run: pnpm test:coverage
+
+      # 評価用サンドボックス（ADR-0024）が契約なしで完走するか。**利用者が最初に触る経路**で、
+      # PRD §7 の先行指標「評価可能性（YES/NO）」の判定そのもの（ADR-0084）。
+      # 2026-09-18 まで CI にもテストにも入っておらず、**壊れても利用者が試すまで分からない**
+      # 状態だった（実際にはそのとき緑だったが、緑であることを誰も確かめていなかった）。
+      - name: Sandbox (offline, no contract)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm sandbox
 
       - name: Build
         if: steps.changes.outputs.code == 'true'

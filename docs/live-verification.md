@@ -38,6 +38,10 @@ grep -rn "VERIFY(live)" src test
 | LV-23 | レート上限は何単位か（App / 契約 / ホスト）         | 未確認 |
 | LV-24 | Attachment Read の必須パラメータ                    | 未確認 |
 | LV-25 | Phase Read に keywords / itemstate を送れるか       | 未確認 |
+| LV-26 | Option マスタの `P_Alias` は XML Name に収まるか    | 未確認 |
+| LV-27 | 複数人を持てる `User` 項目の応答形                  | 未確認 |
+| LV-28 | Sales の `※` 依存連鎖が実際にどう判定されるか       | 未確認 |
+| LV-29 | `System[Department]` は書けるか・書けるならどの形か | 未確認 |
 
 ---
 
@@ -403,9 +407,106 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   （共通語彙の 11 リソースについて）。マトリクスの該当セルは
   [エンドポイント × 機能][coverage] の表 B
 
+## LV-26 Option マスタの `P_Alias` は XML Name の範囲に収まるか
+
+- **現在の対応 / 仮定**: **収まる前提**。[ADR-0085][a85] で、Option の選択肢 alias が
+  **XML の `Name` として妥当か**を送信前に検証して弾くようにした。正規の alias はすべて通る、
+  という前提の上に立っている
+- **不確実な理由**: 選択肢 alias には**出どころが 2 つ**あり、片方にしか保証が無い。
+  **Read の応答**から来た値は入れ子タグの名前そのもの（`decodeOption` は `Object.keys` を返す）
+  なので、定義上 `Name` である。いっぽう **Option マスタ**（`t.option` の `P_Alias`）は
+  **スカラのテキスト**として読まれるので、同じ保証が効かない。
+  出典は alias の書式をどこにも定義していない（[LV-1][lv1] は接頭辞すら未確定）ため、
+  **テナントが作った選択肢の alias が `Name` から外れうるか**が分からない
+- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/encode.ts`（`assertTagName`）／
+  `src/resources/option.ts`（`P_Alias` を `SinglelineText` として読む側）
+- **確認方法**: 実テナントの Option マスタを `t.option.search()` で全件読み、
+  `P_Alias` が 1 件残らず `isXmlName` を通るかを確かめる。**記号や空白を含む alias を
+  作れるかも併せて見る**（UI 側で作れてしまうなら、その alias を持つレコードは書けない）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 外れた場合、**倒れ方は安全側**（書けないだけで、壊れたデータは送らない）。
+  ただし「書けない正規の選択肢がある」ことになるので、そのときは検証の範囲ではなく
+  **PORTERS がその alias をどう wire に載せているか**を調べ直す。
+  なお [LV-1][lv1] が確定しても本件は解けない（接頭辞の有無と文字集合は別の問い）
+
+## LV-27 複数人を持てる `User` 項目の応答形
+
+- **現在の対応 / 仮定**: **先頭 1 人だけ読む**。`Activity.P_EventParticipants`（参加者）は `User` 型だが、
+  UI では複数人を入れられる。decoder は他の `User` 型項目と同じく入れ子の `<User>` を 1 つ読む
+  （`src/xml/decode.ts` の `decodeUser`）
+- **不確実な理由**: 出典は `User` 型の応答形を「`User.P_Id` / `P_Type` / `P_Name` / `P_Mail` の 4 つ」と
+  書くだけで、**複数人のときに `<User>` が繰り返されるのか、別の包みが付くのかを書いていない**。
+  繰り返すなら現在の実装は**2 人目以降を黙って捨てる**ことになり、
+  「値が欠けている」ことが呼び出し側から見えない
+- **コード箇所**: `src/resources/activity.ts`（`P_EventParticipants`）／`src/xml/decode.ts`（`decodeUser`）
+- **確認方法**: 参加者を **2 人以上**入れた Activity を作り、`field=Activity.P_EventParticipants(User.P_Id,…)`
+  で読んで応答 XML の生の形を見る。繰り返すなら読み取り値を配列に変えるのが筋
+  （`Option` が `string[]` なのと同じ形＝[ADR-0017][a17] の前例がある）
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 倒れ方が**安全側ではない**（黙って欠ける）ので、LV のうち優先度は高い。
+  配列に変えるのは公開型の変更＝破壊的
+
+## LV-28 Sales の `※` 依存連鎖が実際にどう判定されるか
+
+- **現在の対応 / 仮定**: **型では止めず、PORTERS に判定させる**（[ADR-0083][a83]）。`●`（無条件必須）だけを
+  `create` の必須にし、`※`（条件付き必須）は optional のまま送る
+- **不確実な理由**: 出典が書く依存連鎖
+  （`P_Job` → `P_Recruiter` → `P_Client` ← `P_Contract`、および `P_Candidate` と `P_Resume` は同時指定）は
+  **散文だけ**で、違反したときに**どの Result Code が返るか**が書かれていない。
+  [ADR-0083][a83] は「PORTERS が調停する」と決めたが、その調停が**判別可能なエラーとして返る**のか、
+  **黙って一部だけ書かれる**のかは未確認
+- **コード箇所**: `src/resources/sales.ts`（`REQUIRED_ON_CREATE` ＝ `P_Owner` のみ）
+- **確認方法**: 連鎖を満たさない組み合わせ（例: `P_Job` だけ指定）で `create` し、
+  返る Result Code と、レコードが実際に作られたかを見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 判別可能なコードが返るなら [ADR-0006][a6] の分類に足せる。
+  黙って通るなら [ADR-0083][a83] の前提（PORTERS が調停する）が崩れるので、
+  型で止める案（0083 の案B）を再検討する
+
+## LV-29 `System[Department]` は書けるか・書けるならどの形か
+
+- **現在の対応 / 仮定**: **書けないことにしておく**。`WritableDataType` から除外し、公開の Write 入力に
+  出さない（[ADR-0061][a61] 案3a の注意）
+- **不確実な理由**: PORTERS はこの型を Phase / User で**読み**に出すだけで、
+  **書けるのか・書けるとしてどの形（`Department.P_Id`？ `User` と同じ ID のみ？）かを公表していない**。
+  推測した形を送るより書けないことにしておくほうが安全側だが、**書けるのに塞いでいる**なら
+  機能の欠落になる
+- **コード箇所**: `src/xml/encode.ts`（`WritableDataType` の `Exclude`）
+- **確認方法**: `System[Department]` 型の項目（Phase の `OwnerDepartment` 等）に対して、
+  `<OwnerDepartment>123</OwnerDepartment>` と `<OwnerDepartment><Department.P_Id>123</Department.P_Id></OwnerDepartment>`
+  の両方を cast 経由で送り、Result Code を比べる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 書けると分かったら型に足す（追加なので**非破壊**）。書けないと分かったら現状のままでよい。
+  「意図的に塞いだ穴」として[エンドポイント × 機能][coverage]の表に ADR 番号つきで載っている
+
+## 状態の意味
+
+**3 値。`未確認` だけが「まだやることが残っている」状態**で、残る 2 つはどちらも終端です。
+
+| 状態     | 意味                                                   | コード側の `VERIFY(live)` |
+| -------- | ------------------------------------------------------ | ------------------------- |
+| `未確認` | 実機で確かめていない。**契約後にやることが残っている** | **必要**（検査が強制）    |
+| `確定`   | 実機で確かめ、事実を「確認結果」に書いた               | 外す（`LV-N` 参照は残す） |
+| `解消`   | **仮定そのものが無くなった**（ADR で設計が変わった等） | 外す                      |
+
+**`解消` は「確認して合っていた」ではありません。** 確認する対象が消えた、という別の事実です
+（例: [LV-3][lv3] / [LV-4][lv4] は [ADR-0081][a81] が Attachment の Read を出典の語彙に直したことで、
+確かめるべき仮定そのものが無くなりました）。**どちらも `未確認` には戻らない**ので、
+進捗を数えるときは **`未確認` の残数**を見ます（[roadmap][rm] の V5 もその形）。
+
+区別を保つ理由: 混ぜると「実機で裏が取れた」と「設計が変わって無関係になった」が同じ列に見え、
+**契約後にどれを確かめるべきかが分からなくなります**。
+
 ## 運用
 
 - 新たに「契約しないと確定しない」仮定が出たら、**コードに `VERIFY(live)` コメント**（`LV-N` 参照付き）を置き、エントリを追加する（「確認結果」は `—`）。
+- **`VERIFY(live)` には必ず `LV-N` を書く。** 番号の無いマーカーは、対応するエントリが無くても
+  気づけない（[RV-50][rv50] で実際に 4 件そうなっていた）。`pnpm check:lv` が両方向を検査する:
+  マーカーに番号があるか、`未確認` のエントリが 1 箇所以上から参照されているか。
 - 確定しても**エントリは削除しない**。「状態」を `確定` に変え、「確認結果」に実機で得られた事実を記入する。
 - 確定したらコード側は通常コメントへ戻す（`VERIFY(live)` トークンは外し、`LV-N` への参照は残してトレースを保つ）。仕様が重い確定は ADR 化し、このエントリからリンクする。
 
@@ -441,3 +542,10 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [ref-phase]: usage/reference/resource-api/resources/phase.md
 [lv15]: #lv-15-itemstateexisting-を明示送信して受け付けられるか
 [coverage]: design/endpoint-coverage.md
+[a85]: adr/0085-option-alias-validation.md
+[lv1]: #lv-1-option-末端-alias-の接頭辞
+[a6]: adr/0006-error-model.md
+[rm]: roadmap.md
+[rv50]: reviews/rv/0050-live-verification-traceability-broken.md
+[a17]: adr/0017-option-read-shape.md
+[a83]: adr/0083-conditionally-required-fields.md
