@@ -8,7 +8,7 @@
 > PORTERS Connect API 8.2.1（2025/03）で追加されたマスタ。ユーザー部署型（Link）項目の参照先で、
 > `User.P_Department`（System[Department]）が持つ `Department.P_Id` / `Department.P_Name` と同じ部署を指す。
 > マスタ系（読み取り専用）。カスタム項目（`U_` / `A_`）は無い（出典「取扱可能な任意の Field はありません」）。
-> **ライブラリは未実装**（2026-09-20 時点。[roadmap][roadmap] の「着手可能」）。
+> ライブラリでは `t.department`（`search` / `searchAll`）。6 項目を 1 度に並べて通るかは [LV-30][lv]。
 
 ## Read パラメータ
 
@@ -63,4 +63,4 @@ envelope。[Resource API 概要][resource-api]）。出典のサンプル:
 [read]: https://hrbcapi.porters.jp/hc/ja/articles/43464258000793-Department-Read
 [announce]: https://hrbcapi.porters.jp/hc/ja/articles/43498624278553
 [resource-api]: ../README.md
-[roadmap]: ../../../../roadmap.md
+[lv]: ../../../../live-verification.md
