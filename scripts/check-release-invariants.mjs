@@ -3,6 +3,7 @@
 //   (1) semver 形式（MAJOR.MINOR.PATCH）か（常時・リリース状態に依らず正当であるべき）
 //   (2) 直近リリース（git タグ）より版が逆行していないか（< で失敗・==/> は許可）
 //       — (2) は base=main の PR（リリース PR）でのみ検査（ADR-0032・back-merge ラグの誤検知回避）
+// あわせて **CI の Node マトリクスが engines の下限を実際に走らせているか**も見る（RV-53）。
 // CI 必須チェックに組み込み、リリース PR で文書更新漏れ・版番号ミスを構造的に防ぐ。
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -21,6 +22,23 @@ const MIN_NODE_RE = /^>=(\d+(?:\.\d+){0,2})$/;
 // `engines.node` から下限の版を採る。読めなければ undefined（呼び出し側でエラーにする）。
 export const minNodeOf = (enginesNode) =>
   MIN_NODE_RE.exec(String(enginesNode ?? "").trim())?.[1];
+
+/**
+ * CI の Node マトリクスが `floor`（engines の下限）を**そのまま**含むか（RV-53）。
+ *
+ * `node: ["22.12", 22, 24, 26]` の行から要素を読み、クォートを外して突き合わせる。
+ * `22` は `22.12` を**含まない**と判定するのが要点 — メジャー指定はその系の最新に解決され、
+ * 下限そのものは走らないため。マトリクス行が読めなければ「無い」扱い（fail-safe: 検査の
+ * 空振りより、読めないことを報告して人に見てもらうほうがよい）。
+ */
+export const matrixCoversFloor = (workflow, floor) => {
+  const row = /^\s*node:\s*\[(.+)\]\s*$/m.exec(String(workflow ?? ""));
+  if (!row) return false;
+  const versions = row[1]
+    .split(",")
+    .map((v) => v.trim().replace(/^["']|["']$/g, ""));
+  return versions.includes(floor);
+};
 
 export const isValidSemver = (v) => SEMVER_RE.test(v);
 
@@ -54,6 +72,7 @@ export const checkRelease = ({
   changelog,
   readme,
   enginesNode,
+  testWorkflow,
   baseline,
   releaseContext,
 }) => {
@@ -91,6 +110,20 @@ export const checkRelease = ({
     if (!readme.includes(`node-%3E%3D${minNode}-`)) {
       errors.push(
         `README の Node バッジ URL が ">=${minNode}" と一致しません（engines.node: >=${minNode}）。`,
+      );
+    }
+    // CI のマトリクスが下限そのものを走らせているか（RV-53）。`22` のようなメジャー指定は
+    // **その時点の 22 系最新**に解決されるので、`engines` が約束した `22.12` は一度も
+    // 走らない。22.12 より後に入った API を使った日に、CI は緑のまま下限の利用者だけが
+    // 実行時に落ちる。**約束した版を走らせて初めて約束になる。**
+    //
+    // バッジと同じ「宣言 ↔ 実体」の検査だが、こちらは**約束が守られているか**を見る点が違う。
+    // engines を上げたらマトリクスも上げる必要があり、それを忘れると下限が未検査に戻る。
+    if (!matrixCoversFloor(testWorkflow, minNode)) {
+      errors.push(
+        `CI の Node マトリクスに engines の下限 "${minNode}" がありません` +
+          `（.github/workflows/test.yml）。メジャーだけの指定はその系の最新に解決されるので、` +
+          `下限そのものは走りません。\`"${minNode}"\` を足してください。`,
       );
     }
   }
@@ -133,6 +166,7 @@ const main = () => {
     changelog: read("CHANGELOG.md"),
     readme: read("README.md"),
     enginesNode: pkg.engines?.node,
+    testWorkflow: read(".github/workflows/test.yml"),
     baseline,
     releaseContext,
   });
