@@ -10,7 +10,7 @@
 - 取得経路: Zendesk の公開コンテンツ API（Cloudflare の JS チャレンジを経由しない）。
   - 一覧: `https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100`
   - 各記事に `html_url`（人間用）, `updated_at`, `body`（HTML）が含まれる。
-- 取得日: **2026-06-12**。各ファイルに参照記事の URL と `updated_at` を併記する。
+- 取得日: **2026-06-12**（初回）／ **2026-09-20**（再取得・差分反映）。各ファイルに参照記事の URL と `updated_at` を併記する。
 - 注意: ブラウザ直アクセス（`hrbcapi.porters.jp`）は Cloudflare の "Just a moment..." チャレンジで
   ボット拒否される。コンテンツ API 経由なら取得できる。
 
@@ -27,7 +27,7 @@
 - [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
 - [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
 - [resources-list][rapi-list]: 全リソースの一覧・R/W・必要スコープ・Alias の注意点。
-- [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 17）。
+- [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 18。Department は未実装）。
 
 ### 横断
 
@@ -47,16 +47,20 @@
 
 ## 再取得の手順
 
-`tmp/porters-docs/`（git 管理外）に取得・生成スクリプトを置いている。最新へ更新する場合:
+`tmp/porters-docs/`（git 管理外）に取得・テキスト化スクリプトを置いている。最新へ更新する場合:
 
 ```bash
-# 記事を取得 → 本文をテキスト化 → リソース別ファイルを生成
+# 記事を取得（99 件・100 件を超えたら next_page を追う）→ 本文をテキスト化
 curl -sS -A "Mozilla/5.0" \
   "https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100" \
   -o tmp/porters-docs/articles-ja.json
 node tmp/porters-docs/extract.mjs
-node tmp/porters-docs/gen-resources.mjs
 ```
+
+取得前の `articles-ja.json` を控えておき、`id` ごとに `updated_at` と `body` を比べると差分が分かる
+（2026-09-20 の再取得では 4 記事の追加・5 記事の本文変更があった）。**`gen-resources.mjs` は使わない**:
+`resources/*.md` には手書きの「Read パラメータ」節（[ADR-0080][adr80] / [ADR-0081][adr81]）が入っていて、
+再生成すると消える。差分は手で反映する。
 
 [auth]: authentication-api/README.md
 [auth-oauth]: authentication-api/oauth.md
@@ -70,4 +74,6 @@ node tmp/porters-docs/gen-resources.mjs
 [rapi-list]: resource-api/resources-list.md
 [rapi-resources]: resource-api/resources/README.md
 [glossary]: glossary.md
+[adr80]: ../../adr/0080-resource-parameter-binding.md
+[adr81]: ../../adr/0081-attachment-read-parameters.md
 [gotchas]: gotchas.md

@@ -25,6 +25,7 @@
 - [User][user] — `/v1/user`
 - [Field][field] — `/v1/field`
 - [Option][option] — `/v1/option`
+- [Department][department] — `/v1/department`（2025/03 追加・**ライブラリ未実装**）
 
 ## 添付
 
@@ -48,4 +49,5 @@
 [user]: user.md
 [field]: field.md
 [option]: option.md
+[department]: department.md
 [attachment]: attachment.md

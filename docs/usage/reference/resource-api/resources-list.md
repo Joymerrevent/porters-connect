@@ -1,6 +1,7 @@
 # リソース一覧（R/W・スコープ・Field Alias・ドキュメント）
 
-出典: Resource List（2023-08-21）、各リソースの Read / Write / Field List 記事。取得日 2026-06-12。
+出典: Resource List（2023-08-21）、各リソースの Read / Write / Field List 記事。取得日 2026-06-12
+（Department は 2026-09-20 の再取得で追加）。
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115012005107-Resource-List>
 
@@ -14,12 +15,13 @@
 
 ## マスタ系（読み取り専用）
 
-| リソース  | endpoint        | スコープ      | Alias 接頭辞 | ドキュメント                                                      |
-| --------- | --------------- | ------------- | ------------ | ----------------------------------------------------------------- |
-| Partition | `/v1/partition` | `partition_r` | `Partition`  | [Read][partition-read]                                            |
-| User      | `/v1/user`      | `user_r`      | `User`       | [Read][user-read] ／ [Field][user-field]                          |
-| Field     | `/v1/field`     | `field_r`     | `Field`      | [Read][field-read]                                                |
-| Option    | `/v1/option`    | `option_r`    | `Option`     | [Read][option-read] ／ [Default Option List][default-option-list] |
+| リソース   | endpoint         | スコープ                     | Alias 接頭辞 | ドキュメント                                                      |
+| ---------- | ---------------- | ---------------------------- | ------------ | ----------------------------------------------------------------- |
+| Partition  | `/v1/partition`  | `partition_r`                | `Partition`  | [Read][partition-read]                                            |
+| User       | `/v1/user`       | `user_r`                     | `User`       | [Read][user-read] ／ [Field][user-field]                          |
+| Field      | `/v1/field`      | `field_r`                    | `Field`      | [Read][field-read]                                                |
+| Option     | `/v1/option`     | `option_r`                   | `Option`     | [Read][option-read] ／ [Default Option List][default-option-list] |
+| Department | `/v1/department` | `user_r`（専用スコープ無し） | `Department` | [Read][department-read] ／ [Field][department-field]              |
 
 ## データ系（R/W あり）
 
@@ -47,6 +49,9 @@
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
 - **Write は自リソースの `_w` だけ**で足りる（各 Write 記事が挙げるスコープは 1 つ）。
   参照先のスコープまで要るのは Read 側だけで、ここが非対称になっている。
+- **Department は Read だけ**（2025/03・Connect API 8.2.1 で追加。Write は「実装していない」と明記）。
+  ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。**ライブラリは未実装**
+  （2026-09-20 時点・[roadmap][roadmap]）。公式の Resource List 記事（2023-08-21）にはまだ載っていない。
 - **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
@@ -66,6 +71,8 @@
 [field-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012160308
 [option-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012160328
 [default-option-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008016567
+[department-read]: https://hrbcapi.porters.jp/hc/ja/articles/43464258000793
+[department-field]: https://hrbcapi.porters.jp/hc/ja/articles/43490733975577
 [candidate-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012006487
 [candidate-write]: https://hrbcapi.porters.jp/hc/ja/articles/115012006467
 [candidate-field]: https://hrbcapi.porters.jp/hc/ja/articles/115008016747
@@ -106,6 +113,7 @@
 [attachment-write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161308
 [mime-type]: https://hrbcapi.porters.jp/hc/ja/articles/215428097
 [resources]: resources/README.md
+[roadmap]: ../../../roadmap.md
 [resource-api-md]: README.md
 [phase]: https://hrbcapi.porters.jp/hc/ja/articles/115008171688
 [field-type-and-data-type-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407

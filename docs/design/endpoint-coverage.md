@@ -1,7 +1,7 @@
 # API エンドポイント × 機能 マトリクス（V1）
 
 - ステータス: living（実装を変えたら同じ PR で更新する）
-- 最終更新: 2026-09-17
+- 最終更新: 2026-09-20
 - 位置づけ: [ロードマップ][roadmap] の **`1.0.0` 完成条件 V1**（機能網羅）の測定対象。
   **PORTERS Connect API のエンドポイントが取るもの**と、**本ライブラリが実際に送るもの**を
   1 枚に並べ、食い違うセルには必ず根拠（ADR か LV）を持たせる。
@@ -228,11 +228,16 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 
 ## この表が測っていないこと
 
+- **`/v1/department`**（Department - Read・2025/03 追加）は**表に無い**。2026-09-20 の出典再取得で
+  reference に載せた（[Department][r-department]）が、ライブラリが**未実装**なので表 C / 表 D に
+  行を足すと検査が呼ぶ相手が無い。実装 PR で行と検査を同時に足す（[ロードマップ][roadmap] の「着手可能」）。
+  それまで **V1 は 1 本欠けている**。
 - **項目（フィールド）の網羅**は D4 の担当（[reference ↔ カタログ突合][refcat]）。本書はパラメータと操作だけを見る。
 - **値の書式**（Data Type ごとの書き方）は [field-data-types][fdt] と [ADR-0016][adr16] の担当。
 - **PORTERS が実際にどう応じるか**は契約後の[ライブ検証][lv]。本書の `⚠️` はすべてそこへ送っている。
 
 [roadmap]: ../roadmap.md
+[r-department]: ../usage/reference/resource-api/resources/department.md
 [adr60]: ../adr/0060-full-resource-coverage-direction.md
 [adr61]: ../adr/0061-phase-resource-surface.md
 [adr76]: ../adr/0076-phase-read-query-surface.md
