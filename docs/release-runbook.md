@@ -100,8 +100,19 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.19.1**（npm latest・`v0.19.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  **8 files / 896.6 kB**・2026-09-20）。**累計 26 版**（うち **0.2.0 以降の 24 版**がこの半自動フロー）。
+- ✅ 最新公開: **0.20.0**（npm latest・`v0.20.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 929.5 kB**・2026-09-21）。**累計 27 版**（うち **0.2.0 以降の 25 版**がこの半自動フロー）。
+  changeset **2 枚**を消費した minor リリースで、出典（PORTERS ヘルプセンター）の再取得で見つかった
+  未追従 2 件＝ **Department Read**（[#348][pr348]）と **時分型の変換関数**（[ADR-0086][adr86]・[#350][pr350]）。
+  **破壊的変更なし**。
+  - **unpacked が 896.6 → 929.5 kB（+32.9 kB）**。増えたのはマスタ 1 種（`resources/department.ts`）と
+    純関数 2 つ（`util/time-of-day.ts`）と JSDoc で、**同梱ファイル数は 8 のまま**。
+  - 手順の面では前版と同じ形で通った: `gh release create` の notes は CHANGELOG の該当節から
+    参照スタイルのリンクを**絶対 URL に解決してから**渡し、publish 直後の `npm view` は 0.19.1 を返した
+    （伝播待ち）ので、ワークフローのログで `+ @joymerrevent/porters-connect@0.20.0` を確認してから
+    約 1 分待って再確認した。back-merge は PR（[#352][pr352]）経由・merge commit。
+- ✅ ひとつ前の **0.19.1**（npm latest・`v0.19.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 896.6 kB**・2026-09-20）。
   changeset **5 枚**を消費した patch リリースで、定期レビュー（[2026-09-18-01][run20260918]）の指摘
   7 件の処置。**破壊的変更なし** — 公開 API の形は変わらず、**壊れたときの倒れ方**が変わる版。
   - いちばん重いのは **Option の選択肢 alias から書き込み XML を注入できた**こと（[RV-48][rv48] /
@@ -269,3 +280,7 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr80]: adr/0080-resource-parameter-binding.md
 [adr81]: adr/0081-attachment-read-parameters.md
 [rv47]: reviews/rv/0047-phase-binding-overridable.md
+[pr348]: https://github.com/Joymerrevent/porters-connect/pull/348
+[pr350]: https://github.com/Joymerrevent/porters-connect/pull/350
+[pr352]: https://github.com/Joymerrevent/porters-connect/pull/352
+[adr86]: adr/0086-time-of-day-fields.md
