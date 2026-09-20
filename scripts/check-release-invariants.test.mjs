@@ -4,6 +4,7 @@ import {
   checkRelease,
   compareSemver,
   isValidSemver,
+  matrixCoversFloor,
   maxTagVersion,
   minNodeOf,
 } from "./check-release-invariants.mjs";
@@ -15,6 +16,7 @@ const ok = {
   changelog: "## [0.2.0]\n- something",
   readme: "Node >= 22.12.0 ... node-%3E%3D22.12.0-brightgreen",
   enginesNode: ">=22.12.0",
+  testWorkflow: '        node: ["22.12.0", 22, 24, 26]\n',
   baseline: "0.2.0",
   releaseContext: true,
 };
@@ -156,5 +158,73 @@ describe("checkRelease (ADR-0027 + ADR-0031)", () => {
   it("flags an engines.node it cannot read instead of skipping (fail-safe)", () => {
     const errors = checkRelease({ ...ok, enginesNode: "^22.12.0" });
     expect(errors.some((e) => e.includes("engines.node"))).toBe(true);
+  });
+});
+
+// RV-53。`engines` が約束した下限を CI が一度も走らせていなかった。約束と実体のずれは
+// engines を上げるたびに再発しうるので、検査で止める。
+describe("matrixCoversFloor (RV-53)", () => {
+  const row = (versions) => `        node: [${versions}]\n`;
+
+  it("下限がそのまま入っていれば通す", () => {
+    expect(matrixCoversFloor(row('"22.12.0", 22, 24, 26'), "22.12.0")).toBe(
+      true,
+    );
+  });
+
+  it("**メジャーだけの指定は下限を含まない**（この検査の要点）", () => {
+    // `22` はその系の最新に解決されるので、22.12.0 そのものは走らない。
+    expect(matrixCoversFloor(row("22, 24, 26"), "22.12.0")).toBe(false);
+  });
+
+  it("マイナーまででも、下限の表記と違えば通さない", () => {
+    // 文字列で突き合わせる＝どちらの表記を使うかを 1 つに決める（エラー文が正解を示す）。
+    expect(matrixCoversFloor(row('"22.12", 24'), "22.12.0")).toBe(false);
+  });
+
+  it("クォートの有無は問わない", () => {
+    expect(matrixCoversFloor(row("'22.12.0', 24"), "22.12.0")).toBe(true);
+    expect(matrixCoversFloor(row("22.12.0, 24"), "22.12.0")).toBe(true);
+  });
+
+  it("マトリクス行が読めなければ「無い」扱い（fail-safe）", () => {
+    // 検査の空振りより、読めないことを報告して人に見てもらうほうがよい。
+    expect(matrixCoversFloor("name: Test\n", "22.12.0")).toBe(false);
+    expect(matrixCoversFloor("", "22.12.0")).toBe(false);
+    expect(matrixCoversFloor(undefined, "22.12.0")).toBe(false);
+  });
+});
+
+describe("checkRelease: CI マトリクスと engines の下限 (RV-53)", () => {
+  it("下限が入っていなければ落とす", () => {
+    const errors = checkRelease({
+      ...ok,
+      testWorkflow: "        node: [22, 24, 26]\n",
+    });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("22.12.0");
+    expect(errors[0]).toContain("test.yml");
+  });
+
+  it("engines を上げてマトリクスを直し忘れたら落ちる（このズレが再発の形）", () => {
+    const errors = checkRelease({
+      ...ok,
+      enginesNode: ">=24.0.0",
+      readme: "Node >= 24.0.0 ... node-%3E%3D24.0.0-brightgreen",
+      // マトリクスは 22.12.0 のまま＝新しい下限は未検査
+      testWorkflow: '        node: ["22.12.0", 22, 24, 26]\n',
+    });
+    expect(errors.some((e) => e.includes("24.0.0"))).toBe(true);
+  });
+
+  it("engines が読めないときはマトリクスを見ない（先に engines を報告する）", () => {
+    const errors = checkRelease({
+      ...ok,
+      enginesNode: "^22",
+      testWorkflow: "        node: [22]\n",
+    });
+    // 「engines が読めない」の 1 件だけ。下限が不明なまま突き合わせても意味が無い。
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("engines.node");
   });
 });
