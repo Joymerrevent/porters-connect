@@ -5,6 +5,72 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-21
+
+**PORTERS ヘルプセンターを再取得して見つかった、追いついていなかった変更 2 つを埋めた版**です。
+破壊的変更はありません。
+
+2026-06 以来はじめて出典を取り直したところ、**Department - Read API**（2025/03・Connect API 8.2.1）が
+reference にも実装にも無く、**時分型**（2026/08・PORTERS 9.3.0）はライブラリが型として知らない
+状態でした。前者はマスタ 5 種目として実装し、後者は型を増やさず変換関数で扱います（[ADR-0086][adr86]）。
+
+### Added
+
+- **Department マスタの Read（`t.department`）**。ユーザー部署型（Link）項目や `User.P_Department` が
+  指す部署を、Partition 単位で一覧できます（[reference][ref-department]）。
+
+  ```ts
+  const t = porters.tenant(123);
+  const page = await t.department.search(); // { total, count, start, items }
+  for await (const d of t.department.searchAll()) {
+    d.P_Id;
+    d.P_Name;
+    d.P_Hidden;
+    d.P_SortNo;
+    d.P_RegistrationDate;
+    d.P_UpdateDate;
+  }
+  ```
+
+  - **読み取り専用**。PORTERS に Write API はありません（お知らせ記事が「read のみ」と明記）。
+  - クエリは `field` / `count` / `start` だけ。`condition` / `get(id)` / `request_type` はありません
+    （出典が挙げないものは公開しない — 他のマスタと同じ）。
+  - **スコープは `user_r`** です。PORTERS は `department_r` を定義していません。
+  - `field` 省略時は 6 項目すべてを要求します（省略すると PORTERS は `P_Id` しか返さないため）。
+    Link 参照からは読めない `P_Hidden` / `P_SortNo` / 登録日 / 更新日も、ここでは読めます。
+  - 型は `Department` / `DepartmentPage` / `DepartmentSearchQuery` / `DepartmentResource` を公開します。
+
+- **時分型（PORTERS 9.3.0）の項目を扱う変換関数 `decodeTimeOfDay` / `encodeTimeOfDay`**（[ADR-0086][adr86]）。
+  時分型は時刻だけ（`00:00`〜`47:59`）を持つカスタム項目ですが、API 上は年月日時分型と同じ
+  `DateTime`（Field Type 12）で、`1970/01/01` を基準日にした日時として運ばれます（`26:00` は
+  `1970/01/02 02:00:00`）。Field Read からも区別できないため、ライブラリは**型を増やさず**、時分型の
+  項目も `f.dateTime()` のまま宣言して ISO で読み書きします。基準日の規則は、その項目が時分型だと
+  知っているところで変換関数に任せます。
+
+  ```ts
+  const job = await t.job.get(1);
+  const start =
+    job?.U_startTime == null ? null : decodeTimeOfDay(job.U_startTime); // "09:00"
+  await t.job.update(1, { U_startTime: encodeTimeOfDay("26:00") }); // → 1970/01/02 02:00:00
+  await t.job.search({
+    condition: { U_startTime: { ge: encodeTimeOfDay("15:00") } },
+  });
+  ```
+
+  - `encodeTimeOfDay` は `"HH:mm"` / `"HH:mm:ss"`（00:00〜47:59）以外を `PortersConfigError`
+    （`category: "validation"`）で**送る前に**止めます（PORTERS の Code 103 / Code 100 を手前で）。
+  - `decodeTimeOfDay` は基準日以外の ISO を同じエラーで止めます（その項目はたぶん時分型ではない、
+    というヒント付き）。秒が `00` でなければ `"HH:mm:ss"` で保持します。
+  - 既存の型・宣言・読み書きは変わりません。変換を呼ぶかどうかは利用者の責務です。
+
+### Changed
+
+- **`generateFieldDecls` が Field Type 12 の行に注記を出すようになりました**
+  （`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と同じ `12` で Field Read からは区別できないため、
+  宣言が生まれる場所で「時刻だけの項目なら変換関数を」と伝えます。
+- 開発用のフェイクサーバー（npm には同梱しません）に `departments` オプションと `/v1/department` を
+  足しました。
+
 ## [0.19.1] - 2026-09-20
 
 **定期レビューで見つけた 7 件を塞いだ版**です。破壊的変更はありません。公開 API の形は変わらず、
@@ -1129,7 +1195,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
@@ -1162,3 +1229,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [gh4]: https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
 [gh5]: https://github.com/advisories/GHSA-7w5x-hrqm-74c2
 [fastcheck]: https://github.com/dubzzz/fast-check
+[adr86]: docs/adr/0086-time-of-day-fields.md
+[ref-department]: docs/usage/reference/resource-api/resources/department.md
