@@ -282,3 +282,7 @@ export type {
 
 // Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).
 export { base64ToBytes, bytesToBase64 } from "./util/base64";
+// Time-of-day (時分型) helpers (ADR-0086): a clock-time field travels as a DateTime anchored to
+// 1970/01/01 and Field Read cannot tell it apart, so the field stays `dateTime()` and the caller
+// who knows which fields are clock times folds the anchor rule in and out with these.
+export { decodeTimeOfDay, encodeTimeOfDay } from "./util/time-of-day";

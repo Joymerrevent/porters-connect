@@ -159,7 +159,7 @@ const files: AttachmentResource;
 const SAMPLE_CATALOG = `{
   candidate: { U_score: "Number"; U_source: "Option"; U_hiredOn: "Date" };
   resume: { U_photo: "Image"; U_contact: "Link" };
-  job: { U_headcount: "Number" };
+  job: { U_headcount: "Number"; U_startTime: "DateTime" };
 }`;
 
 // `t` と `porters` の両方を差し替えられるようにする。例は `t.candidate…` とも

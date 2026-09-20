@@ -38,7 +38,8 @@
 - **削除 API は無い**（データ・添付とも。提供予定なし）。`delete()` を生やさない。削除済みは `itemstate` で Read 可。
 - **時分型（2026/08・PORTERS 9.3.0）は Field Read で年月日時分型と見分けが付かない**（同じ Field Type 12）。
   基準日 `1970/01/01` 付きの書式でしか書けず、任意の日時を書くと Code 103。どの項目が時分型かは環境の
-  管理者に聞くしかない → 詳細は [field-data-types][fdt] の「時分型」節（ライブラリは未対応）。
+  管理者に聞くしかない → 詳細は [field-data-types][fdt] の「時分型」節（ライブラリは `decodeTimeOfDay` /
+  `encodeTimeOfDay` で変換する・[ADR-0086][adr86]）。
 - **フィールド型は原典記事の値をそのまま転記**しているため、PORTERS 側の不揃いも残る。例: 携帯メール
   `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と割れている（原典どおり）。
   型生成時は原典差異に注意し、正典は `resource-api/field-data-types.md` の分類に寄せる（→ 型設計の ADR-0004）。
@@ -72,3 +73,4 @@
 
 [adr77]: ../../adr/0077-fetch-transport-timeout.md
 [fdt]: resource-api/field-data-types.md
+[adr86]: ../../adr/0086-time-of-day-fields.md
