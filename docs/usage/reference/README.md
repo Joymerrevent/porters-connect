@@ -27,7 +27,7 @@
 - [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
 - [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
 - [resources-list][rapi-list]: 全リソースの一覧・R/W・必要スコープ・Alias の注意点。
-- [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 18。Department は未実装）。
+- [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 18）。
 
 ### 横断
 

@@ -21,7 +21,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 - **独自 OAuth を透過**：`code_direct` によるトークン取得・キャッシュ・更新を自動化。
 - **上限内に自制する**：スロットリング・リトライ（指数バックオフ）・リクエストサイズガード内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
-- **PORTERS の全リソースに対応**：データ系 13 種 ＋ Phase ＋ マスタ Read 4 種。
+- **PORTERS の全リソースに対応**：データ系 13 種 ＋ Phase ＋ マスタ Read 5 種。
 
 ## 前提
 
@@ -87,7 +87,7 @@ console.log(page.total, page.items[0]?.P_Name);
 | `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴 |
 | `t.activity`    | アクティビティ |                |              |
 
-マスタ Read は `porters.partition` / `t.user` / `t.field` / `t.option` の 4 種（読み取り専用）。
+マスタ Read は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
 
 **どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of()` で
 束ねるものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は

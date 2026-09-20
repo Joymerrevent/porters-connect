@@ -401,6 +401,7 @@ export const createFakeTransport = (
         partitions: [...partitions].map(Number),
         currentUserId: context.currentUserId,
         optionTree: options.optionTree ?? [],
+        departments: options.departments ?? [],
         resources: FAKE_DATA_DESCRIPTORS,
         customFields: options.customFields ?? {},
         customFieldNames: options.customFieldNames ?? {},

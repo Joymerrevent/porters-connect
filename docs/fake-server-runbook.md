@@ -7,7 +7,7 @@
 - 用途: 「ライブラリが悪いのか、フェイクが悪いのか、そもそも API の形がそうなのか」を切り分けるとき／
   MCP サーバー等の別プロセスから叩く前の疎通確認／新しいリソースを足したときの手触り確認。
 - **curl の例があるのは 5 リソース**（Candidate / Job / Client / Process / Resume）＋ Attachment ＋
-  マスタ 4 種。フェイクは 13 リソース全部に答えるので、**例が無い＝使えない、ではない**
+  マスタ 5 種。フェイクは 13 リソース全部に答えるので、**例が無い＝使えない、ではない**
   （接頭辞を差し替えれば同じ形で叩ける。例外は §1 の表にある 3 つだけ）。
 
 ---
@@ -24,14 +24,15 @@ pnpm fake:serve       # 127.0.0.1:4010 で起動（PORT=5000 pnpm fake:serve で
 ```text
 fake PORTERS server listening on http://127.0.0.1:4010
   auth      /v1/oauth (code_direct), /v1/token
-  resources /v1/candidate, /v1/job, /v1/client, /v1/recruiter, /v1/contact, /v1/opportunity, /v1/activity, /v1/contract, /v1/sales, /v1/phase, /v1/process, /v1/resume, /v1/attachment, /v1/partition, /v1/user, /v1/field, /v1/option
-  seeded    2 candidates, 2 users, 1 option tree
+  resources /v1/candidate, /v1/job, /v1/client, /v1/recruiter, /v1/contact, /v1/opportunity, /v1/activity, /v1/contract, /v1/sales, /v1/phase, /v1/process, /v1/resume, /v1/attachment, /v1/partition, /v1/user, /v1/field, /v1/option, /v1/department
+  seeded    2 candidates, 2 users, 2 departments, 1 option tree
 ```
 
 - **停止は Ctrl-C**。状態は**インメモリのみ**なので、再起動＝初期状態に戻る（後片付け不要）。
 - seed 済みデータ（`test/fake/serve.ts`）:
   - Candidate `10001` 山田 太郎（`P_Owner=5` / `P_Mail=taro@example.com`）・`10002` 佐藤 次郎（`P_Owner=5`）
   - User `1` API アプリ・`5` 採用 花子
+  - Department `1` 営業部・`2` 人事部（`P_Hidden=1`）
   - Option ツリー `Option.P_PersonPhase`（候補者フェーズ）→ `_Applied`（応募）/ `_Screening`（書類選考）
 - ID はリソースごとに **10001 から採番**。**削除 API は無い**（後述の 405）。
 
@@ -71,7 +72,7 @@ BASE=http://127.0.0.1:4010
   | Phase                | `/v1/phase`        | **なし**（主キーも `Id`）   | `ResourceId`                   |
   | Attachment           | `/v1/attachment`   | **なし**（主キーも `Id`）   | `FileName`                     |
   | ほかのデータ系 10 種 | `/v1/job` 他       | リソース名                  | `Job.P_Name` / `Sales.P_Owner` |
-  | マスタ4種            | `/v1/partition` 他 | 各リソース名                | `User.P_Name`                  |
+  | マスタ5種            | `/v1/partition` 他 | 各リソース名                | `User.P_Name`                  |
 
 ---
 
@@ -348,7 +349,7 @@ curl -s -G "${A[@]}" "$BASE/v1/attachment" -d partition=1 \
 
 ---
 
-## 5. マスタ Read（4 種・それぞれ語彙が違う）
+## 5. マスタ Read（5 種・それぞれ語彙が違う）
 
 マスタは `condition` も `get(id)` も無く、**API ごとに専用のパラメータ**を取る（[ADR-0022][adr22]）。
 
@@ -371,6 +372,9 @@ curl -s "${A[@]}" "$BASE/v1/field?partition=1&resource=1&active=-1"
 # Option: 再帰ツリー。alias で部分木、level で深さ（-1 全部 / 0 その節のみ / n 世代）
 curl -s "${A[@]}" "$BASE/v1/option?partition=1&level=-1"
 curl -s -G "${A[@]}" "$BASE/v1/option" -d partition=1 --data-urlencode "alias=Option.P_PersonPhase" -d level=0
+
+# Department: 絞り込み無し（partition の部署を全件）。field を省くと P_Id だけ返る＝本物と同じ
+curl -s "${A[@]}" "$BASE/v1/department?partition=1&field=Department.P_Id,Department.P_Name,Department.P_Hidden"
 ```
 
 見どころ:

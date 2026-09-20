@@ -33,6 +33,7 @@ import {
   createRecruiterResource,
   createResumeResource,
   createUserResource,
+  createDepartmentResource,
 } from "./resources";
 import type {
   AttachmentAccessor,
@@ -52,6 +53,7 @@ import type {
   RecruiterResource,
   ResumeResource,
   UserResource,
+  DepartmentResource,
 } from "./resources";
 import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
@@ -143,6 +145,12 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
    */
   readonly attachment: AttachmentAccessor;
   readonly user: UserResource;
+  /**
+   * Department master Read (Connect API 8.2.1+): the user departments a department-typed Link field
+   * or `User.P_Department` points at. Read-only, listed whole — no filter, no `get(id)`. Covered
+   * by the `user_r` scope (PORTERS defines no `department_r`).
+   */
+  readonly department: DepartmentResource;
   /**
    * Field master Read, reached through the resource whose catalog you want:
    * `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
@@ -275,6 +283,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentAccessor(deps),
         user: createUserResource(deps),
+        department: createDepartmentResource(deps),
         field: createFieldAccessor(deps),
         option: createOptionResource(deps),
       };

@@ -37,6 +37,15 @@ export type FakeUser = {
   P_Mail?: string;
 };
 
+/** A department in the fake's Department master — what `/v1/department` reads (Connect API 8.2.1+). */
+export type FakeDepartment = {
+  P_Id: number;
+  P_Name?: string;
+  /** `0` = shown (default), `1` = hidden in the PORTERS UI. */
+  P_Hidden?: string;
+  P_SortNo?: string;
+};
+
 /**
  * One node of the Option master tree that `/v1/option` reads. PORTERS returns choices as a
  * recursive `<Items>` tree; seed one here when a test cares about the hierarchy (the aliases a
@@ -112,6 +121,8 @@ export type FakeTransportOptions = {
   seed?: Record<string, FakeRecord[]>;
   /** Users returned when expanding `User`-typed fields, and read by `/v1/user`. */
   users?: FakeUser[];
+  /** Departments read by `/v1/department`. Omit for an empty master (PORTERS lists none by default). */
+  departments?: FakeDepartment[];
   /** The Option master tree read by `/v1/option`. Omit to serve the used aliases as flat roots. */
   optionTree?: FakeOptionNode[];
   /** Author recorded in `P_RegisteredBy` / `P_UpdatedBy` when the caller omits them. Default `1`. */

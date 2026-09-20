@@ -43,5 +43,6 @@ export * from "./resume";
 export * from "./attachment";
 export * from "./partition";
 export * from "./user";
+export * from "./department";
 export * from "./field";
 export * from "./option";

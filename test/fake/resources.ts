@@ -5,10 +5,12 @@
 // exception — it is bespoke in the library too (no alias prefix, no Data-Type catalog), so the fake
 // types its fields itself; `attachment-fields.test.ts` guards that list against drift.
 //
-// Phase 3 adds the master reads (Partition / User / Field / Option).
+// Phase 3 adds the master reads (Partition / User / Field / Option); Department joined them in
+// 0.20.0 (Connect API 8.2.1's user-department master).
 
 import {
   ATTACHMENT_FIELD_NAMES,
+  DEPARTMENT_DESCRIPTOR,
   FIELD_DESCRIPTOR,
   OPTION_DESCRIPTOR,
   PARTITION_DESCRIPTOR,
@@ -33,6 +35,7 @@ import {
   type AttachmentReadQuery,
 } from "./attachment-read";
 import {
+  readDepartment,
   readField,
   readOption,
   readPartition,
@@ -125,6 +128,7 @@ export const FAKE_RESOURCES: ReadonlyMap<string, FakeResource> = new Map([
   masterResource(USER_DESCRIPTOR, readUser),
   masterResource(FIELD_DESCRIPTOR, readField),
   masterResource(OPTION_DESCRIPTOR, readOption),
+  masterResource(DEPARTMENT_DESCRIPTOR, readDepartment),
 ]);
 
 /** The data resources only — what Field Read introspects. */

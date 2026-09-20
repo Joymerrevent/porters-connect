@@ -250,6 +250,12 @@ export type {
   UserSearchQuery,
 } from "./resources";
 export type {
+  Department,
+  DepartmentPage,
+  DepartmentResource,
+  DepartmentSearchQuery,
+} from "./resources";
+export type {
   Field,
   FieldPage,
   FieldAccessor,

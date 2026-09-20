@@ -50,8 +50,8 @@
 - **Write は自リソースの `_w` だけ**で足りる（各 Write 記事が挙げるスコープは 1 つ）。
   参照先のスコープまで要るのは Read 側だけで、ここが非対称になっている。
 - **Department は Read だけ**（2025/03・Connect API 8.2.1 で追加。Write は「実装していない」と明記）。
-  ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。**ライブラリは未実装**
-  （2026-09-20 時点・[roadmap][roadmap]）。公式の Resource List 記事（2023-08-21）にはまだ載っていない。
+  ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。公式の Resource List 記事
+  （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` の選択子にはならない）。
 - **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
@@ -113,7 +113,6 @@
 [attachment-write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161308
 [mime-type]: https://hrbcapi.porters.jp/hc/ja/articles/215428097
 [resources]: resources/README.md
-[roadmap]: ../../../roadmap.md
 [resource-api-md]: README.md
 [phase]: https://hrbcapi.porters.jp/hc/ja/articles/115008171688
 [field-type-and-data-type-list]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407
