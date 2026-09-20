@@ -8,7 +8,7 @@
 
 > **encodeTimeOfDay**(`time`): `string`
 
-Defined in: [src/util/time-of-day.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L110)
+Defined in: [src/util/time-of-day.ts:109](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L109)
 
 Write (or search on) a **time-of-day** (時分型) field from a clock time.
 
