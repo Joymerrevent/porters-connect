@@ -342,16 +342,17 @@ page.start; // 今回の開始インデックス
 
 ## マスタは語彙が違う
 
-Partition / User / Field / Option の 4 つは**読み取り専用のマスタ**で、データ系リソースとは
+Partition / User / Department / Field / Option の 5 つは**読み取り専用のマスタ**で、データ系リソースとは
 別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
 公開しているためです。
 
-| アクセサ            | リソース          | メソッド                           | 主なクエリ                                    |
-| ------------------- | ----------------- | ---------------------------------- | --------------------------------------------- |
-| `porters.partition` | Partition         | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
-| `t.user`            | User              | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
-| `t.field`           | Field（項目定義） | `search` / `searchAll`             | `active`（先に `of("candidate")` で束ねる）   |
-| `t.option`          | Option（選択肢）  | `search`                           | `alias` / `level` / `enabled`                 |
+| アクセサ            | リソース           | メソッド                           | 主なクエリ                                    |
+| ------------------- | ------------------ | ---------------------------------- | --------------------------------------------- |
+| `porters.partition` | Partition          | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
+| `t.user`            | User               | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
+| `t.department`      | Department（部署） | `search` / `searchAll`             | `field` だけ（絞り込みは無い）                |
+| `t.field`           | Field（項目定義）  | `search` / `searchAll`             | `active`（先に `of("candidate")` で束ねる）   |
+| `t.option`          | Option（選択肢）   | `search`                           | `alias` / `level` / `enabled`                 |
 
 ```ts
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
@@ -359,6 +360,9 @@ const partitions = await porters.partition.search();
 
 // 現在の API ユーザー（code_direct ではアプリ自身の User）＝自己同定
 const me = await t.user.current();
+
+// 部署マスタ（ユーザー部署型の項目や User.P_Department が指す先）。非表示の部署は P_Hidden で見分ける
+const departments = await t.department.search();
 
 // Job の項目定義（U_ / A_ のカスタム項目を含む）
 const fields = await t.field.of("job").search();

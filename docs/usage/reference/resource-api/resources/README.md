@@ -25,7 +25,7 @@
 - [User][user] — `/v1/user`
 - [Field][field] — `/v1/field`
 - [Option][option] — `/v1/option`
-- [Department][department] — `/v1/department`（2025/03 追加・**ライブラリ未実装**）
+- [Department][department] — `/v1/department`（2025/03 追加）
 
 ## 添付
 
