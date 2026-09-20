@@ -100,9 +100,21 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.19.0**（npm latest・`v0.19.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
-  **8 files / 872.7 kB**・2026-09-18）。**累計 25 版**（`0.1.0` 以降のすべて。うち **0.2.0 以降の 23 版**が
-  この半自動フロー）。changeset **1 枚**を消費した minor リリースで、[ADR-0082][adr82] の反映 1 本。
+- ✅ 最新公開: **0.19.1**（npm latest・`v0.19.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 896.6 kB**・2026-09-20）。**累計 26 版**（うち **0.2.0 以降の 24 版**がこの半自動フロー）。
+  changeset **5 枚**を消費した patch リリースで、定期レビュー（[2026-09-18-01][run20260918]）の指摘
+  7 件の処置。**破壊的変更なし** — 公開 API の形は変わらず、**壊れたときの倒れ方**が変わる版。
+  - いちばん重いのは **Option の選択肢 alias から書き込み XML を注入できた**こと（[RV-48][rv48] /
+    [ADR-0085][adr85]）。公開型が `string[]` なので cast なしで到達でき、**呼び出し側が指定していない
+    レコードが書き換わりうる**状態だった。
+  - **unpacked が 872.7 → 896.6 kB（+23.9 kB）**。増えたのは検証 1 本（`util/xml-name.ts`）と
+    JSDoc で、**同梱ファイル数は 8 のまま**。
+  - 手順の面では、**Release 作成を `gh release create` で行った**（runbook §3 の「人 or CC」）。
+    参照スタイルのリンク（`[ADR-0085][adr85]`）は **Release 上では定義が無く壊れる**ので、
+    CHANGELOG から notes を切り出すときに**絶対 URL へ解決してから**渡した。
+- ✅ ひとつ前の **0.19.0**（npm latest・`v0.19.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 872.7 kB**・2026-09-18）。changeset **1 枚**を消費した minor リリースで、
+  [ADR-0082][adr82] の反映 1 本。
   **破壊的変更は 1 つ**（`engines.node` が `>=20` → `>=22.12.0`）＝ API は変わらないので、利用者の影響は
   **Node 20 に留まっている場合だけ**。
   - **同梱ファイルが 7 → 8 に増えた**のは `dist/index.d.cts`（`.d.ts` のコピー）を足したため。
@@ -245,6 +257,9 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr60]: adr/0060-full-resource-coverage-direction.md
 [adr62]: adr/0062-backmerge-via-pull-request.md
 [cl]: ../CHANGELOG.md
+[run20260918]: reviews/2026-09-18-01.md
+[rv48]: reviews/rv/0048-option-alias-xml-injection.md
+[adr85]: adr/0085-option-alias-validation.md
 [findings]: reviews/findings.md
 [adr73]: adr/0073-throttle-sharing.md
 [adr74]: adr/0074-custom-field-declaration-required.md
