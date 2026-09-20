@@ -8,7 +8,7 @@
 
 > **DepartmentResource** = `object`
 
-Defined in: src/resources/department.ts:64
+Defined in: [src/resources/department.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L64)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: src/resources/department.ts:64
 
 > **search**(`query?`): `Promise`\<[`DepartmentPage`](DepartmentPage.md)\>
 
-Defined in: src/resources/department.ts:65
+Defined in: [src/resources/department.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L65)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: src/resources/department.ts:65
 
 > **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Hidden`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Name`: `"SinglelineText"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_SortNo`: `"Number"`; `P_UpdateDate`: `"System[DateTime]"`; \}\>\>
 
-Defined in: src/resources/department.ts:67
+Defined in: [src/resources/department.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L67)
 
 Auto-paginating search: yields every department of the partition.
 
