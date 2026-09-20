@@ -35,6 +35,25 @@ pnpm sandbox       # オフラインのサンプル実行
 
 提出前に **上のコマンド（`install` と `sandbox` を除く）がすべて green** であることを確認してください（件数を書かないのは、増えたときに数字だけ古くなるのを避けるためです）。
 
+> **成否は「終了コード」で見てください。`Done` の数で数えないこと。** `pnpm check` は複数の検査を
+> まとめて走らせ、失敗したものだけ `Failed` と出ます。通った数を数える読み方だと、検査が 1 本
+> 落ちても「いつもの本数に近い」で見逃せます（実際に見逃して CI で落ちました）。
+> 個別に確かめるなら `pnpm check:api` のように 1 本ずつ実行します。
+
+### `src` を触ったら `pnpm docs:api`
+
+`docs/usage/api/` は TypeDoc の生成物を git 追跡したもので（[ADR-0068][adr68]）、`pnpm check:api`
+が生成物とソースの一致を見ています。**JSDoc だけでなく、ふつうの `//` コメントを足し引きした
+だけでも**生成物の `Defined in: …#L123` がずれて落ちます。
+
+```sh
+pnpm docs:api    # 再生成（差分も一緒にコミットする）
+pnpm check:api   # 一致と、日本語（かな）の混入が無いことを確認
+```
+
+「コメントを足しただけだから影響ない」という直感が外れる場所なので、`src/**` を変更した PR では
+`pnpm check` の前にこれを回すのが確実です。
+
 `pnpm check` は `package.json` の `check:*` を**パターンで束ねた**もので、ドキュメントの
 リンク・索引・コード例・リファレンス生成物・リリース連動文書・シェルの検査が入っています。
 **この文書にゲートの一覧を書かない**のは意図したもので、検査が増えるたびに写した一覧が
@@ -128,6 +147,7 @@ new PortersClient({
 [coc]: ./CODE_OF_CONDUCT.md
 [adr]: ./docs/adr/README.md
 [adr13]: ./docs/adr/0013-coding-conventions-class-vs-function.md
+[adr68]: docs/adr/0068-api-reference-tooling.md
 [adr43]: ./docs/adr/0043-local-fake-server.md
 [adr47]: ./docs/adr/0047-access-point-scheme.md
 [fake-plan]: ./docs/design/fake-server-plan.md
