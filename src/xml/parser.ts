@@ -4,7 +4,11 @@
 import { XMLParser } from "fast-xml-parser";
 
 import { authError, resourceError } from "../errors/classify";
-import { PortersAuthError, PortersResourceError } from "../errors/index";
+import {
+  PortersAuthError,
+  PortersError,
+  PortersResourceError,
+} from "../errors/index";
 import { asArray, asRecord, asString } from "./raw";
 
 const parser = new XMLParser({
@@ -20,6 +24,31 @@ const parser = new XMLParser({
   // Stryker disable next-line ArrowFunction,ConditionalExpression,StringLiteral: equivalent — asArray() normalizes regardless
   isArray: (name) => name === "Item",
 });
+
+/**
+ * Parse, routing a parser failure into the caller's own "unparseable" error (RV-54).
+ *
+ * `fast-xml-parser` throws for two different reasons, and **both mean the same thing to us**:
+ * malformed XML, and a handful of tag names it refuses on principle (`prototype` /
+ * `constructor` / `__proto__` — prototype-pollution guards). The second is the one that bites:
+ * those are perfectly valid XML names, so a tenant whose Option alias is one of them writes
+ * fine and then **fails to read back**.
+ *
+ * Whichever it was, the raw `Error` must not escape: {@link PortersError} is what the
+ * error-handling guide tells callers to branch on, and an exception outside that family reaches
+ * the top of their application unhandled (ADR-0006 — the same hole RV-36 closed for date
+ * conversion). The original is kept on `cause`, so the parser's own message is still readable.
+ */
+const parseXml = (
+  xml: string,
+  unparseable: (cause?: unknown) => PortersError,
+): unknown => {
+  try {
+    return parser.parse(xml);
+  } catch (cause) {
+    throw unparseable(cause);
+  }
+};
 
 // fast-xml-parser yields raw strings; coerce an attribute/code node to an int,
 // treating a missing node as 0. The explicit `undefined` check keeps the
@@ -62,16 +91,21 @@ export const parseResourcePage = (
   xml: string,
   resource: string,
 ): ResourcePage => {
-  const root = asRecord(parser.parse(xml) as unknown);
+  // One factory for both ways a response can be unreadable: the parser refused it, or it
+  // parsed into something that is not a PORTERS envelope. Same answer, same error.
+  const unparseable = (cause?: unknown): PortersError =>
+    new PortersResourceError("unparseable resource response", {
+      category: "unknown",
+      cause,
+    });
+  const root = asRecord(parseXml(xml, unparseable));
   const rootKey = root ? Object.keys(root)[0] : undefined;
   // `root` is always a record here and `root[rootKey]` is undefined exactly when
   // rootKey is, so dropping/forcing either guard collapses to the same throw.
   // Stryker disable next-line ConditionalExpression,LogicalOperator: equivalent — both branches converge on the unparseable throw
   const body = root && rootKey ? asRecord(root[rootKey]) : undefined;
   if (!body) {
-    throw new PortersResourceError("unparseable resource response", {
-      category: "unknown",
-    });
+    throw unparseable();
   }
 
   // 観測した名前をメッセージに載せる: 何が返ってきたかが分かれば利用者が切り分けられる。
@@ -118,15 +152,18 @@ export type WriteResultItem = {
  * answers with a root `<Code>` instead, which is read first and thrown (ADR-0045).
  */
 export const parseWriteResult = (xml: string): WriteResultItem[] => {
-  const root = asRecord(parser.parse(xml) as unknown);
+  const unparseable = (cause?: unknown): PortersError =>
+    new PortersResourceError("unparseable write response", {
+      category: "unknown",
+      cause,
+    });
+  const root = asRecord(parseXml(xml, unparseable));
   const rootKey = root ? Object.keys(root)[0] : undefined;
   // Same equivalence as parseResourcePage: both guards converge on the throw.
   // Stryker disable next-line ConditionalExpression,LogicalOperator: equivalent — both branches converge on the unparseable throw
   const body = root && rootKey ? asRecord(root[rootKey]) : undefined;
   if (!body) {
-    throw new PortersResourceError("unparseable write response", {
-      category: "unknown",
-    });
+    throw unparseable();
   }
 
   // A request-level failure (too many records, malformed XML, no permission) leaves no `<Item>` to
@@ -164,12 +201,15 @@ export type AuthResponse = {
  * throws the mapped PortersAuthError (ADR-0006).
  */
 export const parseAuthentication = (xml: string): AuthResponse => {
-  const root = asRecord(parser.parse(xml) as unknown);
+  const unparseable = (cause?: unknown): PortersError =>
+    new PortersAuthError("unparseable authentication response", {
+      category: "unknown",
+      cause,
+    });
+  const root = asRecord(parseXml(xml, unparseable));
   const body = root ? asRecord(root.Authentication) : undefined;
   if (!body) {
-    throw new PortersAuthError("unparseable authentication response", {
-      category: "unknown",
-    });
+    throw unparseable();
   }
 
   const error = toInt(body.Error);

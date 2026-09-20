@@ -68,7 +68,7 @@
 | [RV-51][rv51] | 🟢     | ドキュメント / DX               | fixed   | 生成した公開 API リファレンスに日本語が混ざる                                     |
 | [RV-52][rv52] | 🟢     | ドキュメント / 計画             | fixed   | `1.0.0` の条件 V5 が定義上満たせず、LV の件数表記も実態とずれている               |
 | [RV-53][rv53] | 🟢     | テスト厳密性 / プロセス         | fixed   | `engines` の下限 22.12 を CI が一度も走らせていない                               |
-| [RV-54][rv54] | 🟡     | エラーモデル / API 忠実性       | open    | 予約名の alias は書けるのに読めず、その例外が PortersError の外に出る             |
+| [RV-54][rv54] | 🟡     | エラーモデル / API 忠実性       | fixed   | 予約名の alias は書けるのに読めず、その例外が PortersError の外に出る             |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
