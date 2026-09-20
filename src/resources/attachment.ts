@@ -114,8 +114,8 @@ export type AttachmentUpdate = {
  *
  * ```ts
  * const files = t.attachment.of("resume");
- * await files.search({ resourceId: 10006 }); // メタデータだけ
- * await files.get(900); // 本体つき
+ * await files.search({ resourceId: 10006 }); // metadata only
+ * await files.get(900); // with the file body
  * ```
  *
  * PORTERS requires `resource=` on every Attachment Read, and the same value goes into the

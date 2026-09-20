@@ -158,7 +158,8 @@ export type {
 } from "./resources";
 /** The resource names `t.phase.of(...)` accepts (ADR-0061 案5b). */
 export type { ResourceName } from "./resources";
-// 名前 ⇄ 数値の変換（ADR-0079）。項目の値は数値のままなので、名前で書く／読むときに使う。
+// Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
+// declares, so these are what you write and read it with.
 export { resourceNameOf, resourceValueOf } from "./resources";
 export type {
   Sales,

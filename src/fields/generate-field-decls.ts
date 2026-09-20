@@ -47,7 +47,7 @@ export type GenerateFieldDeclsOptions = {
    * Field Read's `active` filter. Defaults to `1` — **in-use fields only**, which is what belongs
    * in a template; there is no reason to declare a field the tenant is not using. This is the
    * opposite of `verifyFields`, where narrowing would cause false "missing" reports
-   * (ADR-0069, accept 時の決定).
+   * (ADR-0069, decided on accept).
    */
   readonly active?: -1 | 0 | 1;
   /**
