@@ -1,7 +1,7 @@
 # RV-61 🟢 roadmap が reference README の「再取得の手順」を案内しているが、その節は CONTRIBUTING へ移っている
 
 - 重要度: 🟢 ／ 観点: ドキュメント / プロセス
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -49,7 +49,13 @@ HTML コメントで移動先を知った。#365 の変更ファイル一覧に 
 
 ## 処置
 
-—
+**実施（案 (a)・2026-09-21）。** `docs/roadmap.md` の案内を「手順は [CONTRIBUTING] の『PORTERS ヘルプセンターの
+再取得』」に直し、参照定義 `[contributing]` を足した。案 (b)（検査の追加）は見送り（誤検出が見合わない）。
+
+## 検証
+
+- `grep -n '再取得の手順' docs/roadmap.md` — 0 件。`grep -n 'PORTERS ヘルプセンターの再取得' docs/roadmap.md CONTRIBUTING.md`
+  — 両方に 1 件ずつ（案内と見出し）。`pnpm check:links` 緑。
 
 [rv39]: 0039-link-check-ignores-anchors.md
 [sweep]: ../../../CLAUDE.md
