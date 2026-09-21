@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-21
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.21.0
 
 > 起票元は stakeholder の相談（2026-09-21）: 「カスタム項目はテナントごとに違うのに、宣言は client 単位でしか
 > 渡せない。`porters.tenant(partition)` で足せるようにしてはどうか」。

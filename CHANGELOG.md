@@ -5,6 +5,74 @@
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-21
+
+**カスタム項目の宣言を、partition を束ねる `tenant(id)` で受け取るようにした版**です。
+**破壊的変更を 1 つ**含みます（コンストラクタの `fields` の廃止。移行は 1 対 1）。あわせて、
+利用者が読むもの（公開 JSDoc・使い方ドキュメント・エラーの `hint`）から、保守者向けの識別子と
+廃止済みのオプション名を取り除きました。
+
+### Changed
+
+- **（破壊的）カスタム項目の宣言は `tenant(id, { fields })` で受け取るようになりました**（[ADR-0087][adr87]）。
+  `PortersClientOptions` から `fields` が無くなり、`PortersClient` / `PortersClientOptions` は
+  型引数を取らなくなります。
+
+  カスタム項目（`U_` / `A_`）は **partition（Company DB）ごとのもの**です — 出典の各リソース記事が
+  「テナント毎に異なる」としています。これまで宣言は client に 1 つしか持てず、項目構成の違う
+  テナントを同じ client で扱うと、**別テナントの宣言が黙って適用される**形でした（実物が Option の
+  項目をテキストで読めば値が `null` になり、例外も警告も出ません）。partition を束ねる `tenant(id)` が、
+  その partition の項目の形も束ねます。
+
+  ```ts
+  // 変更前
+  const porters = new PortersClient({ hostname, appId, appSecret, fields });
+  const t = porters.tenant(123);
+
+  // 変更後
+  const porters = new PortersClient({ hostname, appId, appSecret });
+  const t = porters.tenant(123, { fields });
+  ```
+
+  - **移行は 1 対 1**です。コンストラクタの `fields` を `tenant()` の第 2 引数に移すだけで、
+    `t` 以降のコードは変わりません。`tenant(id)`（第 2 引数なし）はこれまでどおり標準項目だけです。
+  - **項目構成の違うテナント群を 1 つの client（1 つのトークン）で扱えます**。
+    `porters.tenant(1, { fields: a })` と `porters.tenant(2, { fields: b })` は、それぞれの宣言で
+    読み書きします。client を分けるのは**トークンを分けたいとき**だけになりました。
+  - `A_` を App 共通、`U_` をテナント固有にしたい場合は、共通部分を関数にして各テナントの宣言に
+    spread します（ライブラリは `A_` と `U_` を区別しません）。書き方は
+    [カスタム項目ガイド][howto-custom-fields]にあります。
+  - **コンストラクタに `fields` が残っていると、構築時に `PortersConfigError`**（`category: "config"`）で
+    止まります。`hint` が `tenant(id, { fields })` を指します。型でも弾きます（`fields` は `never`）。
+    黙って無視すると宣言が丸ごと捨てられ、カスタム項目が型から消えたまま動いてしまうためです。
+    `fields: undefined` は未指定と同じ扱いです。
+  - 型を書くときは、`PortersClient<typeof fields>` / `PortersClientOptions<typeof fields>` が
+    **コンパイルエラー**になります。スコープを受ける関数は `TenantScope<typeof fields>`（これまでどおり）、
+    `tenant()` の引数を切り出すなら新設の `TenantOptions<typeof fields>` で書きます。
+    `ReturnType<typeof porters.tenant>` で受けていた関数は、`tenant` がジェネリックになったため
+    **広い型（`TenantScope<DeclaredCatalogs>`）**に落ち、カスタム項目が型から消えます（使う箇所で
+    コンパイルエラーになります）。`TenantScope<typeof fields>` に書き換えてください。
+  - `generateFieldDecls` / `verifyFields` / `readCustomCatalog` は変わりません（もともと `tenant(id)`
+    スコープを取ります）。
+
+- **公開 API の JSDoc（IDE のホバーと API リファレンスに出る説明文）から、ADR 番号やレビュー指摘番号
+  などの保守者向けの識別子を取り除きました**。利用者には意味を持たない情報で、根拠は実装コメントへ
+  移しています。型・メソッドの意味や挙動は変わりません（説明文だけの変更）。同じ識別子が
+  生成物に戻らないよう、API リファレンスと配布する型定義（`dist/index.d.ts`）を検査するようにしました。
+
+- **利用者向けドキュメント（`docs/usage/` と README）の本文からも、同じ識別子と設計文書へのリンクを
+  取り除きました**。説明の内容は変わりません。文末の `（ADR-0059）` のような表記が消え、設計文書に
+  委ねていた数か所は本文に書き足しています。PORTERS ヘルプセンターの再取得手順（保守者向け）は
+  `CONTRIBUTING.md` へ移しました。あわせて、リリース前に使い方ドキュメント全体を実装と突き合わせ、
+  実装と食い違っていた記述（権限付与未実施のときのエラーの系統、`tenant(id, { fields })` 以前の
+  「client を分ける」案内など）を直しています。
+
+### Fixed
+
+- **PORTERS 以外が返した HTTP エラー（`category: "config"`）の `hint`** が、0.18.0 で廃止した
+  オプション名 `host` を案内していました。現在の `hostname` / `port` / `scheme` を指すように直しました。
+  挙動は変わりません（説明文だけの変更）。
+
 ## [0.20.1] - 2026-09-21
 
 **定期レビュー（0.20.0 直後）で見つけた 1 件を塞いだ版**です。破壊的変更はありません。
@@ -1224,7 +1292,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...v0.19.1
@@ -1260,4 +1329,6 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [gh5]: https://github.com/advisories/GHSA-7w5x-hrqm-74c2
 [fastcheck]: https://github.com/dubzzz/fast-check
 [adr86]: docs/adr/0086-time-of-day-fields.md
+[adr87]: docs/adr/0087-tenant-scoped-field-declarations.md
+[howto-custom-fields]: docs/usage/howto/custom-fields.md
 [ref-department]: docs/usage/reference/resource-api/resources/department.md
