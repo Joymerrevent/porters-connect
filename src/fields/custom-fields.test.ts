@@ -189,7 +189,7 @@ describe("custom fields — tenant(id, { fields }) typing", () => {
     expect(caught).toBeInstanceOf(PortersConfigError);
     const err = caught as PortersConfigError;
     expect(err.category).toBe("config");
-    expect(err.message).toContain("ADR-0087");
+    expect(err.message).toContain("not a client option"); // no ADR number: users need the fix, not the record
     expect(err.hint).toContain("tenant(id, { fields })");
     // `fields: undefined` is not a leftover declaration — an optional spread must not trip it.
     expect(

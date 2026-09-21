@@ -246,7 +246,7 @@ export class PortersClient {
     // casts. Read through `unknown` because the declared type says the key is never there.
     if ((options as { fields?: unknown }).fields !== undefined) {
       throw new PortersConfigError(
-        'PortersClient: "fields" is not a client option (ADR-0087) — custom fields belong to a partition',
+        'PortersClient: "fields" is not a client option — custom fields belong to a partition',
         {
           category: "config",
           hint: "Declare them where you bind the partition: porters.tenant(id, { fields })",
