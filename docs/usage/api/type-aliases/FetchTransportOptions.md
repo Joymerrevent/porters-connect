@@ -16,7 +16,7 @@ Defined in: [src/http/fetch-transport.ts:14](https://github.com/Joymerrevent/por
 
 > `optional` **fetchImpl?**: *typeof* `fetch`
 
-Defined in: [src/http/fetch-transport.ts:30](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L30)
+Defined in: [src/http/fetch-transport.ts:31](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L31)
 
 Injectable fetch (tests / custom dispatcher). Default global fetch.
 
@@ -26,7 +26,7 @@ Injectable fetch (tests / custom dispatcher). Default global fetch.
 
 > `optional` **timeoutMs?**: `number`
 
-Defined in: [src/http/fetch-transport.ts:28](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L28)
+Defined in: [src/http/fetch-transport.ts:29](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L29)
 
 How long one request may take, in milliseconds. Default 30,000.
 
@@ -38,4 +38,4 @@ slot (throttling sits above the transport).
 
 Raise it to read large attachments over a slow link; lower it to fail fast in an interactive
 tool. Must be a positive integer — `0` would abort every request immediately, which reads
-like "no timeout" and is not (ADR-0077).
+like "no timeout" and is not.

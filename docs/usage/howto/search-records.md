@@ -1,8 +1,7 @@
 # Read クエリ（field / expand / image / condition / order / keywords / itemstate）
 
 データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
-**演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります
-（[ADR-0038][adr38]／公開 API の形は [ADR-0005][adr5] R-5）。
+**演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
 
 ## 全体像
 
@@ -32,8 +31,8 @@ for await (const c of t.candidate.searchAll({
 ## `field` — 取得する項目
 
 **省略が既定**です。PORTERS は `field` 未指定だと**主キーしか返さない**ため、
-ライブラリが[カタログ][aliases]（知っている項目の一覧）由来の既定 field を補います
-（[ADR-0020][adr20]）。3 通りの意味があります。
+ライブラリが[カタログ][aliases]（知っている項目の一覧）由来の既定 field を補います<!-- 根拠: ADR-0020 -->。
+3 通りの意味があります。
 
 | 書き方         | 送られるもの                                                 |
 | -------------- | ------------------------------------------------------------ |
@@ -42,7 +41,7 @@ for await (const c of t.candidate.searchAll({
 | `field: [...]` | 指定したものだけ                                             |
 
 alias は **`condition` / `order` と同じ素の名前**（接頭辞なし）で書きます。
-接頭辞はリソースごとの定数なので**ライブラリが付けます**（[ADR-0059][adr59]）。
+接頭辞はリソースごとの定数なので**ライブラリが付けます**<!-- 根拠: ADR-0059 -->。
 
 ```ts
 await t.candidate.search({ field: ["P_Id", "P_Name"] });
@@ -64,7 +63,7 @@ await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言し
 
 綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
 型で受けることでそこを手前に引き上げています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
-綴りまで検査されます（[ADR-0074][adr74]）。宣言せずに触る必要があるときの逃げ道は
+綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに触る必要があるときの逃げ道は
 [カスタム項目][custom-fields]にあります。
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
@@ -73,8 +72,7 @@ await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言し
 ## `expand` — 参照先の項目も読む
 
 `P_Client` や `P_Candidate` のような**参照型**（`System[Reference]`）の項目は、
-既定では**参照先の ID** しか返りません。`expand` を書くと、参照先の項目そのものが返ります
-（[ADR-0058][adr58]）。
+既定では**参照先の ID** しか返りません。`expand` を書くと、参照先の項目そのものが返ります<!-- 根拠: ADR-0058 -->。
 
 ```ts
 const page = await t.job.search({
@@ -126,12 +124,12 @@ p?.P_Job; // 展開しなかった参照は ID のまま
   `P_Resource` を見て対応するアクセサから取得してください。
 - **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で束ねます。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
-  （[ADR-0023][adr23] で宣言できるようになるまでの穴）。
+  （宣言できるようになるまでの穴です）<!-- 根拠: ADR-0023 -->。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
   （型エラー。cast で通しても送信前に `PortersConfigError` で止まり、`expand` を案内します）。
 
-> 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です
-> （[live-verification][lv] LV-10 / LV-16）。応答の解釈はタグ名に依存しない実装なので、
+> 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です<!-- 根拠: LV-10・LV-16 -->。
+> 応答の解釈はタグ名に依存しない実装なので、
 > 外れた場合に直すのは要求側の文字列だけです。
 
 ### ユーザー型は `expand` に書きません
@@ -176,7 +174,7 @@ await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // ✗ expand �
 <!-- doccheck: fields -->
 
 ```ts
-const page = await porters.tenant(1).resume.search({
+const page = await t.resume.search({
   image: { U_photo: ["FileName", "Content"] },
 });
 page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
@@ -189,10 +187,10 @@ page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
 - `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が素直です。
 - `Image` 型の項目にしか書けません（`Link` 型やテキスト項目を書くと**コンパイルエラー**）。
 - **`Image` は `condition` に使えません**（reference が明記）。`Link` は記載が無いため、
-  安全側に倒して同じく対象外にしています（[live-verification][lv] LV-21 — 使えると分かれば緩めます）。
+  安全側に倒して同じく対象外にしています（使えると分かれば緩めます）<!-- 根拠: LV-21 -->。
 
-> `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です
-> （[live-verification][lv] LV-20）。応答は**返ってきたサブタグを読む**実装なので、
+> `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です<!-- 根拠: LV-20 -->。
+> 応答は**返ってきたサブタグを読む**実装なので、
 > 外れた場合に直すのは要求側の文字列だけです。
 
 ## `condition` — 検索条件
@@ -220,7 +218,7 @@ await t.candidate.search({
 ```
 
 **日時は ISO 8601（UTC `…Z`）で渡してください。** PORTERS 形式（`yyyy/mm/dd HH:MM:SS`）への変換は
-ライブラリが行います。JST などの業務タイムゾーン変換は**利用側の責務**です（[PRD R-10][prd]）。
+ライブラリが行います。JST などの業務タイムゾーン変換は**利用側の責務**です<!-- 根拠: PRD R-10 -->。
 
 ### 上位リソースの絞り込み
 
@@ -234,7 +232,7 @@ await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 
 アクティビティのように「どのリソースに付いているか」を持つ項目は、**数値**で絞ります。
 値は非連続（Candidate `1` / Job `3` / Client `5` / Recruiter `9` / Sales `11` …）で、
-数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**（[ADR-0079][adr79]）。
+数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**<!-- 根拠: ADR-0079 -->。
 
 ```ts
 import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
@@ -291,8 +289,8 @@ await t.candidate.search({
 });
 ```
 
-> **省略と `"existing"` は違います**（[ADR-0057][adr57]）。いまはどちらも生存レコードのみが返るので
-> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」**という
+> **省略と `"existing"` は違います**<!-- 根拠: ADR-0057 -->。いまはどちらも生存レコードのみが返るので
+> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」** という
 > 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
 > `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
 > 省略せず `itemstate: "existing"` と書いてください。
@@ -317,13 +315,13 @@ const deleted = page.items.filter((c) => c.P_Deleted === "1");
 
 - **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
   PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
-  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します（[ADR-0056][adr56]）。
+  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します<!-- 根拠: ADR-0056 -->。
 - **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、
   試みるとコンパイルエラーになります。**Write もできません**（`create` / `update` の入力に現れません）。
 - `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
   `"P_Deleted"` を明示してください。
 
-> 応答での出現条件と値域は**実機で未確認**です（[live-verification][lv] LV-14）。
+> 応答での出現条件と値域は**実機で未確認**です<!-- 根拠: LV-14 -->。
 > `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
 
 ## `count` / `start` — ページング
@@ -389,29 +387,20 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 
 ## 関連
 
-- 決定: [ADR-0038][adr38]（Read クエリの詳細設計）／[ADR-0020][adr20]（`field` の既定挙動）／
-  [ADR-0059][adr59]（`field` を接頭辞なしの型付き alias で受ける）／
-  [ADR-0058][adr58]（`expand` で参照先の項目を読む）／
-  [ADR-0056][adr56]（`P_Deleted` を「型を持たない項目」として載せる）／
-  [ADR-0057][adr57]（`itemstate` の明示指定はそのまま送る）
 - カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 - ほかの目的から探す: [目次][index]
 
-[adr5]: ../../adr/0005-public-api-shape.md
-[adr79]: ../../adr/0079-resource-by-name.md
+<!-- 根拠:
+- 決定: ADR-0038（Read クエリの詳細設計）／ADR-0020（`field` の既定挙動）／
+  ADR-0059（`field` を接頭辞なしの型付き alias で受ける）／
+  ADR-0058（`expand` で参照先の項目を読む）／
+  ADR-0056（`P_Deleted` を「型を持たない項目」として載せる）／
+  ADR-0057（`itemstate` の明示指定はそのまま送る）
+-->
+
 [aliases]: ../concepts/aliases.md
-[adr20]: ../../adr/0020-read-field-default.md
-[adr38]: ../../adr/0038-read-query-surface-impl.md
-[adr56]: ../../adr/0056-deleted-flag-typing.md
-[adr57]: ../../adr/0057-itemstate-existing-explicit.md
-[adr58]: ../../adr/0058-reference-expansion-read.md
-[adr59]: ../../adr/0059-read-field-bare-alias.md
-[adr74]: ../../adr/0074-custom-field-declaration-required.md
-[adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [custom-fields]: custom-fields.md
-[lv]: ../../live-verification.md
-[prd]: ../../design/requirements.md
 [rapi]: ../reference/resource-api/README.md
 [partition]: ../concepts/partition.md
 [index]: ../index.md

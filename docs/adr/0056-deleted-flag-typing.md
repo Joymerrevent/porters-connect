@@ -10,7 +10,7 @@
 > どれが削除済みかを利用者が判別できない。
 >
 > **案B で `accepted`（2026-08-22）**: `FieldCatalog` の値を `DataType | null` に広げ、
-> `P_Deleted: null` として**「PORTERS が Data Type を与えていない」という正典の事実を記録**する。
+> `P_Deleted: null` として **「PORTERS が Data Type を与えていない」という正典の事実を記録**する。
 > `null` は新しい Data Type ではない。導出が `keyof F` で回っているため、
 > condition / order / write の禁止は**追加実装なしで**型に現れる。実施は本 ADR とは別 PR。
 >
@@ -36,13 +36,13 @@
 `Telephone` / `User` / `Image` / `Link` の 17 種。**`Deleted` に相当する値は無い**。
 `P_Deleted` は **System Field List にも載っていない**。
 
-各リソースの項目表でも `P_Deleted` は **Field Type 欄・Data Type 欄とも「ー」**である。
+各リソースの項目表でも `P_Deleted` は **Field Type 欄・Data Type 欄とも「ー」** である。
 
 ### ここが制約になる
 
-[ADR-0016][adr16] は **案B（PORTERS Data Type に整合）**で accepted 済みで、こう定めている。
+[ADR-0016][adr16] は **案B（PORTERS Data Type に整合）** で accepted 済みで、こう定めている。
 
-> Data Type は **PORTERS 自身が定義する「値の形」**であり、**独自の粒度を発明せず忠実**。
+> Data Type は **PORTERS 自身が定義する「値の形」** であり、**独自の粒度を発明せず忠実**。
 > （中略）**PORTERS がしない区別は発明しない**。**型ラベルは Data Type に一致**させる。
 
 そして [ADR-0019][adr19] のカタログは **alias → Data Type** の対応で、

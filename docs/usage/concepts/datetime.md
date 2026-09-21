@@ -38,7 +38,7 @@ await t.resume.update(200, { P_DateOfBirth: "1990-04-01" });
 
 ## 業務タイムゾーンの変換はしません
 
-**JST への変換はライブラリの仕事にしていません**（[要件][prd] R-10）。理由は、どのタイムゾーンで
+**JST への変換はライブラリの仕事にしていません**<!-- 根拠: PRD R-10 -->。理由は、どのタイムゾーンで
 見せたいかは利用側の事情であり、ライブラリが決めると必ず誰かの用途に合わないからです。
 
 ```ts
@@ -103,9 +103,7 @@ PORTERS 9.3.0（2026/08）で足された項目タイプ **「時分型」** は
 **どの項目が時分型かは、API からは分かりません**（Field Read でも `12` としか返りません）。
 分かるのはテナントの管理者だけです。そこでこのライブラリは型を増やさず、時分型の項目も
 **`f.dateTime()` のまま宣言し、値は ISO のまま読み書き**します。基準日の規則は、あなたが
-「この項目は時分型だ」と知っているところで**変換関数**に任せます（[ADR-0086][adr86]）。
-
-<!-- doccheck: -->
+「この項目は時分型だ」と知っているところで**変換関数**に任せます<!-- 根拠: ADR-0086 -->。
 
 ```ts
 import {
@@ -122,9 +120,8 @@ const porters = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
-  fields,
 });
-const t = porters.tenant(1);
+const t = porters.tenant(1, { fields }); // 宣言は partition と一緒に束ねる
 
 // 読む: ISO で届く値を時刻に戻す
 const job = await t.job.get(10001);
@@ -155,17 +152,16 @@ await t.job.search({
 
 ## 関連
 
-- 要件: [R-10][prd]（ISO 8601・UTC で正規化し、業務タイムゾーン変換はしない）
-- 決定: [ADR-0011][adr11]（変換を型駆動デコーダに集約）／[ADR-0016][adr16]（Data Type の粒度）／
-  [ADR-0086][adr86]（時分型は型を増やさず変換関数で扱う）
 - 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
 - API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
 
-[adr11]: ../../adr/0011-xml-parse-serialize.md
-[adr16]: ../../adr/0016-field-type-granularity.md
-[adr86]: ../../adr/0086-time-of-day-fields.md
+<!-- 根拠:
+- 要件: PRD R-10（ISO 8601・UTC で正規化し、業務タイムゾーン変換はしない）
+- 決定: ADR-0011（変換を型駆動デコーダに集約）／ADR-0016（Data Type の粒度）／
+  ADR-0086（時分型は型を増やさず変換関数で扱う）
+-->
+
 [fdt]: ../reference/resource-api/field-data-types.md
 [handle-failures]: ../howto/handle-failures.md
-[prd]: ../../design/requirements.md
 [custom-fields]: ../howto/custom-fields.md
 [search-records]: ../howto/search-records.md

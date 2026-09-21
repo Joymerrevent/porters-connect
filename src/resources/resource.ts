@@ -84,8 +84,9 @@ type WritableKeys<F extends FieldCatalog> = {
   [K in keyof F]: F[K] extends WritableDataType ? K : never;
 }[keyof F];
 
+// 書き込み入力の形は ADR-0019 W2。
 /**
- * Create input (ADR-0019 W2): the `requiredOnCreate` aliases are **required** (non-null); every
+ * Create input: the `requiredOnCreate` aliases are **required** (non-null); every
  * other writable field is optional (`null` omits). `P_Id` is supplied by the library — not here.
  */
 export type CreateInput<F extends FieldCatalog, Req extends keyof F> = {
@@ -94,7 +95,7 @@ export type CreateInput<F extends FieldCatalog, Req extends keyof F> = {
   [K in Exclude<WritableKeys<F>, Req>]?: WriteValueOf<F[K]> | null;
 };
 
-/** Update input (ADR-0019 W2): every writable field optional (`null` omits, `""` clears). */
+/** Update input: every writable field optional (`null` omits, `""` clears). */
 export type UpdateInput<F extends FieldCatalog> = {
   [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
 };
@@ -165,15 +166,17 @@ export type ResourceConfig<
  */
 export type EmptyImages = Record<never, never>;
 
+// `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。Unsupported は ADR-0076、
+// Bound は ADR-0061 / ADR-0080。
 /**
  * An object with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
  * (excess-property checking); a variable that happens to carry the key still assigns. Re-declaring
  * each removed key as `?: never` closes that hole, so the call fails whichever way the object was
  * built — including `create({ ...recordFromRead })`, which is how the binding actually gets
- * contradicted in practice (RV-47).
+ * contradicted in practice.
  *
- * Used for two different exclusions: query keys the endpoint does not take (`Unsupported` —
- * ADR-0076) and write aliases the accessor itself fills (`Bound` — ADR-0061 / ADR-0080).
+ * Used for two different exclusions: query keys the endpoint does not take (`Unsupported`)
+ * and write aliases the accessor itself fills (`Bound`).
  * `searchAll` keeps a plain `Omit` for `count` / `start`: those are not "PORTERS does not take
  * this", they are "the walk decides them", and tightening that is a different decision.
  */
@@ -189,20 +192,22 @@ export type Resource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
+  // 端点ごとに語彙を狭める設計は ADR-0076。実行時は寛容のまま（ADR-0074）。
   /**
-   * Query keys **this endpoint does not take** (ADR-0076). The common Read vocabulary is not
+   * Query keys **this endpoint does not take**. The common Read vocabulary is not
    * universal: PORTERS lists `keywords` / `itemstate` for the 11 common data resources and for
    * none of the others, so a resource on this factory can say which of them its own endpoint
    * leaves out. `never` — the default — means "takes the whole vocabulary".
    *
    * Sending a parameter the endpoint does not list can fail the *whole* Read (Result Code 100 /
-   * 102), so the safe side is not to offer it. The runtime stays permissive (ADR-0074): a key
+   * 102), so the safe side is not to offer it. The runtime stays permissive: a key
    * forced in through a cast is still sent, which is how a live contract can test whether
    * PORTERS accepts it at all.
    */
   Unsupported extends keyof SearchQuery<F, R> = never,
+  // of() で束ねた alias を入力から外す設計は ADR-0061、型で塞ぐ経緯は RV-47。
   /**
-   * Write aliases **the accessor itself fills**, so a caller cannot supply them (ADR-0061 / RV-47).
+   * Write aliases **the accessor itself fills**, so a caller cannot supply them.
    * `t.phase.of("client")` binds `Resource`; passing it again could only mean contradicting the
    * binding, and a phase written to the wrong resource cannot be deleted (there is no delete API).
    * `never` — the default — means the caller supplies every writable field.
@@ -229,8 +234,8 @@ export type Resource<
     },
   ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>;
   /**
-   * Read one record by id. `expand` reads referenced records too (ADR-0058); `image` picks an
-   * Image field's sub-tags (ADR-0064) — `get` is where asking for a `Content` belongs, since it
+   * Read one record by id. `expand` reads referenced records too; `image` picks an
+   * Image field's sub-tags — `get` is where asking for a `Content` belongs, since it
    * fetches one record rather than a page.
    */
   get<
@@ -252,8 +257,9 @@ export type Resource<
     id: number,
     input: Without<UpdateInput<F>, Extract<Bound, keyof UpdateInput<F>>>,
   ): Promise<number>;
+  // 一括書き込みの設計は ADR-0041 / F-4。
   /**
-   * Create many records in one call (ADR-0041 / F-4). Auto-batched to ≤200 records and under the
+   * Create many records in one call. Auto-batched to ≤200 records and under the
    * request size cap. **Not atomic** — inspect the {@link BulkWriteResult}: per-record failures are
    * returned (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
    * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
@@ -266,7 +272,7 @@ export type Resource<
     >[],
   ): Promise<BulkWriteResult>;
   /**
-   * Update many records by id in one call (ADR-0041 / F-4). Auto-batched like {@link createMany};
+   * Update many records by id in one call. Auto-batched like {@link createMany};
    * per-record failures are returned in the {@link BulkWriteResult}, not thrown.
    */
   updateMany(

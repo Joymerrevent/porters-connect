@@ -4,19 +4,14 @@
 
 [@joymerrevent/porters-connect](../index.md) / PortersClientOptions
 
-# Type Alias: PortersClientOptions\<C\>
+# Type Alias: PortersClientOptions
 
-> **PortersClientOptions**\<`C`\> = `object`
+> **PortersClientOptions** = `object`
 
-Defined in: [src/client.ts:63](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L63)
+Defined in: [src/client.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L68)
 
-Options for constructing a [PortersClient](../classes/PortersClient.md). `C` is inferred from `fields` (ADR-0023).
-
-## Type Parameters
-
-### C
-
-`C` *extends* [`DeclaredCatalogs`](DeclaredCatalogs.md) = `EmptyCatalog`
+Options for constructing a [PortersClient](../classes/PortersClient.md). App-level only: custom field declarations
+belong to a partition and go to [PortersClient.tenant](../classes/PortersClient.md#tenant) as [TenantOptions](TenantOptions.md).
 
 ## Properties
 
@@ -24,7 +19,7 @@ Options for constructing a [PortersClient](../classes/PortersClient.md). `C` is 
 
 > `optional` **appId?**: `string`
 
-Defined in: [src/client.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L91)
+Defined in: [src/client.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L99)
 
 ***
 
@@ -32,7 +27,7 @@ Defined in: [src/client.ts:91](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **appSecret?**: `string`
 
-Defined in: [src/client.ts:92](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L92)
+Defined in: [src/client.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L100)
 
 ***
 
@@ -40,7 +35,7 @@ Defined in: [src/client.ts:92](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **auth?**: [`TokenProvider`](TokenProvider.md)
 
-Defined in: [src/client.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L95)
+Defined in: [src/client.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L103)
 
 Custom auth strategy; defaults to the transparent code_direct strategy.
 
@@ -48,13 +43,15 @@ Custom auth strategy; defaults to the transparent code_direct strategy.
 
 ### fields?
 
-> `optional` **fields?**: [`DefinedFields`](DefinedFields.md)\<`C`\>
+> `optional` **fields?**: `never`
 
-Defined in: [src/client.ts:114](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L114)
+Defined in: [src/client.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L128)
 
-Tenant custom field declarations from [defineFields](../functions/defineFields.md) (ADR-0023). Each resource's
-declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
-their declared Data Type and appear typed on reads / writes. Omit for standard `P_` only.
+**Not a client option any more.** Custom fields belong to a partition, so the
+declaration goes to [PortersClient.tenant](../classes/PortersClient.md#tenant) as `tenant(id, { fields })`. Typed `never`
+so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
+it is not a fresh literal; at runtime the constructor rejects it with [PortersConfigError](../classes/PortersConfigError.md)
+rather than silently dropping the declaration (the same fail-closed stance as `hostname`).
 
 ***
 
@@ -62,16 +59,16 @@ their declared Data Type and appear typed on reads / writes. Omit for standard `
 
 > **hostname**: `string`
 
-Defined in: [src/client.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L75)
+Defined in: [src/client.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L82)
 
 API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
 (A representative value lives in docs/usage/reference.)
 
-The **name and nothing else**: no port, no scheme, no path, no userinfo, no whitespace
-(ADR-0078). PORTERS issues a server name and speaks https, so a port never arrives with it;
+The **name and nothing else**: no port, no scheme, no path, no userinfo, no whitespace.
+PORTERS issues a server name and speaks https, so a port never arrives with it;
 when you need one (a local fake, a proxy) pass [PortersClientOptions.port](#port). A value
 like `https://xxxxx.example.com` or `a.test:4010` is rejected at construction with a
-[PortersConfigError](../classes/PortersConfigError.md) rather than silently addressing something else (ADR-0048).
+[PortersConfigError](../classes/PortersConfigError.md) rather than silently addressing something else.
 Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
 
 ***
@@ -80,9 +77,9 @@ Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
 
 > `optional` **port?**: `number`
 
-Defined in: [src/client.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L82)
+Defined in: [src/client.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L89)
 
-Port of the access point (ADR-0078). **Omit it for PORTERS** — the contract gives you a name
+Port of the access point. **Omit it for PORTERS** — the contract gives you a name
 and the scheme decides the port. Set it only for a local fake server or a proxy:
 `{ hostname: "127.0.0.1", port: 4010, scheme: "http" }`. An integer 1–65535; anything else
 is rejected at construction.
@@ -93,9 +90,9 @@ is rejected at construction.
 
 > `optional` **scheme?**: [`Scheme`](Scheme.md)
 
-Defined in: [src/client.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L90)
+Defined in: [src/client.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L98)
 
-URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
+URL scheme of the access point. Defaults to `"https"`. Set `"http"` only for a
 local fake server or a trusted tunnel: it sends every request — the OAuth token header
 included — in cleartext, so the library warns once per process (loopback is not exempt).
 Silence it only where cleartext is intended, with the env var
@@ -107,7 +104,7 @@ Silence it only where cleartext is intended, with the env var
 
 > `optional` **scopes?**: [`Scope`](Scope.md)[]
 
-Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L93)
+Defined in: [src/client.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L101)
 
 ***
 
@@ -115,14 +112,14 @@ Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **throttle?**: [`Throttle`](Throttle.md)
 
-Defined in: [src/client.ts:108](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L108)
+Defined in: [src/client.ts:118](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L118)
 
-Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this destination**,
+Rate-limit self-restraint. Defaults to the **process-wide bucket for this destination**,
 so several clients aimed at the same PORTERS add up to one limit instead of one each.
 
 Pass your own to opt out of that sharing, to run different limits, or to coordinate across
-processes — a `Throttle` backed by Redis is what makes the multi-instance case honest
-(ADR-0010 left that to the caller). `createThrottle()` builds the default implementation.
+processes — a `Throttle` backed by Redis is what makes the multi-instance case honest; the
+library leaves that to you. `createThrottle()` builds the default implementation.
 
 ***
 
@@ -130,7 +127,7 @@ processes — a `Throttle` backed by Redis is what makes the multi-instance case
 
 > `optional` **tokenStore?**: [`TokenStore`](TokenStore.md)
 
-Defined in: [src/client.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L97)
+Defined in: [src/client.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L105)
 
 Token persistence; defaults to in-memory.
 
@@ -140,6 +137,6 @@ Token persistence; defaults to in-memory.
 
 > `optional` **transport?**: [`Transport`](Transport.md)
 
-Defined in: [src/client.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L99)
+Defined in: [src/client.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L107)
 
 Injectable HTTP transport; defaults to a fetch-based transport.

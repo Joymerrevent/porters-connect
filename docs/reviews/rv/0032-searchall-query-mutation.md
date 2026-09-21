@@ -28,7 +28,7 @@
   ```
 
 - 公開 API の JSDoc（`src/resources/resource.ts:137`「Auto-paginating search: yields every matching
-  record (200 per page)」）は**「渡したクエリの全件」**を約束している。クエリが途中で変わりうるとは書いていない。
+  record (200 per page)」）は **「渡したクエリの全件」** を約束している。クエリが途中で変わりうるとは書いていない。
 
 ## 影響
 
@@ -99,7 +99,7 @@ rejection として届く。これを `searchAll` の**呼び出し時点**へ�
 - **`read-core` に 2 つ足した**。`readUrlOf` は**ページングを含まない `URLSearchParams`** を受け取り、
   その複製に `count` / `start` だけを足して URL にする。`paginateOnce` は `paginate` と同じ walk だが、
   **ページ取得器を generator の中で 1 度だけ組む**。
-- 各リソースの URL 組み立てを**「クエリ → ページング抜きの params」**に切り出した
+- 各リソースの URL 組み立てを **「クエリ → ページング抜きの params」** に切り出した
   （`resource.ts` の `buildReadParams` ／ `field` / `partition` / `user` の `buildParams`）。
   `buildReadUrl` は `buildReadParams` ＋ `readUrlOf` の 1 ページ版として残してある。
 - `searchAll` が保持するのは**直列化した params と decoder**であって、呼び出し側のオブジェクトではない。

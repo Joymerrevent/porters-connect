@@ -108,7 +108,7 @@ export type ContractCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ContractUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Contract accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Contract accessor; `C` is the declared custom-field catalog merged on. */
 export type ContractResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number],

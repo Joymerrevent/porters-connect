@@ -12,6 +12,7 @@ import type { Transport } from "./types";
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 export type FetchTransportOptions = {
+  // 既定 30 秒と「0 は no timeout ではない」は ADR-0077。
   /**
    * How long one request may take, in milliseconds. Default 30,000.
    *
@@ -23,7 +24,7 @@ export type FetchTransportOptions = {
    *
    * Raise it to read large attachments over a slow link; lower it to fail fast in an interactive
    * tool. Must be a positive integer — `0` would abort every request immediately, which reads
-   * like "no timeout" and is not (ADR-0077).
+   * like "no timeout" and is not.
    */
   timeoutMs?: number;
   /** Injectable fetch (tests / custom dispatcher). Default global fetch. */

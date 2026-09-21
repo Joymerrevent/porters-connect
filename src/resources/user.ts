@@ -73,9 +73,10 @@ export type UserSearchQuery = {
   requestType?: 0 | 1;
   /** -1 = any (default), 0 = system admins, 1 = standard users. */
   userType?: -1 | 0 | 1;
+  // 裸 alias に接頭辞を足すのは ADR-0059、省略時に全項目を取るのは ADR-0020。
   /**
-   * Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix (ADR-0059).
-   * **Omit** to fetch every catalogued field (ADR-0020); narrow it when the extra HR fields
+   * Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix.
+   * **Omit** to fetch every catalogued field; narrow it when the extra HR fields
    * (department / telephone / dates) are not interesting. Pass `[]` for PORTERS' own default —
    * the 4 core fields it returns for a fieldless read.
    */

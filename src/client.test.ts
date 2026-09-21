@@ -4,7 +4,12 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { PortersClient } from "./client";
-import type { TenantScope } from "./client";
+import type {
+  PortersClientOptions,
+  TenantOptions,
+  TenantScope,
+} from "./client";
+import { defineFields } from "./fields";
 import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
 import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
 import type { Throttle } from "./http/throttle";
@@ -522,6 +527,44 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     expectTypeOf<TenantScope>().not.toHaveProperty("auth");
     expectTypeOf<TenantScope>().not.toHaveProperty("partition");
     expectTypeOf<TenantScope>().not.toHaveProperty("tenant");
+  });
+
+  // ADR-0087: the custom field declaration is bound with the partition, not on the client.
+  it("binds a custom field declaration per scope via tenant(id, { fields }) (type)", () => {
+    const fields = defineFields({
+      candidate: (f) => ({ U_score: f.number() }),
+    });
+    const rec = recording();
+    const porters = tenantClient(rec.transport);
+    const declared = porters.tenant(1, { fields });
+    const bare = porters.tenant(2);
+    // The scope's type is exactly TenantScope<that declaration> — nothing wider, nothing narrower.
+    expectTypeOf(declared).toEqualTypeOf<TenantScope<typeof fields>>();
+    expectTypeOf(bare).toEqualTypeOf<TenantScope>();
+    const options: TenantOptions<typeof fields> = { fields };
+    expectTypeOf(porters.tenant(3, options)).toEqualTypeOf<
+      TenantScope<typeof fields>
+    >();
+    // The client itself carries no declaration: not generic, and `fields` is typed `never` so a
+    // stale config object (not a fresh literal, hence no excess property check) fails to compile.
+    expectTypeOf<PortersClientOptions["fields"]>().toEqualTypeOf<undefined>();
+    // @ts-expect-error -- PortersClient takes no type argument (ADR-0087)
+    type _NotGeneric = PortersClient<typeof fields>;
+  });
+
+  it("tenant(id, { fields }) sends the declared fields for that partition only", async () => {
+    const fields = defineFields({
+      candidate: (f) => ({ U_score: f.number() }),
+    });
+    const rec = recording();
+    const porters = tenantClient(rec.transport);
+    await porters.tenant(1, { fields }).candidate.search();
+    await porters.tenant(2).candidate.search();
+    const urls = rec.calls.map((c) => decodeURIComponent(c.url));
+    expect(urls[0]).toContain("partition=1");
+    expect(urls[0]).toContain("Person.U_score"); // declared -> in the default field set (ADR-0020)
+    expect(urls[1]).toContain("partition=2");
+    expect(urls[1]).not.toContain("U_score"); // the other scope never saw the declaration
   });
 });
 

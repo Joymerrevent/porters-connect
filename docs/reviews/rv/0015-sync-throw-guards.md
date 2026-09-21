@@ -47,7 +47,7 @@ Attachment（`search` / `create` / `update`）・マスタ Read 4 種の `search
 
 - `get` / `current` / `exchangeAuthorizationCode` / `clearTokens` / `ensureAuthenticated` は元から async、
   `searchAll` は async generator で呼び出し時点では何も起きないことをテストで固定（変更していない）。
-- `test/integration/exception-contract.test.ts` が**公開サーフェス全体を歩いて「同期 throw しない」**を
+- `test/integration/exception-contract.test.ts` が**公開サーフェス全体を歩いて「同期 throw しない」** を
   退行防止している（1 つでも同期 throw に戻れば落ちる）。
 - README と[エラーハンドリング ガイド][guide]に「例外の届き方」節を追加。semver は minor。
 

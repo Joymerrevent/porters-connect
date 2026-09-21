@@ -18,7 +18,7 @@ Department Read query. The API takes no filter: every department of the partitio
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/department.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L60)
+Defined in: [src/resources/department.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L61)
 
 ***
 
@@ -26,10 +26,10 @@ Defined in: [src/resources/department.ts:60](https://github.com/Joymerrevent/por
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<*typeof* `FIELDS`\>[]
 
-Defined in: [src/resources/department.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L59)
+Defined in: [src/resources/department.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L60)
 
-Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix
-(ADR-0059). **Omit** to fetch every catalogued field (ADR-0020). Pass `[]` for PORTERS' own
+Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix.
+**Omit** to fetch every catalogued field. Pass `[]` for PORTERS' own
 default — `P_Id` alone, which is what a fieldless read returns.
 
 ***
@@ -38,4 +38,4 @@ default — `P_Id` alone, which is what a fieldless read returns.
 
 > `optional` **start?**: `number`
 
-Defined in: [src/resources/department.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L61)
+Defined in: [src/resources/department.ts:62](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L62)

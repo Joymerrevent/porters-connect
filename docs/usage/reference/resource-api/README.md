@@ -78,9 +78,9 @@ Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ
 
 - **ルート要素はリソース名**（`<Candidate>` `<Job>` `<Partition>` …）。総称形ではなく**各リソースの Read 記事すべてに
   実例がある**（Attachment は `<Attachment Total=… >`、Option は属性なしの `<Option>`）。
-  ライブラリはこの名前と `<Code>` の**両方**で「PORTERS の応答か」を同定する（[ADR-0051][adr51]）。
+  ライブラリはこの名前と `<Code>` の**両方**で「PORTERS の応答か」を同定する<!-- 根拠: ADR-0051 -->。
 - `Total`=条件に合う総件数 / `Count`=今回の件数 / `Start`=今回の開始インデックス（**オフセット式ページング**）。
-  ※ **Option だけは属性が付かない**（[ADR-0022][adr22] 事実5）。
+  ※ **Option だけは属性が付かない**<!-- 根拠: ADR-0022 事実5 -->。
 - `<Code>` は Result Code（[result-codes][result-codes]）。`<Item>` は 0 件以上。
   **成功応答にも必ず出力される**（`<Code>0`）ため、`<Code>` の有無が envelope かどうかの判定に使える。
 - データ型ごとの入れ子:
@@ -102,7 +102,6 @@ Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルー
 - **1 分あたり Request 上限**: Read **2000** / Write **500**。超過すると強制切断され得る。
 - **1 リクエストの処理レコード数**: Read / Write とも **最大 200 件**。超える場合は 200 件ずつ分割。
 - **リクエスト全体の長さ**: **約 15000 文字以内**を推奨（将来 16KB 上限を検討中・未確定）。
-  - ※ `SPEC_v1.md` の「32KB で 400」は旧情報。最新値に合わせること。
 - 月次クォータ（約 15 万アクセス/月）は契約オプション側の上限（ドキュメントではなく契約条件）。
 
 [result-codes]: result-codes.md
@@ -114,5 +113,3 @@ Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルー
 [field-data-types]: field-data-types.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
-[adr22]: ../../../adr/0022-master-read-query-surface.md
-[adr51]: ../../../adr/0051-read-envelope-identification.md

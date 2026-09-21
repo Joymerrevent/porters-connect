@@ -18,7 +18,7 @@
 MVP（[[0003-add-attachment-to-mvp]] までの範囲）と公開基盤（CI/CD・リリース自動化・コミュニティヘルス）が一巡し、
 `@joymerrevent/porters-connect@0.2.1` を npm 公開済み。レビュー台帳 [findings][findings] の RV-1〜9 はすべて `fixed`、
 未起票 ADR・open PR/Issue も無い「一区切り」の状態にある。
-ただし横断監査（2026-06-22）で、**受け入れ済み ADR / P0 要件が定めた v1 公開 API に複数の未実装（積み残し）**が判明した
+ただし横断監査（2026-06-22）で、**受け入れ済み ADR / P0 要件が定めた v1 公開 API に複数の未実装（積み残し）** が判明した
 （OAuth の `code` フロー＝[[0007-oauth-public-surface]] / Read クエリ `order`・`keywords`・`itemstate`＝[[0005-public-api-shape]]・R-5 /
 `tenant(id)` ＋ per-call `partition`＝[[0008-multitenancy-partition]] / 200 件一括書き込み＝`CLAUDE.md`）。
 いずれも accepted な決定↔実装ギャップで、roadmap/PRD の「P0 全実装」は実態より過大だった。

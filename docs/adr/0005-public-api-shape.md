@@ -14,6 +14,11 @@
 > 同じく本文の例のうち **`field` の既定は「`P_Id` のみ」ではなくカタログ導出の全項目**
 > （[ADR-0020][0020]）、**`host` は必須で既定値を持たない**（書式検証は [ADR-0048][0048]）。
 > 案1（名前空間アクセサ）・SD-1〜SD-3 という本 ADR の核は不変。以下の本文は当時の記録としてそのまま残す。
+>
+> **Amended by [ADR-0087][0087]（2026-09-21）**: 本文の構築例にある **`fields: myFields`（コンストラクタで
+> 宣言を受ける形）も、現在の公開 API ではない**。カスタム項目は partition ごとのものなので、宣言は
+> `porters.tenant(id, { fields })` で partition と一緒に束ねる（client は宣言を持たない）。
+> SD-2 の宣言 DSL（`defineFields`・ビルダー・検証境界）そのものは不変。
 
 ## Context and Problem Statement
 
@@ -165,3 +170,4 @@ try {
 [0040]: 0040-multitenancy-surface-impl.md
 [0048]: 0048-access-point-host-validation.md
 [0055]: 0055-partition-binding-guard.md
+[0087]: 0087-tenant-scoped-field-declarations.md

@@ -178,13 +178,14 @@ describe("candidate round-trip against the fake server", () => {
       appId: "app-id",
       appSecret: "app-secret",
       transport: fake,
+    });
+    // The declaration is bound with the partition (ADR-0087), not on the client.
+    const t = porters.tenant(1, {
       fields: defineFields({ candidate: (f) => ({ U_score: f.number() }) }),
     });
 
-    const id = await porters
-      .tenant(1)
-      .candidate.create({ P_Owner: 5, U_score: 42 });
-    const record = await porters.tenant(1).candidate.get(id);
+    const id = await t.candidate.create({ P_Owner: 5, U_score: 42 });
+    const record = await t.candidate.get(id);
     expect(record?.U_score).toBe(42);
   });
 

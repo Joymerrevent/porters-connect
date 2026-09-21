@@ -77,7 +77,7 @@ export type CandidateCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type CandidateUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Candidate accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Candidate accessor; `C` is the declared custom-field catalog merged on. */
 export type CandidateResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]

@@ -8,12 +8,12 @@
 
 > **decodeTimeOfDay**(`iso`): `string`
 
-Defined in: [src/util/time-of-day.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L54)
+Defined in: [src/util/time-of-day.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L55)
 
 Read a **time-of-day** (時分型) field's value as a clock time.
 
 PORTERS stores a time-of-day field as a DateTime anchored to 1970/01/01 (`24:00`–`47:59` land on
-1970/01/02) and Field Read cannot tell it from a date-time field (ADR-0086). Read the field as
+1970/01/02) and Field Read cannot tell it from a date-time field. Read the field as
 usual — it decodes to ISO — and pass that ISO string here to get the clock time back:
 `"1970-01-01T09:00:00Z"` → `"09:00"`, `"1970-01-02T02:00:00Z"` → `"26:00"`.
 

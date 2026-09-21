@@ -100,7 +100,7 @@ export type ResumeCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ResumeUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Resume accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Resume accessor; `C` is the declared custom-field catalog merged on. */
 export type ResumeResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number],

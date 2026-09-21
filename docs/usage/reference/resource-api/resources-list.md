@@ -59,11 +59,10 @@
 - **Phase の接頭辞は出典記事の中で揺れている。** 散文は「省略した場合は `Phase.P_Id` が指定された
   ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
   サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も
-  **すべて裸**。裸のほうを正として扱う（→ Phase の公開サーフェスの ADR-0061）。
+  **すべて裸**。裸のほうを正として扱う<!-- 根拠: ADR-0061 -->。
 - 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] に per-resource でまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。
-- MVP 実装順（CLAUDE.md / ADR-0003）: OAuth → Candidate → Job → Client → Process → Resume → Attachment。
 
 [partition-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012006227
 [user-read]: https://hrbcapi.porters.jp/hc/ja/articles/115012160288

@@ -15,8 +15,12 @@
 // 実測で 187 頁中 4 頁に混入していた。**生成物側を見る**のが要点で、`src` を直接 grep すると
 // 内部実装コメント（日本語可）と区別が付かない — 生成物に出たものは定義上すべて公開 JSDoc。
 //
-// 漢字ではなく**かな・カタカナだけ**を見る。ADR の節番号（`案5b` / `論点4`）や日本語の
-// サンプル値は漢字で現れうるので、漢字まで弾くと誤検知になる（判断は RV-51 を参照）。
+// 漢字ではなく**かな・カタカナだけ**を見る。日本語のサンプル値（`P_Title: "面談"`）は漢字で
+// 現れうるので、漢字まで弾くと誤検知になる（判断は RV-51 を参照）。
+//
+// 同じ理由で**保守者向けの識別子**（ADR / RV / LV 番号・VERIFY(live)・docs/adr 等のパス）も
+// 生成物側で弾く。利用者には意味を持たない情報で、IDE のホバーと docs/usage/api にそのまま
+// 出る。根拠は JSDoc ではなく `//` の実装コメントに書く（エラーの message / hint と同じ規律）。
 //
 // 使い方: `pnpm check:api`。落ちたら `pnpm docs:api` で再生成してコミットする。
 
@@ -80,8 +84,61 @@ export const kanaLines = (tree) => {
   return found;
 };
 
+// 保守者向けの識別子。ADR / レビュー指摘（RV）/ 実機確認項目（LV）の番号、VERIFY(live) の印、
+// 設計文書の節番号、そして `docs/usage/` 以外の `docs/` パス。
+//
+// - 節番号は ADR 番号に添えられずに単独で現れることがある（`PhaseAccessor` の `(案5b)` は
+//   実際に生成物に出ていた形で、#363 では手で外した）。ASCII の `SD-n` / `F-n`（基本設計の節・機能番号）と
+//   漢字＋数字の `案n` / `論点n` / `決定n`（ADR の節）は、どちらも生成物に出る日本語の
+//   サンプル値（`面談` のような語）と衝突しないので拾う。かな検査が漢字を対象外にした隙間を
+//   ここで埋める形。
+// - `docs/` は allowlist で見る。利用者が読むのは `docs/usage/` だけで、それ以外
+//   （adr / reviews / design / history / runbook）は保守者向け。denylist だと新しい
+//   保守者向けディレクトリが黙って通る。ただし**このリポジトリのパスに限る**: 素の `docs/` を
+//   拾うと、typedoc が `Error` から継承して描く `https://v8.dev/docs/stack-trace-api` のような
+//   外部 URL に当たる（#363 の修正を通し直したときに実際に落ちた）。パスの先頭（行頭・空白・
+//   引用符・括弧の直後、`../` 付きも可）か、この repo の GitHub URL の中だけを見る。
+//   `docs/README.md` だけは通す: 「読む人／作る人」の分岐点で、利用者向け文書が開発者向け
+//   資料へ案内する唯一の入口（README と docs/usage/index.md が指す）。
+// - `CLAUDE.md`（Claude Code 向けの規約）と `SPEC_v1`（superseded の素案）は内部ファイルの
+//   名前で、利用者向け文書に出ても意味を持たない。手書きの利用者向け文書に実際に混ざっていた形。
+const REPO_DOCS =
+  /(?<![\w./-])(?:\.\.\/)*docs\/(?!usage\b|README\.md\b)|porters-connect\/(?:blob|tree|raw)\/[^\s/]+\/docs\/(?!usage\b|README\.md\b)/;
+const MAINTAINER_ID = new RegExp(
+  [
+    /\bADR-\d{4}/,
+    /\bRV-\d+\b/,
+    /\bLV-\d+\b/,
+    /\bSD-\d+\b/,
+    /\bF-\d+\b/,
+    /(?:案|論点|決定)\d/,
+    /VERIFY\(live\)/,
+    /\bCLAUDE\.md\b/,
+    /\bSPEC_v1\b/,
+    REPO_DOCS,
+  ]
+    .map((r) => r.source)
+    .join("|"),
+);
+
+/**
+ * 生成物に保守者向けの識別子が混ざっている行を拾う。`tree` は readTree の結果
+ * （相対パス -> 内容）。返り値は `path:line: 内容` の配列。
+ */
+export const maintainerIdLines = (tree) => {
+  const found = [];
+  for (const [path, content] of tree) {
+    content.split("\n").forEach((line, i) => {
+      if (MAINTAINER_ID.test(line))
+        found.push(`${path}:${String(i + 1)}: ${line.trim()}`);
+    });
+  }
+  return found;
+};
+
 // 生成と比較の本体。CLI として実行されたときだけ走らせる（テストからは import して
-// `kanaLines` を呼ぶ — import しただけで typedoc が動くと検査のテストが書けない）。
+// `kanaLines` / `maintainerIdLines` を呼ぶ — import しただけで typedoc が動くと検査の
+// テストが書けない）。
 const main = () => {
   if (!exists(COMMITTED)) {
     console.error(
@@ -124,8 +181,19 @@ const main = () => {
           console.error(`  … 他 ${String(kana.length - 20)} 件`);
         process.exit(1);
       }
+      const ids = maintainerIdLines(actual);
+      if (ids.length > 0) {
+        console.error(
+          "公開 API リファレンスに保守者向けの識別子（ADR / RV / LV 番号など）が混ざっています。\n" +
+            "利用者には意味を持たない情報です。根拠は JSDoc ではなく `//` の実装コメントに移してください:\n",
+        );
+        for (const l of ids.slice(0, 20)) console.error(`  ${l}`);
+        if (ids.length > 20)
+          console.error(`  … 他 ${String(ids.length - 20)} 件`);
+        process.exit(1);
+      }
       console.log(
-        `API リファレンスは最新です（${String(expected.size)} ファイル・日本語の混入なし）。`,
+        `API リファレンスは最新です（${String(expected.size)} ファイル・日本語と保守者向け識別子の混入なし）。`,
       );
       process.exit(0);
     }

@@ -51,9 +51,10 @@ export type DepartmentPage = ResourcePage<typeof FIELDS>;
 
 /** Department Read query. The API takes no filter: every department of the partition is listed. */
 export type DepartmentSearchQuery = {
+  // 裸 alias に接頭辞を足すのは ADR-0059、省略時に全項目を取るのは ADR-0020。
   /**
-   * Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix
-   * (ADR-0059). **Omit** to fetch every catalogued field (ADR-0020). Pass `[]` for PORTERS' own
+   * Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix.
+   * **Omit** to fetch every catalogued field. Pass `[]` for PORTERS' own
    * default — `P_Id` alone, which is what a fieldless read returns.
    */
   field?: ReadFieldAlias<typeof FIELDS>[];

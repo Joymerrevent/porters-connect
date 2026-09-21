@@ -94,7 +94,7 @@ export type RecruiterCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type RecruiterUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Recruiter accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Recruiter accessor; `C` is the declared custom-field catalog merged on. */
 export type RecruiterResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number],

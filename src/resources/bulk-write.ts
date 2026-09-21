@@ -18,7 +18,8 @@ import { parseWriteResult, type WriteResultItem } from "../xml/parser";
 /** PORTERS caps a Write request at 200 records; larger inputs are split into batches of 200. */
 const MAX_ITEMS_PER_REQUEST = 200;
 
-/** One record's outcome from a bulk write, in the position it was sent (ADR-0041 SD-2). */
+// 結果の形（入力順・ok 判定）は ADR-0041 SD-2。
+/** One record's outcome from a bulk write, in the position it was sent. */
 export type BulkWriteResultItem = {
   /** 0-based index in the input array. */
   index: number;
@@ -30,8 +31,9 @@ export type BulkWriteResultItem = {
   ok: boolean;
 };
 
+// 件別失敗で throw しない決定は ADR-0041。
 /**
- * The result of `createMany` / `updateMany` (ADR-0041). `results` holds every record's outcome in
+ * The result of `createMany` / `updateMany`. `results` holds every record's outcome in
  * input order; `failed` is the `ok === false` subset. A per-item `code !== 0` does **not** throw —
  * a bulk write mixes successes and failures — so always inspect `hasFailures` / `failed`.
  */

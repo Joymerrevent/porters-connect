@@ -6,7 +6,7 @@
 
 # Class: PortersError
 
-Defined in: [src/errors/porters-error.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L47)
+Defined in: [src/errors/porters-error.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L48)
 
 Base class for every PORTERS-originated error (catch-all).
 
@@ -27,7 +27,7 @@ Base class for every PORTERS-originated error (catch-all).
 
 > **new PortersError**(`message`, `options`): `PortersError`
 
-Defined in: [src/errors/porters-error.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L55)
+Defined in: [src/errors/porters-error.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L56)
 
 #### Parameters
 
@@ -53,7 +53,7 @@ Defined in: [src/errors/porters-error.ts:55](https://github.com/Joymerrevent/por
 
 > `readonly` **category**: [`ErrorCategory`](../type-aliases/ErrorCategory.md)
 
-Defined in: [src/errors/porters-error.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L48)
+Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L49)
 
 ***
 
@@ -73,7 +73,7 @@ Defined in: typescript/lib/lib.es2022.error.d.ts:24
 
 > `readonly` **code**: `number` \| `null`
 
-Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L49)
+Defined in: [src/errors/porters-error.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L50)
 
 ***
 
@@ -81,7 +81,7 @@ Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **context?**: [`PortersErrorContext`](../type-aliases/PortersErrorContext.md)
 
-Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L53)
+Defined in: [src/errors/porters-error.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L54)
 
 ***
 
@@ -89,7 +89,7 @@ Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **hint?**: `string`
 
-Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L51)
+Defined in: [src/errors/porters-error.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L52)
 
 ***
 
@@ -97,7 +97,7 @@ Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **httpStatus?**: `number`
 
-Defined in: [src/errors/porters-error.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L52)
+Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L53)
 
 ***
 
@@ -129,7 +129,7 @@ Defined in: typescript/lib/lib.es5.d.ts:1074
 
 > `readonly` **retryable**: `boolean`
 
-Defined in: [src/errors/porters-error.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L50)
+Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L51)
 
 ***
 

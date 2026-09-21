@@ -33,8 +33,9 @@ export type PortersErrorOptions = {
   retryable?: boolean;
   /** Actionable hint (English by default). */
   hint?: string;
+  // 封筒なし応答にも status を載せる決定は ADR-0044。
   /**
-   * HTTP status of the response this error came from (ADR-0044). Set for every error raised while
+   * HTTP status of the response this error came from. Set for every error raised while
    * reading a response — including one carrying a PORTERS `<Code>` — and `undefined` for failures
    * with no response at all (send-time guards, connection errors).
    */
@@ -76,12 +77,14 @@ export class PortersResourceError extends PortersError {}
 /** Connection / timeout / forced rate-limit disconnect. */
 export class PortersNetworkError extends PortersError {}
 
+// Promise を返すメソッドでは同期 throw しない（ADR-0046）。呼び出しごとの値の変換失敗を
+// category "validation" で返す形は RV-36。
 /**
  * Misconfiguration / misuse — **not PORTERS-originated**.
  *
  * Thrown synchronously where the API returns no Promise (`new PortersClient()`, `defineFields`,
  * `assertFieldsMatch`). From a `Promise`-returning method it arrives as a **rejection**, never a
- * synchronous throw (ADR-0046) — a per-call value the library cannot convert reaches you that way
- * (`category: "validation"` — RV-36).
+ * synchronous throw — a per-call value the library cannot convert reaches you that way
+ * (`category: "validation"`).
  */
 export class PortersConfigError extends PortersError {}

@@ -8,7 +8,7 @@
 
 > **FieldBuilder** = `object`
 
-Defined in: [src/fields/define-fields.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L38)
+Defined in: [src/fields/define-fields.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L39)
 
 Builder passed to each resource declaration: one method per declarable Data Type.
 
@@ -18,7 +18,7 @@ Builder passed to each resource declaration: one method per declarable Data Type
 
 > **age**(): [`FieldDef`](FieldDef.md)\<`"Age"`\>
 
-Defined in: [src/fields/define-fields.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L47)
+Defined in: [src/fields/define-fields.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L48)
 
 #### Returns
 
@@ -30,7 +30,7 @@ Defined in: [src/fields/define-fields.ts:47](https://github.com/Joymerrevent/por
 
 > **date**(): [`FieldDef`](FieldDef.md)\<`"Date"`\>
 
-Defined in: [src/fields/define-fields.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L45)
+Defined in: [src/fields/define-fields.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L46)
 
 #### Returns
 
@@ -42,7 +42,7 @@ Defined in: [src/fields/define-fields.ts:45](https://github.com/Joymerrevent/por
 
 > **dateTime**(): [`FieldDef`](FieldDef.md)\<`"DateTime"`\>
 
-Defined in: [src/fields/define-fields.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L46)
+Defined in: [src/fields/define-fields.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L47)
 
 #### Returns
 
@@ -54,7 +54,7 @@ Defined in: [src/fields/define-fields.ts:46](https://github.com/Joymerrevent/por
 
 > **image**(): [`FieldDef`](FieldDef.md)\<`"Image"`\>
 
-Defined in: [src/fields/define-fields.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L54)
+Defined in: [src/fields/define-fields.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L55)
 
 An Image field (FT-18). Reads back `FileName` alone unless the query's `image` option asks
 for `ContentType` / `Content`; writes the three sub-elements, checked before send.
@@ -69,7 +69,7 @@ for `ContentType` / `Content`; writes the three sub-elements, checked before sen
 
 > **link**(): [`FieldDef`](FieldDef.md)\<`"Link"`\>
 
-Defined in: [src/fields/define-fields.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L59)
+Defined in: [src/fields/define-fields.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L60)
 
 A Link field (FT-20). Reads back a Contact id, a `UserRef`, or a `DepartmentRef` — whichever
 the tenant configured, told apart by shape; writes the referenced id.
@@ -84,7 +84,7 @@ the tenant configured, told apart by shape; writes the referenced id.
 
 > **mail**(): [`FieldDef`](FieldDef.md)\<`"Mail"`\>
 
-Defined in: [src/fields/define-fields.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L42)
+Defined in: [src/fields/define-fields.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L43)
 
 #### Returns
 
@@ -96,7 +96,7 @@ Defined in: [src/fields/define-fields.ts:42](https://github.com/Joymerrevent/por
 
 > **multilineText**(): [`FieldDef`](FieldDef.md)\<`"MultilineText"`\>
 
-Defined in: [src/fields/define-fields.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L41)
+Defined in: [src/fields/define-fields.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L42)
 
 #### Returns
 
@@ -108,7 +108,7 @@ Defined in: [src/fields/define-fields.ts:41](https://github.com/Joymerrevent/por
 
 > **number**(): [`FieldDef`](FieldDef.md)\<`"Number"`\>
 
-Defined in: [src/fields/define-fields.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L39)
+Defined in: [src/fields/define-fields.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L40)
 
 #### Returns
 
@@ -120,7 +120,7 @@ Defined in: [src/fields/define-fields.ts:39](https://github.com/Joymerrevent/por
 
 > **option**(): [`FieldDef`](FieldDef.md)\<`"Option"`\>
 
-Defined in: [src/fields/define-fields.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L48)
+Defined in: [src/fields/define-fields.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L49)
 
 #### Returns
 
@@ -132,7 +132,7 @@ Defined in: [src/fields/define-fields.ts:48](https://github.com/Joymerrevent/por
 
 > **singlelineText**(): [`FieldDef`](FieldDef.md)\<`"SinglelineText"`\>
 
-Defined in: [src/fields/define-fields.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L40)
+Defined in: [src/fields/define-fields.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L41)
 
 #### Returns
 
@@ -144,7 +144,7 @@ Defined in: [src/fields/define-fields.ts:40](https://github.com/Joymerrevent/por
 
 > **telephone**(): [`FieldDef`](FieldDef.md)\<`"Telephone"`\>
 
-Defined in: [src/fields/define-fields.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L43)
+Defined in: [src/fields/define-fields.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L44)
 
 #### Returns
 
@@ -156,7 +156,7 @@ Defined in: [src/fields/define-fields.ts:43](https://github.com/Joymerrevent/por
 
 > **url**(): [`FieldDef`](FieldDef.md)\<`"URL"`\>
 
-Defined in: [src/fields/define-fields.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L44)
+Defined in: [src/fields/define-fields.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L45)
 
 #### Returns
 
@@ -168,7 +168,7 @@ Defined in: [src/fields/define-fields.ts:44](https://github.com/Joymerrevent/por
 
 > **user**(): [`FieldDef`](FieldDef.md)\<`"User"`\>
 
-Defined in: [src/fields/define-fields.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L49)
+Defined in: [src/fields/define-fields.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L50)
 
 #### Returns
 

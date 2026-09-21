@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -75,9 +75,10 @@
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",
-    "check": "pnpm run \"/^check:(?!publish$|cjs$)[^:]+$/\"",
+    "check": "pnpm run \"/^check:(?!publish$|cjs$|dts$)[^:]+$/\"",
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm false-cjs",
     "check:cjs": "node scripts/check-cjs-entry.mjs",
+    "check:dts": "node scripts/check-dts-comments.mjs",
     "check:release": "node scripts/check-release-invariants.mjs",
     "check:index": "node scripts/check-doc-index.mjs",
     "check:docs": "node scripts/check-doc-examples.mjs",
@@ -85,6 +86,7 @@
     "check:lv": "node scripts/check-live-verification.mjs",
     "docs:api": "typedoc",
     "check:api": "node scripts/check-api-reference.mjs",
+    "check:usage": "node scripts/check-usage-docs.mjs",
     "check:mentions": "node scripts/check-api-mentions.mjs",
     "check:shell": "node scripts/check-shell-identifiers.mjs",
     "prepare": "simple-git-hooks"

@@ -10,7 +10,7 @@
 
 Defined in: [src/auth/auth-api.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L16)
 
-Shared options for the browser `code` / `remove` OAuth URLs (oauth.md).
+Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md).
 
 ## Properties
 

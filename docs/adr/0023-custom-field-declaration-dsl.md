@@ -8,6 +8,12 @@
 > [ADR-0004][0004]（型モデル・案H）と [ADR-0005][0005]（公開 API・SD-2 ビルダー）が決めた
 > 「標準 `P_` は静的型／カスタム `U_`・`A_` は利用者が宣言 → 型導出＋実行時検証」の**実装**を確定する。
 > 本 ADR は新しい方針を作るのではなく、両 ADR を**詳細設計レベルで接地**する。
+>
+> **Amended by [ADR-0087][0087]（2026-09-21）**: **D1（案1＝`PortersClient<C>` をジェネリック化し
+> コンストラクタの `fields` から `C` を推論）は部分的に supersede された**。宣言は partition ごとのものなので、
+> 受け取る場所を `porters.tenant(id, { fields })` に移し、`PortersClient` / `PortersClientOptions` は
+> 非ジェネリックになった。型引数は `TenantScope<C>` と `tenant()` にだけ残る。
+> D2〜D7（ビルダー・検証境界・マージ意味論・対象スコープ）は不変。以下の本文は当時の記録としてそのまま残す。
 
 ## Context and Problem Statement
 
@@ -132,6 +138,7 @@
 [0005]: 0005-public-api-shape.md
 [0064]: 0064-link-image-types.md
 [0006]: 0006-error-model.md
+[0087]: 0087-tenant-scoped-field-declarations.md
 [0016]: 0016-field-type-granularity.md
 [0019]: 0019-static-resource-types.md
 [0060]: 0060-full-resource-coverage-direction.md

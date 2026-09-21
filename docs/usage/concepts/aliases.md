@@ -1,6 +1,6 @@
 # alias と Data Type
 
-PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで決まります。ここが分かると、
+PORTERS の項目は**名前（alias）** と**型（Data Type）** の 2 つで決まります。ここが分かると、
 読み書きで出てくる型のほとんどが説明できます。
 
 ## alias は 3 種類ある
@@ -11,21 +11,21 @@ PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで�
 | `U_`   | カスタム項目 | テナントの利用者   | [`defineFields`][custom-fields] で宣言すると型が付く |
 | `A_`   | カスタム項目 | アプリ（API 経由） | 同上                                                 |
 
-`P_` はどのテナントでも同じなので、ライブラリが**カタログ**を持っています（[ADR-0019][adr19]）。
+`P_` はどのテナントでも同じなので、ライブラリが**カタログ**を持っています<!-- 根拠: ADR-0019 -->。
 カタログとは、**ライブラリが知っている項目の一覧**です — リソースごとに、alias と Data Type が
 載っています。型が付くのも、`field` を省略したときに項目が返るのも、これが元になっています。
 
-`U_` / `A_` は**テナントごとに違う**ので、同梱できません。だから宣言する仕組みがあります
-（[ADR-0004][adr4]）。**宣言したものがカタログに加わる**、という関係です。
+`U_` / `A_` は**テナントごとに違う**ので、同梱できません。だから宣言する仕組みがあります<!-- 根拠: ADR-0004 -->。
+**宣言したものがカタログに加わる**、という関係です。
 
 > **`U_` / `A_` は宣言してから使います。** 宣言していない alias は `field` / `condition` /
-> `order` / 書き込みのどこに書いても型エラーです（[ADR-0074][adr74]）。実行時は寛容なままなので、
+> `order` / 書き込みのどこに書いても型エラーです<!-- 根拠: ADR-0074 -->。実行時は寛容なままなので、
 > cast で型を外せば呼べます。詳しくは[カスタム項目][custom-fields]にあります。
 
 ## 接頭辞は書かない
 
 PORTERS の wire 上では項目名が `Person.P_Name` のように**リソースの接頭辞つき**になります。
-このライブラリでは**接頭辞を書きません**（[ADR-0059][adr59]）。ライブラリが付けます。
+このライブラリでは**接頭辞を書きません**<!-- 根拠: ADR-0059 -->。ライブラリが付けます。
 
 <!-- doccheck: expect-error -->
 
@@ -47,12 +47,12 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 | Attachment | **なし**     | `FileName` のように裸        |
 | その他     | リソース名   | `Job.P_Position` など        |
 
-`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます。
+`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）** で書けます。
 
 ## Data Type が「値の形」を決める
 
 PORTERS は項目ごとに **Field Type**（画面上の種類）を持ち、それが **Data Type**（値の形）に
-対応します。このライブラリが型として扱うのは **Data Type** のほうです（[ADR-0016][adr16]）。
+対応します。このライブラリが型として扱うのは **Data Type** のほうです<!-- 根拠: ADR-0016 -->。
 
 Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。たとえば
 `Option[Checkbox]` / `Option[Radiobutton]` / `Option[Dropdown]` の 3 つは、値の形としては
@@ -75,8 +75,8 @@ Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。
 id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が
 別の型なのはこのためです）。
 
-`Option` が常に配列なのは、単一選択でも複数選択でも PORTERS が同じ形で返すからです
-（[ADR-0017][adr17]）。選択が無ければ `null` です。
+`Option` が常に配列なのは、単一選択でも複数選択でも PORTERS が同じ形で返すからです<!-- 根拠: ADR-0017 -->。
+選択が無ければ `null` です。
 
 ## 「どのリソースか」は 2 通りで現れる
 
@@ -93,7 +93,7 @@ Opportunity `25` / Contact `27`）。この値は**2 つの立場**で出てき�
 決めてから読みますが、アクティビティの一覧は**求職者のものと JOB のものが混ざる**のが普通なので、
 レコードごとの値になります。
 
-**数値を書く／読むときは、変換関数を使ってください**（[ADR-0079][adr79]）。欠番（`6`）や
+**数値を書く／読むときは、変換関数を使ってください**<!-- 根拠: ADR-0079 -->。欠番（`6`）や
 取り違え（Recruiter `9` と Sales `11`）は数値リテラルだと気づけません。
 
 ```ts
@@ -118,7 +118,7 @@ resourceNameOf(found.items[0]?.P_Resource ?? 0); // "candidate" | … | number
 ## 型が無い項目もある
 
 PORTERS が Data Type を与えていない項目があります。reference で `ー` と書かれているもので、
-今は `P_Deleted` だけです。変換の基準が無いので**生の文字列のまま返します**（[ADR-0056][adr56]）。
+今は `P_Deleted` だけです。変換の基準が無いので**生の文字列のまま返します**<!-- 根拠: ADR-0056 -->。
 
 この項目は `field` でしか使えません（`condition` / `order` / 書き込みでは PORTERS が拒否します）。
 型の上でもそうなっていて、書こうとするとコンパイルが通りません。
@@ -139,20 +139,15 @@ PORTERS 自身が注意している点です。
 
 ## 関連
 
-- 決定: [ADR-0004][adr4]（`P_` は静的・`U_`/`A_` は宣言）／[ADR-0016][adr16]（Data Type の粒度）／
-  [ADR-0017][adr17]（Option は常に配列）／[ADR-0019][adr19]（静的カタログ）／
-  [ADR-0056][adr56]（型が無い項目）／[ADR-0059][adr59]（接頭辞を書かない）
 - 手順: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 
-[adr4]: ../../adr/0004-field-type-model.md
-[adr79]: ../../adr/0079-resource-by-name.md
-[adr16]: ../../adr/0016-field-type-granularity.md
-[adr17]: ../../adr/0017-option-read-shape.md
-[adr19]: ../../adr/0019-static-resource-types.md
-[adr56]: ../../adr/0056-deleted-flag-typing.md
-[adr59]: ../../adr/0059-read-field-bare-alias.md
-[adr74]: ../../adr/0074-custom-field-declaration-required.md
+<!-- 根拠:
+- 決定: ADR-0004（`P_` は静的・`U_`/`A_` は宣言）／ADR-0016（Data Type の粒度）／
+  ADR-0017（Option は常に配列）／ADR-0019（静的カタログ）／
+  ADR-0056（型が無い項目）／ADR-0059（接頭辞を書かない）
+-->
+
 [custom-fields]: ../howto/custom-fields.md
 [datetime]: datetime.md
 [fdt]: ../reference/resource-api/field-data-types.md

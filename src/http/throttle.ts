@@ -25,13 +25,14 @@ export type ThrottleOptions = {
   readPerMin?: number;
   /** Writes allowed per minute before headroom. Default 500. Same rules as `readPerMin`. */
   writePerMin?: number;
+  // 容量 0 を構築時に弾く判断は RV-49。
   /**
    * Fraction of the limit to actually use (headroom). Default 0.9. Greater than 0, at most 1.
    *
    * The bucket holds `floor(limit * safety)` tokens, so a small limit and a small `safety`
    * multiply into **zero capacity** — `{ readPerMin: 1 }` at the default 0.9 already does.
    * A bucket that can never hold a token would make every call wait forever, so the
-   * combination is rejected at construction rather than hanging (RV-49).
+   * combination is rejected at construction rather than hanging.
    */
   safety?: number;
   now?: () => number;

@@ -5,7 +5,9 @@ Recruiter / Contact / Opportunity / Activity / Contract / Sales / Process / Resu
 **Phase**（`t.phase.of(...)` で束ねたもの）に `createMany` / `updateMany` があります。
 **Attachment にはありません**（本体が巨大な Base64 のため。下記「対象外」）。
 
-設計の根拠は [ADR-0041（F-4 実装）][adr-0041]、書式の一次情報は [Write API（XML 形式）][write-format]。
+書式の一次情報は [Write API（XML 形式）][write-format]。
+
+<!-- 根拠: ADR-0041（実装） -->
 
 ## 使い方
 
@@ -58,7 +60,7 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 - **リクエスト全体の失敗**（HTTP エラー・通信断・パース不能・**リクエスト単位の拒否**）だけが throw されます。
 - リクエストごと拒否された場合（PORTERS が `<Item>` を返さず、ルートの `<Code>` だけで答える形）は、
-  その **Result Code がそのまま `PortersResourceError` として** throw されます（[ADR-0045][adr-0045]）。
+  その **Result Code がそのまま `PortersResourceError` として** throw されます<!-- 根拠: ADR-0045 -->。
   件数不一致のような不透明なエラーにはなりません。
 - バッチ途中（2 つ目以降）で失敗した場合、**既に書き込まれた件数**を `hint` に付けて `PortersResourceError`
   を throw します。`createMany` はバッチ跨ぎで**非冪等**なので、**全体を再実行すると作成が重複**します。
@@ -76,12 +78,13 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 - 手順: [失敗の扱い][handle-failures]（部分成功と、再送してよいか）／[毎日の同期][sync-batch]（差分をまとめて書く）／[添付ファイル][attachments]（単件のみ）
 - 考え方: [上限][limits]（200 件・リクエスト長）／[削除 API が無いということ][no-delete]（作りすぎても消せない）
-- 決定: [ADR-0041][adr-0041]（一括書き込みの公開サーフェス）／[ADR-0045][adr-0045]（Write 応答のルート Code）
 - API 事実: [Write API（XML 形式）][write-format]／[Result Code][result-codes]
 - ほかの目的から探す: [目次][index]
 
-[adr-0041]: ../../adr/0041-bulk-write-surface-impl.md
-[adr-0045]: ../../adr/0045-write-response-root-code.md
+<!-- 根拠:
+- 決定: ADR-0041（一括書き込みの公開サーフェス）／ADR-0045（Write 応答のルート Code）
+-->
+
 [write-format]: ../reference/resource-api/write-format.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [handle-failures]: handle-failures.md

@@ -8,11 +8,11 @@
 
 > **ResourcePageOf**\<`T`\> = `object`
 
-Defined in: [src/resources/read-core.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L96)
+Defined in: [src/resources/read-core.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L98)
 
 A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
 the item decoder produced. Parametrised by the *record* rather than the catalog because a read
-that expands references returns a wider record than the catalog alone describes (ADR-0058).
+that expands references returns a wider record than the catalog alone describes.
 
 ## Type Parameters
 
@@ -26,7 +26,7 @@ that expands references returns a wider record than the catalog alone describes 
 
 > **count**: `number`
 
-Defined in: [src/resources/read-core.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L99)
+Defined in: [src/resources/read-core.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L101)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/read-core.ts:99](https://github.com/Joymerrevent/port
 
 > **items**: `T`[]
 
-Defined in: [src/resources/read-core.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L97)
+Defined in: [src/resources/read-core.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L99)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [src/resources/read-core.ts:97](https://github.com/Joymerrevent/port
 
 > **start**: `number`
 
-Defined in: [src/resources/read-core.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L100)
+Defined in: [src/resources/read-core.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L102)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [src/resources/read-core.ts:100](https://github.com/Joymerrevent/por
 
 > **total**: `number`
 
-Defined in: [src/resources/read-core.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L98)
+Defined in: [src/resources/read-core.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L100)

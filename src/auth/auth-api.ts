@@ -12,7 +12,7 @@ import type { Scope } from "../types/index";
 import { exchangeToken } from "./token-exchange";
 import type { StoredTokens, TokenProvider } from "./types";
 
-/** Shared options for the browser `code` / `remove` OAuth URLs (oauth.md). */
+/** Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md). */
 export type AuthorizationUrlOptions = {
   /** Registered Redirect URL the browser returns to (required for code/remove). */
   redirectUrl: string;
@@ -25,8 +25,9 @@ export type AuthorizationUrlOptions = {
 /** Options for the `remove` (de-authorization) browser URL. */
 export type RevokeUrlOptions = AuthorizationUrlOptions;
 
+// 公開メソッドの範囲は ADR-0007 SD-3 / SD-6。
 /**
- * The `porters.auth.*` surface (ADR-0007 SD-3/SD-6). The initial per-Company-DB grant
+ * The `porters.auth.*` surface. The initial per-Company-DB grant
  * needs a human to open {@link AuthApi.authorizationUrl} in a browser and consent; the
  * library only builds the URL and exchanges the returned `code`. Day-to-day token
  * acquisition/refresh stays transparent (the default strategy), so most callers never

@@ -39,8 +39,9 @@ redirect の場合は `?error=コード`。**Resource API の Result Code（[res
 | 401  | **Refresh Token の有効期限切れ** → 再認証 |
 | 402  | アクセス許可が無い                        |
 
-エラーモデル（ライブラリの `PortersError`）への対応は ADR-0006 を参照。
-利用者向けの症状別対処は [エラーハンドリング ガイド][guide] を参照。
+エラーモデル（ライブラリの `PortersError`）への対応と症状別の対処は [エラーハンドリング ガイド][guide] を参照。
+
+<!-- 根拠: ADR-0006（エラーモデル） -->
 
 [readme]: README.md
 [result-codes]: ../resource-api/result-codes.md

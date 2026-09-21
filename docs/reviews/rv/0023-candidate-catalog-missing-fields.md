@@ -63,7 +63,7 @@ semver は **minor**（公開型に項目が増える）。
 ## 検証
 
 - `test/integration/reference-catalog.test.ts` が
-  **「値を持つ標準項目がすべてカタログにある」**ことを検証し、Candidate も通る。
+  **「値を持つ標準項目がすべてカタログにある」** ことを検証し、Candidate も通る。
 - **落ちることを確認済み**: `P_Memo` を外すと
   `expected [ 'P_Memo' ] to deeply equal []` で失敗する＝本 finding をそのまま再現して検出する。
 - 既存 579 テストは無改修で緑。フェイクサーバーは descriptor を共有しているため

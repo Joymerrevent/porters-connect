@@ -79,7 +79,7 @@ if (result.hasFailures) {
 1 分あたり Read 2000 / Write 500 を、ライブラリが内蔵スロットリングで抑えます。**上限に近づくと
 待つ**ので、バッチ側で `sleep` を挟む必要はありません。
 
-**バケットはホストごと**です（[ADR-0073][adr73]）。同じ PORTERS を向くクライアントをいくつ
+**バケットはホストごと**です<!-- 根拠: ADR-0073 -->。同じ PORTERS を向くクライアントをいくつ
 作っても、合計が上限に収まります。バッチと Web アプリを同じプロセスで動かしても同じです。
 
 **別プロセスで動かすなら話は別です。** 日次バッチを Web アプリとは別のプロセスで回すと、
@@ -140,4 +140,3 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 [aliases]: ../concepts/aliases.md
 [search-records]: search-records.md
 [index]: ../index.md
-[adr73]: ../../adr/0073-throttle-sharing.md

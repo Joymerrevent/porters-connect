@@ -90,9 +90,10 @@ export type AttachmentWalkQuery = Omit<
   "count" | "start"
 >;
 
+// resource は of(name) で束ねる（ADR-0080）・write でも同じ値を使う（ADR-0081）。
 /**
  * Fields for creating an Attachment. `content` is the Base64 file body; the resource it attaches
- * to comes from `of(name)` and cannot be given here (ADR-0080 / ADR-0081).
+ * to comes from `of(name)` and cannot be given here.
  */
 export type AttachmentCreate = {
   /** The record's id within the bound resource. */
@@ -109,8 +110,9 @@ export type AttachmentUpdate = {
   content?: string;
 };
 
+// of(resource) で束ねる形は ADR-0080、write 側も同じ値で埋めるのは ADR-0081。
 /**
- * Attachments are reached through the resource they belong to (ADR-0080 / ADR-0081):
+ * Attachments are reached through the resource they belong to:
  *
  * ```ts
  * const files = t.attachment.of("resume");
@@ -127,15 +129,16 @@ export type AttachmentAccessor = {
 
 export type AttachmentResource = {
   search(query?: AttachmentSearchQuery): Promise<AttachmentPage>;
+  // 本体は get だけが運ぶ（search / searchAll はメタデータのみ）: ADR-0075。
   /**
    * Auto-paginating search: yields every matching attachment (200 per page). Metadata only —
-   * the body stays behind {@link AttachmentResource.get} (ADR-0075), so walking every attachment
+   * the body stays behind {@link AttachmentResource.get}, so walking every attachment
    * in a partition never drags the files along with it.
    */
   searchAll(query?: AttachmentWalkQuery): AsyncIterable<Attachment>;
   /**
    * Read one attachment **with its body** (`content`). This is the only method that carries it:
-   * one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable (ADR-0075).
+   * one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable.
    */
   get(id: number): Promise<Attachment | undefined>;
   /** Create an Attachment; resolves to the newly assigned id. */

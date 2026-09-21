@@ -1,14 +1,15 @@
 // Custom field declaration DSL (ADR-0023, grounding ADR-0004 案H / ADR-0005 SD-2).
 // `defineFields` is the single validation boundary: a typed builder declares each
 // tenant custom field's Data Type per data resource, validation runs synchronously,
-// and the result is branded so PortersClient trusts it without re-validating. Standard
+// and the result is branded so `tenant(id, { fields })` trusts it without re-validating. Standard
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
 import { PortersConfigError } from "../errors";
 import type { EmptyCatalog } from "../resources/read-core";
 import type { DataType } from "../xml/decode";
 
-/** One custom field's declared Data Type — the builder's return value (ADR-0023 D2). */
+// ADR-0023 D2。
+/** One custom field's declared Data Type — the builder's return value. */
 export type FieldDef<D extends DataType> = { readonly dataType: D };
 
 // Data Types a custom U_/A_ field may declare (ADR-0023 D3): the value-shaped types. The
@@ -59,7 +60,8 @@ export type FieldBuilder = {
   link(): FieldDef<"Link">;
 };
 
-/** Data resources that accept custom fields (ADR-0023 D6). Master / Attachment are excluded. */
+// ADR-0023 D6。
+/** Data resources that accept custom fields. Master / Attachment are excluded. */
 export type CustomFieldResource =
   | "candidate"
   | "job"
@@ -112,7 +114,8 @@ export type DefinedFields<C extends DeclaredCatalogs = DeclaredCatalogs> = C & {
   readonly [definedFieldsBrand]: true;
 };
 
-/** The custom catalog declared for resource `K` (or `{}` if none) — types each accessor (ADR-0023 D1). */
+// ADR-0023 D1。
+/** The custom catalog declared for resource `K` (or `{}` if none) — types each accessor. */
 export type CustomFor<
   C extends DeclaredCatalogs,
   K extends CustomFieldResource,
@@ -160,17 +163,19 @@ const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
   "resume",
 ];
 
+// 宣言 DSL は ADR-0023、渡し先が tenant(id, { fields }) なのは ADR-0087。
 /**
- * Declare tenant-specific custom fields per data resource (ADR-0023). This is the validation
+ * Declare tenant-specific custom fields per data resource. This is the validation
  * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key or an
- * alias that is not `U_`/`A_`-prefixed. The branded result is passed to `PortersClient({ fields })`,
- * which merges each catalog into the resource so the custom fields decode/encode by their declared
- * Data Type and appear typed on reads / writes.
+ * alias that is not `U_`/`A_`-prefixed. The branded result is passed to the partition it describes,
+ * `porters.tenant(id, { fields })`, which merges each catalog into the resource so the
+ * custom fields decode/encode by their declared Data Type and appear typed on reads / writes.
  *
  * @example
  * const myFields = defineFields({
  *   candidate: (f) => ({ U_score: f.number(), U_source: f.option() }),
  * });
+ * const t = porters.tenant(1, { fields: myFields });
  */
 export const defineFields = <D extends FieldDecls>(
   decls: D,
