@@ -30,9 +30,16 @@ const t = porters.tenant(123, { fields });
 - `A_` を App 共通、`U_` をテナント固有にしたい場合は、共通部分を関数にして各テナントの宣言に
   spread します（ライブラリは `A_` と `U_` を区別しません）。書き方は[カスタム項目ガイド][guide]に
   あります。
+- **コンストラクタに `fields` が残っていると、構築時に `PortersConfigError`**（`category: "config"`）で
+  止まります。`hint` が `tenant(id, { fields })` を指します。型でも弾きます（`fields` は `never`）。
+  黙って無視すると宣言が丸ごと捨てられ、カスタム項目が型から消えたまま動いてしまうためです。
+  `fields: undefined` は未指定と同じ扱いです。
 - 型を書くときは、`PortersClient<typeof fields>` / `PortersClientOptions<typeof fields>` が
   **コンパイルエラー**になります。スコープを受ける関数は `TenantScope<typeof fields>`（これまでどおり）、
   `tenant()` の引数を切り出すなら新設の `TenantOptions<typeof fields>` で書きます。
+  `ReturnType<typeof porters.tenant>` で受けていた関数は、`tenant` がジェネリックになったため
+  **広い型（`TenantScope<DeclaredCatalogs>`）**に落ち、カスタム項目が型から消えます（使う箇所で
+  コンパイルエラーになります）。`TenantScope<typeof fields>` に書き換えてください。
 - `generateFieldDecls` / `verifyFields` / `readCustomCatalog` は変わりません（もともと `tenant(id)`
   スコープを取ります）。
 
