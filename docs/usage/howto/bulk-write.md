@@ -1,4 +1,4 @@
-# 一括書き込み（createMany / updateMany）
+# 200 件を超える書き込みをしたい
 
 複数レコードをまとめて登録・更新するガイドです。**データ系 11 種**（Candidate / Job / Client /
 Recruiter / Contact / Opportunity / Activity / Contract / Sales / Process / Resume）と

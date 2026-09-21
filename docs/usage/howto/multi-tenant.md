@@ -1,4 +1,4 @@
-# partition の束ね方（単一テナント / マルチテナント）
+# 複数テナントを 1 プロセスで扱いたい
 
 PORTERS は **partition（Company DB）スコープの全リクエストで `partition` を要求**します。
 このライブラリでは **`porters.tenant(id)` が partition を束ねる唯一の方法**で、
