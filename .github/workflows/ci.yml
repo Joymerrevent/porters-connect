@@ -76,7 +76,8 @@ jobs:
       #                  気づけない＝表に無い仮定が契約後の確認リストから漏れる
       #   check:mentions 公開記号が入門か目的別のどこかから辿れるか（ADR-0070 検査③）
       #   check:api      docs/usage/api（TypeDoc 生成物）が今のソースと一致するか（ADR-0068）。
-      #                  JSDoc だけの変更でも差分が出る
+      #                  JSDoc だけの変更でも差分が出る。あわせて生成物に日本語（かな・RV-51）と
+      #                  保守者向けの識別子（ADR / RV / LV 番号など・#363）が混ざっていないかも見る
       #   check:shell    シェルの `$var` に全角文字が吸われる箇所（.sh と workflows の YAML）。
       #                  「報告せず死ぬ」形で壊れるため（実際に 2 度発生）
       - name: Checks (docs / release / shell)
