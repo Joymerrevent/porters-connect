@@ -90,6 +90,18 @@
   FieldType の粒度／Option の読み取り値／Attachment／マスタ Read はすべて起票済み。各々の状態は
   [索引][index] を参照）。
 
+### 【プロセス】
+
+- **Stryker の survivor を「撃破」か「同値として明示」かに振り分ける** — [RV-59][rv59] の案 (b)。
+  [0015][0015] は「survived はテストの穴。`// Stryker disable` は真の同値変異のみ・理由付きで明示」と
+  決めているが、2026-09-21 の全体実測は **Survived 89 ／ Ignored（明示済み）42** で、89 件は
+  どちらでもないまま閾値 95 の下に溜まっている。RV-59 の処置では `client.ts` の 10 件（同値でなかった）
+  だけをテストで撃破し、残り 79 件（`decode.ts` 20・`auth-api.ts` 20・`image.ts` 15 …。エラー文言・
+  hint 文字列の変異が主）の扱いは**保留**した。論点は **規則と実態のどちらを直すか**: 79 件を
+  テストで撃破する（規則どおり・ADR 不要）か、「エラー文言の文字列変異は pin しない」を 0015 に
+  1 行足す（規則の改訂＝要 ADR）か。前 run が survivor を根拠なく「同値」と記録した経緯があるので、
+  どちらにしても**件数でなく行の一覧**で判断する。
+
 ### ADR を起こさずに決着した論点（記録）
 
 - **値レベルの実行時検証**（ロードマップの案D の残り 1 つ）— **ADR 不要と判断**（2026-09-10）。
@@ -131,6 +143,7 @@
 [lv-doc]: ../live-verification.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [0011]: 0011-xml-parse-serialize.md
+[0015]: 0015-mutation-testing.md
 [0047]: 0047-access-point-scheme.md
 [0048]: 0048-access-point-host-validation.md
 [0077]: 0077-fetch-transport-timeout.md
@@ -138,6 +151,7 @@
 [rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
 [rv54]: ../reviews/rv/0054-reserved-tag-name-read-throws.md
 [rv55]: ../reviews/rv/0055-time-of-day-decode-hour-unchecked.md
+[rv59]: ../reviews/rv/0059-tenant-fields-threading-unpinned.md
 [0086]: 0086-time-of-day-fields.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md

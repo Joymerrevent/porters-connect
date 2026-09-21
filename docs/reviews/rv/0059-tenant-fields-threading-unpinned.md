@@ -1,7 +1,7 @@
 # RV-59 🟡 `tenant(id, { fields })` の宣言配線を candidate 以外の 10 リソースで pin しておらず、その survivor を「同値」と記録していた
 
 - 重要度: 🟡 ／ 観点: テスト厳密性 / プロセス
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -71,8 +71,36 @@
 
 ## 処置
 
-—
+**実施（案 (a) ＋ (c)・2026-09-21）。案 (b) は保留し、置き場を作った。**
+
+- (a) `src/fields/custom-fields.test.ts` に表駆動テスト「`tenant(id, { fields })` reaches every data
+  resource」を足した。11 リソースすべてを **1 つの `defineFields`** に宣言し（alias は `U_${path}` で
+  リソースごとに別）、各アクセサの `search()` で (i) 返る `U_x` が宣言の Data Type で decode される
+  （Number → `87`。宣言が落ちれば passthrough の `"87"`）、(ii) URL の `field` にその alias が入る、
+  を 1 リソースずつ `expect`。alias を分けたので、**空のキーだけでなく他リソースのキーへの取り違え**
+  （`customFor("candidate")` を job に渡す）も落ちる。あわせて「表の行 ＝ `CustomFieldResource` の
+  全キー」を pin し、リソースを足したときに表が黙って古くならないようにした。
+- (c) スナップショットの書き方は [run 2][run2] から実施済み（survivor は件数でなくファイルと行を出す）。
+- (b) **保留**。残り 79 件（`decode.ts` 20・`auth-api.ts` 20・`image.ts` 15 …）を「撃破」か
+  「`// Stryker disable` で明示」に振り分ける判断は、[ADR-0015][adr15] の規則をそのまま適用する
+  （全部テストで撃破）か規則を改訂する（エラー文言の変異は pin しない）かの二択で、後者は要 ADR。
+  [RV-57][rv57] の教訓どおり fixed の RV の中に埋めず、[ADR README の論点バックログ][adr-backlog]
+  【プロセス】と roadmap の「要 ADR（判断待ち）」に置いた。**V3 は要 ADR 1 で未達**のまま。
+- コード（`src/client.ts`）は変更していない。ADR も起こしていない（テストの追加のみ）。
+
+## 検証
+
+- **変異を手で当てて落ちることを確認**（2026-09-21）: `src/client.ts:349` を `customFor("")` にすると
+  `'job' decodes its own declaration and asks for it` が失敗（`expected "87" to be 87`）。
+  `customFor("candidate")` にしても同じテストが失敗（job の `U_job` が届かず、URL にも入らない）。
+  どちらも復元後は 20 件緑。
+- **Stryker を `client.ts` 単体で実測**: `pnpm stryker run --mutate src/client.ts` →
+  **41 ミュータント・killed 41・survived 0（100.00）**。指摘時は同じファイルで survived 10。
+- `pnpm test:coverage`（1414 → 1426 件）・`typecheck`・`lint:ts` 緑。
 
 [adr15]: ../../adr/0015-mutation-testing.md
+[adr-backlog]: ../../adr/README.md#論点バックログ（未起票）
+[rv57]: 0057-deferred-decision-not-in-backlog.md
+[run2]: ../2026-09-21-02.md
 [adr87]: ../../adr/0087-tenant-scoped-field-declarations.md
 [prev]: ../2026-09-21-01.md
