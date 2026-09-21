@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-29
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.11.0
 
 > [ADR-0058][adr58] の議論から派生した**独立の判断**（参照展開とは別に、既存の公開 API `field` を変える話）。
 > `condition` / `order` は**素の alias**（`P_Name`）を受けてエンコーダが接頭辞を付けるのに、

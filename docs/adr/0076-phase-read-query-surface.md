@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-15
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.17.0
 
 > [エンドポイント × 機能マトリクス][coverage]（V1）の表 B で見つかったずれ（[LV-25][lv]）の決着。
 > **出典が挙げていないパラメータを、ライブラリが送れてしまう**という形。

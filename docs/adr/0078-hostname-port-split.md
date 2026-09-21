@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.18.0
 
 > [ADR-0047][adr47]（scheme を設定可能に）／[ADR-0048][adr48]（`host` の書式検証）／
 > [ADR-0049][adr49]（既定ポートを落とさない）で作った**アクセスポイントの形**を見直す。

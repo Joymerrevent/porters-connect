@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-31（accepted: 2026-09-03）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.12.1
 
 > [ADR-0010][adr10] の冪等性ガード（非冪等な `create` を不確定失敗で再送しない）は、実装上
 > **`PortersNetworkError` かどうか**だけで判定している。その結果、**リクエストが一度も出ていない失敗**や

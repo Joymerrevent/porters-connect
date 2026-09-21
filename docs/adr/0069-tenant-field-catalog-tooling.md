@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-09
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.15.0
 
 > [ADR-0023][0023] D5 が follow-up に送った 2 つ — **ライブ Field Read による「テナント実在」検証**と
 > **宣言雛形の自動生成**（[ADR-0004][0004] の P2 opt-in dev ツール）— を決める。

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-14
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.16.0
 
 > ドキュメント見直し（[#286][pr286]）の途中で、**`field` には書けるのに受け取れない**という
 > 非対称が見つかった。説明に 1 段落を要する形になっており、その説明自体が設計の徴候と判断して起票する。

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-20（accepted: 2026-09-20）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.20.0
 
 > 2026-09-20 の出典再取得（[#347][pr347]）で見つかった **PORTERS 9.3.0（2026/08/04）の項目タイプ「時分型」**
 > への対応方針。ライブラリは今この型を**知らない**。Field Type が年月日時分型と同じ `12` で API からは

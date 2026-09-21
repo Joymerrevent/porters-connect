@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-23
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.11.0
 
 > [RV-31][rv31] の ADR。PORTERS の Read は `field` の alias に `()` を付けると
 > **上位 Resource の項目を入れ子で返す**。ライブラリはその入れ子から **ID だけを取り出して残りを捨てる**ため、

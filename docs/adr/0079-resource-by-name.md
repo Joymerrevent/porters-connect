@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.18.0
 
 > [ADR-0061][adr61] が `t.phase.of("client")` を名前にしたときに残した論点。
 >

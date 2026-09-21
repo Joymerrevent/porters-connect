@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-04（accepted: 2026-09-05）
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.14.0
 
 > [ADR-0060][adr60] の **D3（データ型網羅 15/17 → 17/17）**の残り＝ `Link` と `Image`。
 > 両型は**カタログ済みの標準項目に 1 つも無く、テナントのカスタム項目（`U_` / `A_`）経由でしか現れない**。
