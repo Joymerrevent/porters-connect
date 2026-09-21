@@ -5,6 +5,35 @@
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-09-21
+
+**定期レビュー（0.20.0 直後）で見つけた 1 件を塞いだ版**です。破壊的変更はありません。
+
+### Fixed
+
+- **`decodeTimeOfDay` が時計の範囲にない時・分・秒を通さなくなりました**。基準日（`1970-01-01` /
+  `1970-01-02`）は見ていましたが、時・分・秒は 2 桁かどうかしか見ていなかったため、
+  `"1970-01-01T30:00:00Z"` を `"30:00"` として返し、それを `encodeTimeOfDay` に戻すと
+  `"1970-01-02T06:00:00Z"`＝**入力と別の値**になっていました。[ADR-0086][adr86] が決めた
+  「両方向とも検証する」の decode 側が欠けていた形です。
+
+  ```ts
+  decodeTimeOfDay("1970-01-01T30:00:00Z"); // PortersConfigError（以前は "30:00"）
+  decodeTimeOfDay("1970-01-01T09:60:00Z"); // PortersConfigError（以前は "09:60"）
+  decodeTimeOfDay("1970-01-02T02:00:00Z"); // "26:00"（変わらず）
+  ```
+
+  時は各基準日で `00`〜`23`、分と秒は `00`〜`59`。それ以外は基準日違いと同じ `PortersConfigError`
+  （`category: "validation"`）で止まります。**Read で得た ISO をそのまま渡しているコードは無変更**です
+  （ライブラリの日時 decode がそもそも不正な時分を通さないため）。エラーになるのは、手で組み立てた
+  ISO を渡していた場合だけです。
+
+### Changed
+
+- 内部の検査を 1 本増やしました（利用者への影響はありません）。CHANGELOG が名指しした設計 ADR に
+  「世に出た版」が記入されているかをリリース時に見る検査で、0.8.0 以降の設計 ADR 21 本に版を
+  記入し直しました。ADR 索引の「実装」列がふたたび事実と一致します。
+
 ## [0.20.0] - 2026-09-21
 
 **PORTERS ヘルプセンターを再取得して見つかった、追いついていなかった変更 2 つを埋めた版**です。
@@ -1195,7 +1224,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...HEAD
+[0.20.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
