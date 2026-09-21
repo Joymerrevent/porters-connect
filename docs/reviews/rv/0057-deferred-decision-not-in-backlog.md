@@ -1,7 +1,7 @@
 # RV-57 🟢 RV-54 で保留した書き込み側の判断が ADR バックログにも roadmap にも無い
 
 - 重要度: 🟢 ／ 観点: プロセス / ドキュメント
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -47,9 +47,28 @@
 
 ## 処置
 
-—
+**完了（案 (a) ＋ (b)・2026-09-21）。**
+
+- (a) [ADR README][adr-readme] の論点バックログ【詳細設計】に**条件付き 1 項目**を足した:
+  「`fast-xml-parser` が拒否する予約名を書き込み側でも弾くか — [RV-54][rv54] 案 (b)。**実例が出たら起票**。
+  論点は [ADR-0002][adr2] との兼ね合い（PORTERS が受け付ける値を JS パーサの都合で拒否してよいか）」。
+  いまの倒れ方（書けるが読み返すと `PortersResourceError`・`cause` にパーサの説明）と、
+  「実例の無い判断をしない」という保留の理由もそこに書いた＝ fixed の RV を読み返さなくても分かる。
+  「未起票の論点はなし」の 1 行は「上記以外の未起票の論点はなし」に改めた。
+- (b) [roadmap][roadmap] の V3 現在地に「要 ADR 0（条件付き 1 件＝ RV-54 案 (b)・実例が出たら起票。
+  分母に数えない）」を添え、「要 ADR（起票から）」節にも同じ 1 項目を置いて置き場（ADR README の
+  バックログ）へリンクした。**V3 の「要 ADR 0」は変えていない**（条件が揃うまでは起票しないので、
+  自分で進められる作業ではない）。
+- ADR は起こしていない（記録の置き場の話。指摘どおり）。
+
+## 検証
+
+- `grep RV-54 docs/adr/README.md docs/roadmap.md` — 指摘時 0 件 → README 1 箇所・roadmap 2 箇所。
+- `pnpm check:links` / `pnpm lint:md` / `pnpm check:index` が緑（README のアンカー付きリンクも実在を確認）。
 
 [adr2]: ../../adr/0002-ground-design-in-live-api-docs.md
+[adr-readme]: ../../adr/README.md
+[roadmap]: ../../roadmap.md
 [adr52]: ../../adr/0052-findings-register-layout.md
 [rv49]: 0049-throttle-options-unvalidated.md
 [rv54]: 0054-reserved-tag-name-read-throws.md
