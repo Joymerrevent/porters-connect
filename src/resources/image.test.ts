@@ -97,19 +97,58 @@ describe("guardImageWrite — 送信前に PORTERS の 3 つの上限を検査�
     ).toThrow(/over the 2MB limit/);
   });
 
-  it("Base64 のパディングを差し引いて実バイト数を測る（境界）", () => {
-    // 2MB ちょうど = 2097152 バイト。パディングありの表現でも「ちょうど」は通す。
-    const exact = "A".repeat((2 * 1024 * 1024) / 3 - 1); // 端数のない長さ
+  it("Base64 のパディングを差し引いて実バイト数を測る（2MB の境界）", () => {
+    // 2MB = 2097152 バイト = 699050 グループ × 3 バイト ＋ 2 バイト。Base64 では 699050 グループ
+    // （2796200 文字）に「AAA=」（2 バイト）を足した形が「ちょうど 2MB」になる。
+    // 以前の境界テストは長さの計算が違い（2MB の 1/4 で「ちょうど」と書いていた）、
+    // パディングを無視しても `>` を `>=` にしても通ってしまっていた（survivor 5 件）。
+    const groups = "A".repeat(2796200); // 2097150 バイト
+    const at = (tail: string) =>
+      guardImageWrite(
+        { U_photo: image({ Content: `${groups}${tail}` }) },
+        FIELDS,
+      );
+    expect(at("AAA=")).toBe(true); // 2097152 = ちょうど 2MB は通す（上限は「超えたら」）
+    expect(at("AA==")).toBe(true); // 2097151（パディング 2 文字 = 2 バイト減）
+    expect(() => at("AAAA")).toThrow(
+      /2097153 bytes once decoded, over the 2MB limit/,
+    ); // 1 バイト超過
+    // 2MB 前後では「=」と「==」の差 1 バイトが合否を分ける長さが無い（3g−2 = 2MB を満たす g が
+    // 整数にならない）ので、「==」の読み方はエラー文の実測バイト数で pin する。
+    expect(() => at("AAAAAA==")).toThrow(/2097154 bytes once decoded/); // 2 グループ ＝ 6−2 バイト
+  });
+
+  it("上限超過のエラーは category config（呼び出し側の値・送信前）", () => {
     expect(() =>
-      guardImageWrite({ U_photo: image({ Content: exact }) }, FIELDS),
-    ).not.toThrow();
-    // パディング 1 / 2 文字は 1 / 2 バイト少ない＝上限ぎりぎりの判定がずれない
+      guardImageWrite(
+        { U_photo: image({ Content: overSizedContent }) },
+        FIELDS,
+      ),
+    ).toThrow(expect.objectContaining({ category: "config" }));
+  });
+
+  it("欠けているサブ項目は検査しない（部分的な値を落とさない）", () => {
+    // Content / FileName / ContentType のどれが無くても、無いものは見ない — 型検査を外して
+    // 「無いのに文字列として測る」と TypeError で落ちる（survivor 3 件がその条件）。
+    const partial = (v: Record<string, string>) =>
+      guardImageWrite({ U_photo: v as unknown as ImageWriteValue }, FIELDS);
+    expect(partial({ FileName: "a.png", ContentType: "image/png" })).toBe(true);
+    expect(partial({ ContentType: "image/png", Content: "QUJD" })).toBe(true);
+    expect(partial({ FileName: "a.png", Content: "QUJD" })).toBe(true);
+  });
+
+  it("文字列でない FileName は検査しない（型の外の値を測って偽の警報にしない）", () => {
+    // 配列を文字列化すると 300 バイトになるが、ガードは string だけを測る。
+    const odd = { FileName: ["x".repeat(300)], ContentType: "image/png" };
     expect(
-      guardImageWrite({ U_photo: image({ Content: `${exact}=` }) }, FIELDS),
+      guardImageWrite({ U_photo: odd as unknown as ImageWriteValue }, FIELDS),
     ).toBe(true);
-    expect(
-      guardImageWrite({ U_photo: image({ Content: `${exact}==` }) }, FIELDS),
-    ).toBe(true);
+  });
+
+  it("Image 型の項目に文字列が渡されても（cast 経由）オブジェクトとしては検査しない", () => {
+    // `typeof value === "object"` を外すと文字列を分解しようとして通ってしまう（WriteItem は
+    // 文字列を受けるので、Image 型の項目に文字列が届く形は型の上でも存在する）。
+    expect(guardImageWrite({ U_photo: "QUJD" }, FIELDS)).toBe(false);
   });
 
   it("255 バイトを超えるファイル名を弾く（文字数ではなくバイト数）", () => {

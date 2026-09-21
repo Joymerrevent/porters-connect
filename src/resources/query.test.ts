@@ -198,16 +198,35 @@ describe("appendReadQuery — itemstate", () => {
     );
   });
 
-  it("rejects a non-standard condition field when deleted/all", () => {
-    let err: unknown;
-    try {
-      encode({ itemstate: "deleted", condition: { P_Name: { part: "x" } } });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(PortersConfigError);
-    expect((err as PortersConfigError).category).toBe("config");
-    expect((err as PortersConfigError).message).toContain("P_Name");
+  // Both restricted states, separately: the check reads `deleted || all`, and pinning only one
+  // side leaves the other free to drop out (the mutant `itemstate === ""` survived on "all").
+  it.each(["deleted", "all"] as const)(
+    "rejects a non-standard condition field when itemstate is %s",
+    (itemstate) => {
+      let err: unknown;
+      try {
+        encode({ itemstate, condition: { P_Name: { part: "x" } } });
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersConfigError);
+      expect((err as PortersConfigError).category).toBe("config");
+      expect((err as PortersConfigError).message).toContain("P_Name");
+      expect((err as PortersConfigError).message).toContain(itemstate);
+    },
+  );
+
+  it("does not restrict the condition when itemstate is existing or omitted", () => {
+    // The restriction is a fact about deleted reads only (reference: itemstate=deleted/all).
+    expect(
+      encode({
+        itemstate: "existing",
+        condition: { P_Name: { part: "x" } },
+      }).get("condition"),
+    ).toBe("W.P_Name:part=x");
+    expect(
+      encode({ condition: { P_Name: { part: "x" } } }).get("condition"),
+    ).toBe("W.P_Name:part=x");
   });
 });
 

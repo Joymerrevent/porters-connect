@@ -188,6 +188,12 @@ describe("decodeField (ADR-0011)", () => {
     ).toBe(7);
   });
 
+  it("Reference: a P_Id that is not text (nested) -> null, not NaN", () => {
+    expect(
+      decode("System[Reference]", { Client: { "Client.P_Id": { odd: 1 } } }),
+    ).toBeNull();
+  });
+
   it("Reference: missing id / non-record nested -> null", () => {
     // Both are "the record is there but the id is not" — tolerated. A scalar `raw` is a
     // mismatch and throws instead (RV-36).
@@ -467,6 +473,13 @@ describe("decodeField: Image (ADR-0064 論点1)", () => {
       FileName: "photo.png",
       ContentType: "image/png",
       Content: null,
+    });
+  });
+
+  it("a sub-tag that is not text (nested) -> null, like an empty one", () => {
+    // Defensive: the key is kept (it was requested) but its value cannot be read as text.
+    expect(decode("Image", { FileName: { odd: 1 } })).toEqual({
+      FileName: null,
     });
   });
 

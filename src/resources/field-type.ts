@@ -89,24 +89,41 @@ export const FIELD_TYPES: readonly FieldTypeRow[] = [
   { value: 20, dataType: "Link", label: "Link", reverse: true },
 ];
 
-// Forward index. Where a Value repeats, the `forward` row wins; otherwise the first row for it.
-const BY_VALUE: ReadonlyMap<number, FieldTypeRow> = FIELD_TYPES.reduce(
-  (acc, row) => {
+// The two indexes are built by pure functions over a row list rather than inline over
+// `FIELD_TYPES`, so the winner rules can be tested with a table whose order does *not* already
+// favour the winner. Inline, `forward` was only ever exercised on a table where the forward row
+// came first, which made "ignore `forward`" indistinguishable from the real rule (RV-59).
+
+/**
+ * Forward index (Value -> row). Where a Value repeats, the `forward` row wins regardless of
+ * position; otherwise the first row for that Value.
+ */
+export const forwardIndex = (
+  rows: readonly FieldTypeRow[],
+): ReadonlyMap<number, FieldTypeRow> =>
+  rows.reduce((acc, row) => {
     const seen = acc.get(row.value);
     if (seen === undefined || row.forward === true) acc.set(row.value, row);
     return acc;
-  },
-  new Map<number, FieldTypeRow>(),
-);
+  }, new Map<number, FieldTypeRow>());
 
-// Reverse index. Only `reverse` rows take part, so a shared Data Type resolves to one Value.
-const BY_DATA_TYPE: ReadonlyMap<DataType, number> = FIELD_TYPES.reduce(
-  (acc, row) =>
-    row.reverse === true && row.dataType !== null
-      ? acc.set(row.dataType, row.value)
-      : acc,
-  new Map<DataType, number>(),
-);
+/**
+ * Reverse index (Data Type -> Value). Only `reverse` rows take part, so a shared Data Type
+ * resolves to one Value; a row with no Data Type (16 Reference) never enters, `reverse` or not.
+ */
+export const reverseIndex = (
+  rows: readonly FieldTypeRow[],
+): ReadonlyMap<DataType, number> =>
+  rows.reduce(
+    (acc, row) =>
+      row.reverse === true && row.dataType !== null
+        ? acc.set(row.dataType, row.value)
+        : acc,
+    new Map<DataType, number>(),
+  );
+
+const BY_VALUE = forwardIndex(FIELD_TYPES);
+const BY_DATA_TYPE = reverseIndex(FIELD_TYPES);
 
 /**
  * What a `Field.P_Type` value means. Three outcomes, kept apart on purpose (ADR-0069 論点4):
