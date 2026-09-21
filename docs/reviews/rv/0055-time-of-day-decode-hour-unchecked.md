@@ -1,7 +1,7 @@
 # RV-55 🟢 `decodeTimeOfDay` が 1 日目の時 24〜47・分秒 60 以上を弾かず、別の wire 値に往復する
 
 - 重要度: 🟢 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -74,8 +74,53 @@ Read 経路の安全性（`Date.parse` が弾く）まで確かめてから重�
 
 ## 処置
 
-—
+**完了（案 (a) ＋ (b)・2026-09-21）。** `decodeTimeOfDay` が wire 側の時・分・秒を
+**基準日と同じ場所で**検証するようにした（`src/util/time-of-day.ts`）。**ADR は起こしていない**:
+[ADR-0086][adr86] 論点3 が既に「両方向とも検証する」と決めており、通していた値はどれも出典の
+書式に無い＝決定の未適用側を埋めただけ（[RV-49][rv49] と同じ形。判断は
+[ADR README の「ADR を起こさずに決着した論点」][adr-readme] に記録）。semver は patch（changeset あり）。
+
+- **検証は wire 側の値に対して行う**（`wireHours > 23 || minutes > 59 || seconds > 59`）。
+  基準日を足した後の `hours > 47` と比べる旧分岐は、2 日目の wire 時 24 しか捕まえられなかった
+  （1 日目の 24〜47 は 47 以下に収まる）。wire 時を見れば両日とも同じ 1 条件で済み、旧分岐は吸収された。
+- **1 日目の wire 時 24（`1970-01-01T24:00:00Z`）も弾く**。指摘の「影響」節はこの 1 値だけを
+  「`"24:00"` と読めて害が無い」としたが、出典は 24:00〜47:59 を **1970/01/02** に置くと明記しており
+  （[ADR-0086][adr86] 出典表「保存」）、`encodeTimeOfDay("24:00")` も 2 日目を書く。1 日目の 24 時は
+  PORTERS の正規形ではなく、通すと「入力と別の wire 値へ往復する」例外が 1 つ残る。規則を
+  「各基準日の wire 時は 00〜23」の 1 本にするほうが説明も検証も単純なので、例外を作らなかった。
+- エラーは基準日違いと同じ `PortersConfigError`（`category: "validation"`）。メッセージは既存の
+  「outside the time-of-day range (00:00-47:59)」を流用し、hint に「各基準日は時 00〜23・分秒 00〜59」を書いた。
+- ドキュメント: [日時の概念][datetime] の時分型節に 1 項目（手で組み立てた ISO が別の値に化けて往復する
+  ことを止める旨）。公開 JSDoc の `@throws` に範囲の条件を足し、`docs:api` を再生成。
+
+## 検証
+
+**指摘の表と同じ入力を、修正後に実測した**（`tsx`）:
+
+| 入力                                                       | 指摘時       | 修正後                                          |
+| ---------------------------------------------------------- | ------------ | ----------------------------------------------- |
+| `decodeTimeOfDay("1970-01-01T24:00:00Z")`                  | `"24:00"`    | throw（outside the time-of-day range）          |
+| `decodeTimeOfDay("1970-01-01T30:00:00Z")`                  | `"30:00"`    | throw（同上）                                   |
+| `decodeTimeOfDay("1970-01-01T09:60:00Z")`                  | `"09:60"`    | throw（同上）                                   |
+| `decodeTimeOfDay("1970-01-01T09:00:99Z")`                  | `"09:00:99"` | throw（同上）                                   |
+| `decodeTimeOfDay("1970-01-02T24:00:00Z")`                  | throw        | throw（同上・**両日とも同じ条件**で落ちる）     |
+| `encodeTimeOfDay(decodeTimeOfDay("1970-01-01T30:00:00Z"))` | 別の wire 値 | decode の時点で throw＝**別の値には往復しない** |
+| `decodeTimeOfDay("1970-01-02T02:00:00Z")`                  | `"26:00"`    | `"26:00"`（正常域は無変更）                     |
+
+`src/util/time-of-day.test.ts` に足したもの（30 → **44 件**）:
+
+- 範囲外 8 値の `it.each`（両日の時 24・時 30 / 99・分 60・秒 60 / 99）— `category` / メッセージ / hint を固定。
+- **property を不正域まで広げた**（推奨 (b)）: decode は両日 × 時分秒 `00..99` を引き、`23 / 59 / 59` 以内なら
+  往復が恒等・外なら `validation` で throw。encode も `00..99`（秒は省略あり）で同じ形。
+  **境界そのもの**を property が固定するので、片側だけ緩める変異は生き残れない。
+- `ISO_DATETIME_RE` の `^` / `$` を pin する入力（前後に 1 文字・空白・改行・桁の増加）。
+  本 run の全体実測で生き残っていた `^` / `$` の変異 2 件はこれで落ちる。
+
+品質ゲートは全 green（**1368 tests**・coverage perFile 100/99.25/100/100・`check` 8 本）。
+`time-of-day.ts` の mutation は **100.00**（123 ミュータント・survivor 0。指摘時は 3）。
 
 [adr86]: ../../adr/0086-time-of-day-fields.md
+[adr-readme]: ../../adr/README.md
+[datetime]: ../../usage/concepts/datetime.md
 [rv48]: 0048-option-alias-xml-injection.md
 [rv49]: 0049-throttle-options-unvalidated.md

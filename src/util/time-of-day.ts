@@ -26,6 +26,8 @@ const ANCHOR_MONTH = "01";
 const ANCHOR_DAYS: Readonly<Record<string, number>> = { "01": 0, "02": 24 };
 const HOURS_PER_ANCHOR_DAY = 24;
 const MAX_HOURS = 47;
+// Each anchor day carries a clock time: the wire hour is 00–23 (day 2 supplies the +24).
+const MAX_WIRE_HOURS = 23;
 const MAX_MINUTES = 59;
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
@@ -42,7 +44,8 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
  * only, but the wire format carries seconds, and dropping them would lose data silently.
  *
  * @throws PortersConfigError (`category: "validation"`) when the value is not an ISO date-time on
- *   1970-01-01 / 1970-01-02 — which usually means the field is a date-time, not a time-of-day.
+ *   1970-01-01 / 1970-01-02 — which usually means the field is a date-time, not a time-of-day — or
+ *   its clock part is out of range (hours 00–23 on either anchor day, minutes / seconds 00–59).
  * @example
  * // doccheck: fields
  * const job = await t.job.get(1);
@@ -68,19 +71,27 @@ export const decodeTimeOfDay = (iso: string): string => {
   const wireHours = Number(m[4]);
   const minutes = m[5];
   const seconds = m[6];
-  // The wire hour is 00–23 within its anchor day; day 2 adds 24 to get back to the UI's 24:00–47:59.
-  const hours = wireHours + extra;
-  if (hours > MAX_HOURS) {
-    // 1970-01-02T24:00:00Z cannot come from PORTERS (the wire hour is a clock hour); a value shaped
-    // like it is not a clock time either, so it fails the same way rather than reading as 48:00.
+  // The regexp only fixes the shape (two digits per part); the range is checked here, on the wire
+  // side, before the anchor is folded in. `1970-01-01T30:00:00Z` or `…T09:60:00Z` is shaped like
+  // a value but never came from PORTERS (the wire hour is a clock hour, and `Date.parse` in the
+  // library's own Read path refuses them), and reading it as "30:00" would re-encode to a
+  // *different* wire value (1970-01-02T06:00:00Z) — the silent kind of wrong. Checking the wire
+  // hour also covers 1970-01-02T24:00:00Z, which would otherwise read as 48:00. RV-55.
+  if (
+    wireHours > MAX_WIRE_HOURS ||
+    Number(minutes) > MAX_MINUTES ||
+    Number(seconds) > MAX_MINUTES
+  ) {
     throw new PortersConfigError(
       `${JSON.stringify(iso)} is outside the time-of-day range (00:00-47:59)`,
       {
         category: "validation",
-        hint: "PORTERS' time-of-day range is 00:00-47:59; the anchor days carry clock hours 00-23 each.",
+        hint: "PORTERS' time-of-day range is 00:00-47:59, carried as a clock time (hours 00-23, minutes and seconds 00-59) on 1970/01/01 or, for 24:00-47:59, 1970/01/02.",
       },
     );
   }
+  // Day 2 adds 24 to get back to the UI's 24:00–47:59.
+  const hours = wireHours + extra;
   // VERIFY(live): whether PORTERS ever returns non-zero seconds for a time-of-day field is
   // unconfirmed (its UI takes hours and minutes only) — docs/live-verification.md (LV-31). Seconds
   // are kept rather than dropped so a value is never silently truncated whichever way it turns out.

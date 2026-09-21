@@ -105,6 +105,15 @@
   **教訓**: 「公開 factory の数値オプション」は 2 つあり（`timeoutMs` と上限値）、
   片方だけ検証されていた。**同じ種類の継ぎ目が複数あるなら、決定は全部に当てたか確かめる。**
 
+- **時分型の decode 側の範囲検証**（[RV-55][rv55]）— **ADR 不要と判断**（2026-09-21）。
+  `decodeTimeOfDay` が基準日は見るが時・分・秒の範囲を見ず、`1970-01-01T30:00:00Z` を `"30:00"` と
+  読んで**別の wire 値に往復**していた欠陥だが、**決定は既に accepted で出ている**:
+  [ADR-0086][0086] 論点3（変換関数は**両方向とも**検証し、外れたら `PortersConfigError` の
+  `validation`）。通していた値はどれも出典の書式に無く、新しい決定は 1 つも生じない＝
+  **0086 の未適用の片側**を埋めるだけ（上の [RV-49][rv49] と同じ形）。実装は [RV-55][rv55] の処置として行った。
+  **教訓**: ADR が「両方向」と書いた検証は、**両方向の実装を突き合わせて**初めて決定どおりになる。
+  往復の property が正常域しか引かないと、片側の欠けは通り抜ける（拒否を証明するなら不正域も生成する）。
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
@@ -120,6 +129,8 @@
 [0077]: 0077-fetch-transport-timeout.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
+[rv55]: ../reviews/rv/0055-time-of-day-decode-hour-unchecked.md
+[0086]: 0086-time-of-day-fields.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
 [0002]: 0002-ground-design-in-live-api-docs.md

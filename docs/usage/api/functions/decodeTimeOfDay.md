@@ -8,7 +8,7 @@
 
 > **decodeTimeOfDay**(`iso`): `string`
 
-Defined in: [src/util/time-of-day.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L51)
+Defined in: [src/util/time-of-day.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L54)
 
 Read a **time-of-day** (時分型) field's value as a clock time.
 
@@ -33,7 +33,8 @@ only, but the wire format carries seconds, and dropping them would lose data sil
 ## Throws
 
 PortersConfigError (`category: "validation"`) when the value is not an ISO date-time on
-  1970-01-01 / 1970-01-02 — which usually means the field is a date-time, not a time-of-day.
+  1970-01-01 / 1970-01-02 — which usually means the field is a date-time, not a time-of-day — or
+  its clock part is out of range (hours 00–23 on either anchor day, minutes / seconds 00–59).
 
 ## Example
 
