@@ -121,6 +121,19 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     );
   });
 
+  it("writes a catalogued field with no Data Type (null — ADR-0056) through as Text", () => {
+    // Only reachable via a cast (the static Write input excludes it), but symmetric with decode's
+    // raw-string passthrough: a null type must not fall into the typed encoder and come out as
+    // the text "undefined".
+    const xml = buildWriteXml({
+      resource: "Candidate",
+      prefix: "Person",
+      fields: new Map<string, DataType | null>([["P_Deleted", null]]),
+      items: [{ P_Deleted: "1" }],
+    });
+    expect(xml).toContain("<Person.P_Deleted>1</Person.P_Deleted>");
+  });
+
   it("falls back to escaped Text for an unknown (custom) alias", () => {
     const xml = buildWriteXml({
       resource: "Candidate",

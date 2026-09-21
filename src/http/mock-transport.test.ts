@@ -24,6 +24,10 @@ describe("createMockTransport", () => {
     expect(token.body).toContain(
       "<RefreshToken>mock-refresh-token</RefreshToken>",
     );
+    // The envelope is complete — `<Error>0</Error>` and the closing root — so the library reads
+    // it exactly as it reads the live reply (a truncated body would parse leniently and hide it).
+    expect(oauth.body).toMatch(/<Error>0<\/Error><\/Authentication>$/);
+    expect(token.body).toMatch(/<Error>0<\/Error><\/Authentication>$/);
   });
 
   it("coerces a string reply to a 200 response", async () => {
