@@ -124,6 +124,39 @@ describe("maintainerIdLines（生成物の保守者向け識別子検出）", ()
     ).toEqual([]);
   });
 
+  it("`docs/usage`（末尾に `/` 無し）と、開発者向け資料の入口 `docs/README.md` は拾わない", () => {
+    // README と docs/usage/index.md が実際に書いている形。`docs/usage` は利用者向けの
+    // 目次そのもので、`docs/README.md` は「読む人／作る人」の分岐点。
+    expect(
+      maintainerIdLines(
+        tree({
+          "a.md": "**[docs/usage][docs-index] が目次**です。\n",
+          "b.md": "開発・保守：[docs/README.md][docs-readme]\n",
+          "c.md":
+            "https://github.com/Joymerrevent/porters-connect/blob/main/docs/README.md\n",
+        }),
+      ),
+    ).toEqual([]);
+    // 似た綴りの別ディレクトリは通さない
+    expect(
+      maintainerIdLines(
+        tree({ "a.md": "docs/usages/x.md\n", "b.md": "docs/README-old.md\n" }),
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("内部ファイルの名前（CLAUDE.md / SPEC_v1）を拾う", () => {
+    // 手書きの利用者向け文書に実際に混ざっていた形。
+    expect(
+      maintainerIdLines(
+        tree({
+          "a.md": "ハードコードしない（CLAUDE.md「ホスト名は非公開」）\n",
+          "b.md": "※ `SPEC_v1.md` の「32KB」は旧情報。\n",
+        }),
+      ),
+    ).toHaveLength(2);
+  });
+
   it("レビュー指摘（RV）と実機確認（LV）の番号を拾う", () => {
     expect(
       maintainerIdLines(
