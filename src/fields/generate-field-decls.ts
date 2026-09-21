@@ -43,11 +43,11 @@ const BUILDER_METHOD: Readonly<Record<CustomDataType, keyof FieldBuilder>> = {
 
 /** Options for {@link generateFieldDecls}. */
 export type GenerateFieldDeclsOptions = {
+  // 既定 1（verifyFields は -1）は ADR-0069 の accept 時の決定。
   /**
    * Field Read's `active` filter. Defaults to `1` — **in-use fields only**, which is what belongs
    * in a template; there is no reason to declare a field the tenant is not using. This is the
-   * opposite of `verifyFields`, where narrowing would cause false "missing" reports
-   * (ADR-0069, decided on accept).
+   * opposite of `verifyFields`, where narrowing would cause false "missing" reports.
    */
   readonly active?: -1 | 0 | 1;
   /**
@@ -114,11 +114,12 @@ const resourceBlock = (
     : `  ${catalog.resource}: ${param} => ({\n${body.join("\n")}\n  }),`;
 };
 
+// 宣言できない項目をコメントとして出す（落とさない）のは ADR-0069 論点4。
 /**
  * Read the given resources' custom fields and print a `defineFields` call for them.
  *
- * Fields whose Field Type cannot be declared are emitted as **comments** rather than dropped
- * (ADR-0069 論点4), so a tenant field the library cannot yet express is visible in the output
+ * Fields whose Field Type cannot be declared are emitted as **comments** rather than dropped,
+ * so a tenant field the library cannot yet express is visible in the output
  * instead of silently absent.
  *
  * Writing the result to a file is the caller's job — this library does not touch the filesystem.

@@ -33,8 +33,9 @@ export type DataType =
   | "Image"
   | "Link";
 
+// System[Department] を User と同じ入れ子として扱う判断は ADR-0061 案3a。
 /**
- * A referenced Department (`System[Department]` — ADR-0061 案3a). Read is nested exactly like
+ * A referenced Department (`System[Department]`). Read is nested exactly like
  * `User`: `<OwnerDepartment><Department><Department.P_Id>…`. Only the two fields PORTERS shows in
  * its sample are modelled — inventing more would be guessing.
  */
@@ -54,25 +55,28 @@ export type UserRef = {
 /** The sub-tags an Image field is made of (`<Alias><FileName/><ContentType/><Content/></Alias>`). */
 export type ImageSubField = "FileName" | "ContentType" | "Content";
 
+// 返ってきた sub-tag だけを optional で持つ形は ADR-0064 論点1。
 /**
- * A decoded Image value (ADR-0064 論点1): the sub-tags PORTERS actually returned, each empty ->
+ * A decoded Image value: the sub-tags PORTERS actually returned, each empty ->
  * null. Every key is **optional for the same reason a read record's fields are** — a sub-tag that
  * was not requested is simply absent. A plain read asks for the bare alias, which PORTERS answers
  * with `FileName` alone; `image` selects more and narrows this to exactly what it selected.
  */
 export type ImageValue = { [K in ImageSubField]?: string | null };
 
+// union にして形で読む判断は ADR-0064 論点4。
 /**
- * A decoded Link value (ADR-0064 論点4). PORTERS resolves a Link to **a Contact id, a User, or a
+ * A decoded Link value. PORTERS resolves a Link to **a Contact id, a User, or a
  * Department**, decided by the tenant's own field setting, and the response carries no
  * discriminator — the shapes just differ. So the value is a union and the decode reads the shape,
  * which cannot disagree with what arrived. Narrow with `typeof v === "number"` / `"P_Mail" in v`.
  */
 export type LinkValue = number | UserRef | DepartmentRef;
 
+// expand の設計は ADR-0058。
 /**
  * An **expanded** `System[Reference]` value: the referenced record's requested fields, decoded by
- * the referenced resource's own catalog (ADR-0058). Only a read that asked for the expansion
+ * the referenced resource's own catalog. Only a read that asked for the expansion
  * (`expand`) produces one — without it a reference decodes to the referenced id (`number`).
  */
 export type ReferenceRecord = { [alias: string]: FieldValue };

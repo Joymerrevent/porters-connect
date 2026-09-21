@@ -8,7 +8,7 @@
 
 > **UserRef** = `object`
 
-Defined in: [src/xml/decode.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L47)
+Defined in: [src/xml/decode.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L48)
 
 A referenced User (Read is nested; Write is `User.P_Id` only).
 
@@ -18,7 +18,7 @@ A referenced User (Read is nested; Write is `User.P_Id` only).
 
 > **P\_Id**: `number` \| `null`
 
-Defined in: [src/xml/decode.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L48)
+Defined in: [src/xml/decode.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L49)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/xml/decode.ts:48](https://github.com/Joymerrevent/porters-conne
 
 > **P\_Mail**: `string` \| `null`
 
-Defined in: [src/xml/decode.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L51)
+Defined in: [src/xml/decode.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L52)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/xml/decode.ts:51](https://github.com/Joymerrevent/porters-conne
 
 > **P\_Name**: `string` \| `null`
 
-Defined in: [src/xml/decode.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L50)
+Defined in: [src/xml/decode.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L51)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [src/xml/decode.ts:50](https://github.com/Joymerrevent/porters-conne
 
 > **P\_Type**: `string` \| `null`
 
-Defined in: [src/xml/decode.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L49)
+Defined in: [src/xml/decode.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L50)

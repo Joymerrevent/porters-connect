@@ -8,9 +8,9 @@
 
 > **resourceNameOf**(`value`): `number` \| `"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
 
-Defined in: [src/resources/resource-list.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L79)
+Defined in: [src/resources/resource-list.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L81)
 
-The name for a resource number (ADR-0079) — the other direction of [resourceValueOf](resourceValueOf.md).
+The name for a resource number — the other direction of [resourceValueOf](resourceValueOf.md).
 Use it to read a value PORTERS returned: `Activity.P_Resource`, `Field.P_ResourceType`, or a
 raw value from [rawValue](rawValue.md).
 

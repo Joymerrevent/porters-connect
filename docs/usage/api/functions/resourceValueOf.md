@@ -8,9 +8,9 @@
 
 > **resourceValueOf**(`name`): `number`
 
-Defined in: [src/resources/resource-list.ts:63](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L63)
+Defined in: [src/resources/resource-list.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L64)
 
-The number PORTERS knows a resource by (ADR-0079). The library takes **names** where PORTERS
+The number PORTERS knows a resource by. The library takes **names** where PORTERS
 takes a `resource=` parameter, but a *field value* stays the number its Data Type declares —
 `Activity.P_Resource`, `Attachment.Resource`, and a `condition` on either.
 

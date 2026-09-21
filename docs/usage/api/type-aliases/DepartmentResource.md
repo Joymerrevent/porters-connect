@@ -8,7 +8,7 @@
 
 > **DepartmentResource** = `object`
 
-Defined in: [src/resources/department.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L64)
+Defined in: [src/resources/department.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L65)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/department.ts:64](https://github.com/Joymerrevent/por
 
 > **search**(`query?`): `Promise`\<[`DepartmentPage`](DepartmentPage.md)\>
 
-Defined in: [src/resources/department.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L65)
+Defined in: [src/resources/department.ts:66](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L66)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/department.ts:65](https://github.com/Joymerrevent/por
 
 > **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Hidden`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Name`: `"SinglelineText"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_SortNo`: `"Number"`; `P_UpdateDate`: `"System[DateTime]"`; \}\>\>
 
-Defined in: [src/resources/department.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L67)
+Defined in: [src/resources/department.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L68)
 
 Auto-paginating search: yields every department of the partition.
 

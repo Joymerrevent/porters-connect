@@ -161,7 +161,8 @@ export type {
   PhaseAccessor,
   PhaseSearchQuery,
 } from "./resources";
-/** The resource names `t.phase.of(...)` accepts (ADR-0061 案5b). */
+// 文字列 union にするのは ADR-0061 案5b。
+/** The resource names `t.phase.of(...)` accepts. */
 export type { ResourceName } from "./resources";
 // Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
 // declares, so these are what you write and read it with.

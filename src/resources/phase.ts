@@ -95,9 +95,10 @@ export type PhasePage = ResourcePage<typeof FIELDS>;
 // putting them back is additive.
 type PhaseUnsupportedQuery = "keywords" | "itemstate";
 
+// keywords / itemstate を外す判断は ADR-0076。
 /**
  * Phase's Read query: the common vocabulary **minus `keywords` / `itemstate`**, which
- * `Phase - Read` does not list (ADR-0076).
+ * `Phase - Read` does not list.
  */
 export type PhaseSearchQuery = Omit<
   SearchQuery<typeof FIELDS>,
@@ -112,11 +113,11 @@ export type PhaseCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type PhaseUpdateInput = UpdateInput<typeof FIELDS>;
 
+// keywords / itemstate を外すのは ADR-0076、write 入力から Resource を外すのは RV-47。
 /**
  * The Phase accessor for one bound resource — the same shape as every other resource, except that
- * `search` / `searchAll` do not take `keywords` / `itemstate` (ADR-0076) and the write inputs do
- * not take `Resource`: `of()` binds it, and supplying it again could only contradict the binding
- * (RV-47).
+ * `search` / `searchAll` do not take `keywords` / `itemstate` and the write inputs do
+ * not take `Resource`: `of()` binds it, and supplying it again could only contradict the binding.
  */
 export type PhaseResource = Resource<
   typeof FIELDS,
@@ -126,8 +127,9 @@ export type PhaseResource = Resource<
   "Resource"
 >;
 
+// of(resource) で束ねる形は ADR-0061 案2a、名前を文字列 union にするのは同 案5b。
 /**
- * Phase is reached through the resource whose history you want (ADR-0061 案2a):
+ * Phase is reached through the resource whose history you want:
  *
  * ```ts
  * const phases = t.phase.of("client");
@@ -135,7 +137,7 @@ export type PhaseResource = Resource<
  * ```
  *
  * The name is the accessor's own spelling ({@link ResourceName}) — `of(5)` and `of("clinet")`
- * are compile errors (案5b).
+ * are compile errors.
  */
 export type PhaseAccessor = {
   of(resource: ResourceName): PhaseResource;

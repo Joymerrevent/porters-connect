@@ -45,10 +45,11 @@ export type UndeclaredField = {
   readonly actual: CustomDataType;
 };
 
+// missing と分ける決定は ADR-0069 論点5。
 /**
  * A resource whose catalog could not be read, so **nothing about it was checked**.
  *
- * Kept apart from {@link MissingField} on purpose (ADR-0069 論点5). Reporting these declarations
+ * Kept apart from {@link MissingField} on purpose. Reporting these declarations
  * as "missing" would be a false alarm — and a report that cries wolf stops being read.
  */
 export type UnverifiableResource = {
@@ -82,10 +83,11 @@ export type FieldVerification = {
 
 /** Options for {@link verifyFields}. */
 export type VerifyFieldsOptions = {
+  // 既定 -1 は ADR-0069 の accept 時の決定。
   /**
    * Field Read's `active` filter. Defaults to `-1` (every field) and should stay there: with `1`
    * a field that exists but is currently unused is absent from the response, and its declaration
-   * would be reported as {@link MissingField} — a false alarm (ADR-0069, decided on accept).
+   * would be reported as {@link MissingField} — a false alarm.
    */
   readonly active?: -1 | 0 | 1;
 };

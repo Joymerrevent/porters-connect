@@ -20,13 +20,14 @@ import {
 } from "./read-core";
 import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
+// 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
 /**
  * A resource whose field catalog can be read (Field Read `resource` selector).
  *
  * Field Read takes a Resource List Value, so the selectable set **is** the set PORTERS gives a
  * Value — the same one `t.phase.of()` accepts. This is an alias rather than a second table on
- * purpose: `field.ts` used to keep its own copy and it silently lost Process (RV-37), so the
- * Value table lives in one place (`resource-list.ts`) and both roles read from it.
+ * purpose: a separate copy once silently lost a resource, so the Value table lives in one place
+ * and both roles read from it.
  */
 export type ResourceType = ResourceName;
 
@@ -63,7 +64,8 @@ export const FIELD_DESCRIPTOR = {
 export type Field = ReadRecord<typeof FIELDS>;
 export type FieldPage = ResourcePage<typeof FIELDS>;
 
-/** Field Read query. The resource itself is bound by `of(name)` (ADR-0080). */
+// resource を of(name) で束ねる形は ADR-0080。
+/** Field Read query. The resource itself is bound by `of(name)`. */
 export type FieldSearchQuery = {
   /** -1 = all (default), 0 = unused only, 1 = in-use only. */
   active?: -1 | 0 | 1;
@@ -80,8 +82,9 @@ export type FieldResource = {
   ): AsyncIterable<Field>;
 };
 
+// of(resource) で束ねる形は ADR-0080。
 /**
- * Field Read is reached through the resource whose catalog you want (ADR-0080):
+ * Field Read is reached through the resource whose catalog you want:
  *
  * ```ts
  * const fields = t.field.of("candidate");

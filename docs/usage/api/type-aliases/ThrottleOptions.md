@@ -16,7 +16,7 @@ Defined in: [src/http/throttle.ts:19](https://github.com/Joymerrevent/porters-co
 
 > `optional` **now?**: () => `number`
 
-Defined in: [src/http/throttle.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L37)
+Defined in: [src/http/throttle.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L38)
 
 #### Returns
 
@@ -40,14 +40,14 @@ integer, and **`readPerMin * safety` must still leave at least one token** — s
 
 > `optional` **safety?**: `number`
 
-Defined in: [src/http/throttle.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L36)
+Defined in: [src/http/throttle.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L37)
 
 Fraction of the limit to actually use (headroom). Default 0.9. Greater than 0, at most 1.
 
 The bucket holds `floor(limit * safety)` tokens, so a small limit and a small `safety`
 multiply into **zero capacity** — `{ readPerMin: 1 }` at the default 0.9 already does.
 A bucket that can never hold a token would make every call wait forever, so the
-combination is rejected at construction rather than hanging (RV-49).
+combination is rejected at construction rather than hanging.
 
 ***
 

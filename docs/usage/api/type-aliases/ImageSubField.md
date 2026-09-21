@@ -8,6 +8,6 @@
 
 > **ImageSubField** = `"FileName"` \| `"ContentType"` \| `"Content"`
 
-Defined in: [src/xml/decode.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L55)
+Defined in: [src/xml/decode.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L56)
 
 The sub-tags an Image field is made of (`<Alias><FileName/><ContentType/><Content/></Alias>`).

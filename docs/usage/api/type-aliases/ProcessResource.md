@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/process.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L106)
 
-The Process accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Process accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

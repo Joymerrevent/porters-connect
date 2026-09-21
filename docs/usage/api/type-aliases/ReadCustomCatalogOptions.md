@@ -8,7 +8,7 @@
 
 > **ReadCustomCatalogOptions** = `object`
 
-Defined in: [src/fields/tenant-catalog.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L77)
+Defined in: [src/fields/tenant-catalog.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L79)
 
 Options for [readCustomCatalog](../functions/readCustomCatalog.md).
 
@@ -18,11 +18,11 @@ Options for [readCustomCatalog](../functions/readCustomCatalog.md).
 
 > `readonly` `optional` **active?**: `-1` \| `0` \| `1`
 
-Defined in: [src/fields/tenant-catalog.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L86)
+Defined in: [src/fields/tenant-catalog.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L89)
 
 Field Read's `active` filter: `-1` all (default), `0` unused only, `1` in-use only.
 
 The default is `-1` deliberately. Narrowing to `1` would hide fields that exist but are
 unused, and a comparison against a declaration would then report them as **missing** — a
 false alarm. `generateFieldDecls` overrides it to `1`, where "only what is in use" is what
-you want in a template (ADR-0069, decided on accept).
+you want in a template.

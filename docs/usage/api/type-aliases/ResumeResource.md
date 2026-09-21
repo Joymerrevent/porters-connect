@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/resume.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L104)
 
-The Resume accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Resume accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

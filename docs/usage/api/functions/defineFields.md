@@ -8,12 +8,12 @@
 
 > **defineFields**\<`D`\>(`decls`): [`DefinedFields`](../type-aliases/DefinedFields.md)\<`DeclaredCatalogsOf`\<`D`\>\>
 
-Defined in: [src/fields/define-fields.ts:176](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L176)
+Defined in: [src/fields/define-fields.ts:180](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L180)
 
-Declare tenant-specific custom fields per data resource (ADR-0023). This is the validation
+Declare tenant-specific custom fields per data resource. This is the validation
 boundary: it throws [PortersConfigError](../classes/PortersConfigError.md) synchronously for an unknown resource key or an
 alias that is not `U_`/`A_`-prefixed. The branded result is passed to the partition it describes,
-`porters.tenant(id, { fields })` (ADR-0087), which merges each catalog into the resource so the
+`porters.tenant(id, { fields })`, which merges each catalog into the resource so the
 custom fields decode/encode by their declared Data Type and appear typed on reads / writes.
 
 ## Type Parameters

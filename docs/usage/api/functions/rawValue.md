@@ -8,9 +8,9 @@
 
 > **rawValue**(`record`, `alias`): `string` \| `null` \| `undefined`
 
-Defined in: [src/resources/read-core.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L81)
+Defined in: [src/resources/read-core.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L82)
 
-Read a field the catalog does not know (ADR-0074 D2) — the named escape hatch for a value that
+Read a field the catalog does not know — the named escape hatch for a value that
 arrived without a declaration: through a cast in `field`, inside an expanded reference record,
 or because PORTERS returned a field that was not asked for.
 

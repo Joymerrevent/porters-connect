@@ -8,9 +8,9 @@
 
 > **BulkWriteResultItem** = `object`
 
-Defined in: [src/resources/bulk-write.ts:22](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L22)
+Defined in: [src/resources/bulk-write.ts:23](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L23)
 
-One record's outcome from a bulk write, in the position it was sent (ADR-0041 SD-2).
+One record's outcome from a bulk write, in the position it was sent.
 
 ## Properties
 
@@ -18,7 +18,7 @@ One record's outcome from a bulk write, in the position it was sent (ADR-0041 SD
 
 > **code**: `number`
 
-Defined in: [src/resources/bulk-write.ts:28](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L28)
+Defined in: [src/resources/bulk-write.ts:29](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L29)
 
 PORTERS per-item Result Code (`0` = success).
 
@@ -28,7 +28,7 @@ PORTERS per-item Result Code (`0` = success).
 
 > **id**: `number`
 
-Defined in: [src/resources/bulk-write.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L26)
+Defined in: [src/resources/bulk-write.ts:27](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L27)
 
 Assigned (create) / echoed (update) record id. Meaningful only when `ok`.
 
@@ -38,7 +38,7 @@ Assigned (create) / echoed (update) record id. Meaningful only when `ok`.
 
 > **index**: `number`
 
-Defined in: [src/resources/bulk-write.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L24)
+Defined in: [src/resources/bulk-write.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L25)
 
 0-based index in the input array.
 
@@ -48,6 +48,6 @@ Defined in: [src/resources/bulk-write.ts:24](https://github.com/Joymerrevent/por
 
 > **ok**: `boolean`
 
-Defined in: [src/resources/bulk-write.ts:30](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L30)
+Defined in: [src/resources/bulk-write.ts:31](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L31)
 
 `code === 0`.

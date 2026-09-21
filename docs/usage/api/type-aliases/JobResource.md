@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/job.ts:108](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L108)
 
-The Job accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Job accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

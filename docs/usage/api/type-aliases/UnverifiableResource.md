@@ -8,11 +8,11 @@
 
 > **UnverifiableResource** = `object`
 
-Defined in: [src/fields/verify-fields.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L54)
+Defined in: [src/fields/verify-fields.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L55)
 
 A resource whose catalog could not be read, so **nothing about it was checked**.
 
-Kept apart from [MissingField](MissingField.md) on purpose (ADR-0069 論点5). Reporting these declarations
+Kept apart from [MissingField](MissingField.md) on purpose. Reporting these declarations
 as "missing" would be a false alarm — and a report that cries wolf stops being read.
 
 ## Properties
@@ -21,7 +21,7 @@ as "missing" would be a false alarm — and a report that cries wolf stops being
 
 > `readonly` **cause**: `unknown`
 
-Defined in: [src/fields/verify-fields.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L57)
+Defined in: [src/fields/verify-fields.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L58)
 
 Whatever Field Read rejected with (a `PortersError`, typically permission or network).
 
@@ -31,4 +31,4 @@ Whatever Field Read rejected with (a `PortersError`, typically permission or net
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/verify-fields.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L55)
+Defined in: [src/fields/verify-fields.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L56)

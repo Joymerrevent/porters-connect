@@ -18,7 +18,7 @@ User Read query. `requestType` 1 = all users (default); `userType` -1 = any (def
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/user.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L83)
+Defined in: [src/resources/user.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L84)
 
 ***
 
@@ -26,10 +26,10 @@ Defined in: [src/resources/user.ts:83](https://github.com/Joymerrevent/porters-c
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<*typeof* `FIELDS`\>[]
 
-Defined in: [src/resources/user.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L82)
+Defined in: [src/resources/user.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L83)
 
-Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix (ADR-0059).
-**Omit** to fetch every catalogued field (ADR-0020); narrow it when the extra HR fields
+Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix.
+**Omit** to fetch every catalogued field; narrow it when the extra HR fields
 (department / telephone / dates) are not interesting. Pass `[]` for PORTERS' own default —
 the 4 core fields it returns for a fieldless read.
 
@@ -49,7 +49,7 @@ Defined in: [src/resources/user.ts:73](https://github.com/Joymerrevent/porters-c
 
 > `optional` **start?**: `number`
 
-Defined in: [src/resources/user.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L84)
+Defined in: [src/resources/user.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L85)
 
 ***
 

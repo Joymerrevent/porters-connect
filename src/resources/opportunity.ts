@@ -82,7 +82,7 @@ export type OpportunityCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type OpportunityUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Opportunity accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Opportunity accessor; `C` is the declared custom-field catalog merged on. */
 export type OpportunityResource<C extends FieldCatalog = EmptyCatalog> =
   Resource<
     typeof FIELDS & C,

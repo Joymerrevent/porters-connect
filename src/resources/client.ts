@@ -71,7 +71,7 @@ export type ClientCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ClientUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Client accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Client accessor; `C` is the declared custom-field catalog merged on. */
 export type ClientResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number]

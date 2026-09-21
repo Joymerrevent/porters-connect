@@ -8,6 +8,6 @@
 
 > **FieldDecls** = `{ [R in CustomFieldResource]?: (f: FieldBuilder) => ResourceDecl }`
 
-Defined in: [src/fields/define-fields.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L80)
+Defined in: [src/fields/define-fields.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L82)
 
 Declaration input: per (data) resource, a builder fn returning its custom fields.

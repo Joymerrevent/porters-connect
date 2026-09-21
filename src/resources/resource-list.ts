@@ -23,7 +23,7 @@ import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
 import { SALES_DESCRIPTOR } from "./sales";
 
-/** Resource name -> the numeric id PORTERS uses for it (docs/usage/reference resources-list.md). */
+/** Resource name -> the numeric id PORTERS uses for it (docs/usage/reference/resource-api/resources-list.md). */
 export const RESOURCE_VALUES = {
   [CANDIDATE_DESCRIPTOR.path]: 1,
   [JOB_DESCRIPTOR.path]: 3,
@@ -44,8 +44,9 @@ export const RESOURCE_VALUES = {
  */
 export type ResourceName = keyof typeof RESOURCE_VALUES;
 
+// 名前 <-> 番号の変換を公開する決定は ADR-0079。
 /**
- * The number PORTERS knows a resource by (ADR-0079). The library takes **names** where PORTERS
+ * The number PORTERS knows a resource by. The library takes **names** where PORTERS
  * takes a `resource=` parameter, but a *field value* stays the number its Data Type declares —
  * `Activity.P_Resource`, `Attachment.Resource`, and a `condition` on either.
  *
@@ -63,8 +64,9 @@ export type ResourceName = keyof typeof RESOURCE_VALUES;
 export const resourceValueOf = (name: ResourceName): number =>
   RESOURCE_VALUES[name];
 
+// 未知の番号をそのまま返す（undefined にも例外にもしない）のは ADR-0079。
 /**
- * The name for a resource number (ADR-0079) — the other direction of {@link resourceValueOf}.
+ * The name for a resource number — the other direction of {@link resourceValueOf}.
  * Use it to read a value PORTERS returned: `Activity.P_Resource`, `Field.P_ResourceType`, or a
  * raw value from {@link rawValue}.
  *

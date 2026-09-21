@@ -8,9 +8,9 @@
 
 > **AttachmentAccessor** = `object`
 
-Defined in: [src/resources/attachment.ts:124](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L124)
+Defined in: [src/resources/attachment.ts:126](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L126)
 
-Attachments are reached through the resource they belong to (ADR-0080 / ADR-0081):
+Attachments are reached through the resource they belong to:
 
 ```ts
 const files = t.attachment.of("resume");
@@ -27,7 +27,7 @@ PORTERS requires `resource=` on every Attachment Read, and the same value goes i
 
 > **of**(`resource`): [`AttachmentResource`](AttachmentResource.md)
 
-Defined in: [src/resources/attachment.ts:125](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L125)
+Defined in: [src/resources/attachment.ts:127](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L127)
 
 #### Parameters
 

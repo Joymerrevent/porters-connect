@@ -8,7 +8,7 @@
 
 > **TenantCustomCatalog** = `object`
 
-Defined in: [src/fields/tenant-catalog.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L54)
+Defined in: [src/fields/tenant-catalog.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L55)
 
 One resource's custom fields as the tenant actually has them.
 
@@ -18,7 +18,7 @@ One resource's custom fields as the tenant actually has them.
 
 > `readonly` **fields**: `Readonly`\<`Record`\<`string`, [`CustomDataType`](CustomDataType.md)\>\>
 
-Defined in: [src/fields/tenant-catalog.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L60)
+Defined in: [src/fields/tenant-catalog.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L61)
 
 Bare alias -> declared Data Type — the same shape `defineFields` produces, so it compares
 directly against a declaration.
@@ -29,7 +29,7 @@ directly against a declaration.
 
 > `readonly` **names**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [src/fields/tenant-catalog.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L73)
+Defined in: [src/fields/tenant-catalog.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L75)
 
 Bare alias -> `Field.P_Name`, for every custom field seen (declarable or not).
 
@@ -43,7 +43,7 @@ own business vocabulary**, so it is carried but never printed unless a caller ex
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/tenant-catalog.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L55)
+Defined in: [src/fields/tenant-catalog.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L56)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [src/fields/tenant-catalog.ts:55](https://github.com/Joymerrevent/po
 
 > `readonly` **undeclarable**: readonly [`UndeclarableField`](UndeclarableField.md)[]
 
-Defined in: [src/fields/tenant-catalog.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L65)
+Defined in: [src/fields/tenant-catalog.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L67)
 
-Custom fields that exist but cannot be declared. **Never silently dropped** (ADR-0069 論点4):
+Custom fields that exist but cannot be declared. **Never silently dropped**:
 an unknown Field Type means PORTERS grew a type, and nobody would notice if it vanished here.

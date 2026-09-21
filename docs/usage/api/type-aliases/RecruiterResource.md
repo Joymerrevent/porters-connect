@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/recruiter.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L98)
 
-The Recruiter accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Recruiter accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

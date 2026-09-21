@@ -97,18 +97,20 @@ type ConditionOf = {
   Link: never;
 };
 
+// Data Type なしを null で表す決定は ADR-0056。
 /**
  * The condition-operator object a field of Data Type `D` accepts. A field PORTERS gives no Data
- * Type (`null` — ADR-0056) resolves to `never`, which is exactly right: the reference says such a
+ * Type (`null`) resolves to `never`, which is exactly right: the reference says such a
  * field cannot appear in `condition` at all.
  */
 type ConditionFor<D extends DataType | null> = D extends DataType
   ? ConditionOf[D]
   : never;
 
+// Data Type ごとの演算子オブジェクトは ADR-0038 案1a。
 /**
  * A typed search condition over a catalog: each field maps to the operator object its Data Type
- * allows (ADR-0038 案1a). Multiple fields are AND-joined (reference). Unknown aliases / wrong
+ * allows. Multiple fields are AND-joined (reference). Unknown aliases / wrong
  * operators are type errors. Custom `U_`/`A_` fields are not in the catalog — condition on them via
  * a cast (the encoder passes unknown aliases through as raw scalars, like read/write).
  */
@@ -135,13 +137,14 @@ export type Order<F extends FieldCatalog> = Array<
 
 // --- itemstate (reference: 削除済みデータ取得) ---
 
+// 省略と existing 明示を区別する決定は ADR-0057。
 /**
  * Which delete state to read. `existing` reads live data, `deleted`/`all` read deleted records —
  * the only way to read deleted data, since there is no delete API. When `deleted`/`all`, condition
  * is restricted to `P_Id` / `P_UpdateDate` / `P_UpdatedBy` and PORTERS auto-adds a "updated within
  * 90 days" filter (`P_UpdateDate` = the delete time, `P_UpdatedBy` = the last editor).
  *
- * **Omitting the field is not the same as passing `existing`** (ADR-0057). Omitting defers to the
+ * **Omitting the field is not the same as passing `existing`.** Omitting defers to the
  * API's own default (today: `existing`); passing `existing` states that you want live records only,
  * and is sent as such. Both read live data now, but only the explicit form keeps doing so if PORTERS
  * ever changes that default. Use `itemstate: "existing"` when live-only actually matters to you.
@@ -154,16 +157,18 @@ export type SearchQuery<
   F extends FieldCatalog = FieldCatalog,
   R extends ReferenceMap = EmptyReferences,
 > = {
+  // 裸 alias に接頭辞を足すのは ADR-0059、省略時に全項目を取るのは ADR-0020。
   /**
    * Output fields as **bare aliases** (e.g. `P_Name`) — the same vocabulary as `condition` and
-   * `order`; the library adds the resource's prefix (ADR-0059). **Omit** to fetch every catalogued
-   * field by default (ADR-0020): PORTERS returns only the primary key for a fieldless request, so
+   * `order`; the library adds the resource's prefix. **Omit** to fetch every catalogued
+   * field by default: PORTERS returns only the primary key for a fieldless request, so
    * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
    * API-native "primary key only" response (e.g. counting).
    */
   field?: ReadFieldAlias<F>[];
+  // expand の設計は ADR-0058。
   /**
-   * Read the *fields* of a referenced record, not just its id (ADR-0058): map an expandable
+   * Read the *fields* of a referenced record, not just its id: map an expandable
    * `System[Reference]` field to the bare aliases you want from the resource it points at. The
    * referenced prefix is supplied by the library, and the expanded fields come back decoded by
    * that resource's own Data Types.
@@ -178,8 +183,9 @@ export type SearchQuery<
    * requested twice.
    */
   expand?: Expand<R>;
+  // image の設計は ADR-0064。
   /**
-   * Read an Image field's `ContentType` / `Content`, not just its `FileName` (ADR-0064): map an
+   * Read an Image field's `ContentType` / `Content`, not just its `FileName`: map an
    * Image-typed field to the sub-tags you want. Only what you select comes back, and the record
    * type narrows to exactly that.
    *
@@ -193,7 +199,7 @@ export type SearchQuery<
    * `field` entry, so nothing is requested twice.
    */
   image?: ImageOption<F>;
-  /** Typed AND-conditions; each field's operators derive from its Data Type (ADR-0038). */
+  /** Typed AND-conditions; each field's operators derive from its Data Type. */
   condition?: Condition<F>;
   /** Sort order; orderable Data Types only (Number/Date/DateTime/Age/System). */
   order?: Order<F>;
