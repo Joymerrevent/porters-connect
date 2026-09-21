@@ -8,6 +8,9 @@
 > （assertion 無しでも緑＝coverage theater）。テストの**質**を測る手段を決める。`accepted`（2026-06-15）：
 > Stryker を導入し、カバレッジ同様に**継続運用・CI で回帰を止める**（score `break` 閾値）。
 > PR は差分（incremental）で高速に・nightly でフル。baseline を作り survived を潰して閾値を設定・ratchet。
+>
+> **訂正（2026-09-22・decider）**: 実行戦略のうち「PR は差分（incremental）」は**取り下げ、PR もフル run**
+> にした。理由は下記 Decision Outcome の訂正。閾値は `break` 100 に到達済み（[RV-59][rv59]）。
 
 ## Context and Problem Statement
 
@@ -38,15 +41,25 @@
 - ツール: **StrykerJS**（`@stryker-mutator/core` ＋ `@stryker-mutator/vitest-runner`）。
 - 対象: src のロジック（[ADR-0014][0014] と同様にバレル/型/プレースホルダ/テストを除外）。
 - **CI 強制**: mutation score の `break` 閾値を設け、下回ったら CI を落とす（回帰防止）。
-- **実行戦略**: **PR は差分のみ（incremental / `--since`）で高速**に、**nightly（schedule）でフル run** して全体 score を追跡。
+- ~~**実行戦略**: **PR は差分のみ（incremental / `--since`）で高速**に、**nightly（schedule）でフル run** して全体 score を追跡。~~
+  **訂正（2026-09-22）**: **PR / push / nightly のすべてでフル run**（CI 実測 約 11 分・incremental は約 3 分）。
+  Stryker の incremental は **static mutant**（モジュール読み込み時に評価される定数: リソースの項目表・
+  応答 XML・regex …）の "Survived" を、**その行のコードを変えるか `--force` を掛けるまで再利用し続ける**
+  （static には per-test の coverage が無く、再試験の条件「cover するテストが増えた」に決して該当しない —
+  `@stryker-mutator/core` の `incremental-differ`）。`break` 100 と組み合わせると、static の穴を**テストで塞いだ
+  PR が必ず落ちる**（#375 で実際に起きた: 進捗は survived 0 なのに、復元したキャッシュの Survived 4 件が
+  最終表に残った）。安全側ではあるがゲートとして成立しないので、差分再評価をやめて速度を手放した。
+  代替案（PR だけ `ignoreStatic`／キャッシュから static の結果だけ捨てる）は、前者が static の退行を PR で
+  見なくなり、後者は static が時間の 6 割を占めるためフル run とほぼ同コストで機構だけ増える、として退けた。
 - **baseline → ratchet**: 導入時にフル run → survived mutant をテストで潰す → `break` 閾値を実測付近に置き徐々に引き上げる。
 - フェイルセーフ: survived は「テストの穴」。`// Stryker disable` は真の同値変異のみに限定（濫用しない）。
 
 ### Consequences
 
 - Good: 空テスト/弱い assertion を CI で継続的に弾ける＝テスト品質を維持。カバレッジの限界を補完。
-- Bad: **遅い**（mutant 数だけ test suite を回す）→ PR は incremental・full は nightly で緩和。同値変異の仕分けコスト。
-- Neutral: `break` 閾値・incremental の基準（`develop`）は実装で確定。score を上げる継続作業が発生（coverage と同性質）。
+- Bad: **遅い**（mutant 数だけ test suite を回す）→ ~~PR は incremental・full は nightly で緩和~~
+  **訂正（2026-09-22）**: 緩和しない。コード変更を含む PR は毎回フル run（約 11 分）。同値変異の仕分けコスト。
+- Neutral: `break` 閾値は実装で確定（2026-09-21 以降 100）。score を上げる継続作業が発生（coverage と同性質）。
 
 ## Pros and Cons of the Options
 
@@ -82,7 +95,8 @@
   分類すると 34 件は挙動・契約の穴だったので全件撃破し、同値 1 件だけを `// Stryker disable` で
   明示、`break` を **100** に上げた（`thresholds = 100/100/100`）。以降は survivor が 1 件でも
   CI が落ちる＝本決定の「撃破か明示か」を仕組みで強制する。経緯は [ADR README][readme] の
-  「ADR を起こさずに決着した論点」。
+  「ADR を起こさずに決着した論点」。**翌日、PR の incremental run が上記の static 再利用で落ち、
+  実行戦略を訂正した**（Decision Outcome の訂正・`.github/workflows/mutation.yml`）。
 - **その後**: 「[ADR-0014][0014] と同様にバレル/型/**プレースホルダ**/テストを除外」のうち
   `stryker.config.json` の `!src/fields/**` は、`src/fields/` がプレースホルダでなくなったあとも残っていた。
   coverage 側と揃えて [RV-44][rv44] で外し、カスタム項目まわりも mutation の対象にした。
