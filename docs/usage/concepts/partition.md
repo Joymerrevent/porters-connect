@@ -8,7 +8,7 @@ PORTERS のデータは **Partition** という単位に分かれています。
 ## client は Partition を持たない
 
 `PortersClient` を作っただけでは、まだどのデータも読めません。**Partition を束ねるのは
-`tenant(id)` です**（[ADR-0055][adr55]）。
+`tenant(id)` です**<!-- 根拠: ADR-0055 -->。
 
 ```ts
 const porters = new PortersClient({ hostname, appId, appSecret });
@@ -38,7 +38,7 @@ console.log(tokyoCount, osakaCount);
 ```
 
 **カスタム項目の宣言も Partition ごと**に渡します — `tenant(id, { fields })`
-（[カスタム項目][custom-fields]・[ADR-0087][adr87]）。カスタム項目は Partition ごとのものなので、
+（[カスタム項目][custom-fields]）<!-- 根拠: ADR-0087 -->。カスタム項目は Partition ごとのものなので、
 client には置きません。client 自体を分けるのは**トークンを分けたい**ときだけです
 （[マルチテナント][multi-tenant]）。
 
@@ -55,7 +55,7 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 > **ログイン中の Partition は取れません。** PORTERS には「ログイン中の企業」を返す呼び方
 > （`request_type=0`）がありますが、**ブラウザ経由の認証（`response_type=code`）でしか使えず**、
 > このライブラリの既定であるサーバ間認証（`code_direct`）では 403 になります。そのため
-> `partition.current()` は**提供していません**（[ADR-0022][adr22]）。アクセスできる Partition の
+> `partition.current()` は**提供していません**<!-- 根拠: ADR-0022 -->。アクセスできる Partition の
 > 一覧から選んでください。
 
 ## 1 つのトークンで複数 Partition を叩けるか — 未確認
@@ -63,7 +63,7 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 このライブラリは既定で**トークンを client 単位で共有**し、`tenant(id)` は `partition=` を
 差し替えるだけです。1 つの App トークンで複数の Partition にアクセスできる前提です。
 
-**これは実機で確かめていません**（[ライブ検証][lv] LV-13）。契約環境で不都合が出たら、
+**これは実機で確かめていません**<!-- 根拠: LV-13 -->。契約環境で不都合が出たら、
 Partition ごとに client を分ける形に切り替えてください — **設計は両対応**にしてあります。
 
 ## 覚えておくこと
@@ -75,16 +75,14 @@ Partition ごとに client を分ける形に切り替えてください — **�
 
 ## 関連
 
-- 決定: [ADR-0055][adr55]（`tenant(id)` に束ねる）／[ADR-0008][adr8]（マルチテナント運用）
 - 手順: [マルチテナント][multi-tenant]（1 プロセスで複数テナントを扱う）／[認証][authenticate]
 - API 事実: [リソース一覧][res-list]（Partition は `/v1/partition`）
 
-[adr8]: ../../adr/0008-multitenancy-partition.md
-[adr22]: ../../adr/0022-master-read-query-surface.md
-[adr55]: ../../adr/0055-partition-binding-guard.md
-[adr87]: ../../adr/0087-tenant-scoped-field-declarations.md
+<!-- 根拠:
+- 決定: ADR-0055（`tenant(id)` に束ねる）／ADR-0008（マルチテナント運用）
+-->
+
 [custom-fields]: ../howto/custom-fields.md
 [authenticate]: ../howto/authenticate.md
-[lv]: ../../live-verification.md
 [multi-tenant]: ../howto/multi-tenant.md
 [res-list]: ../reference/resource-api/resources-list.md
