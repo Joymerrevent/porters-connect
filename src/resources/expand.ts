@@ -47,10 +47,11 @@ type CatalogOf<T> = T extends { fields: infer F extends FieldCatalog }
   ? F
   : never;
 
+// 参照先の接頭辞を descriptor が持つ設計は ADR-0058。
 /**
  * What `expand` accepts: for each expandable reference field, the **bare aliases** to read from
  * the referenced record. The referenced prefix is never written by the caller — the descriptor
- * has it (ADR-0058). Only catalogued aliases of the target are allowed: an alias outside its
+ * has it. Only catalogued aliases of the target are allowed: an alias outside its
  * catalog has no Data Type here, so nothing could type or decode it.
  */
 export type Expand<R extends ReferenceMap> = {

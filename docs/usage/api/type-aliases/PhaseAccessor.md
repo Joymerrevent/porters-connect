@@ -8,9 +8,9 @@
 
 > **PhaseAccessor** = `object`
 
-Defined in: [src/resources/phase.ts:140](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L140)
+Defined in: [src/resources/phase.ts:142](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L142)
 
-Phase is reached through the resource whose history you want (ADR-0061 案2a):
+Phase is reached through the resource whose history you want:
 
 ```ts
 const phases = t.phase.of("client");
@@ -18,7 +18,7 @@ await phases.search({ condition: { ResourceId: { eq: 20001 } } });
 ```
 
 The name is the accessor's own spelling ([ResourceName](ResourceName.md)) — `of(5)` and `of("clinet")`
-are compile errors (案5b).
+are compile errors.
 
 ## Methods
 
@@ -26,7 +26,7 @@ are compile errors (案5b).
 
 > **of**(`resource`): [`PhaseResource`](PhaseResource.md)
 
-Defined in: [src/resources/phase.ts:141](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L141)
+Defined in: [src/resources/phase.ts:143](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L143)
 
 #### Parameters
 

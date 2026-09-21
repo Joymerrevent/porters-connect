@@ -30,13 +30,14 @@ export type FieldCatalogSource = {
   };
 };
 
-/** Why a tenant custom field cannot be expressed as a declaration (ADR-0069 論点4). */
+// 理由を落とさず報告する形は ADR-0069 論点4。builder が出さない型の範囲は ADR-0023 D3。
+/** Why a tenant custom field cannot be expressed as a declaration. */
 export type UndeclarableReason =
   /** `Field.P_Type` is not in PORTERS' published list — a type added since (report, never drop). */
   | "unknown-field-type"
   /** A published type that carries no value of its own (16 Reference). */
   | "no-data-type"
-  /** System-managed, i.e. standard-field territory — not offered by the builder (ADR-0023 D3). */
+  /** System-managed, i.e. standard-field territory — not offered by the builder. */
   | "not-declarable";
 
 /** A custom field PORTERS reports that no `defineFields` declaration can express. */
@@ -58,8 +59,9 @@ export type TenantCustomCatalog = {
    * directly against a declaration.
    */
   readonly fields: Readonly<Record<string, CustomDataType>>;
+  // 落とさない決定は ADR-0069 論点4。
   /**
-   * Custom fields that exist but cannot be declared. **Never silently dropped** (ADR-0069 論点4):
+   * Custom fields that exist but cannot be declared. **Never silently dropped**:
    * an unknown Field Type means PORTERS grew a type, and nobody would notice if it vanished here.
    */
   readonly undeclarable: readonly UndeclarableField[];
@@ -75,13 +77,14 @@ export type TenantCustomCatalog = {
 
 /** Options for {@link readCustomCatalog}. */
 export type ReadCustomCatalogOptions = {
+  // 既定 -1（generateFieldDecls は 1）は ADR-0069 の accept 時の決定。
   /**
    * Field Read's `active` filter: `-1` all (default), `0` unused only, `1` in-use only.
    *
    * The default is `-1` deliberately. Narrowing to `1` would hide fields that exist but are
    * unused, and a comparison against a declaration would then report them as **missing** — a
    * false alarm. `generateFieldDecls` overrides it to `1`, where "only what is in use" is what
-   * you want in a template (ADR-0069, decided on accept).
+   * you want in a template.
    */
   readonly active?: -1 | 0 | 1;
 };
@@ -146,10 +149,11 @@ const classify = (
   return { kind: "declarable", dataType };
 };
 
+// P_ は静的カタログ側（ADR-0019）。
 /**
  * Read one resource's tenant custom fields (`U_` / `A_`) from Field Read.
  *
- * Standard `P_` fields are left out — they are the static catalogs' job (ADR-0019) and declaring
+ * Standard `P_` fields are left out — they are the static catalogs' job and declaring
  * one is rejected by `defineFields` anyway. Fields whose Field Type cannot become a declaration
  * come back under `undeclarable` rather than being dropped.
  *

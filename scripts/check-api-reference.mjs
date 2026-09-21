@@ -15,8 +15,12 @@
 // 実測で 187 頁中 4 頁に混入していた。**生成物側を見る**のが要点で、`src` を直接 grep すると
 // 内部実装コメント（日本語可）と区別が付かない — 生成物に出たものは定義上すべて公開 JSDoc。
 //
-// 漢字ではなく**かな・カタカナだけ**を見る。ADR の節番号（`案5b` / `論点4`）や日本語の
-// サンプル値は漢字で現れうるので、漢字まで弾くと誤検知になる（判断は RV-51 を参照）。
+// 漢字ではなく**かな・カタカナだけ**を見る。日本語のサンプル値（`P_Title: "面談"`）は漢字で
+// 現れうるので、漢字まで弾くと誤検知になる（判断は RV-51 を参照）。
+//
+// 同じ理由で**保守者向けの識別子**（ADR / RV / LV 番号・VERIFY(live)・docs/adr 等のパス）も
+// 生成物側で弾く。利用者には意味を持たない情報で、IDE のホバーと docs/usage/api にそのまま
+// 出る。根拠は JSDoc ではなく `//` の実装コメントに書く（エラーの message / hint と同じ規律）。
 //
 // 使い方: `pnpm check:api`。落ちたら `pnpm docs:api` で再生成してコミットする。
 
@@ -80,8 +84,30 @@ export const kanaLines = (tree) => {
   return found;
 };
 
+// 保守者向けの識別子。ADR / レビュー指摘（RV）/ 実機確認項目（LV）の番号、VERIFY(live) の
+// 印、それらの台帳へのパス。ADR の節番号（`案5b` / `論点4` / `決定3` / `SD-3` / `F-3`）は
+// 単独では日本語のサンプル値と区別が付かないので、番号本体に付いて来る分だけ拾う。
+const MAINTAINER_ID =
+  /\bADR-\d{4}|\bRV-\d+\b|\bLV-\d+\b|VERIFY\(live\)|docs\/(adr|reviews|live-verification)/;
+
+/**
+ * 生成物に保守者向けの識別子が混ざっている行を拾う。`tree` は readTree の結果
+ * （相対パス -> 内容）。返り値は `path:line: 内容` の配列。
+ */
+export const maintainerIdLines = (tree) => {
+  const found = [];
+  for (const [path, content] of tree) {
+    content.split("\n").forEach((line, i) => {
+      if (MAINTAINER_ID.test(line))
+        found.push(`${path}:${String(i + 1)}: ${line.trim()}`);
+    });
+  }
+  return found;
+};
+
 // 生成と比較の本体。CLI として実行されたときだけ走らせる（テストからは import して
-// `kanaLines` を呼ぶ — import しただけで typedoc が動くと検査のテストが書けない）。
+// `kanaLines` / `maintainerIdLines` を呼ぶ — import しただけで typedoc が動くと検査の
+// テストが書けない）。
 const main = () => {
   if (!exists(COMMITTED)) {
     console.error(
@@ -124,8 +150,19 @@ const main = () => {
           console.error(`  … 他 ${String(kana.length - 20)} 件`);
         process.exit(1);
       }
+      const ids = maintainerIdLines(actual);
+      if (ids.length > 0) {
+        console.error(
+          "公開 API リファレンスに保守者向けの識別子（ADR / RV / LV 番号など）が混ざっています。\n" +
+            "利用者には意味を持たない情報です。根拠は JSDoc ではなく `//` の実装コメントに移してください:\n",
+        );
+        for (const l of ids.slice(0, 20)) console.error(`  ${l}`);
+        if (ids.length > 20)
+          console.error(`  … 他 ${String(ids.length - 20)} 件`);
+        process.exit(1);
+      }
       console.log(
-        `API リファレンスは最新です（${String(expected.size)} ファイル・日本語の混入なし）。`,
+        `API リファレンスは最新です（${String(expected.size)} ファイル・日本語と保守者向け識別子の混入なし）。`,
       );
       process.exit(0);
     }

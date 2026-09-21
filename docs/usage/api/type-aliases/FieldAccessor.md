@@ -8,9 +8,9 @@
 
 > **FieldAccessor** = `object`
 
-Defined in: [src/resources/field.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L95)
+Defined in: [src/resources/field.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L98)
 
-Field Read is reached through the resource whose catalog you want (ADR-0080):
+Field Read is reached through the resource whose catalog you want:
 
 ```ts
 const fields = t.field.of("candidate");
@@ -27,7 +27,7 @@ it once means it cannot be forgotten or contradicted.
 
 > **of**(`resource`): [`FieldResource`](FieldResource.md)
 
-Defined in: [src/resources/field.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L96)
+Defined in: [src/resources/field.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L99)
 
 #### Parameters
 

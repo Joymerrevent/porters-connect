@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/candidate.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L81)
 
-The Candidate accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Candidate accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

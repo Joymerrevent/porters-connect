@@ -40,27 +40,28 @@ export type ResourceDeps = {
   partition: number;
 };
 
-/**
- * "No custom fields": the intersection-identity default for the generic catalog params (ADR-0023).
- * A bare `{}` is flagged by `no-empty-object-type`; `Record<never, never>` is the same empty object,
- * lint-clean, adds no keys in `static & C`, and satisfies both `FieldCatalog` and `DeclaredCatalogs`.
- * Lives here (with `FieldCatalog`) so resources need not import from the higher-level `fields/` (RV-8).
- */
+// 汎用カタログ引数の既定値（ADR-0023）。`{}` は no-empty-object-type に掛かるので
+// Record<never, never> で同じ空オブジェクトを表す。fields/ から import しないためここに
+// 置く（RV-8: 下位モジュールが上位を参照しない）。
+/** "No custom fields": the intersection-identity default for the generic catalog params. */
 export type EmptyCatalog = Record<never, never>;
 
+// optional にする「simple」型は ADR-0005 SD-3 / ADR-0019。未宣言 alias を型に出さず rawValue で
+// 読ませるのは ADR-0074 D2。
 /**
  * A decoded record: every known field, each `DecodedValue | null`, and **optional** because a
- * field not named in `field` is simply absent (SD-3 "simple" type — ADR-0005/0019). An alias the
- * catalog does not know is not typed here — declare it with `defineFields` (ADR-0023) to get it
+ * field not named in `field` is simply absent. An alias the
+ * catalog does not know is not typed here — declare it with `defineFields` to get it
  * typed and converted. At runtime such a field still passes through as a raw value; read it with
- * {@link rawValue} (ADR-0074 D2).
+ * {@link rawValue}.
  */
 export type ReadRecord<F extends FieldCatalog> = {
   [K in keyof F]?: DecodedValue<F[K]> | null;
 };
 
+// 未宣言項目の逃げ道として名前付きで公開する決定は ADR-0074 D2。
 /**
- * Read a field the catalog does not know (ADR-0074 D2) — the named escape hatch for a value that
+ * Read a field the catalog does not know — the named escape hatch for a value that
  * arrived without a declaration: through a cast in `field`, inside an expanded reference record,
  * or because PORTERS returned a field that was not asked for.
  *
@@ -88,10 +89,11 @@ export const rawValue = (
   return typeof value === "string" ? value : null;
 };
 
+// レコード型でパラメータ化するのは expand（ADR-0058）で行が広がるため。
 /**
  * A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
  * the item decoder produced. Parametrised by the *record* rather than the catalog because a read
- * that expands references returns a wider record than the catalog alone describes (ADR-0058).
+ * that expands references returns a wider record than the catalog alone describes.
  */
 export type ResourcePageOf<T> = {
   items: T[];
@@ -134,11 +136,13 @@ const readFieldEntry = (
     ? `${qualify(prefix, alias)}(${USER_SUBFIELDS.map((s) => `User.${s}`).join(",")})`
     : qualify(prefix, alias);
 
+// 裸 alias（ADR-0059）・カタログ済みだけを受ける（ADR-0074 D1）・宣言は defineFields（ADR-0023）。
+// 実行時は寛容のまま（ADR-0074）。
 /**
- * What a Read `field` entry may name (ADR-0059 / ADR-0074 D1): a **catalogued** alias — every
- * standard `P_` field plus the custom fields declared with `defineFields` (ADR-0023). An
+ * What a Read `field` entry may name: a **catalogued** alias — every
+ * standard `P_` field plus the custom fields declared with `defineFields`. An
  * undeclared `U_`/`A_` alias is **not** accepted: `condition`, `order` and the Write inputs have
- * always required a declaration, and ADR-0074 D1 brings `field` in line, so custom fields follow
+ * always required a declaration, and `field` follows the same rule, so custom fields follow
  * one rule — declare, then use.
  *
  * Aliases are **bare**: the resource's prefix (`Person.` for Candidate) is a constant the
@@ -146,7 +150,7 @@ const readFieldEntry = (
  * vocabulary and turns a typo (`P_Nmae`) or a hand-written prefix into a compile error instead of
  * a request that quietly returns nothing.
  *
- * The runtime stays permissive (ADR-0074): an alias that arrives through a cast is still sent, and
+ * The runtime stays permissive: an alias that arrives through a cast is still sent, and
  * a response field the catalog does not know still decodes — read it with {@link rawValue}.
  */
 export type ReadFieldAlias<F extends FieldCatalog> = keyof F & string;

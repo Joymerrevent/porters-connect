@@ -9,23 +9,24 @@ import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
 import { isXmlName } from "../util/xml-name";
 import type { DataType, ImageSubField } from "./decode";
 
+// Option を string[] で読み書き対称にするのは ADR-0017。項目ごとの静的 Write 型は
+// 基本設計 SD-3 の残課題。
 /**
  * A value to write. Scalars cover the string Data Types / Number / Id and the
  * ID-only User / Reference. An **Option** value is an array of selected aliases
- * (`string[]`) — symmetric with the Option read shape (ADR-0017); a lone string
+ * (`string[]`) — symmetric with the Option read shape; a lone string
  * is tolerated as a 1-element selection (fail-safe). `null` / `undefined` omits the
  * field (leaves it unchanged) — send `""` to clear a string field.
  *
- * Per-field static typing (Option fields as `string[]`, etc.) is future work — the
- * precise static Write type (SD-3).
+ * Per-field static typing (Option fields as `string[]`, etc.) is future work.
  */
 export type WriteValue =
   string | number | string[] | ImageWriteValue | null | undefined;
 
+// 送信前ガードと静的型で一覧を共有するのは ADR-0064 論点3。
 /**
  * The MIME types PORTERS accepts for an Image field's `ContentType` (reference: Write API - XML
- * Format). Exported so the send-time guard and the static Write input agree on one list
- * (ADR-0064 論点3).
+ * Format). Exported so the send-time guard and the static Write input agree on one list.
  */
 export const IMAGE_CONTENT_TYPES = [
   "image/jpeg",
@@ -37,8 +38,11 @@ export const IMAGE_CONTENT_TYPES = [
 /** One of the four MIME types an Image field accepts. */
 export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
 
+// 3 要素を必須にする判断は ADR-0064 論点3。
+// VERIFY(live): 画像を「消す」手段は未確認。空の sub-element が消去なのか拒否なのかは
+// 書かれておらず、外すと「消えたつもり」になる — docs/live-verification.md (LV-22)。
 /**
- * An Image field's write value (ADR-0064 論点3): the three sub-elements PORTERS' Write format
+ * An Image field's write value: the three sub-elements PORTERS' Write format
  * names, with `Content` Base64-encoded. All three are **required** — PORTERS' sample writes the
  * full element and the library has no basis for a partial write; a value is either supplied whole
  * or the field is omitted (`null` / `undefined`, like every other field).
@@ -50,9 +54,9 @@ export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
  * Size / name-length / MIME are checked **before the request goes out** (the ~15000-char request
  * guard is lifted for an image write, so this is what replaces it).
  *
- * VERIFY(live): there is no way to *clear* an image. Whether empty sub-elements erase the value or
- * are rejected is not written down, and guessing wrong would mean thinking a value was cleared
- * when it was not — docs/live-verification.md (LV-22).
+ * There is no way to *clear* an image. Whether empty sub-elements erase the value or
+ * are rejected is not documented, and guessing wrong would mean thinking a value was cleared
+ * when it was not — so the library does not offer it.
  */
 export type ImageWriteValue = {
   FileName: string;

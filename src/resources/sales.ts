@@ -111,10 +111,11 @@ export type Sales = ReadRecord<typeof FIELDS>;
 export type SalesPage = ResourcePage<typeof FIELDS>;
 export type SalesSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 
+// 条件付き必須を型で表さない決定は ADR-0083。
 /**
  * Fields for `create`: only `P_Owner` is unconditionally required. The six references are
  * required *conditionally* (a dependency chain PORTERS validates server-side), so they stay
- * optional here (ADR-0083) — see the module comment and docs/usage/concepts/limits.md.
+ * optional here — see docs/usage/concepts/limits.md.
  */
 export type SalesCreateInput = CreateInput<
   typeof FIELDS,
@@ -122,7 +123,7 @@ export type SalesCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type SalesUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Sales accessor; `C` is the declared custom-field catalog merged on (ADR-0023). */
+/** The Sales accessor; `C` is the declared custom-field catalog merged on. */
 export type SalesResource<C extends FieldCatalog = EmptyCatalog> = Resource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number],

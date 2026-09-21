@@ -8,8 +8,8 @@
 
 > **Scheme** = `"https"` \| `"http"`
 
-Defined in: [src/types/common.ts:12](https://github.com/Joymerrevent/porters-connect/blob/main/src/types/common.ts#L12)
+Defined in: [src/types/common.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/types/common.ts#L13)
 
-URL scheme of the API access point (ADR-0047). `https` is the default; `http` is opt-in,
+URL scheme of the API access point. `https` is the default; `http` is opt-in,
 meant for a local fake server or a trusted tunnel, and always warns (see
 `PortersClientOptions.scheme`).

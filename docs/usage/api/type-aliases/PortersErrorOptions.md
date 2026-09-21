@@ -26,7 +26,7 @@ Defined in: [src/errors/porters-error.ts:30](https://github.com/Joymerrevent/por
 
 > `optional` **cause?**: `unknown`
 
-Defined in: [src/errors/porters-error.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L43)
+Defined in: [src/errors/porters-error.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L44)
 
 ***
 
@@ -44,7 +44,7 @@ PORTERS raw code; `null` for network/transport failures.
 
 > `optional` **context?**: [`PortersErrorContext`](PortersErrorContext.md)
 
-Defined in: [src/errors/porters-error.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L42)
+Defined in: [src/errors/porters-error.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L43)
 
 ***
 
@@ -62,9 +62,9 @@ Actionable hint (English by default).
 
 > `optional` **httpStatus?**: `number`
 
-Defined in: [src/errors/porters-error.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L41)
+Defined in: [src/errors/porters-error.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L42)
 
-HTTP status of the response this error came from (ADR-0044). Set for every error raised while
+HTTP status of the response this error came from. Set for every error raised while
 reading a response — including one carrying a PORTERS `<Code>` — and `undefined` for failures
 with no response at all (send-time guards, connection errors).
 

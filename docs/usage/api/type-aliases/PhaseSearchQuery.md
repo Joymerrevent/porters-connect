@@ -8,7 +8,7 @@
 
 > **PhaseSearchQuery** = `Omit`\<[`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`\>, `PhaseUnsupportedQuery`\> & `{ [K in PhaseUnsupportedQuery]?: never }`
 
-Defined in: [src/resources/phase.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L102)
+Defined in: [src/resources/phase.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L103)
 
 Phase's Read query: the common vocabulary **minus `keywords` / `itemstate`**, which
-`Phase - Read` does not list (ADR-0076).
+`Phase - Read` does not list.

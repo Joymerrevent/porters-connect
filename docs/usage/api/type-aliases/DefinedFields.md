@@ -8,7 +8,7 @@
 
 > **DefinedFields**\<`C`\> = `C` & `object`
 
-Defined in: [src/fields/define-fields.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L111)
+Defined in: [src/fields/define-fields.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L113)
 
 A validated set of custom field catalogs (branded — the client does not re-validate).
 

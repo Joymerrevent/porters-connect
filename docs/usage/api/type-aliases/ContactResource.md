@@ -10,7 +10,7 @@
 
 Defined in: [src/resources/contact.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L98)
 
-The Contact accessor; `C` is the declared custom-field catalog merged on (ADR-0023).
+The Contact accessor; `C` is the declared custom-field catalog merged on.
 
 ## Type Parameters
 

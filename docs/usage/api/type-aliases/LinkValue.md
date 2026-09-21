@@ -8,9 +8,9 @@
 
 > **LinkValue** = `number` \| [`UserRef`](UserRef.md) \| [`DepartmentRef`](DepartmentRef.md)
 
-Defined in: [src/xml/decode.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L71)
+Defined in: [src/xml/decode.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L74)
 
-A decoded Link value (ADR-0064 論点4). PORTERS resolves a Link to **a Contact id, a User, or a
+A decoded Link value. PORTERS resolves a Link to **a Contact id, a User, or a
 Department**, decided by the tenant's own field setting, and the response carries no
 discriminator — the shapes just differ. So the value is a union and the decode reads the shape,
 which cannot disagree with what arrived. Narrow with `typeof v === "number"` / `"P_Mail" in v`.

@@ -8,9 +8,9 @@
 
 > **FieldDef**\<`D`\> = `object`
 
-Defined in: [src/fields/define-fields.ts:12](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L12)
+Defined in: [src/fields/define-fields.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L13)
 
-One custom field's declared Data Type — the builder's return value (ADR-0023 D2).
+One custom field's declared Data Type — the builder's return value.
 
 ## Type Parameters
 
@@ -24,4 +24,4 @@ One custom field's declared Data Type — the builder's return value (ADR-0023 D
 
 > `readonly` **dataType**: `D`
 
-Defined in: [src/fields/define-fields.ts:12](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L12)
+Defined in: [src/fields/define-fields.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L13)

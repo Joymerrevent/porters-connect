@@ -32,11 +32,12 @@ const MAX_MINUTES = 59;
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
 
+// 変換関数として公開する設計は ADR-0086。
 /**
  * Read a **time-of-day** (時分型) field's value as a clock time.
  *
  * PORTERS stores a time-of-day field as a DateTime anchored to 1970/01/01 (`24:00`–`47:59` land on
- * 1970/01/02) and Field Read cannot tell it from a date-time field (ADR-0086). Read the field as
+ * 1970/01/02) and Field Read cannot tell it from a date-time field. Read the field as
  * usual — it decodes to ISO — and pass that ISO string here to get the clock time back:
  * `"1970-01-01T09:00:00Z"` → `"09:00"`, `"1970-01-02T02:00:00Z"` → `"26:00"`.
  *
@@ -100,13 +101,14 @@ export const decodeTimeOfDay = (iso: string): string => {
     : `${pad2(hours)}:${minutes}:${seconds}`;
 };
 
+// 変換関数として公開する設計は ADR-0086。
 /**
  * Write (or search on) a **time-of-day** (時分型) field from a clock time.
  *
  * Turns `"HH:mm"` / `"HH:mm:ss"` (`00:00`–`47:59`, PORTERS' own range) into the anchored ISO
  * date-time the field takes — `"09:00"` → `"1970-01-01T09:00:00Z"`, `"26:00"` →
  * `"1970-01-02T02:00:00Z"` — so the value goes through `update` / `create` / `condition` like any
- * DateTime (ADR-0086). PORTERS answers any other date with Code 103 on write and Code 100 on
+ * DateTime. PORTERS answers any other date with Code 103 on write and Code 100 on
  * condition (the search is not run), so an out-of-range or malformed clock time is refused here,
  * before anything is sent.
  *

@@ -60,32 +60,36 @@ import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
 import type { PartitionId, Scheme, Scope } from "./types";
 
+// App-level と partition-level の線引きは ADR-0087（カスタム項目の宣言は tenant へ）。
 /**
  * Options for constructing a {@link PortersClient}. App-level only: custom field declarations
- * belong to a partition and go to {@link PortersClient.tenant} as {@link TenantOptions} (ADR-0087).
+ * belong to a partition and go to {@link PortersClient.tenant} as {@link TenantOptions}.
  */
 export type PortersClientOptions = {
+  // hostname は名前だけ・port は別項目（ADR-0078）。不正値は黙って別の宛先に向けず
+  // 構築時に弾く（ADR-0048）。
   /**
    * API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
    * (A representative value lives in docs/usage/reference.)
    *
-   * The **name and nothing else**: no port, no scheme, no path, no userinfo, no whitespace
-   * (ADR-0078). PORTERS issues a server name and speaks https, so a port never arrives with it;
+   * The **name and nothing else**: no port, no scheme, no path, no userinfo, no whitespace.
+   * PORTERS issues a server name and speaks https, so a port never arrives with it;
    * when you need one (a local fake, a proxy) pass {@link PortersClientOptions.port}. A value
    * like `https://xxxxx.example.com` or `a.test:4010` is rejected at construction with a
-   * {@link PortersConfigError} rather than silently addressing something else (ADR-0048).
+   * {@link PortersConfigError} rather than silently addressing something else.
    * Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
    */
   hostname: string;
   /**
-   * Port of the access point (ADR-0078). **Omit it for PORTERS** — the contract gives you a name
+   * Port of the access point. **Omit it for PORTERS** — the contract gives you a name
    * and the scheme decides the port. Set it only for a local fake server or a proxy:
    * `{ hostname: "127.0.0.1", port: 4010, scheme: "http" }`. An integer 1–65535; anything else
    * is rejected at construction.
    */
   port?: number;
+  // http の許可と警告の抑止を分ける理由は ADR-0047。
   /**
-   * URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
+   * URL scheme of the access point. Defaults to `"https"`. Set `"http"` only for a
    * local fake server or a trusted tunnel: it sends every request — the OAuth token header
    * included — in cleartext, so the library warns once per process (loopback is not exempt).
    * Silence it only where cleartext is intended, with the env var
@@ -101,50 +105,57 @@ export type PortersClientOptions = {
   tokenStore?: TokenStore;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
+  // 宛先ごとのプロセス共有バケットは ADR-0073。プロセス横断（Redis 等）は ADR-0010 で
+  // 利用側の責務とした。
   /**
-   * Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this destination**,
+   * Rate-limit self-restraint. Defaults to the **process-wide bucket for this destination**,
    * so several clients aimed at the same PORTERS add up to one limit instead of one each.
    *
    * Pass your own to opt out of that sharing, to run different limits, or to coordinate across
-   * processes — a `Throttle` backed by Redis is what makes the multi-instance case honest
-   * (ADR-0010 left that to the caller). `createThrottle()` builds the default implementation.
+   * processes — a `Throttle` backed by Redis is what makes the multi-instance case honest; the
+   * library leaves that to you. `createThrottle()` builds the default implementation.
    */
   throttle?: Throttle;
+  // 宣言を tenant へ移した経緯は ADR-0087。黙って捨てずに弾くのは hostname と同じ
+  // fail-closed（ADR-0048）。
   /**
-   * **Not a client option any more** (ADR-0087). Custom fields belong to a partition, so the
+   * **Not a client option any more.** Custom fields belong to a partition, so the
    * declaration goes to {@link PortersClient.tenant} as `tenant(id, { fields })`. Typed `never`
    * so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
    * it is not a fresh literal; at runtime the constructor rejects it with {@link PortersConfigError}
-   * rather than silently dropping the declaration (the same fail-closed stance as `hostname`,
-   * ADR-0048).
+   * rather than silently dropping the declaration (the same fail-closed stance as `hostname`).
    */
   fields?: never;
 };
 
+// 宣言 DSL は ADR-0023、partition スコープで受ける決定は ADR-0087。
 /**
- * Options for {@link PortersClient.tenant}. `C` is inferred from `fields` (ADR-0023 / ADR-0087).
+ * Options for {@link PortersClient.tenant}. `C` is inferred from `fields`.
  *
  * Declared per partition, not per client, because that is how PORTERS defines custom fields:
  * every resource article lists `U_[Name]` / `A_[Name]` as differing per tenant (Company DB).
  * The scope that binds the partition is therefore the one that states its field shape — a
- * declaration written for one tenant cannot silently apply to another (ADR-0087).
+ * declaration written for one tenant cannot silently apply to another.
  */
 export type TenantOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
+  // 宣言と検証（verifyFields）が同じ tenant(id) を取る理由は ADR-0069。
   /**
-   * This partition's custom field declarations from {@link defineFields} (ADR-0023). Each
+   * This partition's custom field declarations from {@link defineFields}. Each
    * resource's declared `U_`/`A_` fields are merged onto its static catalog, so they decode /
    * encode by their declared Data Type and appear typed on reads / writes. Omit for standard
    * `P_` only. `generateFieldDecls` writes one from the tenant's Field Read and `verifyFields`
-   * checks one against it (ADR-0069) — both take the same `tenant(id)` scope.
+   * checks one against it — both take the same `tenant(id)` scope.
    */
   fields?: DefinedFields<C>;
 };
 
+// tenant(id) 経由のみ（既定 partition を持たない）は ADR-0040 F-3 / ADR-0055。
+// カスタム項目の宣言をここで束ねるのは ADR-0087。
 /**
- * The partition-bound resource accessors returned by {@link PortersClient.tenant} (ADR-0040 / F-3).
- * **This is the only way to reach a partition-scoped resource** (ADR-0055): PORTERS requires
+ * The partition-bound resource accessors returned by {@link PortersClient.tenant}.
+ * **This is the only way to reach a partition-scoped resource**: PORTERS requires
  * `partition` on every one of these calls, so the API makes you supply it exactly once, explicitly.
- * `C` is that partition's custom field catalog, from `tenant(id, { fields })` (ADR-0087).
+ * `C` is that partition's custom field catalog, from `tenant(id, { fields })`.
  * `auth` (App-level), the `partition` master (discovery — partition-less), and `tenant` itself
  * (no nesting) are deliberately absent: none of them takes a partition.
  */
@@ -158,17 +169,19 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
   readonly activity: ActivityResource<CustomFor<C, "activity">>;
   readonly contract: ContractResource<CustomFor<C, "contract">>;
   readonly sales: SalesResource<CustomFor<C, "sales">>;
+  // of(resource) で束ねる形は ADR-0061 案2a。
   /**
    * Phase history, reached through the resource it belongs to: `t.phase.of("client")`.
-   * PORTERS requires that `resource` on every Phase call, so it is bound once (ADR-0061 案2a).
+   * PORTERS requires that `resource` on every Phase call, so it is bound once.
    */
   readonly phase: PhaseAccessor;
   readonly process: ProcessResource<CustomFor<C, "process">>;
   readonly resume: ResumeResource<CustomFor<C, "resume">>;
+  // of(resource) で束ねる形は ADR-0080、write 側の <Resource> も同じ値で埋めるのは ADR-0081。
   /**
    * Attachments, reached through the resource they belong to: `t.attachment.of("resume")`.
    * PORTERS requires that `resource` on every Attachment Read, and the same value fills the
-   * `<Resource>` field on write, so it is bound once (ADR-0080 / ADR-0081).
+   * `<Resource>` field on write, so it is bound once.
    */
   readonly attachment: AttachmentAccessor;
   readonly user: UserResource;
@@ -178,22 +191,24 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
    * by the `user_r` scope (PORTERS defines no `department_r`).
    */
   readonly department: DepartmentResource;
+  // of(resource) で束ねる形は ADR-0080。
   /**
    * Field master Read, reached through the resource whose catalog you want:
    * `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
-   * once (ADR-0080).
+   * once.
    */
   readonly field: FieldAccessor;
   readonly option: OptionResource;
 };
 
+// 既定 partition を持たない（ADR-0055）・宣言は tenant で受ける（ADR-0087）。
 /**
  * Entry point of the library. Wires the default transport / auth / throttle / requester and exposes
  * the **App-level** surface: `auth`, the `partition` master (discovery), and {@link PortersClient.tenant}.
  *
  * Everything that PORTERS scopes to a partition (Company DB) lives behind `tenant(id)` — see
- * {@link TenantScope}. The client holds no default partition (ADR-0055) and no custom field
- * declaration (ADR-0087): both are bound explicitly, exactly once, at `tenant(id, { fields })`,
+ * {@link TenantScope}. The client holds no default partition and no custom field
+ * declaration: both are bound explicitly, exactly once, at `tenant(id, { fields })`,
  * so "unbound" and "declared for some other tenant" are not states this API can be in.
  *
  * @example
@@ -203,24 +218,28 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
  * const page = await t.candidate.search();
  */
 export class PortersClient {
-  /** OAuth surface: initial browser grant, token warm-up/inspection, local revoke (ADR-0007/0034). */
+  // OAuth 公開メソッドの範囲は ADR-0007 / ADR-0034。
+  /** OAuth surface: initial browser grant, token warm-up/inspection, local revoke. */
   readonly auth: AuthApi;
+  // マスタ Read の公開形は ADR-0021 / ADR-0022。
   /**
-   * Master Read: the partitions this App can reach (ADR-0021/0022). Takes no `partition` itself —
+   * Master Read: the partitions this App can reach. Takes no `partition` itself —
    * it is how you *discover* the ids to pass to {@link PortersClient.tenant}.
    */
   readonly partition: PartitionResource;
+  // tenant(id) の設計は ADR-0040 F-3 / ADR-0055、fields を受けるのは ADR-0087、
+  // partition ごとに別トークンが要る場合は client を分ける（ADR-0008 案3）。
   /**
-   * Bind a partition (Company DB) and get the accessors that route through it (ADR-0040 F-3).
-   * **Single-tenant apps use this too** — it is the only path to a partition-scoped resource
-   * (ADR-0055). Hold the scope once and use it like a client:
+   * Bind a partition (Company DB) and get the accessors that route through it.
+   * **Single-tenant apps use this too** — it is the only path to a partition-scoped resource.
+   * Hold the scope once and use it like a client:
    *
    * ```ts
    * const t = porters.tenant(123);
    * await t.candidate.search();
    * ```
    *
-   * That partition's custom fields are declared here as well (ADR-0087), since PORTERS defines
+   * That partition's custom fields are declared here as well, since PORTERS defines
    * them per partition — see {@link TenantOptions}. Tenants with different fields share one
    * client (and one token):
    *
@@ -231,7 +250,7 @@ export class PortersClient {
    *
    * `auth` (App-level), the `partition` master (discovery — takes no partition), and `tenant`
    * itself (no nesting) are intentionally absent from the returned scope. For a fully separated
-   * per-partition token, construct a dedicated {@link PortersClient} per tenant (ADR-0008 案3).
+   * per-partition token, construct a dedicated {@link PortersClient} per tenant.
    */
   readonly tenant: <C extends DeclaredCatalogs = EmptyCatalog>(
     id: PartitionId,
@@ -355,7 +374,7 @@ export class PortersClient {
     return this.#accessPoint.hostname;
   }
 
-  /** The configured port, or `undefined` when the scheme's own port is used (ADR-0078). */
+  /** The configured port, or `undefined` when the scheme's own port is used. */
   get port(): number | undefined {
     return this.#accessPoint.port;
   }

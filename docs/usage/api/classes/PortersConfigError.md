@@ -6,14 +6,14 @@
 
 # Class: PortersConfigError
 
-Defined in: [src/errors/porters-error.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L87)
+Defined in: [src/errors/porters-error.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L90)
 
 Misconfiguration / misuse — **not PORTERS-originated**.
 
 Thrown synchronously where the API returns no Promise (`new PortersClient()`, `defineFields`,
 `assertFieldsMatch`). From a `Promise`-returning method it arrives as a **rejection**, never a
-synchronous throw (ADR-0046) — a per-call value the library cannot convert reaches you that way
-(`category: "validation"` — RV-36).
+synchronous throw — a per-call value the library cannot convert reaches you that way
+(`category: "validation"`).
 
 ## Extends
 
@@ -25,7 +25,7 @@ synchronous throw (ADR-0046) — a per-call value the library cannot convert rea
 
 > **new PortersConfigError**(`message`, `options`): `PortersConfigError`
 
-Defined in: [src/errors/porters-error.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L55)
+Defined in: [src/errors/porters-error.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L56)
 
 #### Parameters
 
@@ -51,7 +51,7 @@ Defined in: [src/errors/porters-error.ts:55](https://github.com/Joymerrevent/por
 
 > `readonly` **category**: [`ErrorCategory`](../type-aliases/ErrorCategory.md)
 
-Defined in: [src/errors/porters-error.ts:48](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L48)
+Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L49)
 
 #### Inherited from
 
@@ -75,7 +75,7 @@ Defined in: typescript/lib/lib.es2022.error.d.ts:24
 
 > `readonly` **code**: `number` \| `null`
 
-Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L49)
+Defined in: [src/errors/porters-error.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L50)
 
 #### Inherited from
 
@@ -87,7 +87,7 @@ Defined in: [src/errors/porters-error.ts:49](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **context?**: [`PortersErrorContext`](../type-aliases/PortersErrorContext.md)
 
-Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L53)
+Defined in: [src/errors/porters-error.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L54)
 
 #### Inherited from
 
@@ -99,7 +99,7 @@ Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **hint?**: `string`
 
-Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L51)
+Defined in: [src/errors/porters-error.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L52)
 
 #### Inherited from
 
@@ -111,7 +111,7 @@ Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/por
 
 > `readonly` `optional` **httpStatus?**: `number`
 
-Defined in: [src/errors/porters-error.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L52)
+Defined in: [src/errors/porters-error.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L53)
 
 #### Inherited from
 
@@ -147,7 +147,7 @@ Defined in: typescript/lib/lib.es5.d.ts:1074
 
 > `readonly` **retryable**: `boolean`
 
-Defined in: [src/errors/porters-error.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L50)
+Defined in: [src/errors/porters-error.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/errors/porters-error.ts#L51)
 
 #### Inherited from
 

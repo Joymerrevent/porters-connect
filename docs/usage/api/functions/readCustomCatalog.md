@@ -8,11 +8,11 @@
 
 > **readCustomCatalog**(`source`, `resource`, `options?`): `Promise`\<[`TenantCustomCatalog`](../type-aliases/TenantCustomCatalog.md)\>
 
-Defined in: [src/fields/tenant-catalog.ts:160](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L160)
+Defined in: [src/fields/tenant-catalog.ts:164](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L164)
 
 Read one resource's tenant custom fields (`U_` / `A_`) from Field Read.
 
-Standard `P_` fields are left out — they are the static catalogs' job (ADR-0019) and declaring
+Standard `P_` fields are left out — they are the static catalogs' job and declaring
 one is rejected by `defineFields` anyway. Fields whose Field Type cannot become a declaration
 come back under `undeclarable` rather than being dropped.
 
