@@ -30,6 +30,7 @@ pnpm format:check  # prettier
 pnpm check         # ドキュメント・リリース・シェルの検査（check:* を一括）
 pnpm build         # tsup
 pnpm check:publish # 公開物の検査（dist を見るので build の後）
+pnpm check:dts     # 公開する型定義の JSDoc の規約（同じく build の後）
 pnpm sandbox       # オフラインのサンプル実行
 ```
 
@@ -130,6 +131,8 @@ new PortersClient({
 - ファイル名は **kebab-case**。1 ファイル 1 責務（XML / OAuth / HTTP / リソースを混ぜない）。
 - **削除 API は生やさない**（PORTERS 仕様。`delete()` は提供しない）。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。内部実装コメントは日本語可。
+  **ADR / RV / LV 番号などの保守者向けの識別子は、公開 JSDoc とエラーの `message` / `hint` に書かない**
+  （利用者には意味を持たない）。根拠は直前の `//` コメントに置く。`check:api` / `check:dts` が生成物側で弾く。
 - **テストを伴わない新リソース追加はしない。**
 - ドキュメント / README は**日本語ファースト**。Markdown のリンクは**参照スタイル**（本文 `[text][label]`、定義は末尾にまとめる）。
 

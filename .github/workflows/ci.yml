@@ -152,6 +152,14 @@ jobs:
         if: steps.changes.outputs.code == 'true'
         run: pnpm check:cjs
 
+      # 公開する型定義 dist/index.d.ts の JSDoc が規約（英語・保守者向けの識別子を書かない）を
+      # 守っているか。check:api が見る TypeDoc 生成物には **export されていない型の JSDoc が
+      # 出ない**（`Resource` の各メソッドなど 43 ブロック）が、d.ts には載って IDE のホバーに
+      # 出る。build 後にしか見られないのでここに置く（#363 のレビューで見つけた穴）。
+      - name: Check public type declarations (JSDoc conventions)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm check:dts
+
       # 公開依存（prod）の high 以上のみブロックする狭いゲート（フェイルセーフ）。
       - name: Audit (production deps, high+)
         if: steps.changes.outputs.code == 'true'

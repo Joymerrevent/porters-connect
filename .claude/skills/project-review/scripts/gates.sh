@@ -14,7 +14,8 @@ cd "$ROOT" || { echo "cannot cd to repo root: $ROOT"; exit 2; }
 # gate 名 -> 実行コマンド。test:coverage は test を内包するので test 単独は回さない。
 # `check` は package.json の `check:*` をパターンで束ねたもの（RV-42）＝**ここに個別の
 # check を並べない**。並べると検査を足すたびにこの一覧だけ古くなり、レビューが「回して
-# いないゲート」を緑として報告する。`check:publish` は dist を見るので build の後に置く。
+# いないゲート」を緑として報告する。`check:publish` / `check:dts` は dist を見るので
+# build の後に置く。
 GATES=(
   "typecheck|pnpm -s typecheck"
   "lint:ts|pnpm -s lint:ts"
@@ -24,6 +25,7 @@ GATES=(
   "test:coverage|pnpm -s test:coverage"
   "build|pnpm -s build"
   "check:publish|pnpm -s check:publish"
+  "check:dts|pnpm -s check:dts"
 )
 
 declare -a NAMES RESULTS NOTES
