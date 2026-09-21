@@ -1,6 +1,6 @@
 # alias と Data Type
 
-PORTERS の項目は**名前（alias）**と**型（Data Type）**の 2 つで決まります。ここが分かると、
+PORTERS の項目は**名前（alias）** と**型（Data Type）** の 2 つで決まります。ここが分かると、
 読み書きで出てくる型のほとんどが説明できます。
 
 ## alias は 3 種類ある
@@ -47,7 +47,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 | Attachment | **なし**     | `FileName` のように裸        |
 | その他     | リソース名   | `Job.P_Position` など        |
 
-`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）**で書けます。
+`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）** で書けます。
 
 ## Data Type が「値の形」を決める
 

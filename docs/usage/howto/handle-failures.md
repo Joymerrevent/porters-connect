@@ -272,7 +272,7 @@ App ID / App Secret がそこへ実際に送られる（または直しようの
 ## 宣言型と実データの食い違い（`validation`）
 
 宣言したカスタム項目の Data Type が実物と違うと、読み取りは
-**`PortersResourceError`（`category: "validation"`）**で失敗します。どの項目かがメッセージに入ります。
+**`PortersResourceError`（`category: "validation"`）** で失敗します。どの項目かがメッセージに入ります。
 
 ```text
 U_source: declared Option, but the value is not a nested record — PORTERS sends a nested record for Option
@@ -317,7 +317,7 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式�
 
 **読み取り側も同じ理屈で落ちます。** 変換するということは、変換できない値を受け取ったときも
 行き場が無いということです。日時として読めない文字列が返ってきたら
-**`PortersResourceError`（`category: "validation"`）**になります。
+**`PortersResourceError`（`category: "validation"`）** になります。
 
 ```text
 U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value

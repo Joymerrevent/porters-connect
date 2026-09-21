@@ -64,7 +64,7 @@ CLAUDE.md は「**公開サーフェス（型名・メソッド名・public API 
 
 ## 処置
 
-**完了。**推奨の 2 つを行った。
+**完了。** 推奨の 2 つを行った。
 
 1. **出どころの JSDoc を直した**（生成物を直しても再生成で戻るので恒久化しない）:
    - 「accept 時の決定」→ `decided on accept`（`verify-fields.ts` / `tenant-catalog.ts` /

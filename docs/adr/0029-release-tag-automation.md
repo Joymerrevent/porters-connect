@@ -81,7 +81,7 @@
 ### 案B auto-tag ＋ Release イベント publish（採用）
 
 - Good: タグ自動＋**Release 作成が意図的な publish ゲート**＝deliberate。トークンレス。Release 作成は元々やる作業。
-- Bad: Release は**人/CC（ユーザートークン）**が作る必要（GITHUB_TOKEN 製では起動しない）。
+- Bad: Release は**人/CC（ユーザートークン）** が作る必要（GITHUB_TOKEN 製では起動しない）。
 
 ### 案C PAT / 案D App
 

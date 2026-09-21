@@ -288,7 +288,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
   changesets 導入が 2026-06-20）＝下記リリース記録の注記を参照。
   📌 **紛らわしいので注意**: 上には無関係な「v3」が 2 つ出てくる。**js-yaml v3** は古く脆弱な版
   （`safeLoad` を持つ・戻してはいけない側）、**changesets v3** は最新版（上げた側）。
-  今回やったのは **changesets の版上げ（2 → 3）**であって、**js-yaml のダウングレード（4 → 3）ではない**。
+  今回やったのは **changesets の版上げ（2 → 3）** であって、**js-yaml のダウングレード（4 → 3）ではない**。
 - ✅ **RV-22 は fixed**（2026-09-03・[ADR-0063][adr63]＝冪等性ガードを「送信済み ＋ 結果が不明」に限定）。
   **契約待ちだったのは 429 の側だけ**で、[ADR-0050][adr50] が RV-22 へ送っていた
   「トークン取得の失敗＝リクエスト未送信でも `create` を再送しない」は**契約なしで今日起きる**経路だった。
@@ -377,7 +377,7 @@ TODO は役割ごとに分かれている。**本書が入口**で、詳細は�
 読み方 — **リソース網羅（D1）は完了**した。7 種のうち 6 種は descriptor パターンの横展開で 1 種 100〜130 行、
 新しい抽象は 0 だった。**Phase だけが別物**で、接頭辞なし・主キー `Id`・`resource` 必須・`System[Department]` と
 4 軸で違ったため専用 ADR（[ADR-0061][adr61]）を挟み、汎用 factory 側に 9 箇所＋受け口 2 つを足して載せた。
-**D3 の最後の 2 型（`Link` / `Image`）は「項目としてはどのリソースにも無い」**という特殊な残りだった＝
+**D3 の最後の 2 型（`Link` / `Image`）は「項目としてはどのリソースにも無い」** という特殊な残りだった＝
 リソース単位の突合では永久に 0 件のままなので、型の集合そのものを reference と突き合わせる検査を足して閉じた。
 Contract / Sales の `Currency` は **Data Type が `Number`** なので新しい型は要らなかった（Field Type と Data Type は別物）。
 
@@ -468,7 +468,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - CI（ci / mutation / codeql / commitlint / test / scorecard）＋ eslint / prettier / markdownlint ＋ vitest coverage（perFile stmts/funcs/lines=100・branch≥90）＋ Stryker ＋ pre-commit（simple-git-hooks ＋ lint-staged ＋ commitlint）
 - 品質ゲート green・**1194 tests**／project-review プロセス＋台帳（[findings][findings]：
   **open は 0 件**。RV-36 / RV-37 はどちらも 2026-09-09 に案D の評価過程で検出し、2026-09-10 に fixed。
-  **RV-32（`searchAll` のクエリ書き換え）**と **RV-22（送信前に弾かれた write を再送しない）は fixed**（0.12.1 で公開済み）、
+  **RV-32（`searchAll` のクエリ書き換え）** と **RV-22（送信前に弾かれた write を再送しない）は fixed**（0.12.1 で公開済み）、
   **RV-33（back-merge の保護バイパス）も fixed**（2026-09-03・[ADR-0062][adr62]＝ back-merge も PR を通す）。
   台帳は [ADR-0052][adr52] で **1 件 1 ファイル**になり、
   索引とのズレは `pnpm check:index` が CI で弾く）

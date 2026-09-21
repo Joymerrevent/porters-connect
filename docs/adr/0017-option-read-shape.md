@@ -5,7 +5,7 @@
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 議論の結果 **案A（常に `string[]`）で accepted**（2026-06-16）。**PORTERS が Read / Write とも Option を
-> 「alias の集合」で表す（スカラー形なし）**ことが決め手。コードへの反映（`decodeOption` 実装・`FieldValue` 型・
+> 「alias の集合」で表す（スカラー形なし）** ことが決め手。コードへの反映（`decodeOption` 実装・`FieldValue` 型・
 > テスト）は別 PR で行う。[ADR-0011][0011]（XML エンコード/デコード）・[ADR-0016][0016]（FieldType 粒度）を補足する。
 
 ## Context and Problem Statement

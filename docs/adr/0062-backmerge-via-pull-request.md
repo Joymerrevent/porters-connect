@@ -5,7 +5,7 @@
 - Deciders: jun.shiromoto (Joymerrevent)
 - Supersedes: [ADR-0030][adr30] の**実行方式**のみ（back-merge を手動で行うこと自体は不変）
 
-> [ADR-0030][adr30] は back-merge を **案H（手動・`git merge` 1 ステップ）**と決めたが、
+> [ADR-0030][adr30] は back-merge を **案H（手動・`git merge` 1 ステップ）** と決めたが、
 > **保護ルールとの関係を決めていなかった**。0.12.0 のリリースで、その手順が `develop` の
 > 保護を bypass して通っていることが分かった（[findings][findings] **RV-33**）。方式を決め直す。
 

@@ -38,11 +38,11 @@ Field Read（`/v1/field`）は `resource` に Resource List の Value を渡し�
   ```
 
   直前のコメントは **「Master/Phase/Attachment have no Value, so only the R/W data resources are
-  selectable here.」**と書いており、**コード自身の説明と実物が食い違っている**
+  selectable here.」** と書いており、**コード自身の説明と実物が食い違っている**
   （Process は R/W データリソースであり、Value を持つ）。書き落としであって判断ではない。
 
 - **揃っている側**（`src/resources/resource-list.ts:27`）は `PROCESS_DESCRIPTOR.path` を含む 11 件で、
-  `src/resources/resource-list.test.ts` には**「Value を持つリソースを全部覆い、それ以外は含まない」**という
+  `src/resources/resource-list.test.ts` には **「Value を持つリソースを全部覆い、それ以外は含まない」** という
   網羅テストがある（Phase / Attachment を除外する根拠つき）。`field.ts` 側には**この網羅テストが無い**。
   だから片方だけ静かにずれた。
 - [ADR-0022][adr22] D2 は「`ResourceType`（Field 用）は [resources-list][res-list] の Value
@@ -57,7 +57,7 @@ Field Read（`/v1/field`）は `resource` に Resource List の Value を渡し�
 - **機能の穴**: Process のカスタム項目（`U_` / `A_`）をライブラリ経由で列挙できない。
   Process は MVP のリソースで、`defineFields` も `process` のカスタム項目を**受け付ける**
   （`CustomFieldResource` は 11 件で process を含む）。つまり
-  **「宣言はできるが、実物を確かめる手段だけ無い」**という非対称になっている。
+  **「宣言はできるが、実物を確かめる手段だけ無い」** という非対称になっている。
 - **`1.0.0` の V1 に直撃する**: V1 は「API エンドポイント × 機能」を reference と**両方向**で突合し、
   非対応セルには ADR 番号を要求する条件（[roadmap][rm]）。本件は
   **ADR の根拠が無い非対応セル**であり、マトリクスを作れば必ず引っかかる。

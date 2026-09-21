@@ -19,7 +19,7 @@ const page = await t.candidate.search();
 ```
 
 client 側に既定の Partition を置く形にはしていません。既定があると
-**「どの Partition に書いたか分からない書き込み」**が起こりえるためです。`tenant(id)` を通すと、
+**「どの Partition に書いたか分からない書き込み」** が起こりえるためです。`tenant(id)` を通すと、
 読み書きのすべてがどの Partition のものか呼び出し側のコードに現れます。
 
 ## Partition をまたぐには `tenant(id)` を呼び直す
