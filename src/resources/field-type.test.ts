@@ -6,7 +6,10 @@ import {
   fieldTypeLabel,
   fieldTypeValueOf,
   FIELD_TYPES,
+  forwardIndex,
+  reverseIndex,
 } from "./field-type";
+import type { FieldTypeRow } from "./field-type";
 
 // Every Data Type the library models (`src/xml/decode.ts`). Restated here on purpose: the point of
 // these tests is to catch the table falling behind the union, so reading the union would defeat it.
@@ -165,5 +168,42 @@ describe("fieldTypeLabel", () => {
 
   it("has no label for an unknown Value", () => {
     expect(fieldTypeLabel(13)).toBeUndefined();
+  });
+});
+
+// The winner rules, on a table whose order does not already pick the winner. Against
+// `FIELD_TYPES` itself the forward row for 11 is listed first, so "ignore `forward`" and
+// "honour `forward`" agree — the rule was untested until it was tested on its own (RV-59).
+describe("forwardIndex / reverseIndex (winner rules, order-independent)", () => {
+  const rows: FieldTypeRow[] = [
+    { value: 11, dataType: "System[DateTime]", label: "System", reverse: true },
+    {
+      value: 11,
+      dataType: "System[Id]",
+      label: "System",
+      reverse: true,
+      forward: true,
+    },
+    { value: 3, dataType: "Number", label: "Number", reverse: true },
+    { value: 14, dataType: "Number", label: "Currency" },
+    { value: 16, dataType: null, label: "Reference", reverse: true },
+  ];
+
+  it("forward: the `forward` row wins even when it is not listed first", () => {
+    expect(forwardIndex(rows).get(11)?.dataType).toBe("System[Id]");
+  });
+
+  it("forward: without a `forward` row, the first row for the Value stands", () => {
+    const first = forwardIndex(rows.filter((r) => r.forward !== true));
+    expect(first.get(11)?.dataType).toBe("System[DateTime]");
+    expect(first.get(3)?.dataType).toBe("Number");
+  });
+
+  it("reverse: only `reverse` rows take part, and a row with no Data Type never enters", () => {
+    const rev = reverseIndex(rows);
+    expect(rev.get("Number")).toBe(3); // not Currency's 14 (no `reverse`)
+    expect(rev.get("System[Id]")).toBe(11);
+    expect([...rev.keys()]).not.toContain(null); // 16 Reference is `reverse` but has no Data Type
+    expect(rev.size).toBe(3);
   });
 });
