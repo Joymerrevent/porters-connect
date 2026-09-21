@@ -132,7 +132,7 @@ const httpStatusHint = (category: ErrorCategory): string | undefined => {
   if (category === "permission")
     return "Rejected before PORTERS answered. Check the token and scopes, and any gateway (proxy / WAF / IP allow-list) in front of the API.";
   if (category === "config")
-    return "The response did not come from the PORTERS API. Check `host` / `scheme` and anything routing the request.";
+    return "The response did not come from the PORTERS API. Check `hostname` / `port` / `scheme` and anything routing the request.";
   return "Neither a PORTERS envelope nor a recognised HTTP failure — inspect `httpStatus` and the intermediary that produced it.";
 };
 

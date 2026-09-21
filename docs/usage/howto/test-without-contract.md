@@ -177,7 +177,7 @@ PORTERS_HOST=xxxxx.example.com node app.js                                # 本�
 ```
 
 **本番側に `PORTERS_PORT` は要りません。** PORTERS が契約時に通知するのは**サーバー名だけ**で、
-ポートはどの記事にも出てきません（[アクセスポイント][limits]）。
+ポートはどの記事にも出てきません（[アクセスポイントの書式][access-point]）。
 
 ## 関連
 
@@ -189,7 +189,7 @@ PORTERS_HOST=xxxxx.example.com node app.js                                # 本�
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
 [handle-failures]: handle-failures.md
-[limits]: ../concepts/limits.md
+[access-point]: handle-failures.md#アクセスポイントの書式
 [prereq]: ../start/prerequisites.md
 [start]: ../index.md
 [index]: ../index.md

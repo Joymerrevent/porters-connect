@@ -17,7 +17,7 @@ API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照して�
 
 `code_direct` を使うには**事前に一度 `code`（ブラウザ）で権限付与済み**である必要があります。
 権限付与を済ませれば、あとは `appId` / `appSecret` を渡すだけでトークンの取得・キャッシュ・更新まで
-自動で回ります（[README の「認証」][readme]）。
+自動で回ります（[認証を通して、疎通を確認する][s-auth]）。
 
 `porters.auth.*` は、この**初回付与の補助**と、**運用中の確認・終了処理**を行うためのメソッド群です。
 
@@ -218,7 +218,7 @@ try {
 ## 関連
 
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
-- 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [README の「認証」][readme]
+- 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [認証を通して、疎通を確認する][s-auth]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -227,5 +227,5 @@ try {
 
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./handle-failures.md
-[readme]: ../../../README.md
+[s-auth]: ../start/authenticate.md
 [index]: ../index.md
