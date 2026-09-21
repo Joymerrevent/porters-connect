@@ -393,12 +393,12 @@ describe("createResource — image の write（ADR-0064 論点3）", () => {
     const calls: Call[] = [];
     await expect(
       album(calls, WRITE_OK()).createMany([{ U_photo: photo }]),
-    ).rejects.toThrow(/cannot write an image/);
+    ).rejects.toThrow(/createMany cannot write an image/);
     await expect(
       album(calls, WRITE_OK()).updateMany([
         { id: 1, fields: { U_photo: photo } },
       ]),
-    ).rejects.toThrow(/cannot write an image/);
+    ).rejects.toThrow(/updateMany cannot write an image/);
     expect(calls).toHaveLength(0);
   });
 

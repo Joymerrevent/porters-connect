@@ -243,7 +243,10 @@ describe("宣言型と実データの食い違い（RV-36）", () => {
       expect(err.category).toBe("validation");
       expect(err.message).toContain("U_source");
       expect(err.message).toContain("declared Option");
+      // どちらの形を期待したかを言う（入れ子が来るべき型に、スカラが来た）。
+      expect(err.message).toContain("is not a nested record");
       expect(err.hint).toContain("Field Read");
+      expect(err.context).toEqual({ operation: "decode" });
       // 通信起因ではないので code / httpStatus は無い。
       expect(err.code).toBeNull();
       expect(err.retryable).toBe(false);
@@ -259,6 +262,7 @@ describe("宣言型と実データの食い違い（RV-36）", () => {
       "Age",
     ] as const) {
       expect(() => decode(t, { a: 1 }, "U_x")).toThrow(PortersResourceError);
+      expect(() => decode(t, { a: 1 }, "U_x")).toThrow(/is not a scalar value/);
     }
   });
 
@@ -284,9 +288,30 @@ describe("宣言型と実データの食い違い（RV-36）", () => {
       expect(err).toBeInstanceOf(PortersResourceError);
       expect(err.category).toBe("validation");
       expect(err.message).toContain("U_hiredOn");
+      expect(err.message).toContain("declared Date");
       expect(err.hint).toContain("yyyy/mm/dd");
+      expect(err.hint).toContain("Field Read");
+      expect(err.context).toEqual({ operation: "decode" });
       expect(err.cause).toBeInstanceOf(RangeError);
     }
+  });
+
+  it("hint の書式は型ごと: Date / Age は日付だけ、DateTime / System[DateTime] は時刻つき", () => {
+    const hintOf = (type: DataType): string => {
+      try {
+        decode(type, "ただの文字列", "U_x");
+      } catch (e) {
+        return (e as PortersResourceError).hint ?? "";
+      }
+      return expect.unreachable();
+    };
+    // 日付型の hint は `"yyyy/mm/dd"` で閉じる（時刻の断片が付かない）。
+    expect(hintOf("Date")).toContain('as "yyyy/mm/dd". ');
+    expect(hintOf("Age")).toContain('as "yyyy/mm/dd". ');
+    expect(hintOf("Date")).not.toContain("HH:MM:SS");
+    // 日時型は時刻つき。System[DateTime] も wire の書式は同じ。
+    expect(hintOf("DateTime")).toContain('as "yyyy/mm/dd HH:MM:SS". ');
+    expect(hintOf("System[DateTime]")).toContain('as "yyyy/mm/dd HH:MM:SS". ');
   });
 
   it("ISO をそのまま返された場合も投げる（PORTERS 形式ではない）", () => {

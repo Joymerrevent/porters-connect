@@ -207,6 +207,13 @@ describe("sharedThrottleFor (process-wide registry)", () => {
     );
   });
 
+  it("resetSharedThrottles は共有バケットを本当に捨てる（テストの隔離が依存する継ぎ目）", () => {
+    const before = sharedThrottleFor("xxxxx.example.com");
+    resetSharedThrottles();
+    // 何もしない実装でも他のテストは緑のまま通る（前のバケットを使い回すだけ）ので、ここで pin する。
+    expect(sharedThrottleFor("xxxxx.example.com")).not.toBe(before);
+  });
+
   it("既定のバケットは本物のスロットル（take できる）", async () => {
     resetSharedThrottles();
     await expect(

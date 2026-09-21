@@ -89,6 +89,17 @@ describe("createMockTransport", () => {
     expect(msg).toContain("GET not-a-valid-url");
   });
 
+  it("the unmocked-route message says how to take over the auth endpoints", async () => {
+    const t = createMockTransport(() => undefined);
+    await expect(
+      t.send(req("https://h.test/v1/candidate")),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        "(or pass { auth: false } to mock the auth endpoints too)",
+      ) as string,
+    });
+  });
+
   it("with { auth: false } routes the auth endpoints to the handler", async () => {
     const t = createMockTransport(() => undefined, { auth: false });
     await expect(
