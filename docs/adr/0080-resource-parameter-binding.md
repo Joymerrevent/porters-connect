@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.18.0
 
 > [ADR-0079][adr79]（項目の値は数値のまま）の議論から分かれた論点。あちらは**値の型**、
 > こちらは**受け口の形**を決める。

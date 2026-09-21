@@ -1,22 +1,36 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  checkAdrImplemented,
   checkRelease,
   compareSemver,
+  firstMentionedVersions,
   isValidSemver,
   matrixCoversFloor,
   maxTagVersion,
   minNodeOf,
+  parseAdrIndex,
 } from "./check-release-invariants.mjs";
 
 // 文書が整合し版番号も正当な「全部 OK」の入力（各テストで一部だけ崩す）。
 // releaseContext: true ＝ base=main の PR（単調増加(2)を検査する文脈・ADR-0032）。
+// ADR 索引の最小形（ヘッダ ＋ 区切り ＋ 行）。`adrRow` で 1 行ずつ組む。
+const adrRow = (id, phase, implemented, status = "accepted") =>
+  `| [${id}][${id}] | title ${id} | ${phase} | ${status} | ${implemented} |`;
+const adrIndexOf = (...rows) =>
+  [
+    "| #            | タイトル | フェーズ | ステータス | 実装 |",
+    "| ------------ | -------- | -------- | ---------- | ---- |",
+    ...rows,
+  ].join("\n");
+
 const ok = {
   version: "0.2.0",
   changelog: "## [0.2.0]\n- something",
   readme: "Node >= 22.12.0 ... node-%3E%3D22.12.0-brightgreen",
   enginesNode: ">=22.12.0",
   testWorkflow: '        node: ["22.12.0", 22, 24, 26]\n',
+  adrIndex: adrIndexOf(adrRow("0001", "プロセス", "—")),
   baseline: "0.2.0",
   releaseContext: true,
 };
@@ -226,5 +240,169 @@ describe("checkRelease: CI マトリクスと engines の下限 (RV-53)", () => 
     // 「engines が読めない」の 1 件だけ。下限が不明なまま突き合わせても意味が無い。
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("engines.node");
+  });
+});
+
+// RV-56。索引の「実装」列は任意項目で、check:index は「食い違い」しか見ない（両方空なら通る）。
+// その結果 0.8.0 以降の設計 ADR 21 本が 1 本も持っていなかった。CHANGELOG を出典に
+// 「あるべき値」を導いて突き合わせる。
+describe("firstMentionedVersions (RV-56)", () => {
+  it("版節ごとの ADR-NNNN の名指しを集め、最初に名指しした版を返す", () => {
+    const changelog = [
+      "## [Unreleased]",
+      "- 次で [ADR-0099][adr99] を実施予定",
+      "## [0.18.0] - 2026-09-17",
+      "- バケットが宛先ごとに（[ADR-0073][adr73]・RV-43）",
+      "## [0.15.0] - 2026-09-13",
+      "- スロットルを差し替えられる（[ADR-0073][adr73]）",
+      "- 突合の 4 API（ADR-0069）",
+      "[adr73]: docs/adr/0073-throttle-sharing.md",
+    ].join("\n");
+    const first = firstMentionedVersions(changelog);
+    expect(first.get("0073")).toBe("0.15.0"); // 0.18.0 でも挙がるが最初の版
+    expect(first.get("0069")).toBe("0.15.0"); // リンクでない素の表記も拾う
+    expect(first.get("0099")).toBeUndefined(); // [Unreleased] は版ではない
+  });
+
+  it("節に属さない前書きと、版でない節は数えない", () => {
+    const changelog = [
+      "# Changelog",
+      "本書は ADR-0026 の方針で手書きしている。",
+      "## [Unreleased]",
+      "- ADR-0090",
+      "## [0.1.0] - 2026-06-19",
+      "- ADR-0023",
+    ].join("\n");
+    const first = firstMentionedVersions(changelog);
+    expect([...first.keys()]).toEqual(["0023"]);
+  });
+
+  it("空・未定義でも落ちない（空の Map）", () => {
+    expect(firstMentionedVersions("").size).toBe(0);
+    expect(firstMentionedVersions(undefined).size).toBe(0);
+  });
+});
+
+describe("parseAdrIndex (RV-56)", () => {
+  it("ヘッダの見出しで列を探す（並びが変わっても壊れない）", () => {
+    const reordered = [
+      "| # | 実装 | タイトル | フェーズ | ステータス |",
+      "| - | ---- | -------- | -------- | ---------- |",
+      "| [0055][0055] | 0.10.0 | t | 基本設計 | accepted |",
+    ].join("\n");
+    expect(parseAdrIndex(reordered)).toEqual([
+      { id: "0055", phase: "基本設計", implemented: "0.10.0" },
+    ]);
+  });
+
+  it("フェーズ / 実装 の列が無ければ undefined（読めないことを報告する）", () => {
+    expect(
+      parseAdrIndex("| # | タイトル |\n| - | - |\n| [0001][0001] | t |"),
+    ).toBeUndefined();
+    expect(parseAdrIndex("")).toBeUndefined();
+    expect(parseAdrIndex(undefined)).toBeUndefined();
+  });
+});
+
+describe("checkAdrImplemented (RV-56)", () => {
+  const changelog = [
+    "## [Unreleased]",
+    "- ADR-0090 は次で",
+    "## [0.18.0] - 2026-09-17",
+    "- [ADR-0073][adr73]（宛先ごと）／[ADR-0078][adr78]",
+    "## [0.15.0] - 2026-09-13",
+    "- [ADR-0073][adr73]／[ADR-0069][adr69]／[ADR-0068][adr68]",
+    "## [0.9.0] - 2026-08-20",
+    "- カタログが真実源（[ADR-0019][adr19]）／既定 field（ADR-0020）",
+  ].join("\n");
+
+  it("名指しされた設計 ADR に最初の版が入っていれば通す", () => {
+    const adrIndex = adrIndexOf(
+      adrRow("0069", "詳細設計", "0.15.0"),
+      adrRow("0073", "詳細設計", "0.15.0"),
+      adrRow("0078", "基本設計", "0.18.0"),
+    );
+    expect(checkAdrImplemented({ changelog, adrIndex })).toEqual([]);
+  });
+
+  it("**名指しされているのに空なら落とす**（この検査の本体・0055〜0086 の 21 本がこの形だった）", () => {
+    const adrIndex = adrIndexOf(adrRow("0078", "基本設計", "—"));
+    const errors = checkAdrImplemented({ changelog, adrIndex });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("ADR-0078");
+    expect(errors[0]).toContain("0.18.0");
+    expect(errors[0]).toContain("- Implemented: 0.18.0");
+  });
+
+  it("最初の版でなく後の版を書いていたら落とす（改訂の文脈で挙がった版は「世に出た版」ではない）", () => {
+    const adrIndex = adrIndexOf(adrRow("0073", "詳細設計", "0.18.0"));
+    const errors = checkAdrImplemented({ changelog, adrIndex });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("0.15.0");
+  });
+
+  it("CHANGELOG が名指ししていない版を書いていたら落とす（記入は CHANGELOG が版を明示している分に限る）", () => {
+    const adrIndex = adrIndexOf(adrRow("0083", "詳細設計", "0.18.0"));
+    const errors = checkAdrImplemented({ changelog, adrIndex });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("ADR-0083");
+    expect(errors[0]).toContain("名指ししていません");
+  });
+
+  it("[Unreleased] の名指しは版ではないので、空のままで通す", () => {
+    const adrIndex = adrIndexOf(adrRow("0090", "詳細設計", "—"));
+    expect(checkAdrImplemented({ changelog, adrIndex })).toEqual([]);
+  });
+
+  it("0053 以前は見ない（MVP 期の決定は「空欄のまま」と ADR-0053 で決めた）", () => {
+    // 0019 / 0020 は 0.9.0 の CHANGELOG が文脈として挙げるだけで、実装は 0.1.0 以前。
+    const adrIndex = adrIndexOf(
+      adrRow("0019", "詳細設計", "—"),
+      adrRow("0020", "詳細設計", "—"),
+      adrRow("0053", "プロセス", "—"),
+    );
+    expect(checkAdrImplemented({ changelog, adrIndex })).toEqual([]);
+  });
+
+  it("設計フェーズ以外（プロセス / 要件定義）は見ない", () => {
+    // 0068 はプロセス決定で「実装の概念が無い」側。名指しされていても空でよい。
+    const adrIndex = adrIndexOf(
+      adrRow("0068", "プロセス", "—"),
+      adrRow("0060", "要件定義", "—"),
+    );
+    expect(checkAdrImplemented({ changelog, adrIndex })).toEqual([]);
+  });
+
+  it("索引が読めなければ 1 件のエラー（黙って通さない）", () => {
+    expect(checkAdrImplemented({ changelog, adrIndex: "" })).toHaveLength(1);
+    expect(
+      checkAdrImplemented({ changelog, adrIndex: undefined }),
+    ).toHaveLength(1);
+    // ヘッダはあるが行が 0 本＝索引が空。これも「検査が一度も走らない」形なので落とす。
+    expect(
+      checkAdrImplemented({ changelog, adrIndex: adrIndexOf() }),
+    ).toHaveLength(1);
+  });
+});
+
+describe("checkRelease: CHANGELOG が名指しした設計 ADR の「実装」(RV-56)", () => {
+  it("リリース PR で [Unreleased] が版節になった瞬間に、記入漏れが落ちる", () => {
+    const before = {
+      ...ok,
+      version: "0.2.0",
+      changelog: "## [Unreleased]\n- [ADR-0090][adr90]\n## [0.2.0]\n- x",
+      adrIndex: adrIndexOf(adrRow("0090", "詳細設計", "—")),
+    };
+    expect(checkRelease(before)).toEqual([]);
+    const released = {
+      ...before,
+      version: "0.3.0",
+      changelog:
+        "## [Unreleased]\n## [0.3.0]\n- [ADR-0090][adr90]\n## [0.2.0]\n- x",
+    };
+    const errors = checkRelease(released);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("ADR-0090");
+    expect(errors[0]).toContain("0.3.0");
   });
 });

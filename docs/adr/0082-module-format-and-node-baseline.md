@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-18
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.19.0
 
 > [PRD §8][prd] に **2026-08-09 から残っていた未決**（「v1 で CJS 出力まで出すか」）の決着。
 > **decider が案D ＋ Node 22 を選択し `accepted`（2026-09-18）。** 実装は accept 後・別 PR。

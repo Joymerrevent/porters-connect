@@ -14,8 +14,10 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.19.1**（2026-09-20）＝ 定期レビュー（[2026-09-18-01][run20260918]）で見つけた 7 件を
-塞いだ patch 版。**破壊的変更なし**で、公開 API の形は変わらず**壊れたときの倒れ方**が変わる
+**最新は 0.20.0**（2026-09-21）＝ 出典の再取得で見つかった未追従 2 件を埋めた minor 版
+（**Department Read**・マスタ 5 種目 ／ **時分型の変換関数** `decodeTimeOfDay` / `encodeTimeOfDay`・
+[ADR-0086][adr86]）。**破壊的変更なし**。ひとつ前の **0.19.1**（2026-09-20）＝ 定期レビュー
+（[2026-09-18-01][run20260918]）で見つけた 7 件を塞いだ patch 版
 （Option alias からの XML 注入・[ADR-0085][adr85] ／ `createThrottle` の無言ハング ／
 パーサの例外が `PortersError` の外に出ていた件 ほか）。ひとつ前の **0.19.0**（2026-09-18）＝ CJS からの入口を `require` 条件で開け、Node の下限を 22.12 に
 上げた版（[ADR-0082][adr82]・破壊的変更 1 つ＝ `engines` の引き上げ）。ひとつ前の **0.18.0**（2026-09-17）は
@@ -42,10 +44,10 @@ Department は同日に実装して **V1 は再び達成**、時分型は同日�
 - **Department - Read API**（2025/03・Connect API 8.2.1 で追加。Read のみ・スコープ `user_r`）が
   reference にも実装にも無かった。公式の API List / Resource List 記事には今も載っておらず、
   お知らせ記事と専用ページだけにある＝ 記事一覧の差分を取らないと見えない。→ **実装済み**
-  （`t.department`・マスタ 5 種目・0.20.0 で公開予定）
+  （`t.department`・マスタ 5 種目・**0.20.0 で公開**）
 - **Data Type: DateTime の時分型**（2026/08/04・PORTERS 9.3.0）。Field Type は年月日時分型と同じ 12 で
   **Field Read から区別できない**。基準日 `1970/01/01` 付きでしか書けない。→ [ADR-0086][adr86]
-  （accepted・実装済み。次の minor で公開）
+  （accepted・実装済み・**0.20.0 で公開**）
 
 reference への反映（Department ページ新設・時分型・TLS 1.2 のみ・Result Code 9 の追記）は済んでいる
 （[reference README][ref-readme] の「再取得の手順」）。**V5・V6 は契約待ち**。
@@ -66,7 +68,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 | --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **達成**（[表 A〜G][coverage]・18 エンドポイント・検査 97 件＝ 2026-09-20 実測）。2026-09-20 に `/v1/department` が 1 本欠けたが同日に実装して復帰。**根拠の無いずれは 0** |
 | V2  | **使い方のドキュメント完成**           | 「入門（順に読む）→ 考え方 → 目的別 HOWTO」が揃い、**読者の目的から引ける**こと。検査は [ADR-0070][adr70] の 5 つ                          | **達成**（4 層 ＋ 検査①〜⑤ ＋ README を入口に絞る ＋ `docs/usage/` への集約）                                                                                              |
-| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | **達成**（着手可能 0・判断待ち 0・要 ADR 0・open 0。README 英語版は `1.0.0` の後へ）                                                                                       |
+| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | **達成**（着手可能 0・判断待ち 0・要 ADR 0（条件付き 1 件＝ [RV-54][rv54] 案 (b)・実例が出たら起票。分母に数えない）・open 0。README 英語版は `1.0.0` の後へ）             |
 | V4  | **残る未確認はライブ検証だけ**         | **`pnpm check:lv` が緑**＝コードの `VERIFY(live)` と [live-verification][lv] のエントリが双方向で対応する（[RV-50][rv50]）                 | **達成**（検査が CI に載った。未確認 28 ／ 確定 1 ／ 解消 2）                                                                                                              |
 | V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の **`未確認` が 0 件**（`確定` と `解消` はどちらも終端 — [状態の意味][lvstate]）                                 | **未確認 28 件**（契約待ち）。`確定` 1・`解消` 2                                                                                                                           |
 | V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                                                                                                                                               |
@@ -216,6 +218,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 ### 要 ADR（起票から）
 
 - **未起票の論点は無い**（時分型は [ADR-0086][adr86] として起票済み → 上記「判断待ち」）。
+- **条件付き 1 件（実例が出たら起票・いまは数えない）**: `fast-xml-parser` が拒否する予約名
+  （`prototype` 等）を**書き込み側でも弾くか** — [RV-54][rv54] 案 (b)。読み側で `PortersError` に
+  包む案 (a) だけを入れて保留した（2026-09-20）。論点は [ADR-0002][adr2] との兼ね合い（PORTERS が
+  受け付ける値を JS パーサの都合で拒否してよいか）。置き場は [ADR README の論点バックログ][adr-backlog]
+  （[RV-57][rv57]）。
 - [x] ✅ **`Activity.P_Resource` を名前で受けるか** — [ADR-0079][adr79] で決着（2026-09-16・
       **数値のまま ＋ 変換関数の公開**）。派生した [ADR-0080][adr80]（URL パラメータのリソースは
       `of()` で束ねる）・[ADR-0081][adr81]（Attachment の Read を出典の語彙に）も accepted・実装済み。
@@ -482,8 +489,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.19.1`**（npm latest・2026-09-20 にレジストリで確認・**8 files / 896.6 kB**）。**全 26 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.20.0`**（npm latest・2026-09-21 にレジストリで確認・**8 files / 929.5 kB**）。**全 27 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -502,7 +509,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **0.17.0 で添付の本体を `get` に寄せ（[ADR-0075][adr75]・破壊的）＋ Phase の Read から出典に無い 2 つを外し
       （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**、
       **0.18.0 で URL パラメータのリソースを `of()` に揃え（[ADR-0080][adr80] / [ADR-0081][adr81]・破壊的）
-      ＋ アクセスポイントを `hostname` / `port` に分割（[ADR-0078][adr78]・破壊的）**）。
+      ＋ アクセスポイントを `hostname` / `port` に分割（[ADR-0078][adr78]・破壊的）**、
+      **0.20.0 で Department マスタの Read（マスタ 5 種目）＋ 時分型の変換関数（[ADR-0086][adr86]）**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -577,7 +585,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.19.1 の**全 26 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.20.0 の**全 27 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
@@ -680,6 +688,10 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [lvstate]: live-verification.md#状態の意味
 [rv50]: reviews/rv/0050-live-verification-traceability-broken.md
 [rv52]: reviews/rv/0052-lv-gate-definition-unsatisfiable.md
+[rv54]: reviews/rv/0054-reserved-tag-name-read-throws.md
+[rv57]: reviews/rv/0057-deferred-decision-not-in-backlog.md
+[adr2]: adr/0002-ground-design-in-live-api-docs.md
+[adr-backlog]: adr/README.md#論点バックログ（未起票）
 [rv36]: reviews/rv/0036-write-value-validation-partial.md
 [rv37]: reviews/rv/0037-field-read-missing-process.md
 [adr-readme]: adr/README.md

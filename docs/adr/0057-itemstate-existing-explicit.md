@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-22
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.10.0
 
 > [ADR-0038][adr38] **SD-4 の再検討**（amend であって全体の supersede ではない）。
 > `existing` は API の既定なので param を省略すると決めたが、**利用者が明示的に `existing` と

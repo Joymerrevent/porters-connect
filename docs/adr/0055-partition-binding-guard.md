@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-21
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.10.0
 
 > **案F で `accepted`（2026-08-21）**: **`PortersClient` から `partition` を外す**。
 > client 既定を廃止し、**partition スコープのリソースは `porters.tenant(id)` 経由でしか得られない**ようにする。

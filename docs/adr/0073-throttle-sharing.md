@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-13
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.15.0
 
 > [RV-43][rv43] の処置。1 分あたりの上限を自制するバケットが **`PortersClient` ごと**に作られる
 > ため、テナント別に client を立てると 1 プロセス内で自制が分裂する。しかもドキュメントが

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.17.0
 
 > [RV-46][rv46] の決着。**塞いだなら別の道を用意する**という話で、
 > [ADR-0075][adr75]（添付の本体は `get(id)` でだけ運ぶ）の直後に出てきた。

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-18
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.19.1
 
 > [RV-48][rv48]（🔴）の起票に対する ADR。**挙動変更**（これまで通っていた値が throw になる）なので、
 > 実装より先に決定が要る。

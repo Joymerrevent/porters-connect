@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.17.0
 
 > [エンドポイント × 機能マトリクス][coverage]（V1）の表 D で見つかった [RV-45][rv45] の決着。
 > **Read を持つ 17 エンドポイントのうち、置けるのに `searchAll` が無いのは Attachment だけ**で、

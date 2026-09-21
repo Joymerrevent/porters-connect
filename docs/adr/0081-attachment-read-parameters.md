@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-16
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.18.0
 
 > [ADR-0080][adr80] の議論から続いた論点。**decider が「出典に合わせる」を選択し `accepted`
 > （2026-09-16）。** 実装は accept 後・別 PR（0.18.0）。

@@ -76,12 +76,19 @@
 
 ### 【詳細設計】
 
-- **未起票の論点はなし**（ここへ挙げていた「必須の `resource` をどう束ねるか」は
+- **条件付き 1 件（実例が出たら起票）**: **`fast-xml-parser` が拒否する予約名（`prototype` /
+  `constructor` / `__proto__`）を書き込み側でも弾くか** — [RV-54][rv54] の案 (b)。RV-54 の処置では
+  読み側で `PortersError` に包む案 (a) だけを入れ、この判断は**保留**した（2026-09-20）。
+  論点は [0002][0002] との兼ね合い＝ **PORTERS が受け付ける値を JS パーサの都合で拒否してよいか**。
+  いまは「書けるが読み返すと `PortersResourceError`（`cause` にパーサの説明）」で倒れる。
+  利用者がこの名前の alias を実際に使い、読めないことが問題になった時点で起票する
+  （それまでは決めない＝実例の無い判断をしない）。
+- 上記以外の未起票の論点はなし（ここへ挙げていた「必須の `resource` をどう束ねるか」は
   [0080][0080]（URL パラメータのリソースは `of()` で束ねる）と [0081][0081]（Attachment の Read を
-  出典の語彙に）で決着・実装済み。Field / Phase / Attachment の 3 本が `of()` に揃った）。
-- 上記以外の未起票の論点はなし（HTTP トランスポート／リトライ・スロットリング／XML パース・
-  シリアライズ／トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／
-  マスタ Read はすべて起票済み。各々の状態は [索引][index] を参照）。
+  出典の語彙に）で決着・実装済み。Field / Phase / Attachment の 3 本が `of()` に揃った。
+  HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／トークンのキャッシュ・更新／
+  FieldType の粒度／Option の読み取り値／Attachment／マスタ Read はすべて起票済み。各々の状態は
+  [索引][index] を参照）。
 
 ### ADR を起こさずに決着した論点（記録）
 
@@ -105,6 +112,15 @@
   **教訓**: 「公開 factory の数値オプション」は 2 つあり（`timeoutMs` と上限値）、
   片方だけ検証されていた。**同じ種類の継ぎ目が複数あるなら、決定は全部に当てたか確かめる。**
 
+- **時分型の decode 側の範囲検証**（[RV-55][rv55]）— **ADR 不要と判断**（2026-09-21）。
+  `decodeTimeOfDay` が基準日は見るが時・分・秒の範囲を見ず、`1970-01-01T30:00:00Z` を `"30:00"` と
+  読んで**別の wire 値に往復**していた欠陥だが、**決定は既に accepted で出ている**:
+  [ADR-0086][0086] 論点3（変換関数は**両方向とも**検証し、外れたら `PortersConfigError` の
+  `validation`）。通していた値はどれも出典の書式に無く、新しい決定は 1 つも生じない＝
+  **0086 の未適用の片側**を埋めるだけ（上の [RV-49][rv49] と同じ形）。実装は [RV-55][rv55] の処置として行った。
+  **教訓**: ADR が「両方向」と書いた検証は、**両方向の実装を突き合わせて**初めて決定どおりになる。
+  往復の property が正常域しか引かないと、片側の欠けは通り抜ける（拒否を証明するなら不正域も生成する）。
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
@@ -120,6 +136,9 @@
 [0077]: 0077-fetch-transport-timeout.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
+[rv54]: ../reviews/rv/0054-reserved-tag-name-read-throws.md
+[rv55]: ../reviews/rv/0055-time-of-day-decode-hour-unchecked.md
+[0086]: 0086-time-of-day-fields.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
 [0002]: 0002-ground-design-in-live-api-docs.md
