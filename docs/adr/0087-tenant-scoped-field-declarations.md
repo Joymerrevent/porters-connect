@@ -72,6 +72,14 @@ PORTERS の reference は各リソース記事で同じ 1 行を置いている�
 `null` になる**。例外も警告も出ず「その項目は空だった」と区別が付かない＝このプロジェクトが
 フェイルセーフで避けたい側である。
 
+> **訂正（2026-09-21・[RV-60][rv60]）** — 上の段落は [ADR-0069][adr69]（2026-09-09）の実測表を
+> そのまま引いたが、その翌日の [RV-36][rv36] の処置（0.15.0）で Option ⇄ テキストの取り違えは
+> **読み取り時に `validation` で落ちる**ようになっており、本 ADR の起票時点で既に「黙って `null`」では
+> なかった（下の「信じている入力」表はそのとおり書いている）。残っていた silent な経路は
+> Number ⇄ テキスト（`NaN`・[RV-58][rv58] で是正）。**決定（案B）は変わらない** — 根拠は層の整合・
+> トークン共有・型引数の単純化で立ち、「別テナントの宣言を当てた」ことをライブラリが知り得ない点も
+> そのまま。
+
 問い: **カスタム項目の宣言はどこで束ねるべきか。client に残すか、`tenant()` に移すか、両方か。
 移すなら渡し方はどの形か。**
 
@@ -328,6 +336,8 @@ const tenantB = defineFields({ candidate: appCandidate });
 [adr69]: 0069-tenant-field-catalog-tooling.md
 [adr74]: 0074-custom-field-declaration-required.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[rv58]: ../reviews/rv/0058-number-decode-nan-unchecked.md
+[rv60]: ../reviews/rv/0060-changelog-stale-silent-null-premise.md
 [ref-list]: ../usage/reference/resource-api/resources-list.md
 [ref-candidate]: ../usage/reference/resource-api/resources/candidate.md
 [guide-cf]: ../usage/howto/custom-fields.md
