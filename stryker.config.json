@@ -10,6 +10,6 @@
     "!src/**/types.ts",
     "!src/types/**"
   ],
-  "thresholds": { "high": 100, "low": 95, "break": 95 },
+  "thresholds": { "high": 100, "low": 100, "break": 100 },
   "ignorePatterns": ["dist", "coverage", ".stryker-tmp", "reports"]
 }

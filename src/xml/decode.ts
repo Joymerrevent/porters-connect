@@ -258,6 +258,8 @@ const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   const outer = asRecord(raw);
   if (!outer) return null;
   if ("User" in outer) return decodeUser(outer);
+  // Stryker disable next-line ConditionalExpression: equivalent — with no `Department` node,
+  // decodeDepartment returns null, which is exactly the fall-through below.
   if ("Department" in outer) return decodeDepartment(outer);
   return null;
 };
