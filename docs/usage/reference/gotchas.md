@@ -20,7 +20,7 @@
 - **並列処理にリスク**がある（公式が注意喚起）。同一データへの並行 Write は競合し得る → 既定は控えめな並行度・順序保証を検討。
 - **TLS 1.2 のみ**（2026/08/27 から。TLS 1.0 / 1.1 は廃止・暗号スイートは出典の 12 種）。Node 22 の `fetch` は
   既定で TLS 1.2 以上を使うのでライブラリ側の対応は不要。古い OpenSSL を同梱したランタイムや、独自
-  transport（[ADR-0077][adr77]）で TLS を落としている場合だけ影響する。
+  transport<!-- 根拠: ADR-0077 -->で TLS を落としている場合だけ影響する。
 - **Result Code 9 は `x-forwarded-for` ヘッダでも出る**（2026/07 追記）。プロキシ経由で付く場合は除外する。
 
 ## 実行環境
@@ -32,17 +32,16 @@
 
 - **Alias は環境・テナント依存**。本番と開発用テスト環境で項目・選択肢の Alias がズレると連携が壊れる
   （マスタコピーで一致させる運用）。→ ライブラリは **Alias をハードコードせず**、
-  Partition / Field / Option Read で発見する手段を提供する（→ 型設計の ADR-0004）。
+  Partition / Field / Option Read で発見する手段を提供する<!-- 根拠: ADR-0004 -->。
 - **keyword（フリーワード）検索は Option 型項目を対象にできない**（FAQ）。Option は `condition` で指定する。
 - **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。未知 Alias に強い設計（寛容なパース・明確なエラー）。
 - **削除 API は無い**（データ・添付とも。提供予定なし）。`delete()` を生やさない。削除済みは `itemstate` で Read 可。
 - **時分型（2026/08・PORTERS 9.3.0）は Field Read で年月日時分型と見分けが付かない**（同じ Field Type 12）。
   基準日 `1970/01/01` 付きの書式でしか書けず、任意の日時を書くと Code 103。どの項目が時分型かは環境の
   管理者に聞くしかない → 詳細は [field-data-types][fdt] の「時分型」節（ライブラリは `decodeTimeOfDay` /
-  `encodeTimeOfDay` で変換する・[ADR-0086][adr86]）。
+  `encodeTimeOfDay` で変換する）<!-- 根拠: ADR-0086 -->。
 - **フィールド型は原典記事の値をそのまま転記**しているため、PORTERS 側の不揃いも残る。例: 携帯メール
-  `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と割れている（原典どおり）。
-  型生成時は原典差異に注意し、正典は `resource-api/field-data-types.md` の分類に寄せる（→ 型設計の ADR-0004）。
+  `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と割れている（原典どおり）。<!-- 型生成時は原典差異に注意し、正典は resource-api/field-data-types.md の分類に寄せる（ADR-0004） -->
 
 ## ログイン中の企業 / ユーザーの特定
 
@@ -71,6 +70,4 @@
 
 > 設計は最新（version 2）前提。旧挙動は出典の「仕様変更のご案内」を参照。
 
-[adr77]: ../../adr/0077-fetch-transport-timeout.md
 [fdt]: resource-api/field-data-types.md
-[adr86]: ../../adr/0086-time-of-day-fields.md

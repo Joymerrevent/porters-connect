@@ -5,7 +5,7 @@
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List>
 
-各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。型設計（→ 型設計の ADR-0004）の土台。
+各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。型設計の土台<!-- 根拠: ADR-0004 -->。
 
 ## Field Type 一覧
 
@@ -70,9 +70,9 @@
 **既存連携への影響**（出典の注意）: 管理者が時分型項目を足すと、Field Read 上は年月日時分型に見えるため、
 任意の日時を書き込んだ連携が **Code 103** で落ちる。どの項目が時分型かは環境の管理者に確認するしかない。
 
-**このライブラリでの扱い**（[ADR-0086][adr86]）: **型は増やさない**。時分型も `dateTime()` で宣言し、
-値は ISO（`1970-01-01T09:00:00Z`）のまま読み書きする（[ADR-0011][adr11] の正規化はタイムゾーン演算を
-しない書式変換なので、値は欠けない）。基準日の規則は `decodeTimeOfDay`（ISO → `"HH:mm"`・基準日以外は
+**このライブラリでの扱い**<!-- 根拠: ADR-0086 -->: **型は増やさない**。時分型も `dateTime()` で宣言し、
+値は ISO（`1970-01-01T09:00:00Z`）のまま読み書きする（日時の正規化はタイムゾーン演算を
+しない書式変換なので、値は欠けない）<!-- 根拠: ADR-0011 -->。基準日の規則は `decodeTimeOfDay`（ISO → `"HH:mm"`・基準日以外は
 `PortersConfigError`・秒 ≠ 00 は保持）／ `encodeTimeOfDay`（`"HH:mm[:ss]"` 00:00〜47:59 → ISO・
 範囲外は送信前に `PortersConfigError`）が閉じ込める。**どの項目が時分型かは利用者の責務**（API から
 判別できないため）。`generateFieldDecls` は FT-12 の行に注記を出す。使い方は
@@ -83,21 +83,14 @@
 上の事実に対して、このライブラリがどう決めたか。**いずれも決着済み**です。
 
 - **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。ライブラリは境界で
-  **ISO 8601（UTC）に正規化**し、**JST など業務タイムゾーンへの変換はしない**（利用側の責務。
-  [要件 R-10][prd]／[ADR-0011][adr11]）。
+  **ISO 8601（UTC）に正規化**し、**JST など業務タイムゾーンへの変換はしない**（利用側の責務）<!-- 根拠: PRD R-10・ADR-0011 -->。
 - **参照・User・Link は Write 時 ID のみ**、読み取りは入れ子展開。**型は Read / Write で分けた**
-  （`Candidate` と `CandidateUpdateInput`。[ADR-0016][adr16]／[ADR-0019][adr19]）。
-- **Link は version 2 必須**。`X-P-ConnectAPI-Version: 2` を**既定で送る**（[ADR-0042][adr42]）。
-- `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → **入力型から除外済み**（[ADR-0019][adr19]）。
+  （`Candidate` と `CandidateUpdateInput`）<!-- 根拠: ADR-0016・ADR-0019 -->。
+- **Link は version 2 必須**。`X-P-ConnectAPI-Version: 2` を**既定で送る**<!-- 根拠: ADR-0042 -->。
+- `P_RegistrationDate` / `P_UpdateDate` は Write 不可 → **入力型から除外済み**<!-- 根拠: ADR-0019 -->。
 
 [write-format-md]: write-format.md
 [res-department]: resources/department.md
 [time-only]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
-[adr86]: ../../../adr/0086-time-of-day-fields.md
 [concept-dt]: ../../concepts/datetime.md
-[prd]: ../../../design/requirements.md
-[adr11]: ../../../adr/0011-xml-parse-serialize.md
-[adr16]: ../../../adr/0016-field-type-granularity.md
-[adr19]: ../../../adr/0019-static-resource-types.md
-[adr42]: ../../../adr/0042-supported-version-policy.md
 [resource-api-md]: README.md

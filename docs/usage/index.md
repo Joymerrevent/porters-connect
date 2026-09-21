@@ -2,7 +2,7 @@
 
 `@joymerrevent/porters-connect` — PORTERS Connect API を TypeScript から型安全に扱う**非公式**ラッパー。
 
-このページが**ドキュメントの目次**です（[ADR-0070][adr70]・[ADR-0072][adr72]）。構成は 4 層で、
+このページが**ドキュメントの目次**です<!-- 根拠: ADR-0070・ADR-0072 -->。構成は 4 層で、
 上から順に「**繋ぐ → やりたいことをやる → 前提を深く知る → 細部を引く**」になっています。
 
 ---
@@ -99,8 +99,6 @@
 
 開発・保守のための資料（ADR・設計・ロードマップ・台帳）は [docs/README.md][docs-readme] にまとめてあります。
 
-[adr70]: ../adr/0070-usage-documentation-architecture.md
-[adr72]: ../adr/0072-start-contract-first.md
 [api]: api/index.md
 [authenticate]: howto/authenticate.md
 [bulk-write]: howto/bulk-write.md

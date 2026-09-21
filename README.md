@@ -123,7 +123,7 @@ console.log(page.total, page.items[0]?.P_Name);
 
 ## リンク
 
-**この README は「最短で動かす」ところまで**です。網羅は目次側が担当します（[ADR-0070][adr70]）。
+**この README は「最短で動かす」ところまで**です。網羅は目次側が担当します<!-- 根拠: ADR-0070 -->。
 
 - 利用者向け：[docs/usage][docs-index]（目次）／[公開 API の全記号][api-ref]／[PORTERS API の事実][ref]
 - 開発・保守：[docs/README.md][docs-readme]（ADR・基本設計・ロードマップ・台帳への入口）
@@ -166,6 +166,5 @@ console.log(page.total, page.items[0]?.P_Name);
 [test-without-contract]: docs/usage/howto/test-without-contract.md
 [docs-index]: docs/usage/index.md
 [docs-resources]: docs/usage/index.md#リソースと操作
-[adr70]: ./docs/adr/0070-usage-documentation-architecture.md
 [docs-readme]: ./docs/README.md
 [ref]: docs/usage/reference/README.md
