@@ -28,6 +28,10 @@ await t.candidate.search({ condition: { P_Name: { part: "山田" } } });
 await t.job.get(jobId);
 ```
 
+カスタム項目を使うなら、その宣言も**ここで一緒に**渡します — `porters.tenant(id, { fields })`
+（[カスタム項目][custom-fields]・[ADR-0087][adr-0087]）。カスタム項目は partition ごとのものなので、
+client には置きません。
+
 App レベルの操作は `porters` 側にあります。
 
 ```ts
@@ -44,12 +48,16 @@ const partitions = await porters.partition.search(); // 使える partition の�
 ```ts
 // SaaS の 1 リクエスト = 1 テナント
 const partition = await lookupPartitionForUser(req.user); // ← SaaS の責務
-const t = porters.tenant(partition);
+const t = porters.tenant(partition, { fields: fieldsFor(partition) }); // 宣言も partition と一緒に
 
 await t.candidate.search(query); // partition=<partition> で送信
 const job = await t.job.get(jobId);
 await t.attachment.of("resume").create(file);
 ```
+
+`fields` は**その partition のカスタム項目の宣言**です（[カスタム項目][custom-fields]）。
+partition と宣言の対応を持つのは SaaS 側で、ライブラリは 2 つを同じ呼び出しで受け取るだけです。
+項目構成が同じテナント群なら、同じ宣言を渡します（[ADR-0087][adr-0087]）。
 
 - 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
   activity / contract / sales / process / resume ＋ `phase` ＋ `attachment`）**＋ master Read**
@@ -59,11 +67,14 @@ await t.attachment.of("resume").create(file);
 - **per-call 引数は設けません**（ADR-0040 案1c）。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。
   partition の解決は **`tenant(id)` の 1 層だけ**です（client 既定は [ADR-0055][adr-0055] で廃止）。
   どちらが効いているかを考える必要はありません。
+- **カスタム項目の宣言も 1 層だけ**です。`tenant(id, { fields })` で渡し、client は宣言を持ちません
+  （[ADR-0087][adr-0087]）。別のテナントの宣言が黙って効くことはありません。
 
 ## 3. 認証を完全分離したい — テナント別 client
 
 既定では `tenant(id)` は client のトークンを**共有**します（共有トークン＋partition ルーティング）。
 **partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
+client を分ける理由は**これだけ**です — カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
 
 ```ts
 // partition ごとに別のトークン置き場を与える＝トークンが混ざらない
@@ -95,11 +106,13 @@ const user = await t.user.current(); // ログイン中 user
 
 - 手順: [認証][oauth]（Company DB ごとの権限付与）／[カスタム項目][custom-fields]（テナントで項目が違う場合）
 - 考え方: [Partition（Company DB）とテナント][partition]
-- 決定: [ADR-0008][adr-0008]（マルチテナント）／[ADR-0040][adr-0040]（実装）／[ADR-0055][adr-0055]（client から partition を外す）
+- 決定: [ADR-0008][adr-0008]（マルチテナント）／[ADR-0040][adr-0040]（実装）／[ADR-0055][adr-0055]（client から partition を外す）／
+  [ADR-0087][adr-0087]（カスタム項目の宣言も `tenant()` で束ねる）
 - ほかの目的から探す: [目次][index]
 
 [adr-0008]: ../../adr/0008-multitenancy-partition.md
 [adr-0021]: ../../adr/0021-master-read-resources.md
+[adr-0087]: ../../adr/0087-tenant-scoped-field-declarations.md
 [adr-0055]: ../../adr/0055-partition-binding-guard.md
 [adr-0040]: ../../adr/0040-multitenancy-surface-impl.md
 [bd]: ../../design/basic-design.md

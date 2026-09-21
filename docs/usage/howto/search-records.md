@@ -176,7 +176,7 @@ await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // âœ— expand ã
 <!-- doccheck: fields -->
 
 ```ts
-const page = await porters.tenant(1).resume.search({
+const page = await t.resume.search({
   image: { U_photo: ["FileName", "Content"] },
 });
 page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }

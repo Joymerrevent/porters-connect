@@ -24,8 +24,8 @@ client 側に既定の Partition を置く形にはしていません。既定�
 
 ## Partition をまたぐには `tenant(id)` を呼び直す
 
-スコープは Partition ごとに作ります。トークンやカタログは client が持つので、
-`tenant(id)` は安い操作です。
+スコープは Partition ごとに作ります。トークンは client が持ち、`tenant(id)` はアクセサを
+束ね直すだけなので、安い操作です。
 
 ```ts
 const tokyo = porters.tenant(1);
@@ -37,8 +37,10 @@ const osakaCount = (await osaka.candidate.search({ field: [] })).total;
 console.log(tokyoCount, osakaCount);
 ```
 
-テナントごとに**カスタム項目の構成が違う**場合や、**トークンを分けたい**場合は client 自体を
-分けます。使い分けは[マルチテナント][multi-tenant]にあります。
+**カスタム項目の宣言も Partition ごと**に渡します — `tenant(id, { fields })`
+（[カスタム項目][custom-fields]・[ADR-0087][adr87]）。カスタム項目は Partition ごとのものなので、
+client には置きません。client 自体を分けるのは**トークンを分けたい**ときだけです
+（[マルチテナント][multi-tenant]）。
 
 ## Partition を発見する
 
@@ -80,6 +82,8 @@ Partition ごとに client を分ける形に切り替えてください — **�
 [adr8]: ../../adr/0008-multitenancy-partition.md
 [adr22]: ../../adr/0022-master-read-query-surface.md
 [adr55]: ../../adr/0055-partition-binding-guard.md
+[adr87]: ../../adr/0087-tenant-scoped-field-declarations.md
+[custom-fields]: ../howto/custom-fields.md
 [authenticate]: ../howto/authenticate.md
 [lv]: ../../live-verification.md
 [multi-tenant]: ../howto/multi-tenant.md
