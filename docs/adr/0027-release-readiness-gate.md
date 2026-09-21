@@ -51,7 +51,7 @@
 
 ## Decision Outcome
 
-**決定（accepted・2026-06-20）：ハイブリッドを採用。** SECURITY は版番号を撤去（案C）し、publint・attw・CHANGELOG 版エントリ・README バッジ↔engines を **CI 必須ゲート（案A）**で守る。案B（自動更新）は低頻度には過剰として不採用。理由は下記「推奨」のとおり。
+**決定（accepted・2026-06-20）：ハイブリッドを採用。** SECURITY は版番号を撤去（案C）し、publint・attw・CHANGELOG 版エントリ・README バッジ↔engines を **CI 必須ゲート（案A）** で守る。案B（自動更新）は低頻度には過剰として不採用。理由は下記「推奨」のとおり。
 
 ### 推奨（私案）：ハイブリッド（消す ＋ 検査する）
 

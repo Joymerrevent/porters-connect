@@ -5,7 +5,7 @@
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > `1.0.0` の完成条件 **V2「リファレンス完成」**（[roadmap][rm]）の中身を決める。
-> [ADR-0035][adr35] は**使い方（guide）**の構造を決めたが、**網羅的な API リファレンス**は対象外だった。
+> [ADR-0035][adr35] は**使い方（guide）** の構造を決めたが、**網羅的な API リファレンス**は対象外だった。
 
 ## Context and Problem Statement
 

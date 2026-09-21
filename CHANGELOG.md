@@ -204,7 +204,7 @@ reference にも実装にも無く、**時分型**（2026/08・PORTERS 9.3.0）�
 
 PORTERS が `resource=` を **URL パラメータで必須**に要求するエンドポイントは 3 つ（Field / Phase /
 Attachment）あるのに、受け口の形が 3 つとも違っていました。**パラメータのリソースは `of(name)` で
-束ね、項目の値は宣言した Data Type どおり（数値）**という線を引き、3 本とも `of()` に揃えています。
+束ね、項目の値は宣言した Data Type どおり（数値）** という線を引き、3 本とも `of()` に揃えています。
 
 ### Added
 
@@ -890,7 +890,7 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
     **呼び出し側の書き味は変わりません**。
   - **App レベルのものは `porters` 側に残ります**（いずれも `partition` を取りません）—
     `porters.auth.*`（OAuth）と `porters.partition.search()`（partition の発見）。
-  - 理由: `partition` 未設定のクライアントは**`partition=0`** を全リクエストに載せていました。
+  - 理由: `partition` 未設定のクライアントは **`partition=0`** を全リクエストに載せていました。
     `0` は PORTERS のドキュメントに存在しない値で、由来は最初の PoC の穴埋めです。実際には
     Result Code **404** を招くため、**設定漏れが「サーバーが 404 を返す」形に化け**ていました。
     `tenant(id)` を唯一の経路にすることで、**「partition を束ね忘れたクライアント」という状態が

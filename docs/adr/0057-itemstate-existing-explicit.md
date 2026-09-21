@@ -51,7 +51,7 @@ if (q.itemstate !== undefined && q.itemstate !== "existing") {
 | `search({ itemstate: "all" })`      | 両方欲しい                 | `itemstate=all`     |
 
 **2 行目で、利用者が渡した情報を捨てている。** 現行の PORTERS では結果が同じなので実害は出ないが、
-それは**「PORTERS の既定が `existing` である」というサーバー側の仕様に寄りかかっている**からで、
+それは **「PORTERS の既定が `existing` である」というサーバー側の仕様に寄りかかっている**からで、
 明示指定を明示指定として扱っているからではない。
 
 ### 既定が変わったときに何が起きるか
@@ -124,7 +124,7 @@ if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
 1. **`appendReadQuery` の条件から `&& q.itemstate !== "existing"` を外す**（`src/resources/query.ts`）。
    残すのは `q.itemstate !== undefined` だけ。
 2. **`ItemState` の JSDoc を直す**。現在「Omitting (or `existing`) reads live data」と書いてあり、
-   2 つを同一視している。**省略は「サーバーの既定に委ねる」／`existing` は「生存のみを要求する」**と書き分ける。
+   2 つを同一視している。**省略は「サーバーの既定に委ねる」／`existing` は「生存のみを要求する」** と書き分ける。
 3. **テストの期待値を更新**（`src/resources/query.test.ts` の
    「sets deleted / all but omits existing and undefined」）。`existing` は**載る**、`{}` は**載らない**へ。
 4. **フェイクは変更不要**。`parseReadQuery` の `?? "existing"` は明示・省略のどちらでも同じ結果になる。
