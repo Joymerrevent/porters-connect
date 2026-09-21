@@ -115,8 +115,8 @@ for await (const c of t.candidate.searchAll({
 **書くときはかたちが変わります**（`P_Owner` は数値の id だけを送る）。読みと書きでかたちが違うのは
 **PORTERS Connect API の性質**で、[alias と Data Type][aliases] にまとめてあります。
 
-テナント固有の項目（`U_` / `A_`）も読めますが、**宣言しないと型が付かず、`field` に書かないと
-そもそも要求されません**。宣言のしかたは[カスタム項目][custom-fields]にあります。
+テナント固有の項目（`U_` / `A_`）も読めますが、**宣言しないと `field` に書けず（コンパイルエラー）、
+要求もされません**。宣言のしかたは[カスタム項目][custom-fields]にあります。
 
 ## 次に読む
 

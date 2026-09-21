@@ -61,7 +61,7 @@ partition と宣言の対応を持つのは SaaS 側で、ライブラリは 2 �
 
 - 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
   activity / contract / sales / process / resume ＋ `phase` ＋ `attachment`）**＋ master Read**
-  （user / field / option）。
+  （user / department / field / option）。
 - 含まれないもの: `auth`（App 単位・partition 非依存）／`partition` マスタ（partition の**発見**専用で partition を取らない）／
   `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
 - **per-call 引数は設けません**<!-- 根拠: ADR-0040 案1c -->。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。
@@ -85,7 +85,7 @@ const t = clientFor(tokenStore).tenant(partition);
 ```
 
 > [!NOTE]
-> 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です<!-- 根拠:  -->。
+> 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です<!-- 根拠: LV-13 -->。
 > 共有トークンで不都合があればテナント別 client に切り替えてください（設計は両対応）。
 >
 > **client を分けてもスロットルは分かれません。** 1 分あたりの上限を自制するバケットは
@@ -94,13 +94,19 @@ const t = clientFor(tokenStore).tenant(partition);
 
 ## オンボーディング（partition の発見）
 
-初回はブラウザでの権限付与（[OAuth 認証ガイド][oauth]）の後、`request_type=0` でログイン中の
-partition / user を発見できます。発見した partition を SaaS の DB に「会社 ↔ partition」で保存します。
+初回のブラウザでの権限付与（[OAuth 認証ガイド][oauth]）の直後は、`exchangeAuthorizationCode` で得た
+トークンが**ブラウザでログインした人のもの**なので、そのトークンが有効な間だけ `requestType: 0` で
+「ログイン中の partition / user」を引けます。発見した partition を SaaS の DB に「会社 ↔ partition」で
+保存します。
 
 ```ts
-const me = await porters.partition.search({ requestType: 0 }); // ログイン中 partition（browser code 付与時）
-const user = await t.user.current(); // ログイン中 user
+const me = await porters.partition.search({ requestType: 0 }); // ログイン中 partition（code 付与の直後だけ）
+const user = await t.user.current(); // ログイン中 user（同上）
 ```
+
+以降の無人運用（`code_direct` で取り直したトークン）ではこの呼び方は使えません — `requestType: 0` は
+403 になり、`t.user.current()` はアプリ自身の User を返します（[Partition とテナント][partition]）。
+普段は `porters.partition.search()`（アクセスできる一覧）から選んでください。
 
 ## 関連
 
