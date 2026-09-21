@@ -161,6 +161,9 @@ describe("guardRawExpansion — field に手書きされた展開を弾く", () 
       error = e;
     }
     expect((error as PortersConfigError).category).toBe("config");
+    expect((error as PortersConfigError).message).toContain(
+      'field entry "Job.P_Client(Client.P_Id)" expands a reference',
+    );
     expect((error as PortersConfigError).hint).toContain(
       'expand: { P_Client: ["P_Id", ...] }',
     );

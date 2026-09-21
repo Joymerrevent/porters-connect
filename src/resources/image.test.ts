@@ -124,7 +124,37 @@ describe("guardImageWrite — 送信前に PORTERS の 3 つの上限を検査�
         { U_photo: image({ Content: overSizedContent }) },
         FIELDS,
       ),
-    ).toThrow(expect.objectContaining({ category: "config" }));
+    ).toThrow(
+      expect.objectContaining({
+        category: "config",
+        hint: expect.stringContaining("2MB or less") as string,
+      }),
+    );
+  });
+
+  it("hint が上限の直し方を言う（ファイル名はバイト数・mime は許される 4 種）", () => {
+    expect(() =>
+      guardImageWrite(
+        { U_photo: image({ FileName: "あ".repeat(86) }) },
+        FIELDS,
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        hint: expect.stringContaining("255 bytes or fewer") as string,
+      }),
+    );
+    expect(() =>
+      guardImageWrite(
+        { U_photo: image({ ContentType: "image/webp" }) },
+        FIELDS,
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        hint: expect.stringContaining(
+          "image/jpeg / image/gif / image/png / image/bmp",
+        ) as string,
+      }),
+    );
   });
 
   it("欠けているサブ項目は検査しない（部分的な値を落とさない）", () => {

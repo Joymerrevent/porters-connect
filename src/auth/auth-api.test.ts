@@ -124,7 +124,11 @@ describe("createAuthApi — authorizationUrl / revokeUrl (ADR-0034 SD-2/SD-4)", 
       PortersConfigError,
     );
     expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
-      expect.objectContaining({ category: "config" }),
+      expect.objectContaining({
+        category: "config",
+        message: expect.stringContaining("at least one scope") as string,
+        hint: expect.stringContaining("`scopes`") as string,
+      }),
     );
   });
 
@@ -134,7 +138,11 @@ describe("createAuthApi — authorizationUrl / revokeUrl (ADR-0034 SD-2/SD-4)", 
       PortersConfigError,
     );
     expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
-      expect.objectContaining({ category: "config" }),
+      expect.objectContaining({
+        category: "config",
+        message: expect.stringContaining("appId is required") as string,
+        hint: expect.stringContaining("Set appId") as string,
+      }),
     );
   });
 });
@@ -178,6 +186,10 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     );
     await expect(auth.exchangeAuthorizationCode("c")).rejects.toMatchObject({
       category: "config",
+      message: expect.stringContaining(
+        "appId and appSecret are required",
+      ) as string,
+      hint: expect.stringContaining("appId/appSecret") as string,
     });
   });
 });
@@ -222,7 +234,14 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
     ).rejects.toBeInstanceOf(PortersConfigError);
     await expect(
       customAuth().exchangeAuthorizationCode("c"),
-    ).rejects.toMatchObject({ category: "config" });
+    ).rejects.toMatchObject({
+      category: "config",
+      // Names the method so the caller knows which call is off-limits under a custom strategy.
+      message: expect.stringContaining(
+        "exchangeAuthorizationCode is only available",
+      ) as string,
+      hint: expect.stringContaining("custom `auth` strategy") as string,
+    });
   });
 
   it("clearTokens rejects under a custom strategy (category config)", async () => {
@@ -231,6 +250,9 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
     );
     await expect(customAuth().clearTokens()).rejects.toMatchObject({
       category: "config",
+      message: expect.stringContaining(
+        "clearTokens is only available",
+      ) as string,
     });
   });
 

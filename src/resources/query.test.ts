@@ -163,6 +163,11 @@ describe("appendReadQuery — keywords", () => {
     }
     expect(err).toBeInstanceOf(PortersConfigError);
     expect((err as PortersConfigError).category).toBe("config");
+    // 何文字で、上限が何文字か（数字が入っていれば利用者は詰められる）。
+    expect((err as PortersConfigError).message).toContain(
+      "keywords is 101 characters, over the 100-character limit",
+    );
+    expect((err as PortersConfigError).hint).toContain("100 characters");
   });
 
   it("omits an empty keywords list", () => {
@@ -213,6 +218,10 @@ describe("appendReadQuery — itemstate", () => {
       expect((err as PortersConfigError).category).toBe("config");
       expect((err as PortersConfigError).message).toContain("P_Name");
       expect((err as PortersConfigError).message).toContain(itemstate);
+      // 許される 3 項目を hint が名指しする。
+      expect((err as PortersConfigError).hint).toContain(
+        "P_Id, P_UpdateDate, P_UpdatedBy",
+      );
     },
   );
 
@@ -248,6 +257,7 @@ describe("condition の変換できない日時（RV-36）", () => {
       expect(err.category).toBe("validation");
       expect(err.message).toContain("P_When");
       expect(err.hint).toContain("ISO 8601");
+      expect(err.context).toEqual({ operation: "read" });
       expect(err.cause).toBeInstanceOf(RangeError);
     }
   });
