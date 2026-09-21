@@ -315,6 +315,80 @@ describe("宣言型と実データの食い違い（RV-36）", () => {
   });
 });
 
+// RV-58: スカラどうしのずれのうち、数値だけは `Number(text)` という**変換**を伴う。日時と違って
+// 変換が throw せず NaN を返すので、RV-36 の網（形の食い違い・日時の書式）に掛からず、テキストの
+// 項目を f.number() と宣言すると NaN が黙って入っていた（typeof は number・null 判定も通る・
+// 書き戻すと "NaN" を送る）。ADR-0006「silent な誤変換はしない」を数値にも当てる。
+describe("数値でない文字列を Number として読まない（RV-58）", () => {
+  it.each(["abc", "12abc", "社内候補", "Infinity", "-Infinity", "NaN"])(
+    "Number に %j が来たら NaN にせず投げる",
+    (text) => {
+      expect(() => decode("Number", text, "U_score")).toThrow(
+        PortersResourceError,
+      );
+    },
+  );
+
+  it("System[Id] も同じ（P_Id は数値でしか来ない）", () => {
+    expect(() => decode("System[Id]", "abc", "P_Id")).toThrow(
+      PortersResourceError,
+    );
+  });
+
+  it("Link のスカラ形（Contact の ID）も同じ", () => {
+    expect(() => decode("Link", "社内候補", "U_contact")).toThrow(
+      PortersResourceError,
+    );
+    // 入れ子の形は今までどおり形で読む（ADR-0064 案4a）。
+    expect(decode("Link", { User: { P_Id: "9" } }, "U_contact")).toMatchObject({
+      P_Id: 9,
+    });
+  });
+
+  it("フィールド名・category・hint を載せる（RV-36 の日時と同じ形）", () => {
+    try {
+      decode("Number", "社内候補", "U_score");
+      expect.unreachable();
+    } catch (e) {
+      const err = e as PortersResourceError;
+      expect(err).toBeInstanceOf(PortersResourceError);
+      expect(err.category).toBe("validation");
+      expect(err.message).toContain("U_score");
+      expect(err.message).toContain("declared Number");
+      expect(err.message).toContain('"社内候補"');
+      expect(err.hint).toContain("plain number");
+      expect(err.hint).not.toContain("Contact id"); // Link 用の文言を Number に出さない
+      expect(err.hint).toContain("Field Read");
+      expect(err.context).toEqual({ operation: "decode" });
+      expect(err.code).toBeNull();
+      expect(err.retryable).toBe(false);
+    }
+  });
+
+  it("Link の hint は Contact の ID だと言う（Number の文言と取り違えない）", () => {
+    try {
+      decode("Link", "abc", "U_contact");
+      expect.unreachable();
+    } catch (e) {
+      const err = e as PortersResourceError;
+      expect(err.message).toContain("declared Link");
+      expect(err.hint).toContain("Contact id");
+      expect(err.hint).toContain("plain number");
+    }
+  });
+
+  it("数値として読めるものは今までどおり number（範囲の網を狭めない）", () => {
+    expect(decode("Number", "87", "U_score")).toBe(87);
+    expect(decode("Number", "-1.25", "U_score")).toBe(-1.25);
+    expect(decode("Number", "0", "U_score")).toBe(0);
+    expect(decode("Number", " 42 ", "U_score")).toBe(42); // 前後の空白は Number() が許す
+    expect(decode("System[Id]", "10001", "P_Id")).toBe(10001);
+    expect(decode("Link", "10001", "U_contact")).toBe(10001);
+    // 空は食い違いではなく「値が無い」= null（RV-36 と同じ）。
+    expect(decode("Number", "", "U_score")).toBeNull();
+  });
+});
+
 // 展開して読んだ System[Reference]（ADR-0058）。参照先カタログは引数で受け取る＝
 // xml/ が resources/ を見ない（RV-8）ことと、入れ子タグに依存しない（LV-10）ことを両立する。
 describe("decodeReferenceRecord — 展開した System[Reference]（ADR-0058）", () => {
