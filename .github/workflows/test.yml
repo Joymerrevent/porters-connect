@@ -1,10 +1,18 @@
 name: Test
 
-# 対応 Node（22=engines の下限＝Maintenance LTS / 24=Active LTS / 26=Current）でテストを回し
-# 互換性を担保。**下限・Active LTS・Current の 3 段**を保つ（どれを落としても、上げた利用者か
-# 下限に留まる利用者のどちらかが未検査になる）。
+# 対応 Node（22.12.0=engines の下限 / 22=Maintenance LTS の最新 / 24=Active LTS / 26=Current）で
+# テストを回し互換性を担保。**下限・Active LTS・Current の 3 段**を保つ（どれを落としても、
+# 上げた利用者か下限に留まる利用者のどちらかが未検査になる）。
 # 下限が 22.12 なのは Node の `require(esm)` が既定で有効な最小の版だから（ADR-0082）。
 # 20 は EOL（2026-04-30）につき外した — 減らしたのは EOL の 1 本だけで、段は減らしていない。
+#
+# **下限はパッチ版まで書く**（RV-53）。`22` はその時点の 22 系最新に解決されるので、
+# `engines` が約束した 22.12.0 そのものは一度も走っていなかった。22.12 より後に入った API を
+# 使った日に、CI は緑のまま下限の利用者だけが実行時に落ちる（`… is not a function` で、
+# ライブラリの不具合には見えない）。**約束した版を走らせて初めて約束になる。**
+# engines を上げてここを直し忘れると下限が未検査に戻るので、ずれは `pnpm check:release` が検出する。
+# `22`（系の最新）も残す: 下限は「試す対象」で、そこで開発するわけではないので、
+# 実際に使われる 22 系最新の退行も見たい。`.node-version`（ローカル / release）は `22` のまま。
 # 非必須チェックなので docs-only は paths-ignore で素直に skip（runner すら起動しない・ADR-0028）。
 on:
   pull_request:
@@ -27,11 +35,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24, 26]
+        node: ["22.12.0", 22, 24, 26]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:

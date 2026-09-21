@@ -343,3 +343,108 @@ describe("Write XML: 書いて読むと戻る（property-based）", () => {
     );
   });
 });
+
+// ADR-0085。PCDATA 側（上の「書いて読むと戻る」）と対になる、**名前の位置**の試験。
+// RV-48 はここに例が 1 件も無かったので、カバレッジ 100% のまま穴が残っていた。
+describe("要素名になる値の検証（ADR-0085 / RV-48）", () => {
+  // RV-48 の実測で使った払い出し。`<Item>` を閉じて開き直し、別レコードを名指す。
+  const INJECTION =
+    "Option.P_Applied/></Person.P_Phase><Person.P_Id>999</Person.P_Id></Item>" +
+    "<Item><Person.P_Name>pwned</Person.P_Name><Person.P_Phase><Option.P_Applied";
+
+  const write = (items: Record<string, unknown>[]): string =>
+    buildWriteXml({
+      resource: "Candidate",
+      prefix: "Person",
+      fields: FIELDS,
+      items: items as Parameters<typeof buildWriteXml>[0]["items"],
+    });
+
+  it("RV-48 の払い出しを Option の alias から弾く", () => {
+    expect(() => write([{ P_Id: 10001, P_Phase: [INJECTION] }])).toThrow(
+      PortersConfigError,
+    );
+  });
+
+  it("弾くときは validation の PortersConfigError（ADR-0006）で、項目と値を名指す", () => {
+    try {
+      write([{ P_Phase: ["a<b"] }]);
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(PortersConfigError);
+      const err = e as PortersConfigError;
+      expect(err.category).toBe("validation");
+      // どの項目の、どの値が悪いのかが分からないと直せない。
+      expect(err.message).toContain("P_Phase");
+      expect(err.message).toContain("a<b");
+      // **どちらの境界で落ちたか**も要る。選択肢 alias と項目 alias は直し方が違う
+      // （前者は値を、後者は入力オブジェクトのキーを疑う）。
+      expect(err.message).toContain("option alias");
+      // hint は「何が正しい形か」と「正しい値をどこから得るか」を言う。全文ではなく
+      // その 2 つが残っているかだけを見る（文言の言い換えで落ちないように）。
+      expect(err.hint).toContain("XML Name");
+      expect(err.hint).toContain("t.option");
+      // 失敗した工程。エラーを分類して扱う利用者はここを見る（ADR-0006）。
+      expect(err.context?.operation).toBe("encode");
+    }
+  });
+
+  it.each([
+    ["空白を含む", "Option.P_A B"],
+    ["数字始まり", "1Option"],
+    ["空文字", ""],
+    ["`>` を含む", "a>b"],
+    ["`/` を含む", "a/b"],
+    ["`&` を含む", "a&b"],
+  ])("Option の alias が %s とき弾く（%j）", (_label, alias) => {
+    expect(() => write([{ P_Phase: [alias] }])).toThrow(PortersConfigError);
+  });
+
+  it("正規の alias は通す（日本語の選択肢を含む）", () => {
+    const xml = write([{ P_Phase: ["Option.P_Applied", "Option.P_東京"] }]);
+    expect(xml).toContain(
+      "<Person.P_Phase><Option.P_Applied/><Option.P_東京/></Person.P_Phase>",
+    );
+  });
+
+  it("項目 alias（item のキー）も同じ検証を通る — 論点2 (ii)", () => {
+    // 型は `WritableKeys<F>` に絞っているが、excess property check はフレッシュな
+    // リテラルにしか効かない。`JSON.parse(...) as …` ならこのキーが実行時に届く。
+    const untrusted = JSON.parse(
+      '{"P_Name></Person.P_Name><Person.P_Id>999</Person.P_Id><Person.P_Name":"x"}',
+    ) as Record<string, unknown>;
+    expect(() => write([untrusted])).toThrow(PortersConfigError);
+    // 選択肢 alias 側と取り違えないこと（直すのは入力オブジェクトのキーのほう）。
+    expect(() => write([untrusted])).toThrow(/field alias/);
+  });
+
+  it("同じ文字列でも、本文の位置なら従来どおり通る（過剰に締めていない）", () => {
+    // エスケープが効く経路は塞がない。ここが締まると round-trip が壊れる。
+    const xml = write([{ P_Name: INJECTION }]);
+    expect(xml).toContain("&lt;/Person.P_Phase&gt;");
+    expect(xml).not.toContain("<Person.P_Id>999</Person.P_Id>");
+  });
+
+  it("どんな alias を渡しても <Item> は増やせない（property-based）", () => {
+    const count = (xml: string, needle: string): number =>
+      xml.split(needle).length - 1;
+    fc.assert(
+      fc.property(fc.string(), fc.string(), (optionAlias, name) => {
+        let xml: string;
+        try {
+          xml = write([{ P_Id: 10001, P_Phase: [optionAlias], P_Name: name }]);
+        } catch (e) {
+          // 弾くのは正しい倒れ方。ただし必ずライブラリのエラー型で（RV-36 と同じ契約）。
+          expect(e).toBeInstanceOf(PortersError);
+          return;
+        }
+        // 通したなら構造は呼び出し側の値に動かされていない。**生の文字列で数える**のが要点で、
+        // パースして数えると、パーサ自身の都合（予約名の拒否など）が混ざって不変条件がぼやける。
+        // 本文の位置に現れた "<Item>" はエスケープ済みなので、この数え方で取り違えは起きない。
+        expect(count(xml, "<Item>")).toBe(1);
+        expect(count(xml, "</Item>")).toBe(1);
+        expect(count(xml, "<Person.P_Id>")).toBe(1);
+      }),
+    );
+  });
+});

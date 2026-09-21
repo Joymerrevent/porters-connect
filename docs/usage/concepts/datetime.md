@@ -93,15 +93,74 @@ await t.candidate.search({
 
 これは差分取得に使えます。「前回から更新されたものだけ」は `P_UpdateDate` の条件で引けます。
 
+## 時分型は日時ではありません（変換関数で扱います）
+
+PORTERS 9.3.0（2026/08）で足された項目タイプ **「時分型」** は、**時刻だけ**（`00:00`〜`47:59`）を持つ
+カスタム項目です。ただし API 上は **年月日時分型と同じ `DateTime`（Field Type 12）** で、
+`1970/01/01` を基準日にした日時として運ばれます — `09:00` は `1970/01/01 09:00:00`、`26:00` は
+`1970/01/02 02:00:00`。UTC でもありません（タイムゾーン変換は行われません）。
+
+**どの項目が時分型かは、API からは分かりません**（Field Read でも `12` としか返りません）。
+分かるのはテナントの管理者だけです。そこでこのライブラリは型を増やさず、時分型の項目も
+**`f.dateTime()` のまま宣言し、値は ISO のまま読み書き**します。基準日の規則は、あなたが
+「この項目は時分型だ」と知っているところで**変換関数**に任せます（[ADR-0086][adr86]）。
+
+<!-- doccheck: -->
+
+```ts
+import {
+  PortersClient,
+  decodeTimeOfDay,
+  defineFields,
+  encodeTimeOfDay,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  job: (f) => ({ U_startTime: f.dateTime() }), // 時分型でも dateTime() のまま
+});
+const porters = new PortersClient({
+  hostname: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+  fields,
+});
+const t = porters.tenant(1);
+
+// 読む: ISO で届く値を時刻に戻す
+const job = await t.job.get(10001);
+const start =
+  job?.U_startTime == null ? null : decodeTimeOfDay(job.U_startTime); // "09:00" / "26:00"
+
+// 書く・検索する: 時刻を ISO にしてから渡す
+await t.job.update(10001, { U_startTime: encodeTimeOfDay("26:00") }); // → 1970/01/02 02:00:00
+await t.job.search({
+  condition: { U_startTime: { ge: encodeTimeOfDay("15:00") } },
+});
+```
+
+- `encodeTimeOfDay` は `"HH:mm"` か `"HH:mm:ss"`（`00:00`〜`47:59`）だけを受け付け、それ以外は
+  `PortersConfigError`（`category: "validation"`）で**送る前に**止まります。PORTERS は基準日以外の
+  値を Write では Code 103、`condition` では Code 100（**検索が実行されない**）で返すので、
+  手前で止めるほうが「0 件だった」との取り違えを防げます。
+- `decodeTimeOfDay` は基準日（`1970-01-01` / `1970-01-02`）の ISO だけを受け付けます。別の日付が
+  来たら、その項目はたぶん時分型ではありません — エラーのヒントにそう書いてあります。
+  秒が `00` でなければ `"HH:mm:ss"` で保持します（黙って落としません）。
+- **変換を呼ぶかどうかはあなたの責務**です。呼ばずにオフセット付きの ISO（`+09:00`）を書くと、
+  既存の日時の契約どおり UTC に換算されて**黙ってずれます**。`Z` 付きなら値は通ります。
+- 管理者が時分型の項目を足すと、既存の連携が普通の日時を書いて Code 103 で落ちることがあります。
+  `generateFieldDecls` は Field Type 12 の行にその注意を出します（[カスタム項目][custom-fields]）。
+
 ## 関連
 
 - 要件: [R-10][prd]（ISO 8601・UTC で正規化し、業務タイムゾーン変換はしない）
-- 決定: [ADR-0011][adr11]（変換を型駆動デコーダに集約）／[ADR-0016][adr16]（Data Type の粒度）
+- 決定: [ADR-0011][adr11]（変換を型駆動デコーダに集約）／[ADR-0016][adr16]（Data Type の粒度）／
+  [ADR-0086][adr86]（時分型は型を増やさず変換関数で扱う）
 - 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
 - API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
 
 [adr11]: ../../adr/0011-xml-parse-serialize.md
 [adr16]: ../../adr/0016-field-type-granularity.md
+[adr86]: ../../adr/0086-time-of-day-fields.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [handle-failures]: ../howto/handle-failures.md
 [prd]: ../../design/requirements.md

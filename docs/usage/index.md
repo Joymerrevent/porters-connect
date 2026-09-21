@@ -75,12 +75,13 @@
 `updateMany` は 200 件を超えても自動で分割して書きます（使い方は[一括書き込み][bulk-write]）。
 **添付だけ一括を持ちません** — ファイル本体が大きく、1 リクエストが上限に当たるためです。
 
-マスタ 4 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
+マスタ 5 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
 
 | アクセサ            | リソース                | メソッド                           | 備考                                                          |
 | ------------------- | ----------------------- | ---------------------------------- | ------------------------------------------------------------- |
 | `porters.partition` | Partition（Company DB） | `search` / `searchAll`             | **client 直下**（`tenant()` を通さない唯一の読み取り）        |
 | `t.user`            | User                    | `search` / `searchAll` / `current` | `current()` は自己同定（`code_direct` ではアプリ自身の User） |
+| `t.department`      | Department（部署）      | `search` / `searchAll`             | 絞り込み無し（Partition の部署を全件）。スコープは `user_r`   |
 | `t.field`           | Field（項目定義）       | `search` / `searchAll`             | **先に `t.field.of("candidate")` でリソースを束ねる**         |
 | `t.option`          | Option（選択肢）        | `search`                           | **`searchAll` なし**（API に `start` が無いため）             |
 

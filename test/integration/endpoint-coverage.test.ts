@@ -102,7 +102,7 @@ const endpointOf = (row: Row): string =>
 
 // --- 対象 -----------------------------------------------------------------------------
 
-// 共通語彙で Read する 11 エンドポイント（マスタ 4 種 / Phase / Attachment は語彙が違う）。
+// 共通語彙で Read する 11 エンドポイント（マスタ 5 種 / Phase / Attachment は語彙が違う）。
 const COMMON_ENDPOINTS = [
   "/v1/candidate",
   "/v1/job",
@@ -140,13 +140,19 @@ const REFERENCE_SOURCES: {
     path: `${REFERENCE}/README.md`,
     heading: "Read パラメータ（共通）",
   },
-  ...["partition", "user", "field", "option", "phase", "attachment"].map(
-    (name) => ({
-      endpoints: [`/v1/${name}`],
-      path: `${REFERENCE}/resources/${name}.md`,
-      heading: "Read パラメータ",
-    }),
-  ),
+  ...[
+    "partition",
+    "user",
+    "field",
+    "option",
+    "department",
+    "phase",
+    "attachment",
+  ].map((name) => ({
+    endpoints: [`/v1/${name}`],
+    path: `${REFERENCE}/resources/${name}.md`,
+    heading: "Read パラメータ",
+  })),
 ];
 
 /** reference が挙げるパラメータ: エンドポイント -> パラメータ -> `●`（必須）/ `○`（任意）。 */
@@ -290,6 +296,12 @@ const PROBES: Probe[] = [
         count: 5,
       }),
   },
+  {
+    endpoint: "/v1/department",
+    accessor: ({ t }) => t.department,
+    read: ({ t }) =>
+      t.department.search({ field: ["P_Id"], count: 5, start: 0 }),
+  },
   commonProbe("/v1/candidate", (t) => t.candidate),
   commonProbe("/v1/job", (t) => t.job),
   commonProbe("/v1/client", (t) => t.client),
@@ -430,10 +442,10 @@ describe("V1 マトリクス: 表そのものが読めている（前提の自�
     }
   });
 
-  it("表 A と表 B が同じ 17 エンドポイントを同じ順で並べている", () => {
+  it("表 A と表 B が同じ 18 エンドポイントを同じ順で並べている", () => {
     const a = tableOf("表 A").map(endpointOf);
     const b = tableOf("表 B").map(endpointOf);
-    expect(a).toHaveLength(17);
+    expect(a).toHaveLength(18);
     expect(b).toEqual(a);
   });
 

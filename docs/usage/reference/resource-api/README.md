@@ -1,7 +1,7 @@
 # Resource API（エンドポイント / パラメータ / XML / Result Code / 制限）
 
-出典: Read API - Parameter（2025-03-27）/ Read API - XML Format（2025-03-05）/
-Request 制限（2026-04-28）/ Candidate - Read（2024-07-29、XML 例）。取得日 2026-06-12。
+出典: Read API - Parameter（2026-07-28）/ Read API - XML Format（2025-03-05）/
+Request 制限（2026-04-28）/ Candidate - Read（2024-07-29、XML 例）。取得日 2026-06-12（2026-09-20 に再取得・差分反映）。
 （Result Code は [result-codes][result-codes]、Write XML は [write-format][write-format] を参照）
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008016927-Read-API-Parameter>
@@ -45,15 +45,18 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 | Option                                           | `or` / `and`（値はコロン区切り）                     | `or`   |
 | Link（ユーザー型/部署型/担当者型）               | `or` / `and`（値は ID のみ）                         | `or`   |
 
+- **時分型**（Field Type 12 のうち時刻だけを持つ項目・2026/08 追加）を condition に書くときは、値に基準日を付ける:
+  `1970/01/01 HH:mm:ss`（00:00〜23:59）／ `1970/01/02 HH:mm:ss`（24:00〜47:59）。基準日以外の年月日は
+  **Result Code 100 で検索されない**（[field-data-types][field-data-types] の「時分型」節）。
 - 上位階層の field を直接 condition に使うのは不可。ただし「紐づく上位 ID が入る項目」で ID 検索は可能
   （例 `condition=Resume.P_Candidate:eq=10008`）。複数 ID や範囲指定は不可。
 - `itemstate` が `deleted` / `all` の場合、condition に使えるのは
   `{Resource}.P_Id` / `{Resource}.P_UpdateDate` / `{Resource}.P_UpdatedBy` の 3 種のみ、
   かつ更新日は **90 日以内**（自動で 90 日条件が付く。91 日以前を指定すると Result Code 124）。
 
-マスタ 4 種（Partition / User / Field / Option）は**この共通表と語彙が違う**。各リソースの
+マスタ 5 種（Partition / User / Field / Option / Department）は**この共通表と語彙が違う**。各リソースの
 「Read パラメータ」節を参照（[Partition][res-partition] / [User][res-user] / [Field][res-field] /
-[Option][res-option]）。
+[Option][res-option] / [Department][res-department]）。
 
 ## Write パラメータ
 
@@ -107,6 +110,8 @@ Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルー
 [res-user]: resources/user.md
 [res-field]: resources/field.md
 [res-option]: resources/option.md
+[res-department]: resources/department.md
+[field-data-types]: field-data-types.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
 [adr22]: ../../../adr/0022-master-read-query-surface.md

@@ -8,7 +8,7 @@
 
 > **PortersClientOptions**\<`C`\> = `object`
 
-Defined in: [src/client.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L61)
+Defined in: [src/client.ts:63](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L63)
 
 Options for constructing a [PortersClient](../classes/PortersClient.md). `C` is inferred from `fields` (ADR-0023).
 
@@ -24,7 +24,7 @@ Options for constructing a [PortersClient](../classes/PortersClient.md). `C` is 
 
 > `optional` **appId?**: `string`
 
-Defined in: [src/client.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L89)
+Defined in: [src/client.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L91)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [src/client.ts:89](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **appSecret?**: `string`
 
-Defined in: [src/client.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L90)
+Defined in: [src/client.ts:92](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L92)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [src/client.ts:90](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **auth?**: [`TokenProvider`](TokenProvider.md)
 
-Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L93)
+Defined in: [src/client.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L95)
 
 Custom auth strategy; defaults to the transparent code_direct strategy.
 
@@ -50,7 +50,7 @@ Custom auth strategy; defaults to the transparent code_direct strategy.
 
 > `optional` **fields?**: [`DefinedFields`](DefinedFields.md)\<`C`\>
 
-Defined in: [src/client.ts:112](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L112)
+Defined in: [src/client.ts:114](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L114)
 
 Tenant custom field declarations from [defineFields](../functions/defineFields.md) (ADR-0023). Each resource's
 declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
@@ -62,7 +62,7 @@ their declared Data Type and appear typed on reads / writes. Omit for standard `
 
 > **hostname**: `string`
 
-Defined in: [src/client.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L73)
+Defined in: [src/client.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L75)
 
 API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
 (A representative value lives in docs/usage/reference.)
@@ -80,7 +80,7 @@ Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
 
 > `optional` **port?**: `number`
 
-Defined in: [src/client.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L80)
+Defined in: [src/client.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L82)
 
 Port of the access point (ADR-0078). **Omit it for PORTERS** — the contract gives you a name
 and the scheme decides the port. Set it only for a local fake server or a proxy:
@@ -93,7 +93,7 @@ is rejected at construction.
 
 > `optional` **scheme?**: [`Scheme`](Scheme.md)
 
-Defined in: [src/client.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L88)
+Defined in: [src/client.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L90)
 
 URL scheme of the access point (ADR-0047). Defaults to `"https"`. Set `"http"` only for a
 local fake server or a trusted tunnel: it sends every request — the OAuth token header
@@ -107,7 +107,7 @@ Silence it only where cleartext is intended, with the env var
 
 > `optional` **scopes?**: [`Scope`](Scope.md)[]
 
-Defined in: [src/client.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L91)
+Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L93)
 
 ***
 
@@ -115,7 +115,7 @@ Defined in: [src/client.ts:91](https://github.com/Joymerrevent/porters-connect/b
 
 > `optional` **throttle?**: [`Throttle`](Throttle.md)
 
-Defined in: [src/client.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L106)
+Defined in: [src/client.ts:108](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L108)
 
 Rate-limit self-restraint (ADR-0073). Defaults to the **process-wide bucket for this destination**,
 so several clients aimed at the same PORTERS add up to one limit instead of one each.
@@ -130,7 +130,7 @@ processes — a `Throttle` backed by Redis is what makes the multi-instance case
 
 > `optional` **tokenStore?**: [`TokenStore`](TokenStore.md)
 
-Defined in: [src/client.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L95)
+Defined in: [src/client.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L97)
 
 Token persistence; defaults to in-memory.
 
@@ -140,6 +140,6 @@ Token persistence; defaults to in-memory.
 
 > `optional` **transport?**: [`Transport`](Transport.md)
 
-Defined in: [src/client.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L97)
+Defined in: [src/client.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L99)
 
 Injectable HTTP transport; defaults to a fetch-based transport.

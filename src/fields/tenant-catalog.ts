@@ -81,7 +81,7 @@ export type ReadCustomCatalogOptions = {
    * The default is `-1` deliberately. Narrowing to `1` would hide fields that exist but are
    * unused, and a comparison against a declaration would then report them as **missing** — a
    * false alarm. `generateFieldDecls` overrides it to `1`, where "only what is in use" is what
-   * you want in a template (ADR-0069, accept 時の決定).
+   * you want in a template (ADR-0069, decided on accept).
    */
   readonly active?: -1 | 0 | 1;
 };
