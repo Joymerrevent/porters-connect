@@ -84,11 +84,36 @@ export const kanaLines = (tree) => {
   return found;
 };
 
-// 保守者向けの識別子。ADR / レビュー指摘（RV）/ 実機確認項目（LV）の番号、VERIFY(live) の
-// 印、それらの台帳へのパス。ADR の節番号（`案5b` / `論点4` / `決定3` / `SD-3` / `F-3`）は
-// 単独では日本語のサンプル値と区別が付かないので、番号本体に付いて来る分だけ拾う。
-const MAINTAINER_ID =
-  /\bADR-\d{4}|\bRV-\d+\b|\bLV-\d+\b|VERIFY\(live\)|docs\/(adr|reviews|live-verification)/;
+// 保守者向けの識別子。ADR / レビュー指摘（RV）/ 実機確認項目（LV）の番号、VERIFY(live) の印、
+// 設計文書の節番号、そして `docs/usage/` 以外の `docs/` パス。
+//
+// - 節番号は ADR 番号に添えられずに単独で現れることがある（`PhaseAccessor` の `(案5b)` は
+//   実際に生成物に出ていた形で、#363 では手で外した）。ASCII の `SD-n` / `F-n`（基本設計の節・機能番号）と
+//   漢字＋数字の `案n` / `論点n` / `決定n`（ADR の節）は、どちらも生成物に出る日本語の
+//   サンプル値（`面談` のような語）と衝突しないので拾う。かな検査が漢字を対象外にした隙間を
+//   ここで埋める形。
+// - `docs/` は allowlist で見る。利用者が読むのは `docs/usage/` だけで、それ以外
+//   （adr / reviews / design / history / runbook）は保守者向け。denylist だと新しい
+//   保守者向けディレクトリが黙って通る。ただし**このリポジトリのパスに限る**: 素の `docs/` を
+//   拾うと、typedoc が `Error` から継承して描く `https://v8.dev/docs/stack-trace-api` のような
+//   外部 URL に当たる（#363 の修正を通し直したときに実際に落ちた）。パスの先頭（行頭・空白・
+//   引用符・括弧の直後、`../` 付きも可）か、この repo の GitHub URL の中だけを見る。
+const REPO_DOCS =
+  /(?<![\w./-])(?:\.\.\/)*docs\/(?!usage\/)|porters-connect\/(?:blob|tree|raw)\/[^\s/]+\/docs\/(?!usage\/)/;
+const MAINTAINER_ID = new RegExp(
+  [
+    /\bADR-\d{4}/,
+    /\bRV-\d+\b/,
+    /\bLV-\d+\b/,
+    /\bSD-\d+\b/,
+    /\bF-\d+\b/,
+    /(?:案|論点|決定)\d/,
+    /VERIFY\(live\)/,
+    REPO_DOCS,
+  ]
+    .map((r) => r.source)
+    .join("|"),
+);
 
 /**
  * 生成物に保守者向けの識別子が混ざっている行を拾う。`tree` は readTree の結果

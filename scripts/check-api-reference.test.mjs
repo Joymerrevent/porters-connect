@@ -80,6 +80,50 @@ describe("maintainerIdLines（生成物の保守者向け識別子検出）", ()
     expect(found.map((f) => f.split(":")[0])).toEqual(["a.md", "b.md"]);
   });
 
+  it("ADR 番号を伴わない節番号も拾う（`(案5b)` は実際に生成物に出ていた形）", () => {
+    expect(
+      maintainerIdLines(
+        tree({
+          "a.md": "the precise static Write type (SD-3).\n",
+          "b.md": "bound once (F-3).\n",
+          "c.md": "so it is bound once (案2a).\n",
+          "d.md": "Never silently dropped (論点4).\n",
+          "e.md": "decided on accept (決定3).\n",
+        }),
+      ),
+    ).toHaveLength(5);
+  });
+
+  it("`docs/usage/` 以外の `docs/` パスを拾う（allowlist）", () => {
+    expect(
+      maintainerIdLines(
+        tree({
+          "a.md": "see docs/design/basic-design.md\n",
+          "b.md": "see docs/roadmap.md\n",
+          "c.md": "(docs/history/SPEC_v1.md)\n",
+          "d.md": "`../docs/adr/0064-image.md`\n",
+          "e.md":
+            "https://github.com/Joymerrevent/porters-connect/blob/main/docs/adr/0064-image.md\n",
+        }),
+      ),
+    ).toHaveLength(5);
+  });
+
+  it("外部サイトの `/docs/` パスは拾わない（typedoc が Error から継承して描く URL）", () => {
+    // 実際に落ちた形: https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+    expect(
+      maintainerIdLines(
+        tree({
+          "a.md":
+            "https://v8.dev/docs/stack-trace-api#customizing-stack-traces\n",
+          "b.md": "https://example.com/docs/adr/whatever\n",
+          "c.md":
+            "https://github.com/Joymerrevent/porters-connect/blob/main/docs/usage/concepts/limits.md\n",
+        }),
+      ),
+    ).toEqual([]);
+  });
+
   it("レビュー指摘（RV）と実機確認（LV）の番号を拾う", () => {
     expect(
       maintainerIdLines(
@@ -104,13 +148,16 @@ describe("maintainerIdLines（生成物の保守者向け識別子検出）", ()
   });
 
   it("似た綴りの英単語や型名は拾わない", () => {
-    // `System[Reference]` / `verifyFields` / `MADR-0001` のような語で誤検知しない。
+    // `System[Reference]` / `verifyFields` / `MADR-0001` / `UTF-8` のような語で誤検知しない。
+    // 漢字のサンプル値も、数字が続かない限り対象外（`面談` / `案` 単独）。
     expect(
       maintainerIdLines(
         tree({
           "a.md":
             "An expanded System[Reference] value; check it with verifyFields.\n",
           "b.md": "MADR-0001 is not ours; neither is XRV-1 nor SLV-2.\n",
+          "c.md": "A UTF-8 name; PDF-1 is not a section either.\n",
+          "d.md": 'P_Title: "面談", P_Memo: "案",\n',
         }),
       ),
     ).toEqual([]);

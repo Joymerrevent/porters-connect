@@ -54,9 +54,10 @@ export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
  * Size / name-length / MIME are checked **before the request goes out** (the ~15000-char request
  * guard is lifted for an image write, so this is what replaces it).
  *
- * There is no way to *clear* an image. Whether empty sub-elements erase the value or
- * are rejected is not documented, and guessing wrong would mean thinking a value was cleared
- * when it was not — so the library does not offer it.
+ * There is no documented way to *clear* an image, and the library adds none: whether PORTERS
+ * treats empty sub-elements as "erase" or rejects them is not written down, and guessing wrong
+ * would mean thinking a value was cleared when it was not. Sending empty strings is not
+ * prevented — it is simply unverified.
  */
 export type ImageWriteValue = {
   FileName: string;
