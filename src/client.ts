@@ -1,4 +1,5 @@
 import { createAuthApi, createDefaultTokenProvider } from "./auth";
+import { PortersConfigError } from "./errors";
 import type {
   AuthApi,
   AuthProviderControls,
@@ -59,8 +60,11 @@ import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
 import type { PartitionId, Scheme, Scope } from "./types";
 
-/** Options for constructing a {@link PortersClient}. `C` is inferred from `fields` (ADR-0023). */
-export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
+/**
+ * Options for constructing a {@link PortersClient}. App-level only: custom field declarations
+ * belong to a partition and go to {@link PortersClient.tenant} as {@link TenantOptions} (ADR-0087).
+ */
+export type PortersClientOptions = {
   /**
    * API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
    * (A representative value lives in docs/usage/reference.)
@@ -107,9 +111,31 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
    */
   throttle?: Throttle;
   /**
-   * Tenant custom field declarations from {@link defineFields} (ADR-0023). Each resource's
-   * declared `U_`/`A_` fields are merged onto its static catalog, so they decode/encode by
-   * their declared Data Type and appear typed on reads / writes. Omit for standard `P_` only.
+   * **Not a client option any more** (ADR-0087). Custom fields belong to a partition, so the
+   * declaration goes to {@link PortersClient.tenant} as `tenant(id, { fields })`. Typed `never`
+   * so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
+   * it is not a fresh literal; at runtime the constructor rejects it with {@link PortersConfigError}
+   * rather than silently dropping the declaration (the same fail-closed stance as `hostname`,
+   * ADR-0048).
+   */
+  fields?: never;
+};
+
+/**
+ * Options for {@link PortersClient.tenant}. `C` is inferred from `fields` (ADR-0023 / ADR-0087).
+ *
+ * Declared per partition, not per client, because that is how PORTERS defines custom fields:
+ * every resource article lists `U_[Name]` / `A_[Name]` as differing per tenant (Company DB).
+ * The scope that binds the partition is therefore the one that states its field shape — a
+ * declaration written for one tenant cannot silently apply to another (ADR-0087).
+ */
+export type TenantOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
+  /**
+   * This partition's custom field declarations from {@link defineFields} (ADR-0023). Each
+   * resource's declared `U_`/`A_` fields are merged onto its static catalog, so they decode /
+   * encode by their declared Data Type and appear typed on reads / writes. Omit for standard
+   * `P_` only. `generateFieldDecls` writes one from the tenant's Field Read and `verifyFields`
+   * checks one against it (ADR-0069) — both take the same `tenant(id)` scope.
    */
   fields?: DefinedFields<C>;
 };
@@ -118,6 +144,7 @@ export type PortersClientOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
  * The partition-bound resource accessors returned by {@link PortersClient.tenant} (ADR-0040 / F-3).
  * **This is the only way to reach a partition-scoped resource** (ADR-0055): PORTERS requires
  * `partition` on every one of these calls, so the API makes you supply it exactly once, explicitly.
+ * `C` is that partition's custom field catalog, from `tenant(id, { fields })` (ADR-0087).
  * `auth` (App-level), the `partition` master (discovery — partition-less), and `tenant` itself
  * (no nesting) are deliberately absent: none of them takes a partition.
  */
@@ -165,16 +192,17 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
  * the **App-level** surface: `auth`, the `partition` master (discovery), and {@link PortersClient.tenant}.
  *
  * Everything that PORTERS scopes to a partition (Company DB) lives behind `tenant(id)` — see
- * {@link TenantScope}. The client holds no default partition (ADR-0055): a partition is bound
- * explicitly, exactly once, so "unbound" is not a state this API can be in.
+ * {@link TenantScope}. The client holds no default partition (ADR-0055) and no custom field
+ * declaration (ADR-0087): both are bound explicitly, exactly once, at `tenant(id, { fields })`,
+ * so "unbound" and "declared for some other tenant" are not states this API can be in.
  *
  * @example
  * const porters = new PortersClient({ hostname, appId, appSecret });
  * await porters.auth.ensureAuthenticated();   // App-level
- * const t = porters.tenant(123);              // bind the partition once
+ * const t = porters.tenant(123, { fields: myFields }); // bind the partition (and its fields) once
  * const page = await t.candidate.search();
  */
-export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
+export class PortersClient {
   /** OAuth surface: initial browser grant, token warm-up/inspection, local revoke (ADR-0007/0034). */
   readonly auth: AuthApi;
   /**
@@ -192,14 +220,39 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
    * await t.candidate.search();
    * ```
    *
+   * That partition's custom fields are declared here as well (ADR-0087), since PORTERS defines
+   * them per partition — see {@link TenantOptions}. Tenants with different fields share one
+   * client (and one token):
+   *
+   * ```ts
+   * const a = porters.tenant(1, { fields: fieldsA });
+   * const b = porters.tenant(2, { fields: fieldsB });
+   * ```
+   *
    * `auth` (App-level), the `partition` master (discovery — takes no partition), and `tenant`
    * itself (no nesting) are intentionally absent from the returned scope. For a fully separated
    * per-partition token, construct a dedicated {@link PortersClient} per tenant (ADR-0008 案3).
    */
-  readonly tenant: (id: PartitionId) => TenantScope<C>;
+  readonly tenant: <C extends DeclaredCatalogs = EmptyCatalog>(
+    id: PartitionId,
+    options?: TenantOptions<C>,
+  ) => TenantScope<C>;
   readonly #accessPoint: AccessPoint;
 
-  constructor(options: PortersClientOptions<C>) {
+  constructor(options: PortersClientOptions) {
+    // A `fields` left over from before ADR-0087 must not be ignored: the declaration would be
+    // dropped and every custom field would silently come back untyped (or not at all). The type
+    // already refuses it (`fields?: never`); this is the runtime side for JavaScript callers and
+    // casts. Read through `unknown` because the declared type says the key is never there.
+    if ((options as { fields?: unknown }).fields !== undefined) {
+      throw new PortersConfigError(
+        'PortersClient: "fields" is not a client option — custom fields belong to a partition',
+        {
+          category: "config",
+          hint: "Declare them where you bind the partition: porters.tenant(id, { fields })",
+        },
+      );
+    }
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
     // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
     // problem, so it fails where the configuration was handed over — before any credential can
@@ -251,22 +304,26 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;
-    // The per-resource custom catalog declared via defineFields (or {} when none). Branded
-    // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
-    const customFor = <K extends keyof DeclaredCatalogs>(
-      key: K,
-    ): CustomFor<C, K> => (options.fields?.[key] ?? {}) as CustomFor<C, K>;
-    // Build the partition-bound accessor bundle for a given partition. The root client uses the
-    // default partition; `tenant(id)` re-binds it (ADR-0040 / F-3) by re-running the same factories
-    // with `partition` overridden — resources are already `deps.partition`-driven, so the factories
-    // need no change. Partition Read is App-level (no partition) and built once below, not here.
+    // Build the partition-bound accessor bundle for a given partition (ADR-0040 / F-3) by running
+    // the same factories with that `partition` — resources are already `deps.partition`-driven, so
+    // the factories need no change. The custom field catalog is bound here too (ADR-0087): it is
+    // per partition, so it arrives with the partition and never outlives the scope. Partition Read
+    // is App-level (no partition) and built once below, not here.
     //
     // VERIFY(live): re-binding swaps only the `partition` query and keeps the **same token**, so
     // this assumes one App token reaches every partition it was granted. Whether a token's access
     // actually spans partitions is unconfirmed — docs/live-verification.md (LV-13). If it does not,
     // the recommended path becomes a dedicated client per tenant (ADR-0008 案3); the design already
     // allows that, so only the ergonomics of `tenant(id)` would change.
-    const buildScope = (partition: number): TenantScope<C> => {
+    const buildScope = <C extends DeclaredCatalogs = EmptyCatalog>(
+      partition: number,
+      scope: TenantOptions<C> = {},
+    ): TenantScope<C> => {
+      // The per-resource custom catalog declared via defineFields (or {} when none). Branded
+      // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
+      const customFor = <K extends keyof DeclaredCatalogs>(
+        key: K,
+      ): CustomFor<C, K> => (scope.fields?.[key] ?? {}) as CustomFor<C, K>;
       const deps = { requester, accessPoint, partition };
       return {
         candidate: createCandidateResource(deps, customFor("candidate")),

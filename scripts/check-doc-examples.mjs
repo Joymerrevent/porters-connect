@@ -142,6 +142,8 @@ const req: { user: string };
 const tokenStore: TokenStore;
 const transport: Transport;
 const lookupPartitionForUser: (user: string) => Promise<number>;
+// partition ↔ 宣言の対応は SaaS の責務（ADR-0008 / ADR-0087）。例では引くだけ
+const fieldsFor: (partition: number) => DefinedFields;
 const query: CandidateSearchQuery;
 const inputs: CandidateCreateInput[];
 const file: AttachmentCreate;
@@ -162,25 +164,21 @@ const SAMPLE_CATALOG = `{
   job: { U_headcount: "Number"; U_startTime: "DateTime" };
 }`;
 
-// `t` と `porters` の両方を差し替えられるようにする。例は `t.candidate…` とも
-// `porters.tenant(1).resume…` とも書くため。
+// 差し替えるのは `t` だけ。宣言は `tenant(id, { fields })` で partition と一緒に束ねるので
+// （ADR-0087）、`porters` は宣言を持たない＝既定の `PortersClient` のままでよい。宣言済みの
+// スコープを `porters` から作る例は、利用者と同じく `porters.tenant(1, { fields })` と書く。
 //
 // 型は**明示 import する**。ambient のエイリアス（`type TenantScope = __Lib.TenantScope`）は
 // **型引数を落とす**ので `TenantScope<…>` と書けない。同じ理由で、コード例が総称型に
 // 型引数を渡す場合はその型を例の中で import する必要がある（利用者が書く形と同じ）。
 
-/** ブロックが自分で宣言していない名前だけを前置きする（再宣言を避ける）。 */
+/** ブロックが自分で `t` を宣言していないときだけ前置きする（再宣言を避ける）。 */
 const withFieldsFor = (code) => {
   const lines = [
-    `import type {`,
-    `  PortersClient as __PC,`,
-    `  TenantScope as __TS,`,
-    `} from "@joymerrevent/porters-connect";`,
+    `import type { TenantScope as __TS } from "@joymerrevent/porters-connect";`,
   ];
   if (!/\b(const|let|var)\s+t\b/.test(code))
     lines.push(`declare const t: __TS<${SAMPLE_CATALOG}>;`);
-  if (!/\b(const|let|var)\s+porters\b/.test(code))
-    lines.push(`declare const porters: __PC<${SAMPLE_CATALOG}>;`);
   return `${lines.join("\n")}\n`;
 };
 
@@ -380,7 +378,7 @@ try {
   // 1 ブロック = 1 モジュール。`export {}` を足して module 扱いにする（ambient を使うため）。
   const names = checked.map((b, i) => {
     const name = `case-${String(i).padStart(3, "0")}.ts`;
-    // `fields` の例だけ、宣言済みカスタム項目つきの `t` / `porters` に差し替える。
+    // `fields` の例だけ、宣言済みカスタム項目つきの `t` に差し替える。
     // ブロックが自分で同名を宣言している場合は入れない（再宣言になる）。
     const pre = b.directive?.kinds.has("fields") ? withFieldsFor(b.code) : "";
     // 前置きの行数だけ、報告の行番号を戻す必要がある。

@@ -25,7 +25,6 @@ const porters = new PortersClient({
   hostname: "sandbox.invalid", // 実利用では契約時のホスト（PORTERS_HOST）
   appId: "demo",
   appSecret: "demo",
-  fields,
   // ↓ これを外せば本物の fetch で動く。認証（/v1/oauth, /v1/token）は自動応答される。
   transport: createMockTransport((req) => {
     if (req.url.includes("/v1/candidate")) {
@@ -58,9 +57,10 @@ const porters = new PortersClient({
   }),
 });
 
-// partition（Company DB）は tenant で一度だけ束ねる（ADR-0055）。単一テナントでもこの形で、
-// 以降は `t` をクライアントのように使える。client 直下には auth と partition マスタだけが残る。
-const t = porters.tenant(1);
+// partition（Company DB）は tenant で一度だけ束ねる（ADR-0055）。カスタム項目の宣言も partition
+// ごとのものなので、ここで一緒に渡す（ADR-0087）。単一テナントでもこの形で、以降は `t` を
+// クライアントのように使える。client 直下には auth と partition マスタだけが残る。
+const t = porters.tenant(1, { fields });
 
 // 1) 検索：型付きオブジェクトが返る（XML は外に出ない）。condition は Data Type ごとに型付き
 const page = await t.candidate.search({

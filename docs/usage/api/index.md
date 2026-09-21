@@ -167,6 +167,7 @@
 - [SearchQuery](type-aliases/SearchQuery.md)
 - [StoredTokens](type-aliases/StoredTokens.md)
 - [TenantCustomCatalog](type-aliases/TenantCustomCatalog.md)
+- [TenantOptions](type-aliases/TenantOptions.md)
 - [TenantScope](type-aliases/TenantScope.md)
 - [Throttle](type-aliases/Throttle.md)
 - [ThrottleOptions](type-aliases/ThrottleOptions.md)

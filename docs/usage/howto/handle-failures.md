@@ -221,6 +221,21 @@ new PortersClient({ hostname: "a.test", port: 0 }); // ❌ port は 1〜65535 �
 App ID / App Secret がそこへ実際に送られる（または直しようのない設定ミスが `network` として
 延々リトライされる）ためです。**曖昧な設定で黙って別の宛先へ繋がない**のが本ライブラリの契約です。
 
+同じ場所で、**client に無くなったオプションも弾きます**。0.21 より前のカスタム項目の宣言
+`fields` をコンストラクタに渡すと `PortersConfigError`（`category: "config"`）になり、`hint` が
+`tenant(id, { fields })` を指します（[ADR-0087][adr-0087]）。黙って無視すると宣言が丸ごと捨てられ、
+カスタム項目が型から消えたまま動いてしまうためです。
+
+```ts
+new PortersClient({ hostname: "xxxxx.example.com", fields: undefined }); // ✅ 未指定と同じ
+```
+
+<!-- doccheck: expect-error -->
+
+```ts
+new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ 型でも構築時でも落ちる
+```
+
 **`port` はどの値でも書けます**（`8080` も、冗長な `443` も通ります）。既知の制限は 2 つです
 （どちらもエラーの `hint` に出ます）。
 
@@ -379,6 +394,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 [adr-0046]: ../../adr/0046-guard-error-contract.md
 [adr-0047]: ../../adr/0047-access-point-scheme.md
 [adr-0048]: ../../adr/0048-access-point-host-validation.md
+[adr-0087]: ../../adr/0087-tenant-scoped-field-declarations.md
 [adr-0078]: ../../adr/0078-hostname-port-split.md
 [adr-0050]: ../../adr/0050-auth-http-status-handling.md
 [adr-0051]: ../../adr/0051-read-envelope-identification.md

@@ -171,8 +171,11 @@ const tenantB = defineFields({ candidate: appCandidate });
 - **ライブラリが単純になる**。`PortersClient<C>` と `PortersClientOptions<C>` の型引数が消える
   （`C` は `customFor` にしか使われていない）。二層のマージ意味論・同じ alias を違う Data Type で
   宣言したときの衝突規則・tenant 側が勝つ型ヘルパー、のどれも要らない。
-- **ガイドの落とし穴が節ごと消える**。「`PortersClientOptions` を型引数なしで書くとカスタム項目が黙って
+- ~~**ガイドの落とし穴が節ごと消える**。~~「`PortersClientOptions` を型引数なしで書くとカスタム項目が黙って
   消える」は、型引数が無くなれば起きない。
+  **訂正（実装時 2026-09-21）**: `PortersClientOptions` についてはそのとおりだが、**同じ形の落とし穴は
+  `TenantOptions` に移る**（型引数なしの `TenantOptions` 注釈でも代入は通り、`EmptyCatalog` に固定される
+  — tsc で確認）。ガイドの節は削除ではなく `TenantOptions` 向けに書き換えて残した。決定（案B）は変わらない。
 - **層の説明が 1 文で済む**。client ＝ App レベル（`auth`・`partition` マスタ・`tenant()`）、
   `TenantScope` ＝ partition と**その partition の項目の形**。[ADR-0055][adr55] の言い方に `fields` が乗る。
 - **ADR-0069 のツールと向きが揃う**。宣言を作る（`generateFieldDecls`）・確かめる（`verifyFields`）・
@@ -203,13 +206,16 @@ const tenantB = defineFields({ candidate: appCandidate });
 4. **CHANGELOG 最上部に破壊的変更として明記**し、移行手順を 1 対 1 で示す
    （コンストラクタの `fields` → `tenant()` の第 2 引数）。semver は 0.x のため **minor**
    （[ADR-0055][adr55] 合意事項 7 と同じ扱い）。
+   **追記（実装時 2026-09-21）**: この repo の実務では実装 PR は **changeset** に書き、CHANGELOG へは
+   リリース時に転記する（[release runbook][runbook]）。移行手順は changeset に載せた。
 5. **ドキュメントの洗い出し**（[breaking change の作法][sweep]＝ts スニペットは `check:docs` が拾うが、
    地の文は手で洗う）:
    - [カスタム項目ガイド][guide-cf]: 「3 行で」の構築例／「複数テナントで項目が違う場合」を
      「テナントごとに宣言を渡す」に書き換え（テナント別 client の案内は**認証を分けたい場合**に限る）／
      「宣言したクライアントを関数に渡す」の `PortersClient<DeclaredCatalogs>` を非ジェネリックに／
-     「設定を切り出すときも同じ」は**節ごと削除**（落とし穴が消えるため）／`A_` 共通 ＋ `U_` 固有の
-     合成例（上記）を足す。
+     「設定を切り出すときも同じ」は~~**節ごと削除**（落とし穴が消えるため）~~
+     **訂正（実装時 2026-09-21）: `TenantOptions` 向けに書き換えて残す**（上記 Decision Outcome の訂正と
+     同じ理由）／`A_` 共通 ＋ `U_` 固有の合成例（上記）を足す。
    - [マルチテナントガイド][guide-mt]: §2 に `{ fields }` を載せる。§3（テナント別 client）は
      **認証の分離だけ**の理由にする。
    - [日時の概念][guide-dt]・[基本設計][bd] §「公開 API」の構築例・`examples/offline-sandbox.ts`・
@@ -219,12 +225,22 @@ const tenantB = defineFields({ candidate: appCandidate });
    - JSDoc（`PortersClient` / `TenantScope` / `defineFields` の `@example`）。
 6. **フェイクサーバー・`verifyFields`・`generateFieldDecls`・`readCustomCatalog` は無変更**
    （既に `tenant(id)` スコープを取る）。
+7. **追記（実装時 2026-09-21・変更レビューの指摘）**: 旧形の `fields` がコンストラクタに残っていても、
+   型はフレッシュなリテラルにしか excess property check を掛けず、実行時は読まないので**黙って捨てられる**
+   （記録 mock で確認: 構築は通り、URL はカスタム項目を要求しない）。設定オブジェクトを別の場所で組む
+   TypeScript 利用者と JavaScript 利用者がこの経路に入る。RV-17 / RV-25 と同じ「設定の誤りが実行前に
+   落ちない」型なので、**`PortersClientOptions.fields` を `never` で型付け**（非フレッシュでも落ちる）し、
+   **コンストラクタで `PortersConfigError`（`category: "config"`・hint は `tenant(id, { fields })`）**を
+   投げる（ADR-0048 の系列）。`fields: undefined` は未指定と同じ扱い（任意の spread を落とさない）。
+   トレードオフ: 設定オブジェクトに `fields` を同居させて `tenant(id, { fields: config.fields })` と
+   使い回す書き方は、client に渡す前に外す必要がある。
 
 ### Consequences
 
 - Good: **「別テナントの宣言が黙って適用される」状態が存在しなくなる**。`PortersClient` /
   `PortersClientOptions` が非ジェネリックになり、公開型と説明が単純になる。マージ規則・衝突規則を持たない。
-  ガイドの落とし穴の節が消える。宣言を作る・確かめる・使うが全部 `tenant(id)` 単位で揃う。
+  ~~ガイドの落とし穴の節が消える。~~（訂正・実装時: `TenantOptions` に移るので節は書き換えて残す）
+  宣言を作る・確かめる・使うが全部 `tenant(id)` 単位で揃う。
   項目が違うテナント群を **1 つの client（1 つのトークンキャッシュ）**で扱える。
 - Bad: **破壊的変更**。`fields` を渡している利用者は `tenant()` の第 2 引数へ移す（1 対 1・機械的）。
   項目が同じ複数テナントでは呼び出しごとに `{ fields }` を渡すか、利用側で 1 行包む。
@@ -319,3 +335,4 @@ const tenantB = defineFields({ candidate: appCandidate });
 [bd]: ../design/basic-design.md
 [sweep]: ../../CLAUDE.md
 [lv]: ../live-verification.md
+[runbook]: ../release-runbook.md

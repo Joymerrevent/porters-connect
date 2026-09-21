@@ -1,8 +1,13 @@
 // Public surface. Only what is exported here is part of the supported API.
 
 export { PortersClient } from "./client";
-// `TenantScope` is the partition-bound accessor bundle from `porters.tenant(id)` (ADR-0040 / F-3).
-export type { PortersClientOptions, TenantScope } from "./client";
+// `TenantScope` is the partition-bound accessor bundle from `porters.tenant(id, options)` (ADR-0040 /
+// F-3); `TenantOptions` carries that partition's custom field declaration (ADR-0087).
+export type {
+  PortersClientOptions,
+  TenantOptions,
+  TenantScope,
+} from "./client";
 
 export {
   PortersError,
@@ -56,8 +61,8 @@ export type {
   FieldDecls,
   FieldDef,
 } from "./fields";
-// Constraint types of the public generics (`PortersClient<C>` / `TenantScope<C>`). Exported so a
-// helper that takes a client can name its type instead of relying on `typeof porters` (RV-30).
+// Constraint types of the public generics (`TenantScope<C>` / `TenantOptions<C>`). Exported so a
+// helper that takes a scope can name its type instead of relying on `typeof t` (RV-30).
 export type {
   CustomFieldResource,
   CustomFor,
