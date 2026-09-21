@@ -4,8 +4,7 @@ PORTERS のテナントは、標準項目（`P_`）に加えて**テナント固
 ユーザーが作った項目は `U_[Name]`、アプリが作った項目は `A_[Name]` という alias になります。
 
 カスタム項目は**テナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。
-代わりに、**利用側が `defineFields` で宣言する**と、その項目が読み書きの型に現れるようになります
-（[ADR-0004][adr4] のハイブリッド方式／`defineFields` の詳細設計は [ADR-0023][adr23]）。
+代わりに、**利用側が `defineFields` で宣言する**と、その項目が読み書きの型に現れるようになります<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
 
 ## 3 行で
 
@@ -23,7 +22,7 @@ const t = porters.tenant(partition, { fields }); // 宣言は partition と一�
 これで `t.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
 
 宣言を渡す先が `tenant()` なのは、カスタム項目が **partition（Company DB）ごとのもの**だからです
-（出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています・[ADR-0087][adr87]）。
+（出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています）<!-- 根拠: ADR-0087 -->。
 client は宣言を持ちません。partition を束ねる場所で、その partition の項目の形も束ねます。
 0.21 より前の形（コンストラクタの `fields`）が残っていると、**構築時に `PortersConfigError`**
 （`category: "config"`）で止まります — 黙って捨てると、カスタム項目が全部型から消えたまま動いてしまうためです。
@@ -43,7 +42,7 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 
 **型が受け付けません。** 宣言していないカスタム項目は、`field` / `condition` / `order` /
 書き込みのどこに書いてもコンパイルエラーです。カスタム項目は**宣言してから使う** — 入口は
-この 1 つです（[ADR-0074][adr74]）。
+この 1 つです<!-- 根拠: ADR-0074 -->。
 
 **実行時は変わりません。** 型を外せば送れますし（後述の逃げ道）、応答に知らない項目が混ざっても
 落ちません。止めているのは型で、狙いは 2 つ — **値の変換を効かせること**と、**綴りを機械に
@@ -74,7 +73,7 @@ const c = page.items[0]; // ← 表の `c`
 | 値  | cast で型を外して送ると、**文字列にしてそのまま送られる**。ISO 8601 の日時は `2026-09-10` のまま送られ、配列は `"a,b"` という 1 本の文字列になる | **Data Type に合わせて変換して送る。** 日時は `2026/09/10` に、`Option` は子要素に、`Image` は 3 要素になる |
 
 読み取りにはもう 1 つ、**そもそも要求されるかどうか**の差があります。宣言するとその項目が
-`field` 省略時の既定に入り、何も書かなくても返ってきます（[ADR-0020][adr20]）。
+`field` 省略時の既定に入り、何も書かなくても返ってきます<!-- 根拠: ADR-0020 -->。
 **書き込みにこの差はありません** — `create` / `update` に書いた項目だけが送られるので、
 宣言しても送られる項目は変わりません。
 
@@ -125,14 +124,14 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 ```
 
 綴り間違いも同じところで止まります。`U_hiredOn` を `U_hireOn` と書けば、宣言していても
-コンパイルエラーです（[ADR-0059][adr59]）。
+コンパイルエラーです<!-- 根拠: ADR-0059 -->。
 
 型を外したときは、**書き込みのほうが危ない**です。読み取りは変換されない文字列が来るだけですが、
 書き込みはその値がそのまま PORTERS に届きます。受理されるかどうかは PORTERS 次第で、ライブラリは
 検知しません。
 
 宣言していないと **`U_` 以降の綴りも検査されません**。取得漏れを型で防ぎたい項目は、
-ここで宣言してください（[ADR-0059][adr59]）。
+ここで宣言してください<!-- 根拠: ADR-0059 -->。
 
 ## 宣言できる型
 
@@ -159,8 +158,8 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 （日時は読み書きとも ISO 8601 で、PORTERS 形式との変換はライブラリがやります）。
 
 宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
-`contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません
-（[ADR-0023][adr23] D6）。リソースが増えるとここも増えます（[ADR-0060][adr60]）。
+`contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません<!-- 根拠: ADR-0023 D6 -->。
+リソースが増えるとここも増えます<!-- 根拠: ADR-0060 -->。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
 > システムが管理する標準項目の領分なので、ビルダーに用意していません。
@@ -168,10 +167,9 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 > **時分型（PORTERS 9.3.0）も `f.dateTime()` で宣言します。** 専用のメソッドはありません — API 上は
 > 年月日時分型と同じ Field Type 12 で、ライブラリは Field Read からも区別できないためです。
 > 値は ISO のまま読み書きし、時刻（`"09:00"` / `"26:00"`）との変換は `decodeTimeOfDay` /
-> `encodeTimeOfDay` で行います（[日時は UTC][datetime] の「時分型」節・[ADR-0086][adr86]）。
+> `encodeTimeOfDay` で行います（[日時は UTC][datetime] の「時分型」節）<!-- 根拠: ADR-0086 -->。
 
-**`Image` と `Link` は、この宣言が唯一の入口です**（[ADR-0064][adr64]。[PRD R-4][prd] で
-v1 未対応としていたものを実装しました）。標準項目にこの 2 型は 1 つもなく
+**`Image` と `Link` は、この宣言が唯一の入口です**<!-- 根拠: ADR-0064・PRD R-4（v1 で未対応としていたものを実装） -->。標準項目にこの 2 型は 1 つもなく
 （reference 全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
 宣言しない限り、型にも読み取り結果にも現れません。
 
@@ -216,7 +214,7 @@ await t.resume.update(id, {
 ## 宣言を自動生成する
 
 テナントの項目を調べて手で書き写す必要はありません。**`generateFieldDecls`** が Field Read を読んで
-`defineFields` の呼び出しをそのまま出力します（[ADR-0069][adr69]）。
+`defineFields` の呼び出しをそのまま出力します<!-- 根拠: ADR-0069 -->。
 
 ```ts
 import { generateFieldDecls } from "@joymerrevent/porters-connect";
@@ -264,7 +262,7 @@ catalog.undeclarable; // 宣言では表せない項目（理由つき）
 
 宣言と実物がずれると読み取りが壊れます。実物が Option の項目を `f.singlelineText()` と宣言すると、
 読み取りは **`PortersResourceError`（`category: "validation"`）で落ちます** — 入れ子が来るはずの
-ところにスカラが来た（またはその逆）は、宣言が違うことしか意味しないためです（[RV-36][rv36]）。
+ところにスカラが来た（またはその逆）は、宣言が違うことしか意味しないためです<!-- 根拠: RV-36 -->。
 
 **落ちないずれ方もあります。** 形が同じスカラどうし（実物 `SinglelineText` を `f.number()` と
 宣言した、など）は検知できず、`Number(値)` の結果＝**`NaN` が入ります**。`Link` は
@@ -320,7 +318,7 @@ for await (const f of t.field.of("candidate").searchAll()) {
 
 ## 検証されること
 
-`defineFields` は**宣言の検証境界**です（[ADR-0023][adr23] D4）。次の 2 つを**同期的に**検査し、
+`defineFields` は**宣言の検証境界**です<!-- 根拠: ADR-0023 D4 -->。次の 2 つを**同期的に**検査し、
 違反すると `PortersConfigError` を投げます。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）は同梱済みなので宣言の対象外です。
@@ -334,14 +332,14 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 検証を通った宣言は**ブランド付き**になり、`tenant()` は再検証しません。
 なお `defineFields` は `Promise` を返さないため、**この 2 つだけは同期 throw** です
-（`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します（[ADR-0046][adr46]）。
+（`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
 ## どこまで検証するか
 
 3 つに分かれます。
 
 - **宣言と実データの食い違い**は、読み取り時に `validation` で surface します
-  （[ADR-0006][adr6]／黙って `null` にしません）。事前に知りたいなら上記 `verifyFields` です。
+  （黙って `null` にしません）<!-- 根拠: ADR-0006 -->。事前に知りたいなら上記 `verifyFields` です。
 - **日時の書式**は**読み書きとも**検査します。日時だけは**変換する**（ISO 8601 ⇄ PORTERS 形式）ので、
   変換できない値は送れず、読めもしないためです。他の型は変換が無いので検査しません — この非対称は
   意図したものです。
@@ -358,11 +356,11 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 それより細かい違いは許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
 **スカラどうしのずれは形では捕まらない**ので、`f.number()` と宣言した項目が実はテキストなら
 `NaN` になります（気づけないのはここだけ＝`verifyFields` の出番）。
-詳しくは[エラーハンドリング ガイド][error-handling]にあります（[RV-36][rv36] で実装済み）。
+詳しくは[エラーハンドリング ガイド][error-handling]にあります<!-- 根拠: RV-36 -->。
 
 ## テナントごとに宣言を渡す
 
-宣言は **`tenant()` ごと**に渡します（[ADR-0087][adr87]）。カスタム項目は partition（Company DB）
+宣言は **`tenant()` ごと**に渡します<!-- 根拠: ADR-0087 -->。カスタム項目は partition（Company DB）
 ごとのものなので、partition を束ねる呼び出しが、その partition の項目の形も束ねます。
 別のテナントの宣言が黙って効く、という状態はありません — `{ fields }` を渡し忘れたスコープで
 `U_` に触れば、コンパイルエラーです。
@@ -507,7 +505,7 @@ void topScorers(porters.tenant(1, { fields: other })); // ✗ 型エラー：U_s
 ```
 
 カタログの alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
-スコープの型も違います**（[ADR-0074][adr74] D1）。(2) の `TenantScope<DeclaredCatalogs>` が
+スコープの型も違います**<!-- 根拠: ADR-0074 D1 -->。(2) の `TenantScope<DeclaredCatalogs>` が
 どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**広いカタログ**だから
 です。狭いものは広いほうへ渡せる、という向きだけが通ります。
 
@@ -556,33 +554,20 @@ const score = async () => {
 
 ## 関連
 
-- 決定: [ADR-0023][adr23]（`defineFields` の詳細設計）／[ADR-0004][adr4]（型モデル）／
-  [ADR-0087][adr87]（宣言は `tenant()` で束ねる）
-- 型の由来: [ADR-0016][adr16]（Data Type の粒度）／[ADR-0017][adr17]（Option は常に `string[]`）
-- 既定 field: [ADR-0020][adr20]／`field` の alias: [ADR-0059][adr59]
 - API 事実: [Field Type / Data Type][fdt]
 - ほかの目的から探す: [目次][index]
 
-[adr4]: ../../adr/0004-field-type-model.md
-[adr74]: ../../adr/0074-custom-field-declaration-required.md
-[adr16]: ../../adr/0016-field-type-granularity.md
-[adr17]: ../../adr/0017-option-read-shape.md
-[adr20]: ../../adr/0020-read-field-default.md
-[adr23]: ../../adr/0023-custom-field-declaration-dsl.md
-[adr46]: ../../adr/0046-guard-error-contract.md
-[adr59]: ../../adr/0059-read-field-bare-alias.md
-[adr60]: ../../adr/0060-full-resource-coverage-direction.md
-[adr64]: ../../adr/0064-link-image-types.md
-[adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
-[adr6]: ../../adr/0006-error-model.md
-[rv36]: ../../reviews/rv/0036-write-value-validation-partial.md
+<!-- 根拠:
+- 決定: ADR-0023（`defineFields` の詳細設計）／ADR-0004（型モデル）／
+  ADR-0087（宣言は `tenant()` で束ねる）
+- 型の由来: ADR-0016（Data Type の粒度）／ADR-0017（Option は常に `string[]`）
+- 既定 field: ADR-0020／`field` の alias: ADR-0059
+-->
+
 [error-handling]: handle-failures.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [multi-tenancy]: multi-tenant.md
 [write-constraints]: ../concepts/limits.md
-[prd]: ../../design/requirements.md
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
-[adr86]: ../../adr/0086-time-of-day-fields.md
-[adr87]: ../../adr/0087-tenant-scoped-field-declarations.md
 [datetime]: ../concepts/datetime.md

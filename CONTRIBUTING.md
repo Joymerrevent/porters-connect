@@ -55,6 +55,29 @@ pnpm check:api   # 一致と、日本語（かな）の混入が無いことを�
 「コメントを足しただけだから影響ない」という直感が外れる場所なので、`src/**` を変更した PR では
 `pnpm check` の前にこれを回すのが確実です。
 
+### PORTERS ヘルプセンターの再取得（`docs/usage/reference` の更新）
+
+[docs/usage/reference][reference] は PORTERS Connect API ヘルプセンター（Zendesk）の記事を出典に
+手で整理したもので、出典が更新されたら差分を手で反映します。取得は Zendesk の公開コンテンツ API
+経由で行います（ブラウザ直アクセス `https://hrbcapi.porters.jp/hc/ja` は Cloudflare の
+"Just a moment..." チャレンジでボット拒否されるため）。各記事には `html_url`（人間用）・
+`updated_at`・`body`（HTML）が含まれます。
+
+`tmp/porters-docs/`（git 管理外）に取得・テキスト化スクリプトを置いています。最新へ更新する場合:
+
+```bash
+# 記事を取得（99 件・100 件を超えたら next_page を追う）→ 本文をテキスト化
+curl -sS -A "Mozilla/5.0" \
+  "https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100" \
+  -o tmp/porters-docs/articles-ja.json
+node tmp/porters-docs/extract.mjs
+```
+
+取得前の `articles-ja.json` を控えておき、`id` ごとに `updated_at` と `body` を比べると差分が分かります
+（2026-09-20 の再取得では 4 記事の追加・5 記事の本文変更がありました）。**`gen-resources.mjs` は使いません**:
+`resources/*.md` には手書きの「Read パラメータ」節（[ADR-0080][adr80] / [ADR-0081][adr81]）が入っていて、
+再生成すると消えます。差分は手で反映し、取得日を [reference の README][reference] に書き足します。
+
 `pnpm check` は `package.json` の `check:*` を**パターンで束ねた**もので、ドキュメントの
 リンク・索引・コード例・リファレンス生成物・リリース連動文書・シェルの検査が入っています。
 **この文書にゲートの一覧を書かない**のは意図したもので、検査が増えるたびに写した一覧が
@@ -131,8 +154,12 @@ new PortersClient({
 - ファイル名は **kebab-case**。1 ファイル 1 責務（XML / OAuth / HTTP / リソースを混ぜない）。
 - **削除 API は生やさない**（PORTERS 仕様。`delete()` は提供しない）。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。内部実装コメントは日本語可。
-  **ADR / RV / LV 番号などの保守者向けの識別子は、公開 JSDoc とエラーの `message` / `hint` に書かない**
-  （利用者には意味を持たない）。根拠は直前の `//` コメントに置く。`check:api` / `check:dts` が生成物側で弾く。
+  **ADR / RV / LV 番号などの保守者向けの識別子は、公開 JSDoc・エラーの `message` / `hint`・
+  利用者向けドキュメント（`docs/usage/` と README）の本文に書かない**（利用者には意味を持たない）。
+  根拠はコードなら直前の `//` コメント、Markdown なら HTML コメント（`<!-- 根拠: ADR-0059 -->`）に置く。
+  利用者向けドキュメントから保守者向け文書（`docs/adr` / `docs/design` / `docs/reviews` 等）へリンクしない
+  （開発者向け資料への入口は `docs/README.md` だけ）。`check:api` / `check:dts` が生成物側で、
+  `check:usage` が手書き側で弾く。
 - **テストを伴わない新リソース追加はしない。**
 - ドキュメント / README は**日本語ファースト**。Markdown のリンクは**参照スタイル**（本文 `[text][label]`、定義は末尾にまとめる）。
 
@@ -155,3 +182,6 @@ new PortersClient({
 [adr47]: ./docs/adr/0047-access-point-scheme.md
 [fake-plan]: ./docs/design/fake-server-plan.md
 [fake-runbook]: ./docs/fake-server-runbook.md
+[reference]: ./docs/usage/reference/README.md
+[adr80]: ./docs/adr/0080-resource-parameter-binding.md
+[adr81]: ./docs/adr/0081-attachment-read-parameters.md

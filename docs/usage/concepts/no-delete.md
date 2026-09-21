@@ -44,8 +44,7 @@ const gone = await t.candidate.search({ itemstate: "deleted" });
 
 ## 省略と `existing` は同じではありません
 
-`itemstate` を**省略する**のと `"existing"` を**明示する**のは、このライブラリでは別の意味です
-（[ADR-0057][adr57]）。
+`itemstate` を**省略する**のと `"existing"` を**明示する**のは、このライブラリでは別の意味です<!-- 根拠: ADR-0057 -->。
 
 - **省略** → 何も送らない。PORTERS 自身の既定（今は `existing`）に任せる
 - **`"existing"`** → そう送る。「生きているものだけが欲しい」と明示する
@@ -55,8 +54,7 @@ const gone = await t.candidate.search({ itemstate: "deleted" });
 
 ## 削除済みかどうかは `P_Deleted` で分かる
 
-`all` で読むと生きているものと削除済みが混ざります。区別は `P_Deleted` で付けます
-（[ADR-0056][adr56]）。
+`all` で読むと生きているものと削除済みが混ざります。区別は `P_Deleted` で付けます<!-- 根拠: ADR-0056 -->。
 
 ```ts
 const page = await t.candidate.search({
@@ -72,7 +70,7 @@ const page = await t.candidate.search({
 そして `field` でしか使えません。`condition` / `order` / 書き込みでは PORTERS が拒否するので、
 **型の上でも書けません**。
 
-> `P_Deleted` の wire 形と出現条件は実機で未確認です（[ライブ検証][lv] LV-14）。
+> `P_Deleted` の wire 形と出現条件は実機で未確認です<!-- 根拠: LV-14 -->。
 > `field` に明示して読む使い方が、いまのところ最も確実です。
 
 ## 設計への影響
@@ -88,17 +86,16 @@ const page = await t.candidate.search({
 
 ## 関連
 
-- 決定: [ADR-0056][adr56]（`P_Deleted` の型）／[ADR-0057][adr57]（`itemstate` の明示送信）／
-  [ADR-0063][adr63]（冪等性ガードの範囲）
 - 手順: [検索][search-records]（`itemstate` の指定）／[失敗の扱い][handle-failures]（再送の判断）
 - API 事実: [gotchas][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複）
 
-[adr56]: ../../adr/0056-deleted-flag-typing.md
-[adr57]: ../../adr/0057-itemstate-existing-explicit.md
-[adr63]: ../../adr/0063-idempotency-guard-scope.md
+<!-- 根拠:
+- 決定: ADR-0056（`P_Deleted` の型）／ADR-0057（`itemstate` の明示送信）／
+  ADR-0063（冪等性ガードの範囲）
+-->
+
 [codes]: ../reference/resource-api/result-codes.md
-[fake]: ../../fake-server-runbook.md
+[fake]: ../howto/test-without-contract.md
 [gotchas]: ../reference/gotchas.md
 [handle-failures]: ../howto/handle-failures.md
-[lv]: ../../live-verification.md
 [search-records]: ../howto/search-records.md

@@ -98,8 +98,12 @@ export const kanaLines = (tree) => {
 //   拾うと、typedoc が `Error` から継承して描く `https://v8.dev/docs/stack-trace-api` のような
 //   外部 URL に当たる（#363 の修正を通し直したときに実際に落ちた）。パスの先頭（行頭・空白・
 //   引用符・括弧の直後、`../` 付きも可）か、この repo の GitHub URL の中だけを見る。
+//   `docs/README.md` だけは通す: 「読む人／作る人」の分岐点で、利用者向け文書が開発者向け
+//   資料へ案内する唯一の入口（README と docs/usage/index.md が指す）。
+// - `CLAUDE.md`（Claude Code 向けの規約）と `SPEC_v1`（superseded の素案）は内部ファイルの
+//   名前で、利用者向け文書に出ても意味を持たない。手書きの利用者向け文書に実際に混ざっていた形。
 const REPO_DOCS =
-  /(?<![\w./-])(?:\.\.\/)*docs\/(?!usage\/)|porters-connect\/(?:blob|tree|raw)\/[^\s/]+\/docs\/(?!usage\/)/;
+  /(?<![\w./-])(?:\.\.\/)*docs\/(?!usage\b|README\.md\b)|porters-connect\/(?:blob|tree|raw)\/[^\s/]+\/docs\/(?!usage\b|README\.md\b)/;
 const MAINTAINER_ID = new RegExp(
   [
     /\bADR-\d{4}/,
@@ -109,6 +113,8 @@ const MAINTAINER_ID = new RegExp(
     /\bF-\d+\b/,
     /(?:案|論点|決定)\d/,
     /VERIFY\(live\)/,
+    /\bCLAUDE\.md\b/,
+    /\bSPEC_v1\b/,
     REPO_DOCS,
   ]
     .map((r) => r.source)

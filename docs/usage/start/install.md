@@ -32,7 +32,7 @@ Node が `require()` で ESM を読めるのは **22.12 以降**です（下限�
 
 **CJS 用の別ファイルは配りません。** 実体が 2 つあると ESM 側と CJS 側で**別のクラス**が読まれ、
 `catch (e) { if (e instanceof PortersError) … }` が `false` になって**握りつぶしではなく素通り**
-します（[ADR-0082][adr82]）。実体が 1 つなら、どちらから読んでも同じクラスです。
+します<!-- 根拠: ADR-0082 -->。実体が 1 つなら、どちらから読んでも同じクラスです。
 
 ## クライアントを作成する
 
@@ -103,7 +103,6 @@ URL の組み立てはライブラリ内の 1 箇所に閉じているので、�
 **[認証を通して、疎通を確認する][s-auth]** — 初回の権限付与を済ませて、
 「本当に繋がった」ことを確かめます。
 
-[adr82]: ../../adr/0082-module-format-and-node-baseline.md
 [s-auth]: authenticate.md
 [s-prereq]: prerequisites.md
 [s-read]: first-read.md

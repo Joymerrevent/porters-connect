@@ -7,7 +7,7 @@
 
 Attachment の Read は **どのリソースの添付か（`resource`）が必須**です（[Attachment の項目と
 Mime Type][ref-attachment]）。ライブラリはこれを `of()` で 1 回だけ受け取り、以降のすべての
-呼び出しに載せます（[ADR-0080][adr80]）。
+呼び出しに載せます<!-- 根拠: ADR-0080 -->。
 
 ```ts
 const files = t.attachment.of("resume"); // 履歴書に付く添付
@@ -65,7 +65,7 @@ for (const a of page.items) console.log(a.fileName, a.contentType);
 ```
 
 一覧で本体まで返すと、**ファイル全部をダウンロードすることになる**からです。
-**本体を取れるのは `get` だけ**です（[ADR-0075][adr75]）。1 ページは最大 200 件なので、
+**本体を取れるのは `get` だけ**です<!-- 根拠: ADR-0075 -->。1 ページは最大 200 件なので、
 本体を混ぜると 1 回の応答が**読める大きさを越える**ことがあります（1 ファイル 2MB 超 × 200 件で、
 文字列の上限に当たって `RangeError` になります）。Attachment はファイルサイズを返さないので、
 「何件までなら安全か」を呼び出し側が判断することもできません。
@@ -103,7 +103,7 @@ transport: createFetchTransport({ timeoutMs: 120_000 });
 ## 絞り込めるのは「どのレコードの添付か」だけ
 
 Attachment の Read が取る絞り込みは `resourceId`（1 レコードの添付）と `id`（1 件）だけで、
-**ファイル名や Mime Type での検索はできません**（PORTERS が提供していません — [ADR-0081][adr81]）。
+**ファイル名や Mime Type での検索はできません**（PORTERS が提供していません）<!-- 根拠: ADR-0081 -->。
 名前で探したいときは、`searchAll` で歩きながら絞ってください（上の例）。
 
 読み取った `a.resource` は**数値**で返ります（PORTERS のリソース番号）。名前に戻すなら
@@ -147,9 +147,6 @@ await files.create({ ...file, content: base64 });
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
 - ほかの目的から探す: [目次][index]
 
-[adr75]: ../../adr/0075-attachment-search-all.md
-[adr80]: ../../adr/0080-resource-parameter-binding.md
-[adr81]: ../../adr/0081-attachment-read-parameters.md
 [bulk-write]: bulk-write.md
 [handle-failures]: handle-failures.md
 [limits]: ../concepts/limits.md

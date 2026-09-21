@@ -86,6 +86,7 @@
     "check:lv": "node scripts/check-live-verification.mjs",
     "docs:api": "typedoc",
     "check:api": "node scripts/check-api-reference.mjs",
+    "check:usage": "node scripts/check-usage-docs.mjs",
     "check:mentions": "node scripts/check-api-mentions.mjs",
     "check:shell": "node scripts/check-shell-identifiers.mjs",
     "prepare": "simple-git-hooks"

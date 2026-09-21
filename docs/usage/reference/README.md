@@ -1,18 +1,17 @@
 # PORTERS Connect API リファレンス（自前整理）
 
-設計を実 API に接地するための**事実ベースのメモ**です。公式ドキュメントの逐語コピーではなく、
-本ライブラリ設計に必要な要点を自分たちの言葉で再構成したものです（非公式・著作権配慮）。
+PORTERS Connect API の仕様のうち、このライブラリを使ううえで必要な事実を、自分たちの言葉で
+整理したものです。公式ドキュメントの逐語コピーではありません（非公式・著作権配慮）。
 **ここだけで仕様が分かる**ことを目標に、API の 2 本柱（Authentication API / Resource API）＋横断、で構成します。
 
-## 出典と取得方法
+## 出典
 
-- 一次情報: PORTERS Connect API ヘルプセンター（Zendesk）。ブラウザ表示は `https://hrbcapi.porters.jp/hc/ja`。
-- 取得経路: Zendesk の公開コンテンツ API（Cloudflare の JS チャレンジを経由しない）。
-  - 一覧: `https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100`
-  - 各記事に `html_url`（人間用）, `updated_at`, `body`（HTML）が含まれる。
-- 取得日: **2026-06-12**（初回）／ **2026-09-20**（再取得・差分反映）。各ファイルに参照記事の URL と `updated_at` を併記する。
-- 注意: ブラウザ直アクセス（`hrbcapi.porters.jp`）は Cloudflare の "Just a moment..." チャレンジで
-  ボット拒否される。コンテンツ API 経由なら取得できる。
+- 一次情報: PORTERS Connect API ヘルプセンター（`https://hrbcapi.porters.jp/hc/ja`）。
+- 取得日: **2026-06-12**（初回）／ **2026-09-20**（再取得・差分反映）。各ファイルに参照記事の URL と
+  `updated_at` を併記しています。
+
+<!-- 再取得の手順（Zendesk API 経由の取得・差分の取り方・gen-resources.mjs を使わない理由）は
+     CONTRIBUTING.md「PORTERS ヘルプセンターの再取得」にある。利用者向けのこのページには置かない。 -->
 
 ## 構成
 
@@ -37,30 +36,12 @@
 
 - レスポンスは **XML のみ**（`charset=UTF-8`）。利用者には型付きオブジェクトのみ返す。
 - **既定ホストは `api-hrbc-jp.porterscloud.com`**（共有サーバ）。個別サーバ契約時のみ別ホスト → `PORTERS_HOST` で受ける。
-  - ※ これは理解のための**参考値**。コード・設定に**ハードコードしない**（CLAUDE.md「ホスト名は非公開」）。実値は常に `PORTERS_HOST` 経由。
+  - ※ これは理解のための**参考値**。コード・設定に**ハードコードしない**。実値は常に `PORTERS_HOST` 経由。<!-- 根拠: CLAUDE.md「ホスト名は非公開」 -->
 - 認証コードの有効期限は **30 秒**。Access Token **約30分**、Refresh Token **約2時間**。
 - **削除 API は無い**が、`itemstate=deleted|all` で**削除済みデータの読み取りは可能**（90日以内の制約あり）。
 - **エラーコードが 2 系統**ある（認証系 `<Authentication><Error>` → [auth-errors] ／ リソース系 `<Code>` → [rapi-rc]）。番号が重複しても意味が違う。リソース系は **Read がルート直下、Write は `<Item>` ごと**と出る場所が違う。
 - 1 リクエスト最大 **200 レコード**、1 分あたり Read **2000** / Write **500**、リクエスト長 **約15000文字**（将来 16KB を検討中・未確定）。
-  - ※ `SPEC_v1.md` の「32KB」は旧情報。最新は約15000文字。
 - **Field Alias の接頭辞はリソース名と一致しないことがある**（例: Candidate の項目は `Person.P_*`）。
-
-## 再取得の手順
-
-`tmp/porters-docs/`（git 管理外）に取得・テキスト化スクリプトを置いている。最新へ更新する場合:
-
-```bash
-# 記事を取得（99 件・100 件を超えたら next_page を追う）→ 本文をテキスト化
-curl -sS -A "Mozilla/5.0" \
-  "https://hrbc-api.zendesk.com/api/v2/help_center/ja/articles.json?per_page=100" \
-  -o tmp/porters-docs/articles-ja.json
-node tmp/porters-docs/extract.mjs
-```
-
-取得前の `articles-ja.json` を控えておき、`id` ごとに `updated_at` と `body` を比べると差分が分かる
-（2026-09-20 の再取得では 4 記事の追加・5 記事の本文変更があった）。**`gen-resources.mjs` は使わない**:
-`resources/*.md` には手書きの「Read パラメータ」節（[ADR-0080][adr80] / [ADR-0081][adr81]）が入っていて、
-再生成すると消える。差分は手で反映する。
 
 [auth]: authentication-api/README.md
 [auth-oauth]: authentication-api/oauth.md
@@ -74,6 +55,4 @@ node tmp/porters-docs/extract.mjs
 [rapi-list]: resource-api/resources-list.md
 [rapi-resources]: resource-api/resources/README.md
 [glossary]: glossary.md
-[adr80]: ../../adr/0080-resource-parameter-binding.md
-[adr81]: ../../adr/0081-attachment-read-parameters.md
 [gotchas]: gotchas.md

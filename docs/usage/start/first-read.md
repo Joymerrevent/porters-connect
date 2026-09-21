@@ -59,7 +59,7 @@ console.log(page.items.length); // このページの件数
 **省略すると、そのリソースの標準項目（`P_`）が全部返ります。**
 
 PORTERS 自体は `field` を指定しないと主キーしか返しません。それでは型が約束している項目が
-ひとつも入らないので、**ライブラリが既定の項目を補っています**（[ADR-0020][adr20]）。補う元は
+ひとつも入らないので、**ライブラリが既定の項目を補っています**<!-- 根拠: ADR-0020 -->。補う元は
 [カタログ][aliases]（ライブラリが知っている項目の一覧）です。
 
 | 書き方         | 返ってくるもの                                           |
@@ -99,7 +99,7 @@ for await (const c of t.candidate.searchAll({
 ```
 
 渡したクエリは、**最初のページを取るときに 1 度だけ**組み立てられます。反復中に元のオブジェクトを
-書き換えても、**後続のページは最初の条件のまま**です（[RV-32][rv32]）。「全件取ったつもりが、
+書き換えても、**後続のページは最初の条件のまま**です<!-- 根拠: RV-32 -->。「全件取ったつもりが、
 途中から別条件の全件」になるのを防ぐためです。
 
 ## 返ってくる値のかたち
@@ -122,11 +122,9 @@ for await (const c of t.candidate.searchAll({
 
 **[はじめての書き込み][s4]** — 読めたので、次は作成して更新します。
 
-[adr20]: ../../adr/0020-read-field-default.md
 [aliases]: ../concepts/aliases.md
 [custom-fields]: ../howto/custom-fields.md
 [partition]: ../concepts/partition.md
-[rv32]: ../../reviews/rv/0032-searchall-query-mutation.md
 [s2]: authenticate.md
 [s4]: first-write.md
 [search-records]: ../howto/search-records.md
