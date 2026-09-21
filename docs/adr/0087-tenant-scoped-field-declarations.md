@@ -1,6 +1,6 @@
 # 87. カスタム項目の宣言は `tenant(id)` で束ねる（client から `fields` を外す）
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-21
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -12,7 +12,8 @@
 > 問われ、実装と既存 ADR を確かめたうえで **案B に推奨を切り替えた**（理由は Decision Outcome）。
 > **渡し方はメソッドチェーンでなくパラメタ**（論点2 案2a）で decider と合意済み。
 >
-> 本 ADR は **`proposed`**。decider が案を選んで `accepted` にし、実装は accept 後・別 PR。
+> **decider が案B ＋ 案2a ＋ 案3a を選択し `accepted`（2026-09-21）。** 実装は accept 後・別 PR
+> （下記「実施時の合意事項」のとおり）。
 
 ## Context and Problem Statement
 
@@ -91,23 +92,23 @@ PORTERS の reference は各リソース記事で同じ 1 行を置いている�
 ### 論点1: 宣言をどこで束ねるか
 
 - **案A: client に残し、`tenant(id, { fields })` で追加する（二層マージ）** — 起票前の最初の推奨
-- **案B: client から `fields` を外し、`tenant(id, { fields })` のみにする** — **推奨**
+- **案B: client から `fields` を外し、`tenant(id, { fields })` のみにする** — **採用**
 - 案C: 現状維持（テナントごとに `PortersClient` を構築する、という案内のまま）
 - 案D: 構築時に `fields: (partition) => DefinedFields` の解決関数を渡す
 
 ### 論点2: `tenant()` への渡し方
 
-- **案2a: パラメタ** `porters.tenant(id, { fields })` — **採用方向（decider 合意・2026-09-21）**
+- **案2a: パラメタ** `porters.tenant(id, { fields })` — **採用（decider 合意・2026-09-21）**
 - 案2b: メソッドチェーン `porters.tenant(id).withFields(fields)`
 
 ### 論点3: パラメタの形
 
-- **案3a: オプションオブジェクト** `tenant(id, { fields })` — 推奨
+- **案3a: オプションオブジェクト** `tenant(id, { fields })` — **採用**
 - 案3b: 位置引数 `tenant(id, fields)`
 
 ## Decision Outcome
 
-推奨: **案B ＋ 案2a ＋ 案3a**。**`PortersClientOptions` から `fields` を外し、宣言は `tenant(id, { fields })`
+採用: **案B ＋ 案2a ＋ 案3a**（decider・2026-09-21）。**`PortersClientOptions` から `fields` を外し、宣言は `tenant(id, { fields })`
 でだけ受け取る。`PortersClient` と `PortersClientOptions` はジェネリックでなくなり、型引数は
 `TenantScope<C>` と `tenant()` にだけ残る。**
 
@@ -161,7 +162,7 @@ const tenantB = defineFields({ candidate: appCandidate });
 **「共通部分の合成」は利用側の DSL で表せる**ので、ライブラリは `A_` と `U_` の区別を知らなくてよい。
 これが二層マージ（案A）を持たなくてよい根拠である。
 
-### 案B を推す理由（案A との差）
+### 案B を採る理由（案A との差）
 
 - **不正な状態そのものが消える**。案A は「client の基底宣言が、別テナントに黙って適用される」状態を残す。
   案B は**スコープの形をスコープを作る場所で必ず言う**ので、その状態が存在しない。
@@ -254,7 +255,7 @@ const tenantB = defineFields({ candidate: appCandidate });
   衝突規則・tenant 側が勝つ型ヘルパーが要る。`PortersClient<C>` のジェネリックと、その落とし穴も残る。
   合成は DSL の spread で利用側が書けるので、ライブラリ側のマージは**二重の手段**になる。
 
-### 案B: client から外し `tenant()` のみ（推奨）
+### 案B: client から外し `tenant()` のみ（採用）
 
 - Good: 不正な状態が存在しない。公開型が単純（client 非ジェネリック・マージ規則なし）。層の説明が
   1 文。ADR-0069 のツールと向きが揃う。1 client で項目の違うテナント群を扱える。
