@@ -102,7 +102,17 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.20.0**（npm latest・`v0.20.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.20.1**（npm latest・`v0.20.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 932.5 kB**・2026-09-21）。**累計 28 版**（うち **0.2.0 以降の 26 版**がこの半自動フロー）。
+  changeset **1 枚**を消費した patch リリースで、0.20.0 直後の定期レビュー（[2026-09-21-01][run20260921]）の
+  指摘 3 件の処置（[#355][pr355] / [#356][pr356]）。**破壊的変更なし**。
+  - **unpacked が 929.5 → 932.5 kB（+3.0 kB）**。増えたのは `decodeTimeOfDay` の範囲検証と JSDoc だけで、
+    **同梱ファイル数は 8 のまま**。
+  - 手順の面では、**§1 に足した「CHANGELOG に名指しした設計 ADR の `Implemented`」の手順と `check:release` の
+    検査（[RV-56][rv56]）が初めて本番で走った**。この CHANGELOG は [ADR-0086][adr86] を名指しするが、最初の
+    名指しは 0.20.0 なので索引の値と一致＝緑。Release 作成・`npm view` の伝播待ち・back-merge（[#358][pr358]・
+    PR 経由・merge commit）は前版と同じ形。
+- ✅ ひとつ前の **0.20.0**（npm latest・`v0.20.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **8 files / 929.5 kB**・2026-09-21）。**累計 27 版**（うち **0.2.0 以降の 25 版**がこの半自動フロー）。
   changeset **2 枚**を消費した minor リリースで、出典（PORTERS ヘルプセンター）の再取得で見つかった
   未追従 2 件＝ **Department Read**（[#348][pr348]）と **時分型の変換関数**（[ADR-0086][adr86]・[#350][pr350]）。
@@ -287,4 +297,8 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr348]: https://github.com/Joymerrevent/porters-connect/pull/348
 [pr350]: https://github.com/Joymerrevent/porters-connect/pull/350
 [pr352]: https://github.com/Joymerrevent/porters-connect/pull/352
+[pr355]: https://github.com/Joymerrevent/porters-connect/pull/355
+[pr356]: https://github.com/Joymerrevent/porters-connect/pull/356
+[pr358]: https://github.com/Joymerrevent/porters-connect/pull/358
+[run20260921]: reviews/2026-09-21-01.md
 [adr86]: adr/0086-time-of-day-fields.md
