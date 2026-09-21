@@ -102,7 +102,20 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.20.1**（npm latest・`v0.20.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.21.0**（npm latest・`v0.21.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 947.8 kB**・2026-09-21）。**累計 29 版**（うち **0.2.0 以降の 27 版**がこの半自動フロー）。
+  changeset **4 枚**（minor 1・patch 3）を消費した minor リリースで、カスタム項目の宣言を `tenant(id, { fields })` で
+  受ける [ADR-0087][adr87]（[#362][pr362]・**破壊的変更 1 つ**＝コンストラクタの `fields` 廃止・移行は 1 対 1）と、
+  公開 JSDoc（[#363][pr363] / [#364][pr364]）・使い方ドキュメント（[#365][pr365] / [#366][pr366]）から保守者向けの
+  識別子を除いた版。
+  - **unpacked が 932.5 → 947.8 kB（+15.3 kB）**。増えたのは `tenant(id, { fields })` の実装・JSDoc の書き換え・
+    同梱 CHANGELOG の追記ぶんで、**同梱ファイル数は 8 のまま**。
+  - 手順の面では前版と同じ形で通った（リリース PR [#367][pr367]・merge commit）: Tag ワークフロー green →
+    `gh release create`（notes は CHANGELOG の該当節・参照スタイルのリンクを絶対 URL に解決）→ Release ワークフロー
+    green。publish 直後の `npm view` は 0.20.1 を返した（伝播待ち）ので、ログの
+    `+ @joymerrevent/porters-connect@0.21.0` を確認してから 30 秒間隔で再確認し、約 1 分後に 0.21.0 で確定した。
+    back-merge は [#368][pr368]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.20.1**（npm latest・`v0.20.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **8 files / 932.5 kB**・2026-09-21）。**累計 28 版**（うち **0.2.0 以降の 26 版**がこの半自動フロー）。
   changeset **1 枚**を消費した patch リリースで、0.20.0 直後の定期レビュー（[2026-09-21-01][run20260921]）の
   指摘 3 件の処置（[#355][pr355] / [#356][pr356]）。**破壊的変更なし**。
@@ -302,3 +315,11 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr358]: https://github.com/Joymerrevent/porters-connect/pull/358
 [run20260921]: reviews/2026-09-21-01.md
 [adr86]: adr/0086-time-of-day-fields.md
+[adr87]: adr/0087-tenant-scoped-field-declarations.md
+[pr362]: https://github.com/Joymerrevent/porters-connect/pull/362
+[pr363]: https://github.com/Joymerrevent/porters-connect/pull/363
+[pr364]: https://github.com/Joymerrevent/porters-connect/pull/364
+[pr365]: https://github.com/Joymerrevent/porters-connect/pull/365
+[pr366]: https://github.com/Joymerrevent/porters-connect/pull/366
+[pr367]: https://github.com/Joymerrevent/porters-connect/pull/367
+[pr368]: https://github.com/Joymerrevent/porters-connect/pull/368
