@@ -1,4 +1,4 @@
-# 契約なしでテストを書きたい
+# 契約なしでテストを書きたい（`createMockTransport`）
 
 PORTERS に繋がなくても、**このライブラリを通るコードはすべてテストできます**。
 公開ヘルパー `createMockTransport` に、PORTERS の代わりの XML を返させるだけです。
