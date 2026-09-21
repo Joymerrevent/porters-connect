@@ -72,7 +72,7 @@
 | [RV-55][rv55] | 🟢     | API 忠実性 / フェイルセーフ     | fixed   | `decodeTimeOfDay` が 1 日目の時 24〜47・分秒 60 以上を弾かず、別の wire 値に往復する |
 | [RV-56][rv56] | 🟢     | ドキュメント / プロセス         | fixed   | ADR 索引の「実装」列が 0.8.0 以降更新されず、凡例が 21 本で事実と食い違う            |
 | [RV-57][rv57] | 🟢     | プロセス / ドキュメント         | fixed   | RV-54 で保留した書き込み側の判断が ADR バックログにも roadmap にも無い               |
-| [RV-58][rv58] | 🟢     | API 忠実性 / フェイルセーフ     | open    | `Number` の Read が数値でない文字列を `NaN` に黙って変換し、そのまま Write に戻る    |
+| [RV-58][rv58] | 🟢     | API 忠実性 / フェイルセーフ     | fixed   | `Number` の Read が数値でない文字列を `NaN` に黙って変換し、そのまま Write に戻る    |
 | [RV-59][rv59] | 🟡     | テスト厳密性 / プロセス         | fixed   | `tenant(id, { fields })` の宣言配線を candidate 以外の 10 リソースで pin していない  |
 | [RV-60][rv60] | 🟢     | ドキュメント / API 忠実性       | open    | 0.21.0 の CHANGELOG と ADR-0087 が 0.15.0 で直した「黙って `null`」を現在形で書く    |
 | [RV-61][rv61] | 🟢     | ドキュメント / プロセス         | open    | roadmap が reference README の「再取得の手順」を指すが、その節は CONTRIBUTING に移動 |

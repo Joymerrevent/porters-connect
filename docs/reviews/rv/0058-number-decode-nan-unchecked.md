@@ -1,7 +1,7 @@
 # RV-58 🟢 `Number` の Read が数値でない文字列を `NaN` に黙って変換し、そのまま Write に戻る
 
 - 重要度: 🟢 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -24,7 +24,13 @@
 - [ADR-0006][adr6] `:121` — 「宣言型と実データの食い違いも `validation` で surface（フィールド名付き・
   **silent な誤変換はしない**）」。
 - [ADR-0069][adr69] `:26-31` の実測表は「Number / `f.singlelineText()`」（`"123"`＝実害小）は載せているが、
-  **逆向き「テキスト / `f.number()`」は載っていない**＝この経路は一度も測られていない。
+  **逆向き「テキスト / `f.number()`」は載っていない**。
+- **訂正（処置時・2026-09-21）**: 起票時に「この経路は一度も測られていない」と書いたが誤り。
+  `docs/usage/howto/handle-failures.md:323-327`（#286・2026-09-15）が「実物が `SinglelineText` の項目を
+  `f.number()` と宣言すると … `Number("社内候補")` の結果＝`NaN` が入ります」と**利用者向けに書いており**、
+  `custom-fields.md` / `aliases.md` にも同旨が 4 か所あった。つまり挙動は**知られていて**、
+  `verifyFields` を使う理由として案内されていた。ただし **ADR-0006（silent な誤変換はしない）との矛盾を
+  受け入れる決定は RV にも ADR にも無い**＝「知っていたが記録していない」類型で、指摘そのものは変わらない。
 - 実測（2026-09-21・`decodeField` 直叩き）:
 
   | 入力                                    | 結果                      |
@@ -68,7 +74,33 @@ silent `null` より悪い: `NaN` は `typeof === "number"` で `!= null` も通
 
 ## 処置
 
-—
+**実施（案 (a)・読み側・2026-09-21）。案 (b)（書き側）は入れていない。**
+
+- (a) `src/xml/decode.ts` に `numeric(alias, type, value)` を足し、`Number` / `System[Id]` のスカラ分岐と
+  `Link` のスカラ形（Contact の ID）がそれを通るようにした。`Number(value)` が有限でなければ
+  `PortersResourceError`（`category: "validation"`・message は `converted()` と同じ形・hint は
+  「PORTERS sends Number as a plain number …」／Link は「A scalar Link is a Contact id …」）。
+  空文字は従来どおり手前で `null`。`converted()` のコメント「日時だけが唯一のケース」も直した。
+- (b) **書き側は足していない**。[RV-36][rv36] #4 で **案3（書き側に検証を足さない）が stakeholder 決定済み**
+  （2026-09-10）で、その根拠「送ってしまっても result code で大きな音がする」は `NaN` にも当てはまる
+  （PORTERS 側で弾かれる見込み。実機未確認）。決定を覆す材料は無いので、起票時の推奨 (b) は取り下げる。
+- ガイド 3 本（`handle-failures.md` / `custom-fields.md` / `aliases.md`）の「`NaN` が入る」5 か所を
+  「変換を伴う型（日時・数値）は落ちる／変換を伴わないスカラどうし（`Number` を `f.singlelineText()`）は
+  文字列のまま入る」に書き換えた。[ADR-0069][adr69] の実測表には「逆向きの行が無かった」追記を置いた
+  （表自体は歴史的記録なので書き換えない）。
+- changeset（patch）を足した。**ADR は起こしていない**（ADR-0006 の既決を数値型に適用しただけ）。
+
+## 検証
+
+- `src/xml/decode.test.ts`「数値でない文字列を Number として読まない（RV-58）」6 件: `"abc"` /
+  `"12abc"` / `"社内候補"` / `"Infinity"` / `"-Infinity"` / `"NaN"` の各入力で `Number` が throw、
+  `System[Id]` と `Link` のスカラ形も throw、message（項目名・`declared Number`・値）・hint
+  （`plain number`・`Field Read`、Link は `Contact id`）・`category` / `context` を pin。正常域
+  （`"87"` / `"-1.25"` / `"0"` / `" 42 "` / `""` → null）が変わらないことも pin。
+- **Stryker を `decode.ts` 単体で実測**: 190 ミュータント・survived **20**（変更前と同数＝新規行の
+  survivor 0。hint の三項演算子は Number 側の `not.toContain("Contact id")` で、`context` は
+  `toEqual` で撃破）。
+- `pnpm test:coverage` 1426 → **1437 件**・`typecheck` / `lint` / `check` / `check:usage` 緑。
 
 [rv36]: 0036-write-value-validation-partial.md
 [rv55]: 0055-time-of-day-decode-hour-unchecked.md
