@@ -9,6 +9,8 @@
 - **実装** 列は「その決定がどの版で世に出たか」。`—` は**特定の版に紐づけていない**ことを表します
   （プロセス決定で実装の概念が無いもの、または MVP 期に段階的に実装され CHANGELOG が版を明示していないもの）。
   記入は [CHANGELOG][changelog] が版を明示している分に限っています。
+- [0053][0053] より後の基本設計／詳細設計の ADR は、**CHANGELOG の版節が名指しした最初の版**が「実装」に
+  入っているかを `pnpm check:release` が突き合わせます（[RV-56][rv56]。任意項目は書かれなくなるため）。
 
 | #            | タイトル                                                           | フェーズ | ステータス         | 実装   |
 | ------------ | ------------------------------------------------------------------ | -------- | ------------------ | ------ |
@@ -101,6 +103,7 @@
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
+[rv56]: ../reviews/rv/0056-adr-implemented-column-stale.md
 [0001]: 0001-record-architecture-decisions.md
 [0002]: 0002-ground-design-in-live-api-docs.md
 [0003]: 0003-add-attachment-to-mvp.md

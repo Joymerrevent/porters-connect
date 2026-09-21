@@ -62,7 +62,8 @@ jobs:
       # `check:publish` と `check:cjs` だけは `dist` を見るので束ねず、build の後で回す。
       #
       # 中身と、いずれも**コード変更の有無に関わらず常時実行**する理由:
-      #   check:release  リリース連動文書の整合（ADR-0027）。README/CHANGELOG の変更も拾う
+      #   check:release  リリース連動文書の整合（ADR-0027）。README/CHANGELOG の変更も拾う。
+      #                  CHANGELOG が名指しした設計 ADR の「実装」列（RV-56）もここ
       #   check:index    索引（docs/adr/index.md ほか）と本文メタ行の突合（ADR-0053 / ADR-0052）。
       #                  索引の更新は docs-only PR で起きる
       #   check:links    md のリンク先と見出しアンカーの実在。MD052 は「ラベル未定義」しか
