@@ -14,10 +14,11 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.20.0**（2026-09-21）＝ 出典の再取得で見つかった未追従 2 件を埋めた minor 版
-（**Department Read**・マスタ 5 種目 ／ **時分型の変換関数** `decodeTimeOfDay` / `encodeTimeOfDay`・
-[ADR-0086][adr86]）。**破壊的変更なし**。ひとつ前の **0.19.1**（2026-09-20）＝ 定期レビュー
-（[2026-09-18-01][run20260918]）で見つけた 7 件を塞いだ patch 版
+**最新は 0.20.1**（2026-09-21）＝ 0.20.0 直後の定期レビュー（[2026-09-21-01][run20260921]）で見つけた
+3 件（RV-55〜57）を塞いだ patch 版（`decodeTimeOfDay` の範囲検証 ／ ADR 索引の「実装」列を CHANGELOG と
+突き合わせる検査）。**破壊的変更なし**。ひとつ前の **0.20.0**（2026-09-21）＝ 出典の再取得で見つかった
+未追従 2 件を埋めた minor 版（**Department Read**・マスタ 5 種目 ／ **時分型の変換関数**
+`decodeTimeOfDay` / `encodeTimeOfDay`・[ADR-0086][adr86]）
 （Option alias からの XML 注入・[ADR-0085][adr85] ／ `createThrottle` の無言ハング ／
 パーサの例外が `PortersError` の外に出ていた件 ほか）。ひとつ前の **0.19.0**（2026-09-18）＝ CJS からの入口を `require` 条件で開け、Node の下限を 22.12 に
 上げた版（[ADR-0082][adr82]・破壊的変更 1 つ＝ `engines` の引き上げ）。ひとつ前の **0.18.0**（2026-09-17）は
@@ -489,8 +490,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.20.0`**（npm latest・2026-09-21 にレジストリで確認・**8 files / 929.5 kB**）。**全 27 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.20.1`**（npm latest・2026-09-21 にレジストリで確認・**8 files / 932.5 kB**）。**全 28 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -510,7 +511,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       （[ADR-0076][adr76]・破壊的）＋ `searchAll` と `createFetchTransport` を公開**、
       **0.18.0 で URL パラメータのリソースを `of()` に揃え（[ADR-0080][adr80] / [ADR-0081][adr81]・破壊的）
       ＋ アクセスポイントを `hostname` / `port` に分割（[ADR-0078][adr78]・破壊的）**、
-      **0.20.0 で Department マスタの Read（マスタ 5 種目）＋ 時分型の変換関数（[ADR-0086][adr86]）**）。
+      **0.20.0 で Department マスタの Read（マスタ 5 種目）＋ 時分型の変換関数（[ADR-0086][adr86]）**、
+      0.20.1 で `decodeTimeOfDay` の範囲検証（RV-55）＋ ADR 索引の「実装」列の検査（RV-56））。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -585,7 +587,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.20.0 の**全 27 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.20.1 の**全 28 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
@@ -682,7 +684,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [run]: reviews/2026-08-10-01.md
 [run816]: reviews/2026-08-16-01.md
 [adr]: adr/README.md
-[run20260918]: reviews/2026-09-18-01.md
+[run20260921]: reviews/2026-09-21-01.md
 [adr85]: adr/0085-option-alias-validation.md
 [findings]: reviews/findings.md
 [lvstate]: live-verification.md#状態の意味
