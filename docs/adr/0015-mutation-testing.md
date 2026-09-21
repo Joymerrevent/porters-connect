@@ -77,6 +77,12 @@
 - 後続: ✅ score 閾値の CI 強制は実装・運用済み（上記）。以降はフル 100% 維持を前提に、緩めば
   CI が落ちる。新たな等価変異が出たときのみ `// Stryker disable` を追加する。
 - 関連: [[0014-test-coverage-policy]], [[0013-coding-conventions-class-vs-function]]。
+- **その後（2026-09-21・[RV-59][rv59]）**: 06-15 の「生存 0」は 08-09 には 96.84 まで緩んでいた
+  （`break` 95 が許す幅で survivor が溜まり、レビューはそれを「同値」と読んでいた）。79 件を行ごとに
+  分類すると 34 件は挙動・契約の穴だったので全件撃破し、同値 1 件だけを `// Stryker disable` で
+  明示、`break` を **100** に上げた（`thresholds = 100/100/100`）。以降は survivor が 1 件でも
+  CI が落ちる＝本決定の「撃破か明示か」を仕組みで強制する。経緯は [ADR README][readme] の
+  「ADR を起こさずに決着した論点」。
 - **その後**: 「[ADR-0014][0014] と同様にバレル/型/**プレースホルダ**/テストを除外」のうち
   `stryker.config.json` の `!src/fields/**` は、`src/fields/` がプレースホルダでなくなったあとも残っていた。
   coverage 側と揃えて [RV-44][rv44] で外し、カスタム項目まわりも mutation の対象にした。
@@ -85,5 +91,7 @@
 [0013]: 0013-coding-conventions-class-vs-function.md
 [0014]: 0014-test-coverage-policy.md
 [rv44]: ../reviews/rv/0044-fields-excluded-from-coverage.md
+[rv59]: ../reviews/rv/0059-tenant-fields-threading-unpinned.md
+[readme]: README.md
 [pr12]: https://github.com/Joymerrevent/porters-connect/pull/12
 [pr13]: https://github.com/Joymerrevent/porters-connect/pull/13

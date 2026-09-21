@@ -81,11 +81,13 @@
   （`customFor("candidate")` を job に渡す）も落ちる。あわせて「表の行 ＝ `CustomFieldResource` の
   全キー」を pin し、リソースを足したときに表が黙って古くならないようにした。
 - (c) スナップショットの書き方は [run 2][run2] から実施済み（survivor は件数でなくファイルと行を出す）。
-- (b) **保留**。残り 79 件（`decode.ts` 20・`auth-api.ts` 20・`image.ts` 15 …）を「撃破」か
-  「`// Stryker disable` で明示」に振り分ける判断は、[ADR-0015][adr15] の規則をそのまま適用する
-  （全部テストで撃破）か規則を改訂する（エラー文言の変異は pin しない）かの二択で、後者は要 ADR。
-  [RV-57][rv57] の教訓どおり fixed の RV の中に埋めず、[ADR README の論点バックログ][adr-backlog]
-  【プロセス】と roadmap の「要 ADR（判断待ち）」に置いた。**V3 は要 ADR 1 で未達**のまま。
+- (b) **決着（2026-09-21・stakeholder）: [ADR-0015][adr15] をそのまま適用**。79 件を行ごとに分類すると
+  挙動 25・契約 9・文言 34・`context` 8・同値 3 で、**34 件は規則を改訂しても残る穴**だった
+  （Option search の `method: "GET"` を `""` にしても 1437 件緑、`PortersConfigError` の `category` を
+  空にしても通る、2MB 境界テストの計算違い、`field-type` の勝者規則が表の並び順で同値 …）。
+  挙動・契約の 34 件を #374、文言・`context`・同値・`break` 100 を後続 PR で入れ、**全体実測 100.00・
+  survived 0**（2026-09-21 22:14・2616 killed・timeout 8・Ignored 44）。バックログの項目は閉じ、
+  経緯は [ADR README][adr-readme]「ADR を起こさずに決着した論点」に記録した。
 - コード（`src/client.ts`）は変更していない。ADR も起こしていない（テストの追加のみ）。
 
 ## 検証
@@ -99,8 +101,7 @@
 - `pnpm test:coverage`（1414 → 1426 件）・`typecheck`・`lint:ts` 緑。
 
 [adr15]: ../../adr/0015-mutation-testing.md
-[adr-backlog]: ../../adr/README.md#論点バックログ（未起票）
-[rv57]: 0057-deferred-decision-not-in-backlog.md
+[adr-readme]: ../../adr/README.md
 [run2]: ../2026-09-21-02.md
 [adr87]: ../../adr/0087-tenant-scoped-field-declarations.md
 [prev]: ../2026-09-21-01.md
