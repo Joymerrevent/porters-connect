@@ -8,7 +8,7 @@
 
 > **TenantOptions**\<`C`\> = `object`
 
-Defined in: [src/client.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L122)
+Defined in: [src/client.ts:132](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L132)
 
 Options for [PortersClient.tenant](../classes/PortersClient.md#tenant). `C` is inferred from `fields` (ADR-0023 / ADR-0087).
 
@@ -29,7 +29,7 @@ declaration written for one tenant cannot silently apply to another (ADR-0087).
 
 > `optional` **fields?**: [`DefinedFields`](DefinedFields.md)\<`C`\>
 
-Defined in: [src/client.ts:130](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L130)
+Defined in: [src/client.ts:140](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L140)
 
 This partition's custom field declarations from [defineFields](../functions/defineFields.md) (ADR-0023). Each
 resource's declared `U_`/`A_` fields are merged onto its static catalog, so they decode /

@@ -1,4 +1,5 @@
 import { createAuthApi, createDefaultTokenProvider } from "./auth";
+import { PortersConfigError } from "./errors";
 import type {
   AuthApi,
   AuthProviderControls,
@@ -109,6 +110,15 @@ export type PortersClientOptions = {
    * (ADR-0010 left that to the caller). `createThrottle()` builds the default implementation.
    */
   throttle?: Throttle;
+  /**
+   * **Not a client option any more** (ADR-0087). Custom fields belong to a partition, so the
+   * declaration goes to {@link PortersClient.tenant} as `tenant(id, { fields })`. Typed `never`
+   * so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
+   * it is not a fresh literal; at runtime the constructor rejects it with {@link PortersConfigError}
+   * rather than silently dropping the declaration (the same fail-closed stance as `hostname`,
+   * ADR-0048).
+   */
+  fields?: never;
 };
 
 /**
@@ -230,6 +240,19 @@ export class PortersClient {
   readonly #accessPoint: AccessPoint;
 
   constructor(options: PortersClientOptions) {
+    // A `fields` left over from before ADR-0087 must not be ignored: the declaration would be
+    // dropped and every custom field would silently come back untyped (or not at all). The type
+    // already refuses it (`fields?: never`); this is the runtime side for JavaScript callers and
+    // casts. Read through `unknown` because the declared type says the key is never there.
+    if ((options as { fields?: unknown }).fields !== undefined) {
+      throw new PortersConfigError(
+        'PortersClient: "fields" is not a client option (ADR-0087) — custom fields belong to a partition',
+        {
+          category: "config",
+          hint: "Declare them where you bind the partition: porters.tenant(id, { fields })",
+        },
+      );
+    }
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
     // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
     // problem, so it fails where the configuration was handed over — before any credential can

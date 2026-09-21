@@ -25,6 +25,8 @@ const t = porters.tenant(partition, { fields }); // 宣言は partition と一�
 宣言を渡す先が `tenant()` なのは、カスタム項目が **partition（Company DB）ごとのもの**だからです
 （出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています・[ADR-0087][adr87]）。
 client は宣言を持ちません。partition を束ねる場所で、その partition の項目の形も束ねます。
+0.21 より前の形（コンストラクタの `fields`）が残っていると、**構築時に `PortersConfigError`**
+（`category: "config"`）で止まります — 黙って捨てると、カスタム項目が全部型から消えたまま動いてしまうためです。
 
 <!-- doccheck: fields expect-error -->
 

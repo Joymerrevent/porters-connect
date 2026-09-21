@@ -545,8 +545,9 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     expectTypeOf(porters.tenant(3, options)).toEqualTypeOf<
       TenantScope<typeof fields>
     >();
-    // The client itself carries no declaration: not generic, no `fields` option.
-    expectTypeOf<PortersClientOptions>().not.toHaveProperty("fields");
+    // The client itself carries no declaration: not generic, and `fields` is typed `never` so a
+    // stale config object (not a fresh literal, hence no excess property check) fails to compile.
+    expectTypeOf<PortersClientOptions["fields"]>().toEqualTypeOf<undefined>();
     // @ts-expect-error -- PortersClient takes no type argument (ADR-0087)
     type _NotGeneric = PortersClient<typeof fields>;
   });
