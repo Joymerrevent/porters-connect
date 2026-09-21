@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-30
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.12.0
 
 > **stakeholder 判断で `accepted`（2026-08-31）。** 5 つの論点をすべて決めた —
 > **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5b**（論点2〜5 は 2026-08-30、論点1 は 2026-08-31）。

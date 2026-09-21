@@ -18,6 +18,8 @@
 - [ ] 各変更 PR に `pnpm changeset`（`.changeset/*.md`）が入っていること（変更の記録）
 - [ ] `release/X.Y.Z` ブランチを切る
 - [ ] **CHANGELOG を手書き**（[ADR-0026][adr26]・案B）: `.changeset/*.md` の要約を `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD` に転記（Added/Changed/Fixed/Security）。空の `[Unreleased]` 再設置・末尾の compare リンク更新
+- [ ] **CHANGELOG に名指しした基本設計／詳細設計の ADR に `- Implemented: X.Y.Z` を書き、[ADR 索引][adr-index]の「実装」列も同じ値にする**
+      （[RV-56][rv56]。`pnpm check:release` が CHANGELOG の名指しと索引を突き合わせ、`pnpm check:index` が索引と本文を突き合わせる＝忘れると落ちる）
 - [ ] `pnpm changeset:version` で `version` を bump（`changelog: false` なので CHANGELOG は生成されず changeset が消費される）
   - ⚠️ **`.changeset/*.md` が 1 枚も無いと exit 1 で落ちる**（changesets v3 の仕様変更。v2 は黙って exit 0）。
     版を上げたいのに changeset が無い＝**記録漏れ**なので、changeset を書いてからやり直す
@@ -261,6 +263,8 @@ override が先、changesets の導入が翌日という順序だったため、
 [rm]: roadmap.md
 [adr25]: adr/0025-release-automation.md
 [adr26]: adr/0026-changelog-format.md
+[adr-index]: adr/index.md
+[rv56]: reviews/rv/0056-adr-implemented-column-stale.md
 [adr29]: adr/0029-release-tag-automation.md
 [adr30]: adr/0030-backmerge-method.md
 [adr82]: adr/0082-module-format-and-node-baseline.md

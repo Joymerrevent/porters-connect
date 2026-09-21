@@ -4,6 +4,7 @@
 //   (2) 直近リリース（git タグ）より版が逆行していないか（< で失敗・==/> は許可）
 //       — (2) は base=main の PR（リリース PR）でのみ検査（ADR-0032・back-merge ラグの誤検知回避）
 // あわせて **CI の Node マトリクスが engines の下限を実際に走らせているか**も見る（RV-53）。
+// さらに **CHANGELOG が名指しした設計 ADR が「実装」（世に出た版）を持っているか**も見る（RV-56）。
 // CI 必須チェックに組み込み、リリース PR で文書更新漏れ・版番号ミスを構造的に防ぐ。
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -66,6 +67,113 @@ export const maxTagVersion = (tags) => {
   );
 };
 
+// ---- CHANGELOG ↔ ADR 索引の「実装」列（RV-56） ----
+//
+// ADR-0053 が索引に「実装」列（その決定が世に出た版）を足したとき、既知分（〜0051）は遡って
+// 記入し、それ以前の MVP 期の決定は「空欄のまま」と決めた。**0053 より後に起こした ADR は列の
+// 運用が始まってから生まれたもの**なので、CHANGELOG の版節が名指しした基本設計／詳細設計の ADR は
+// 「実装」を持つはず。だが列は任意項目で、`check:index` は索引と本文の**食い違い**しか見ない
+// （両方空なら通る）ため、実測（2026-09-21）では 0055〜0086 の設計 ADR 21 本が 1 本も持って
+// いなかった＝任意項目が運用から落ちた。ここでは CHANGELOG を出典に「あるべき値」を導いて
+// 突き合わせる。期待値は**最初に名指しした版**（後の版が同じ ADR を改訂の文脈で挙げることがある）。
+// `[Unreleased]` は版ではないので数えない＝ リリース PR で版節に変わった瞬間に検査が効く。
+const IMPLEMENTED_TRACKED_AFTER = 53;
+const DESIGN_PHASES = new Set(["基本設計", "詳細設計"]);
+const NONE = "—";
+const ADR_MENTION_RE = /ADR-(\d{4})/g;
+const CHANGELOG_SECTION_RE = /^## \[([^\]]+)\]/;
+
+/**
+ * CHANGELOG の版節ごとに `ADR-NNNN` の名指しを集め、ADR 番号 → **最初に名指しした版** を返す。
+ * 版でない節（`[Unreleased]`）と、どの節にも属さない前書きは数えない。
+ */
+export const firstMentionedVersions = (changelog) => {
+  const first = new Map();
+  let version;
+  for (const line of String(changelog ?? "").split("\n")) {
+    const section = CHANGELOG_SECTION_RE.exec(line);
+    if (section) {
+      version = isValidSemver(section[1]) ? section[1] : undefined;
+      continue;
+    }
+    if (version === undefined) continue;
+    for (const [, id] of line.matchAll(ADR_MENTION_RE)) {
+      const known = first.get(id);
+      if (known === undefined || compareSemver(version, known) < 0) {
+        first.set(id, version);
+      }
+    }
+  }
+  return first;
+};
+
+/**
+ * ADR 索引（`docs/adr/index.md`）のテーブルから `{ id, phase, implemented }` を読む。
+ * 列はヘッダ行の見出し（`フェーズ` / `実装`）で探す＝列の並びが変わっても壊れない。
+ * ヘッダが見つからなければ `undefined`（呼び出し側で「読めない」を報告する・fail-safe）。
+ */
+export const parseAdrIndex = (adrIndex) => {
+  let phaseAt;
+  let implAt;
+  const rows = [];
+  for (const line of String(adrIndex ?? "").split("\n")) {
+    if (!line.startsWith("|")) continue;
+    const cells = line
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+    if (phaseAt === undefined) {
+      phaseAt = cells.indexOf("フェーズ");
+      implAt = cells.indexOf("実装");
+      if (phaseAt === -1 || implAt === -1) phaseAt = undefined;
+      continue;
+    }
+    const id = /^\[(\d{4})\]/.exec(cells[0] ?? "")?.[1];
+    if (id === undefined) continue; // 区切り行など
+    rows.push({ id, phase: cells[phaseAt], implemented: cells[implAt] });
+  }
+  return phaseAt === undefined ? undefined : rows;
+};
+
+/**
+ * 0053 より後の基本設計／詳細設計 ADR について、索引の「実装」が
+ * 「CHANGELOG が最初に名指しした版（名指しが無ければ `—`）」と一致するか（RV-56）。
+ * 索引が読めなければ 1 件のエラー（黙って通すと検査が一度も走らない・fail-open を避ける）。
+ */
+export const checkAdrImplemented = ({ changelog, adrIndex }) => {
+  const rows = parseAdrIndex(adrIndex);
+  if (rows === undefined || rows.length === 0) {
+    return [
+      "docs/adr/index.md の一覧テーブル（フェーズ / 実装 列）が読めません（CHANGELOG と突き合わせられません）。",
+    ];
+  }
+  const mentioned = firstMentionedVersions(changelog);
+  const errors = [];
+  for (const { id, phase, implemented } of rows) {
+    if (Number(id) <= IMPLEMENTED_TRACKED_AFTER || !DESIGN_PHASES.has(phase)) {
+      continue;
+    }
+    const expected = mentioned.get(id) ?? NONE;
+    if (implemented === expected) continue;
+    if (implemented === NONE) {
+      errors.push(
+        `ADR-${id}（${phase}）は CHANGELOG ${expected} が名指ししているのに「実装」が空です。` +
+          `本文に \`- Implemented: ${expected}\` を足し、索引の列も同じ値にしてください（pnpm check:index が突き合わせます）。`,
+      );
+    } else if (expected === NONE) {
+      errors.push(
+        `ADR-${id} の「実装」${implemented} を CHANGELOG のどの版節も名指ししていません` +
+          `（記入は CHANGELOG が版を明示している分に限る）。CHANGELOG に ADR 番号を書くか、行を外してください。`,
+      );
+    } else {
+      errors.push(
+        `ADR-${id} の「実装」${implemented} が、CHANGELOG が最初に名指しした版 ${expected} と食い違います。`,
+      );
+    }
+  }
+  return errors;
+};
+
 // 純粋な検査本体（fs/git に触れず単体テスト可能・ADR-0031）。エラー文言の配列を返す。
 export const checkRelease = ({
   version,
@@ -73,6 +181,7 @@ export const checkRelease = ({
   readme,
   enginesNode,
   testWorkflow,
+  adrIndex,
   baseline,
   releaseContext,
 }) => {
@@ -128,6 +237,10 @@ export const checkRelease = ({
     }
   }
 
+  // CHANGELOG が名指しした設計 ADR に「実装」（世に出た版）があるか（RV-56）。
+  // リリース PR で `[Unreleased]` が版節になった瞬間に、その版が名指しした ADR の記入漏れが落ちる。
+  errors.push(...checkAdrImplemented({ changelog, adrIndex }));
+
   // (2) 単調増加検証（baseline ＝ 直近 git タグ・ADR-0031 案A/案C）。
   // base=main の PR（リリース PR）でのみ検査する（ADR-0032）。git-flow の手動 back-merge
   // ラグで develop の version が最新タグを下回る窓があり、毎 PR で回すと無関係 PR を誤検知するため。
@@ -167,6 +280,7 @@ const main = () => {
     readme: read("README.md"),
     enginesNode: pkg.engines?.node,
     testWorkflow: read(".github/workflows/test.yml"),
+    adrIndex: read("docs/adr/index.md"),
     baseline,
     releaseContext,
   });

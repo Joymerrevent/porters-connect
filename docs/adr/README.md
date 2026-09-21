@@ -76,12 +76,19 @@
 
 ### 【詳細設計】
 
-- **未起票の論点はなし**（ここへ挙げていた「必須の `resource` をどう束ねるか」は
+- **条件付き 1 件（実例が出たら起票）**: **`fast-xml-parser` が拒否する予約名（`prototype` /
+  `constructor` / `__proto__`）を書き込み側でも弾くか** — [RV-54][rv54] の案 (b)。RV-54 の処置では
+  読み側で `PortersError` に包む案 (a) だけを入れ、この判断は**保留**した（2026-09-20）。
+  論点は [0002][0002] との兼ね合い＝ **PORTERS が受け付ける値を JS パーサの都合で拒否してよいか**。
+  いまは「書けるが読み返すと `PortersResourceError`（`cause` にパーサの説明）」で倒れる。
+  利用者がこの名前の alias を実際に使い、読めないことが問題になった時点で起票する
+  （それまでは決めない＝実例の無い判断をしない）。
+- 上記以外の未起票の論点はなし（ここへ挙げていた「必須の `resource` をどう束ねるか」は
   [0080][0080]（URL パラメータのリソースは `of()` で束ねる）と [0081][0081]（Attachment の Read を
-  出典の語彙に）で決着・実装済み。Field / Phase / Attachment の 3 本が `of()` に揃った）。
-- 上記以外の未起票の論点はなし（HTTP トランスポート／リトライ・スロットリング／XML パース・
-  シリアライズ／トークンのキャッシュ・更新／FieldType の粒度／Option の読み取り値／Attachment／
-  マスタ Read はすべて起票済み。各々の状態は [索引][index] を参照）。
+  出典の語彙に）で決着・実装済み。Field / Phase / Attachment の 3 本が `of()` に揃った。
+  HTTP トランスポート／リトライ・スロットリング／XML パース・シリアライズ／トークンのキャッシュ・更新／
+  FieldType の粒度／Option の読み取り値／Attachment／マスタ Read はすべて起票済み。各々の状態は
+  [索引][index] を参照）。
 
 ### ADR を起こさずに決着した論点（記録）
 
@@ -129,6 +136,7 @@
 [0077]: 0077-fetch-transport-timeout.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
+[rv54]: ../reviews/rv/0054-reserved-tag-name-read-throws.md
 [rv55]: ../reviews/rv/0055-time-of-day-decode-hour-unchecked.md
 [0086]: 0086-time-of-day-fields.md
 [0069]: 0069-tenant-field-catalog-tooling.md

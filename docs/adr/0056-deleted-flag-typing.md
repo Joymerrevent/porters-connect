@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-08-21
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.10.0
 
 > [findings RV-26][rv26] の是正案。F-2（[ADR-0038][adr38]）で `itemstate: "deleted" | "all"` を実装したが、
 > **削除状態を表す `P_Deleted` がカタログに無い**ため、`"all"` で読んだときに
