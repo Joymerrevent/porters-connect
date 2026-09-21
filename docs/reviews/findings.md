@@ -74,8 +74,8 @@
 | [RV-57][rv57] | 🟢     | プロセス / ドキュメント         | fixed   | RV-54 で保留した書き込み側の判断が ADR バックログにも roadmap にも無い               |
 | [RV-58][rv58] | 🟢     | API 忠実性 / フェイルセーフ     | fixed   | `Number` の Read が数値でない文字列を `NaN` に黙って変換し、そのまま Write に戻る    |
 | [RV-59][rv59] | 🟡     | テスト厳密性 / プロセス         | fixed   | `tenant(id, { fields })` の宣言配線を candidate 以外の 10 リソースで pin していない  |
-| [RV-60][rv60] | 🟢     | ドキュメント / API 忠実性       | open    | 0.21.0 の CHANGELOG と ADR-0087 が 0.15.0 で直した「黙って `null`」を現在形で書く    |
-| [RV-61][rv61] | 🟢     | ドキュメント / プロセス         | open    | roadmap が reference README の「再取得の手順」を指すが、その節は CONTRIBUTING に移動 |
+| [RV-60][rv60] | 🟢     | ドキュメント / API 忠実性       | fixed   | 0.21.0 の CHANGELOG と ADR-0087 が 0.15.0 で直した「黙って `null`」を現在形で書く    |
+| [RV-61][rv61] | 🟢     | ドキュメント / プロセス         | fixed   | roadmap が reference README の「再取得の手順」を指すが、その節は CONTRIBUTING に移動 |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
