@@ -1,7 +1,7 @@
 # API エンドポイント × 機能 マトリクス（V1）
 
 - ステータス: living（実装を変えたら同じ PR で更新する）
-- 最終更新: 2026-09-17
+- 最終更新: 2026-09-20
 - 位置づけ: [ロードマップ][roadmap] の **`1.0.0` 完成条件 V1**（機能網羅）の測定対象。
   **PORTERS Connect API のエンドポイントが取るもの**と、**本ライブラリが実際に送るもの**を
   1 枚に並べ、食い違うセルには必ず根拠（ADR か LV）を持たせる。
@@ -48,9 +48,9 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 
 ## 表 A — PORTERS が取る Read パラメータ（出典）
 
-出典は [Resource API 概要][rapi]（共通表）と、語彙が違う 6 エンドポイントの各ページ
+出典は [Resource API 概要][rapi]（共通表）と、語彙が違う 7 エンドポイントの各ページ
 （[Partition][r-partition] / [User][r-user] / [Field][r-field] / [Option][r-option] /
-[Phase][r-phase] / [Attachment][r-attachment]）。エンドポイント固有のパラメータは**表 C**にある。
+[Department][r-department] / [Phase][r-phase] / [Attachment][r-attachment]）。エンドポイント固有のパラメータは**表 C**にある。
 
 | エンドポイント    | partition | count | start | field | condition | keywords | order | itemstate |
 | ----------------- | --------- | ----- | ----- | ----- | --------- | -------- | ----- | --------- |
@@ -58,6 +58,7 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/user`        | ●         | ○     | ○     | ○     | —         | —        | —     | —         |
 | `/v1/field`       | ●         | ○     | ○     | —     | —         | —        | —     | —         |
 | `/v1/option`      | ●         | ○     | —     | —     | —         | —        | —     | —         |
+| `/v1/department`  | ●         | ○     | ○     | ○     | —         | —        | —     | —         |
 | `/v1/candidate`   | ●         | ○     | ○     | ○     | ○         | ○        | ○     | ○         |
 | `/v1/job`         | ●         | ○     | ○     | ○     | ○         | ○        | ○     | ○         |
 | `/v1/client`      | ●         | ○     | ○     | ○     | ○         | ○        | ○     | ○         |
@@ -88,6 +89,7 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/user`        | 送る      | 送る  | 送る  | 送る  | —         | —        | —     | —         |
 | `/v1/field`       | 送る      | 送る  | 送る  | —     | —         | —        | —     | —         |
 | `/v1/option`      | 送る      | 送る  | —     | —     | —         | —        | —     | —         |
+| `/v1/department`  | 送る      | 送る  | 送る  | 送る  | —         | —        | —     | —         |
 | `/v1/candidate`   | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
 | `/v1/job`         | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
 | `/v1/client`      | 送る      | 送る  | 送る  | 送る  | 送る      | 送る     | 送る  | 送る      |
@@ -150,6 +152,7 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/user`        | あり   | あり                 | なし |
 | `/v1/field`       | あり   | あり                 | なし |
 | `/v1/option`      | あり   | なし（`start` 無し） | なし |
+| `/v1/department`  | あり   | あり                 | なし |
 | `/v1/candidate`   | あり   | あり                 | あり |
 | `/v1/job`         | あり   | あり                 | あり |
 | `/v1/client`      | あり   | あり                 | あり |
@@ -164,7 +167,7 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 | `/v1/phase`       | あり   | あり                 | あり |
 | `/v1/attachment`  | あり   | あり                 | あり |
 
-- **マスタ 4 種に `get` が無い**のは [ADR-0022][adr22] の決定（主キー検索の語彙を持たないので、
+- **マスタ 5 種に `get` が無い**のは [ADR-0022][adr22] の決定（主キー検索の語彙を持たないので、
   `condition` で 1 件に絞る形が作れない）。`t.user.current()` は自己同定で、`get` の代わりではない。
 - **`/v1/option` の `searchAll`** は PORTERS 側に `start` が無いので置けない（表 A）。
   ページングの無い Read なので `search` が全件返す。
@@ -228,11 +231,15 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 
 ## この表が測っていないこと
 
+- ~~**`/v1/department`** は表に無い~~ — **解消**（0.20.0）。2026-09-20 の出典再取得で見つかった
+  Department - Read（2025/03 追加）を実装し、表 A / B / D に載せた。固有パラメータは無い
+  （表 C に行は無い）。`partition` ＋ `field` ＋ ページングだけの、いちばん素直なマスタ。
 - **項目（フィールド）の網羅**は D4 の担当（[reference ↔ カタログ突合][refcat]）。本書はパラメータと操作だけを見る。
 - **値の書式**（Data Type ごとの書き方）は [field-data-types][fdt] と [ADR-0016][adr16] の担当。
 - **PORTERS が実際にどう応じるか**は契約後の[ライブ検証][lv]。本書の `⚠️` はすべてそこへ送っている。
 
 [roadmap]: ../roadmap.md
+[r-department]: ../usage/reference/resource-api/resources/department.md
 [adr60]: ../adr/0060-full-resource-coverage-direction.md
 [adr61]: ../adr/0061-phase-resource-surface.md
 [adr76]: ../adr/0076-phase-read-query-surface.md

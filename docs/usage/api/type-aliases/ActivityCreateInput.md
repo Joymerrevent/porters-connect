@@ -8,6 +8,6 @@
 
 > **ActivityCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/activity.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L82)
+Defined in: [src/resources/activity.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L83)
 
 Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable.

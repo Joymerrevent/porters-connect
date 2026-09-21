@@ -45,7 +45,8 @@ const FIELDS = {
   P_Memo: "MultilineText",
   // VERIFY(live): participants is a `User` field that can hold several people. Whether the
   // Read response repeats the nested <User> element (and how) is unconfirmed; the decoder
-  // takes the first, like every other User field. See docs/live-verification.md.
+  // takes the first, like every other User field — so a second participant would be dropped
+  // silently. docs/live-verification.md (LV-27).
   P_EventParticipants: "User",
   P_EventResources: "Option",
   // 削除状態（"0" / "1"）。PORTERS が Data Type を与えていない項目＝`null`（ADR-0056。

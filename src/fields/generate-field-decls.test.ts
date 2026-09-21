@@ -235,6 +235,37 @@ describe("generateFieldDecls", () => {
 
   // The generated text has to name a real builder method for every declarable type. A typo would
   // only show up when a user pasted the output into their project, so pin it here.
+  describe("the time-of-day note on Field Type 12 (ADR-0086)", () => {
+    it("tells the reader a dateTime() may be a clock-time field, since Field Read cannot", async () => {
+      const source = sourceOf({
+        job: [
+          { P_Alias: "Job.U_start", P_Type: 12 },
+          { P_Alias: "Job.U_note", P_Type: 1 },
+        ],
+      });
+
+      const src = await generateFieldDecls(source, ["job"]);
+
+      expect(src).toContain(
+        "    U_start: f.dateTime(), // FT-12: a time-of-day field has this same Field Type — if this one holds a clock time, use decodeTimeOfDay / encodeTimeOfDay",
+      );
+      // Only FT-12 gets it.
+      expect(src).toContain("    U_note: f.singlelineText(),\n");
+    });
+
+    it("follows the field's name when names are included", async () => {
+      const source = sourceOf({
+        job: [{ P_Alias: "Job.U_start", P_Type: 12, P_Name: "開始時刻" }],
+      });
+
+      const src = await generateFieldDecls(source, ["job"], {
+        includeNames: true,
+      });
+
+      expect(src).toContain("    U_start: f.dateTime(), // 開始時刻 — FT-12:");
+    });
+  });
+
   it("emits a builder call for every declarable Data Type", async () => {
     const rows = CUSTOM_DATA_TYPES.map((dataType, i) => ({
       P_Alias: `Job.U_f${String(i).padStart(2, "0")}`,
@@ -245,7 +276,7 @@ describe("generateFieldDecls", () => {
 
     expect(src).toContain("U_f00: f.number(),");
     expect(src).toContain("U_f05: f.url(),"); // not f.uRL()
-    expect(src).toContain("U_f07: f.dateTime(),");
+    expect(src).toContain("U_f07: f.dateTime(), // FT-12:");
     expect(src).toContain("U_f12: f.link(),");
     // Nothing fell through to a comment: every declarable type produced a call.
     expect(src).not.toContain("//  ");

@@ -13,7 +13,9 @@
 // given together on create. A flat required-list cannot express that, so the library sends what
 // it is given and lets PORTERS arbitrate. The chain is spelled out for callers in
 // docs/usage/concepts/limits.md; why we do not encode it is in ADR-0083.
-// VERIFY(live): the exact conditions are doc-only until a contract environment confirms them.
+// VERIFY(live): the conditions are doc-only, and so is *how* PORTERS refuses a violation —
+// whether it comes back as a distinguishable Result Code or is silently accepted in part.
+// docs/live-verification.md (LV-28).
 //
 // `P_ClientOwner` / `P_RecruiterOwner` / `P_JobOwner` / `P_CandidateOwner` / `P_ResumeOwner`
 // are Field Type `Reference` (16) — display-only mirrors of the referenced record's owner,

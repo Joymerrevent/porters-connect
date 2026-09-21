@@ -158,6 +158,11 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
 > システムが管理する標準項目の領分なので、ビルダーに用意していません。
+>
+> **時分型（PORTERS 9.3.0）も `f.dateTime()` で宣言します。** 専用のメソッドはありません — API 上は
+> 年月日時分型と同じ Field Type 12 で、ライブラリは Field Read からも区別できないためです。
+> 値は ISO のまま読み書きし、時刻（`"09:00"` / `"26:00"`）との変換は `decodeTimeOfDay` /
+> `encodeTimeOfDay` で行います（[日時は UTC][datetime] の「時分型」節・[ADR-0086][adr86]）。
 
 **`Image` と `Link` は、この宣言が唯一の入口です**（[ADR-0064][adr64]。[PRD R-4][prd] で
 v1 未対応としていたものを実装しました）。標準項目にこの 2 型は 1 つもなく
@@ -235,6 +240,9 @@ export const myFields = defineFields({
   生成物はリポジトリにコミットされることが多く、テナントの業務語彙が混ざるのは既定にしたくないためです。
 - **ライブラリが宣言できない型はコメントで残ります**（消しません）。「テナントに無い」と
   読み違えないようにするためです。
+- **Field Type 12 の行には注記が付きます**（`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と
+  同じ `12` で、Field Read からは区別できないためです。その項目が時刻だけを持つなら、読み書きで
+  `decodeTimeOfDay` / `encodeTimeOfDay` を当ててください（[日時は UTC][datetime]）。
 
 宣言を作る前に中身だけ見たいときは、`readCustomCatalog` が「alias → Data Type」を返します。
 
@@ -332,6 +340,11 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 - **値の妥当性**（桁数・必須・選択肢に存在するか等）は検査せず、PORTERS 側に委ねます。
   手前で厳しく弾くと、サーバーが受け付ける値をライブラリが落としてしまう可能性があるためです
   （安全側ではなく危険側に倒れる）。
+
+**`verifyFields` は時分型を見分けません。** 時分型も年月日時分型も Field Type は `12` なので、
+`f.dateTime()` と宣言してあれば一致と判定します（それで正しい — 宣言はどちらも `dateTime()` です）。
+どの項目が時分型かは管理者に確かめ、読み書きのところで `decodeTimeOfDay` / `encodeTimeOfDay` を
+当ててください（[日時は UTC][datetime]）。
 
 食い違いの検出は**形の違いだけ**に絞っています（スカラが来るべき所に入れ子、またはその逆）。
 それより細かい違いは許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
@@ -555,3 +568,5 @@ const score = async () => {
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
 [adr73]: ../../adr/0073-throttle-sharing.md
+[adr86]: ../../adr/0086-time-of-day-fields.md
+[datetime]: ../concepts/datetime.md

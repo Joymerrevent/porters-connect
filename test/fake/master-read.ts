@@ -1,17 +1,20 @@
-// The master reads (ADR-0021/0022): Partition / User / Field / Option. Each takes its *own*
-// query vocabulary — no `condition`, no `get(id)`, and only User accepts `field` — so they do not
-// go through `query.ts`; each handler below reads exactly the parameters the reference documents.
+// The master reads (ADR-0021/0022): Partition / User / Field / Option / Department. Each takes
+// its *own* query vocabulary — no `condition`, no `get(id)`, and only User and Department accept
+// `field` — so they do not go through `query.ts`; each handler below reads exactly the parameters
+// the reference documents.
 //
 // Where the data comes from:
-//   Partition  the `partitions` option (the ids this fake accepts)
-//   User       the User master — the same registry that expands `User`-typed fields
-//   Field      the resource descriptors, i.e. the library's own catalogs, turned into Field rows
-//   Option     the seeded Option tree, or the aliases writes have used so far
+//   Partition   the `partitions` option (the ids this fake accepts)
+//   User        the User master — the same registry that expands `User`-typed fields
+//   Field       the resource descriptors, i.e. the library's own catalogs, turned into Field rows
+//   Option      the seeded Option tree, or the aliases writes have used so far
+//   Department  the `departments` option (Connect API 8.2.1+; empty unless seeded)
 //
 // `request_type` semantics are OAuth-method dependent (ADR-0022 fact 4): the fake authenticates
 // like `code_direct`, so Partition `request_type=0` (login partition) answers Result Code 403 and
 // User `request_type=0` answers the App's own user.
 
+import { DEPARTMENT_DESCRIPTOR } from "../../src/resources/department";
 import { FIELD_DESCRIPTOR } from "../../src/resources/field";
 import { fieldTypeValueOf } from "../../src/resources/field-type";
 import { RESOURCE_VALUES } from "../../src/resources/resource-list";
@@ -29,7 +32,7 @@ import {
   type FieldSelection,
   type ItemShape,
 } from "./wire";
-import type { FakeOptionNode, FakeRecord } from "./types";
+import type { FakeDepartment, FakeOptionNode, FakeRecord } from "./types";
 
 /** What the master handlers read from the fake's state. */
 export type MasterContext = {
@@ -39,6 +42,8 @@ export type MasterContext = {
   /** The App's own user — what `request_type=0` resolves to under `code_direct`. */
   currentUserId: number;
   optionTree: FakeOptionNode[];
+  /** Departments `/v1/department` lists, in seed order. */
+  departments: FakeDepartment[];
   /** Data resources, for Field Read (`resource=` selects one). */
   resources: ReadonlyMap<string, ResourceDescriptor>;
   /** Tenant custom fields Field Read should report, by resource path then bare alias. */
@@ -138,6 +143,21 @@ export const readUser: MasterReadHandler = (url, ctx) => {
     )
     .map((u) => ({ ...u }));
   return page(USER_DESCRIPTOR, ctx, records, url);
+};
+
+/** `GET /v1/department?partition=&field=` — the user-department master (no filter; whole list). */
+export const readDepartment: MasterReadHandler = (url, ctx) => {
+  // Dates are the fake's fixed stamp: a real tenant would carry registration/update times, but
+  // nothing in a Department Read depends on their values.
+  const records = ctx.departments.map((d) => ({
+    P_Id: String(d.P_Id),
+    P_Name: d.P_Name ?? `Department ${d.P_Id}`,
+    P_Hidden: d.P_Hidden ?? "0",
+    P_SortNo: d.P_SortNo ?? String(d.P_Id),
+    P_RegistrationDate: "2026/01/01 00:00:00",
+    P_UpdateDate: "2026/01/01 00:00:00",
+  }));
+  return page(DEPARTMENT_DESCRIPTOR, ctx, records, url);
 };
 
 /** `GET /v1/field?partition=&resource=&active=` — a resource's catalog, as Field rows. */

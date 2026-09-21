@@ -85,7 +85,7 @@ export type VerifyFieldsOptions = {
   /**
    * Field Read's `active` filter. Defaults to `-1` (every field) and should stay there: with `1`
    * a field that exists but is currently unused is absent from the response, and its declaration
-   * would be reported as {@link MissingField} — a false alarm (ADR-0069, accept 時の決定).
+   * would be reported as {@link MissingField} — a false alarm (ADR-0069, decided on accept).
    */
   readonly active?: -1 | 0 | 1;
 };

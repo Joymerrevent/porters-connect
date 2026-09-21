@@ -33,6 +33,7 @@ import {
   createRecruiterResource,
   createResumeResource,
   createUserResource,
+  createDepartmentResource,
 } from "./resources";
 import type {
   AttachmentAccessor,
@@ -52,6 +53,7 @@ import type {
   RecruiterResource,
   ResumeResource,
   UserResource,
+  DepartmentResource,
 } from "./resources";
 import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
@@ -143,6 +145,12 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
    */
   readonly attachment: AttachmentAccessor;
   readonly user: UserResource;
+  /**
+   * Department master Read (Connect API 8.2.1+): the user departments a department-typed Link field
+   * or `User.P_Department` points at. Read-only, listed whole — no filter, no `get(id)`. Covered
+   * by the `user_r` scope (PORTERS defines no `department_r`).
+   */
+  readonly department: DepartmentResource;
   /**
    * Field master Read, reached through the resource whose catalog you want:
    * `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
@@ -252,6 +260,12 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
     // default partition; `tenant(id)` re-binds it (ADR-0040 / F-3) by re-running the same factories
     // with `partition` overridden — resources are already `deps.partition`-driven, so the factories
     // need no change. Partition Read is App-level (no partition) and built once below, not here.
+    //
+    // VERIFY(live): re-binding swaps only the `partition` query and keeps the **same token**, so
+    // this assumes one App token reaches every partition it was granted. Whether a token's access
+    // actually spans partitions is unconfirmed — docs/live-verification.md (LV-13). If it does not,
+    // the recommended path becomes a dedicated client per tenant (ADR-0008 案3); the design already
+    // allows that, so only the ergonomics of `tenant(id)` would change.
     const buildScope = (partition: number): TenantScope<C> => {
       const deps = { requester, accessPoint, partition };
       return {
@@ -269,6 +283,7 @@ export class PortersClient<C extends DeclaredCatalogs = EmptyCatalog> {
         resume: createResumeResource(deps, customFor("resume")),
         attachment: createAttachmentAccessor(deps),
         user: createUserResource(deps),
+        department: createDepartmentResource(deps),
         field: createFieldAccessor(deps),
         option: createOptionResource(deps),
       };

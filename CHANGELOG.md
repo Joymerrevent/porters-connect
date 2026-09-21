@@ -5,6 +5,134 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-21
+
+**PORTERS ヘルプセンターを再取得して見つかった、追いついていなかった変更 2 つを埋めた版**です。
+破壊的変更はありません。
+
+2026-06 以来はじめて出典を取り直したところ、**Department - Read API**（2025/03・Connect API 8.2.1）が
+reference にも実装にも無く、**時分型**（2026/08・PORTERS 9.3.0）はライブラリが型として知らない
+状態でした。前者はマスタ 5 種目として実装し、後者は型を増やさず変換関数で扱います（[ADR-0086][adr86]）。
+
+### Added
+
+- **Department マスタの Read（`t.department`）**。ユーザー部署型（Link）項目や `User.P_Department` が
+  指す部署を、Partition 単位で一覧できます（[reference][ref-department]）。
+
+  ```ts
+  const t = porters.tenant(123);
+  const page = await t.department.search(); // { total, count, start, items }
+  for await (const d of t.department.searchAll()) {
+    d.P_Id;
+    d.P_Name;
+    d.P_Hidden;
+    d.P_SortNo;
+    d.P_RegistrationDate;
+    d.P_UpdateDate;
+  }
+  ```
+
+  - **読み取り専用**。PORTERS に Write API はありません（お知らせ記事が「read のみ」と明記）。
+  - クエリは `field` / `count` / `start` だけ。`condition` / `get(id)` / `request_type` はありません
+    （出典が挙げないものは公開しない — 他のマスタと同じ）。
+  - **スコープは `user_r`** です。PORTERS は `department_r` を定義していません。
+  - `field` 省略時は 6 項目すべてを要求します（省略すると PORTERS は `P_Id` しか返さないため）。
+    Link 参照からは読めない `P_Hidden` / `P_SortNo` / 登録日 / 更新日も、ここでは読めます。
+  - 型は `Department` / `DepartmentPage` / `DepartmentSearchQuery` / `DepartmentResource` を公開します。
+
+- **時分型（PORTERS 9.3.0）の項目を扱う変換関数 `decodeTimeOfDay` / `encodeTimeOfDay`**（[ADR-0086][adr86]）。
+  時分型は時刻だけ（`00:00`〜`47:59`）を持つカスタム項目ですが、API 上は年月日時分型と同じ
+  `DateTime`（Field Type 12）で、`1970/01/01` を基準日にした日時として運ばれます（`26:00` は
+  `1970/01/02 02:00:00`）。Field Read からも区別できないため、ライブラリは**型を増やさず**、時分型の
+  項目も `f.dateTime()` のまま宣言して ISO で読み書きします。基準日の規則は、その項目が時分型だと
+  知っているところで変換関数に任せます。
+
+  ```ts
+  const job = await t.job.get(1);
+  const start =
+    job?.U_startTime == null ? null : decodeTimeOfDay(job.U_startTime); // "09:00"
+  await t.job.update(1, { U_startTime: encodeTimeOfDay("26:00") }); // → 1970/01/02 02:00:00
+  await t.job.search({
+    condition: { U_startTime: { ge: encodeTimeOfDay("15:00") } },
+  });
+  ```
+
+  - `encodeTimeOfDay` は `"HH:mm"` / `"HH:mm:ss"`（00:00〜47:59）以外を `PortersConfigError`
+    （`category: "validation"`）で**送る前に**止めます（PORTERS の Code 103 / Code 100 を手前で）。
+  - `decodeTimeOfDay` は基準日以外の ISO を同じエラーで止めます（その項目はたぶん時分型ではない、
+    というヒント付き）。秒が `00` でなければ `"HH:mm:ss"` で保持します。
+  - 既存の型・宣言・読み書きは変わりません。変換を呼ぶかどうかは利用者の責務です。
+
+### Changed
+
+- **`generateFieldDecls` が Field Type 12 の行に注記を出すようになりました**
+  （`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と同じ `12` で Field Read からは区別できないため、
+  宣言が生まれる場所で「時刻だけの項目なら変換関数を」と伝えます。
+- 開発用のフェイクサーバー（npm には同梱しません）に `departments` オプションと `/v1/department` を
+  足しました。
+
+## [0.19.1] - 2026-09-20
+
+**定期レビューで見つけた 7 件を塞いだ版**です。破壊的変更はありません。公開 API の形は変わらず、
+**壊れたときの倒れ方**が変わります。
+
+いちばん重いのは **Option の選択肢 alias から書き込み XML を注入できた**こと。PORTERS は Option の値を
+**タグ名**として書くため（`<FieldAlias><OptionAlias/></FieldAlias>`）、その値を検証していないと
+**呼び出し側が指定していないレコードが書き換わり**ます。要素名はエスケープできないので、検証して弾く形にしました
+（[ADR-0085][adr85]）。
+
+### Security
+
+- **Option の選択肢 alias と書き込み項目 alias を、XML の名前として妥当か検証するようになりました**
+  （[ADR-0085][adr85]）。公開型が `string[]` なので cast なしで到達でき、`<Item>` を閉じて開き直す文字列を
+  渡すと **well-formed な XML に別レコードを名指す `<Item>` を注入**できていました（更新先が
+  すり替わる／頼んでいない項目が書き足される）。
+
+  ```ts
+  await t.candidate.update(10001, { P_Phase: [userInput] });
+  // 不正なら送信前に PortersConfigError（category: "validation"）
+  ```
+
+  通るのは **XML の `Name`**（英数字・`_`・`-`・`.`・日本語など。先頭に数字や `-` は置けません）。
+  出典が alias の書式を定めていないので**XML が許すものはすべて許します** — `Option.P_東京` のような
+  alias も従来どおり書けます。**本文になる値（テキスト項目など）の扱いは変わりません。**
+
+### Fixed
+
+- **`createThrottle` が実質 0 件の上限を受け付けて永久に待つのをやめました**。バケットのトークンは
+  `floor(上限 × safety)` 個で、既定 `safety` は 0.9。そのため `createThrottle({ readPerMin: 1 })` は
+  容量 0 になり、**すべての呼び出しが返らなく**なっていました（例外もログも無し）。
+
+  ```ts
+  createThrottle({ readPerMin: 1 }); // PortersConfigError（floor(1 × 0.9) = 0）
+  createThrottle({ readPerMin: 2 }); // OK（floor(1.8) = 1）
+  ```
+
+  `readPerMin` / `writePerMin` は**正の整数**、`safety` は **0 より大きく 1 以下**。加えて
+  **積が 1 以上**であることを見ます。「1 件も通さない」は `take()` が解決しない `Throttle` を
+  自分で渡してください。
+
+- **XML の解析に失敗したとき、例外が必ず `PortersError` になるようになりました**。
+  `fast-xml-parser` は `prototype` / `constructor` / `__proto__` をタグ名として拒否します。
+  これらは妥当な XML Name なので書き込みは通り、**読み取りだけ**が素の `Error` で落ちていました
+  — `catch (e) { if (e instanceof PortersError) … }` に**引っかからず**、アプリの最上位まで
+  素通りします。Read は `PortersResourceError`、認証は `PortersAuthError` に包み、パーサ自身の
+  説明は `cause` に残します。壊れた XML も同じ経路になりました。
+
+- **公開 API リファレンス**（`docs/usage/api/`）に残っていた日本語を英語に直しました。
+  公開サーフェスの JSDoc は英語、README とガイドは日本語ファースト、という切り分けは変わりません。
+
+### Changed
+
+- **CI が `engines` の下限そのものを走らせるようになりました**。`engines.node` は `>=22.12.0` を
+  約束していますが、テストの Node マトリクスは `22`（その時点の 22 系最新に解決される）だったため、
+  **22.12.0 は一度も走っていません**でした。Node 22.12.0 で動かしている場合、そのバージョンが
+  実際に検証されるようになります。
+
+- 内部の検査を 2 本増やしました（利用者への影響はありません）。契約後に実機確認する仮定と
+  コード側のコメントの対応を双方向で見る検査と、リファレンスへの日本語混入を見る検査です。
+  前者では**コードに仮定があるのに一覧に無いもの**が 3 件見つかり、起票しました。
+
 ## [0.19.0] - 2026-09-18
 
 **CJS からの入口を開け、Node の下限を 22.12 に上げた版**です。**破壊的変更を 1 つ**含みます
@@ -1062,11 +1190,14 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr82]: docs/adr/0082-module-format-and-node-baseline.md
 [limits]: docs/usage/concepts/limits.md
 [failures]: docs/usage/howto/handle-failures.md
+[adr85]: docs/adr/0085-option-alias-validation.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
+[0.19.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.16.0...v0.17.0
@@ -1098,3 +1229,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [gh4]: https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
 [gh5]: https://github.com/advisories/GHSA-7w5x-hrqm-74c2
 [fastcheck]: https://github.com/dubzzz/fast-check
+[adr86]: docs/adr/0086-time-of-day-fields.md
+[ref-department]: docs/usage/reference/resource-api/resources/department.md

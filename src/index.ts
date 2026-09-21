@@ -158,7 +158,8 @@ export type {
 } from "./resources";
 /** The resource names `t.phase.of(...)` accepts (ADR-0061 案5b). */
 export type { ResourceName } from "./resources";
-// 名前 ⇄ 数値の変換（ADR-0079）。項目の値は数値のままなので、名前で書く／読むときに使う。
+// Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
+// declares, so these are what you write and read it with.
 export { resourceNameOf, resourceValueOf } from "./resources";
 export type {
   Sales,
@@ -249,6 +250,12 @@ export type {
   UserSearchQuery,
 } from "./resources";
 export type {
+  Department,
+  DepartmentPage,
+  DepartmentResource,
+  DepartmentSearchQuery,
+} from "./resources";
+export type {
   Field,
   FieldPage,
   FieldAccessor,
@@ -275,3 +282,7 @@ export type {
 
 // Opt-in binary <-> Base64 helpers for Attachment content (ADR-0018).
 export { base64ToBytes, bytesToBase64 } from "./util/base64";
+// Time-of-day (時分型) helpers (ADR-0086): a clock-time field travels as a DateTime anchored to
+// 1970/01/01 and Field Read cannot tell it apart, so the field stays `dateTime()` and the caller
+// who knows which fields are clock times folds the anchor rule in and out with these.
+export { decodeTimeOfDay, encodeTimeOfDay } from "./util/time-of-day";

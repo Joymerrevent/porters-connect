@@ -19,7 +19,7 @@
 // because that is what the generic factory sends for all 13 resources. PORTERS' own Phase sample
 // requests them **bare** (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the
 // parenthesised form for this resource. The response shape is the same either way, so if the
-// parenthesised form is rejected, the fix is the request string only. See docs/live-verification.md.
+// parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
 import {
   createResource,
@@ -85,7 +85,7 @@ export type Phase = ReadRecord<typeof FIELDS>;
 export type PhasePage = ResourcePage<typeof FIELDS>;
 // Phase - Read does not list `keywords` / `itemstate` among its Input Variables — and that is not
 // an editorial omission: of the 17 Read articles, the 11 common data resources list both (in the
-// URL template *and* the table) and Phase / Attachment / the 4 masters list neither (ADR-0076).
+// URL template *and* the table) and Phase / Attachment / the 5 masters list neither (ADR-0076).
 // Sending an unlisted parameter can fail the whole Read (Result Code 100 / 102), so the query type
 // leaves them out.
 //
