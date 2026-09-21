@@ -4,8 +4,9 @@ PORTERS の OAuth は独自仕様です。**普段の運用はライブラリが
 **初回だけは人手によるブラウザでの権限付与**が要ります。本ガイドは公開 API `porters.auth.*` の使い方を
 手順順にまとめます。
 
-設計の根拠は [ADR-0007（OAuth 公開 API）][adr-0007] と [ADR-0034（F-1 実装）][adr-0034]、
 API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照してください。
+
+<!-- 根拠: ADR-0007（OAuth 公開 API）・ADR-0034（実装） -->
 
 ## 全体像（2 つのフェーズ）
 
@@ -123,7 +124,7 @@ const porters = new PortersClient({
 ```
 
 - `tokenStore` が効くのは**既定ストラテジのときだけ**です。独自 `TokenProvider`（後述の「カスタム認証ストラテジ使用時」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
-- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です（[ADR-0012][adr-0012]）。
+- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
 
@@ -216,14 +217,14 @@ try {
 
 ## 関連
 
-- 設計: [ADR-0007（OAuth 公開 API）][adr-0007] / [ADR-0034（F-1 実装）][adr-0034] / [ADR-0012（トークンのキャッシュ/更新）][adr-0012]
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
 - 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [README の「認証」][readme]
 - ほかの目的から探す: [目次][index]
 
-[adr-0007]: ../../adr/0007-oauth-public-surface.md
-[adr-0034]: ../../adr/0034-oauth-public-surface-impl.md
-[adr-0012]: ../../adr/0012-token-cache-refresh.md
+<!-- 根拠:
+- 設計: ADR-0007（OAuth 公開 API） / ADR-0034（F-1 実装） / ADR-0012（トークンのキャッシュ/更新）
+-->
+
 [auth-ref]: ../reference/authentication-api/README.md
 [error-handling]: ./handle-failures.md
 [readme]: ../../../README.md

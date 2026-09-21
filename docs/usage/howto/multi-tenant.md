@@ -2,15 +2,15 @@
 
 PORTERS は **partition（Company DB）スコープの全リクエストで `partition` を要求**します。
 このライブラリでは **`porters.tenant(id)` が partition を束ねる唯一の方法**で、
-**単一テナントでも複数テナントでも同じ形**です（[ADR-0055][adr-0055]）。
+**単一テナントでも複数テナントでも同じ形**です<!-- 根拠: ADR-0055 -->。
 
 `PortersClient` は partition を持ちません。client 直下にあるのは **partition を取らないもの**
 （`auth`・`partition` マスタ・`tenant(id)` 自身）だけです。
 「partition を束ね忘れたクライアント」という状態が**存在しない**ようにしてあります。
 
-設計の根拠は [ADR-0008（マルチテナント）][adr-0008]・[ADR-0021（`tenant` 改名）][adr-0021]・
-[ADR-0040（実装・案1c）][adr-0040]・[ADR-0055（client から partition を外す）][adr-0055]。
-partition の前提は [認証 & マルチテナント設計][bd] を参照してください。
+partition の前提は [Partition の考え方][partition] を参照してください。
+
+<!-- 根拠: ADR-0008（マルチテナント）・ADR-0021（`tenant` 改名）・ADR-0040（実装・案1c）・ADR-0055（client から partition を外す）・基本設計（認証 & マルチテナント） -->
 
 > [!NOTE]
 > **end-user ↔ 会社 ↔ partition のマッピングは利用側（SaaS）の責務**です。ライブラリ（第1層）は
@@ -29,7 +29,7 @@ await t.job.get(jobId);
 ```
 
 カスタム項目を使うなら、その宣言も**ここで一緒に**渡します — `porters.tenant(id, { fields })`
-（[カスタム項目][custom-fields]・[ADR-0087][adr-0087]）。カスタム項目は partition ごとのものなので、
+（[カスタム項目][custom-fields]）<!-- 根拠: ADR-0087 -->。カスタム項目は partition ごとのものなので、
 client には置きません。
 
 App レベルの操作は `porters` 側にあります。
@@ -57,18 +57,18 @@ await t.attachment.of("resume").create(file);
 
 `fields` は**その partition のカスタム項目の宣言**です（[カスタム項目][custom-fields]）。
 partition と宣言の対応を持つのは SaaS 側で、ライブラリは 2 つを同じ呼び出しで受け取るだけです。
-項目構成が同じテナント群なら、同じ宣言を渡します（[ADR-0087][adr-0087]）。
+項目構成が同じテナント群なら、同じ宣言を渡します<!-- 根拠: ADR-0087 -->。
 
 - 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
   activity / contract / sales / process / resume ＋ `phase` ＋ `attachment`）**＋ master Read**
   （user / field / option）。
 - 含まれないもの: `auth`（App 単位・partition 非依存）／`partition` マスタ（partition の**発見**専用で partition を取らない）／
   `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
-- **per-call 引数は設けません**（ADR-0040 案1c）。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。
-  partition の解決は **`tenant(id)` の 1 層だけ**です（client 既定は [ADR-0055][adr-0055] で廃止）。
+- **per-call 引数は設けません**<!-- 根拠: ADR-0040 案1c -->。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。
+  partition の解決は **`tenant(id)` の 1 層だけ**です（client 既定は廃止しました）<!-- 根拠: ADR-0055 -->。
   どちらが効いているかを考える必要はありません。
-- **カスタム項目の宣言も 1 層だけ**です。`tenant(id, { fields })` で渡し、client は宣言を持ちません
-  （[ADR-0087][adr-0087]）。別のテナントの宣言が黙って効くことはありません。
+- **カスタム項目の宣言も 1 層だけ**です。`tenant(id, { fields })` で渡し、client は宣言を持ちません<!-- 根拠: ADR-0087 -->
+  。別のテナントの宣言が黙って効くことはありません。
 
 ## 3. 認証を完全分離したい — テナント別 client
 
@@ -85,12 +85,12 @@ const t = clientFor(tokenStore).tenant(partition);
 ```
 
 > [!NOTE]
-> 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です（[live-verification][lv]）。
+> 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です<!-- 根拠:  -->。
 > 共有トークンで不都合があればテナント別 client に切り替えてください（設計は両対応）。
 >
 > **client を分けてもスロットルは分かれません。** 1 分あたりの上限を自制するバケットは
-> **ホストごと**なので、同じ PORTERS を向く client は何個作っても合計が上限に収まります
-> （[ADR-0073][adr73]）。共有から降りたいときは `throttle` を渡します。
+> **ホストごと**なので、同じ PORTERS を向く client は何個作っても合計が上限に収まります<!-- 根拠: ADR-0073 -->。
+> 共有から降りたいときは `throttle` を渡します。
 
 ## オンボーディング（partition の発見）
 
@@ -106,19 +106,14 @@ const user = await t.user.current(); // ログイン中 user
 
 - 手順: [認証][oauth]（Company DB ごとの権限付与）／[カスタム項目][custom-fields]（テナントで項目が違う場合）
 - 考え方: [Partition（Company DB）とテナント][partition]
-- 決定: [ADR-0008][adr-0008]（マルチテナント）／[ADR-0040][adr-0040]（実装）／[ADR-0055][adr-0055]（client から partition を外す）／
-  [ADR-0087][adr-0087]（カスタム項目の宣言も `tenant()` で束ねる）
 - ほかの目的から探す: [目次][index]
 
-[adr-0008]: ../../adr/0008-multitenancy-partition.md
-[adr-0021]: ../../adr/0021-master-read-resources.md
-[adr-0087]: ../../adr/0087-tenant-scoped-field-declarations.md
-[adr-0055]: ../../adr/0055-partition-binding-guard.md
-[adr-0040]: ../../adr/0040-multitenancy-surface-impl.md
-[bd]: ../../design/basic-design.md
-[lv]: ../../live-verification.md
+<!-- 根拠:
+- 決定: ADR-0008（マルチテナント）／ADR-0040（実装）／ADR-0055（client から partition を外す）／
+  ADR-0087（カスタム項目の宣言も `tenant()` で束ねる）
+-->
+
 [oauth]: ./authenticate.md
 [custom-fields]: custom-fields.md
 [partition]: ../concepts/partition.md
 [index]: ../index.md
-[adr73]: ../../adr/0073-throttle-sharing.md
