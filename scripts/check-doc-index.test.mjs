@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  checkHowtoExits,
+  checkExits,
   checkTarget,
   parseIndexTable,
 } from "./check-doc-index.mjs";
@@ -229,9 +229,10 @@ describe("checkTarget — 対象が存在しないとき", () => {
   });
 });
 
-// 検査⑤（[ADR-0070] 追記）: 目的別の各ページに出口があるか。
+// 検査⑤（[ADR-0070] 追記・階層は [ADR-0088]）: 引く層（主題別・リソース別・実践例）の各ページに出口があるか。
 // 黙って通る検査がいちばん質の悪い壊れ方なので、**落ちるべきケースで落ちる**ことを確かめる。
-describe("checkHowtoExits", () => {
+describe("checkExits", () => {
+  const ONE = ["docs/usage/topics"];
   const page = (related) =>
     `# 何かの手順\n\n本文。\n${related}\n[index]: ../index.md\n[other]: other.md\n`;
 
@@ -249,17 +250,19 @@ describe("checkHowtoExits", () => {
   };
 
   it("関連があり、そこから目次へ戻れれば問題なし", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       reader({ "a.md": WITH_EXIT, "b.md": WITH_EXIT }),
       () => ["a.md", "b.md"],
+      ONE,
     );
     expect(problems).toEqual([]);
   });
 
   it("関連の節が無いページを検出する", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       reader({ "a.md": WITH_EXIT, "b.md": NO_SECTION }),
       () => ["a.md", "b.md"],
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("b.md");
@@ -267,9 +270,11 @@ describe("checkHowtoExits", () => {
   });
 
   it("関連はあるが目次へ戻れないページを検出する", () => {
-    const problems = checkHowtoExits(reader({ "a.md": NO_EXIT }), () => [
-      "a.md",
-    ]);
+    const problems = checkExits(
+      reader({ "a.md": NO_EXIT }),
+      () => ["a.md"],
+      ONE,
+    );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("目次");
   });
@@ -278,36 +283,53 @@ describe("checkHowtoExits", () => {
     const inline = page(
       "\n## 関連\n\n- ほかの目的から探す: [目次](../index.md)\n\n",
     );
-    expect(checkHowtoExits(reader({ "a.md": inline }), () => ["a.md"])).toEqual(
+    expect(checkExits(reader({ "a.md": inline }), () => ["a.md"], ONE)).toEqual(
       [],
     );
   });
 
   it("md 以外は対象外", () => {
-    const problems = checkHowtoExits(reader({ "a.md": WITH_EXIT }), () => [
-      "a.md",
-      "notes.txt",
-    ]);
+    const problems = checkExits(
+      reader({ "a.md": WITH_EXIT }),
+      () => ["a.md", "notes.txt"],
+      ONE,
+    );
     expect(problems).toEqual([]);
   });
 
   // ここから番人（ADR-0071 論点2）。移設して定数を直し忘れると、検査は対象ゼロで
   // 黙って緑になる。「1 件も拾えない」を落とすことで、それを止める。
   it("階層が見つからなければ落ちる（対象ゼロで緑にしない）", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       () => "",
       () => {
         throw new Error("ENOENT");
       },
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("検査対象が見つかりません");
   });
 
+  it("3 階層のうち 1 つだけ消えても落ちる（残りが緑でも隠れない）", () => {
+    const list = (dir) => {
+      if (dir.endsWith("/resources")) throw new Error("ENOENT");
+      return ["a.md"];
+    };
+    const problems = checkExits(reader({ "a.md": WITH_EXIT }), list, [
+      "docs/usage/topics",
+      "docs/usage/resources",
+      "docs/usage/recipes",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/resources");
+  });
+
   it("md が 1 件も無ければ落ちる", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       () => "",
       () => [],
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain(".md がありません");

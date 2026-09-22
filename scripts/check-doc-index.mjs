@@ -344,23 +344,25 @@ export const checkStartChain = (read = readFileSync) => {
 };
 
 /**
- * 目的別（`docs/usage/howto/`）の各ページに**出口**があるかの検査（[ADR-0070] 追記の検査⑤）。
+ * 引く層（目次から引いて 1 本読む層。いまは目的別 `docs/usage/howto/` の 1 階層）の各ページに
+ * **出口**があるかの検査（[ADR-0070] 追記の検査⑤）。階層は `EXIT_DIRS` で持ち、増えても
+ * 階層ごとに番人が働く（[ADR-0088] で 3 階層に広がる）。
  *
- * 入門と違い、目的別は**順序が無い**（目次から目的で引いて 1 本読む層）。だから鎖ではなく、
- * 「読み終えた人が次の目的へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
- * **目次へ戻れる**こと。実測（2026-09-12）では 9 本中 3 本に節が無く、1 本は別名だった。
+ * 入門と違い、引く層は**順序が無い**。だから鎖ではなく、「読み終えた人が次へ移れること」だけを
+ * 見る。具体的には `## 関連` を持ち、その節から**目次へ戻れる**こと。実測（2026-09-12）では
+ * 目的別 9 本中 3 本に節が無く、1 本は別名だった。
  *
- * 検出するもの: `## 関連` の欠落／関連から目次へのリンクが無い／階層ごと消えた（番人）。
+ * 検出するもの: `## 関連` の欠落／関連から目次へのリンクが無い／階層ごと消えた（番人・階層ごと）。
  */
-const HOWTO_DIR = "docs/usage/howto";
-const HOWTO_SECTION = "## 関連";
-const HOWTO_EXIT = "../index.md";
+const EXIT_DIRS = ["docs/usage/howto"];
+const EXIT_SECTION = "## 関連";
+const EXIT_TARGET = "../index.md";
 
 /** `## 関連` 以降（次の `## ` 手前まで）を返す。節が無ければ `undefined`。 */
 const relatedSection = (body) => {
-  const start = body.indexOf(`\n${HOWTO_SECTION}\n`);
+  const start = body.indexOf(`\n${EXIT_SECTION}\n`);
   if (start === -1) return undefined;
-  const rest = body.slice(start + HOWTO_SECTION.length + 2);
+  const rest = body.slice(start + EXIT_SECTION.length + 2);
   const end = rest.indexOf("\n## ");
   return end === -1 ? rest : rest.slice(0, end);
 };
@@ -377,41 +379,47 @@ const linkTargets = (body, section) => {
   return targets;
 };
 
-export const checkHowtoExits = (
+export const checkExits = (
   read = readFileSync,
-  list = () => readdirSync(HOWTO_DIR),
+  list = (dir) => readdirSync(dir),
+  dirs = EXIT_DIRS,
 ) => {
   const problems = [];
-  let files;
-  try {
-    files = list().filter((f) => f.endsWith(".md"));
-  } catch {
-    // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
-    return [
-      `検査対象が見つかりません: ${HOWTO_DIR}（HOWTO_DIR を直すか、移設を戻す）`,
-    ];
-  }
-  if (files.length === 0)
-    return [
-      `${HOWTO_DIR} に .md がありません（HOWTO_DIR を直すか、移設を戻す）`,
-    ];
-
-  for (const f of files.sort()) {
-    const body = read(join(HOWTO_DIR, f), "utf8");
-    const section = relatedSection(body);
-    if (section === undefined) {
+  for (const dir of dirs) {
+    let files;
+    try {
+      files = list(dir).filter((f) => f.endsWith(".md"));
+    } catch {
+      // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
+      // 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
       problems.push(
-        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` の節がありません（読み終えた人の出口が無い）`,
+        `検査対象が見つかりません: ${dir}（EXIT_DIRS を直すか、移設を戻す）`,
       );
       continue;
     }
-    const exits = linkTargets(body, section).filter((t) =>
-      t.startsWith(HOWTO_EXIT),
-    );
-    if (exits.length === 0)
+    if (files.length === 0) {
       problems.push(
-        `${HOWTO_DIR}/${f}: \`${HOWTO_SECTION}\` から目次（${HOWTO_EXIT}）へ戻れません`,
+        `${dir} に .md がありません（EXIT_DIRS を直すか、移設を戻す）`,
       );
+      continue;
+    }
+    for (const f of files.sort()) {
+      const body = read(join(dir, f), "utf8");
+      const section = relatedSection(body);
+      if (section === undefined) {
+        problems.push(
+          `${dir}/${f}: \`${EXIT_SECTION}\` の節がありません（読み終えた人の出口が無い）`,
+        );
+        continue;
+      }
+      const exits = linkTargets(body, section).filter((t) =>
+        t.startsWith(EXIT_TARGET),
+      );
+      if (exits.length === 0)
+        problems.push(
+          `${dir}/${f}: \`${EXIT_SECTION}\` から目次（${EXIT_TARGET}）へ戻れません`,
+        );
+    }
   }
   return problems;
 };
@@ -420,7 +428,7 @@ export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...targets.flatMap((t) => checkTarget(t, read)),
   ...checkUserDocIndex(read),
   ...checkStartChain(read),
-  ...checkHowtoExits(read),
+  ...checkExits(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。
