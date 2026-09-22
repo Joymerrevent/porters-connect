@@ -116,10 +116,12 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 - [ ] **使い方ドキュメントを 5 章に組み直す**（[ADR-0088][adr88]・2026-09-22 accepted）。ADR の「実装の分け方」
       どおり **PR 4 本を順に**（積まない＝squash で毎回衝突するため）:
-  - [ ] ① 階層と検査 — `topics/` `resources/` `recipes/` の新設・既存ページは `git mv` だけ・検査①③④⑤の
-        階層差し替えと番人・検査⑥（リソース別 ↔ `TenantScope` のアクセサの両方向突合）
-  - [ ] ② リソース別 — `resources/README.md` ＋ 18 本。`index.md` の表を消す
-  - [ ] ③ 主題別と実践例 — 統合・書き直し（ADR「書き直す箇所」）。`concepts/` が消える
+  - [ ] ① 階層と検査 — `topics/` `resources/` `recipes/` の新設・既存ページは `git mv` だけ（`howto/` と
+        `concepts/` はここで消える）・検査①③④⑤の階層差し替えと番人。ADR の表から漏れていた
+        `aliases.md` は `topics/fields.md` に（ADR の訂正注記）
+  - [ ] ② リソース別 — `resources/README.md` ＋ 18 本。`index.md` の表を消す。検査⑥（リソース別 ↔
+        `TenantScope` のアクセサの両方向突合）はここ（① では 17 本が無く赤になるため）
+  - [ ] ③ 主題別と実践例 — 統合・書き直し（ADR「書き直す箇所」）
   - [ ] ④ 目次と README — `index.md` の全面書き直し・README「ドキュメント」節・`docs/README.md`・
         `reference/README.md` の目標の 1 文
 - [x] ✅ 案D **`defineFields` 深掘りの残り**（[ADR-0023][adr23] D5）— **完了**（2026-09-10）。
