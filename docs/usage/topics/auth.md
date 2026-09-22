@@ -1,8 +1,19 @@
-# 認証を通したい（OAuth 認証）
+# 認証とトークン
 
 PORTERS の OAuth は独自仕様です。**普段の運用はライブラリが透過的に自動化**しますが、
-**初回だけは人手によるブラウザでの権限付与**が要ります。本ガイドは公開 API `porters.auth.*` の使い方を
-手順順にまとめます。
+**初回だけは人手によるブラウザでの権限付与**が要ります。このページは公開 API `porters.auth.*` の使い方と、
+トークンの置き場所・失効・自前管理までをまとめます。手順を順に追うなら入門の
+[認証を通して、疎通を確認する][s-auth]から入ってください。
+
+## まず知ること
+
+- **認証は 2 つのフェーズ**です。初回の権限付与は人がブラウザで 1 回（`code`）、以降はライブラリが無人で
+  トークンを取り直します（`code_direct`）。順番は飛ばせません。
+- **認証コードは発行から 30 秒で失効**します。リダイレクトを受けたハンドラの中でそのまま交換します。
+- **トークンは既定でインメモリ**です。プロセスを跨いで共有するなら `tokenStore` を渡します。Refresh Token を
+  外に出すので、置き場所の安全性は利用側の責任です。
+- **認証のリクエストも API アクセス数に数えられます**（月 15 万は契約条件）。永続化すると取り直しが減ります。
+- **トークンを自前で管理する**なら `TokenProvider` を渡します。そのとき `porters.auth.*` の一部は使えません。
 
 API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照してください。
 
@@ -217,8 +228,12 @@ try {
 
 ## 関連
 
+- 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
+- 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
+  [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
+- リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
+- 実践例: [複数テナント][multi-tenant]（認証を分けるか）
 - API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
-- 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [認証を通して、疎通を確認する][s-auth]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -229,3 +244,8 @@ try {
 [error-handling]: ./errors.md
 [s-auth]: ../start/authenticate.md
 [index]: ../index.md
+[limits]: limits.md
+[tenant]: tenant.md
+[r-partition]: ../resources/partition.md
+[r-user]: ../resources/user.md
+[multi-tenant]: ../recipes/multi-tenant.md
