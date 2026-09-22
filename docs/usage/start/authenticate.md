@@ -68,7 +68,7 @@ const page = await porters.tenant(123).candidate.search({ count: 1 });
 
 ## 繋がったことを確かめる
 
-**ここが入門の折り返し点**です。次の 2 行が通れば、契約・設定・権限付与のすべてが揃っています。
+**ここが入門の中間の確認点**です。次の 2 行が通れば、契約・設定・権限付与のすべてが揃っています。
 
 ```ts
 await porters.auth.ensureAuthenticated(); // 通らなければ、この行で落ちる
