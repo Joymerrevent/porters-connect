@@ -1,14 +1,20 @@
-# 削除 API が無いということ
+# 削除と削除済みデータ
 
-**PORTERS Connect API には削除がありません。** データも添付も、API から消す方法は提供されていません
-（PORTERS 自身が「提供予定なし」と書いています）。
+PORTERS Connect API に削除はありません。その代わり、画面で消されたデータは読めます。このページは
+「消せない」ことの扱いと、削除済みを読む `itemstate` / `P_Deleted` の規則をまとめます。
 
-これは制約であると同時に、設計の前提になります。
+## まず知ること
+
+- **削除 API はありません。** データも添付も、API から消す方法は提供されていません（PORTERS 自身が
+  「提供予定なし」と書いています）。このライブラリも `delete()` を**型の上でも持ちません**。
+- **画面で消されたデータは読めます。** `itemstate` で生存／削除済み／両方を選びます。
+- **`itemstate` の省略と `"existing"` は別の意味です。** 省略は PORTERS の既定に従い、`"existing"` は生存のみを
+  要求します。今はどちらも同じ結果ですが、既定が変わったときに違いが出ます。
+- **消せない前提で書きます。** 二重に作らない工夫、`create` を自動で再送しない、テストデータも残る。
 
 ## `delete()` は生えていません
 
-このライブラリは `delete()` を**型の上でも持ちません**。「実行すると失敗するメソッド」を置くと、
-**呼べると思わせてしまう**からです。無い操作は無いままにしてあります。
+「実行すると失敗するメソッド」を置くと、**呼べると思わせてしまう**からです。無い操作は無いままにしてあります。
 
 <!-- doccheck: expect-error -->
 
@@ -19,75 +25,77 @@ await t.candidate.delete(10001);
 
 消す必要があるときは PORTERS の画面で操作します。API の役目ではありません。
 
-## 削除済みのデータは「読める」
+## `itemstate` — 削除済みを読む
 
-消せませんが、**画面で消されたデータは読めます**。`itemstate` で状態を選びます。
-
-| `itemstate` | 読むもの             |
-| ----------- | -------------------- |
-| `existing`  | 生きているデータ     |
-| `deleted`   | **削除済みのデータ** |
-| `all`       | 両方                 |
+| 指定         | 意味                                 | 送信                 |
+| ------------ | ------------------------------------ | -------------------- |
+| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
+| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
+| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
+| `"all"`      | 両方                                 | `itemstate=all`      |
 
 ```ts
-const gone = await t.candidate.search({ itemstate: "deleted" });
+const gone = await t.candidate.search({
+  itemstate: "deleted",
+  condition: { P_UpdateDate: { ge: "2026-07-01T00:00:00Z" } },
+});
 ```
 
-削除済みを読むときは**条件が絞られます**。`condition` に使えるのは
-**`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**で、それ以外を書くと**送信前に弾かれます**
-（PORTERS に送れば 400 になるので、待たずに落とします）。この制限は `"deleted"` だけでなく
-**`"all"` にも掛かります** — 生きているデータが混ざっていても、絞り込みはこの 3 つだけです。
+> **省略と `"existing"` は違います**<!-- 根拠: ADR-0057 -->。いまはどちらも生存レコードのみが返るので
+> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」** という
+> 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
+> `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
+> 省略せず `itemstate: "existing"` と書いてください。
 
-このとき 2 つの項目の意味が変わります。**`P_UpdateDate` は削除された時刻**、
-**`P_UpdatedBy` は最後に編集した人**です。加えて PORTERS が
-**「更新から 90 日以内」の条件を自動で足します** — つまり古い削除は引けません。
+### `"deleted"` / `"all"` のときの制約
 
-## 省略と `existing` は同じではありません
+どちらも送信前に検査します（PORTERS に送れば 400 になるので、待たずに落とします）。
 
-`itemstate` を**省略する**のと `"existing"` を**明示する**のは、このライブラリでは別の意味です<!-- 根拠: ADR-0057 -->。
+- `condition` に使えるのは **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**です。他の項目を指定すると
+  `PortersConfigError`（hint 付き）になります。生きているデータが混ざる `"all"` でも同じです。
+- **更新日は 90 日以内**です。PORTERS が自動で 90 日条件を付けるため、91 日以前を指定すると Result Code `124` が
+  返ります。つまり古い削除は引けません。
 
-- **省略** → 何も送らない。PORTERS 自身の既定（今は `existing`）に任せる
-- **`"existing"`** → そう送る。「生きているものだけが欲しい」と明示する
+このとき 2 つの項目の意味が変わります。**`P_UpdateDate` は削除された日時**、**`P_UpdatedBy` は最後に編集した人**です。
 
-今はどちらも同じ結果ですが、**PORTERS が既定を変えたときに違いが出ます**。生きているデータだけで
-なければ困る処理なら、明示しておいてください。
+## `P_Deleted` — どれが削除済みか
 
-## 削除済みかどうかは `P_Deleted` で分かる
-
-`all` で読むと生きているものと削除済みが混ざります。区別は `P_Deleted` で付けます<!-- 根拠: ADR-0056 -->。
+`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します<!-- 根拠: ADR-0056 -->。
 
 ```ts
 const page = await t.candidate.search({
   itemstate: "all",
   field: ["P_Id", "P_Name", "P_Deleted"],
 });
+const deleted = page.items.filter((c) => c.P_Deleted === "1");
 ```
 
-この項目は**変わり者**です。PORTERS が Data Type を与えていないので、**生の文字列**のまま返ります
-（`"0"` / `"1"`）。`0` や `false` に変換していないのは、どう変換すべきかを**こちらで決めると
-発明になる**からです。
+- **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
+  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
+  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します。
+- **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、試みると
+  コンパイルエラーになります。**書き込みもできません**（`create` / `update` の入力に現れません）。
+- `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは `"P_Deleted"` を明示してください。
 
-そして `field` でしか使えません。`condition` / `order` / 書き込みでは PORTERS が拒否するので、
-**型の上でも書けません**。
+> 応答での出現条件と値域は**実機で未確認**です<!-- 根拠: LV-14 -->。
+> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
 
-> `P_Deleted` の wire 形と出現条件は実機で未確認です<!-- 根拠: LV-14 -->。
-> `field` に明示して読む使い方が、いまのところ最も確実です。
+## 消せないことが使い方に効くところ
 
-## 設計への影響
-
-削除が無いことは、使い方にいくつか波及します。
-
-- **同じデータを二重に作らない工夫が要ります。** 作ってしまっても消せません。`create` は
-  非冪等なので、ライブラリは**結果が不明な場合に自動で再送しません**（[失敗の扱い][handle-failures]）
-- **Process は Job × Resume で一意**です。重複して作ろうとすると PORTERS が Result Code `301` を
-  返します（消せないので、弾かれるのは親切な側です）
-- **テスト環境のデータも消せません。** 契約なしで動かす[フェイクサーバー][fake]が用意してあるのは、
-  これも理由の 1 つです
+- **同じデータを二重に作らない工夫が要ります。** 作ってしまっても消せません。`create` は非冪等なので、
+  ライブラリは**結果が不明な場合に自動で再送しません**（[エラーと再試行][errors]）。
+- **Process は JOB × レジュメで一意**です。重複して作ろうとすると PORTERS が Result Code `301` を返します
+  （消せないので、弾かれるのは親切な側です。[Process][r-process]）。
+- **差分取得で「消えたレコード」は追えません。** 削除は `itemstate: "deleted"` で別に読みます
+  （[毎日の差分同期][sync-batch]）。
+- **テスト環境のデータも消せません。** 契約なしで動かす[フェイクサーバー][testing]が用意してあるのは、
+  これも理由の 1 つです。
 
 ## 関連
 
-- 手順: [検索][search-records]（`itemstate` の指定）／[失敗の扱い][handle-failures]（再送の判断）
-- API 事実: [gotchas][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複）
+- 主題: [検索][query]（クエリの他の要素）／[書き込み][write]（`create` は再送されない）／[エラーと再試行][errors]
+- 実践例: [毎日の差分同期][sync-batch]
+- API 事実: [運用上の落とし穴][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複・`124` 期間）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -96,8 +104,11 @@ const page = await t.candidate.search({
 -->
 
 [codes]: ../reference/resource-api/result-codes.md
-[fake]: testing.md
+[testing]: testing.md
 [gotchas]: ../reference/gotchas.md
-[handle-failures]: errors.md
-[search-records]: query.md
+[errors]: errors.md
+[query]: query.md
+[write]: write.md
+[sync-batch]: ../recipes/sync-batch.md
+[r-process]: ../resources/process.md
 [index]: ../index.md

@@ -1,7 +1,17 @@
-# 条件でレコードを探したい（検索クエリ）
+# 検索（`search` / `searchAll` とクエリ）
 
-データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
-**演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
+データ系リソースの `search` / `searchAll` が受けるクエリの、要素ごとの使い方です。
+
+## まず知ること
+
+- **PORTERS の Read は `field` を指定しないと主キーしか返しません**。ライブラリは省略時に、知っている項目
+  （標準項目と宣言済みのカスタム項目）を補って要求します。
+- **`condition` に書ける演算子は項目の Data Type で決まります**（文字列に `part` / `full`、数値や日時に
+  `ge` / `le` など）。型が合わないものはコンパイルエラーです<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
+- **1 ページは最大 200 件**です。全件が要るときは `searchAll` が 200 件刻みで辿ります。
+- **削除済みのレコードは既定では返りません**。含めるかどうかは `itemstate` で選びます
+  （[削除と削除済みデータ][deleted]）。
+- **マスタ 5 種は語彙が違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
 
 ## 全体像
 
@@ -270,17 +280,11 @@ await t.candidate.search({ keywords: ["東京", "営業"] });
 - **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` で落ちます。
 - 電話番号はハイフンを除いた数字で照合されます。
 
-## `itemstate` — 削除済みの取得
+## `itemstate` — 削除済みを含めるか
 
-**PORTERS に削除 API はありません**。`delete()` を提供しないのはそのためで、
-削除済みレコードを読む唯一の手段がこの `itemstate` です。
-
-| 指定         | 意味                                 | 送信                 |
-| ------------ | ------------------------------------ | -------------------- |
-| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
-| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
-| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
-| `"all"`      | 両方                                 | `itemstate=all`      |
+PORTERS に削除 API はありませんが、画面で消されたレコードは `itemstate` で読めます。
+省略（PORTERS の既定に従う）と `"existing"`（生存のみを要求する）は別の意思表示で、`"deleted"` / `"all"` のときは
+`condition` に使える項目と期間に制限があります。表と制約は[削除と削除済みデータ][deleted]にまとめてあります。
 
 ```ts
 await t.candidate.search({
@@ -288,41 +292,6 @@ await t.candidate.search({
   condition: { P_UpdateDate: { ge: "2026-07-01T00:00:00Z" } },
 });
 ```
-
-> **省略と `"existing"` は違います**<!-- 根拠: ADR-0057 -->。いまはどちらも生存レコードのみが返るので
-> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」** という
-> 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
-> `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
-> 省略せず `itemstate: "existing"` と書いてください。
-
-**`deleted` / `all` のときは制約が 2 つ**あります。どちらも送信前に検査します。
-
-- `condition` に使えるのは **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**。
-  他の項目を指定すると `PortersConfigError`（hint 付き）になります。
-- **更新日は 90 日以内**。PORTERS が自動で 90 日条件を付けるため、
-  91 日以前を指定すると Result Code 124 が返ります。
-
-ここで言う `P_UpdateDate` は**削除された日時**、`P_UpdatedBy` は**最後に編集した人**です。
-
-### `P_Deleted` — どれが削除済みか
-
-`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します。
-
-```ts
-const page = await t.candidate.search({ itemstate: "all" });
-const deleted = page.items.filter((c) => c.P_Deleted === "1");
-```
-
-- **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
-  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
-  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します<!-- 根拠: ADR-0056 -->。
-- **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、
-  試みるとコンパイルエラーになります。**Write もできません**（`create` / `update` の入力に現れません）。
-- `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
-  `"P_Deleted"` を明示してください。
-
-> 応答での出現条件と値域は**実機で未確認**です<!-- 根拠: LV-14 -->。
-> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
 
 ## `count` / `start` — ページング
 
@@ -387,7 +356,9 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 
 ## 関連
 
-- カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
+- 主題: [削除と削除済みデータ][deleted]（`itemstate` と `P_Deleted`）／[項目と値の形][aliases]（alias と読みの形）／
+  [カスタム項目][custom-fields]（`U_` / `A_` を条件に使う）／[書き込み][write]
+- リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 - ほかの目的から探す: [目次][index]
 
@@ -404,3 +375,6 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [rapi]: ../reference/resource-api/README.md
 [partition]: tenant.md
 [index]: ../index.md
+[deleted]: deleted.md
+[write]: write.md
+[resources]: ../resources/README.md
