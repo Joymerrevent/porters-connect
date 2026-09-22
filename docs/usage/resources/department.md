@@ -21,6 +21,8 @@ for await (const d of t.department.searchAll())
 
 ## 固有の注意
 
+このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+
 - **絞り込みはありません**。PORTERS の Department Read が条件を受けないため、Partition の部署を全件読んで手元で選びます。`get(id)` もありません。
 - スコープは **`user_r`** です。PORTERS は `department_r` を定義していません。
 - 項目は `P_Id` / `P_Name` / `P_Hidden` / `P_SortNo` / `P_RegistrationDate` / `P_UpdateDate` の 6 つです。

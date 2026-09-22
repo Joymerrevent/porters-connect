@@ -40,6 +40,16 @@ await files.update(900, { fileName: "new.pdf" }); // 差し替え
 
 `delete` はありません（[削除 API が無いということ][no-delete]）。
 
+## 固有の注意
+
+このリソースだけに効く注意です。それぞれの詳しい説明は、このページの以降の節にあります。
+
+- 読み書きは `of()` で束ねたリソースの添付だけが対象で、束ねた値は作成時の付け先にもなります。
+- `search` / `searchAll` は本体（`content`）を返しません。本体は `get` で 1 件ずつ取ります。
+- 絞り込めるのは `resourceId` と `id` だけで、ファイル名や Mime Type では探せません。
+- 本体は 10MB までです。超えると送信前に `PortersConfigError` で止まります。
+- `createMany` / `updateMany` はありません。付け先（`resourceId`）は更新で変えられません。
+
 ## 追加する
 
 ```ts

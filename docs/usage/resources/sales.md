@@ -27,13 +27,15 @@ const id = await t.sales.create({
 
 ## 固有の注意
 
+このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+
 - **参照 6 項目は条件付き必須**（出典の `※`）で、型では止めません。規則は依存の連鎖です。
   - `P_Job` を指定するなら `P_Recruiter` と `P_Client` も一緒に。`P_Contract` は `P_Client` と一緒に（下位を書くなら上位も）。
   - クリアするときは逆向きで、上位をクリアするなら下位も一緒に。
   - `P_Candidate` と `P_Resume` は新規登録で両方を指定し、整合性が検査されます。更新で片方だけ書くと、更新前のもう一方と突き合わされます。
   - 外れると PORTERS が Result Code で返します（`create` は `P_Owner` だけを必須にしてあり、`P_Client` だけの正当な呼び出しを弾かないため）。
-- 参照型の項目は `P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume` です。既定では参照先の id だけが返り、`expand` を書くと参照先の項目も一緒に読めます（[検索][query]）。
-- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）は**最新フェーズに対する条件**があります（フェーズ日付が最新より新しいこと、など）。同じフェーズなら上書き、違うフェーズなら追加です。履歴そのものは [Phase][r-phase] で読みます。
+- 参照型の項目（`P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume`）は、既定では参照先の id だけが返ります。`expand` で参照先の項目も読めます（[検索][query]）。
+- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）には、最新フェーズに対する条件があります（日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
 
 ## 新規作成の必須項目
 
