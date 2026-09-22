@@ -427,11 +427,75 @@ export const checkExits = (
   return problems;
 };
 
+/**
+ * リソース別（`docs/usage/resources/`）とアクセサの**両方向**突合（[ADR-0088] の検査⑥）。
+ *
+ * 「1 リソース 1 ページ」は、ページが無いリソースがあると引く軸として壊れる。逆にアクセサの無い
+ * ページは 404 と同じ。どちらも黙って起きるので、公開 API の実体（`src/client.ts` の
+ * `readonly x: XResource | XAccessor`＝ `TenantScope` の 17 個と client 直下の `partition`）と
+ * `resources/*.md` を突き合わせる。D4（reference ↔ カタログ）と同じ形。
+ *
+ * 検出するもの: アクセサにページが無い／ページにアクセサが無い／アクセサが 1 つも拾えない・
+ * 階層が消えた（番人）。
+ */
+const CLIENT_SOURCE = "src/client.ts";
+const RESOURCES_DIR = "docs/usage/resources";
+const RESOURCES_INDEX = "README.md";
+
+/** `readonly candidate: CandidateResource<…>` / `readonly phase: PhaseAccessor` の名前を採る。 */
+export const accessorNames = (source) =>
+  [...source.matchAll(/^\s*readonly (\w+): \w+(?:Resource|Accessor)\b/gm)].map(
+    (m) => m[1],
+  );
+
+export const checkResourcePages = (
+  read = readFileSync,
+  list = () => readdirSync(RESOURCES_DIR),
+) => {
+  let source;
+  try {
+    source = read(CLIENT_SOURCE, "utf8");
+  } catch {
+    return [
+      `${CLIENT_SOURCE} が読めません（CLIENT_SOURCE を直すか、移設を戻す）`,
+    ];
+  }
+  const accessors = accessorNames(source);
+  // **番人**。宣言の書き方が変わると 0 個になり、「ページが要るアクセサは無い」と読んで緑になる。
+  if (accessors.length === 0)
+    return [
+      `${CLIENT_SOURCE} にアクセサ（readonly x: XResource | XAccessor）が見つかりません（宣言の形が変わったなら accessorNames を直す）`,
+    ];
+  let pages;
+  try {
+    pages = list()
+      .filter((f) => f.endsWith(".md") && f !== RESOURCES_INDEX)
+      .map((f) => f.replace(/\.md$/, ""));
+  } catch {
+    return [
+      `検査対象が見つかりません: ${RESOURCES_DIR}（RESOURCES_DIR を直すか、移設を戻す）`,
+    ];
+  }
+  const problems = [];
+  for (const a of accessors)
+    if (!pages.includes(a))
+      problems.push(
+        `アクセサ ${a} のページがありません: ${RESOURCES_DIR}/${a}.md（1 リソース 1 ページ）`,
+      );
+  for (const p of pages)
+    if (!accessors.includes(p))
+      problems.push(
+        `ページに対応するアクセサがありません: ${RESOURCES_DIR}/${p}.md（${CLIENT_SOURCE} に無い）`,
+      );
+  return problems;
+};
+
 export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...targets.flatMap((t) => checkTarget(t, read)),
   ...checkUserDocIndex(read),
   ...checkStartChain(read),
   ...checkExits(read),
+  ...checkResourcePages(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。

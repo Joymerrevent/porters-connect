@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   checkExits,
+  checkResourcePages,
+  accessorNames,
   checkTarget,
   parseIndexTable,
 } from "./check-doc-index.mjs";
@@ -333,5 +335,97 @@ describe("checkExits", () => {
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain(".md がありません");
+  });
+});
+
+// 検査⑥（[ADR-0088]）: リソース別のページとアクセサの両方向突合。
+describe("checkResourcePages", () => {
+  const CLIENT = `
+export type TenantScope<C> = {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+  readonly phase: PhaseAccessor;
+  readonly user: UserResource;
+};
+export class PortersClient {
+  readonly auth: AuthApi;
+  readonly partition: PartitionResource;
+  readonly tenant: <C>(partition: number) => TenantScope<C>;
+}
+`;
+  const reader = (source) => (path) => {
+    if (path.endsWith("src/client.ts")) return source;
+    throw new Error(`想定外の読み取り: ${path}`);
+  };
+
+  it("XResource / XAccessor の宣言だけをアクセサとして採る（auth / tenant は違う）", () => {
+    expect(accessorNames(CLIENT)).toEqual([
+      "candidate",
+      "phase",
+      "user",
+      "partition",
+    ]);
+  });
+
+  it("アクセサとページが 1:1 なら問題なし（README.md は一覧なので数えない）", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "README.md",
+      "candidate.md",
+      "phase.md",
+      "user.md",
+      "partition.md",
+    ]);
+    expect(problems).toEqual([]);
+  });
+
+  it("アクセサにページが無ければ落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "README.md",
+      "candidate.md",
+      "phase.md",
+      "user.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("partition.md");
+  });
+
+  it("アクセサの無いページがあれば落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "candidate.md",
+      "phase.md",
+      "user.md",
+      "partition.md",
+      "ghost.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("ghost.md");
+  });
+
+  // 番人。宣言の形が変わる／階層を移す、のどちらでも「対象ゼロで緑」にしない。
+  it("アクセサが 1 つも拾えなければ落ちる", () => {
+    const problems = checkResourcePages(
+      reader("export class PortersClient {}"),
+      () => ["candidate.md"],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("見つかりません");
+  });
+
+  it("階層が見つからなければ落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => {
+      throw new Error("ENOENT");
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/resources");
+  });
+
+  it("client.ts が読めなければ落ちる", () => {
+    const problems = checkResourcePages(
+      () => {
+        throw new Error("ENOENT");
+      },
+      () => ["candidate.md"],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("src/client.ts");
   });
 });
