@@ -1,9 +1,16 @@
-# 日時は UTC で、ISO 8601 で入出力する
+# 日時と時分型
 
-PORTERS の日時は**すべて UTC** です。ローカル時刻ではありません。
+日時の項目を読み書きするときの形と、変換できない値の扱い、時分型の変換関数をまとめます。
 
-このライブラリは境界で **ISO 8601 に正規化**します。つまり**あなたのコードは ISO 8601 だけを
-扱えばよく、PORTERS の書式を知らなくて済みます**。
+## まず知ること
+
+- **PORTERS の日時はすべて UTC** です。ローカル時刻ではありません。
+- **ライブラリは境界で ISO 8601 に正規化**します。利用側のコードは ISO 8601（`2026-09-11T12:00:00Z`）だけを扱えば
+  よく、PORTERS の書式（`yyyy/mm/dd HH:MM:SS`）を知らなくて済みます。
+- **JST などへの変換はしません。** 業務タイムゾーンは利用側の責務です。
+- **変換できない値は、送る前・読んだ直後に弾きます**（`category: "validation"`）。黙って別の値にはしません。
+- **時分型は年月日時分型と同じ Field Type** で返り、Field Read からは見分けが付きません。`decodeTimeOfDay` /
+  `encodeTimeOfDay` で変換します。
 
 ## 変換の対応
 
@@ -152,7 +159,10 @@ await t.job.search({
 
 ## 関連
 
-- 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
+- 主題: [検索][search-records]（`condition` の書き方）／[書き込み][write]（送る前の検査）／[エラーと再試行][handle-failures]／
+  [項目と値の形][fields]
+- リソース別: [Field][r-field]（時分型は Field Read で見分けが付かない）
+- 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` は ISO 8601）
 - API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
 - ほかの目的から探す: [目次][index]
 
@@ -167,3 +177,7 @@ await t.job.search({
 [custom-fields]: custom-fields.md
 [search-records]: query.md
 [index]: ../index.md
+[write]: write.md
+[fields]: fields.md
+[r-field]: ../resources/field.md
+[sync-batch]: ../recipes/sync-batch.md

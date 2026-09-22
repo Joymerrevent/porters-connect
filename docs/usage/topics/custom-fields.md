@@ -1,10 +1,16 @@
-# テナント固有の項目を型付きで扱いたい（`defineFields`）
+# カスタム項目（`defineFields`）
 
 PORTERS のテナントは、標準項目（`P_`）に加えて**テナント固有のカスタム項目**を持ちます。
 ユーザーが作った項目は `U_[Name]`、アプリが作った項目は `A_[Name]` という alias になります。
 
-カスタム項目は**テナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。
-代わりに、**利用側が `defineFields` で宣言する**と、その項目が読み書きの型に現れるようになります<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
+## まず知ること
+
+- **カスタム項目はテナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。**利用側が `defineFields` で
+  宣言する**と、その項目が読み書きの型に現れます<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
+- **宣言は `tenant(id, { fields })` で Partition と一緒に束ねます。** client は宣言を持ちません。
+- **宣言していないカスタム項目は型が受け付けません**（コンパイルエラー）。宣言せずに触る逃げ道は別にあります。
+- **宣言はテナントの実物と突き合わせられます。** `generateFieldDecls` で自動生成し、`verifyFields` で食い違いを見つけます。
+- **テナントが必須にした項目の欠落は型では止まりません。** 必須かどうかは PORTERS 側の設定（`P_Required`）です。
 
 ## 3 行で
 
@@ -411,6 +417,10 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 
 ## 関連
 
+- 主題: [項目と値の形][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を束ねる場所）／
+  [書き込み][write]／[エラーと再試行][error-handling]（宣言と実データの食い違い）
+- リソース別: [Field][r-field]（項目定義の Read）／[Option][r-option]（選択肢の alias）
+- 実践例: [複数テナント][multi-tenancy]（宣言をテナントごとに持つ・スコープを関数に渡す）
 - API 事実: [Field Type / Data Type][fdt]
 - ほかの目的から探す: [目次][index]
 
@@ -428,3 +438,8 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
 [datetime]: datetime.md
+[fields]: fields.md
+[tenant]: tenant.md
+[write]: write.md
+[r-field]: ../resources/field.md
+[r-option]: ../resources/option.md

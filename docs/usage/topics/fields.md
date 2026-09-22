@@ -1,7 +1,15 @@
-# alias と Data Type
+# 項目と値の形（alias と Data Type）
 
 PORTERS の項目は**名前（alias）** と**型（Data Type）** の 2 つで決まります。ここが分かると、
 読み書きで出てくる型のほとんどが説明できます。
+
+## まず知ること
+
+- **alias は 3 種類**です。標準項目 `P_` はライブラリが型を同梱し、カスタム項目 `U_` / `A_` は `defineFields` で宣言すると型が付きます。
+- **接頭辞は書きません。** wire 上は `Person.P_Name` ですが、書くのは `P_Name` だけで、接頭辞はライブラリが付けます。
+- **Data Type が値の形を決めます。** 選択肢は常に配列、ユーザーや参照は読むと入れ子で、書くときは id だけです。
+- **型が無い項目もあります**（`P_Deleted`）。生の文字列のまま返します。
+- **alias はテナントと環境で変わります。** カスタム項目は本番と開発環境でずれることがあり、突合の道具があります。
 
 ## alias は 3 種類ある
 
@@ -139,7 +147,9 @@ PORTERS 自身が注意している点です。
 
 ## 関連
 
-- 手順: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）
+- 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときの形）／
+  [日時と時分型][datetime]／[削除と削除済みデータ][deleted]（`P_Deleted`）
+- リソース別: [User][r-user]／[Department][r-department]（参照値の形）／[Option][r-option]（選択肢の alias）
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 - ほかの目的から探す: [目次][index]
 
@@ -156,3 +166,8 @@ PORTERS 自身が注意している点です。
 [res-list]: ../reference/resource-api/resources-list.md
 [search-records]: query.md
 [index]: ../index.md
+[write]: write.md
+[deleted]: deleted.md
+[r-user]: ../resources/user.md
+[r-department]: ../resources/department.md
+[r-option]: ../resources/option.md
