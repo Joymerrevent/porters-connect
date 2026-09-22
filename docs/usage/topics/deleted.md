@@ -97,8 +97,9 @@ const deleted = page.items.filter((c) => c.P_Deleted === "1");
 ## 関連
 
 - 主題: [検索][query]（クエリの他の要素）／[書き込み][write]（`create` は再送されない）／[エラーと再試行][errors]
+- リソース別: [Process][r-process]（JOB × レジュメで一意。重複は `301`）
 - 実践例: [毎日の差分同期][sync-batch]
-- API 事実: [運用上の落とし穴][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複・`124` 期間）
+- リファレンス: [運用上の落とし穴][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複・`124` 期間）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

@@ -153,7 +153,7 @@ PORTERS 自身が注意している点です。
 - 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときのかたち）／
   [日時と時分型][datetime]／[削除と削除済みデータ][deleted]（`P_Deleted`）
 - リソース別: [User][r-user]／[Department][r-department]（参照値のかたち）／[Option][r-option]（選択肢の alias）
-- API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
+- リファレンス: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

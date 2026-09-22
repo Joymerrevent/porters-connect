@@ -196,7 +196,7 @@ try {
   [上限とレート][limits]（200 件・リクエスト長・画像）／[削除と削除済みデータ][deleted]（作りすぎても消せない）
 - リソース別: [リソースと操作][resources]（必須項目と固有の規則はリソースごと）
 - 実践例: [毎日の差分同期][sync-batch]（差分をまとめて書く）
-- API 事実: [Write API（XML 形式）][write-format]／[Result Code][result-codes]
+- リファレンス: [Write API（XML 形式）][write-format]／[Result Code][result-codes]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

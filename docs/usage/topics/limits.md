@@ -197,20 +197,13 @@ const porters = new PortersClient({
 構築時に `PortersConfigError` で弾かれます。短くすることもできます（対話的なツールで待たせたく
 ないときなど）。
 
-## PORTERS に委ねるもの（型では止めません）
-
-条件付きの必須（出典の `※`）・レコード間の整合性・参照先の実在・テナントが必須にしたカスタム項目は、
-呼び出し時点の型では判定できないので送信し、サーバーの判定を受け取ります。規則は[書き込み][write]の
-「型で止めないもの」に、リソース固有の規則（Sales の参照 6 項目、Process の一意制約、フェーズ項目）は
-それぞれの[リソースのページ][resources]にあります。
-
 ## 関連
 
 - 主題: [書き込み][write]（200 件分割・必須の規則）／[エラーと再試行][errors]（レート超過・タイムアウトの受け取り方）／
   [認証とトークン][auth]（トークンの永続化でアクセス数を減らす）／[カスタム項目][custom-fields]（画像）
 - リソース別: [Attachment][attachments]（10MB・本体は `get` だけ）／[リソースと操作][resources]
 - 実践例: [毎日の差分同期][sync-batch]（レートの自制と差分取得）／[複数テナント][multi-tenant]（スロットルの共有）
-- API 事実: [Write API（XML 形式 / 新規・更新 / Phase）][write-format]／[リソース一覧][resources-list]／[運用上の落とし穴][gotchas]
+- リファレンス: [Write API（XML 形式 / 新規・更新 / Phase）][write-format]／[リソース一覧][resources-list]／[運用上の落とし穴][gotchas]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

@@ -166,7 +166,7 @@ await t.job.search({
   [項目と値のかたち][fields]
 - リソース別: [Field][r-field]（時分型は Field Read で見分けが付かない）
 - 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` は ISO 8601）
-- API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
+- リファレンス: [Field Type / Data Type][fdt]（wire 形式の一次情報）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

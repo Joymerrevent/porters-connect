@@ -236,7 +236,7 @@ try {
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
 - リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
 - 実践例: [複数テナント][multi-tenant]（認証を分けるか）
-- API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
+- リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

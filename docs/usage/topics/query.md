@@ -362,7 +362,8 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - 主題: [削除と削除済みデータ][deleted]（`itemstate` と `P_Deleted`）／[項目と値のかたち][aliases]（alias と読みのかたち）／
   [カスタム項目][custom-fields]（`U_` / `A_` を条件に使う）／[書き込み][write]
 - リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
-- API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
+- 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` の条件で差分を取る）
+- リファレンス: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -381,3 +382,4 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [deleted]: deleted.md
 [write]: write.md
 [resources]: ../resources/README.md
+[sync-batch]: ../recipes/sync-batch.md

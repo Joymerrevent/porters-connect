@@ -115,7 +115,7 @@ try {
 }
 ```
 
-## まず知っておく：ライブラリが自動で面倒を見ること
+## ライブラリが自動で面倒を見ること
 
 下記は**ライブラリ内部で処理**されるため、通常は利用者コードに現れません。現れたときは
 「自動回復でも直らなかった」状態なので、ヒントに従って対処します。
@@ -283,10 +283,6 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 | `config`     | 設定・使い方の誤り                         | 呼び出し前の不正：宣言・オプション・サイズを修正             |
 | `unknown`    | 未知（フェイルセーフ）                     | `code` と `hint` を確認／握り潰さず surface 済み             |
 
-## 症状から引く
-
-「この症状はどの系統で、どう直すか」の早見表は[トラブルシューティング][troubleshooting]に切り出してあります。
-
 ## 宣言型と実データの食い違い（`validation`）
 
 宣言したカスタム項目の Data Type が実物と違うと、読み取りは
@@ -391,11 +387,10 @@ Resource API が返す Result Code と、ライブラリでの `category`・再�
 
 ## 関連
 
-- 症状から引く: [トラブルシューティング][troubleshooting]
 - 主題: [書き込み][write]（部分成功と、再送してよいか）／[上限とレート][limits]（レート超過は `network` で届く）／
   [認証とトークン][auth]（`PortersAuthError` のあと）／[カスタム項目][custom-fields]（宣言と実データの突合）
 - 実践例: [毎日の差分同期][sync-batch]（どこから再開するか）
-- API 事実: [リソース Result Code][result-codes]／[認証エラーコード][auth-errors]／[認証 API のフロー][auth-flow]
+- リファレンス: [トラブルシューティング][troubleshooting]（症状から引く）／[リソース Result Code][result-codes]／[認証エラーコード][auth-errors]／[認証 API のフロー][auth-flow]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

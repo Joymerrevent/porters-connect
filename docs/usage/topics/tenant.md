@@ -115,19 +115,12 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 **これは実機で確かめていません**<!-- 根拠: LV-13 -->。契約環境で不都合が出たら、
 Partition ごとに client を分ける形に切り替えてください — **設計は両対応**にしてあります。
 
-## 覚えておくこと
-
-- **`tenant(id)` を通さないと読み書きできない。** 既定の Partition は無い
-- **`porters.partition` だけは client 直下。** Partition を探すための読み取り
-- **`porters.auth` も client 直下。** 認証は Partition に紐づかない
-- Partition をまたぐ操作は、**それぞれのスコープで**行う
-
 ## 関連
 
 - 主題: [認証とトークン][auth]（権限付与は Company DB ごと）／[カスタム項目][custom-fields]（宣言を Partition ごとに渡す）
 - リソース別: [Partition][r-partition]／[リソースと操作][resources]（スコープの下にあるもの）
 - 実践例: [複数テナント][multi-tenant]（登録・宣言の持ち方・認証の分離・レート）
-- API 事実: [リソース一覧][res-list]（Partition は `/v1/partition`）
+- リファレンス: [リソース一覧][res-list]（Partition は `/v1/partition`）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

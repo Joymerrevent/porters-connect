@@ -413,19 +413,13 @@ const b = porters.tenant(2, { fields: tenantB }); // A_score だけ
 client を分けるのは**トークンを分けたいとき**だけです（[複数テナント][multi-tenancy] の §3）。
 項目が違うだけなら、同じ client（同じトークン）から `tenant(id, { fields })` を作り分けます。
 
-## 宣言したスコープを関数に渡す
-
-`tenant(id, { fields })` のスコープを引数に取る関数は、`TenantScope<typeof fields>` で受けるとカスタム項目が型付きのまま、
-`TenantScope<DeclaredCatalogs>` で受けるとどの宣言でも受けられる代わりに標準項目だけになります。書き方と落とし穴
-（宣言が違うスコープは渡せない・`TenantOptions` の型引数）は[複数テナントの実践例][multi-tenancy]にまとめてあります。
-
 ## 関連
 
 - 主題: [項目と値のかたち][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を束ねる場所）／
   [書き込み][write]／[エラーと再試行][error-handling]（宣言と実データの食い違い）
 - リソース別: [Field][r-field]（項目定義の Read）／[Option][r-option]（選択肢の alias）
 - 実践例: [複数テナント][multi-tenancy]（宣言をテナントごとに持つ・スコープを関数に渡す）
-- API 事実: [Field Type / Data Type][fdt]
+- リファレンス: [Field Type / Data Type][fdt]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
