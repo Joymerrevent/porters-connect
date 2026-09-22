@@ -10,9 +10,9 @@
 
 このリソースで呼べるメソッドと、使い方の例です。
 
-| 読み     |
-| -------- |
-| `search` |
+| 読み     | 書き              |
+| -------- | ----------------- |
+| `search` | —（読み取り専用） |
 
 ```ts
 const options = await t.option.search({ alias: "Option.P_Gender" }); // 部分木を深さ優先で平らに

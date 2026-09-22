@@ -10,9 +10,9 @@ Company DB の一覧です。データはすべていずれかの Partition に�
 
 このリソースで呼べるメソッドと、使い方の例です。
 
-| 読み                   |
-| ---------------------- |
-| `search` / `searchAll` |
+| 読み                   | 書き              |
+| ---------------------- | ----------------- |
+| `search` / `searchAll` | —（読み取り専用） |
 
 ```ts
 const page = await porters.partition.search(); // このトークンでアクセスできる Partition

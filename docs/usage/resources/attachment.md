@@ -27,6 +27,10 @@ const files = t.attachment.of("resume"); // 履歴書に付く添付
 
 このリソースで呼べるメソッドと、使い方の例です。
 
+| 読み                           | 書き                            |
+| ------------------------------ | ------------------------------- |
+| `search` / `searchAll` / `get` | `create` / `update`（一括なし） |
+
 ```ts
 await files.search(); // 一覧（本体は含まない）
 await files.searchAll(); // 200 件を超える一覧を順に（本体は含まない）

@@ -10,9 +10,9 @@ PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目�
 
 このリソースで呼べるメソッドと、使い方の例です。
 
-| 読み                               |
-| ---------------------------------- |
-| `search` / `searchAll` / `current` |
+| 読み                               | 書き              |
+| ---------------------------------- | ----------------- |
+| `search` / `searchAll` / `current` | —（読み取り専用） |
 
 ```ts
 const me = await t.user.current(); // code_direct ではアプリ自身の User
