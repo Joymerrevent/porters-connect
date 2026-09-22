@@ -141,6 +141,7 @@ PORTERS 自身が注意している点です。
 
 - 手順: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 決定: ADR-0004（`P_` は静的・`U_`/`A_` は宣言）／ADR-0016（Data Type の粒度）／
@@ -154,3 +155,4 @@ PORTERS 自身が注意している点です。
 [gotchas]: ../reference/gotchas.md
 [res-list]: ../reference/resource-api/resources-list.md
 [search-records]: ../howto/search-records.md
+[index]: ../index.md

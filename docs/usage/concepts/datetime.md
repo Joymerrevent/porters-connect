@@ -154,6 +154,7 @@ await t.job.search({
 
 - 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
 - API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 要件: PRD R-10（ISO 8601・UTC で正規化し、業務タイムゾーン変換はしない）
@@ -165,3 +166,4 @@ await t.job.search({
 [handle-failures]: ../howto/handle-failures.md
 [custom-fields]: ../howto/custom-fields.md
 [search-records]: ../howto/search-records.md
+[index]: ../index.md

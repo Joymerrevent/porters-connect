@@ -77,6 +77,7 @@ Partition ごとに client を分ける形に切り替えてください — **�
 
 - 手順: [マルチテナント][multi-tenant]（1 プロセスで複数テナントを扱う）／[認証][authenticate]
 - API 事実: [リソース一覧][res-list]（Partition は `/v1/partition`）
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 決定: ADR-0055（`tenant(id)` に束ねる）／ADR-0008（マルチテナント運用）
@@ -86,3 +87,4 @@ Partition ごとに client を分ける形に切り替えてください — **�
 [authenticate]: ../howto/authenticate.md
 [multi-tenant]: ../howto/multi-tenant.md
 [res-list]: ../reference/resource-api/resources-list.md
+[index]: ../index.md

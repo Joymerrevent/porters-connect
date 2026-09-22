@@ -255,11 +255,12 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 > **`contract` に `P_Owner` はありません**。他の全リソースが所有者を必須にしているので目を引きますが、
 > PORTERS が公表している項目一覧に存在しないためです（無い項目を足していません）。
 
-## 出典・関連
+## 関連
 
 - API 事実: [Write API（XML 形式 / 新規・更新 / Phase）][write-format] ／ [リソース一覧][resources-list]
 - エラーの受け取り方: [エラー処理ガイド][error-handling]
 - 一括書き込み: [一括書き込みガイド][bulk]
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 決定: ADR-0041（一括書き込み）／ADR-0045（Write 応答のルート `<Code>`）／
@@ -277,3 +278,4 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [multi-tenant]: ../howto/multi-tenant.md
 [custom-fields]: ../howto/custom-fields.md
 [api-throttle-options]: ../api/type-aliases/ThrottleOptions.md
+[index]: ../index.md

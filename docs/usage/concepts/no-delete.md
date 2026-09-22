@@ -88,6 +88,7 @@ const page = await t.candidate.search({
 
 - 手順: [検索][search-records]（`itemstate` の指定）／[失敗の扱い][handle-failures]（再送の判断）
 - API 事実: [gotchas][gotchas]（削除 API は無い）／[Result Code][codes]（`301` 重複）
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 決定: ADR-0056（`P_Deleted` の型）／ADR-0057（`itemstate` の明示送信）／
@@ -99,3 +100,4 @@ const page = await t.candidate.search({
 [gotchas]: ../reference/gotchas.md
 [handle-failures]: ../howto/handle-failures.md
 [search-records]: ../howto/search-records.md
+[index]: ../index.md
