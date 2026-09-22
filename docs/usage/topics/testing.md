@@ -1,7 +1,8 @@
 # 契約なしでテストする（`createMockTransport`）
 
-PORTERS に繋がなくても、**このライブラリを通るコードはすべてテストできます**。
-公開ヘルパー `createMockTransport` に、PORTERS の代わりの XML を返させるだけです。
+PORTERS に繋がずにテストを書きたいときに読むページです。`createMockTransport` で PORTERS の代わりの応答を返し、
+送った内容と失敗の経路まで検証する方法が分かります。契約や権限付与を待っている間、CI、本番でしか出ない失敗を
+手元で起こすとき、に効きます。
 
 ## まず知ること
 
