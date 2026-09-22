@@ -54,7 +54,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 
 ## 関連
 
-- 主題: [カスタム項目][custom-fields]／[日時と時分型][datetime]
+- 主題: [カスタム項目][custom-fields]（宣言の生成と突合）／[日時と時分型][datetime]（時分型の見分け）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

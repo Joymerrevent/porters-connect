@@ -199,9 +199,7 @@ await files.create({ ...file, content: base64 });
 
 ## 関連
 
-- 手順: [一括書き込み][bulk-write]（データ系リソースの 200 件分割）／[失敗の扱い][handle-failures]
-- 考え方: [上限][limits]（長さ・件数・レート）／[削除 API が無いということ][no-delete]
-- API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
+- 主題: [書き込み][bulk-write]（一括はデータ系だけ）／[エラーと再試行][handle-failures]／[上限とレート][limits]（10MB・タイムアウト）／[削除と削除済みデータ][no-delete]（消せない）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

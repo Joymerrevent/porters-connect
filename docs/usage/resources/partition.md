@@ -52,7 +52,7 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]
+- 主題: [Partition とテナントスコープ][tenant]（`tenant(id)` に渡す id）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

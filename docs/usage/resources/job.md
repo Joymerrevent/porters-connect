@@ -72,7 +72,7 @@ const id = await t.job.create({
 
 ## 関連
 
-- 主題: [検索][query]／[書き込み][write]／[上限とレート][limits]
+- 主題: [検索][query]（条件の書き方）／[書き込み][write]（必須と一括）／[上限とレート][limits]（200 件・リクエスト長）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 
