@@ -23,6 +23,8 @@
 
 ## 組み立て
 
+次の順に組みます。登録 → スコープ → 宣言 → 関数への受け渡し → 認証 → レート、の 6 段です。
+
 ### 1. テナントを登録する（Partition の発見）
 
 初回のブラウザでの権限付与（[認証とトークン][auth]）の直後は、`exchangeAuthorizationCode` で得た
@@ -286,6 +288,7 @@ const batch = new PortersClient({
 - 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
   [カスタム項目][custom-fields]（宣言の書き方・自動生成・突合）／[上限とレート][limits]
 - リソース別: [Partition][r-partition]／[User][r-user]
+- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -300,3 +303,4 @@ const batch = new PortersClient({
 [r-partition]: ../resources/partition.md
 [r-user]: ../resources/user.md
 [index]: ../index.md
+[sync-batch]: sync-batch.md
