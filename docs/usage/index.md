@@ -76,6 +76,14 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 調べる章です。特定のリソースを扱うときに開いてください。呼べるメソッドはリソースごとに違うので、
 まず[リソースと操作][resources]の表で確かめると早いです。
 
+**マスタ系（読み取り専用）** — 先に押さえておくと、データ系の項目に入る値の意味が分かります。
+
+- [Partition（Company DB）][r-partition] — `tenant(id)` に渡す id を探す。client 直下の唯一の読み取り
+- [User（ユーザー）][r-user] — `P_Owner` などユーザー型項目の参照先。`current()` で自己同定
+- [Department（部署）][r-department] — ユーザーの部署。絞り込み無し
+- [Field（項目定義）][r-field] — カスタム項目の発見。先に `of("candidate")` で束ねる
+- [Option（選択肢）][r-option] — 選択肢の alias を知る。`searchAll` は無い
+
 **データ系（読み書き）**
 
 - [Candidate（個人連絡先）][r-candidate] — 求職者本人の連絡先。Staffing ではスタッフ連絡先。項目の接頭辞が `Person.`
@@ -91,14 +99,6 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 - [Resume（レジュメ）][r-resume] — 個人連絡先に属する経歴。Staffing ではスタッフ
 - [Phase（フェーズ履歴）][r-phase] — フェーズの変更履歴。先に `of("candidate")` で束ねる
 - [Attachment（添付ファイル）][r-attachment] — レコードに付くファイル。先に `of("resume")` で束ねる。本体は `get` だけ
-
-**マスタ系（読み取り専用）**
-
-- [Partition（Company DB）][r-partition] — `tenant(id)` に渡す id を探す。client 直下の唯一の読み取り
-- [User（ユーザー）][r-user] — `P_Owner` などユーザー型項目の参照先。`current()` で自己同定
-- [Department（部署）][r-department] — ユーザーの部署。絞り込み無し
-- [Field（項目定義）][r-field] — カスタム項目の発見。先に `of("candidate")` で束ねる
-- [Option（選択肢）][r-option] — 選択肢の alias を知る。`searchAll` は無い
 
 ### 4. 実践例
 
