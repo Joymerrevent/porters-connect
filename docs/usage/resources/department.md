@@ -4,7 +4,7 @@
 - **スコープ**: `user_r`（専用のスコープは無い）
 - **読み取り専用**（PORTERS に Write API が無い）
 
-ユーザーの部署です。ユーザー部署型（Link）の項目と `User.P_Department` の参照先になります。Connect API 8.2.1（2025/03）で追加された読み取り専用のマスタです。
+ユーザーの部署のマスタです。ユーザー部署型（Link）の項目と `User.P_Department` の参照先になります。
 
 ## 呼べるメソッド
 
@@ -24,6 +24,7 @@ for await (const d of t.department.searchAll())
 - **絞り込みはありません**。PORTERS の Department Read が条件を受けないため、Partition の部署を全件読んで手元で選びます。`get(id)` もありません。
 - スコープは **`user_r`** です。PORTERS は `department_r` を定義していません。
 - 項目は `P_Id` / `P_Name` / `P_Hidden` / `P_SortNo` / `P_RegistrationDate` / `P_UpdateDate` の 6 つです。
+- Connect API 8.2.1（2025/03）で追加された、読み取り専用のマスタです。
 
 ## 項目と型
 

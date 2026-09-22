@@ -5,8 +5,7 @@
 - **スコープ**: 読み `candidate_r`（＋ 参照先の `user_r` / `option_r`）／ 書き `candidate_w`
 - **項目の接頭辞**: `Person.`（書くときは付けない）
 
-求職者本人の連絡先です（Staffing ではスタッフ連絡先）。経歴はレジュメ（[Resume][r-resume]）に分かれ、
-レジュメ側の `P_Candidate` が本人を指します。添付は `t.attachment.of("candidate")` で付けます。
+求職者本人の連絡先です。経歴はレジュメ（[Resume][r-resume]）に分かれ、レジュメ側の `P_Candidate` が本人を指します。
 
 ## 呼べるメソッド
 
@@ -30,6 +29,7 @@ await t.candidate.update(id, { P_Name: "山田 花子" });
 
 - **項目の接頭辞がリソース名と違います**（`Person.P_Name`）。書くのは `P_Name` だけで、接頭辞はライブラリが付けます。
 - フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）は**最新フェーズに対する条件**があります（フェーズ日付が最新より新しいこと、など）。同じフェーズなら上書き、違うフェーズなら追加です。履歴そのものは [Phase][r-phase] で読みます。
+- 添付は `t.attachment.of("candidate")` で付けます（[Attachment][r-attachment]）。
 
 ## 新規作成の必須項目
 
@@ -67,3 +67,4 @@ PORTERS の判定に委ねます（[書き込み][write]）。
 [r-resume]: resume.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[r-attachment]: attachment.md

@@ -4,8 +4,7 @@
 - **スコープ**: `field_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-項目の定義です。テナントごとに違うカスタム項目（`U_` / `A_`）は、ここを読んで発見します。`generateFieldDecls` /
-`verifyFields` / `readCustomCatalog` はこのリソースの上に組んであります（[カスタム項目][custom-fields]）。
+各リソースの項目の定義です。テナントごとに違うカスタム項目（`U_` / `A_`）は、ここを読んで見つけます。
 
 ## 呼べるメソッド
 
@@ -28,6 +27,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 - `active` で使用中（`1`）／未使用（`0`）／すべて（`-1`・既定）を選べます。
 - `P_Required` が **テナントが入力必須にしたカスタム項目**を表します。これは `defineFields` の宣言には載らないので、必須の欠落は型では止まりません。
 - 時分型（2026/08 追加）は年月日時分型と同じ Field Type で返るため、**ここからは見分けが付きません**（[日時と時分型][datetime]）。
+- `generateFieldDecls` / `verifyFields` / `readCustomCatalog` はこのリソースの上に組んであります（[カスタム項目][custom-fields]）。
 
 ## 項目と型
 

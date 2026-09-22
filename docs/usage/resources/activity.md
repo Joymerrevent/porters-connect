@@ -5,8 +5,7 @@
 - **スコープ**: 読み `activity_r`（＋ 参照先の `client_r` / `recruiter_r` / `job_r` / `candidate_r` / `resume_r` / `process_r` / `sales_r` / `user_r` / `option_r`）／ 書き `activity_w`
 - **項目の接頭辞**: `Activity.`（書くときは付けない）
 
-レコードに付く活動の記録です。**どのリソースの、どのレコードに付くか**を `P_Resource`（リソースの番号）と
-`P_ResourceId`（そのレコードの id）で持ちます。
+レコードに付く活動の記録です。どのリソースのどのレコードに付くかを、`P_Resource` と `P_ResourceId` で持ちます。
 
 ## 呼べるメソッド
 

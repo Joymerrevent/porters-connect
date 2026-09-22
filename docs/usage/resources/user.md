@@ -4,7 +4,7 @@
 - **スコープ**: `user_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目は、読むとこのリソースの `P_Id` / `P_Type` / `P_Name` / `P_Mail` を入れ子で返し、書くときは `P_Id` の数値だけを受けます。
+PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目の参照先で、読むと入れ子で返り、書くときは id だけを渡します。
 
 ## 呼べるメソッド
 
@@ -28,6 +28,7 @@ const page = await t.user.search({
 - **`current()` は「いま API を実行しているユーザー」**です。ライブラリの既定であるサーバ間認証（`code_direct`）ではアプリ自身の User（ユーザー名 = アプリ名）が返り、ブラウザ経由の認証（`code`）ではログインユーザーが返ります。無ければ `undefined` です。
 - `field` を省略するとカタログ上の 17 項目が返ります。`[]` を渡すと PORTERS 本来の既定（4 項目）になります。
 - `P_Department` は部署（[Department][r-department]）を指します。
+- 読むと `P_Id` / `P_Type` / `P_Name` / `P_Mail` の入れ子で返り、書くときは `P_Id` の数値だけを渡します（[項目と値のかたち][fields]）。
 
 ## 項目と型
 

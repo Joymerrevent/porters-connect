@@ -5,7 +5,7 @@
 - **スコープ**: 読み `process_r`（＋ 参照先の `candidate_r` / `resume_r` / `client_r` / `recruiter_r` / `job_r` / `user_r` / `option_r`）／ 書き `process_w`
 - **項目の接頭辞**: `Process.`（書くときは付けない）
 
-個人連絡先（レジュメ）と JOB を結ぶ選考の記録です（Staffing では引当 / 就業管理）。
+個人連絡先（レジュメ）と JOB を結ぶ選考の記録です。JOB とレジュメの組ごとに 1 件だけ作れます。
 
 ## 呼べるメソッド
 

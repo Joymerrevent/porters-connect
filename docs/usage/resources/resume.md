@@ -5,8 +5,7 @@
 - **スコープ**: 読み `resume_r`（＋ 参照先の `candidate_r` / `user_r` / `option_r`）／ 書き `resume_w`
 - **項目の接頭辞**: `Resume.`（書くときは付けない）
 
-個人連絡先に属する経歴です（Staffing ではスタッフ）。本人（`P_Candidate`）に必ず紐づき、選考（[Process][r-process]）と
-添付（`t.attachment.of("resume")`）の付け先になります。
+個人連絡先に属する経歴です。本人（`P_Candidate`）に必ず紐づき、選考（[Process][r-process]）と添付の付け先になります。
 
 ## 呼べるメソッド
 

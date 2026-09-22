@@ -5,8 +5,7 @@
 - **スコープ**: 読み `phase_r`（＋ 束ねたリソースの `_r`）／ 書き `phase_w`
 - **項目の接頭辞**: 無し（`Id` / `Resource` / `ResourceId` / `Phase` / `Date` のように裸）
 
-フェーズの変更履歴です。データ系リソースのレコードごとに積み上がり、`Recent` が `1` の行が最新、`0` が過去です。
-レコード側の `P_Phase` を書き換えると、ここに行が増えます。
+フェーズの変更履歴です。データ系リソースのレコードごとに積み上がり、レコード側の `P_Phase` を書き換えると行が増えます。
 
 ## まず、どのリソースの履歴かを束ねる
 
@@ -42,6 +41,7 @@ console.log(latest?.Phase, latest?.Date);
   （日付が最新より新しいこと、など）を満たさないと PORTERS が Result Code で返します。
 - `JobOwner` / `JobOwnerDepartment` / `ResumeOwner` / `ResumeOwnerDepartment` は **Process と Sales の履歴にだけ**あります。
 - `Id` はリソースごとの連番です。別のリソースの履歴と同じ `Id` が付くことがあります。
+- `Recent` が `1` の行が最新、`0` が過去のフェーズです。
 
 ## 新規作成の必須項目
 

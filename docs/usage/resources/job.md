@@ -5,8 +5,8 @@
 - **スコープ**: 読み `job_r`（＋ 参照先の `recruiter_r` / `client_r` / `user_r` / `option_r`）／ 書き `job_w`
 - **項目の接頭辞**: `Job.`（書くときは付けない）
 
-企業の求人です（Staffing では案件）。企業（`P_Client`）と企業担当者（`P_Recruiter`）に必ず紐づきます。
-個人連絡先との結び付きは [Process][r-process] が持ちます。
+企業の求人です。企業（`P_Client`）と企業担当者（`P_Recruiter`）に必ず紐づき、個人連絡先との結び付きは
+[Process][r-process] が持ちます。
 
 ## 呼べるメソッド
 
