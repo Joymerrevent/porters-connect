@@ -47,8 +47,8 @@ for await (const f of fields.searchAll({ active: 1 })) {
 | 型                                       | 役割                            |
 | ---------------------------------------- | ------------------------------- |
 | [`Field`][t-Field]                       | 読み取った 1 件                 |
-| [`FieldPage`][t-FieldPage]               | `search` の戻り値（1 ページ）   |
 | [`FieldSearchQuery`][t-FieldSearchQuery] | `search` / `searchAll` のクエリ |
+| [`FieldPage`][t-FieldPage]               | `search` の戻り値（1 ページ）   |
 | [`FieldAccessor`][t-FieldAccessor]       | `t.field` の型（`of()` を持つ） |
 | [`FieldResource`][t-FieldResource]       | `t.field.of(...)` の型          |
 

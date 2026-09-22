@@ -43,8 +43,8 @@ for await (const d of t.department.searchAll())
 | 型                                                 | 役割                                   |
 | -------------------------------------------------- | -------------------------------------- |
 | [`Department`][t-Department]                       | 読み取った 1 件                        |
-| [`DepartmentPage`][t-DepartmentPage]               | `search` の戻り値（1 ページ）          |
 | [`DepartmentSearchQuery`][t-DepartmentSearchQuery] | `search` / `searchAll` のクエリ        |
+| [`DepartmentPage`][t-DepartmentPage]               | `search` の戻り値（1 ページ）          |
 | [`DepartmentResource`][t-DepartmentResource]       | `t.department` の型                    |
 | [`DepartmentRef`][t-DepartmentRef]                 | 部署型の項目が読みで返す入れ子のかたち |
 

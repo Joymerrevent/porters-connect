@@ -48,8 +48,8 @@ const page = await t.user.search({
 | 型                                     | 役割                                       |
 | -------------------------------------- | ------------------------------------------ |
 | [`User`][t-User]                       | 読み取った 1 件                            |
-| [`UserPage`][t-UserPage]               | `search` の戻り値（1 ページ）              |
 | [`UserSearchQuery`][t-UserSearchQuery] | `search` / `searchAll` のクエリ            |
+| [`UserPage`][t-UserPage]               | `search` の戻り値（1 ページ）              |
 | [`UserResource`][t-UserResource]       | `t.user` の型                              |
 | [`UserRef`][t-UserRef]                 | ユーザー型の項目が読みで返す入れ子のかたち |
 

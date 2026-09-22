@@ -44,8 +44,8 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 | 型                                               | 役割                                      |
 | ------------------------------------------------ | ----------------------------------------- |
 | [`Partition`][t-Partition]                       | 読み取った 1 件                           |
-| [`PartitionPage`][t-PartitionPage]               | `search` の戻り値（1 ページ）             |
 | [`PartitionSearchQuery`][t-PartitionSearchQuery] | `search` / `searchAll` のクエリ           |
+| [`PartitionPage`][t-PartitionPage]               | `search` の戻り値（1 ページ）             |
 | [`PartitionResource`][t-PartitionResource]       | `porters.partition` の型                  |
 | [`PartitionId`][t-PartitionId]                   | Partition の id の型（`tenant()` の引数） |
 
