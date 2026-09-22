@@ -1,7 +1,12 @@
-# 添付ファイルを扱いたい（`t.attachment`）
+# Attachment（添付ファイル）
 
-添付は **Attachment** という専用リソースです。ほかのリソースとは形が違います
-（接頭辞なし・中身は Base64・`createMany` が無い）ので、ここだけ別に説明します。
+- **アクセサ**: `t.attachment.of("resume")` のように、**どのリソースの添付かを先に束ねる**
+- **画面名**: 各レコードの「添付ファイル」
+- **スコープ**: 読み `attachment_r`（＋ 束ねたリソースの `_r`）／ 書き `attachment_w`
+- **項目の接頭辞**: 無し（`id` / `resource` / `resourceId` / `contentType` / `fileName` / `content`）
+
+レコードに付くファイルです。ほかのリソースとは形が違います（接頭辞なし・中身は Base64・`createMany` が無い）
+ので、このページで通して説明します。
 
 ## まず、どのリソースの添付かを束ねる
 
@@ -19,7 +24,7 @@ const files = t.attachment.of("resume"); // 履歴書に付く添付
 束ねた値は**作成時の付け先にもなります** — `create` に `resource` はありません。
 別のリソースに付けたければ、別の `of()` から作ってください。
 
-## 5 つのメソッド
+## 呼べるメソッド
 
 ```ts
 await files.search(); // 一覧（本体は含まない）
@@ -140,11 +145,19 @@ await files.create({ ...file, content: base64 });
 `createMany` / `updateMany` は Attachment にはありません。ファイルは 1 件ずつです。
 たくさん送るときは、レートの自制（1 分あたり Write 500）がライブラリ側で効きます。
 
+## 項目と型
+
+- 項目と Mime Type: [Attachment の項目][ref-attachment]（PORTERS の事実）
+- 型: [`Attachment`][t-read]（読み取り）／ [`AttachmentCreate`][t-create] ／ [`AttachmentUpdate`][t-update] ／
+  [`AttachmentSearchQuery`][t-query] ／ [`AttachmentWalkQuery`][t-walk] ／ [`AttachmentPage`][t-page] ／
+  [`AttachmentAccessor`][t-accessor] ／ [`AttachmentResource`][t-resource]
+
 ## 関連
 
 - 手順: [一括書き込み][bulk-write]（データ系リソースの 200 件分割）／[失敗の扱い][handle-failures]
 - 考え方: [上限][limits]（長さ・件数・レート）／[削除 API が無いということ][no-delete]
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
+- リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 
 [bulk-write]: ../topics/write.md
@@ -154,3 +167,12 @@ await files.create({ ...file, content: base64 });
 [no-delete]: ../topics/deleted.md
 [res-list]: ../reference/resource-api/resources-list.md
 [index]: ../index.md
+[resources]: README.md
+[t-read]: ../api/type-aliases/Attachment.md
+[t-create]: ../api/type-aliases/AttachmentCreate.md
+[t-update]: ../api/type-aliases/AttachmentUpdate.md
+[t-query]: ../api/type-aliases/AttachmentSearchQuery.md
+[t-walk]: ../api/type-aliases/AttachmentWalkQuery.md
+[t-page]: ../api/type-aliases/AttachmentPage.md
+[t-accessor]: ../api/type-aliases/AttachmentAccessor.md
+[t-resource]: ../api/type-aliases/AttachmentResource.md

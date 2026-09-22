@@ -165,6 +165,6 @@ console.log(page.total, page.items[0]?.P_Name);
 [s-prereq]: docs/usage/start/prerequisites.md
 [test-without-contract]: docs/usage/topics/testing.md
 [docs-index]: docs/usage/index.md
-[docs-resources]: docs/usage/index.md#リソースと操作
+[docs-resources]: docs/usage/resources/README.md
 [docs-readme]: ./docs/README.md
 [ref]: docs/usage/reference/README.md

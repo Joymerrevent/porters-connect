@@ -1,0 +1,62 @@
+# Client（企業）
+
+- **アクセサ**: `t.client`
+- **画面名**: Agent「企業」／ Staffing「企業」
+- **スコープ**: 読み `client_r`（＋ 参照先の `user_r` / `option_r`）／ 書き `client_w`
+- **項目の接頭辞**: `Client.`（書くときは付けない）
+
+取引先の企業です。企業担当者・JOB・契約・コンタクト・商談は、それぞれの `P_Client` でここに紐づきます。
+
+## 呼べるメソッド
+
+| 読み                           | 書き                                              |
+| ------------------------------ | ------------------------------------------------- |
+| `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |
+
+```ts
+const page = await t.client.search({ condition: { P_Name: { part: "商事" } } });
+const id = await t.client.create({ P_Owner: 5, P_Name: "株式会社サンプル" });
+```
+
+`delete` はありません（[削除と削除済みデータ][deleted]）。200 件を超える書き込みは `createMany` / `updateMany` が
+自動で分割します（[書き込み][write]）。
+
+## 固有の注意
+
+- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）は**最新フェーズに対する条件**があります（フェーズ日付が最新より新しいこと、など）。同じフェーズなら上書き、違うフェーズなら追加です。履歴そのものは [Phase][r-phase] で読みます。
+
+## 新規作成の必須項目
+
+`P_Owner`
+
+出典で `●`（無条件で必須）の項目だけを `create` の入力型が要求します。`※`（条件付き必須）は型で止めず、
+PORTERS の判定に委ねます（[書き込み][write]）。
+
+## 項目と型
+
+- 標準項目（`P_`）の一覧: [Client の項目][ref]（PORTERS の事実）
+- 型: [`Client`][t-read]（読み取り）／ [`ClientCreateInput`][t-create] ／ [`ClientUpdateInput`][t-update] ／
+  [`ClientSearchQuery`][t-query] ／ [`ClientPage`][t-page] ／ [`ClientResource`][t-resource]
+- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+
+## 関連
+
+- 主題: [検索][query]／[書き込み][write]／[上限とレート][limits]
+- リソースの一覧: [リソースと操作][resources]
+- ほかの目的から探す: [目次][index]
+
+[ref]: ../reference/resource-api/resources/client.md
+[t-read]: ../api/type-aliases/Client.md
+[t-create]: ../api/type-aliases/ClientCreateInput.md
+[t-update]: ../api/type-aliases/ClientUpdateInput.md
+[t-query]: ../api/type-aliases/ClientSearchQuery.md
+[t-page]: ../api/type-aliases/ClientPage.md
+[t-resource]: ../api/type-aliases/ClientResource.md
+[query]: ../topics/query.md
+[write]: ../topics/write.md
+[limits]: ../topics/limits.md
+[custom-fields]: ../topics/custom-fields.md
+[resources]: README.md
+[index]: ../index.md
+[r-phase]: phase.md
+[deleted]: ../topics/deleted.md

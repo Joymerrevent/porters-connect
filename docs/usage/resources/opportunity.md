@@ -1,0 +1,69 @@
+# Opportunity（商談管理）
+
+- **アクセサ**: `t.opportunity`
+- **画面名**: 「商談管理」
+- **スコープ**: 読み `opportunity_r`（＋ 参照先の `recruiter_r` / `client_r` / `user_r` / `option_r`）／ 書き `opportunity_w`
+- **項目の接頭辞**: `Opportunity.`（書くときは付けない）
+
+企業との商談です。企業（`P_Client`）と企業担当者（`P_Recruiter`）に紐づきます。
+
+## 呼べるメソッド
+
+| 読み                           | 書き                                              |
+| ------------------------------ | ------------------------------------------------- |
+| `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |
+
+```ts
+const page = await t.opportunity.search({
+  expand: { P_Recruiter: ["P_Id", "P_Name"] },
+});
+const id = await t.opportunity.create({
+  P_Owner: 5,
+  P_Client: 20001,
+  P_Recruiter: 30001,
+});
+```
+
+`delete` はありません（[削除と削除済みデータ][deleted]）。200 件を超える書き込みは `createMany` / `updateMany` が
+自動で分割します（[書き込み][write]）。
+
+## 固有の注意
+
+- 参照型の項目は `P_Client` / `P_Recruiter` です。既定では参照先の id だけが返り、`expand` を書くと参照先の項目も一緒に読めます（[検索][query]）。
+- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）は**最新フェーズに対する条件**があります（フェーズ日付が最新より新しいこと、など）。同じフェーズなら上書き、違うフェーズなら追加です。履歴そのものは [Phase][r-phase] で読みます。
+
+## 新規作成の必須項目
+
+`P_Owner` / `P_Client` / `P_Recruiter`
+
+出典で `●`（無条件で必須）の項目だけを `create` の入力型が要求します。`※`（条件付き必須）は型で止めず、
+PORTERS の判定に委ねます（[書き込み][write]）。
+
+## 項目と型
+
+- 標準項目（`P_`）の一覧: [Opportunity の項目][ref]（PORTERS の事実）
+- 型: [`Opportunity`][t-read]（読み取り）／ [`OpportunityCreateInput`][t-create] ／ [`OpportunityUpdateInput`][t-update] ／
+  [`OpportunitySearchQuery`][t-query] ／ [`OpportunityPage`][t-page] ／ [`OpportunityResource`][t-resource]
+- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+
+## 関連
+
+- 主題: [検索][query]／[書き込み][write]／[上限とレート][limits]
+- リソースの一覧: [リソースと操作][resources]
+- ほかの目的から探す: [目次][index]
+
+[ref]: ../reference/resource-api/resources/opportunity.md
+[t-read]: ../api/type-aliases/Opportunity.md
+[t-create]: ../api/type-aliases/OpportunityCreateInput.md
+[t-update]: ../api/type-aliases/OpportunityUpdateInput.md
+[t-query]: ../api/type-aliases/OpportunitySearchQuery.md
+[t-page]: ../api/type-aliases/OpportunityPage.md
+[t-resource]: ../api/type-aliases/OpportunityResource.md
+[query]: ../topics/query.md
+[write]: ../topics/write.md
+[limits]: ../topics/limits.md
+[custom-fields]: ../topics/custom-fields.md
+[resources]: README.md
+[index]: ../index.md
+[r-phase]: phase.md
+[deleted]: ../topics/deleted.md

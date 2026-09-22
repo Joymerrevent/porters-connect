@@ -50,43 +50,15 @@
 | [削除 API が無いということ][no-delete]         | 消せない。ただし削除済みは読める                     |
 | [上限][limits]                                 | 長さ・件数・レートの上限と、どこで弾かれるか         |
 
-## リソースと操作
+## リソース別 — 1 リソース 1 ページ
 
-`porters.tenant(id)` で束ねたスコープ（`t`）の下にあります。**メソッドは行ごとに違う**ので、
-呼べるものはこの表で確かめてください。
+`porters.tenant(id)` で束ねたスコープ（`t`）の下にある 18 リソースを、**同じ節構成**（呼べるメソッド →
+固有の注意 → 新規作成の必須項目 → 項目と型）で 1 ページずつ置いています。**呼べるメソッドは行ごとに違う**ので、
+まず [リソースと操作][resources] の表で確かめてください。
 
-| アクセサ        | リソース       | 読み                           | 書き                                              | 備考                                                                                         |
-| --------------- | -------------- | ------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `t.candidate`   | 個人連絡先     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.job`         | JOB            | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.client`      | 企業           | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.recruiter`   | 企業担当者     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.contact`     | コンタクト     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.opportunity` | 商談管理       | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.activity`    | アクティビティ | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.contract`    | 契約           | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.sales`       | 成約・売上     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.process`     | 選考プロセス   | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | Job × Resume で一意（重複は Result Code `301`）                                              |
-| `t.resume`      | レジュメ       | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                              |
-| `t.phase`       | フェーズ履歴   | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | **先に `t.phase.of("candidate")` で上位リソースを束ねる**                                    |
-| `t.attachment`  | 添付ファイル   | `search` / `searchAll` / `get` | `create` / `update`（**一括なし**）               | **先に `t.attachment.of("resume")` で付け先のリソースを束ねる**。本体は `get` でしか取れない |
-
-**`delete` はどの行にもありません**（[削除 API が無いということ][no-delete]）。`createMany` /
-`updateMany` は 200 件を超えても自動で分割して書きます（使い方は[一括書き込み][bulk-write]）。
-**添付だけ一括を持ちません** — ファイル本体が大きく、1 リクエストが上限に当たるためです。
-
-マスタ 5 種は**読み取り専用**で、語彙も違います（`condition` と `get(id)` がありません）。
-
-| アクセサ            | リソース                | メソッド                           | 備考                                                          |
-| ------------------- | ----------------------- | ---------------------------------- | ------------------------------------------------------------- |
-| `porters.partition` | Partition（Company DB） | `search` / `searchAll`             | **client 直下**（`tenant()` を通さない唯一の読み取り）        |
-| `t.user`            | User                    | `search` / `searchAll` / `current` | `current()` は自己同定（`code_direct` ではアプリ自身の User） |
-| `t.department`      | Department（部署）      | `search` / `searchAll`             | 絞り込み無し（Partition の部署を全件）。スコープは `user_r`   |
-| `t.field`           | Field（項目定義）       | `search` / `searchAll`             | **先に `t.field.of("candidate")` でリソースを束ねる**         |
-| `t.option`          | Option（選択肢）        | `search`                           | **`searchAll` なし**（API に `start` が無いため）             |
-
-引数・戻り値・項目の一覧は [公開 API の全記号][api] が正典です。クエリの書き方は
-[検索][search-records]、添付の扱いは[添付ファイル][attachments]にあります。
+| データ系（読み書き）                                                                                                                                                                                                                                                                                                       | マスタ系（読み取り専用）                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| [Candidate][r-candidate] ／ [Job][r-job] ／ [Client][r-client] ／ [Recruiter][r-recruiter] ／ [Contact][r-contact] ／ [Opportunity][r-opportunity] ／ [Activity][r-activity] ／ [Contract][r-contract] ／ [Sales][r-sales] ／ [Process][r-process] ／ [Resume][r-resume] ／ [Phase][r-phase] ／ [Attachment][r-attachment] | [Partition][r-partition] ／ [User][r-user] ／ [Department][r-department] ／ [Field][r-field] ／ [Option][r-option] |
 
 ## リファレンス — 細部を引く
 
@@ -122,3 +94,22 @@
 [docs-readme]: ../README.md
 [sync-batch]: recipes/sync-batch.md
 [test-without-contract]: topics/testing.md
+[resources]: resources/README.md
+[r-candidate]: resources/candidate.md
+[r-job]: resources/job.md
+[r-client]: resources/client.md
+[r-recruiter]: resources/recruiter.md
+[r-contact]: resources/contact.md
+[r-opportunity]: resources/opportunity.md
+[r-activity]: resources/activity.md
+[r-contract]: resources/contract.md
+[r-sales]: resources/sales.md
+[r-process]: resources/process.md
+[r-resume]: resources/resume.md
+[r-phase]: resources/phase.md
+[r-attachment]: resources/attachment.md
+[r-partition]: resources/partition.md
+[r-user]: resources/user.md
+[r-department]: resources/department.md
+[r-field]: resources/field.md
+[r-option]: resources/option.md
