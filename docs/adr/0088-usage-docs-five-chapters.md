@@ -1,6 +1,6 @@
 # 88. 使い方ドキュメントを「導入／主題別／リソース別／実践例／リファレンス」の 5 章に組み直す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-22
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -14,6 +14,9 @@
 > 起票前の議論（2026-09-22）で stakeholder が 3 点を選択済み: **リソース別は 18 本を 1:1** ／
 > **実践例は 2 本で開始** ／ **「〜したい」は題名から外して目次の索引へ**。既存の本文は使うが、
 > 新しい章立てに合わない箇所は書き直す。
+>
+> **decider が 5 論点すべて推奨案どおり選択し `accepted`（2026-09-22）**。実装は accept 後・別 PR
+> （「実装の分け方」の 4 本を順に）。
 
 ## Context and Problem Statement
 
