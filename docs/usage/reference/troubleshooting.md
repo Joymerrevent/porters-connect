@@ -20,7 +20,7 @@
 | 登録最大件数超過                          | リソース `500`                        | `validation` | 件数を減らす／200 件以下のバッチに分割                                     |
 | `PortersConfigError`（送信前）            | サイズ超過                            | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）       |
 | `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正                  | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                     |
-| **読み取りで宣言型と実データが食い違う**  | —（応答の形が違う）                   | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す   |
+| **読み取りで宣言型と実データが食い違う**  | —（応答のかたちが違う）               | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す   |
 | **書き込み・condition の日時が変換不能**  | —（渡した値の書式）                   | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）               |
 | `new PortersClient(...)` がその場で落ちる | `hostname` / `port` / `scheme` の書式 | `config`     | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                   |
 | `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）              | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                     |
