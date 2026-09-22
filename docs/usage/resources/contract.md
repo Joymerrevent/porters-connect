@@ -1,13 +1,15 @@
 # Contract（契約）
 
+企業との契約です。企業（`P_Client`）に紐づきます。
+
 - **アクセサ**: `t.contract`
 - **画面名**: Agent「契約」／ Staffing「契約」
 - **スコープ**: 読み `contract_r`（＋ 参照先の `client_r` / `user_r` / `option_r`）／ 書き `contract_w`
 - **項目の接頭辞**: `Contract.`（書くときは付けない）
 
-企業との契約です。企業（`P_Client`）に紐づきます。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                           | 書き                                              |
 | ------------------------------ | ------------------------------------------------- |
@@ -32,6 +34,8 @@ const id = await t.contract.create({ P_Client: 20001 }); // P_Owner は無い
 
 ## 新規作成の必須項目
 
+`create` で必ず渡す項目と、渡さないとどこで止まるかです。
+
 | 項目       | 必須の種類        | どこで止まるか               |
 | ---------- | ----------------- | ---------------------------- |
 | `P_Client` | ●（無条件で必須） | 渡さないとコンパイルで止まる |
@@ -43,6 +47,8 @@ const id = await t.contract.create({ P_Client: 20001 }); // P_Owner は無い
 `P_Owner` の項目が無いので、必須は `P_Client` だけです。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 標準項目（`P_`）の一覧: [Contract の項目][ref]（PORTERS の事実）
 - 型: [`Contract`][t-read]（読み取り）／ [`ContractCreateInput`][t-create] ／ [`ContractUpdateInput`][t-update] ／

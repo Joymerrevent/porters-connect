@@ -1,12 +1,14 @@
 # Department（部署）
 
+ユーザーの部署のマスタです。ユーザー部署型（Link）の項目と `User.P_Department` の参照先になります。
+
 - **アクセサ**: `t.department`
 - **スコープ**: `user_r`（専用のスコープは無い）
 - **読み取り専用**（PORTERS に Write API が無い）
 
-ユーザーの部署のマスタです。ユーザー部署型（Link）の項目と `User.P_Department` の参照先になります。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                   |
 | ---------------------- |
@@ -29,6 +31,8 @@ for await (const d of t.department.searchAll())
 - Connect API 8.2.1（2025/03）で追加された、読み取り専用のマスタです。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Department の項目][ref]（PORTERS の事実）
 - 型: [`Department`][t-Department] ／ [`DepartmentPage`][t-DepartmentPage] ／ [`DepartmentSearchQuery`][t-DepartmentSearchQuery] ／ [`DepartmentResource`][t-DepartmentResource] ／ [`DepartmentRef`][t-DepartmentRef]

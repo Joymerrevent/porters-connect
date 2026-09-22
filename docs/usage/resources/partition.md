@@ -1,12 +1,14 @@
 # Partition（Company DB）
 
+Company DB の一覧です。データはすべていずれかの Partition に属し、`porters.tenant(id)` に渡す id はここで探します。
+
 - **アクセサ**: `porters.partition`（**client 直下**。`tenant()` を通さない）
 - **スコープ**: `partition_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-Company DB の一覧です。データはすべていずれかの Partition に属し、`porters.tenant(id)` に渡す id はここで探します。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                   |
 | ---------------------- |
@@ -30,6 +32,8 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 - 項目は `P_Id` / `P_Name` / `P_CompanyId` の 3 つです。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Partition の項目][ref]（PORTERS の事実）
 - 型: [`Partition`][t-Partition] ／ [`PartitionPage`][t-PartitionPage] ／ [`PartitionSearchQuery`][t-PartitionSearchQuery] ／ [`PartitionResource`][t-PartitionResource] ／ [`PartitionId`][t-PartitionId]

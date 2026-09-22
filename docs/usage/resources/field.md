@@ -1,12 +1,14 @@
 # Field（項目定義）
 
+各リソースの項目の定義です。テナントごとに違うカスタム項目（`U_` / `A_`）は、ここを読んで見つけます。
+
 - **アクセサ**: `t.field.of("candidate")` のように、**どのリソースの項目かを先に束ねる**
 - **スコープ**: `field_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-各リソースの項目の定義です。テナントごとに違うカスタム項目（`U_` / `A_`）は、ここを読んで見つけます。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                   |
 | ---------------------- |
@@ -32,6 +34,8 @@ for await (const f of fields.searchAll({ active: 1 })) {
 - `generateFieldDecls` / `verifyFields` / `readCustomCatalog` はこのリソースの上に組んであります（[カスタム項目][custom-fields]）。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Field の項目][ref]（PORTERS の事実）
 - 型: [`Field`][t-Field] ／ [`FieldPage`][t-FieldPage] ／ [`FieldSearchQuery`][t-FieldSearchQuery] ／ [`FieldResource`][t-FieldResource] ／ [`FieldAccessor`][t-FieldAccessor]

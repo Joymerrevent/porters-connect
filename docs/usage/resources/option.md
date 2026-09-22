@@ -1,12 +1,14 @@
 # Option（選択肢）
 
+選択肢のマスタです。選択肢型の項目（`P_Phase` や `U_` の Option 型）に入れる alias は、ここで確かめます。
+
 - **アクセサ**: `t.option`
 - **スコープ**: `option_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-選択肢のマスタです。選択肢型の項目（`P_Phase` や `U_` の Option 型）に入れる alias は、ここで確かめます。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み     |
 | -------- |
@@ -29,6 +31,8 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 - フリーワード検索（`keywords`）は選択肢型の項目を対象にできません。選択肢は `condition` で絞ります。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Option の項目][ref]（PORTERS の事実）
 - 型: [`Option`][t-Option] ／ [`OptionSearchQuery`][t-OptionSearchQuery] ／ [`OptionResource`][t-OptionResource]

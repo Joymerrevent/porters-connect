@@ -1,12 +1,14 @@
 # User（ユーザー）
 
+PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目の参照先で、読むと入れ子で返り、書くときは id だけを渡します。
+
 - **アクセサ**: `t.user`
 - **スコープ**: `user_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
-PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目の参照先で、読むと入れ子で返り、書くときは id だけを渡します。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                               |
 | ---------------------------------- |
@@ -33,6 +35,8 @@ const page = await t.user.search({
 - 読むと `P_Id` / `P_Type` / `P_Name` / `P_Mail` の入れ子で返り、書くときは `P_Id` の数値だけを渡します（[項目と値のかたち][fields]）。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [User の項目][ref]（PORTERS の事実）
 - 型: [`User`][t-User] ／ [`UserPage`][t-UserPage] ／ [`UserSearchQuery`][t-UserSearchQuery] ／ [`UserResource`][t-UserResource] ／ [`UserRef`][t-UserRef]

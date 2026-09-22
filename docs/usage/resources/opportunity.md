@@ -1,13 +1,15 @@
 # Opportunity（商談管理）
 
+企業との商談です。企業（`P_Client`）と企業担当者（`P_Recruiter`）に紐づきます。
+
 - **アクセサ**: `t.opportunity`
 - **画面名**: 「商談管理」
 - **スコープ**: 読み `opportunity_r`（＋ 参照先の `recruiter_r` / `client_r` / `user_r` / `option_r`）／ 書き `opportunity_w`
 - **項目の接頭辞**: `Opportunity.`（書くときは付けない）
 
-企業との商談です。企業（`P_Client`）と企業担当者（`P_Recruiter`）に紐づきます。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                           | 書き                                              |
 | ------------------------------ | ------------------------------------------------- |
@@ -36,6 +38,8 @@ const id = await t.opportunity.create({
 
 ## 新規作成の必須項目
 
+`create` で必ず渡す項目と、渡さないとどこで止まるかです。
+
 | 項目          | 必須の種類        | どこで止まるか               |
 | ------------- | ----------------- | ---------------------------- |
 | `P_Owner`     | ●（無条件で必須） | 渡さないとコンパイルで止まる |
@@ -48,6 +52,8 @@ const id = await t.opportunity.create({
 このリソースに ※（条件付き必須）の項目はありません。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 標準項目（`P_`）の一覧: [Opportunity の項目][ref]（PORTERS の事実）
 - 型: [`Opportunity`][t-read]（読み取り）／ [`OpportunityCreateInput`][t-create] ／ [`OpportunityUpdateInput`][t-update] ／

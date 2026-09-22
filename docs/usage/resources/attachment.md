@@ -1,11 +1,11 @@
 # Attachment（添付ファイル）
 
+レコードに付くファイルです。ほかのリソースとはかたちが違い、一覧では本体を運ばず、1 件ずつ `get` で取ります。
+
 - **アクセサ**: `t.attachment.of("resume")` のように、**どのリソースの添付かを先に束ねる**
 - **画面名**: 各レコードの「添付ファイル」
 - **スコープ**: 読み `attachment_r`（＋ 束ねたリソースの `_r`）／ 書き `attachment_w`
 - **項目の接頭辞**: 無し（`id` / `resource` / `resourceId` / `contentType` / `fileName` / `content`）
-
-レコードに付くファイルです。ほかのリソースとはかたちが違い、一覧では本体を運ばず、1 件ずつ `get` で取ります。
 
 ## まず、どのリソースの添付かを束ねる
 
@@ -24,6 +24,8 @@ const files = t.attachment.of("resume"); // 履歴書に付く添付
 別のリソースに付けたければ、別の `of()` から作ってください。
 
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 ```ts
 await files.search(); // 一覧（本体は含まない）
@@ -156,6 +158,8 @@ await files.create({ ...file, content: base64 });
 
 ## 新規作成の必須項目
 
+`create` で必ず渡す項目と、渡さないとどこで止まるかです。
+
 | 項目          | 必須の種類 | どこで止まるか               |
 | ------------- | ---------- | ---------------------------- |
 | `resourceId`  | ●（必須）  | 渡さないとコンパイルで止まる |
@@ -167,6 +171,8 @@ await files.create({ ...file, content: base64 });
 （付け先 `resourceId` は更新で変えられません）。※（条件付き必須）の項目はありません。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目と Mime Type: [Attachment の項目][ref-attachment]（PORTERS の事実）
 - 型: [`Attachment`][t-read]（読み取り）／ [`AttachmentCreate`][t-create] ／ [`AttachmentUpdate`][t-update] ／

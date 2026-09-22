@@ -1,13 +1,15 @@
 # Activity（アクティビティ）
 
+レコードに付く活動の記録です。どのリソースのどのレコードに付くかを、`P_Resource` と `P_ResourceId` で持ちます。
+
 - **アクセサ**: `t.activity`
 - **画面名**: Agent「アクティビティ」／ Staffing「アクティビティ」
 - **スコープ**: 読み `activity_r`（＋ 参照先の `client_r` / `recruiter_r` / `job_r` / `candidate_r` / `resume_r` / `process_r` / `sales_r` / `user_r` / `option_r`）／ 書き `activity_w`
 - **項目の接頭辞**: `Activity.`（書くときは付けない）
 
-レコードに付く活動の記録です。どのリソースのどのレコードに付くかを、`P_Resource` と `P_ResourceId` で持ちます。
-
 ## 呼べるメソッド
+
+このリソースで呼べるメソッドと、使い方の例です。
 
 | 読み                           | 書き                                              |
 | ------------------------------ | ------------------------------------------------- |
@@ -35,6 +37,8 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 
 ## 新規作成の必須項目
 
+`create` で必ず渡す項目と、渡さないとどこで止まるかです。
+
 | 項目      | 必須の種類        | どこで止まるか               |
 | --------- | ----------------- | ---------------------------- |
 | `P_Owner` | ●（無条件で必須） | 渡さないとコンパイルで止まる |
@@ -46,6 +50,8 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 このリソースに ※（条件付き必須）の項目はありません。
 
 ## 項目と型
+
+標準項目の一覧と、このライブラリの型を引く先です。
 
 - 標準項目（`P_`）の一覧: [Activity の項目][ref]（PORTERS の事実）
 - 型: [`Activity`][t-read]（読み取り）／ [`ActivityCreateInput`][t-create] ／ [`ActivityUpdateInput`][t-update] ／
