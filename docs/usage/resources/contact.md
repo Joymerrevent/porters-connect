@@ -49,10 +49,17 @@ const id = await t.contact.create({ P_Owner: 5, P_Client: 20001 });
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Contact の項目][ref]（PORTERS の事実）
-- 型: [`Contact`][t-read]（読み取り）／ [`ContactCreateInput`][t-create] ／ [`ContactUpdateInput`][t-update] ／
-  [`ContactSearchQuery`][t-query] ／ [`ContactPage`][t-page] ／ [`ContactResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Contact の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                           | 役割                            |
+| -------------------------------------------- | ------------------------------- |
+| [`Contact`][t-Contact]                       | 読み取った 1 件                 |
+| [`ContactCreateInput`][t-ContactCreateInput] | `create` / `createMany` の入力  |
+| [`ContactUpdateInput`][t-ContactUpdateInput] | `update` / `updateMany` の入力  |
+| [`ContactSearchQuery`][t-ContactSearchQuery] | `search` / `searchAll` のクエリ |
+| [`ContactPage`][t-ContactPage]               | `search` の戻り値（1 ページ）   |
+| [`ContactResource`][t-ContactResource]       | `t.contact` の型                |
 
 ## 関連
 
@@ -61,12 +68,6 @@ const id = await t.contact.create({ P_Owner: 5, P_Client: 20001 });
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/contact.md
-[t-read]: ../api/type-aliases/Contact.md
-[t-create]: ../api/type-aliases/ContactCreateInput.md
-[t-update]: ../api/type-aliases/ContactUpdateInput.md
-[t-query]: ../api/type-aliases/ContactSearchQuery.md
-[t-page]: ../api/type-aliases/ContactPage.md
-[t-resource]: ../api/type-aliases/ContactResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -75,3 +76,9 @@ const id = await t.contact.create({ P_Owner: 5, P_Client: 20001 });
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Contact]: ../api/type-aliases/Contact.md
+[t-ContactCreateInput]: ../api/type-aliases/ContactCreateInput.md
+[t-ContactUpdateInput]: ../api/type-aliases/ContactUpdateInput.md
+[t-ContactSearchQuery]: ../api/type-aliases/ContactSearchQuery.md
+[t-ContactPage]: ../api/type-aliases/ContactPage.md
+[t-ContactResource]: ../api/type-aliases/ContactResource.md

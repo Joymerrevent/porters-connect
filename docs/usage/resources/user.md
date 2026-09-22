@@ -43,7 +43,15 @@ const page = await t.user.search({
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [User の項目][ref]（PORTERS の事実）
-- 型: [`User`][t-User] ／ [`UserPage`][t-UserPage] ／ [`UserSearchQuery`][t-UserSearchQuery] ／ [`UserResource`][t-UserResource] ／ [`UserRef`][t-UserRef]
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                     | 役割                                       |
+| -------------------------------------- | ------------------------------------------ |
+| [`User`][t-User]                       | 読み取った 1 件                            |
+| [`UserPage`][t-UserPage]               | `search` の戻り値（1 ページ）              |
+| [`UserSearchQuery`][t-UserSearchQuery] | `search` / `searchAll` のクエリ            |
+| [`UserResource`][t-UserResource]       | `t.user` の型                              |
+| [`UserRef`][t-UserRef]                 | ユーザー型の項目が読みで返す入れ子のかたち |
 
 ## 関連
 

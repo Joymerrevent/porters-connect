@@ -61,10 +61,17 @@ const id = await t.sales.create({
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Sales の項目][ref]（PORTERS の事実）
-- 型: [`Sales`][t-read]（読み取り）／ [`SalesCreateInput`][t-create] ／ [`SalesUpdateInput`][t-update] ／
-  [`SalesSearchQuery`][t-query] ／ [`SalesPage`][t-page] ／ [`SalesResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Sales の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                       | 役割                            |
+| ---------------------------------------- | ------------------------------- |
+| [`Sales`][t-Sales]                       | 読み取った 1 件                 |
+| [`SalesCreateInput`][t-SalesCreateInput] | `create` / `createMany` の入力  |
+| [`SalesUpdateInput`][t-SalesUpdateInput] | `update` / `updateMany` の入力  |
+| [`SalesSearchQuery`][t-SalesSearchQuery] | `search` / `searchAll` のクエリ |
+| [`SalesPage`][t-SalesPage]               | `search` の戻り値（1 ページ）   |
+| [`SalesResource`][t-SalesResource]       | `t.sales` の型                  |
 
 ## 関連
 
@@ -73,12 +80,6 @@ const id = await t.sales.create({
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/sales.md
-[t-read]: ../api/type-aliases/Sales.md
-[t-create]: ../api/type-aliases/SalesCreateInput.md
-[t-update]: ../api/type-aliases/SalesUpdateInput.md
-[t-query]: ../api/type-aliases/SalesSearchQuery.md
-[t-page]: ../api/type-aliases/SalesPage.md
-[t-resource]: ../api/type-aliases/SalesResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -87,3 +88,9 @@ const id = await t.sales.create({
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Sales]: ../api/type-aliases/Sales.md
+[t-SalesCreateInput]: ../api/type-aliases/SalesCreateInput.md
+[t-SalesUpdateInput]: ../api/type-aliases/SalesUpdateInput.md
+[t-SalesSearchQuery]: ../api/type-aliases/SalesSearchQuery.md
+[t-SalesPage]: ../api/type-aliases/SalesPage.md
+[t-SalesResource]: ../api/type-aliases/SalesResource.md

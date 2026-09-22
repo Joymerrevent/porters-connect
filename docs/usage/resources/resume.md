@@ -51,10 +51,17 @@ const id = await t.resume.create({ P_Owner: 5, P_Candidate: 10001 });
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Resume の項目][ref]（PORTERS の事実）
-- 型: [`Resume`][t-read]（読み取り）／ [`ResumeCreateInput`][t-create] ／ [`ResumeUpdateInput`][t-update] ／
-  [`ResumeSearchQuery`][t-query] ／ [`ResumePage`][t-page] ／ [`ResumeResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Resume の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                         | 役割                            |
+| ------------------------------------------ | ------------------------------- |
+| [`Resume`][t-Resume]                       | 読み取った 1 件                 |
+| [`ResumeCreateInput`][t-ResumeCreateInput] | `create` / `createMany` の入力  |
+| [`ResumeUpdateInput`][t-ResumeUpdateInput] | `update` / `updateMany` の入力  |
+| [`ResumeSearchQuery`][t-ResumeSearchQuery] | `search` / `searchAll` のクエリ |
+| [`ResumePage`][t-ResumePage]               | `search` の戻り値（1 ページ）   |
+| [`ResumeResource`][t-ResumeResource]       | `t.resume` の型                 |
 
 ## 関連
 
@@ -63,12 +70,6 @@ const id = await t.resume.create({ P_Owner: 5, P_Candidate: 10001 });
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/resume.md
-[t-read]: ../api/type-aliases/Resume.md
-[t-create]: ../api/type-aliases/ResumeCreateInput.md
-[t-update]: ../api/type-aliases/ResumeUpdateInput.md
-[t-query]: ../api/type-aliases/ResumeSearchQuery.md
-[t-page]: ../api/type-aliases/ResumePage.md
-[t-resource]: ../api/type-aliases/ResumeResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -78,3 +79,9 @@ const id = await t.resume.create({ P_Owner: 5, P_Candidate: 10001 });
 [r-process]: process.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Resume]: ../api/type-aliases/Resume.md
+[t-ResumeCreateInput]: ../api/type-aliases/ResumeCreateInput.md
+[t-ResumeUpdateInput]: ../api/type-aliases/ResumeUpdateInput.md
+[t-ResumeSearchQuery]: ../api/type-aliases/ResumeSearchQuery.md
+[t-ResumePage]: ../api/type-aliases/ResumePage.md
+[t-ResumeResource]: ../api/type-aliases/ResumeResource.md

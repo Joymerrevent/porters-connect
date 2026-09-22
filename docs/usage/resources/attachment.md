@@ -183,10 +183,19 @@ await files.create({ ...file, content: base64 });
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 項目と Mime Type: [Attachment の項目][ref-attachment]（PORTERS の事実）
-- 型: [`Attachment`][t-read]（読み取り）／ [`AttachmentCreate`][t-create] ／ [`AttachmentUpdate`][t-update] ／
-  [`AttachmentSearchQuery`][t-query] ／ [`AttachmentWalkQuery`][t-walk] ／ [`AttachmentPage`][t-page] ／
-  [`AttachmentAccessor`][t-accessor] ／ [`AttachmentResource`][t-resource]
+- 項目の一覧: [Attachment の項目と Mime Type][ref-attachment]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                                 | 役割                                 |
+| -------------------------------------------------- | ------------------------------------ |
+| [`Attachment`][t-Attachment]                       | 読み取った 1 件                      |
+| [`AttachmentCreate`][t-AttachmentCreate]           | `create` の入力                      |
+| [`AttachmentUpdate`][t-AttachmentUpdate]           | `update` の入力                      |
+| [`AttachmentSearchQuery`][t-AttachmentSearchQuery] | `search` のクエリ                    |
+| [`AttachmentWalkQuery`][t-AttachmentWalkQuery]     | `searchAll` のクエリ                 |
+| [`AttachmentPage`][t-AttachmentPage]               | `search` の戻り値（1 ページ）        |
+| [`AttachmentAccessor`][t-AttachmentAccessor]       | `t.attachment` の型（`of()` を持つ） |
+| [`AttachmentResource`][t-AttachmentResource]       | `t.attachment.of(...)` の型          |
 
 ## 関連
 
@@ -204,12 +213,12 @@ await files.create({ ...file, content: base64 });
 [res-list]: ../reference/resource-api/resources-list.md
 [index]: ../index.md
 [resources]: README.md
-[t-read]: ../api/type-aliases/Attachment.md
-[t-create]: ../api/type-aliases/AttachmentCreate.md
-[t-update]: ../api/type-aliases/AttachmentUpdate.md
-[t-query]: ../api/type-aliases/AttachmentSearchQuery.md
-[t-walk]: ../api/type-aliases/AttachmentWalkQuery.md
-[t-page]: ../api/type-aliases/AttachmentPage.md
-[t-accessor]: ../api/type-aliases/AttachmentAccessor.md
-[t-resource]: ../api/type-aliases/AttachmentResource.md
 [write]: ../topics/write.md
+[t-Attachment]: ../api/type-aliases/Attachment.md
+[t-AttachmentCreate]: ../api/type-aliases/AttachmentCreate.md
+[t-AttachmentUpdate]: ../api/type-aliases/AttachmentUpdate.md
+[t-AttachmentSearchQuery]: ../api/type-aliases/AttachmentSearchQuery.md
+[t-AttachmentWalkQuery]: ../api/type-aliases/AttachmentWalkQuery.md
+[t-AttachmentPage]: ../api/type-aliases/AttachmentPage.md
+[t-AttachmentAccessor]: ../api/type-aliases/AttachmentAccessor.md
+[t-AttachmentResource]: ../api/type-aliases/AttachmentResource.md

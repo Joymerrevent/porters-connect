@@ -58,10 +58,17 @@ const id = await t.job.create({
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Job の項目][ref]（PORTERS の事実）
-- 型: [`Job`][t-read]（読み取り）／ [`JobCreateInput`][t-create] ／ [`JobUpdateInput`][t-update] ／
-  [`JobSearchQuery`][t-query] ／ [`JobPage`][t-page] ／ [`JobResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Job の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                   | 役割                            |
+| ------------------------------------ | ------------------------------- |
+| [`Job`][t-Job]                       | 読み取った 1 件                 |
+| [`JobCreateInput`][t-JobCreateInput] | `create` / `createMany` の入力  |
+| [`JobUpdateInput`][t-JobUpdateInput] | `update` / `updateMany` の入力  |
+| [`JobSearchQuery`][t-JobSearchQuery] | `search` / `searchAll` のクエリ |
+| [`JobPage`][t-JobPage]               | `search` の戻り値（1 ページ）   |
+| [`JobResource`][t-JobResource]       | `t.job` の型                    |
 
 ## 関連
 
@@ -70,12 +77,6 @@ const id = await t.job.create({
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/job.md
-[t-read]: ../api/type-aliases/Job.md
-[t-create]: ../api/type-aliases/JobCreateInput.md
-[t-update]: ../api/type-aliases/JobUpdateInput.md
-[t-query]: ../api/type-aliases/JobSearchQuery.md
-[t-page]: ../api/type-aliases/JobPage.md
-[t-resource]: ../api/type-aliases/JobResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -85,3 +86,9 @@ const id = await t.job.create({
 [r-process]: process.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Job]: ../api/type-aliases/Job.md
+[t-JobCreateInput]: ../api/type-aliases/JobCreateInput.md
+[t-JobUpdateInput]: ../api/type-aliases/JobUpdateInput.md
+[t-JobSearchQuery]: ../api/type-aliases/JobSearchQuery.md
+[t-JobPage]: ../api/type-aliases/JobPage.md
+[t-JobResource]: ../api/type-aliases/JobResource.md

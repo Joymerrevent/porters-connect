@@ -52,10 +52,17 @@ const id = await t.contract.create({ P_Client: 20001 }); // P_Owner は無い
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Contract の項目][ref]（PORTERS の事実）
-- 型: [`Contract`][t-read]（読み取り）／ [`ContractCreateInput`][t-create] ／ [`ContractUpdateInput`][t-update] ／
-  [`ContractSearchQuery`][t-query] ／ [`ContractPage`][t-page] ／ [`ContractResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Contract の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                             | 役割                            |
+| ---------------------------------------------- | ------------------------------- |
+| [`Contract`][t-Contract]                       | 読み取った 1 件                 |
+| [`ContractCreateInput`][t-ContractCreateInput] | `create` / `createMany` の入力  |
+| [`ContractUpdateInput`][t-ContractUpdateInput] | `update` / `updateMany` の入力  |
+| [`ContractSearchQuery`][t-ContractSearchQuery] | `search` / `searchAll` のクエリ |
+| [`ContractPage`][t-ContractPage]               | `search` の戻り値（1 ページ）   |
+| [`ContractResource`][t-ContractResource]       | `t.contract` の型               |
 
 ## 関連
 
@@ -64,12 +71,6 @@ const id = await t.contract.create({ P_Client: 20001 }); // P_Owner は無い
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/contract.md
-[t-read]: ../api/type-aliases/Contract.md
-[t-create]: ../api/type-aliases/ContractCreateInput.md
-[t-update]: ../api/type-aliases/ContractUpdateInput.md
-[t-query]: ../api/type-aliases/ContractSearchQuery.md
-[t-page]: ../api/type-aliases/ContractPage.md
-[t-resource]: ../api/type-aliases/ContractResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -77,3 +78,9 @@ const id = await t.contract.create({ P_Client: 20001 }); // P_Owner は無い
 [resources]: README.md
 [index]: ../index.md
 [deleted]: ../topics/deleted.md
+[t-Contract]: ../api/type-aliases/Contract.md
+[t-ContractCreateInput]: ../api/type-aliases/ContractCreateInput.md
+[t-ContractUpdateInput]: ../api/type-aliases/ContractUpdateInput.md
+[t-ContractSearchQuery]: ../api/type-aliases/ContractSearchQuery.md
+[t-ContractPage]: ../api/type-aliases/ContractPage.md
+[t-ContractResource]: ../api/type-aliases/ContractResource.md

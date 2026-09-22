@@ -54,10 +54,17 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Activity の項目][ref]（PORTERS の事実）
-- 型: [`Activity`][t-read]（読み取り）／ [`ActivityCreateInput`][t-create] ／ [`ActivityUpdateInput`][t-update] ／
-  [`ActivitySearchQuery`][t-query] ／ [`ActivityPage`][t-page] ／ [`ActivityResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Activity の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                             | 役割                            |
+| ---------------------------------------------- | ------------------------------- |
+| [`Activity`][t-Activity]                       | 読み取った 1 件                 |
+| [`ActivityCreateInput`][t-ActivityCreateInput] | `create` / `createMany` の入力  |
+| [`ActivityUpdateInput`][t-ActivityUpdateInput] | `update` / `updateMany` の入力  |
+| [`ActivitySearchQuery`][t-ActivitySearchQuery] | `search` / `searchAll` のクエリ |
+| [`ActivityPage`][t-ActivityPage]               | `search` の戻り値（1 ページ）   |
+| [`ActivityResource`][t-ActivityResource]       | `t.activity` の型               |
 
 ## 関連
 
@@ -66,12 +73,6 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/activity.md
-[t-read]: ../api/type-aliases/Activity.md
-[t-create]: ../api/type-aliases/ActivityCreateInput.md
-[t-update]: ../api/type-aliases/ActivityUpdateInput.md
-[t-query]: ../api/type-aliases/ActivitySearchQuery.md
-[t-page]: ../api/type-aliases/ActivityPage.md
-[t-resource]: ../api/type-aliases/ActivityResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -80,3 +81,9 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Activity]: ../api/type-aliases/Activity.md
+[t-ActivityCreateInput]: ../api/type-aliases/ActivityCreateInput.md
+[t-ActivityUpdateInput]: ../api/type-aliases/ActivityUpdateInput.md
+[t-ActivitySearchQuery]: ../api/type-aliases/ActivitySearchQuery.md
+[t-ActivityPage]: ../api/type-aliases/ActivityPage.md
+[t-ActivityResource]: ../api/type-aliases/ActivityResource.md

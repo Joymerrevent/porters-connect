@@ -70,9 +70,17 @@ console.log(latest?.Phase, latest?.Date);
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Phase の項目][ref]（PORTERS の事実）
-- 型: [`Phase`][t-read]（読み取り）／ [`PhaseCreateInput`][t-create] ／ [`PhaseUpdateInput`][t-update] ／
-  [`PhaseSearchQuery`][t-query] ／ [`PhasePage`][t-page] ／ [`PhaseAccessor`][t-accessor] ／ [`PhaseResource`][t-resource]
-- カスタム項目はありません（固定項目のみ）
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                       | 役割                            |
+| ---------------------------------------- | ------------------------------- |
+| [`Phase`][t-Phase]                       | 読み取った 1 件                 |
+| [`PhaseCreateInput`][t-PhaseCreateInput] | `create` / `createMany` の入力  |
+| [`PhaseUpdateInput`][t-PhaseUpdateInput] | `update` / `updateMany` の入力  |
+| [`PhaseSearchQuery`][t-PhaseSearchQuery] | `search` / `searchAll` のクエリ |
+| [`PhasePage`][t-PhasePage]               | `search` の戻り値（1 ページ）   |
+| [`PhaseAccessor`][t-PhaseAccessor]       | `t.phase` の型（`of()` を持つ） |
+| [`PhaseResource`][t-PhaseResource]       | `t.phase.of(...)` の型          |
 
 ## 関連
 
@@ -81,15 +89,15 @@ console.log(latest?.Phase, latest?.Date);
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/phase.md
-[t-read]: ../api/type-aliases/Phase.md
-[t-create]: ../api/type-aliases/PhaseCreateInput.md
-[t-update]: ../api/type-aliases/PhaseUpdateInput.md
-[t-query]: ../api/type-aliases/PhaseSearchQuery.md
-[t-page]: ../api/type-aliases/PhasePage.md
-[t-accessor]: ../api/type-aliases/PhaseAccessor.md
-[t-resource]: ../api/type-aliases/PhaseResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [deleted]: ../topics/deleted.md
 [resources]: README.md
 [index]: ../index.md
+[t-Phase]: ../api/type-aliases/Phase.md
+[t-PhaseCreateInput]: ../api/type-aliases/PhaseCreateInput.md
+[t-PhaseUpdateInput]: ../api/type-aliases/PhaseUpdateInput.md
+[t-PhaseSearchQuery]: ../api/type-aliases/PhaseSearchQuery.md
+[t-PhasePage]: ../api/type-aliases/PhasePage.md
+[t-PhaseAccessor]: ../api/type-aliases/PhaseAccessor.md
+[t-PhaseResource]: ../api/type-aliases/PhaseResource.md

@@ -66,10 +66,17 @@ if (existing.total === 0) {
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Process の項目][ref]（PORTERS の事実）
-- 型: [`Process`][t-read]（読み取り）／ [`ProcessCreateInput`][t-create] ／ [`ProcessUpdateInput`][t-update] ／
-  [`ProcessSearchQuery`][t-query] ／ [`ProcessPage`][t-page] ／ [`ProcessResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Process の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                           | 役割                            |
+| -------------------------------------------- | ------------------------------- |
+| [`Process`][t-Process]                       | 読み取った 1 件                 |
+| [`ProcessCreateInput`][t-ProcessCreateInput] | `create` / `createMany` の入力  |
+| [`ProcessUpdateInput`][t-ProcessUpdateInput] | `update` / `updateMany` の入力  |
+| [`ProcessSearchQuery`][t-ProcessSearchQuery] | `search` / `searchAll` のクエリ |
+| [`ProcessPage`][t-ProcessPage]               | `search` の戻り値（1 ページ）   |
+| [`ProcessResource`][t-ProcessResource]       | `t.process` の型                |
 
 ## 関連
 
@@ -78,12 +85,6 @@ if (existing.total === 0) {
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/process.md
-[t-read]: ../api/type-aliases/Process.md
-[t-create]: ../api/type-aliases/ProcessCreateInput.md
-[t-update]: ../api/type-aliases/ProcessUpdateInput.md
-[t-query]: ../api/type-aliases/ProcessSearchQuery.md
-[t-page]: ../api/type-aliases/ProcessPage.md
-[t-resource]: ../api/type-aliases/ProcessResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -92,3 +93,9 @@ if (existing.total === 0) {
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Process]: ../api/type-aliases/Process.md
+[t-ProcessCreateInput]: ../api/type-aliases/ProcessCreateInput.md
+[t-ProcessUpdateInput]: ../api/type-aliases/ProcessUpdateInput.md
+[t-ProcessSearchQuery]: ../api/type-aliases/ProcessSearchQuery.md
+[t-ProcessPage]: ../api/type-aliases/ProcessPage.md
+[t-ProcessResource]: ../api/type-aliases/ProcessResource.md

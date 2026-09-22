@@ -39,7 +39,15 @@ for await (const d of t.department.searchAll())
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Department の項目][ref]（PORTERS の事実）
-- 型: [`Department`][t-Department] ／ [`DepartmentPage`][t-DepartmentPage] ／ [`DepartmentSearchQuery`][t-DepartmentSearchQuery] ／ [`DepartmentResource`][t-DepartmentResource] ／ [`DepartmentRef`][t-DepartmentRef]
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                                 | 役割                                   |
+| -------------------------------------------------- | -------------------------------------- |
+| [`Department`][t-Department]                       | 読み取った 1 件                        |
+| [`DepartmentPage`][t-DepartmentPage]               | `search` の戻り値（1 ページ）          |
+| [`DepartmentSearchQuery`][t-DepartmentSearchQuery] | `search` / `searchAll` のクエリ        |
+| [`DepartmentResource`][t-DepartmentResource]       | `t.department` の型                    |
+| [`DepartmentRef`][t-DepartmentRef]                 | 部署型の項目が読みで返す入れ子のかたち |
 
 ## 関連
 

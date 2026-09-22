@@ -39,7 +39,13 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Option の項目][ref]（PORTERS の事実）
-- 型: [`Option`][t-Option] ／ [`OptionSearchQuery`][t-OptionSearchQuery] ／ [`OptionResource`][t-OptionResource]
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                         | 役割                                             |
+| ------------------------------------------ | ------------------------------------------------ |
+| [`Option`][t-Option]                       | 読み取った 1 件（`search` は `Option[]` を返す） |
+| [`OptionSearchQuery`][t-OptionSearchQuery] | `search` のクエリ                                |
+| [`OptionResource`][t-OptionResource]       | `t.option` の型                                  |
 
 ## 関連
 

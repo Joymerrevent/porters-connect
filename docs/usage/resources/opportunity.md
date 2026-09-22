@@ -56,10 +56,17 @@ const id = await t.opportunity.create({
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Opportunity の項目][ref]（PORTERS の事実）
-- 型: [`Opportunity`][t-read]（読み取り）／ [`OpportunityCreateInput`][t-create] ／ [`OpportunityUpdateInput`][t-update] ／
-  [`OpportunitySearchQuery`][t-query] ／ [`OpportunityPage`][t-page] ／ [`OpportunityResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Opportunity の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                                   | 役割                            |
+| ---------------------------------------------------- | ------------------------------- |
+| [`Opportunity`][t-Opportunity]                       | 読み取った 1 件                 |
+| [`OpportunityCreateInput`][t-OpportunityCreateInput] | `create` / `createMany` の入力  |
+| [`OpportunityUpdateInput`][t-OpportunityUpdateInput] | `update` / `updateMany` の入力  |
+| [`OpportunitySearchQuery`][t-OpportunitySearchQuery] | `search` / `searchAll` のクエリ |
+| [`OpportunityPage`][t-OpportunityPage]               | `search` の戻り値（1 ページ）   |
+| [`OpportunityResource`][t-OpportunityResource]       | `t.opportunity` の型            |
 
 ## 関連
 
@@ -68,12 +75,6 @@ const id = await t.opportunity.create({
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/opportunity.md
-[t-read]: ../api/type-aliases/Opportunity.md
-[t-create]: ../api/type-aliases/OpportunityCreateInput.md
-[t-update]: ../api/type-aliases/OpportunityUpdateInput.md
-[t-query]: ../api/type-aliases/OpportunitySearchQuery.md
-[t-page]: ../api/type-aliases/OpportunityPage.md
-[t-resource]: ../api/type-aliases/OpportunityResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -82,3 +83,9 @@ const id = await t.opportunity.create({
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Opportunity]: ../api/type-aliases/Opportunity.md
+[t-OpportunityCreateInput]: ../api/type-aliases/OpportunityCreateInput.md
+[t-OpportunityUpdateInput]: ../api/type-aliases/OpportunityUpdateInput.md
+[t-OpportunitySearchQuery]: ../api/type-aliases/OpportunitySearchQuery.md
+[t-OpportunityPage]: ../api/type-aliases/OpportunityPage.md
+[t-OpportunityResource]: ../api/type-aliases/OpportunityResource.md

@@ -42,7 +42,15 @@ for await (const f of fields.searchAll({ active: 1 })) {
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Field の項目][ref]（PORTERS の事実）
-- 型: [`Field`][t-Field] ／ [`FieldPage`][t-FieldPage] ／ [`FieldSearchQuery`][t-FieldSearchQuery] ／ [`FieldResource`][t-FieldResource] ／ [`FieldAccessor`][t-FieldAccessor]
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                       | 役割                            |
+| ---------------------------------------- | ------------------------------- |
+| [`Field`][t-Field]                       | 読み取った 1 件                 |
+| [`FieldPage`][t-FieldPage]               | `search` の戻り値（1 ページ）   |
+| [`FieldSearchQuery`][t-FieldSearchQuery] | `search` / `searchAll` のクエリ |
+| [`FieldAccessor`][t-FieldAccessor]       | `t.field` の型（`of()` を持つ） |
+| [`FieldResource`][t-FieldResource]       | `t.field.of(...)` の型          |
 
 ## 関連
 
@@ -59,5 +67,5 @@ for await (const f of fields.searchAll({ active: 1 })) {
 [t-Field]: ../api/type-aliases/Field.md
 [t-FieldPage]: ../api/type-aliases/FieldPage.md
 [t-FieldSearchQuery]: ../api/type-aliases/FieldSearchQuery.md
-[t-FieldResource]: ../api/type-aliases/FieldResource.md
 [t-FieldAccessor]: ../api/type-aliases/FieldAccessor.md
+[t-FieldResource]: ../api/type-aliases/FieldResource.md

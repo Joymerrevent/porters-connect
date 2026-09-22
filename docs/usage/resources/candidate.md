@@ -53,10 +53,17 @@ await t.candidate.update(id, { P_Name: "山田 花子" });
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Candidate の項目][ref]（PORTERS の事実）
-- 型: [`Candidate`][t-read]（読み取り）／ [`CandidateCreateInput`][t-create] ／ [`CandidateUpdateInput`][t-update] ／
-  [`CandidateSearchQuery`][t-query] ／ [`CandidatePage`][t-page] ／ [`CandidateResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Candidate の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                               | 役割                            |
+| ------------------------------------------------ | ------------------------------- |
+| [`Candidate`][t-Candidate]                       | 読み取った 1 件                 |
+| [`CandidateCreateInput`][t-CandidateCreateInput] | `create` / `createMany` の入力  |
+| [`CandidateUpdateInput`][t-CandidateUpdateInput] | `update` / `updateMany` の入力  |
+| [`CandidateSearchQuery`][t-CandidateSearchQuery] | `search` / `searchAll` のクエリ |
+| [`CandidatePage`][t-CandidatePage]               | `search` の戻り値（1 ページ）   |
+| [`CandidateResource`][t-CandidateResource]       | `t.candidate` の型              |
 
 ## 関連
 
@@ -65,12 +72,6 @@ await t.candidate.update(id, { P_Name: "山田 花子" });
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/candidate.md
-[t-read]: ../api/type-aliases/Candidate.md
-[t-create]: ../api/type-aliases/CandidateCreateInput.md
-[t-update]: ../api/type-aliases/CandidateUpdateInput.md
-[t-query]: ../api/type-aliases/CandidateSearchQuery.md
-[t-page]: ../api/type-aliases/CandidatePage.md
-[t-resource]: ../api/type-aliases/CandidateResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -81,3 +82,9 @@ await t.candidate.update(id, { P_Name: "山田 花子" });
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
 [r-attachment]: attachment.md
+[t-Candidate]: ../api/type-aliases/Candidate.md
+[t-CandidateCreateInput]: ../api/type-aliases/CandidateCreateInput.md
+[t-CandidateUpdateInput]: ../api/type-aliases/CandidateUpdateInput.md
+[t-CandidateSearchQuery]: ../api/type-aliases/CandidateSearchQuery.md
+[t-CandidatePage]: ../api/type-aliases/CandidatePage.md
+[t-CandidateResource]: ../api/type-aliases/CandidateResource.md

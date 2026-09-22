@@ -47,10 +47,17 @@ const id = await t.client.create({ P_Owner: 5, P_Name: "株式会社サンプル
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Client の項目][ref]（PORTERS の事実）
-- 型: [`Client`][t-read]（読み取り）／ [`ClientCreateInput`][t-create] ／ [`ClientUpdateInput`][t-update] ／
-  [`ClientSearchQuery`][t-query] ／ [`ClientPage`][t-page] ／ [`ClientResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Client の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                         | 役割                            |
+| ------------------------------------------ | ------------------------------- |
+| [`Client`][t-Client]                       | 読み取った 1 件                 |
+| [`ClientCreateInput`][t-ClientCreateInput] | `create` / `createMany` の入力  |
+| [`ClientUpdateInput`][t-ClientUpdateInput] | `update` / `updateMany` の入力  |
+| [`ClientSearchQuery`][t-ClientSearchQuery] | `search` / `searchAll` のクエリ |
+| [`ClientPage`][t-ClientPage]               | `search` の戻り値（1 ページ）   |
+| [`ClientResource`][t-ClientResource]       | `t.client` の型                 |
 
 ## 関連
 
@@ -59,12 +66,6 @@ const id = await t.client.create({ P_Owner: 5, P_Name: "株式会社サンプル
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/client.md
-[t-read]: ../api/type-aliases/Client.md
-[t-create]: ../api/type-aliases/ClientCreateInput.md
-[t-update]: ../api/type-aliases/ClientUpdateInput.md
-[t-query]: ../api/type-aliases/ClientSearchQuery.md
-[t-page]: ../api/type-aliases/ClientPage.md
-[t-resource]: ../api/type-aliases/ClientResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -73,3 +74,9 @@ const id = await t.client.create({ P_Owner: 5, P_Name: "株式会社サンプル
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Client]: ../api/type-aliases/Client.md
+[t-ClientCreateInput]: ../api/type-aliases/ClientCreateInput.md
+[t-ClientUpdateInput]: ../api/type-aliases/ClientUpdateInput.md
+[t-ClientSearchQuery]: ../api/type-aliases/ClientSearchQuery.md
+[t-ClientPage]: ../api/type-aliases/ClientPage.md
+[t-ClientResource]: ../api/type-aliases/ClientResource.md

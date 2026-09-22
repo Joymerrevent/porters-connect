@@ -40,7 +40,15 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 標準項目の一覧と、このライブラリの型を引く先です。
 
 - 項目の一覧: [Partition の項目][ref]（PORTERS の事実）
-- 型: [`Partition`][t-Partition] ／ [`PartitionPage`][t-PartitionPage] ／ [`PartitionSearchQuery`][t-PartitionSearchQuery] ／ [`PartitionResource`][t-PartitionResource] ／ [`PartitionId`][t-PartitionId]
+- カスタム項目（`U_` / `A_`）: ありません
+
+| 型                                               | 役割                                      |
+| ------------------------------------------------ | ----------------------------------------- |
+| [`Partition`][t-Partition]                       | 読み取った 1 件                           |
+| [`PartitionPage`][t-PartitionPage]               | `search` の戻り値（1 ページ）             |
+| [`PartitionSearchQuery`][t-PartitionSearchQuery] | `search` / `searchAll` のクエリ           |
+| [`PartitionResource`][t-PartitionResource]       | `porters.partition` の型                  |
+| [`PartitionId`][t-PartitionId]                   | Partition の id の型（`tenant()` の引数） |
 
 ## 関連
 

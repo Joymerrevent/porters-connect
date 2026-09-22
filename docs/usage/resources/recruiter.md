@@ -51,10 +51,17 @@ const id = await t.recruiter.create({ P_Owner: 5, P_Client: 20001 });
 
 標準項目の一覧と、このライブラリの型を引く先です。
 
-- 標準項目（`P_`）の一覧: [Recruiter の項目][ref]（PORTERS の事実）
-- 型: [`Recruiter`][t-read]（読み取り）／ [`RecruiterCreateInput`][t-create] ／ [`RecruiterUpdateInput`][t-update] ／
-  [`RecruiterSearchQuery`][t-query] ／ [`RecruiterPage`][t-page] ／ [`RecruiterResource`][t-resource]
-- テナント固有の項目（`U_` / `A_`）は宣言してから使います（[カスタム項目][custom-fields]）
+- 項目の一覧: [Recruiter の項目][ref]（PORTERS の事実）
+- カスタム項目（`U_` / `A_`）: 宣言してから使います（[カスタム項目][custom-fields]）
+
+| 型                                               | 役割                            |
+| ------------------------------------------------ | ------------------------------- |
+| [`Recruiter`][t-Recruiter]                       | 読み取った 1 件                 |
+| [`RecruiterCreateInput`][t-RecruiterCreateInput] | `create` / `createMany` の入力  |
+| [`RecruiterUpdateInput`][t-RecruiterUpdateInput] | `update` / `updateMany` の入力  |
+| [`RecruiterSearchQuery`][t-RecruiterSearchQuery] | `search` / `searchAll` のクエリ |
+| [`RecruiterPage`][t-RecruiterPage]               | `search` の戻り値（1 ページ）   |
+| [`RecruiterResource`][t-RecruiterResource]       | `t.recruiter` の型              |
 
 ## 関連
 
@@ -63,12 +70,6 @@ const id = await t.recruiter.create({ P_Owner: 5, P_Client: 20001 });
 - ほかの目的から探す: [目次][index]
 
 [ref]: ../reference/resource-api/resources/recruiter.md
-[t-read]: ../api/type-aliases/Recruiter.md
-[t-create]: ../api/type-aliases/RecruiterCreateInput.md
-[t-update]: ../api/type-aliases/RecruiterUpdateInput.md
-[t-query]: ../api/type-aliases/RecruiterSearchQuery.md
-[t-page]: ../api/type-aliases/RecruiterPage.md
-[t-resource]: ../api/type-aliases/RecruiterResource.md
 [query]: ../topics/query.md
 [write]: ../topics/write.md
 [limits]: ../topics/limits.md
@@ -77,3 +78,9 @@ const id = await t.recruiter.create({ P_Owner: 5, P_Client: 20001 });
 [index]: ../index.md
 [r-phase]: phase.md
 [deleted]: ../topics/deleted.md
+[t-Recruiter]: ../api/type-aliases/Recruiter.md
+[t-RecruiterCreateInput]: ../api/type-aliases/RecruiterCreateInput.md
+[t-RecruiterUpdateInput]: ../api/type-aliases/RecruiterUpdateInput.md
+[t-RecruiterSearchQuery]: ../api/type-aliases/RecruiterSearchQuery.md
+[t-RecruiterPage]: ../api/type-aliases/RecruiterPage.md
+[t-RecruiterResource]: ../api/type-aliases/RecruiterResource.md
