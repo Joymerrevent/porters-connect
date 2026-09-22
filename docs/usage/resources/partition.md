@@ -51,7 +51,7 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]（`tenant(id)` に渡す id）
+- 主題: [Partition とテナントスコープ][tenant]（`tenant(id)` に渡す id）／[認証とトークン][auth]（アクセスできる Partition は権限付与で決まる）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 
@@ -65,3 +65,4 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 [t-PartitionSearchQuery]: ../api/type-aliases/PartitionSearchQuery.md
 [t-PartitionResource]: ../api/type-aliases/PartitionResource.md
 [t-PartitionId]: ../api/type-aliases/PartitionId.md
+[auth]: ../topics/auth.md

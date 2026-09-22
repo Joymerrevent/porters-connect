@@ -49,7 +49,7 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 
 ## 関連
 
-- 主題: [検索][query]（選択肢型の `condition`）
+- 主題: [検索][query]（選択肢型の `condition`）／[項目と値のかたち][fields]（選択肢は常に配列）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 
@@ -60,3 +60,4 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 [t-Option]: ../api/type-aliases/Option.md
 [t-OptionSearchQuery]: ../api/type-aliases/OptionSearchQuery.md
 [t-OptionResource]: ../api/type-aliases/OptionResource.md
+[fields]: ../topics/fields.md

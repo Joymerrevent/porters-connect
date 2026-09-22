@@ -201,7 +201,7 @@ await files.create({ ...file, content: base64 });
 
 ## 関連
 
-- 主題: [書き込み][bulk-write]（一括はデータ系だけ）／[エラーと再試行][handle-failures]／[上限とレート][limits]（10MB・タイムアウト）／[削除と削除済みデータ][no-delete]（消せない）
+- 主題: [書き込み][bulk-write]（一括はデータ系だけ）／[エラーと再試行][handle-failures]（再送の判断）／[上限とレート][limits]（10MB・タイムアウト）／[削除と削除済みデータ][no-delete]（消せない）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

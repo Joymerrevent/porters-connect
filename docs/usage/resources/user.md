@@ -55,7 +55,7 @@ const page = await t.user.search({
 
 ## 関連
 
-- 主題: [項目と値のかたち][fields]（ユーザー型の読みと書きのかたち）
+- 主題: [項目と値のかたち][fields]（ユーザー型の読みと書きのかたち）／[認証とトークン][auth]（`current()` が誰になるか）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 
@@ -70,3 +70,4 @@ const page = await t.user.search({
 [t-UserSearchQuery]: ../api/type-aliases/UserSearchQuery.md
 [t-UserResource]: ../api/type-aliases/UserResource.md
 [t-UserRef]: ../api/type-aliases/UserRef.md
+[auth]: ../topics/auth.md
