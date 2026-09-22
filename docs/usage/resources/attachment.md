@@ -144,6 +144,15 @@ await files.create({ ...file, content: base64 });
 `createMany` / `updateMany` は Attachment にはありません。ファイルは 1 件ずつです。
 たくさん送るときは、レートの自制（1 分あたり Write 500）がライブラリ側で効きます。
 
+## 新規作成の必須項目
+
+| 項目                                                  | 必須の種類        | どこで止まるか               |
+| ----------------------------------------------------- | ----------------- | ---------------------------- |
+| `resourceId` / `contentType` / `fileName` / `content` | ●（4 つとも必須） | 渡さないとコンパイルで止まる |
+
+`create` は 4 項目すべてが必須で、`update` は `contentType` / `fileName` / `content` の 3 つだけが任意です
+（付け先 `resourceId` は更新で変えられません）。※（条件付き必須）の項目はありません。
+
 ## 項目と型
 
 - 項目と Mime Type: [Attachment の項目][ref-attachment]（PORTERS の事実）
