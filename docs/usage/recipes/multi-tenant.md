@@ -6,7 +6,7 @@
 
 > [!NOTE]
 > **利用者 ↔ 会社 ↔ Partition の対応は利用側（SaaS）の責務**です。ライブラリは業務ロジックを持ちません。
-> 発見した Partition の保存とルーティングは SaaS 側で行います。
+> 発見した Partition を保存し、リクエストごとにどの Partition かを決めるのは SaaS 側です。
 
 ## 使う機能
 
@@ -235,7 +235,7 @@ const score = async () => {
 
 ### 5. 認証を分けるか
 
-既定では `tenant(id)` は client のトークンを**共有**します（共有トークン＋ Partition ルーティング）。
+既定では `tenant(id)` は client のトークンを**共有**します（トークンは 1 つで、Partition だけを切り替える）。
 **Partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
 client を分ける理由は**これだけ**です。カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
 
@@ -278,7 +278,7 @@ const batch = new PortersClient({
 
 この用途で自分で用意するものです。ライブラリは持ちません。
 
-- 利用者 ↔ 会社 ↔ Partition の対応の保存とルーティング
+- 利用者 ↔ 会社 ↔ Partition の対応を保存し、リクエストごとに引くこと
 - Refresh Token の置き場所（`tokenStore`）の安全性
 - 月 15 万アクセスの累積（契約条件。テナントの合計で数える）
 - プロセスを跨いだレートの協調

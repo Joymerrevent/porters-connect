@@ -76,7 +76,7 @@ await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
 起動時に認証の不備を早く知りたいとき、または有効なトークンを確かめたいときに使います。
 
 ```ts
-// 起動時に前もってトークンを用意（取得できなければ即エラー＝fail-fast / ウォームアップ）
+// 起動時に前もってトークンを用意（取得できなければ、この時点でエラーになる）
 await porters.auth.ensureAuthenticated();
 
 // 現在有効な Access Token を取得（デバッグ用）。Refresh Token は返しません
@@ -88,7 +88,7 @@ const token = await porters.auth.getToken();
 
 ## トークンの永続化（`tokenStore`）
 
-既定（透過ストラテジ）のトークン保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
+既定の方式（ライブラリがトークンを取得・更新する）では、トークンの保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
 
 永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（**認証のリクエストも API アクセス数に数えられます**）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
@@ -137,7 +137,7 @@ const porters = new PortersClient({
 });
 ```
 
-- `tokenStore` が効くのは**既定ストラテジのときだけ**です。独自 `TokenProvider`（後述の「カスタム認証ストラテジ使用時」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
+- `tokenStore` が効くのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
 - 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
@@ -159,9 +159,9 @@ await porters.auth.clearTokens();
 - `revokeUrl()` は**サーバ側**の権限削除（ブラウザ手順）。
 - `clearTokens()` は**ローカル**のトークン破棄のみ（サーバ側の権限は消しません）。
 
-## カスタム認証ストラテジ使用時
+## トークンを自前で管理するとき
 
-`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の透過ストラテジを置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
+`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
 
 ```ts
 // 実装するのは getAccessToken の 1 つだけ（opts は GetAccessTokenOptions として型 export 済み）
@@ -194,14 +194,14 @@ const porters = new PortersClient({ hostname, auth });
 
 > 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。
 
-独自ストラテジのとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
+自前管理のとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
 残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
-| メソッド                                    | 既定ストラテジ | カスタムストラテジ   |
-| ------------------------------------------- | -------------- | -------------------- |
-| `authorizationUrl` / `revokeUrl`            | ○              | `PortersConfigError` |
-| `exchangeAuthorizationCode` / `clearTokens` | ○              | `PortersConfigError` |
-| `ensureAuthenticated` / `getToken`          | ○              | ○（委譲）            |
+| メソッド                                    | 既定の方式 | 自前管理             |
+| ------------------------------------------- | ---------- | -------------------- |
+| `authorizationUrl` / `revokeUrl`            | ○          | `PortersConfigError` |
+| `exchangeAuthorizationCode` / `clearTokens` | ○          | `PortersConfigError` |
+| `ensureAuthenticated` / `getToken`          | ○          | ○（委譲）            |
 
 ## エラー
 
@@ -210,7 +210,7 @@ const porters = new PortersClient({ hostname, auth });
 
 - Token エンドポイントがエラーを返す／`code` が失効（30 秒）→ `PortersAuthError`（`category: "auth"`）
 - ネットワーク不達・切断 → `PortersNetworkError`
-- `appId` / `appSecret` / `scopes` 不足、カスタムストラテジでの誤用 → `PortersConfigError`（`category: "config"`）
+- `appId` / `appSecret` / `scopes` 不足、自前管理のときの誤用 → `PortersConfigError`（`category: "config"`）
 
 ```ts
 import {

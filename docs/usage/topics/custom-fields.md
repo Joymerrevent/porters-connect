@@ -312,7 +312,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 `assertFieldsMatch` は **`unverifiable` でも投げます**。「確かめられなかった」は「問題なし」ではない
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では投げません。
 
-> **どれも opt-in です。** `defineFields` 自体は PORTERS を呼びません。この 3 つは呼んだときだけ
+> **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。この 3 つは呼んだときだけ
 > Field Read を叩きます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
 
 ### 素の Field Read を使う
@@ -342,7 +342,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 //   must start with "U_" or "A_" (standard P_ fields are built in)
 ```
 
-検証を通った宣言は**ブランド付き**になり、`tenant()` は再検証しません。
+検証を通った宣言には**印が付き**、`tenant()` は再検証しません。
 なお `defineFields` は `Promise` を返さないため、**この 2 つだけは同期 throw** です
 （`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
@@ -350,7 +350,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 3 つに分かれます。
 
-- **宣言と実データの食い違い**は、読み取り時に `validation` で surface します
+- **宣言と実データの食い違い**は、読み取り時に `validation` のエラーとして表に出します
   （黙って `null` にしません）<!-- 根拠: ADR-0006 -->。事前に知りたいなら上記 `verifyFields` です。
 - **変換を伴う値**は検査します。日時（ISO 8601 ⇄ PORTERS 形式）は**読み書きとも**、数値（文字列 →
   `number`）は**読み取りで**。変換できない値は送れず、読めもしないためです。他の型は変換が無いので

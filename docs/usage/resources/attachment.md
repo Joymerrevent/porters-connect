@@ -153,7 +153,7 @@ resourceNameOf(17); // "resume"
 await files.create({ ...file, content: base64 });
 ```
 
-`category` は `config` です。通常の「リクエストが長すぎる」ガード（約 15000 文字）は
+`category` は `config` です。通常の「リクエストが長すぎる」の検査（約 15000 文字）は
 **アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限とレート][limits]）。
 
