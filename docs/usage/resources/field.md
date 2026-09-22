@@ -27,11 +27,11 @@ for await (const f of fields.searchAll({ active: 1 })) {
 
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
-- PORTERS は Field Read のすべてに `resource=` を要求します。ライブラリはそれを `of()` で 1 回だけ受け取ります。名前はアクセサと同じ綴りで、打ち間違いはコンパイルエラーです。
-- `active` で使用中（`1`）／未使用（`0`）／すべて（`-1`・既定）を選べます。
-- `P_Required` が **テナントが入力必須にしたカスタム項目**を表します。これは `defineFields` の宣言には載らないので、必須の欠落は型では止まりません。
-- 時分型（2026/08 追加）は年月日時分型と同じ Field Type で返るため、**ここからは見分けが付きません**（[日時と時分型][datetime]）。
-- `generateFieldDecls` / `verifyFields` / `readCustomCatalog` はこのリソースの上に組んであります（[カスタム項目][custom-fields]）。
+- **先に `of()` でリソースを束ねます。** PORTERS は Field Read のすべてに `resource=` を要求し、ライブラリはそれを 1 回だけ受け取ります。名前はアクセサと同じ綴りで、打ち間違いはコンパイルエラーです。
+- **`active` で使用中か未使用かを選べます**（`1` 使用中／`0` 未使用／`-1` すべて・既定）。
+- **`P_Required` は、テナントが入力必須にした項目です。** これは `defineFields` の宣言には載らないので、必須の欠落は型では止まりません。
+- **時分型はここからは見分けが付きません。** 年月日時分型と同じ Field Type で返るためです（[日時と時分型][datetime]）。
+- **カスタム項目の道具はこのリソースの上に組んであります。** `generateFieldDecls` / `verifyFields` / `readCustomCatalog` です（[カスタム項目][custom-fields]）。
 
 ## 新規作成の必須項目
 

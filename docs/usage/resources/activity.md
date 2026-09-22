@@ -31,9 +31,9 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
-- `P_Resource` は**数値**です（Candidate `1` / Job `3` / Client `5` …）。書くときも絞るときも `resourceValueOf("candidate")` で名前から引き、読んだ値は `resourceNameOf` で名前に戻せます（[検索][query]の「リソース種別で絞る」）。
-- 参照型の項目（`P_ResourceId`）は、既定では参照先の id だけが返ります。`expand` で参照先の項目も読めます（[検索][query]）。
-- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）には、最新フェーズに対する条件があります（日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
+- **`P_Resource` は数値です**（Candidate `1` / Job `3` / Client `5` …）。書くときも絞るときも `resourceValueOf("candidate")` で名前から引き、読んだ値は `resourceNameOf` で名前に戻せます（[検索][query]の「リソース種別で絞る」）。
+- **参照型の項目（`P_ResourceId`）は、既定では参照先の id だけが返ります。**`expand` で参照先の項目も読めます（[検索][query]）。
+- **フェーズの項目には、最新フェーズに対する条件があります**（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`。日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
 
 ## 新規作成の必須項目
 

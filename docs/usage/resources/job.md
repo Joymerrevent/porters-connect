@@ -35,8 +35,8 @@ const id = await t.job.create({
 
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
-- 参照型の項目（`P_Client` / `P_Recruiter`）は、既定では参照先の id だけが返ります。`expand` で参照先の項目も読めます（[検索][query]）。
-- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）には、最新フェーズに対する条件があります（日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
+- **参照型の項目（`P_Client` / `P_Recruiter`）は、既定では参照先の id だけが返ります。**`expand` で参照先の項目も読めます（[検索][query]）。
+- **フェーズの項目には、最新フェーズに対する条件があります**（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`。日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
 
 ## 新規作成の必須項目
 

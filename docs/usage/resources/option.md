@@ -26,9 +26,9 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`searchAll` はありません**。PORTERS の Option Read に `start` が無く、ページを進める手段が無いためです。`search` の戻り値もページではなく **`Option[]`** です。
-- `alias` で部分木の根を、`level` で深さ（`-1` すべて・既定、`0` 兄弟、`1` 以上は子孫）を、`enabled` で使用中かを選べます。木は `P_ParentId` から組み立て直せます。
-- 既定の選択肢の一覧は PORTERS の Default Option List にありますが、テナントで上書きされるので、実際の値は必ずここで読んでください。
-- フリーワード検索（`keywords`）は選択肢型の項目を対象にできません。選択肢は `condition` で絞ります。
+- **読む範囲は `alias`（部分木の根）・`level`（深さ）・`enabled`（使用中か）で選べます。** `level` は `-1` すべて（既定）、`0` 兄弟、`1` 以上は子孫です。木は `P_ParentId` から組み立て直せます。
+- **実際の値は必ずここで読んでください。** 既定の選択肢の一覧（PORTERS の Default Option List）は、テナントで上書きされます。
+- **`keywords` では選択肢型の項目を絞れません。** 選択肢は `condition` で絞ります。
 
 ## 新規作成の必須項目
 

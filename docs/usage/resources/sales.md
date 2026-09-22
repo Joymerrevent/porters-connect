@@ -36,8 +36,8 @@ const id = await t.sales.create({
   - クリアするときは逆向きで、上位をクリアするなら下位も一緒に。
   - `P_Candidate` と `P_Resume` は新規登録で両方を指定し、整合性が検査されます。更新で片方だけ書くと、更新前のもう一方と突き合わされます。
   - 外れると PORTERS が Result Code で返します（`create` は `P_Owner` だけを必須にしてあり、`P_Client` だけの正当な呼び出しを弾かないため）。
-- 参照型の項目（`P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume`）は、既定では参照先の id だけが返ります。`expand` で参照先の項目も読めます（[検索][query]）。
-- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）には、最新フェーズに対する条件があります（日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
+- **参照型の項目（`P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume`）は、既定では参照先の id だけが返ります。**`expand` で参照先の項目も読めます（[検索][query]）。
+- **フェーズの項目には、最新フェーズに対する条件があります**（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`。日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
 
 ## 新規作成の必須項目
 

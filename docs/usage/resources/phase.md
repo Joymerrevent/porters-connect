@@ -40,12 +40,12 @@ console.log(latest?.Phase, latest?.Date);
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`search` / `searchAll` に `keywords` と `itemstate` はありません**。PORTERS の Phase Read がその 2 つを受けないためです。
-- 書き込みの入力に `Resource` はありません。`of()` で束ねた値をライブラリが埋めます。`Id` も同じです。
+- **書き込みの入力に `Resource` と `Id` はありません。** `of()` で束ねた値と新規作成の印を、ライブラリが埋めます。
 - **フェーズ日付・メモはフェーズとセット**で書きます。既存の履歴があるレコードでは、最新フェーズに対する条件
   （日付が最新より新しいこと、など）を満たさないと PORTERS が Result Code で返します。
-- `JobOwner` / `JobOwnerDepartment` / `ResumeOwner` / `ResumeOwnerDepartment` は **Process と Sales の履歴にだけ**あります。
-- `Id` はリソースごとの連番です。別のリソースの履歴と同じ `Id` が付くことがあります。
-- `Recent` が `1` の行が最新、`0` が過去のフェーズです。
+- **`JobOwner` などの 4 項目は Process と Sales の履歴にだけあります**（`JobOwner` / `JobOwnerDepartment` / `ResumeOwner` / `ResumeOwnerDepartment`）。
+- **`Id` はリソースごとの連番です。** 別のリソースの履歴と同じ `Id` が付くことがあります。
+- **`Recent` が `1` の行が最新です**（`0` は過去）。
 
 ## 新規作成の必須項目
 

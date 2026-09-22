@@ -30,9 +30,9 @@ const page = await t.user.search({
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`current()` は「いま API を実行しているユーザー」**です。ライブラリの既定であるサーバ間認証（`code_direct`）ではアプリ自身の User（ユーザー名 = アプリ名）が返り、ブラウザ経由の認証（`code`）ではログインユーザーが返ります。無ければ `undefined` です。
-- `field` を省略するとカタログ上の 17 項目が返ります。`[]` を渡すと PORTERS 本来の既定（4 項目）になります。
-- `P_Department` は部署（[Department][r-department]）を指します。
-- 読むと `P_Id` / `P_Type` / `P_Name` / `P_Mail` の入れ子で返り、書くときは `P_Id` の数値だけを渡します（[項目と値のかたち][fields]）。
+- **`field` を省略すると 17 項目すべてが返ります。** `[]` を渡すと PORTERS 本来の既定（4 項目）になります。
+- **`P_Department` は部署を指します**（[Department][r-department]）。
+- **読むと入れ子、書くときは id だけです。** `P_Id` / `P_Type` / `P_Name` / `P_Mail` の入れ子で返り、書くときは `P_Id` の数値だけを渡します（[項目と値のかたち][fields]）。
 
 ## 新規作成の必須項目
 

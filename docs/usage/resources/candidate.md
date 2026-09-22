@@ -32,8 +32,8 @@ await t.candidate.update(id, { P_Name: "山田 花子" });
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **項目の接頭辞がリソース名と違います**（`Person.P_Name`）。書くのは `P_Name` だけで、接頭辞はライブラリが付けます。
-- フェーズの項目（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`）には、最新フェーズに対する条件があります（日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
-- 添付は `t.attachment.of("candidate")` で付けます（[Attachment][r-attachment]）。
+- **フェーズの項目には、最新フェーズに対する条件があります**（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`。日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
+- **添付は `t.attachment.of("candidate")` で付けます**（[Attachment][r-attachment]）。
 
 ## 新規作成の必須項目
 
