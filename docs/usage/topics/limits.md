@@ -1,7 +1,15 @@
-# 上限と制約 — ライブラリが弾くもの・PORTERS に委ねるもの
+# 上限とレート
 
-読み書きには、**型で表せる制約**・**送信前に検査できる上限**・**サーバーでしか判定できない制約**が
-あります。このガイドは**その境界**を書きます。「なぜ型が通ったのにエラーになるのか」「なぜここは型で止めないのか」の答えです。
+長さ・件数・レート・時間の上限と、それぞれをライブラリが弾くのか、PORTERS に委ねるのかをまとめます。
+「なぜ型が通ったのにエラーになるのか」「なぜここは型で止めないのか」の答えです。
+
+## まず知ること
+
+- **リクエスト長は約 15000 文字**（URL ＋ body）。超えると PORTERS は 400 を返すので、ライブラリは送信前に弾きます。
+- **1 リクエストは 200 件まで**。`createMany` / `updateMany` が自動で分割します。
+- **1 分あたり Read 2000 / Write 500**。内蔵のスロットルが待って収めます。
+- **月 15 万アクセスは契約条件**で、ライブラリは数えません（プロセスを跨いだ累積は正しく数えられない）。
+- **1 リクエスト 30 秒**でライブラリが打ち切ります。大きな添付では延ばせます。
 
 方針は一貫しています — **手前で厳しくしすぎない**。
 サーバーが受け付けるものをライブラリが落とすと、利用者には**回避手段がありません**。
@@ -191,75 +199,18 @@ const porters = new PortersClient({
 
 ## PORTERS に委ねるもの（型では止めません）
 
-**条件付きの必須**や**レコード間の整合性**は、他のレコードの状態に依存するため、
-呼び出し時点の型では判定できません。これらは送信し、サーバーの判定を受け取ります。
-
-### Sales — 参照 6 項目の依存関係
-
-`Sales` の `P_Client` / `P_Recruiter` / `P_Job` / `P_Contract` / `P_Candidate` / `P_Resume` は、
-リファレンスで **`※`（条件付き必須）** と書かれています。実際の規則は依存の連鎖です。
-
-```text
-Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
-（A -> B は「A は B の下位リソース」）
-```
-
-- **下位を指定するなら、その上位も同時に指定**する必要があります。
-  `P_Job` を指定するなら `P_Recruiter` と `P_Client` も要ります。
-- **クリアするときは逆向き**。上位をクリアするなら下位も一緒にクリアします。
-- **`P_Candidate` と `P_Resume` は新規登録時に両方**指定し、整合性が検査されます。
-  更新で片方だけ指定した場合は、指定した値と**更新前のもう一方の値**で検査されます。
-
-ライブラリの `create` が必須にしているのは **`P_Owner` だけ**です。
-6 項目を一律必須にすると、`P_Client` だけを指定する正当な呼び出しまで弾いてしまいます。
-
-これは Sales だけの扱いではありません。**型で必須にするのは `●`（無条件で必須）の項目だけ**で、
-`※`（条件付き必須）は PORTERS に委ねる、というのが全リソース共通の規則です<!-- 根拠: ADR-0083 -->。
-**型が緩い側に倒してある**のは、こちらの誤りなら往復 1 回と型付きエラーで済むからです
-（型で弾かれると、利用者の側に回避手段がありません）。
-
-### Phase 関連項目の更新
-
-`P_Phase` / `P_PhaseDate` / `P_PhaseMemo` は、**現在の最新フェーズに対する条件**を満たす必要があります
-（フェーズ日付が最新より新しいこと、など）。同じフェーズなら上書き、違うフェーズなら追加になります。
-新規登録時は既存フェーズが無いため実質制約はありませんが、**フェーズ日付・メモはフェーズとセット**で指定します。
-
-### そのほか
-
-- **Process は Job × Resume の組で一意**です。重複登録は Result Code 301 で返ります。
-- **参照先の実在**（`P_Client: 99999` が本当にあるか）は検査しません。
-- **テナントが入力必須にしたカスタム項目**の欠落は型では止まりません。必須かどうかは PORTERS 側の
-  設定（Field Read の `P_Required`）で、`defineFields` の宣言には載らないためです
-  （[カスタム項目][custom-fields]）。
-
-## リソースごとの「新規必須」
-
-型が要求する項目です。出典の「新規必須」列が **`●`** のものだけが並びます（`※` は上記のとおり
-委ねる側）<!-- 根拠: ADR-0083 -->。`P_Id` はライブラリが供給するため入力型には現れません。
-
-| リソース      | `create` の必須                                                               |
-| ------------- | ----------------------------------------------------------------------------- |
-| `candidate`   | `P_Owner`                                                                     |
-| `job`         | `P_Owner` / `P_Client` / `P_Recruiter`                                        |
-| `client`      | `P_Owner`                                                                     |
-| `recruiter`   | `P_Owner` / `P_Client`                                                        |
-| `contact`     | `P_Owner` / `P_Client`                                                        |
-| `opportunity` | `P_Owner` / `P_Client` / `P_Recruiter`                                        |
-| `activity`    | `P_Owner` / `P_Title`                                                         |
-| `contract`    | **`P_Client` のみ**（このリソースに `P_Owner` は無い）                        |
-| `sales`       | `P_Owner` のみ（参照 6 項目は条件付き＝上記）                                 |
-| `process`     | `P_Owner` / `P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume` |
-| `resume`      | `P_Owner` / `P_Candidate`                                                     |
-| `phase`       | `ResourceId` のみ（`Id` はライブラリが、`Resource` は `of(...)` が埋める）    |
-
-> **`contract` に `P_Owner` はありません**。他の全リソースが所有者を必須にしているので目を引きますが、
-> PORTERS が公表している項目一覧に存在しないためです（無い項目を足していません）。
+条件付きの必須（出典の `※`）・レコード間の整合性・参照先の実在・テナントが必須にしたカスタム項目は、
+呼び出し時点の型では判定できないので送信し、サーバーの判定を受け取ります。規則は[書き込み][write]の
+「型で止めないもの」に、リソース固有の規則（Sales の参照 6 項目、Process の一意制約、フェーズ項目）は
+それぞれの[リソースのページ][resources]にあります。
 
 ## 関連
 
-- API 事実: [Write API（XML 形式 / 新規・更新 / Phase）][write-format] ／ [リソース一覧][resources-list]
-- エラーの受け取り方: [エラー処理ガイド][error-handling]
-- 一括書き込み: [一括書き込みガイド][bulk]
+- 主題: [書き込み][write]（200 件分割・必須の規則）／[エラーと再試行][errors]（レート超過・タイムアウトの受け取り方）／
+  [認証とトークン][auth]（トークンの永続化でアクセス数を減らす）／[カスタム項目][custom-fields]（画像）
+- リソース別: [Attachment][attachments]（10MB・本体は `get` だけ）／[リソースと操作][resources]
+- 実践例: [毎日の差分同期][sync-batch]（レートの自制と差分取得）／[複数テナント][multi-tenant]（スロットルの共有）
+- API 事実: [Write API（XML 形式 / 新規・更新 / Phase）][write-format]／[リソース一覧][resources-list]／[運用上の落とし穴][gotchas]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -271,6 +222,12 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [write-format]: ../reference/resource-api/write-format.md
 [resources-list]: ../reference/resource-api/resources-list.md
 [error-handling]: errors.md
+[errors]: errors.md
+[write]: write.md
+[resources]: ../resources/README.md
+[auth]: auth.md
+[sync-batch]: ../recipes/sync-batch.md
+[gotchas]: ../reference/gotchas.md
 [bulk]: write.md
 [attachments]: ../resources/attachment.md
 [failures]: errors.md
