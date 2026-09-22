@@ -1,5 +1,8 @@
 # OAuth API
 
+OAuth API のパラメータ、`response_type` の 3 つ、応答の形を引くページです。ライブラリでは `porters.auth.*` が組み立てるので、
+普段は呼び方を意識しません。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008017487-OAuth>（updated_at 2025-06-03、取得 2026-06-12）。
 全体像は [認証 README][readme]。
 

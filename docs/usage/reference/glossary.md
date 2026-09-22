@@ -1,5 +1,7 @@
 # 用語集（Terminology）
 
+PORTERS の用語と、Agent / Staffing の画面名とリソース名の対応を引くページです。ドキュメントで見慣れない語が出てきたときに開いてください。
+
 出典: Terminology（関連用語）（updated_at 2024-08-23、取得 2026-06-12）。
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008172808-Terminology-Related-Terms>

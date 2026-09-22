@@ -1,5 +1,7 @@
 # リソース Result Code（認証エラーとは別系統）
 
+Resource API が返す Result Code の一覧と、ライブラリがそれを再試行するかどうかを引くページです。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008171708-Result-Code-List>（updated_at 2026-07-16、取得 2026-06-12・2026-09-20 に差分反映）。
 全体像は [Resource API 概要][readme]。
 

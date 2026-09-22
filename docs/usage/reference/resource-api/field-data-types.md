@@ -1,5 +1,7 @@
 # Field Type / Data Type（型システム）
 
+項目の Field Type と Data Type の対応と、Data Type ごとの値の書式を引くページです。ライブラリの型はこれを土台にしています。
+
 出典: Field Type & Data Type List（updated_at 2026-07-28、取得 2026-06-12・2026-09-20 に差分反映）／
 時分型は [Data Type: DateTime（時分型）の追加][time-only]（2026-08-04・PORTERS 9.3.0）。
 

@@ -1,5 +1,7 @@
 # Write API（XML 形式 / 新規・更新 / Phase）
 
+Write API の XML の形（新規・更新・Phase の更新・レスポンス）を引くページです。ライブラリが組み立てるので、普段は意識しません。
+
 出典: Write API - XML Format（updated_at 2025-02-18）／ Write API - Phase の更新について（2020-06-09）／
 レスポンス例は各リソースの Write 記事（例 Candidate - Write, updated_at 2019-10-16）。取得 2026-06-12（レスポンス節 2026-06-15 追記）。
 

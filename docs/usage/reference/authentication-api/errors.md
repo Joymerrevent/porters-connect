@@ -1,5 +1,7 @@
 # 認証エラーコード（リソースの Result Code とは別系統）
 
+認証 API が返すエラーコードの一覧です。ライブラリでは `PortersAuthError` の `code` に入ります。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008172688-Authentication-and-Authorization-Error>（updated_at 2021-06-03、取得 2026-06-12）。
 全体像は [認証 README][readme]。
 

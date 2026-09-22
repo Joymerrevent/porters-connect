@@ -1,5 +1,7 @@
 # リソース一覧（R/W・スコープ・Field Alias・ドキュメント）
 
+PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出典記事を引くページです。
+
 出典: Resource List（2023-08-21）、各リソースの Read / Write / Field List 記事。取得日 2026-06-12
 （Department は 2026-09-20 の再取得で追加）。
 

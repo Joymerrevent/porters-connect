@@ -1,5 +1,8 @@
 # Resource API（エンドポイント / パラメータ / XML / Result Code / 制限）
 
+Resource API の共通仕様（エンドポイント・Read のパラメータ・XML の形・制限）を引くページです。ライブラリの `search` / `get` /
+`create` / `update` は、この上に組んであります。
+
 出典: Read API - Parameter（2026-07-28）/ Read API - XML Format（2025-03-05）/
 Request 制限（2026-04-28）/ Candidate - Read（2024-07-29、XML 例）。取得日 2026-06-12（2026-09-20 に再取得・差分反映）。
 （Result Code は [result-codes][result-codes]、Write XML は [write-format][write-format] を参照）
