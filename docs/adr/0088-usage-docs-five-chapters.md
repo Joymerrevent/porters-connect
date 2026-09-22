@@ -265,6 +265,11 @@ accept 後・別 PR（[ADR-0001][0001]）。同じ docs を触る変更を無理
 また `concepts/` は 3 でなく **1 の `git mv` で消える**（考え方 5 本もそこで `topics/` へ移す）。
 分け方の順序と、検査⑥を新設する決定は変わらない。
 
+**訂正（実装時 2026-09-22・stakeholder）**: ~~別 PR 4 本を順に~~ **1 本の PR に、修正ごとのコミットで 1〜4 の順に積む**
+（[#378][pr378]）。分けた理由は「積んだ PR は squash で毎回衝突する」だったが、1 本の PR なら衝突そのものが無く、
+develop に「目次は旧 4 層のまま `topics/` を指す」ような途中の状態を置かずに済む。レビューはコミット単位で追える。
+分け方の順序・各段の中身・検査⑥は変わらない。
+
 ### Consequences
 
 - **Good**: 主題で引いても、リソースで引いても、1 ページで答えが出る。目次が目次に戻る。
@@ -356,3 +361,4 @@ accept 後・別 PR（[ADR-0001][0001]）。同じ docs を触る変更を無理
 [0072]: 0072-start-contract-first.md
 [adr-readme]: README.md
 [rm]: ../roadmap.md
+[pr378]: https://github.com/Joymerrevent/porters-connect/pull/378
