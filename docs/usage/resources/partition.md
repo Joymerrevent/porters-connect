@@ -31,6 +31,10 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 - **ログイン中の Partition は取れません**。PORTERS の `request_type=0` はブラウザ経由の認証（`code`）でしか使えず、ライブラリの既定であるサーバ間認証（`code_direct`）では Result Code `403` になります。アクセスできる一覧（既定の `requestType: 1`）から選んでください。
 - 項目は `P_Id` / `P_Name` / `P_CompanyId` の 3 つです。
 
+## 新規作成の必須項目
+
+このリソースは読み取り専用なので、`create` はありません。
+
 ## 項目と型
 
 標準項目の一覧と、このライブラリの型を引く先です。

@@ -34,6 +34,10 @@ const page = await t.user.search({
 - `P_Department` は部署（[Department][r-department]）を指します。
 - 読むと `P_Id` / `P_Type` / `P_Name` / `P_Mail` の入れ子で返り、書くときは `P_Id` の数値だけを渡します（[項目と値のかたち][fields]）。
 
+## 新規作成の必須項目
+
+このリソースは読み取り専用なので、`create` はありません。
+
 ## 項目と型
 
 標準項目の一覧と、このライブラリの型を引く先です。

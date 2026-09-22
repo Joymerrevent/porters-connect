@@ -30,6 +30,10 @@ for await (const d of t.department.searchAll())
 - 項目は `P_Id` / `P_Name` / `P_Hidden` / `P_SortNo` / `P_RegistrationDate` / `P_UpdateDate` の 6 つです。
 - Connect API 8.2.1（2025/03）で追加された、読み取り専用のマスタです。
 
+## 新規作成の必須項目
+
+このリソースは読み取り専用なので、`create` はありません。
+
 ## 項目と型
 
 標準項目の一覧と、このライブラリの型を引く先です。

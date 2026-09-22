@@ -30,6 +30,10 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 - 既定の選択肢の一覧は PORTERS の Default Option List にありますが、テナントで上書きされるので、実際の値は必ずここで読んでください。
 - フリーワード検索（`keywords`）は選択肢型の項目を対象にできません。選択肢は `condition` で絞ります。
 
+## 新規作成の必須項目
+
+このリソースは読み取り専用なので、`create` はありません。
+
 ## 項目と型
 
 標準項目の一覧と、このライブラリの型を引く先です。

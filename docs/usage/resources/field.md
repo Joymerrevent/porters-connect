@@ -33,6 +33,10 @@ for await (const f of fields.searchAll({ active: 1 })) {
 - 時分型（2026/08 追加）は年月日時分型と同じ Field Type で返るため、**ここからは見分けが付きません**（[日時と時分型][datetime]）。
 - `generateFieldDecls` / `verifyFields` / `readCustomCatalog` はこのリソースの上に組んであります（[カスタム項目][custom-fields]）。
 
+## 新規作成の必須項目
+
+このリソースは読み取り専用なので、`create` はありません。
+
 ## 項目と型
 
 標準項目の一覧と、このライブラリの型を引く先です。

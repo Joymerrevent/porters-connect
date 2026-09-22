@@ -164,15 +164,20 @@ await files.create({ ...file, content: base64 });
 
 `create` で必ず渡す項目と、渡さないとどこで止まるかです。
 
-| 項目          | 必須の種類 | どこで止まるか               |
-| ------------- | ---------- | ---------------------------- |
-| `resourceId`  | ●（必須）  | 渡さないとコンパイルで止まる |
-| `contentType` | ●（必須）  | 渡さないとコンパイルで止まる |
-| `fileName`    | ●（必須）  | 渡さないとコンパイルで止まる |
-| `content`     | ●（必須）  | 渡さないとコンパイルで止まる |
+| 項目          | 必須の種類        | どこで止まるか               |
+| ------------- | ----------------- | ---------------------------- |
+| `resourceId`  | ●（無条件で必須） | 渡さないとコンパイルで止まる |
+| `contentType` | ●（無条件で必須） | 渡さないとコンパイルで止まる |
+| `fileName`    | ●（無条件で必須） | 渡さないとコンパイルで止まる |
+| `content`     | ●（無条件で必須） | 渡さないとコンパイルで止まる |
 
-`create` は 4 項目すべてが必須で、`update` は `contentType` / `fileName` / `content` の 3 つだけが任意です
-（付け先 `resourceId` は更新で変えられません）。※（条件付き必須）の項目はありません。
+●（無条件で必須）は `create` の入力型が要求し、渡さないとコンパイルで止まります。※（条件付き必須）は
+他のレコードの状態に依存するため型では止めず、PORTERS の判定に委ねます（[書き込み][write]の「型で止めないもの」）。
+`id` は採番されるので渡しません。
+
+このリソースに ※（条件付き必須）の項目はありません。
+
+`update` は `contentType` / `fileName` / `content` の 3 つだけが任意です（付け先 `resourceId` は更新で変えられません）。
 
 ## 項目と型
 
@@ -207,3 +212,4 @@ await files.create({ ...file, content: base64 });
 [t-page]: ../api/type-aliases/AttachmentPage.md
 [t-accessor]: ../api/type-aliases/AttachmentAccessor.md
 [t-resource]: ../api/type-aliases/AttachmentResource.md
+[write]: ../topics/write.md
