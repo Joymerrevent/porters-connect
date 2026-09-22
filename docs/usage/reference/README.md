@@ -30,7 +30,8 @@ PORTERS Connect API の仕様のうち、このライブラリを使ううえで
 
 ### 横断
 
-[glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）。
+[glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）／
+[troubleshooting][troubleshooting]（症状 → 原因 → 対処の早見表）。
 
 ## 重要な前提・落とし穴（設計に効くもの）
 
@@ -56,3 +57,4 @@ PORTERS Connect API の仕様のうち、このライブラリを使ううえで
 [rapi-resources]: resource-api/resources/README.md
 [glossary]: glossary.md
 [gotchas]: gotchas.md
+[troubleshooting]: troubleshooting.md

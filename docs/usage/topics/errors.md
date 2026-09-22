@@ -1,8 +1,20 @@
-# 失敗したときに落とす／続けるを決めたい（エラーハンドリング）
+# エラーと再試行
 
-PORTERS への問い合わせを増やさず**自己解決**できるよう、本ライブラリのエラーは
-「**何が・どの系統で・どう直すか・再試行してよいか**」を型に載せています。本ガイドは
-症状からの早見表と、2 系統（認証 / リソース）のコード対応表をまとめます。
+PORTERS への問い合わせを増やさず**自己解決**できるよう、このライブラリのエラーは
+「**何が・どの系統で・どう直すか・再試行してよいか**」を型に載せています。このページはエラーの型と
+`category`、届き方、ライブラリが自動で面倒を見る範囲、2 系統（認証 / リソース）のコード対応表をまとめます。
+症状から引く早見表は[トラブルシューティング][troubleshooting]にあります。
+
+## まず知ること
+
+- **すべての PORTERS 由来のエラーは `PortersError` を継承**し、系統ごとに `PortersAuthError` / `PortersResourceError` /
+  `PortersNetworkError` / `PortersConfigError` に分かれます。
+- **横断的な判断は `category`**（`auth` / `permission` / `validation` / `notFound` / `conflict` / `rateLimit` / `transient` /
+  `network` / `server` / `config` / `unknown`）で、`retryable` が再試行してよいかを持ちます。
+- **`Promise` を返す公開メソッドは同期 throw しません。** 設定ミスも含め、すべて reject で届きます。
+- **一時的な失敗はライブラリが再試行します**（指数バックオフ・既定 3 回）。ただし **`create` は結果が不明でも再送しません**
+  （非冪等で、消せないため）。
+- **認証系とリソース系でコードの番号が重複し、意味が違います**。`instanceof` で系統を分けてから `code` を見ます。
 
 生コードの一次情報は [リソース Result Code][result-codes] と [認証エラーコード][auth-errors] を参照してください。
 
@@ -270,32 +282,9 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 | `config`     | 設定・使い方の誤り                         | 呼び出し前の不正：宣言・オプション・サイズを修正             |
 | `unknown`    | 未知（フェイルセーフ）                     | `code` と `hint` を確認／握り潰さず surface 済み             |
 
-## 症状 → 原因 → 対処（早見表）
+## 症状から引く
 
-| 症状                                      | 系統 / code                           | category     | 対処                                                                       |
-| ----------------------------------------- | ------------------------------------- | ------------ | -------------------------------------------------------------------------- |
-| `PortersAuthError` が出て処理が止まる     | 認証 `401`                            | `auth`       | Refresh Token 失効。**初回ブラウザ `code` 付与**をその Company DB で再実施 |
-| 認証で `app_id` / `secret` 系のエラー     | 認証 `104` / `105`                    | `auth`       | App ID / App Secret を確認（`.env`・ハードコード禁止）                     |
-| データ取得で権限エラー                    | リソース `403`                        | `permission` | 対象 Company DB へ権限付与（初回 `code` 付与）／スコープを確認             |
-| `partition` が見つからない                | リソース `404`                        | `notFound`   | partition id と契約期間（未開始 / 解約）を確認                             |
-| 作成・更新で値が弾かれる                  | リソース `100`〜`116`                 | `validation` | パラメータ・書式・型・日時・Option を見直す                                |
-| 宣言したカスタム項目で `validation`       | リソース `100`                        | `validation` | その partition に項目が実在するか `t.field.of(...).search()` で確認        |
-| `itemstate` / `version` 不正              | リソース `133` / `146`                | `validation` | 値を見直す（itemstate・ConnectAPI Version）                                |
-| 重複・依存で作成/削除できない             | リソース `301`/`303`/`304`            | `conflict`   | 重複作成を避ける／子要素・被参照を解消                                     |
-| IP 制限 / アプリ権限不足                  | リソース `406` / `601`                | `permission` | IP アドレス申請／アプリ権限の申請                                          |
-| 登録最大件数超過                          | リソース `500`                        | `validation` | 件数を減らす／200 件以下のバッチに分割                                     |
-| `PortersConfigError`（送信前）            | サイズ超過                            | `config`     | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）       |
-| `PortersConfigError`（`defineFields` 等） | 宣言・オプション不正                  | `config`     | alias は `U_`/`A_`・既知リソースキー・オプションを修正                     |
-| **読み取りで宣言型と実データが食い違う**  | —（応答の形が違う）                   | `validation` | 宣言した Data Type が実物と違う。`verifyFields` で突き合わせて宣言を直す   |
-| **書き込み・condition の日時が変換不能**  | —（渡した値の書式）                   | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）               |
-| `new PortersClient(...)` がその場で落ちる | `hostname` / `port` / `scheme` の書式 | `config`     | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                   |
-| `PortersNetworkError` が断続的に出る      | —（切断 / タイムアウト）              | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                     |
-| `code` が `null` で `httpStatus` がある   | —（HTTP のみ）                        | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）        |
-| `resource response root is …` が出る      | —（200 ＋ 別物のボディ）              | `unknown`    | 中間装置が代わりに応答している。`hostname` と経路を確認                    |
-
-<!-- 根拠:
-- 「`resource response root is …` が出る」の行: ADR-0051
--->
+「この症状はどの系統で、どう直すか」の早見表は[トラブルシューティング][troubleshooting]に切り出してあります。
 
 ## 宣言型と実データの食い違い（`validation`）
 
@@ -397,8 +386,11 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 
 ## 関連
 
-- 一次情報: [リソース Result Code][result-codes] ／ [認証エラーコード][auth-errors]
-- 認証フロー: [認証 API のフロー][auth-flow]
+- 症状から引く: [トラブルシューティング][troubleshooting]
+- 主題: [書き込み][write]（部分成功と、再送してよいか）／[上限とレート][limits]（レート超過は `network` で届く）／
+  [認証とトークン][auth]（`PortersAuthError` のあと）／[カスタム項目][custom-fields]（宣言と実データの突合）
+- 実践例: [毎日の差分同期][sync-batch]（どこから再開するか）
+- API 事実: [リソース Result Code][result-codes]／[認証エラーコード][auth-errors]／[認証 API のフロー][auth-flow]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -413,3 +405,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 [auth-errors]: ../reference/authentication-api/errors.md
 [auth-flow]: ../reference/authentication-api/README.md
 [index]: ../index.md
+[troubleshooting]: ../reference/troubleshooting.md
+[write]: write.md
+[auth]: auth.md
+[sync-batch]: ../recipes/sync-batch.md
