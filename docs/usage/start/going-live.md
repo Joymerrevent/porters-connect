@@ -1,7 +1,7 @@
 # 本番に出す前に
 
 - **前提**: [はじめての書き込み][s4]
-- **次に読む**: [目的別の HOWTO][index]（「〜したい」から引く）
+- **次に読む**: [目次][index]（主題・リソース・用途から引く）
 
 ここまでで読み書きはできます。最後に、**本番で効いてくる前提**を 6 つ確認します。
 どれも「知らないと、動いてから困る」ものです。
@@ -79,8 +79,9 @@ for await (const c of t.candidate.searchAll({
 
 入門はここまでです。あとは**目的から引いてください**。
 
-- [目的別の HOWTO][index] — 「〜したい」で引く
-- [考え方][index] — PORTERS 側の前提（読んでおくと手順が短く読める）
+- [主題別][index] — 認証・検索・書き込み・上限……を 1 主題 1 ページで。冒頭の「まず知ること」に PORTERS 側の前提
+- [リソース別][resources] — 使うリソースの呼べるメソッドと固有の注意
+- [実践例][index] — 毎日の差分同期・複数テナントの組み立て
 - [公開 API の全記号][api] — 型とメソッドの正典
 
 [api]: ../api/index.md
@@ -92,3 +93,4 @@ for await (const c of t.candidate.searchAll({
 [no-delete]: ../topics/deleted.md
 [partition]: ../topics/tenant.md
 [s4]: first-write.md
+[resources]: ../resources/README.md
