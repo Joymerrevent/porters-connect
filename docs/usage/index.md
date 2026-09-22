@@ -87,9 +87,29 @@ PORTERS Connect API は、応答が XML で、OAuth が独自仕様で、削除 
 **同じ節構成**（呼べるメソッド → 固有の注意 → 新規作成の必須項目 → 項目と型）で置いています。
 **呼べるメソッドは行ごとに違う**ので、まず [リソースと操作][resources] の表で確かめてください。
 
-| データ系（読み書き）                                                                                                                                                                                                                                                                                                       | マスタ系（読み取り専用）                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [Candidate][r-candidate] ／ [Job][r-job] ／ [Client][r-client] ／ [Recruiter][r-recruiter] ／ [Contact][r-contact] ／ [Opportunity][r-opportunity] ／ [Activity][r-activity] ／ [Contract][r-contract] ／ [Sales][r-sales] ／ [Process][r-process] ／ [Resume][r-resume] ／ [Phase][r-phase] ／ [Attachment][r-attachment] | [Partition][r-partition] ／ [User][r-user] ／ [Department][r-department] ／ [Field][r-field] ／ [Option][r-option] |
+**データ系（読み書き）**
+
+- [Candidate（個人連絡先）][r-candidate] — 求職者本人の連絡先。Staffing ではスタッフ連絡先。項目の接頭辞が `Person.`
+- [Job（JOB）][r-job] — 求人。Staffing では案件。企業と企業担当者に必ず紐づく
+- [Client（企業）][r-client] — 取引先の企業。担当者・JOB・契約・コンタクト・商談がここに紐づく
+- [Recruiter（企業担当者）][r-recruiter] — 企業側の担当者
+- [Contact（コンタクト）][r-contact] — 企業との接触の記録
+- [Opportunity（商談管理）][r-opportunity] — 企業との商談
+- [Activity（アクティビティ）][r-activity] — レコードに付く活動の記録。付け先のリソースは数値で持つ
+- [Contract（契約）][r-contract] — 企業との契約。所有者（`P_Owner`）の項目が無い
+- [Sales（成約・売上）][r-sales] — Staffing では個別契約。参照 6 項目に依存の規則がある
+- [Process（選考プロセス）][r-process] — 個人連絡先と JOB を結ぶ選考。Staffing では引当 / 就業管理。JOB × レジュメで一意
+- [Resume（レジュメ）][r-resume] — 個人連絡先に属する経歴。Staffing ではスタッフ
+- [Phase（フェーズ履歴）][r-phase] — フェーズの変更履歴。先に `of("candidate")` で束ねる
+- [Attachment（添付ファイル）][r-attachment] — レコードに付くファイル。先に `of("resume")` で束ねる。本体は `get` だけ
+
+**マスタ系（読み取り専用）**
+
+- [Partition（Company DB）][r-partition] — `tenant(id)` に渡す id を探す。client 直下の唯一の読み取り
+- [User（ユーザー）][r-user] — `P_Owner` などユーザー型項目の参照先。`current()` で自己同定
+- [Department（部署）][r-department] — ユーザーの部署。絞り込み無し
+- [Field（項目定義）][r-field] — カスタム項目の発見。先に `of("candidate")` で束ねる
+- [Option（選択肢）][r-option] — 選択肢の alias を知る。`searchAll` は無い
 
 ## 4. 実践例
 
