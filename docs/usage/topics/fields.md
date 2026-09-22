@@ -82,8 +82,8 @@ Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。
 | `Image`             | 要求したサブ項目だけ               | 3 つとも必須                 |
 | `Link`              | Contact id ／ User ／ Department   | id だけ（数値）              |
 
-**読みと書きでかたちが違う**のが PORTERS Connect API の性質です。`User` や参照は読むと入れ子で返り、書くときは
-id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が
+**読みと書きでかたちが違う**のが PORTERS Connect API の性質です。`User` は読むと入れ子で返り、参照は既定では参照先の id で返り
+（`expand` で入れ子にできる）、書くときはどちらも id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が
 別の型なのはこのためです）。
 
 `Option` が常に配列なのは、単一選択でも複数選択でも PORTERS が同じ形で返すからです<!-- 根拠: ADR-0017 -->。
