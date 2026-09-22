@@ -96,8 +96,8 @@ const page = await t.candidate.search({
 -->
 
 [codes]: ../reference/resource-api/result-codes.md
-[fake]: ../howto/test-without-contract.md
+[fake]: testing.md
 [gotchas]: ../reference/gotchas.md
-[handle-failures]: ../howto/handle-failures.md
-[search-records]: ../howto/search-records.md
+[handle-failures]: errors.md
+[search-records]: query.md
 [index]: ../index.md

@@ -433,7 +433,7 @@ await t.phase.of(29); // PORTERS が値を増やしたとき、版を待たず�
   案5b を採るなら、`of()` は名前・`P_Resource` は数値という非対称が残る＝**別途起票して揃えるか決める**。
 - **残る論点は D3 の `Link` / `Image`**（R-4）と D2（マスタ項目の拡張）で、どちらも別 ADR。
 
-[write-constraints]: ../usage/concepts/limits.md
+[write-constraints]: ../usage/topics/limits.md
 [write-format]: ../usage/reference/resource-api/write-format.md
 [resource-list]: ../usage/reference/resource-api/resources-list.md
 [rv23]: ../reviews/rv/0023-candidate-catalog-missing-fields.md

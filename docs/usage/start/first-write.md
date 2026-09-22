@@ -97,8 +97,8 @@ try {
 
 **[本番に出す前に][s5]** — 動くようになったので、本番に出す前の確認をします。
 
-[bulk-write]: ../howto/bulk-write.md
-[handle-failures]: ../howto/handle-failures.md
-[no-delete]: ../concepts/no-delete.md
+[bulk-write]: ../topics/write.md
+[handle-failures]: ../topics/errors.md
+[no-delete]: ../topics/deleted.md
 [s3]: first-read.md
 [s5]: going-live.md

@@ -188,8 +188,8 @@ PORTERS_HOST=xxxxx.example.com node app.js                                # 本�
 
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
-[handle-failures]: handle-failures.md
-[access-point]: handle-failures.md#アクセスポイントの書式
+[handle-failures]: errors.md
+[access-point]: errors.md#アクセスポイントの書式
 [prereq]: ../start/prerequisites.md
 [start]: ../index.md
 [index]: ../index.md

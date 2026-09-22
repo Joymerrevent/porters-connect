@@ -450,10 +450,10 @@ Contract / Sales の `Currency` は **Data Type が `Number`** なので新し�
 > **MCP が露出できるのは第1層が持つものだけ**＝未実装 7 リソースはそのまま MCP の穴になる。
 > 排他ではなく**順序の問題**として、第1層を先に広げる。0033 は [ADR-0060][adr60] で **superseded**。
 
-**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/usage/howto/authenticate.md`）／
+**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/usage/topics/auth.md`）／
 F-2 Read クエリ（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0）／
-F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/usage/howto/multi-tenant.md`）／
-F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/usage/howto/bulk-write.md`）。
+F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/usage/recipes/multi-tenant.md`）／
+F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/usage/topics/write.md`）。
 
 横断監査 [2026-06-22-03][rv3] の検出ドリフト RV-10〜12 はすべて `fixed`（RV-11 は [ADR-0036][adr36] で refresh 挙動を amend）。
 

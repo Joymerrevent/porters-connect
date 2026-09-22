@@ -270,12 +270,12 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 
 [write-format]: ../reference/resource-api/write-format.md
 [resources-list]: ../reference/resource-api/resources-list.md
-[error-handling]: ../howto/handle-failures.md
-[bulk]: ../howto/bulk-write.md
-[attachments]: ../howto/attachments.md
-[failures]: ../howto/handle-failures.md
-[authenticate]: ../howto/authenticate.md
-[multi-tenant]: ../howto/multi-tenant.md
-[custom-fields]: ../howto/custom-fields.md
+[error-handling]: errors.md
+[bulk]: write.md
+[attachments]: ../resources/attachment.md
+[failures]: errors.md
+[authenticate]: auth.md
+[multi-tenant]: ../recipes/multi-tenant.md
+[custom-fields]: custom-fields.md
 [api-throttle-options]: ../api/type-aliases/ThrottleOptions.md
 [index]: ../index.md

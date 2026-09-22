@@ -122,9 +122,9 @@ for await (const c of t.candidate.searchAll({
 
 **[はじめての書き込み][s4]** — 読めたので、次は作成して更新します。
 
-[aliases]: ../concepts/aliases.md
-[custom-fields]: ../howto/custom-fields.md
-[partition]: ../concepts/partition.md
+[aliases]: ../topics/fields.md
+[custom-fields]: ../topics/custom-fields.md
+[partition]: ../topics/tenant.md
 [s2]: authenticate.md
 [s4]: first-write.md
-[search-records]: ../howto/search-records.md
+[search-records]: ../topics/query.md

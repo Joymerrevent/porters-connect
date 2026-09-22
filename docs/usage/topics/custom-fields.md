@@ -567,10 +567,10 @@ const score = async () => {
 - 既定 field: ADR-0020／`field` の alias: ADR-0059
 -->
 
-[error-handling]: handle-failures.md
+[error-handling]: errors.md
 [fdt]: ../reference/resource-api/field-data-types.md
-[multi-tenancy]: multi-tenant.md
-[write-constraints]: ../concepts/limits.md
+[multi-tenancy]: ../recipes/multi-tenant.md
+[write-constraints]: limits.md
 [index]: ../index.md
 [gotchas]: ../reference/gotchas.md
-[datetime]: ../concepts/datetime.md
+[datetime]: datetime.md

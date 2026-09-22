@@ -83,8 +83,8 @@ Partition ごとに client を分ける形に切り替えてください — **�
 - 決定: ADR-0055（`tenant(id)` に束ねる）／ADR-0008（マルチテナント運用）
 -->
 
-[custom-fields]: ../howto/custom-fields.md
-[authenticate]: ../howto/authenticate.md
-[multi-tenant]: ../howto/multi-tenant.md
+[custom-fields]: custom-fields.md
+[authenticate]: auth.md
+[multi-tenant]: ../recipes/multi-tenant.md
 [res-list]: ../reference/resource-api/resources-list.md
 [index]: ../index.md

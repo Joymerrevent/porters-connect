@@ -107,7 +107,7 @@ Refresh Token を外に出すことになるので、置き場所の安全性は
 
 **[はじめての読み取り][s-read]** — 繋がったので、実際にデータを読みます。
 
-[authenticate]: ../howto/authenticate.md
-[handle-failures]: ../howto/handle-failures.md
+[authenticate]: ../topics/auth.md
+[handle-failures]: ../topics/errors.md
 [s-install]: install.md
 [s-read]: first-read.md

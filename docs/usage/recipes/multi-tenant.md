@@ -119,7 +119,7 @@ const user = await t.user.current(); // ログイン中 user（同上）
   ADR-0087（カスタム項目の宣言も `tenant()` で束ねる）
 -->
 
-[oauth]: ./authenticate.md
-[custom-fields]: custom-fields.md
-[partition]: ../concepts/partition.md
+[oauth]: ./../topics/auth.md
+[custom-fields]: ../topics/custom-fields.md
+[partition]: ../topics/tenant.md
 [index]: ../index.md

@@ -180,7 +180,7 @@ decider が 2026-08-11 に選択。
 
 [findings]: ../reviews/findings.md
 [run]: ../reviews/2026-08-10-01.md
-[guide]: ../usage/howto/handle-failures.md
+[guide]: ../usage/topics/errors.md
 [adr6]: 0006-error-model.md
 [adr9]: 0009-http-transport.md
 [adr46]: 0046-guard-error-contract.md

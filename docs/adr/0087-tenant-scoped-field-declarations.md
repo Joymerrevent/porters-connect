@@ -340,9 +340,9 @@ const tenantB = defineFields({ candidate: appCandidate });
 [rv60]: ../reviews/rv/0060-changelog-stale-silent-null-premise.md
 [ref-list]: ../usage/reference/resource-api/resources-list.md
 [ref-candidate]: ../usage/reference/resource-api/resources/candidate.md
-[guide-cf]: ../usage/howto/custom-fields.md
-[guide-mt]: ../usage/howto/multi-tenant.md
-[guide-dt]: ../usage/concepts/datetime.md
+[guide-cf]: ../usage/topics/custom-fields.md
+[guide-mt]: ../usage/recipes/multi-tenant.md
+[guide-dt]: ../usage/topics/datetime.md
 [bd]: ../design/basic-design.md
 [sweep]: ../../CLAUDE.md
 [lv]: ../live-verification.md

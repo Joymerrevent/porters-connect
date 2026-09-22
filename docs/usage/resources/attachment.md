@@ -147,10 +147,10 @@ await files.create({ ...file, content: base64 });
 - API 事実: [リソース一覧][res-list]（`Value` 列）／[Attachment の項目と Mime Type][ref-attachment]
 - ほかの目的から探す: [目次][index]
 
-[bulk-write]: bulk-write.md
-[handle-failures]: handle-failures.md
-[limits]: ../concepts/limits.md
+[bulk-write]: ../topics/write.md
+[handle-failures]: ../topics/errors.md
+[limits]: ../topics/limits.md
 [ref-attachment]: ../reference/resource-api/resources/attachment.md
-[no-delete]: ../concepts/no-delete.md
+[no-delete]: ../topics/deleted.md
 [res-list]: ../reference/resource-api/resources-list.md
 [index]: ../index.md

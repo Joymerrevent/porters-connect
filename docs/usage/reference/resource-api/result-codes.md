@@ -54,4 +54,4 @@
 [readme]: README.md
 [write-format]: write-format.md
 [errors]: ../authentication-api/errors.md
-[guide]: ../../howto/handle-failures.md
+[guide]: ../../topics/errors.md

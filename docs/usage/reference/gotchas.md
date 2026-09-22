@@ -71,9 +71,9 @@
 > 設計は最新（version 2）前提。旧挙動は出典の「仕様変更のご案内」を参照。
 
 [fdt]: resource-api/field-data-types.md
-[limits]: ../concepts/limits.md
-[sync-batch]: ../howto/sync-batch.md
-[handle-failures]: ../howto/handle-failures.md
+[limits]: ../topics/limits.md
+[sync-batch]: ../recipes/sync-batch.md
+[handle-failures]: ../topics/errors.md
 [install]: ../start/install.md
-[custom-fields]: ../howto/custom-fields.md
-[test-without-contract]: ../howto/test-without-contract.md
+[custom-fields]: ../topics/custom-fields.md
+[test-without-contract]: ../topics/testing.md

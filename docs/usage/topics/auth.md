@@ -226,6 +226,6 @@ try {
 -->
 
 [auth-ref]: ../reference/authentication-api/README.md
-[error-handling]: ./handle-failures.md
+[error-handling]: ./errors.md
 [s-auth]: ../start/authenticate.md
 [index]: ../index.md

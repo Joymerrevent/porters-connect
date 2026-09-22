@@ -22,8 +22,14 @@ import { join } from "node:path";
 const API_DIR = "docs/usage/api";
 const SCOPE = ["classes", "functions"];
 
-// 言及を探す先。ADR-0070 の「HOWTO / 入門ページ」。
-const GUIDE_GLOBS = ["docs/usage/start/**/*.md", "docs/usage/howto/**/*.md"];
+// 言及を探す先。ADR-0070 の「HOWTO / 入門ページ」＝ ADR-0088 の 5 章では導入と、引く 3 章
+// （主題別・リソース別・実践例）。リファレンス（`reference/` と生成物）は探す先に数えない。
+const GUIDE_GLOBS = [
+  "docs/usage/start/**/*.md",
+  "docs/usage/topics/**/*.md",
+  "docs/usage/resources/**/*.md",
+  "docs/usage/recipes/**/*.md",
+];
 
 /**
  * 言及が無くてよい記号と、その理由。**理由を必須にする**のは、外した記録が残らないと
@@ -86,7 +92,8 @@ console.error(
 for (const u of unmentioned)
   console.error(`  ${u.name}（${API_DIR}/${u.from}）`);
 console.error(
-  `\n入門（docs/usage/start）か目的別（docs/usage/howto）のどこかで使い方に触れてください。\n` +
+  `\n導入（docs/usage/start）か、主題別・リソース別・実践例（docs/usage/{topics,resources,recipes}）の\n` +
+    `どこかで使い方に触れてください。\n` +
     `触れないと決めたなら、${"scripts/check-api-mentions.mjs"} の EXEMPT に理由つきで足します。`,
 );
 process.exit(1);

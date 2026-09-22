@@ -185,15 +185,15 @@ export const checkTarget = (target, read = readFileSync) => {
 
 /**
  * 利用者向けドキュメントの目次（`docs/usage/index.md`）と実ファイルの 1:1 突合
- * （[ADR-0070] 論点4 の検査①）。
+ * （[ADR-0070] 論点4 の検査①。階層は [ADR-0088] の 5 章）。
  *
  * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
  * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
  *
- * 対象は `docs/usage/{start,concepts,howto}` の 3 階層だけ。`reference/` と `api/` は
+ * 対象は `docs/usage/{start,topics,resources,recipes}` の 4 階層だけ。`reference/` と `api/` は
  * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
  */
-const USER_DOC_DIRS = ["start", "concepts", "howto"];
+const USER_DOC_DIRS = ["start", "topics", "resources", "recipes"];
 
 export const checkUserDocIndex = (read = readFileSync) => {
   const problems = [];
@@ -204,7 +204,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
   } catch {
     return [`${indexPath} がありません（利用者向けドキュメントの目次）`];
   }
-  // 参照スタイルの定義から、3 階層へのリンクだけを拾う。
+  // 参照スタイルの定義から、4 階層へのリンクだけを拾う。
   const linked = new Set(
     [...index.matchAll(/^\[[^\]]+\]:\s*(\S+)$/gm)]
       .map((m) => m[1])
@@ -217,7 +217,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
       entries = readdirSync(join("docs", "usage", dir));
     } catch {
       // **番人**（ADR-0071 論点2）。以前は「まだ無いディレクトリは対象外」と読み飛ばしていたが、
-      // 移設したのに定数を直し忘れると検査が静かに空振りする。3 階層はすべて実在する前提。
+      // 移設したのに定数を直し忘れると検査が静かに空振りする。4 階層はすべて実在する前提。
       problems.push(
         `検査対象の階層が見つかりません: docs/usage/${dir}（USER_DOC_DIRS を直すか、移設を戻す）`,
       );
@@ -344,17 +344,20 @@ export const checkStartChain = (read = readFileSync) => {
 };
 
 /**
- * 引く層（目次から引いて 1 本読む層。いまは目的別 `docs/usage/howto/` の 1 階層）の各ページに
- * **出口**があるかの検査（[ADR-0070] 追記の検査⑤）。階層は `EXIT_DIRS` で持ち、増えても
- * 階層ごとに番人が働く（[ADR-0088] で 3 階層に広がる）。
+ * 引く層（`docs/usage/{topics,resources,recipes}`）の各ページに**出口**があるかの検査
+ * （[ADR-0070] 追記の検査⑤。階層は [ADR-0088] の 5 章で、目的別 1 階層から 3 階層に広がった）。
  *
- * 入門と違い、引く層は**順序が無い**。だから鎖ではなく、「読み終えた人が次へ移れること」だけを
- * 見る。具体的には `## 関連` を持ち、その節から**目次へ戻れる**こと。実測（2026-09-12）では
- * 目的別 9 本中 3 本に節が無く、1 本は別名だった。
+ * 入門と違い、引く層は**順序が無い**（目次から主題・リソース・用途で引いて 1 本読む層）。だから鎖では
+ * なく、「読み終えた人が次へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
+ * **目次へ戻れる**こと。実測（2026-09-12）では目的別 9 本中 3 本に節が無く、1 本は別名だった。
  *
  * 検出するもの: `## 関連` の欠落／関連から目次へのリンクが無い／階層ごと消えた（番人・階層ごと）。
  */
-const EXIT_DIRS = ["docs/usage/howto"];
+const EXIT_DIRS = [
+  "docs/usage/topics",
+  "docs/usage/resources",
+  "docs/usage/recipes",
+];
 const EXIT_SECTION = "## 関連";
 const EXIT_TARGET = "../index.md";
 
@@ -391,7 +394,7 @@ export const checkExits = (
       files = list(dir).filter((f) => f.endsWith(".md"));
     } catch {
       // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
-      // 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
+      // 3 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
       problems.push(
         `検査対象が見つかりません: ${dir}（EXIT_DIRS を直すか、移設を戻す）`,
       );

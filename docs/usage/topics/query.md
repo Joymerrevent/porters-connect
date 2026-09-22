@@ -399,8 +399,8 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
   ADR-0057（`itemstate` の明示指定はそのまま送る）
 -->
 
-[aliases]: ../concepts/aliases.md
+[aliases]: fields.md
 [custom-fields]: custom-fields.md
 [rapi]: ../reference/resource-api/README.md
-[partition]: ../concepts/partition.md
+[partition]: tenant.md
 [index]: ../index.md

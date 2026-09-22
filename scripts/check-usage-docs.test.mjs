@@ -71,8 +71,8 @@ describe("linkFindings（保守者向け文書へのリンク）", () => {
     expect(
       linkFindings(
         tree({
-          "docs/usage/howto/a.md": [
-            "[b]: ../concepts/b.md",
+          "docs/usage/topics/a.md": [
+            "[b]: ../topics/b.md",
             "[c]: b.md#section",
             "[root]: ../../../README.md",
             "[docs]: ../../README.md",
@@ -92,7 +92,7 @@ describe("linkFindings（保守者向け文書へのリンク）", () => {
     expect(
       linkFindings(
         tree({
-          "docs/usage/howto/a.md": [
+          "docs/usage/topics/a.md": [
             "[adr]: ../../adr/0006-error-model.md",
             "[prd]: ../../design/requirements.md#r-10",
             "[rv]: ../../reviews/rv/0036.md",
@@ -103,10 +103,10 @@ describe("linkFindings（保守者向け文書へのリンク）", () => {
         }),
       ),
     ).toEqual([
-      "docs/usage/howto/a.md:1: ../../adr/0006-error-model.md → docs/adr/0006-error-model.md",
-      "docs/usage/howto/a.md:2: ../../design/requirements.md#r-10 → docs/design/requirements.md",
-      "docs/usage/howto/a.md:3: ../../reviews/rv/0036.md → docs/reviews/rv/0036.md",
-      "docs/usage/howto/a.md:4: ../../live-verification.md → docs/live-verification.md",
+      "docs/usage/topics/a.md:1: ../../adr/0006-error-model.md → docs/adr/0006-error-model.md",
+      "docs/usage/topics/a.md:2: ../../design/requirements.md#r-10 → docs/design/requirements.md",
+      "docs/usage/topics/a.md:3: ../../reviews/rv/0036.md → docs/reviews/rv/0036.md",
+      "docs/usage/topics/a.md:4: ../../live-verification.md → docs/live-verification.md",
       "README.md:1: ./docs/roadmap.md → docs/roadmap.md",
     ]);
   });
@@ -159,18 +159,18 @@ describe("readUserDocs（対象ファイルの収集）", () => {
 
   it("docs/usage を再帰し、生成物 docs/usage/api と .md 以外は除き、README.md を足す", () => {
     root = mkdtempSync(join(tmpdir(), "usage-docs-"));
-    mkdirSync(join(root, "docs/usage/howto"), { recursive: true });
+    mkdirSync(join(root, "docs/usage/topics"), { recursive: true });
     mkdirSync(join(root, GENERATED, "classes"), { recursive: true });
     writeFileSync(join(root, "README.md"), "# readme\n");
     writeFileSync(join(root, "docs/usage/index.md"), "# index\n");
-    writeFileSync(join(root, "docs/usage/howto/a.md"), "# a\n");
-    writeFileSync(join(root, "docs/usage/howto/note.txt"), "not md\n");
+    writeFileSync(join(root, "docs/usage/topics/a.md"), "# a\n");
+    writeFileSync(join(root, "docs/usage/topics/note.txt"), "not md\n");
     writeFileSync(join(root, GENERATED, "README.md"), "generated\n");
     writeFileSync(join(root, GENERATED, "classes/X.md"), "generated\n");
     expect([...readUserDocs(root).keys()].sort()).toEqual([
       "README.md",
-      "docs/usage/howto/a.md",
       "docs/usage/index.md",
+      "docs/usage/topics/a.md",
     ]);
   });
 });

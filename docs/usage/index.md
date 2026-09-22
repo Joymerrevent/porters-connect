@@ -100,17 +100,17 @@
 開発・保守のための資料（ADR・設計・ロードマップ・台帳）は [docs/README.md][docs-readme] にまとめてあります。
 
 [api]: api/index.md
-[authenticate]: howto/authenticate.md
-[bulk-write]: howto/bulk-write.md
-[custom-fields]: howto/custom-fields.md
-[handle-failures]: howto/handle-failures.md
-[attachments]: howto/attachments.md
-[aliases]: concepts/aliases.md
-[datetime]: concepts/datetime.md
-[limits]: concepts/limits.md
-[no-delete]: concepts/no-delete.md
-[partition]: concepts/partition.md
-[multi-tenant]: howto/multi-tenant.md
+[authenticate]: topics/auth.md
+[bulk-write]: topics/write.md
+[custom-fields]: topics/custom-fields.md
+[handle-failures]: topics/errors.md
+[attachments]: resources/attachment.md
+[aliases]: topics/fields.md
+[datetime]: topics/datetime.md
+[limits]: topics/limits.md
+[no-delete]: topics/deleted.md
+[partition]: topics/tenant.md
+[multi-tenant]: recipes/multi-tenant.md
 [s-auth]: start/authenticate.md
 [s-install]: start/install.md
 [s-live]: start/going-live.md
@@ -118,7 +118,7 @@
 [s-read]: start/first-read.md
 [s-write]: start/first-write.md
 [reference]: reference/README.md
-[search-records]: howto/search-records.md
+[search-records]: topics/query.md
 [docs-readme]: ../README.md
-[sync-batch]: howto/sync-batch.md
-[test-without-contract]: howto/test-without-contract.md
+[sync-batch]: recipes/sync-batch.md
+[test-without-contract]: topics/testing.md

@@ -149,10 +149,10 @@ PORTERS 自身が注意している点です。
   ADR-0056（型が無い項目）／ADR-0059（接頭辞を書かない）
 -->
 
-[custom-fields]: ../howto/custom-fields.md
+[custom-fields]: custom-fields.md
 [datetime]: datetime.md
 [fdt]: ../reference/resource-api/field-data-types.md
 [gotchas]: ../reference/gotchas.md
 [res-list]: ../reference/resource-api/resources-list.md
-[search-records]: ../howto/search-records.md
+[search-records]: query.md
 [index]: ../index.md

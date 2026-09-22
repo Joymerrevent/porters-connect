@@ -132,11 +132,11 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 - 考え方: [上限][limits]／[日時は UTC][datetime]（`P_UpdateDate` は ISO 8601）／[削除 API が無いということ][no-delete]
 - ほかの目的から探す: [目次][index]
 
-[bulk-write]: bulk-write.md
-[datetime]: ../concepts/datetime.md
-[handle-failures]: handle-failures.md
-[limits]: ../concepts/limits.md
-[no-delete]: ../concepts/no-delete.md
-[aliases]: ../concepts/aliases.md
-[search-records]: search-records.md
+[bulk-write]: ../topics/write.md
+[datetime]: ../topics/datetime.md
+[handle-failures]: ../topics/errors.md
+[limits]: ../topics/limits.md
+[no-delete]: ../topics/deleted.md
+[aliases]: ../topics/fields.md
+[search-records]: ../topics/query.md
 [index]: ../index.md

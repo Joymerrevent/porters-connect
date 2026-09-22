@@ -55,8 +55,9 @@ const MARKDOWN_ROOTS = [
   "docs/design/**/*.md",
   "docs/usage/index.md",
   "docs/usage/start/**/*.md",
-  "docs/usage/concepts/**/*.md",
-  "docs/usage/howto/**/*.md",
+  "docs/usage/topics/**/*.md",
+  "docs/usage/resources/**/*.md",
+  "docs/usage/recipes/**/*.md",
 ];
 
 // JSDoc の `@example` も対象。これは **`docs/usage/api` に生成されて利用者に見える**ので、

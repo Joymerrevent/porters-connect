@@ -163,7 +163,7 @@ await t.job.search({
 -->
 
 [fdt]: ../reference/resource-api/field-data-types.md
-[handle-failures]: ../howto/handle-failures.md
-[custom-fields]: ../howto/custom-fields.md
-[search-records]: ../howto/search-records.md
+[handle-failures]: errors.md
+[custom-fields]: custom-fields.md
+[search-records]: query.md
 [index]: ../index.md

@@ -171,6 +171,6 @@ Sales.P_Job -> Sales.P_Recruiter -> Sales.P_Client <- Sales.P_Contract
 [adr19]: 0019-static-resource-types.md
 [adr46]: 0046-guard-error-contract.md
 [adr61]: 0061-phase-resource-surface.md
-[limits]: ../usage/concepts/limits.md
+[limits]: ../usage/topics/limits.md
 [lv]: ../live-verification.md
 [rm]: ../roadmap.md

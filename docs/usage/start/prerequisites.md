@@ -83,9 +83,9 @@ Company DB の一覧が返ることを「繋がった」の証拠に使います
 **[インストールと、クライアントの構築][s-install]** — 手元にライブラリを入れて、
 受け取った 3 つの値を渡します。
 
-[partition]: ../concepts/partition.md
+[partition]: ../topics/tenant.md
 [resources-list]: ../reference/resource-api/resources-list.md
 [s-auth]: authenticate.md
 [s-install]: install.md
 [s-live]: going-live.md
-[test-without-contract]: ../howto/test-without-contract.md
+[test-without-contract]: ../topics/testing.md

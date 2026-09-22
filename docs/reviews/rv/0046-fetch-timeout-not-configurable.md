@@ -97,8 +97,8 @@ co-located テストで 4 つ固定した — signal が渡ること、**応答�
 [adr77]: ../../adr/0077-fetch-transport-timeout.md
 [adr48]: ../../adr/0048-access-point-host-validation.md
 [rv28]: 0028-count-range-unvalidated.md
-[attachments]: ../../usage/howto/attachments.md
+[attachments]: ../../usage/resources/attachment.md
 [adr73]: ../../adr/0073-throttle-sharing.md
 [adr75]: ../../adr/0075-attachment-search-all.md
 [adr6]: ../../adr/0006-error-model.md
-[limits]: ../../usage/concepts/limits.md
+[limits]: ../../usage/topics/limits.md

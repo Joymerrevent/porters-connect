@@ -45,4 +45,4 @@ redirect の場合は `?error=コード`。**Resource API の Result Code（[res
 
 [readme]: README.md
 [result-codes]: ../resource-api/result-codes.md
-[guide]: ../../howto/handle-failures.md
+[guide]: ../../topics/errors.md

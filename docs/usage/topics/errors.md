@@ -408,7 +408,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 -->
 
 [custom-fields]: custom-fields.md
-[limits]: ../concepts/limits.md
+[limits]: limits.md
 [result-codes]: ../reference/resource-api/result-codes.md
 [auth-errors]: ../reference/authentication-api/errors.md
 [auth-flow]: ../reference/authentication-api/README.md

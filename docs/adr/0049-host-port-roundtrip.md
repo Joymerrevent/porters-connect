@@ -178,7 +178,7 @@
   [ADR-0006][adr6]（エラーモデル）。
 
 [findings]: ../reviews/findings.md
-[guide]: ../usage/howto/handle-failures.md
+[guide]: ../usage/topics/errors.md
 [adr6]: 0006-error-model.md
 [adr47]: 0047-access-point-scheme.md
 [adr48]: 0048-access-point-host-validation.md

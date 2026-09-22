@@ -87,10 +87,10 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 [write-format]: ../reference/resource-api/write-format.md
 [result-codes]: ../reference/resource-api/result-codes.md
-[handle-failures]: handle-failures.md
-[sync-batch]: sync-batch.md
-[attachments]: attachments.md
-[limits]: ../concepts/limits.md
-[no-delete]: ../concepts/no-delete.md
+[handle-failures]: errors.md
+[sync-batch]: ../recipes/sync-batch.md
+[attachments]: ../resources/attachment.md
+[limits]: limits.md
+[no-delete]: deleted.md
 [custom-fields]: custom-fields.md
 [index]: ../index.md

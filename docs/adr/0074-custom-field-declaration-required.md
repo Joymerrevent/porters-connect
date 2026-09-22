@@ -230,5 +230,5 @@ const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
 [0055]: 0055-partition-binding-guard.md
 [0059]: 0059-read-field-bare-alias.md
 [0069]: 0069-tenant-field-catalog-tooling.md
-[rq]: ../usage/howto/search-records.md
-[cf]: ../usage/howto/custom-fields.md
+[rq]: ../usage/topics/query.md
+[cf]: ../usage/topics/custom-fields.md

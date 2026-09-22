@@ -84,11 +84,11 @@ for await (const c of t.candidate.searchAll({
 - [公開 API の全記号][api] — 型とメソッドの正典
 
 [api]: ../api/index.md
-[authenticate]: ../howto/authenticate.md
-[handle-failures]: ../howto/handle-failures.md
+[authenticate]: ../topics/auth.md
+[handle-failures]: ../topics/errors.md
 [index]: ../index.md
-[limits]: ../concepts/limits.md
-[multi-tenant]: ../howto/multi-tenant.md
-[no-delete]: ../concepts/no-delete.md
-[partition]: ../concepts/partition.md
+[limits]: ../topics/limits.md
+[multi-tenant]: ../recipes/multi-tenant.md
+[no-delete]: ../topics/deleted.md
+[partition]: ../topics/tenant.md
 [s4]: first-write.md

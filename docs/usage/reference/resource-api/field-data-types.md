@@ -92,5 +92,5 @@
 [write-format-md]: write-format.md
 [res-department]: resources/department.md
 [time-only]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
-[concept-dt]: ../../concepts/datetime.md
+[concept-dt]: ../../topics/datetime.md
 [resource-api-md]: README.md
