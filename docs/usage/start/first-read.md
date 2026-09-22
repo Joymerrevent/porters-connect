@@ -111,11 +111,11 @@ for await (const c of t.candidate.searchAll({
 
 先に知っておくべきことが 3 つあります。
 
-| 見え方                     | 例                                             |
-| -------------------------- | ---------------------------------------------- |
-| **日時は ISO 8601（UTC）** | `P_UpdateDate` → `"2026-09-11T12:00:00Z"`      |
-| **選択肢は常に配列**       | `P_Phase` → `["Option.P_PersonPhase_Applied"]` |
-| **User や参照は入れ子**    | `P_Owner` → `{ P_Id, P_Type, P_Name, P_Mail }` |
+| 見え方                       | 例                                                                   |
+| ---------------------------- | -------------------------------------------------------------------- |
+| **日時は ISO 8601（UTC）**   | `P_UpdateDate` → `"2026-09-11T12:00:00Z"`                            |
+| **選択肢は常に配列**         | `P_Phase` → `["Option.P_PersonPhase_Applied"]`                       |
+| **User は入れ子、参照は id** | `P_Owner` → `{ P_Id, P_Type, P_Name, P_Mail }`、`P_Client` → `20001` |
 
 **書くときはかたちが変わります**（`P_Owner` は数値の id だけを送る）。読みと書きでかたちが違うのは
 **PORTERS Connect API の性質**で、[alias と Data Type][aliases] にまとめてあります。
