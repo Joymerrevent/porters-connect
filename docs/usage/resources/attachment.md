@@ -48,15 +48,17 @@ await files.update(900, { fileName: "new.pdf" }); // 差し替え
 
 ## 固有の注意
 
-このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページに、それぞれの詳しい説明はこのページの以降の節にあります。
+このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+要点は次の 6 つで、詳しくはこの節の下の各項目にあります。
 
-- **先に `of()` でリソースを束ねます。** 束ねた値は作成時の付け先にもなります。
+- **先に `of()` でリソースを束ねます。** 束ねた値は作成時の付け先にもなります（上の「まず、どのリソースの添付かを束ねる」）。
+- **付け先（`resourceId`）は更新で変えられません。** 間違えたら正しい先に作り直し、間違えたほうは消せません。
 - **一覧は本体（`content`）を返しません。** 本体は `get` で 1 件ずつ取ります。
 - **絞り込めるのは `resourceId` と `id` だけです。** ファイル名や Mime Type では探せません。
 - **本体は 10MB までです。** 超えると送信前に `PortersConfigError` で止まります。
-- **一括はありません。** `createMany` / `updateMany` が無く、付け先（`resourceId`）は更新で変えられません。
+- **一括はありません。** `createMany` / `updateMany` が無く、ファイルは 1 件ずつです。
 
-## 追加する
+### 追加する（付け先は変えられない）
 
 ```ts
 import { bytesToBase64 } from "@joymerrevent/porters-connect";
@@ -74,7 +76,7 @@ const id = await t.attachment.of("candidate").create({
 **間違えたほうは消せません**（[削除 API が無いということ][no-delete]）。付ける前に
 `of()` の名前と `resourceId` を確かめてください。
 
-## 読むときは、本体が付いてこない
+### 読むときは、本体が付いてこない
 
 **`search` は本体（`content`）を返しません。** メタ情報
 （`id` / `resource` / `resourceId` / `contentType` / `fileName`）だけです。
@@ -120,7 +122,7 @@ for await (const a of files.searchAll()) {
 transport: createFetchTransport({ timeoutMs: 120_000 });
 ```
 
-## 絞り込めるのは「どのレコードの添付か」だけ
+### 絞り込めるのは「どのレコードの添付か」だけ
 
 Attachment の Read が取る絞り込みは `resourceId`（1 レコードの添付）と `id`（1 件）だけで、
 **ファイル名や Mime Type での検索はできません**（PORTERS が提供していません）<!-- 根拠: ADR-0081 -->。
@@ -144,7 +146,7 @@ resourceNameOf(17); // "resume"
 
 正典は[リソース一覧][res-list]の `Value` 列です。
 
-## 上限は 10MB、送信前に弾かれる
+### 上限は 10MB、送信前に弾かれる
 
 ```ts
 // PortersConfigError: attachment content is 14000001 characters, over the ~10MB file limit
@@ -155,7 +157,7 @@ await files.create({ ...file, content: base64 });
 **アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限][limits]）。
 
-## まとめて作成する方法は無い
+### まとめて作成する方法は無い
 
 `createMany` / `updateMany` は Attachment にはありません。ファイルは 1 件ずつです。
 たくさん送るときは、レートの自制（1 分あたり Write 500）がライブラリ側で効きます。
