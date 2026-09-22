@@ -1,83 +1,241 @@
-# 複数テナントを 1 プロセスで扱いたい（`tenant(id)` と partition）
+# 複数テナントを 1 プロセスで扱う（SaaS の組み立て）
 
-PORTERS は **partition（Company DB）スコープの全リクエストで `partition` を要求**します。
-このライブラリでは **`porters.tenant(id)` が partition を束ねる唯一の方法**で、
-**単一テナントでも複数テナントでも同じ形**です<!-- 根拠: ADR-0055 -->。
-
-`PortersClient` は partition を持ちません。client 直下にあるのは **partition を取らないもの**
-（`auth`・`partition` マスタ・`tenant(id)` 自身）だけです。
-「partition を束ね忘れたクライアント」という状態が**存在しない**ようにしてあります。
-
-partition の前提は [Partition の考え方][partition] を参照してください。
-
-<!-- 根拠: ADR-0008（マルチテナント）・ADR-0021（`tenant` 改名）・ADR-0040（実装・案1c）・ADR-0055（client から partition を外す）・基本設計（認証 & マルチテナント） -->
+複数の PORTERS 契約（Company DB）を、1 つのアプリケーションから扱う組み立てです。
+テナントの登録から、リクエストごとのスコープ、宣言の持ち方、認証を分けるか、レートの共有までを順に組みます。
 
 > [!NOTE]
-> **end-user ↔ 会社 ↔ partition のマッピングは利用側（SaaS）の責務**です。ライブラリ（第1層）は
-> 業務ロジックを持ちません。発見した partition の保存・ルーティングは SaaS 側で行ってください。
+> **利用者 ↔ 会社 ↔ Partition の対応は利用側（SaaS）の責務**です。ライブラリは業務ロジックを持ちません。
+> 発見した Partition の保存とルーティングは SaaS 側で行います。
 
-## 1. 単一テナント — スコープを 1 回持つ
+## 使う機能
 
-相手が 1 partition なら、**起動時に一度束ねて使い回します**。以降は `t` をクライアントのように扱えます。
+| 機能                                              | 何に使うか                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------- |
+| `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する      |
+| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を束ねる    |
+| `defineFields` の spread 合成                     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる |
+| `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                       |
+| `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき               |
+| `createThrottle`                                  | レートの共有から降りる／プロセスを跨いで協調する           |
+
+## 組み立て
+
+### 1. テナントを登録する（Partition の発見）
+
+初回のブラウザでの権限付与（[認証とトークン][auth]）の直後は、`exchangeAuthorizationCode` で得た
+トークンが**ブラウザでログインした人のもの**なので、そのトークンが有効な間だけ `requestType: 0` で
+「ログイン中の Partition / User」を引けます。発見した Partition を SaaS の DB に「会社 ↔ Partition」で
+保存します。
 
 ```ts
-const porters = new PortersClient({ hostname, appId, appSecret });
-const t = porters.tenant(Number(process.env.PORTERS_PARTITION));
-
-await t.candidate.search({ condition: { P_Name: { part: "山田" } } });
-await t.job.get(jobId);
+const me = await porters.partition.search({ requestType: 0 }); // ログイン中 Partition（code 付与の直後だけ）
+const user = await t.user.current(); // ログイン中 User（同上）
 ```
 
-カスタム項目を使うなら、その宣言も**ここで一緒に**渡します — `porters.tenant(id, { fields })`
-（[カスタム項目][custom-fields]）<!-- 根拠: ADR-0087 -->。カスタム項目は partition ごとのものなので、
-client には置きません。
+以降の無人運用（`code_direct` で取り直したトークン）ではこの呼び方は使えません。`requestType: 0` は
+403 になり、`t.user.current()` はアプリ自身の User を返します（[Partition とテナントスコープ][tenant]）。
+普段は `porters.partition.search()`（アクセスできる一覧）から選んでください。Company DB が複数あるなら、
+権限付与も Company DB ごとに繰り返します。
 
-App レベルの操作は `porters` 側にあります。
+### 2. リクエストごとにスコープを作る
 
-```ts
-await porters.auth.ensureAuthenticated(); // トークンの事前取得
-const partitions = await porters.partition.search(); // 使える partition の発見
-```
-
-## 2. マルチテナント — `porters.tenant(id)` スコープ
-
-リクエストごとにテナントが変わる SaaS では、partition を**スコープで束ね**ます。
-`tenant(id)` は partition を固定したアクセサ群（`TenantScope`）を返し、配下の呼び出しは
-すべてその partition に送られます。
+`tenant(id)` は Partition を固定したアクセサ群（`TenantScope`）を返し、配下の呼び出しはすべてその Partition に
+送られます。トークンは client が持ち、`tenant(id)` はアクセサを束ね直すだけなので、リクエストごとに作って構いません。
 
 ```ts
 // SaaS の 1 リクエスト = 1 テナント
 const partition = await lookupPartitionForUser(req.user); // ← SaaS の責務
-const t = porters.tenant(partition, { fields: fieldsFor(partition) }); // 宣言も partition と一緒に
+const t = porters.tenant(partition, { fields: fieldsFor(partition) }); // 宣言も Partition と一緒に
 
 await t.candidate.search(query); // partition=<partition> で送信
 const job = await t.job.get(jobId);
 await t.attachment.of("resume").create(file);
 ```
 
-`fields` は**その partition のカスタム項目の宣言**です（[カスタム項目][custom-fields]）。
-partition と宣言の対応を持つのは SaaS 側で、ライブラリは 2 つを同じ呼び出しで受け取るだけです。
-項目構成が同じテナント群なら、同じ宣言を渡します<!-- 根拠: ADR-0087 -->。
+`fields` は**その Partition のカスタム項目の宣言**です。Partition と宣言の対応を持つのは SaaS 側で、
+ライブラリは 2 つを同じ呼び出しで受け取るだけです。項目構成が同じテナント群なら、同じ宣言を渡します<!-- 根拠: ADR-0087 -->。
 
-- 露出するのは **データ系 13 種**（candidate / job / client / recruiter / contact / opportunity /
-  activity / contract / sales / process / resume ＋ `phase` ＋ `attachment`）**＋ master Read**
-  （user / department / field / option）。
-- 含まれないもの: `auth`（App 単位・partition 非依存）／`partition` マスタ（partition の**発見**専用で partition を取らない）／
-  `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
-- **per-call 引数は設けません**<!-- 根拠: ADR-0040 案1c -->。「呼び出しごとの partition 選択」は `tenant(id)` 経由で表します。
-  partition の解決は **`tenant(id)` の 1 層だけ**です（client 既定は廃止しました）<!-- 根拠: ADR-0055 -->。
-  どちらが効いているかを考える必要はありません。
-- **カスタム項目の宣言も 1 層だけ**です。`tenant(id, { fields })` で渡し、client は宣言を持ちません<!-- 根拠: ADR-0087 -->
-  。別のテナントの宣言が黙って効くことはありません。
+### 3. 宣言をテナントごとに持つ
 
-## 3. 認証を完全分離したい — テナント別 client
-
-既定では `tenant(id)` は client のトークンを**共有**します（共有トークン＋partition ルーティング）。
-**partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
-client を分ける理由は**これだけ**です — カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
+宣言は **`tenant()` ごと**に渡します。カスタム項目は Partition ごとのものなので、Partition を束ねる呼び出しが、
+その Partition の項目の形も束ねます。別のテナントの宣言が黙って効く、という状態はありません。
+`{ fields }` を渡し忘れたスコープで `U_` に触れば、コンパイルエラーです。
 
 ```ts
-// partition ごとに別のトークン置き場を与える＝トークンが混ざらない
+import type { PartitionId } from "@joymerrevent/porters-connect";
+
+// SaaS: Partition ↔ 宣言の対応は自分の DB から引く（ライブラリの責務ではありません）
+const t = porters.tenant(partition, { fields: fieldsFor(partition) });
+
+// 項目構成が同じテナント群: 1 行包んで使い回す
+const tenant = (p: PartitionId) => porters.tenant(p, { fields: myFields });
+const t2 = tenant(2);
+```
+
+**`A_` を App 共通、`U_` をテナント固有にする**なら、共通部分を関数にして各テナントの宣言に spread します。
+ライブラリは `A_` と `U_` を区別しません（出典はどちらも「テナント毎に異なる」としているため）。
+書き方は[カスタム項目][custom-fields]の「テナントごとに宣言を渡す」にあります。
+
+### 4. 宣言したスコープを関数に渡す
+
+アプリが育つと、`tenant(id, { fields })` のスコープを**引数に取る関数**を切り出したくなります。
+そのとき型をどう書くかで、**カスタム項目が残るかどうか**が変わります。
+
+```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
+import type {
+  DeclaredCatalogs,
+  TenantScope,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+const porters = new PortersClient({
+  hostname: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+});
+
+// (1) 自分の宣言で受ける — カスタム項目が型付きのまま
+const topScorers = async (t: TenantScope<typeof fields>) => {
+  const page = await t.candidate.search({ field: ["P_Name", "U_score"] });
+  return page.items.filter((c) => (c.U_score ?? 0) > 80);
+};
+
+// (2) どの宣言のスコープでも受ける — 標準項目（P_）だけを触る共通処理
+const countCandidates = async (t: TenantScope<DeclaredCatalogs>) =>
+  (await t.candidate.search({ field: [] })).total;
+
+// client を受ける関数は、型引数なしの PortersClient（client は宣言を持ちません）
+const listPartitions = (client: PortersClient) => client.partition.search();
+
+// 呼ぶ側
+const t = porters.tenant(123, { fields });
+for (const c of await topScorers(t)) {
+  console.log(c.P_Name, c.U_score); // string | null | undefined / number | null | undefined
+}
+console.log(await countCandidates(t));
+
+const partitions = await listPartitions(porters);
+console.log(partitions.items.map((p) => p.P_Name));
+```
+
+**(2) はカスタム項目が返り値の型に出ません。** `DeclaredCatalogs` は「何か宣言されているかも
+しれない」としか言っていないので、読み取り結果は標準項目（`P_`）だけになります。`field` に
+書くことはできる（`U_` / `A_` で始まる alias は常に要求できます）のに、受け取る側で型が
+付かない、という形です。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import type {
+  DeclaredCatalogs,
+  TenantScope,
+} from "@joymerrevent/porters-connect";
+
+const wide = async (t: TenantScope<DeclaredCatalogs>) => {
+  const page = await t.candidate.search({ field: ["U_score"] }); // 要求はできる
+  return page.items[0]?.U_score; // ✗ 型エラー：宣言が分からないので型には出ない
+};
+```
+
+使い分けはこうなります。
+
+| 書き方                          | 受けられるスコープ | カスタム項目の型      |
+| ------------------------------- | ------------------ | --------------------- |
+| `TenantScope<typeof fields>`    | その宣言のものだけ | **付く**              |
+| `TenantScope<DeclaredCatalogs>` | どれでも           | 付かない（`P_` のみ） |
+
+**カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分のカタログだけ
+取り出したいときは `CustomFor<typeof fields, "candidate">` が使えます（名前の一覧は
+`CustomFieldResource`）。
+
+`typeof t` で書く手もありますが、**値が先に無いと書けません**。関数を別ファイルに
+切り出すなら、上の型名で書くほうが素直です。
+
+#### 宣言が違うスコープは渡せません
+
+`TenantScope<typeof fields>` は**その宣言のスコープだけ**を受け取ります。`U_score` を宣言して
+いないスコープを渡すと型エラーです。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import { defineFields, PortersClient } from "@joymerrevent/porters-connect";
+import type { TenantScope } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({ candidate: (f) => ({ U_score: f.number() }) });
+const other = defineFields({
+  candidate: (f) => ({ U_memo: f.singlelineText() }),
+});
+
+const topScorers = async (t: TenantScope<typeof fields>) => {
+  const page = await t.candidate.search({ field: ["U_score"] });
+  return page.items[0]?.U_score;
+};
+
+const porters = new PortersClient({ hostname, appId, appSecret });
+void topScorers(porters.tenant(1, { fields: other })); // ✗ 型エラー：U_score を宣言していない
+```
+
+カタログの alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
+スコープの型も違います**<!-- 根拠: ADR-0074 D1 -->。(2) の `TenantScope<DeclaredCatalogs>` が
+どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**広いカタログ**だから
+です。狭いものは広いほうへ渡せる、という向きだけが通ります。
+
+それでも**宣言はプロジェクトに 1 か所置いて export する**のが素直です
+（`generateFieldDecls` の出力先がその置き場になります）。テナントごとに宣言が違うなら、
+宣言とそれを受ける関数を同じモジュールに閉じます。
+
+#### `tenant()` の引数を切り出すときも同じ
+
+`tenant()` の第 2 引数の型は `TenantOptions` です。これも型引数を取るので、**宣言つきの引数を
+関数や別ファイルに切り出すなら、型引数も渡します**。
+
+```ts
+import type { TenantOptions } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+const options: TenantOptions<typeof fields> = { fields };
+const t = porters.tenant(1, options);
+```
+
+型引数を省いて `TenantOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
+落ちるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 注釈が
+`EmptyCatalog` に固定するためです。
+
+<!-- doccheck: expect-error -->
+
+```ts
+import type { TenantOptions } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+
+const bare: TenantOptions = { fields }; // 代入は通る
+
+const score = async () => {
+  const page = await porters
+    .tenant(1, bare)
+    .candidate.search({ field: ["U_score"] });
+  return page.items[0]?.U_score; // ✗ 型引数を省いたので、型からは消えている
+};
+```
+
+### 5. 認証を分けるか
+
+既定では `tenant(id)` は client のトークンを**共有**します（共有トークン＋ Partition ルーティング）。
+**Partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
+client を分ける理由は**これだけ**です。カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
+
+```ts
+// Partition ごとに別のトークン置き場を与える＝トークンが混ざらない
 const clientFor = (tokenStore: TokenStore) =>
   new PortersClient({ hostname, appId, appSecret, tokenStore });
 
@@ -85,41 +243,55 @@ const t = clientFor(tokenStore).tenant(partition);
 ```
 
 > [!NOTE]
-> 「1 つの App トークンで複数 partition を叩けるか」は実機未確認です<!-- 根拠: LV-13 -->。
+> 「1 つの App トークンで複数 Partition を叩けるか」は実機未確認です<!-- 根拠: LV-13 -->。
 > 共有トークンで不都合があればテナント別 client に切り替えてください（設計は両対応）。
->
-> **client を分けてもスロットルは分かれません。** 1 分あたりの上限を自制するバケットは
-> **ホストごと**なので、同じ PORTERS を向く client は何個作っても合計が上限に収まります<!-- 根拠: ADR-0073 -->。
-> 共有から降りたいときは `throttle` を渡します。
 
-## オンボーディング（partition の発見）
+### 6. レートは全テナントで 1 つ
 
-初回のブラウザでの権限付与（[OAuth 認証ガイド][oauth]）の直後は、`exchangeAuthorizationCode` で得た
-トークンが**ブラウザでログインした人のもの**なので、そのトークンが有効な間だけ `requestType: 0` で
-「ログイン中の partition / user」を引けます。発見した partition を SaaS の DB に「会社 ↔ partition」で
-保存します。
+1 分あたりの上限（Read 2000 / Write 500）を自制するバケットは **ホストごと**です<!-- 根拠: ADR-0073 -->。
+client を分けても、同じ PORTERS を向く client は何個作っても合計が上限に収まります。
+テナントが増えても上限は増えません。1 テナントの一括処理が他のテナントの応答を遅らせるなら、
+`createThrottle` で共有から降りるか、別の上限で走らせます。
 
 ```ts
-const me = await porters.partition.search({ requestType: 0 }); // ログイン中 partition（code 付与の直後だけ）
-const user = await t.user.current(); // ログイン中 user（同上）
+import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
+
+// バッチ用の client は別枠にする
+const batch = new PortersClient({
+  hostname,
+  appId,
+  appSecret,
+  throttle: createThrottle({ readPerMin: 500, writePerMin: 100 }),
+});
 ```
 
-以降の無人運用（`code_direct` で取り直したトークン）ではこの呼び方は使えません — `requestType: 0` は
-403 になり、`t.user.current()` はアプリ自身の User を返します（[Partition とテナント][partition]）。
-普段は `porters.partition.search()`（アクセスできる一覧）から選んでください。
+**プロセスを跨ぐと協調しません。** 複数インスタンスで動かすなら、PORTERS から見た合計はその足し算です。
+そこまで守りたいなら `Throttle`（`take(write): Promise<void>` の 1 メソッド）を自分で実装して渡します
+（[上限とレート][limits]）。
+
+## ライブラリの外（利用側の責務）
+
+- 利用者 ↔ 会社 ↔ Partition の対応の保存とルーティング
+- Refresh Token の置き場所（`tokenStore`）の安全性
+- 月 15 万アクセスの累積（契約条件。テナントの合計で数える）
+- プロセスを跨いだレートの協調
 
 ## 関連
 
-- 手順: [認証][oauth]（Company DB ごとの権限付与）／[カスタム項目][custom-fields]（テナントで項目が違う場合）
-- 考え方: [Partition（Company DB）とテナント][partition]
+- 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
+  [カスタム項目][custom-fields]（宣言の書き方・自動生成・突合）／[上限とレート][limits]
+- リソース別: [Partition][r-partition]／[User][r-user]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 決定: ADR-0008（マルチテナント）／ADR-0040（実装）／ADR-0055（client から partition を外す）／
-  ADR-0087（カスタム項目の宣言も `tenant()` で束ねる）
+  ADR-0073（スロットルの共有単位）／ADR-0074 D1（宣言でスコープの型が決まる）／ADR-0087（宣言も `tenant()` で束ねる）
 -->
 
-[oauth]: ./../topics/auth.md
+[auth]: ../topics/auth.md
 [custom-fields]: ../topics/custom-fields.md
-[partition]: ../topics/tenant.md
+[tenant]: ../topics/tenant.md
+[limits]: ../topics/limits.md
+[r-partition]: ../resources/partition.md
+[r-user]: ../resources/user.md
 [index]: ../index.md
