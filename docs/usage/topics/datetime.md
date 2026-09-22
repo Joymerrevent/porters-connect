@@ -17,7 +17,7 @@
 
 Data Type ごとの、PORTERS の書式とライブラリが渡す・受けるかたちの対応です。利用側が扱うのは右の列だけです。
 
-| Data Type          | PORTERS の wire 形式         | このライブラリが渡す／受ける形               |
+| Data Type          | PORTERS との通信の書式       | このライブラリが渡す／受ける形               |
 | ------------------ | ---------------------------- | -------------------------------------------- |
 | `DateTime`         | `yyyy/mm/dd HH:MM:SS`（UTC） | `2026-09-11T12:00:00Z`（ISO・`Z` つき）      |
 | `System[DateTime]` | 同上（登録日 / 更新日）      | 同上。**書き込み不可**                       |
@@ -166,7 +166,7 @@ await t.job.search({
   [項目と値のかたち][fields]
 - リソース別: [Field][r-field]（時分型は Field Read で見分けが付かない）
 - 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` は ISO 8601）
-- リファレンス: [Field Type / Data Type][fdt]（wire 形式の一次情報）
+- リファレンス: [Field Type / Data Type][fdt]（通信の書式の一次情報）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:

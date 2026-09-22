@@ -53,7 +53,7 @@ console.log(page.items.length); // このページの件数
 
 - **XML は外に漏れません。** PORTERS の応答は XML ですが、返るのは型の付いたオブジェクトです。
   `page.items[0]?.P_Name` は `string | null` で、`P_Nmae` と書けばコンパイルが通りません。
-- **`Person.` を書いていません。** wire 上の項目名は `Person.P_Name` ですが、書くのは
+- **`Person.` を書いていません。** PORTERS との通信では項目名は `Person.P_Name` ですが、書くのは
   `P_Name` だけです（接頭辞はライブラリが付けます）。**Candidate の接頭辞は `Person`** で、
   リソース名と一致しません — 覚えなくて済むようにしてあります（[項目と値のかたち][aliases]）。
 
