@@ -32,7 +32,7 @@ for await (const d of t.department.searchAll())
 
 ## 関連
 
-- 主題: [項目と値の形][fields]（部署型の読みと書きの形）
+- 主題: [項目と値のかたち][fields]（部署型の読みと書きのかたち）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

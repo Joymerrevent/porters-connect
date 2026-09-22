@@ -1,14 +1,14 @@
-# 項目と値の形（alias と Data Type）
+# 項目と値のかたち（alias と Data Type）
 
-検索や書き込みで、返ってきた値や渡す値の形に戸惑ったときに読むページです。項目の**名前（alias）** と
-**型（Data Type）** が値の形をどう決めているかが分かり、なぜ読みと書きで形が違うのか、なぜ接頭辞を書かないのかを
+検索や書き込みで、返ってきた値や渡す値のかたちに戸惑ったときに読むページです。項目の**名前（alias）** と
+**型（Data Type）** が値のかたちをどう決めているかが分かり、なぜ読みと書きでかたちが違うのか、なぜ接頭辞を書かないのかを
 説明できるようになります。
 
 ## まず知ること
 
 - **alias は 3 種類**です。標準項目 `P_` はライブラリが型を同梱し、カスタム項目 `U_` / `A_` は `defineFields` で宣言すると型が付きます。
 - **接頭辞は書きません。** wire 上は `Person.P_Name` ですが、書くのは `P_Name` だけで、接頭辞はライブラリが付けます。
-- **Data Type が値の形を決めます。** 選択肢は常に配列、ユーザーや参照は読むと入れ子で、書くときは id だけです。
+- **Data Type が値のかたちを決めます。** 選択肢は常に配列、ユーザーや参照は読むと入れ子で、書くときは id だけです。
 - **型が無い項目もあります**（`P_Deleted`）。生の文字列のまま返します。
 - **alias はテナントと環境で変わります。** カスタム項目は本番と開発環境でずれることがあり、突合の道具があります。
 
@@ -58,13 +58,13 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 
 `field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）** で書けます。
 
-## Data Type が「値の形」を決める
+## Data Type が「値のかたち」を決める
 
-PORTERS は項目ごとに **Field Type**（画面上の種類）を持ち、それが **Data Type**（値の形）に
+PORTERS は項目ごとに **Field Type**（画面上の種類）を持ち、それが **Data Type**（値のかたち）に
 対応します。このライブラリが型として扱うのは **Data Type** のほうです<!-- 根拠: ADR-0016 -->。
 
 Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。たとえば
-`Option[Checkbox]` / `Option[Radiobutton]` / `Option[Dropdown]` の 3 つは、値の形としては
+`Option[Checkbox]` / `Option[Radiobutton]` / `Option[Dropdown]` の 3 つは、値のかたちとしては
 どれも `Option` です。`Currency` の Data Type は `Number` です。
 
 読み書きで現れる代表的な形:
@@ -80,7 +80,7 @@ Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。
 | `Image`             | 要求したサブ項目だけ               | 3 つとも必須                 |
 | `Link`              | Contact id ／ User ／ Department   | id だけ（数値）              |
 
-**読みと書きで形が違う**のが PORTERS Connect API の性質です。`User` や参照は読むと入れ子で返り、書くときは
+**読みと書きでかたちが違う**のが PORTERS Connect API の性質です。`User` や参照は読むと入れ子で返り、書くときは
 id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が
 別の型なのはこのためです）。
 
@@ -148,9 +148,9 @@ PORTERS 自身が注意している点です。
 
 ## 関連
 
-- 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときの形）／
+- 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときのかたち）／
   [日時と時分型][datetime]／[削除と削除済みデータ][deleted]（`P_Deleted`）
-- リソース別: [User][r-user]／[Department][r-department]（参照値の形）／[Option][r-option]（選択肢の alias）
+- リソース別: [User][r-user]／[Department][r-department]（参照値のかたち）／[Option][r-option]（選択肢の alias）
 - API 事実: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）
 - ほかの目的から探す: [目次][index]
 

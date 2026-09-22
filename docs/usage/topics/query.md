@@ -357,7 +357,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 
 ## 関連
 
-- 主題: [削除と削除済みデータ][deleted]（`itemstate` と `P_Deleted`）／[項目と値の形][aliases]（alias と読みの形）／
+- 主題: [削除と削除済みデータ][deleted]（`itemstate` と `P_Deleted`）／[項目と値のかたち][aliases]（alias と読みのかたち）／
   [カスタム項目][custom-fields]（`U_` / `A_` を条件に使う）／[書き込み][write]
 - リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
 - API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
