@@ -16,6 +16,8 @@
 
 ## 全体像
 
+1 回の `search` に書ける要素をすべて載せた例です。それぞれの要素は、以降の節で説明します。
+
 ```ts
 const page = await t.candidate.search({
   field: ["P_Id", "P_Name"], // 取得する項目（省略可）

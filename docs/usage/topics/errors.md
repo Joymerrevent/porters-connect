@@ -267,6 +267,8 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 
 ## category 一覧と対処方針
 
+`category` の 11 種と、それぞれの主な原因と対処です。落とすか続けるかの分岐は、この表で決められます。
+
 | category     | 意味                                       | 主な原因 / 対処                                              |
 | ------------ | ------------------------------------------ | ------------------------------------------------------------ |
 | `auth`       | 認証情報・トークン・コード                 | Refresh 失効 → 再認証（ブラウザ `code` 付与）／資格情報確認  |
@@ -359,6 +361,8 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 
 ### 認証系（`PortersAuthError` ＝ `<Authentication><Error>`）
 
+認証 API が返すコードと、ライブラリでの `category`・再試行の可否です。
+
 | code                                          | 意味（要約）                                           | category               |
 | --------------------------------------------- | ------------------------------------------------------ | ---------------------- |
 | `400`                                         | Access Token 期限切れ                                  | `auth`（自動 Refresh） |
@@ -371,6 +375,8 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 | 上記以外                                      | 未対応コード                                           | `unknown`              |
 
 ### リソース系（`PortersResourceError` ＝ `<{Resource}><Code>`）
+
+Resource API が返す Result Code と、ライブラリでの `category`・再試行の可否です。
 
 | code                                                               | 意味（要約）                        | category     | retryable |
 | ------------------------------------------------------------------ | ----------------------------------- | ------------ | --------- |

@@ -9,6 +9,8 @@
 
 ## 作成する
 
+必須項目を渡して、1 件作ります。
+
 ```ts
 const newId = await t.candidate.create({
   P_Owner: 5, // 担当ユーザーの id。**新規作成では必須**
@@ -30,6 +32,8 @@ await t.candidate.create({ P_Name: "山田 太郎" }); // ✗ P_Owner が無い
 ```
 
 ## 更新する
+
+id と、変えたい項目だけを渡します。
 
 ```ts
 await t.candidate.update(10001, { P_Mail: "new@example.com" });

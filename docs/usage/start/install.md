@@ -8,6 +8,8 @@
 
 ## インストール
 
+npm・pnpm・yarn のどれでも入ります。
+
 ```sh
 npm i @joymerrevent/porters-connect
 # pnpm add @joymerrevent/porters-connect

@@ -29,6 +29,8 @@ for (const p of partitions.items) console.log(p.P_Id, p.P_Name);
 
 ## 条件で探す
 
+条件を付けて、1 ページ分を取ります。
+
 ```ts
 const page = await t.candidate.search({
   field: ["P_Id", "P_Name", "P_Mail", "P_UpdateDate"],
@@ -80,6 +82,8 @@ const idsOnly = await t.candidate.search({ field: [] }); // P_Id だけ
 （後述）。
 
 ## 1 件だけ取る
+
+id が分かっているなら、`get` で 1 件だけ取れます。
 
 ```ts
 const one = await t.candidate.get(10001);

@@ -22,6 +22,8 @@ PORTERS に繋がずにテストを書きたいときに読むページです。
 
 ## 差し替えるのは「トランスポート」1 箇所
 
+`transport` に `createMockTransport` を渡します。ほかのコードはそのままです。
+
 ```ts
 import {
   PortersClient,
@@ -115,6 +117,8 @@ try {
 `PortersError` の系統と `category` の対応は[失敗の扱い][handle-failures]にあります。
 
 ## テストの形（vitest の例）
+
+1 つのテストの全体を vitest で書くと、こうなります。
 
 <!-- doccheck: skip テストフレームワークの import はドキュメント検査の解決対象外 -->
 
