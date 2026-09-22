@@ -177,7 +177,7 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 > **時分型（PORTERS 9.3.0）も `f.dateTime()` で宣言します。** 専用のメソッドはありません — API 上は
 > 年月日時分型と同じ Field Type 12 で、ライブラリは Field Read からも区別できないためです。
 > 値は ISO のまま読み書きし、時刻（`"09:00"` / `"26:00"`）との変換は `decodeTimeOfDay` /
-> `encodeTimeOfDay` で行います（[日時は UTC][datetime] の「時分型」節）<!-- 根拠: ADR-0086 -->。
+> `encodeTimeOfDay` で行います（[日時と時分型][datetime] の「時分型」節）<!-- 根拠: ADR-0086 -->。
 
 **`Image` と `Link` は、この宣言が唯一の入口です**<!-- 根拠: ADR-0064・PRD R-4（v1 で未対応としていたものを実装） -->。標準項目にこの 2 型は 1 つもなく
 （reference 全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
@@ -258,7 +258,7 @@ export const myFields = defineFields({
   読み違えないようにするためです。
 - **Field Type 12 の行には注記が付きます**（`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と
   同じ `12` で、Field Read からは区別できないためです。その項目が時刻だけを持つなら、読み書きで
-  `decodeTimeOfDay` / `encodeTimeOfDay` を当ててください（[日時は UTC][datetime]）。
+  `decodeTimeOfDay` / `encodeTimeOfDay` を当ててください（[日時と時分型][datetime]）。
 
 宣言を作る前に中身だけ見たいときは、`readCustomCatalog` が「alias → Data Type」を返します。
 
@@ -362,14 +362,14 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 **`verifyFields` は時分型を見分けません。** 時分型も年月日時分型も Field Type は `12` なので、
 `f.dateTime()` と宣言してあれば一致と判定します（それで正しい — 宣言はどちらも `dateTime()` です）。
 どの項目が時分型かは管理者に確かめ、読み書きのところで `decodeTimeOfDay` / `encodeTimeOfDay` を
-当ててください（[日時は UTC][datetime]）。
+当ててください（[日時と時分型][datetime]）。
 
 食い違いの検出は**形の違い**（スカラが来るべき所に入れ子、またはその逆）と、**変換できない値**
 （日時・数値に読めない文字列）に絞っています。それより細かい違い（入れ子の中の想定外のタグなど）は
 許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
 **変換を伴わないスカラどうしのずれ**（`Number` の項目を `f.singlelineText()` と宣言した、など）は
 捕まらず、文字列のまま入ります（気づけないのはここだけ＝`verifyFields` の出番）。
-詳しくは[エラーハンドリング ガイド][error-handling]にあります<!-- 根拠: RV-36 -->。
+詳しくは[エラーと再試行][error-handling]にあります<!-- 根拠: RV-36 -->。
 
 ## テナントごとに宣言を渡す
 
@@ -410,7 +410,7 @@ const a = porters.tenant(1, { fields: tenantA }); // A_score と U_memo が型�
 const b = porters.tenant(2, { fields: tenantB }); // A_score だけ
 ```
 
-client を分けるのは**トークンを分けたいとき**だけです（[マルチテナント][multi-tenancy] の §3）。
+client を分けるのは**トークンを分けたいとき**だけです（[複数テナント][multi-tenancy] の §3）。
 項目が違うだけなら、同じ client（同じトークン）から `tenant(id, { fields })` を作り分けます。
 
 ## 宣言したスコープを関数に渡す

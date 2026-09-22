@@ -44,7 +44,7 @@ await files.update(900, { fileName: "new.pdf" }); // 差し替え
 更新の入力型に入れていません** — 付け替えができると PORTERS が公表していないので、
 できることにしていません。
 
-`delete` はありません（[削除 API が無いということ][no-delete]）。
+`delete` はありません（[削除と削除済みデータ][no-delete]）。
 
 ## 固有の注意
 
@@ -73,7 +73,7 @@ const id = await t.attachment.of("candidate").create({
 
 **`resourceId` は数値で、型は `number`** です。間違った id もコンパイルは通ります。しかも
 **付け先は `update` で変えられません**（上記）。間違えたら正しい先に作り直すことになり、
-**間違えたほうは消せません**（[削除 API が無いということ][no-delete]）。付ける前に
+**間違えたほうは消せません**（[削除と削除済みデータ][no-delete]）。付ける前に
 `of()` の名前と `resourceId` を確かめてください。
 
 ### 読むときは、本体が付いてこない
@@ -116,7 +116,7 @@ for await (const a of files.searchAll()) {
 ```
 
 本体が大きいと、既定の **30 秒**（1 リクエストあたり）に収まらないことがあります。
-その場合は transport を組んで延ばしてください（[上限][limits]）。
+その場合は transport を組んで延ばしてください（[上限とレート][limits]）。
 
 ```ts
 transport: createFetchTransport({ timeoutMs: 120_000 });
@@ -155,7 +155,7 @@ await files.create({ ...file, content: base64 });
 
 `category` は `config` です。通常の「リクエストが長すぎる」ガード（約 15000 文字）は
 **アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
-（詳しくは[上限][limits]）。
+（詳しくは[上限とレート][limits]）。
 
 ### まとめて作成する方法は無い
 

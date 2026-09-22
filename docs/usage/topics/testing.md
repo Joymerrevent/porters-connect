@@ -114,7 +114,7 @@ try {
 }
 ```
 
-`PortersError` の系統と `category` の対応は[失敗の扱い][handle-failures]にあります。
+`PortersError` の系統と `category` の対応は[エラーと再試行][handle-failures]にあります。
 
 ## テストの形（vitest の例）
 

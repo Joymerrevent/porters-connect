@@ -259,7 +259,7 @@ resourceNameOf(page.items[0]?.P_Resource ?? 0); // "candidate" | … | number
 `resourceNameOf` は**知らない数値をそのまま返します**。Resource List は PORTERS のもので増えるため、
 知らない値をエラーにせずデータとして通します。
 
-考え方は[alias と Data Type][aliases]の「どのリソースか」の節にまとめてあります。
+考え方は[項目と値のかたち][aliases]の「どのリソースか」の節にまとめてあります。
 
 ## `order` — 並び順
 
@@ -344,7 +344,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - `t.option.search()` に `searchAll` はありません（API に `start` が無いため）。階層は
   `P_ParentId` / `P_Order` で復元します。
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
-  認証では 403 になるためです（[Partition とテナント][partition]）。
+  認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
 
 ## 送信前に落ちるもの
 

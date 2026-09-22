@@ -206,7 +206,7 @@ const porters = new PortersClient({ hostname, auth });
 ## エラー
 
 `exchangeAuthorizationCode` など非同期メソッドは、失敗を**戻り値ではなく throw**で表します
-（[エラーハンドリング ガイド][error-handling]）。
+（[エラーと再試行][error-handling]）。
 
 - Token エンドポイントがエラーを返す／`code` が失効（30 秒）→ `PortersAuthError`（`category: "auth"`）
 - ネットワーク不達・切断 → `PortersNetworkError`

@@ -24,7 +24,7 @@ const partitions = await porters.partition.search();
 for (const p of partitions.items) console.log(p.P_Id, p.P_Name);
 ```
 
-なぜ client に既定の Partition を持たせないのかは [Partition とテナント][partition] にあります。
+なぜ client に既定の Partition を持たせないのかは [Partition とテナントスコープ][partition] にあります。
 短く言うと、**どこに書いたか分からない書き込み**を起こさないためです。
 
 ## 条件で探す
@@ -55,7 +55,7 @@ console.log(page.items.length); // このページの件数
   `page.items[0]?.P_Name` は `string | null` で、`P_Nmae` と書けばコンパイルが通りません。
 - **`Person.` を書いていません。** wire 上の項目名は `Person.P_Name` ですが、書くのは
   `P_Name` だけです（接頭辞はライブラリが付けます）。**Candidate の接頭辞は `Person`** で、
-  リソース名と一致しません — 覚えなくて済むようにしてあります（[alias と Data Type][aliases]）。
+  リソース名と一致しません — 覚えなくて済むようにしてあります（[項目と値のかたち][aliases]）。
 
 ## `field` で取る項目を選ぶ
 
@@ -118,7 +118,7 @@ for await (const c of t.candidate.searchAll({
 | **User は入れ子、参照は id** | `P_Owner` → `{ P_Id, P_Type, P_Name, P_Mail }`、`P_Client` → `20001` |
 
 **書くときはかたちが変わります**（`P_Owner` は数値の id だけを送る）。読みと書きでかたちが違うのは
-**PORTERS Connect API の性質**で、[alias と Data Type][aliases] にまとめてあります。
+**PORTERS Connect API の性質**で、[項目と値のかたち][aliases] にまとめてあります。
 
 テナント固有の項目（`U_` / `A_`）も読めますが、**宣言しないと `field` に書けず（コンパイルエラー）、
 要求もされません**。宣言のしかたは[カスタム項目][custom-fields]にあります。

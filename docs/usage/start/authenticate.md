@@ -91,7 +91,7 @@ for (const p of partitions.items) console.log(p.P_Id, p.P_Name);
 取り直せます）。プロセスを跨いで共有したい・起動を速くしたいなら `tokenStore` を渡します。
 Refresh Token を外に出すことになるので、置き場所の安全性は利用側の責任です。
 
-書き方と注意点は[認証の手順][authenticate]にあります。
+書き方と注意点は[認証とトークン][authenticate]にあります。
 
 ## うまくいかないとき
 
@@ -105,8 +105,8 @@ Refresh Token を外に出すことになるので、置き場所の安全性は
 | 一覧が空で返る                                | 権限付与した Company DB が無い／`partition_r` を付与していない               |
 | スコープ不足で読めない                        | `authorizationUrl` に渡したスコープに、使うリソースが入っていない            |
 
-エラーの型と見分け方は[失敗の扱い][handle-failures]に、認証まわりの細部は
-[認証の手順][authenticate]にあります。
+エラーの型と見分け方は[エラーと再試行][handle-failures]に、認証まわりの細部は
+[認証とトークン][authenticate]にあります。
 
 ## 次に読む
 
