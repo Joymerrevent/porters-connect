@@ -1,4 +1,4 @@
-# Read クエリ（field / expand / image / condition / order / keywords / itemstate）
+# 条件でレコードを探したい（検索クエリ）
 
 データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
 **演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
