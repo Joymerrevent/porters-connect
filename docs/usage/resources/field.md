@@ -31,7 +31,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 - **`active` で使用中か未使用かを選べます**（`1` 使用中／`0` 未使用／`-1` すべて・既定）。
 - **`P_Required` は、テナントが入力必須にした項目です。** これは `defineFields` の宣言には載らないので、必須の欠落は型では止まりません。
 - **時分型はここからは見分けが付きません。** 年月日時分型と同じ Field Type で返るためです（[日時と時分型][datetime]）。
-- **カスタム項目の道具はこのリソースの上に組んであります。** `generateFieldDecls` / `verifyFields` / `readCustomCatalog` です（[カスタム項目][custom-fields]）。
+- **カスタム項目の宣言を作る・確かめる関数は、このリソースを読んで動きます。** `generateFieldDecls` / `verifyFields` / `readCustomCatalog` です（[カスタム項目][custom-fields]）。
 
 ## 新規作成の必須項目
 

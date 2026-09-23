@@ -105,7 +105,7 @@ if (one?.content) {
 ```
 
 200 件を超える添付を順に見るときは `searchAll` が使えます。こちらも**メタデータだけ**が流れるので、
-全部を歩いても本体はダウンロードされません。要るファイルだけ `get` で取ってください。
+全件をたどっても本体はダウンロードされません。要るファイルだけ `get` で取ってください。
 
 ```ts
 for await (const a of files.searchAll()) {
@@ -126,7 +126,7 @@ transport: createFetchTransport({ timeoutMs: 120_000 });
 
 Attachment の Read が取る絞り込みは `resourceId`（1 レコードの添付）と `id`（1 件）だけで、
 **ファイル名や Mime Type での検索はできません**（PORTERS が提供していません）<!-- 根拠: ADR-0081 -->。
-名前で探したいときは、`searchAll` で歩きながら絞ってください（上の例）。
+名前で探したいときは、`searchAll` で順に読みながら絞ってください（上の例）。
 
 読み取った `a.resource` は**数値**で返ります（PORTERS のリソース番号）。名前に戻すなら
 `resourceNameOf` が使えます。
@@ -154,7 +154,7 @@ await files.create({ ...file, content: base64 });
 ```
 
 `category` は `config` です。通常の「リクエストが長すぎる」の検査（約 15000 文字）は
-**アップロードでは迂回される**ので、Attachment 専用の上限を別に持っています
+**アップロードでは外している**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限とレート][limits]）。
 
 ### まとめて作成する方法は無い
