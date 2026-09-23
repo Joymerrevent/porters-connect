@@ -52,10 +52,10 @@ PORTERS にログインしていない状態で `response_type=remove`・対象 
 
 ## スコープ一覧
 
-リソース別に R/W が分かれる（`{resource}_r` / `{resource}_w`）。複数はカンマ区切り。
+リソース別に読み（`{resource}_r`）と書き（`{resource}_w`）が分かれる。複数はカンマ区切り。
 
 - **マスタ系（読み取りのみ）**: `partition_r` / `user_r` / `field_r` / `option_r`
-- **データ系（R/W あり）**: `client` / `recruiter` / `contact` / `job` / `candidate` / `resume` /
+- **データ系（読み書きあり）**: `client` / `recruiter` / `contact` / `job` / `candidate` / `resume` /
   `process` / `activity` / `contract` / `sales` / `phase` / `attachment` / `opportunity`（各 `_r` / `_w`）
 
 注意: Read でも複数スコープが要ることがある（例: Candidate Read = `candidate_r, user_r, option_r`。参照・選択肢項目の取得のため）。

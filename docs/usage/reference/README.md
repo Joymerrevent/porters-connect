@@ -1,4 +1,4 @@
-# PORTERS Connect API リファレンス（自前整理）
+# PORTERS API の事実（Connect API の仕様の整理）
 
 PORTERS Connect API の仕様のうち、**このライブラリを使ううえで必要な PORTERS 側の事実**を、自分たちの言葉で
 整理したものです。公式ドキュメントの逐語コピーではありません（非公式・著作権配慮）。ライブラリが内側に隠しているもの
@@ -26,7 +26,7 @@ API の 2 本柱（Authentication API / Resource API）＋横断、で構成し�
 - [result-codes][rapi-rc]: リソース系 Result Code 一覧・リトライ方針（認証エラーとは別系統）。
 - [field-data-types][rapi-fdt]: Field Type / Data Type の型システム・値書式。
 - [write-format][rapi-wf]: Write の XML 形式・新規/更新・Phase 更新。
-- [resources-list][rapi-list]: 全リソースの一覧・R/W・必要スコープ・Alias の注意点。
+- [resources-list][rapi-list]: 全リソースの一覧・読み書き・必要スコープ・alias の注意点。
 - [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 18）。
 
 ### 横断
@@ -34,7 +34,7 @@ API の 2 本柱（Authentication API / Resource API）＋横断、で構成し�
 [glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）／
 [troubleshooting][troubleshooting]（症状 → 原因 → 対処の早見表）。
 
-## 重要な前提・落とし穴（設計に効くもの）
+## 重要な前提・落とし穴（使ううえで効くもの）
 
 - レスポンスは **XML のみ**（`charset=UTF-8`）。利用者には型付きオブジェクトのみ返す。
 - **既定ホストは `api-hrbc-jp.porterscloud.com`**（共有サーバ）。個別サーバ契約時のみ別ホスト → `PORTERS_HOST` で受ける。

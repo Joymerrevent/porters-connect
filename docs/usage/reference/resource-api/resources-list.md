@@ -1,4 +1,4 @@
-# リソース一覧（R/W・スコープ・Field Alias・ドキュメント）
+# リソース一覧（読み書き・スコープ・alias の接頭辞・出典）
 
 PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出典記事を引くページです。
 
@@ -25,7 +25,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
 | Option     | `/v1/option`     | `option_r`                   | `Option`     | [Read][option-read] ／ [Default Option List][default-option-list] |
 | Department | `/v1/department` | `user_r`（専用スコープ無し） | `Department` | [Read][department-read] ／ [Field][department-field]              |
 
-## データ系（R/W あり）
+## データ系（読み書きあり）
 
 | リソース    | endpoint          | Value | スコープ                          | Alias 接頭辞  | ドキュメント                                                                         |
 | ----------- | ----------------- | ----- | --------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
@@ -45,7 +45,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
 
 ## 補足
 
-- 上表の **スコープ列は自リソースの R/W のみ**。**Read は参照する上位リソースの `_r` も必要**で、
+- 上表の **スコープ列は自リソースの読み書きのみ**。**Read は参照する上位リソースの `_r` も必要**で、
   ほぼ常に `user_r` / `option_r` を含む（例: Process Read =
   `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
@@ -62,7 +62,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
   ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
   サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も
   **すべて裸**。裸のほうを正として扱う<!-- 根拠: ADR-0061 -->。
-- 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] に per-resource でまとめている**
+- 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] にリソースごとにまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。
 
