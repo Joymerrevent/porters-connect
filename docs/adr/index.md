@@ -102,6 +102,7 @@
 | [0086][0086] | DateTime の時分型は型を増やさず、変換関数で扱う                    | 基本設計 | accepted           | 0.20.0 |
 | [0087][0087] | カスタム項目の宣言は `tenant(id)` で束ねる（client から外す）      | 基本設計 | accepted           | 0.21.0 |
 | [0088][0088] | 使い方ドキュメントを主題別・リソース別の 5 章に組み直す            | プロセス | accepted           | —      |
+| [0089][0089] | カスタム項目を宣言で明示したときだけ `create` の必須にする         | 基本設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -194,3 +195,4 @@
 [0086]: 0086-time-of-day-fields.md
 [0087]: 0087-tenant-scoped-field-declarations.md
 [0088]: 0088-usage-docs-five-chapters.md
+[0089]: 0089-custom-field-required-on-create.md

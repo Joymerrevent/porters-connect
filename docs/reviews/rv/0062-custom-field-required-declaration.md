@@ -65,7 +65,12 @@
 
 ## 処置
 
-未着手。ADR の起票待ち（ロードマップ「判断待ち」に載せた）。
+**起票（案 (a)・2026-09-23）。** [ADR-0089][adr89] を proposed で起票した（推奨は opt-in の `f.number({ required: true })`・
+`generateFieldDecls` が `P_Required=1` を写す・`verifyFields` は報告だけ）。案 (b) のライブ検証の項目は、
+`pnpm check:lv` がコードの印と両方向で突き合わせるので実装の PR で足す。
+
+**accepted（2026-09-24）。** decider が推奨どおり（案1a ＋ 2a ＋ 3a ＋ 4a）を選んだ。実装待ち（状態は open のまま。
+実装の PR で fixed にする）。
 
 ## 検証
 
@@ -74,4 +79,5 @@
 [adr04]: ../../adr/0004-field-type-model.md
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md
 [adr83]: ../../adr/0083-conditionally-required-fields.md
+[adr89]: ../../adr/0089-custom-field-required-on-create.md
 [lv]: ../../live-verification.md

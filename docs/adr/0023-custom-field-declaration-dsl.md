@@ -14,6 +14,10 @@
 > 受け取る場所を `porters.tenant(id, { fields })` に移し、`PortersClient` / `PortersClientOptions` は
 > 非ジェネリックになった。型引数は `TenantScope<C>` と `tenant()` にだけ残る。
 > D2〜D7（ビルダー・検証境界・マージ意味論・対象スコープ）は不変。以下の本文は当時の記録としてそのまま残す。
+>
+> **Amended by [ADR-0089][0089]（2026-09-24）**: **D7 の「カスタムは `requiredOnCreate` に入らない（常に任意）」は
+> 部分的に supersede された**。宣言で `f.number({ required: true })` のように明示した項目だけ `create` の必須になる
+> （書かなければ任意のまま）。D7 のマージ意味論（`静的カタログ & C`）そのものは不変。
 
 ## Context and Problem Statement
 
@@ -145,3 +149,4 @@
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0074]: 0074-custom-field-declaration-required.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[0089]: 0089-custom-field-required-on-create.md
