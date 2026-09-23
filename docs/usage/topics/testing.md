@@ -1,8 +1,8 @@
 # 契約なしでテストする（`createMockTransport`）
 
 PORTERS に繋がずにテストを書きたいときに読むページです。`createMockTransport` で PORTERS の代わりの応答を返し、
-送った内容と失敗の経路まで検証する方法が分かります。契約や権限付与を待っている間、CI、本番でしか出ない失敗を
-手元で起こすとき、に役立ちます。
+送った内容と失敗の経路まで検証する方法が分かります。契約や権限付与を待っている間・CI・本番でしか出ない失敗を
+手元で起こすときに役立ちます。
 
 ## まず知ること
 
@@ -44,7 +44,7 @@ const porters = new PortersClient({
 });
 ```
 
-差し替えているのは **`fetch` ではなく `Transport`** という、差し替えるために公開している部分です。ライブラリ内部の
+差し替えているのは **`fetch` ではなく `Transport`** です。`Transport` は、差し替えを想定して公開しているインターフェースです。ライブラリ内部の
 HTTP 実装が変わってもテストは壊れません。
 
 **認証は自動で応答します。** `/v1/oauth` と `/v1/token` はモックしなくても通るので、書くのは
@@ -156,7 +156,7 @@ describe("候補者の取得", () => {
 
 ## XML を書くのがつらいとき
 
-応答 XML は**テストしたい項目だけ**書けば足ります。要求していない項目は `null` で返るので、
+応答 XML は**テストしたい項目だけ**書けば足ります。応答に書かなかった項目は `null` で返るので、
 レコード全体を再現する必要はありません。
 
 それでも足りない場合 — レート制限・リクエスト長・Result Code まで**本物のように**振る舞わせたい
@@ -170,12 +170,12 @@ describe("候補者の取得", () => {
 平文になるので毎プロセス 1 回警告が出ます（警告を止めるには環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` が要ります。`http` を許可する設定と、警告を止める設定は別です）。
 
 **ライブラリは `hostname` / `port` / `scheme` を環境変数から読みません**（設定がどこから来たかを明示するため）。
-env で本番とローカルを切り替えたいときは、アプリ側で渡してください。
+環境変数で本番とローカルを切り替えたいときは、アプリ側で渡してください。
 
 ```ts
 const forLocal = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
-  // ポートは `hostname` に書けません（書くと構築時にエラーになります）。env も 1 本ずつ分けます
+  // ポートは `hostname` に書けません（書くと構築時にエラーになります）。環境変数も項目ごとに分けます
   port: process.env.PORTERS_PORT ? Number(process.env.PORTERS_PORT) : undefined,
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID ?? "",

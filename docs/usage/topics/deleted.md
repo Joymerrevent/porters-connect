@@ -55,7 +55,7 @@ const gone = await t.candidate.search({
 どちらも送信前に検査します（PORTERS に送れば 400 になるので、待たずに弾きます）。
 
 - `condition` に使えるのは **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**です。他の項目を指定すると
-  `PortersConfigError`（hint 付き）になります。生きているデータが混ざる `"all"` でも同じです。
+  `PortersConfigError`（hint 付き）になります。生存データが混ざる `"all"` でも同じです。
 - **更新日は 90 日以内**です。PORTERS が自動で 90 日条件を付けるため、91 日以上前の更新日を指定すると Result Code `124` が
   返ります。つまり古い削除は引けません。
 
@@ -74,14 +74,14 @@ const deleted = page.items.filter((c) => c.P_Deleted === "1");
 ```
 
 - **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
-  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
+  PORTERS がこの項目に **Data Type を与えていない**（PORTERS のリファレンスの Field Type / Data Type 欄がともに「ー」）ため、
   変換の基準がありません。ライブラリが独自に決めると、PORTERS が定めていない仕様をこのライブラリが作ることになるので、**生の値のまま**返します。
 - **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、試みると
   コンパイルエラーになります。**書き込みもできません**（`create` / `update` の入力に現れません）。
 - `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは `"P_Deleted"` を明示してください。
 
 > 応答での出現条件と値域は**実機で未確認**です<!-- 根拠: LV-14 -->。
-> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
+> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは実機で未確認です。
 
 ## 消せないことが使い方に影響するところ
 

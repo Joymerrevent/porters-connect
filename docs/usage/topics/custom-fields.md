@@ -28,7 +28,7 @@ const t = porters.tenant(partition, { fields }); // 宣言は partition と一�
 これで `t.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
 
 宣言を渡す先が `tenant()` なのは、カスタム項目が **partition（Company DB）ごとのもの**だからです
-（出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています）<!-- 根拠: ADR-0087 -->。
+（PORTERS の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています）<!-- 根拠: ADR-0087 -->。
 partition を指定する場所で、その partition の項目の形も決めます。
 
 <!-- doccheck: fields expect-error -->
@@ -47,7 +47,7 @@ await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 **型が受け付けません。** 宣言していないカスタム項目は、`field` / `condition` / `order` /
 書き込みのどこに書いてもコンパイルエラーです。カスタム項目は**宣言してから使います**。宣言以外に、型付きで使う方法はありません<!-- 根拠: ADR-0074 -->。
 
-**実行時は変わりません。** 型を外せば送れますし（後述の「宣言せずに読み書きする方法」）、応答に知らない項目が混ざっても
+**実行時の動作は、宣言の有無で変わりません。** 型を外せば送れますし（後述の「宣言せずに読み書きする方法」）、応答に知らない項目が混ざっても
 エラーにはなりません。止めているのは型で、目的は 2 つ — **値を変換すること**と、**綴りをコンパイラに
 検査させること**です。
 
@@ -112,8 +112,8 @@ await t.candidate.update(10001, { U_score: 80 } as CandidateUpdateInput);
 **毎回こう書くくらいなら宣言してください。** 型を外すと、綴りの検査も値の変換も行われません。
 
 **宣言しても必須項目は増えません。** `create` が必須にするのは各リソースの標準項目だけで
-（Candidate なら `P_Owner`。一覧は[書き込みの制約][write-constraints]）、宣言したカスタム項目は
-つねに任意です。ビルダーにも必須を宣言する手段はありません。
+（Candidate なら `P_Owner`。一覧は[書き込み][write]の「新規作成の必須項目」）、宣言したカスタム項目は
+つねに任意です。`f.number()` などの宣言にも、必須を表す書き方はありません。
 
 ただし **PORTERS 側では項目を入力必須に設定できます**。その状態は Field Read の `P_Required`
 （`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まらず、
@@ -138,8 +138,8 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 書き込みはその値がそのまま PORTERS に届きます。受理されるかどうかは PORTERS 次第で、ライブラリは
 検知しません。
 
-宣言していないと **`U_` 以降の綴りも検査されません**。取得漏れを型で防ぎたい項目は、
-ここで宣言してください<!-- 根拠: ADR-0059 -->。
+型を外した場合は **`U_` 以降の綴りも検査されません**。取得漏れを型で防ぎたい項目は、
+宣言してください<!-- 根拠: ADR-0059 -->。
 
 ## 宣言できる型
 
@@ -165,9 +165,8 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 書き込みは `User` / `Link` が ID ひとつだけ、`Image` は 3 要素そろって必要です
 （日時は読み書きとも ISO 8601 で、PORTERS 形式との変換はライブラリがやります）。
 
-宣言できるのは**実装済みのデータ系リソース**（`candidate` / `job` / `client` / `recruiter` /
+宣言できるのは**データ系リソース**（`candidate` / `job` / `client` / `recruiter` /
 `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume`）です。マスタ系・Attachment・**Phase** はカスタム項目を持たないため受け付けません<!-- 根拠: ADR-0023 D6 -->。
-リソースが増えるとここも増えます<!-- 根拠: ADR-0060 -->。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
 > システムが管理する標準項目にしか無いので、ビルダーに用意していません。
@@ -178,7 +177,7 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 > `encodeTimeOfDay` で行います（[日時と時分型][datetime] の「時分型」節）<!-- 根拠: ADR-0086 -->。
 
 **`Image` と `Link` の項目は、宣言しないと使えません**<!-- 根拠: ADR-0064・PRD R-4（v1 で未対応としていたものを実装） -->。標準項目にこの 2 型は 1 つもなく
-（reference 全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
+（PORTERS のリファレンスの全 17 リソースの Field Type 列で 0 件）、テナントが作った項目としてしか存在しません。
 宣言しない限り、型にも読み取り結果にも現れません。
 
 <!-- doccheck: fields -->
@@ -217,7 +216,7 @@ await t.resume.update(id, {
 ```
 
 画像の上限（2MB / 255 バイト / ContentType は jpeg・gif・png・bmp の 4 種）と、**一括書き込みでは画像を送れない**ことは
-[書き込みの制約ガイド][write-constraints]にまとめています。
+[上限とレート][write-constraints]にまとめています。
 
 ## 宣言を自動生成する
 
@@ -273,7 +272,7 @@ catalog.undeclarable; // 宣言では表せない項目（理由つき）
 ところに単一の値が来た（またはその逆）は、宣言が違うことしか意味しないためです<!-- 根拠: RV-36 -->。
 
 テキストの項目を `f.number()` や `f.date()` と宣言した場合もエラーになります — 数値・日時に**読めない値**は
-変換できないためです（`Link` の単一の値の形＝Contact の ID も同じ）<!-- 根拠: RV-36・RV-58 -->。
+変換できないためです（`Link` で単一の値として届く Contact の ID も同じです）<!-- 根拠: RV-36・RV-58 -->。
 
 **エラーにならないずれ方もあります。** 形が同じ単一の値どうしで変換を伴わない組み合わせ（実際は `Number` の項目を
 `f.singlelineText()` と宣言した、など）は検知できず、値が**文字列のまま**入ります（`"123"`）。
@@ -290,13 +289,13 @@ if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていま
 
 レポートは 5 つに分かれます。
 
-| 区分           | 意味                                                  | 深刻度                                                 |
-| -------------- | ----------------------------------------------------- | ------------------------------------------------------ |
-| `typeMismatch` | 実在するが Data Type が違う                           | **最悪**（読み取りがエラーになるか、型が違う値が入る） |
-| `missing`      | 宣言したがテナントに無い                              | 高                                                     |
-| `unverifiable` | そのリソースの項目定義を PORTERS から**読めなかった** | 中（無いのか読めないのかは別）                         |
-| `undeclared`   | テナントにあるが宣言していない                        | 低（そのまま動く＝現状どおり）                         |
-| `undeclarable` | 存在するが宣言では表せない                            | 情報                                                   |
+| 区分           | 意味                                                  | 深刻度                                                   |
+| -------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| `typeMismatch` | 実在するが Data Type が違う                           | **最悪**（読み取りがエラーになるか、型が違う値が入る）   |
+| `missing`      | 宣言したがテナントに無い                              | 高                                                       |
+| `unverifiable` | そのリソースの項目定義を PORTERS から**読めなかった** | 中（項目が無いのか、読めなかっただけなのかは分からない） |
+| `undeclared`   | テナントにあるが宣言していない                        | 低（宣言しなくても動作は変わらない）                     |
+| `undeclarable` | 存在するが宣言では表せない                            | 情報                                                     |
 
 **`verifyFields` は例外を投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、止めるかどうかは利用側が決めます。起動時に止めたいなら 1 行足します。
@@ -310,8 +309,8 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 `assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では例外を投げません。
 
-> **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。`generateFieldDecls` / `verifyFields` / `assertFieldsMatch` の 3 つは、呼んだときだけ
-> Field Read を呼びます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
+> **`defineFields` は PORTERS を呼びません。** Field Read を呼ぶのは `generateFieldDecls` と `verifyFields` だけで、
+> 呼んだときだけです（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
 
 ### Field Read をそのまま使う
 
@@ -324,7 +323,7 @@ for await (const f of t.field.of("candidate").searchAll()) {
 ```
 
 `P_Type` は PORTERS の Field Type コードです（3 = Number、5/6/7 = Option、17 = User など。
-対応は [Field Type / Data Type][fdt] を参照）。`generateFieldDecls` / `verifyFields` / `assertFieldsMatch` は、この変換を代わりに行います。
+対応は [Field Type / Data Type][fdt] を参照）。`generateFieldDecls` / `verifyFields` は、この変換を代わりに行います。
 
 ## 検証されること
 

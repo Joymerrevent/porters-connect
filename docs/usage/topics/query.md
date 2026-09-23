@@ -31,7 +31,7 @@ const page = await t.candidate.search({
 // → { items, total, count, start }
 ```
 
-全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件ずつ順に返します）。
+全件を辿るなら `searchAll`（`count` / `start` は指定せず、200 件ずつ順に返します）。
 
 ```ts
 for await (const c of t.candidate.searchAll({
@@ -143,7 +143,7 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 
 > 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です<!-- 根拠: LV-10・LV-16 -->。
 > 応答の解釈はタグ名に依存しない実装なので、
-> 外れた場合に直すのは要求側の文字列だけです。
+> 想定と違っていた場合に直すのはライブラリが送る要求の文字列だけで、利用側のコードは変わりません。
 
 ### ユーザー型は `expand` に書きません
 
@@ -204,7 +204,7 @@ page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
 
 > `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です<!-- 根拠: LV-20 -->。
 > 応答は**返ってきたサブタグを読む**実装なので、
-> 外れた場合に直すのは要求側の文字列だけです。
+> 想定と違っていた場合に直すのはライブラリが送る要求の文字列だけで、利用側のコードは変わりません。
 
 ## `condition` — 検索条件
 
@@ -235,7 +235,7 @@ await t.candidate.search({
 
 ### 上位リソースの絞り込み
 
-上位階層の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
+親にあたるリソース（Resume なら Candidate）の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
 
 ```ts
 await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });

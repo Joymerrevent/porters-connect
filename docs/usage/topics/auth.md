@@ -29,14 +29,14 @@ API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照して�
 
 `code_direct` を使うには**事前に一度 `code`（ブラウザ）で権限付与済み**である必要があります。
 権限付与を済ませれば、あとは `appId` / `appSecret` を渡すだけでトークンの取得・キャッシュ・更新まで
-自動で回ります（[認証を通して、疎通を確認する][s-auth]）。
+自動で行われます（[認証を通して、疎通を確認する][s-auth]）。
 
 `porters.auth.*` は、この**初回付与の補助**と、**運用中の確認・終了処理**を行うためのメソッド群です。
 
 ## 初回の権限付与（ブラウザ・人手で 1 回）
 
 ライブラリは**認可 URL の生成**と **`code` の交換**だけを担います。ブラウザでのログイン・承諾、
-および redirect（`?code=` の受け取り）は**利用者側の Web アプリの責務**です。
+およびリダイレクト（`?code=` の受け取り）は**利用者側の Web アプリの責務**です。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -51,17 +51,17 @@ const porters = new PortersClient({
 // 1) 認可 URL を生成 → ユーザーのブラウザで開く（ログイン → 権限付与の承諾）
 const url = porters.auth.authorizationUrl({
   redirectUrl: "https://app.example.com/porters/callback", // アプリ登録済みの Redirect URL
-  state: "csrf-token-xyz", // 任意（redirect に引き継がれる。CSRF 対策等）
+  state: "csrf-token-xyz", // 任意（リダイレクトに引き継がれる。CSRF 対策等）
   // scopes 省略時は client の `scopes` を使う
 });
 // → このURLへユーザーを誘導する
 
-// 2) redirect で戻ってきた ?code= を交換（code の有効期限は 30 秒）
+// 2) リダイレクトで戻ってきた ?code= を交換（code の有効期限は 30 秒）
 await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
 // 成功すると以後は無人運用（code_direct + 自動更新）になる
 ```
 
-- `redirectUrl` は**アプリ登録時の Redirect URL** と一致させます（`code`/`remove` で必須）。
+- `redirectUrl` は**アプリ登録時の Redirect URL** と一致させます（認可 URL と、後述の権限削除 URL の両方で必須）。
 - `scopes` は付与したい権限。省略すると client に設定した `scopes` を使います（どちらも空だと
   `PortersConfigError`）。
 - `exchangeAuthorizationCode(code)` は**成功時に値を返しません（`Promise<void>`）**。取得したトークンは
@@ -138,11 +138,11 @@ const porters = new PortersClient({
 ```
 
 - `tokenStore` が使われるのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
-- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です<!-- 根拠: ADR-0012 -->。
+- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は実機で未確認です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
 
-PORTERS にはサーバ間で完結する権限削除 API がなく、**`remove` もブラウザでの承諾が必要**です。
+PORTERS にはサーバ間で完結する権限削除 API がなく、**権限削除（`response_type=remove`）もブラウザでの承諾が必要**です。
 そのため削除は 2 段階に分けています。
 
 ```ts
@@ -161,7 +161,7 @@ await porters.auth.clearTokens();
 
 ## トークンを自前で管理するとき
 
-`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
+`PortersClient` の `auth` オプションに独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
 
 ```ts
 // 実装するのは getAccessToken の 1 つだけ（opts の型は GetAccessTokenOptions）
@@ -172,7 +172,7 @@ type TokenProvider = {
 
 - **返り値**: その時点で有効な Access Token（文字列）。リソース呼び出しのたびに呼ばれます。
 - **`opts.forceRefresh`**: ライブラリが `401`/`402`（トークン失効）を受けた直後に `true` で再呼び出しします。`true` のときは**キャッシュを使わず新しいトークンを取り直して**ください。
-- 再認証が必要で取得できないときは `PortersAuthError` を throw します（ライブラリは繰り返さず、エラーとして返します）。
+- 再認証が必要で取得できないときは、`TokenProvider` 側で `PortersAuthError` を throw してください（ライブラリは繰り返さず、エラーとして返します）。
 
 ```ts
 import type { TokenProvider } from "@joymerrevent/porters-connect";
@@ -194,7 +194,7 @@ const porters = new PortersClient({ hostname, auth });
 
 > 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。
 
-自前管理のとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
+自前管理のとき、`porters.auth.*` で**動くのは `TokenProvider` に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
 残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
 | メソッド                                    | 既定の方式 | 自前管理                    |

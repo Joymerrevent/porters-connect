@@ -9,7 +9,7 @@ PORTERS のデータは **Partition**（Company DB）という単位に分かれ
 - **client は Partition を持ちません。** `porters.tenant(id)` が Partition を指定したスコープ（`TenantScope`）を返し、
   配下の呼び出しはすべてその Partition に送られます。**単一テナントでも同じ書き方**です。
 - **カスタム項目の宣言も `tenant(id, { fields })` で渡します。** カスタム項目は Partition ごとのものだからです。
-- **client 直下にあるのは Partition を取らないものだけ**です。`auth`・`partition` マスタ・`tenant()` 自身。
+- **`porters` の直下にあるのは、Partition の指定が要らないものだけ**です（`auth`・`partition` マスタ・`tenant()` 自身）。
 - **Partition の id は `porters.partition.search()` で探します。** ログイン中の Partition を返す呼び方はありません。
 - 複数テナントを 1 プロセスで動かす組み立て（登録・認証の分離・レート）は[実践例][multi-tenant]にあります。
 
@@ -74,7 +74,7 @@ await t.attachment.of("resume").create(file);
 - 含まれないもの: `auth`（App 単位・Partition 非依存）／`partition` マスタ（Partition の**発見**専用）／
   `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
 - **呼び出しごとの Partition 引数はありません**<!-- 根拠: ADR-0040 案1c -->。Partition を決める場所は **`tenant(id)` の 1 箇所だけ**で、
-  どちらが適用されているかを考える必要はありません<!-- 根拠: ADR-0055 -->。
+  呼び出しごとの引数とスコープのどちらが優先されるか、を考える必要はありません<!-- 根拠: ADR-0055 -->。
 - **カスタム項目の宣言も 1 箇所だけ**です<!-- 根拠: ADR-0087 -->。別のテナントの宣言が気づかないうちに適用されることはありません。
 
 トークンは client が持ち、`tenant(id)` は Partition 付きのアクセサを作り直すだけなので、軽い操作です。
