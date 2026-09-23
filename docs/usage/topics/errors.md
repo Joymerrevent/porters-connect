@@ -21,7 +21,7 @@
 
 ## エラーの型
 
-すべての PORTERS 由来エラーは基底 `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
+すべての PORTERS 由来エラーは `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
 
 | クラス                 | 系統                                       | `code` の空間     |
 | ---------------------- | ------------------------------------------ | ----------------- |
@@ -78,7 +78,7 @@ e.context; // { resource?, operation?, partition? }
 
 ## 基本の対処
 
-基底 `PortersError` でまとめて捕捉し、`category`（横断）や `instanceof`（系統）で分岐します。
+`PortersError` でまとめて捕捉し、`category`（横断）や `instanceof`（系統）で分岐します。
 
 ```ts
 import {
@@ -260,7 +260,7 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 （どちらもエラーの `hint` に出ます）。
 
 - **非 ASCII のサーバー名は punycode 表記**で渡してください（`xn--...`）。
-- **IPv6 は角括弧付き**で渡してください（`[::1]`）。裸のコロンはポートの書き忘れと区別が付きません。
+- **IPv6 は角括弧付き**で渡してください（`[::1]`）。角括弧の無いコロンは、ポートの書き忘れと区別が付きません。
 
 なお**パス prefix 付きのゲートウェイ**（`https://gw/porters/v1/...`）は対象外と決めており<!-- 根拠: ADR-0047 -->、
 本検証はその決定を実行時にも明示するものです。
@@ -285,7 +285,7 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 
 ## 宣言型と実データの食い違い（`validation`）
 
-宣言したカスタム項目の Data Type が実物と違うと、読み取りは
+宣言したカスタム項目の Data Type が実際の項目と違うと、読み取りは
 **`PortersResourceError`（`category: "validation"`）** で失敗します。どの項目かがメッセージに入ります。
 
 ```text
@@ -298,23 +298,23 @@ U_source: declared Option, but the value is not a nested record — PORTERS send
 
 事前に知りたいなら [`verifyFields`][custom-fields] です（起動時や CI で突き合わせられます）。
 
-判定は**形の食い違いだけ**に絞っています。PORTERS は値型（数値・文字列・日時）をスカラで、
-複合型（Option / User / 参照 / Image）を入れ子で送るので、**スカラが来るべき所に入れ子**（またはその逆）は
+判定は**形の食い違いだけ**に絞っています。PORTERS は値型（数値・文字列・日時）を単一の値で、
+複合型（Option / User / 参照 / Image）を入れ子で送るので、**単一の値が来るべき所に入れ子**（またはその逆）は
 Data Type が違うことしか意味しません。それより細かい違い（入れ子の中の想定外のタグ、`P_Id` の欠落）は
 **そのまま許容して `null`** にします — そこは値が本当に無いこともあり、弾くと偽の警報になるためです。
 
-`Link` は検査しません。Contact の ID はスカラ、User / Department は入れ子で、**形そのものが判別子**
-だからです<!-- 根拠: ADR-0064 -->。
+`Link` は検査しません。Contact の ID は単一の値、User / Department は入れ子で、**形そのもので見分けられる**
+からです<!-- 根拠: ADR-0064 -->。
 
-**スカラどうしのずれは形では捕まりません。** 捕まるのは**変換を伴う型**だけです — 日時（次の節）と
-数値。実物が `SinglelineText` の項目を `f.number()` と宣言すると、`"社内候補"` は数値に読めないので
-エラーになります（`Link` のスカラ形＝Contact の ID も同じ）<!-- 根拠: RV-58 -->:
+**単一の値どうしのずれは、形の違いでは検出できません。** 検出できるのは**変換を伴う型**だけです — 日時（次の節）と
+数値。実際は `SinglelineText` の項目を `f.number()` と宣言すると、`"社内候補"` は数値に読めないので
+エラーになります（`Link` の単一の値の形＝Contact の ID も同じ）<!-- 根拠: RV-58 -->:
 
 ```text
 U_score: declared Number, but "社内候補" is not a PORTERS Number value
 ```
 
-逆向き（実物 `Number` を `f.singlelineText()` と宣言）は変換が無いので通り、`"123"` が**文字列のまま**
+逆向き（実際は `Number` の項目を `f.singlelineText()` と宣言）は変換が無いので通り、`"123"` が**文字列のまま**
 入ります。**宣言が違うのに何も知らせない**のはこの形なので、**`verifyFields` で突き合わせる価値が
 いちばん高いのもここ**です。
 
@@ -344,7 +344,7 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 ```
 
 実際にこれが出るのは、たいてい PORTERS の不調ではなく**宣言が違う**ときです（日時でない項目を
-`f.date()` と宣言した）。スカラどうしのずれがエラーになるのは、変換を伴う日時と数値の経路だけです。
+`f.date()` と宣言した）。単一の値どうしのずれがエラーになるのは、変換を伴う日時と数値の経路だけです。
 
 条件（`condition`）の日時も同じ経路です。クラスは `PortersConfigError`（値を渡したのは呼び出し側なので
 「PORTERS 由来でない」＝このクラス）、`category` は `validation`（エラーモデルが

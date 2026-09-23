@@ -73,9 +73,9 @@ await t.attachment.of("resume").create(file);
   （`user` / `department` / `field` / `option`）です（[リソースと操作][resources]）。
 - 含まれないもの: `auth`（App 単位・Partition 非依存）／`partition` マスタ（Partition の**発見**専用）／
   `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
-- **呼び出しごとの Partition 引数はありません**<!-- 根拠: ADR-0040 案1c -->。Partition の解決は **`tenant(id)` の 1 層だけ**で、
+- **呼び出しごとの Partition 引数はありません**<!-- 根拠: ADR-0040 案1c -->。Partition を決める場所は **`tenant(id)` の 1 箇所だけ**で、
   どちらが適用されているかを考える必要はありません<!-- 根拠: ADR-0055 -->。
-- **カスタム項目の宣言も 1 層だけ**です<!-- 根拠: ADR-0087 -->。別のテナントの宣言が気づかないうちに適用されることはありません。
+- **カスタム項目の宣言も 1 箇所だけ**です<!-- 根拠: ADR-0087 -->。別のテナントの宣言が気づかないうちに適用されることはありません。
 
 トークンは client が持ち、`tenant(id)` は Partition 付きのアクセサを作り直すだけなので、軽い操作です。
 

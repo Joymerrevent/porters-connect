@@ -50,12 +50,12 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 
 一致しない例が実際にあります。
 
-| リソース   | 接頭辞       | 注意                         |
-| ---------- | ------------ | ---------------------------- |
-| Candidate  | **`Person`** | リソース名と違う             |
-| Phase      | **なし**     | `Id` / `Resource` のように裸 |
-| Attachment | **なし**     | `FileName` のように裸        |
-| その他     | リソース名   | `Job.P_Position` など        |
+| リソース   | 接頭辞       | 注意                                 |
+| ---------- | ------------ | ------------------------------------ |
+| Candidate  | **`Person`** | リソース名と違う                     |
+| Phase      | **なし**     | `Id` / `Resource` のように接頭辞なし |
+| Attachment | **なし**     | `FileName` のように接頭辞なし        |
+| その他     | リソース名   | `Job.P_Position` など                |
 
 `field` / `condition` / `order` はすべて**同じ書き方（接頭辞なしの alias）** で書けます。
 
@@ -104,7 +104,7 @@ Opportunity `25` / Contact `27`）。この値は**2 つの立場**で出てき�
 レコードごとの値になります。
 
 **数値を書く／読むときは、変換関数を使ってください**<!-- 根拠: ADR-0079 -->。欠番（`6`）や
-取り違え（Recruiter `9` と Sales `11`）は数値リテラルだと気づけません。
+取り違え（Recruiter `9` と Sales `11`）は数値をそのまま書くと気づけません。
 
 ```ts
 import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
@@ -141,11 +141,11 @@ PORTERS 自身が注意している点です。
 >
 > — [gotchas][gotchas]（出典記事からの転記）
 
-つまり**宣言した alias が今のテナントに実在するとは限りません**。宣言と実物を突き合わせる
+つまり**宣言した alias が今のテナントに実在するとは限りません**。宣言と実際の項目を突き合わせる
 手段があります（[`verifyFields`][custom-fields]）。Data Type がずれていると読み取りは
 `PortersResourceError`（`category: "validation"`）になります（形の違い、または日時・数値に
 読めない値）。エラーにならないずれ方（`Number` の項目を `SinglelineText` と宣言した、など）は値が
-文字列のまま入るだけで気づけません。ここは機械に確かめさせてください。
+文字列のまま入るだけで気づけません。ここは `verifyFields` で確かめてください。
 
 ## 関連
 

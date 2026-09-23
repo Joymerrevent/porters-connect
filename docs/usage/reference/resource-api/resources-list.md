@@ -12,7 +12,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
 - エンドポイントは `https://{host}/v1/{resource}`（resource はリソース名の小文字。例 `/v1/candidate`）。
 - **XML のルート要素はリソース名**（`Candidate`, `Job`, ...）。
 - **Field Alias の接頭辞**は原則リソース名と同じだが、例外が 3 つある。**Candidate は `Person.P_*`**、
-  **Phase と Attachment は接頭辞も `P_` も無い**（`Id` / `Resource` / `FileName` のように裸）。
+  **Phase と Attachment は接頭辞も `P_` も無い**（`Id` / `Resource` / `FileName` のように接頭辞が付かない）。
 - `Value` 列は Process / Phase などが内部でリソースを参照するときに使う数値 ID。
 
 ## マスタ系（読み取り専用）
@@ -58,10 +58,10 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
 - Phase の更新には専用の作法がある（[Phase の更新について][phase]）。
-- **Phase の接頭辞は出典記事の中で揺れている。** 散文は「省略した場合は `Phase.P_Id` が指定された
+- **Phase の接頭辞は出典記事の中で一致していない。** 散文は「省略した場合は `Phase.P_Id` が指定された
   ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
   サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も
-  **すべて裸**。裸のほうを正として扱う<!-- 根拠: ADR-0061 -->。
+  **すべて接頭辞なし**。接頭辞なしのほうを正として扱う<!-- 根拠: ADR-0061 -->。
 - 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] にリソースごとにまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。

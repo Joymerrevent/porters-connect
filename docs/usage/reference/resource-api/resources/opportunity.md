@@ -11,7 +11,7 @@
 ## カスタム項目
 
 - `Opportunity.U_[Name]`（ユーザー作成）/ `Opportunity.A_[Name]`（アプリ作成）はテナント毎に異なる。
-  上表に無い項目は **Field Read API**（`/v1/field`）で動的に取得する。
+  上表に無い項目は **Field Read API**（`/v1/field`）で実行時に取得する。
 
 ## 項目一覧
 

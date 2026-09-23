@@ -245,7 +245,7 @@ await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 
 アクティビティのように「どのリソースに付いているか」を持つ項目は、**数値**で絞ります。
 値は非連続（Candidate `1` / Job `3` / Client `5` / Recruiter `9` / Sales `11` …）で、
-数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**<!-- 根拠: ADR-0079 -->。
+数値をそのまま書くと欠番や取り違えに気づけないので、**名前から引いてください**<!-- 根拠: ADR-0079 -->。
 
 ```ts
 import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";

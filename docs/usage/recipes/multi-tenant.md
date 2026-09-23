@@ -188,7 +188,7 @@ void topScorers(porters.tenant(1, { fields: other })); // ✗ 型エラー：U_s
 宣言した項目の alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
 スコープの型も違います**<!-- 根拠: ADR-0074 D1 -->。(2) の `TenantScope<DeclaredCatalogs>` が
 どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**受け付ける宣言の範囲が広い**から
-です。狭いものは広いほうへ渡せる、という向きだけが通ります。
+です。宣言が限定されたものを範囲の広いほうへ渡す向きだけが通ります。
 
 それでも**宣言はプロジェクトに 1 か所置いて export する**のが素直です
 （`generateFieldDecls` の出力先がその置き場になります）。テナントごとに宣言が違うなら、
@@ -196,7 +196,7 @@ void topScorers(porters.tenant(1, { fields: other })); // ✗ 型エラー：U_s
 
 #### `tenant()` の引数を切り出すときも同じ
 
-`tenant()` の第 2 引数の型は `TenantOptions` です。これも型引数を取るので、**宣言つきの引数を
+`tenant()` の第 2 引数の型は `TenantOptions` です。これも型引数（`<...>` の部分）を取るので、**宣言つきの引数を
 関数や別ファイルに切り出すなら、型引数も渡します**。
 
 ```ts
@@ -211,8 +211,8 @@ const t = porters.tenant(1, options);
 ```
 
 型引数を省いて `TenantOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
-エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 注釈が
-`EmptyCatalog` に固定するためです。
+エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — `TenantOptions` とだけ書いた型が、
+宣言なしの型（`EmptyCatalog`）に固定するためです。
 
 <!-- doccheck: expect-error -->
 
