@@ -7,7 +7,7 @@
 
 - **カスタム項目はテナントごとに違う**ので、ライブラリがあらかじめ持っている型には含められません。**利用側が `defineFields` で
   宣言する**と、その項目が読み書きの型に現れます<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
-- **宣言は `tenant(id, { fields })` で Partition と一緒に渡します。** client は宣言を持ちません。
+- **宣言は `tenant(id, { fields })` で Partition と一緒に渡します。**
 - **宣言していないカスタム項目は型が受け付けません**（コンパイルエラー）。宣言せずに触る方法は別にあります。
 - **宣言はテナントの実際の項目と突き合わせられます。** `generateFieldDecls` で自動生成し、`verifyFields` で食い違いを見つけます。
 - **テナントが必須にした項目の欠落は型では止まりません。** 必須かどうかは PORTERS 側の設定（`P_Required`）です。
@@ -29,9 +29,7 @@ const t = porters.tenant(partition, { fields }); // 宣言は partition と一�
 
 宣言を渡す先が `tenant()` なのは、カスタム項目が **partition（Company DB）ごとのもの**だからです
 （出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています）<!-- 根拠: ADR-0087 -->。
-client は宣言を持ちません。partition を指定する場所で、その partition の項目の形も決めます。
-0.21 より前の形（コンストラクタの `fields`）が残っていると、**構築時に `PortersConfigError`**
-（`category: "config"`）で止まります — 黙って捨てると、カスタム項目が全部型から消えたまま動いてしまうためです。
+partition を指定する場所で、その partition の項目の形も決めます。
 
 <!-- doccheck: fields expect-error -->
 

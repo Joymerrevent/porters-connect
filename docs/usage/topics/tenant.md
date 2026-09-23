@@ -44,7 +44,7 @@ await t.job.get(jobId);
 ```
 
 カスタム項目を使うなら、その宣言も**ここで一緒に**渡します — `porters.tenant(id, { fields })`
-（[カスタム項目][custom-fields]）<!-- 根拠: ADR-0087 -->。client は宣言を持ちません。
+（[カスタム項目][custom-fields]）<!-- 根拠: ADR-0087 -->。
 
 App レベルの操作は `porters` 側にあります。
 

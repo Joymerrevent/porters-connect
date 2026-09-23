@@ -113,7 +113,7 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
 const countCandidates = async (t: TenantScope<DeclaredCatalogs>) =>
   (await t.candidate.search({ field: [] })).total;
 
-// client を受ける関数は、型引数なしの PortersClient（client は宣言を持ちません）
+// client を受ける関数は、型引数なしの PortersClient
 const listPartitions = (client: PortersClient) => client.partition.search();
 
 // 呼ぶ側

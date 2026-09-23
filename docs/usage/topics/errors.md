@@ -292,9 +292,9 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 U_source: declared Option, but the value is not a nested record — PORTERS sends a nested record for Option
 ```
 
-**以前は黙って `null` になっていました**<!-- 根拠: RV-36 -->。例外も警告も出ないので「その項目は空だった」
-と区別が付かず、気づけない壊れ方でした。エラーモデルは「宣言型と実データの食い違いも
-`validation` のエラーとして返す（項目名付き。黙って別の値にはしない）」と決めており<!-- 根拠: ADR-0006 -->、いまは実装がそれに従います。
+黙って `null` にすると、例外も警告も出ないので「その項目は空だった」と区別が付かず、気づけません<!-- 根拠: RV-36 -->。
+そのため、宣言型と実データの食い違いも `validation` のエラーとして返します（項目名付き。黙って別の値には
+しません）<!-- 根拠: ADR-0006 -->。
 
 事前に知りたいなら [`verifyFields`][custom-fields] です（起動時や CI で突き合わせられます）。
 
