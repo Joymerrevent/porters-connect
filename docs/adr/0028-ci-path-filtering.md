@@ -43,6 +43,30 @@ docs-only で重い検査を省きつつ、必須チェックを壊さない方�
 **決定（accepted・2026-06-20）：案B（ハイブリッド）を採用。** mutation は必須維持（条件分岐で docs skip）。
 test 系は**拒否リスト**（`paths-ignore`・依存/設定変更も拾う）、CodeQL は**src 許可リスト**（`paths`・自ソースのみ解析）とする。詳細は下記。
 
+**訂正（2026-09-23・stakeholder）**: **リリースの流れの PR では、develop と比べて判定する**。
+0.22.0 のリリースで、`stryker`（フル run・約 11 分）が**同じコードに 3 回**走った: リリース PR
+（`release/X.Y.Z` → `main`）、`main` への push、back-merge PR（`main` → `develop`）。後の 2 つは同じコミットで、
+PR の画面にも 2 組並ぶ。原因は 2 つある:
+
+- **リリース PR の差分は base（`main`）に対して取るので、前のリリース以降に develop へ入ったコードがすべて
+  「変更」に見える**。実際にリリースブランチで足すのは版番号・CHANGELOG・changeset だけなのに、docs-only に
+  ならない。しかもそのコードは develop へのマージ時に必須の `stryker` を通っている。
+- **back-merge PR の head は `main` そのもの**で、同じコミットを `main` への push が検査している。
+
+そこで、`pull_request` のうち **base=`main` かつ head が `release/` で始まるもの**と **base=`develop` かつ
+head=`main` のもの**に限り、**検査対象（PR のマージ結果）を `origin/develop` と比べ**、違いが
+「コードでないもの（`**/*.md`・`docs/**`）」と「`package.json` の `version` だけの変更」に収まるときは
+`stryker` を skip する（報告は保つ＝上の落とし穴は踏まない）。
+
+- **品質バーは下げない**: skip するのは、コードが develop（必須の `stryker` を通ったもの）と同じときだけ。
+  リリースブランチで欠陥を直した（コードを変えた）とき、develop が先に進んで差が出たとき、依存を変えたときは
+  フル run になる。`main` への push と nightly のフル run はそのまま残る。
+- **判定に失敗したら走らせる**（fetch や JSON の読み取りに失敗したら skip しない）。省くのは速度のためで、
+  判定が壊れたときに検査が消えるのは逆向き。
+- 対象は `stryker` だけ。`ci`（約 1 分）と `test` マトリクス（約 30 秒）は据え置く。この 2 つのためにワークフローを
+  複雑にする利点は小さい。
+- 判定は `scripts/` の小さなスクリプトに置いてテストする（ワークフローの `if` に式を並べると、条件の穴が見えない）。
+
 ### 推奨（私案）
 
 - **方式＝案B（ハイブリッド）**：
