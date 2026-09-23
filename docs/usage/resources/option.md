@@ -23,7 +23,7 @@ for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 
 ## 固有の注意
 
-このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`searchAll` はありません**。PORTERS の Option Read に `start` が無く、ページを進める手段が無いためです。`search` の戻り値もページではなく **`Option[]`** です。
 - **読む範囲は `alias`（部分木の根）・`level`（深さ）・`enabled`（使用中か）で選べます。** `level` は `-1` すべて（既定）、`0` 兄弟、`1` 以上は子孫です。木は `P_ParentId` から組み立て直せます。

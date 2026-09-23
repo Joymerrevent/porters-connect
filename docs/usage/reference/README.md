@@ -34,7 +34,7 @@ API の 2 本柱（Authentication API / Resource API）＋横断、で構成し�
 [glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）／
 [troubleshooting][troubleshooting]（症状 → 原因 → 対処の早見表）。
 
-## 重要な前提・落とし穴（使ううえで効くもの）
+## 重要な前提・落とし穴（使ううえで影響するもの）
 
 - レスポンスは **XML のみ**（`charset=UTF-8`）。利用者には型付きオブジェクトのみ返す。
 - **既定ホストは `api-hrbc-jp.porterscloud.com`**（共有サーバ）。個別サーバ契約時のみ別ホスト → `PORTERS_HOST` で受ける。

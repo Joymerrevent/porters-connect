@@ -137,7 +137,7 @@ const porters = new PortersClient({
 });
 ```
 
-- `tokenStore` が効くのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
+- `tokenStore` が使われるのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
 - 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
