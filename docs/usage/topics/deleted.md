@@ -63,7 +63,7 @@ const gone = await t.candidate.search({
 
 ## `P_Deleted` — どれが削除済みか
 
-`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します<!-- 根拠: ADR-0056 -->。
+`"all"` は生存と削除済みを混ぜて返します。**各レコードが生存か削除済みかは、`P_Deleted` の値で見分けます**<!-- 根拠: ADR-0056 -->。
 
 ```ts
 const page = await t.candidate.search({
