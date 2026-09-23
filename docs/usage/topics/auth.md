@@ -197,11 +197,7 @@ const porters = new PortersClient({ hostname, auth });
 自前管理のとき、`porters.auth.*` で**動くのは `TokenProvider` に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
 残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
-| メソッド                                    | 既定の方式 | 自前管理                    |
-| ------------------------------------------- | ---------- | --------------------------- |
-| `authorizationUrl` / `revokeUrl`            | ○          | `PortersConfigError`        |
-| `exchangeAuthorizationCode` / `clearTokens` | ○          | `PortersConfigError`        |
-| `ensureAuthenticated` / `getToken`          | ○          | ○（`TokenProvider` に委譲） |
+6 メソッドの一覧と、それぞれの既定の方式／自前管理での挙動は [auth][cl-auth] にあります。
 
 ## エラー
 
@@ -234,6 +230,7 @@ try {
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
 - 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
+- クライアントと関数: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `auth` / `scopes` オプション）
 - リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
 - 実践例: [複数テナント][multi-tenant]（認証を分けるか）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
@@ -252,3 +249,5 @@ try {
 [r-partition]: ../resources/partition.md
 [r-user]: ../resources/user.md
 [multi-tenant]: ../recipes/multi-tenant.md
+[cl-auth]: ../client/auth.md
+[cl-client]: ../client/client.md

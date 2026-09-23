@@ -37,6 +37,7 @@
 **`delete` はどの行にもありません**（[削除と削除済みデータ][deleted]）。`createMany` / `updateMany` は 200 件を超えても
 自動で分割します（[書き込み][write]）。
 
+`porters` そのもの・`porters.auth`・`tenant(id)` のスコープ・単独の関数は[クライアントと関数][client]の章にあります。
 引数・戻り値の正確な定義は [公開 API リファレンス][api]、項目の一覧は [PORTERS API の事実][ref] です。
 
 ## 関連
@@ -69,3 +70,4 @@
 [api]: ../api/index.md
 [ref]: ../reference/README.md
 [index]: ../index.md
+[client]: ../client/client.md

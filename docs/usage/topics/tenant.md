@@ -68,11 +68,8 @@ const job = await t.job.get(jobId);
 await t.attachment.of("resume").create(file);
 ```
 
-- スコープから使えるのは **データ系 13 種**（`candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` /
-  `activity` / `contract` / `sales` / `process` / `resume` ＋ `phase` ＋ `attachment`）**＋ マスタ Read**
-  （`user` / `department` / `field` / `option`）です（[リソースと操作][resources]）。
-- 含まれないもの: `auth`（App 単位・Partition 非依存）／`partition` マスタ（Partition の**発見**専用）／
-  `tenant` 自身（**ネストしない**）。これらは `porters` から直接呼びます。
+- スコープにぶら下がるアクセサ（データ系 13 種 ＋ マスタ 4 種）と、含まれないもの（`auth`・`partition`・`tenant` 自身）の
+  一覧は [tenant(id)][cl-tenant] にあります。
 - **呼び出しごとの Partition 引数はありません**<!-- 根拠: ADR-0040 案1c -->。Partition を決める場所は **`tenant(id)` の 1 箇所だけ**で、
   呼び出しごとの引数とスコープのどちらが優先されるか、を考える必要はありません<!-- 根拠: ADR-0055 -->。
 - **カスタム項目の宣言も 1 箇所だけ**です<!-- 根拠: ADR-0087 -->。別のテナントの宣言が気づかないうちに適用されることはありません。
@@ -118,6 +115,7 @@ Partition ごとに client を分ける形に切り替えてください — **�
 ## 関連
 
 - 主題: [認証とトークン][auth]（権限付与は Company DB ごと）／[カスタム項目][custom-fields]（宣言を Partition ごとに渡す）
+- クライアントと関数: [tenant(id)][cl-tenant]（アクセサの一覧と `fields`）／[PortersClient][cl-client]（`tenant()` / `partition` / `auth`）
 - リソース別: [Partition][r-partition]／[リソースと操作][resources]（スコープの下にあるもの）
 - 実践例: [複数テナント][multi-tenant]（登録・宣言の持ち方・認証の分離・レート）
 - リファレンス: [リソース一覧][res-list]（Partition は `/v1/partition`）
@@ -135,3 +133,5 @@ Partition ごとに client を分ける形に切り替えてください — **�
 [r-partition]: ../resources/partition.md
 [res-list]: ../reference/resource-api/resources-list.md
 [index]: ../index.md
+[cl-tenant]: ../client/tenant-scope.md
+[cl-client]: ../client/client.md
