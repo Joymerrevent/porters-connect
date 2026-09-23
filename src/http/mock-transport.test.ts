@@ -24,6 +24,10 @@ describe("createMockTransport", () => {
     expect(token.body).toContain(
       "<RefreshToken>mock-refresh-token</RefreshToken>",
     );
+    // The envelope is complete — `<Error>0</Error>` and the closing root — so the library reads
+    // it exactly as it reads the live reply (a truncated body would parse leniently and hide it).
+    expect(oauth.body).toMatch(/<Error>0<\/Error><\/Authentication>$/);
+    expect(token.body).toMatch(/<Error>0<\/Error><\/Authentication>$/);
   });
 
   it("coerces a string reply to a 200 response", async () => {
@@ -83,6 +87,17 @@ describe("createMockTransport", () => {
       .then(() => "")
       .catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
     expect(msg).toContain("GET not-a-valid-url");
+  });
+
+  it("the unmocked-route message says how to take over the auth endpoints", async () => {
+    const t = createMockTransport(() => undefined);
+    await expect(
+      t.send(req("https://h.test/v1/candidate")),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        "(or pass { auth: false } to mock the auth endpoints too)",
+      ) as string,
+    });
   });
 
   it("with { auth: false } routes the auth endpoints to the handler", async () => {

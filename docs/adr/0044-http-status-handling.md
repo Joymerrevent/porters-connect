@@ -109,7 +109,7 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
-[guide]: ../usage/howto/handle-failures.md
+[guide]: ../usage/topics/errors.md
 [ref-resource]: ../usage/reference/resource-api/README.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
 [adr6]: 0006-error-model.md

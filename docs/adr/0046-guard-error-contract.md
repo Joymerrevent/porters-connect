@@ -127,7 +127,7 @@
   （partition は `tenant(id)` で一度だけ束ねる）。同期 throw と reject の契約そのものは変わらない。
 
 [findings]: ../reviews/findings.md
-[guide]: ../usage/howto/handle-failures.md
+[guide]: ../usage/topics/errors.md
 [adr5]: 0005-public-api-shape.md
 [adr6]: 0006-error-model.md
 [adr24]: 0024-mock-transport.md

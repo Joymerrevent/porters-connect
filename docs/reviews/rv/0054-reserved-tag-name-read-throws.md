@@ -130,6 +130,6 @@ JS パーサの都合で拒否する判断は [ADR-0002][adr2] との兼ね合�
 [adr6]: ../../adr/0006-error-model.md
 [adr2]: ../../adr/0002-ground-design-in-live-api-docs.md
 [adr85]: ../../adr/0085-option-alias-validation.md
-[guide]: ../../usage/howto/handle-failures.md
+[guide]: ../../usage/topics/errors.md
 [rv36]: 0036-write-value-validation-partial.md
 [rv48]: 0048-option-alias-xml-injection.md

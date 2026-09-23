@@ -64,7 +64,7 @@ describe("maintainerIdLines（生成物の保守者向け識別子検出）", ()
           "a.md":
             "Bind a partition (Company DB) and get the accessors that route through it.\n",
           // 利用者向けドキュメントへのパスは対象外（docs/usage は利用者が読む）。
-          "b.md": "See docs/usage/concepts/limits.md.\n",
+          "b.md": "See docs/usage/topics/limits.md.\n",
         }),
       ),
     ).toEqual([]);

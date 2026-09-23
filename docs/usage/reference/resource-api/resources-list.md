@@ -1,4 +1,6 @@
-# リソース一覧（R/W・スコープ・Field Alias・ドキュメント）
+# リソース一覧（読み書き・スコープ・alias の接頭辞・出典）
+
+PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出典記事を引くページです。
 
 出典: Resource List（2023-08-21）、各リソースの Read / Write / Field List 記事。取得日 2026-06-12
 （Department は 2026-09-20 の再取得で追加）。
@@ -10,7 +12,7 @@
 - エンドポイントは `https://{host}/v1/{resource}`（resource はリソース名の小文字。例 `/v1/candidate`）。
 - **XML のルート要素はリソース名**（`Candidate`, `Job`, ...）。
 - **Field Alias の接頭辞**は原則リソース名と同じだが、例外が 3 つある。**Candidate は `Person.P_*`**、
-  **Phase と Attachment は接頭辞も `P_` も無い**（`Id` / `Resource` / `FileName` のように裸）。
+  **Phase と Attachment は接頭辞も `P_` も無い**（`Id` / `Resource` / `FileName` のように接頭辞が付かない）。
 - `Value` 列は Process / Phase などが内部でリソースを参照するときに使う数値 ID。
 
 ## マスタ系（読み取り専用）
@@ -23,7 +25,7 @@
 | Option     | `/v1/option`     | `option_r`                   | `Option`     | [Read][option-read] ／ [Default Option List][default-option-list] |
 | Department | `/v1/department` | `user_r`（専用スコープ無し） | `Department` | [Read][department-read] ／ [Field][department-field]              |
 
-## データ系（R/W あり）
+## データ系（読み書きあり）
 
 | リソース    | endpoint          | Value | スコープ                          | Alias 接頭辞  | ドキュメント                                                                         |
 | ----------- | ----------------- | ----- | --------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
@@ -43,24 +45,24 @@
 
 ## 補足
 
-- 上表の **スコープ列は自リソースの R/W のみ**。**Read は参照する上位リソースの `_r` も必要**で、
+- 上表の **スコープ列は自リソースの読み書きのみ**。**Read は参照する上位リソースの `_r` も必要**で、
   ほぼ常に `user_r` / `option_r` を含む（例: Process Read =
   `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
 - **Write は自リソースの `_w` だけ**で足りる（各 Write 記事が挙げるスコープは 1 つ）。
-  参照先のスコープまで要るのは Read 側だけで、ここが非対称になっている。
+  参照先のスコープまで要るのは Read 側だけで、Read と Write で要るスコープが違う。
 - **Department は Read だけ**（2025/03・Connect API 8.2.1 で追加。Write は「実装していない」と明記）。
   ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。公式の Resource List 記事
-  （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` の選択子にはならない）。
-- **削除 API は無い**。`delete()` は型レベルでも生やさない。ただし `itemstate=deleted|all` で削除済みデータの
+  （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` に指定できる値にはならない）。
+- **削除 API は無い**。`delete()` は型の上でも用意しない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
-- Phase の更新には専用の作法がある（[Phase の更新について][phase]）。
-- **Phase の接頭辞は出典記事の中で揺れている。** 散文は「省略した場合は `Phase.P_Id` が指定された
+- Phase の更新には専用の手順がある（[Phase の更新について][phase]）。
+- **Phase の接頭辞は出典記事の中で一致していない。** 散文は「省略した場合は `Phase.P_Id` が指定された
   ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
   サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も
-  **すべて裸**。裸のほうを正として扱う<!-- 根拠: ADR-0061 -->。
-- 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] に per-resource でまとめている**
+  **すべて接頭辞なし**。接頭辞なしのほうを正として扱う<!-- 根拠: ADR-0061 -->。
+- 各リソースの **標準項目（`P_*`）の一覧は [resources/][resources] にリソースごとにまとめている**
   （出典記事から抽出）。カスタム項目（`U_` / `A_`）はテナント毎に異なるため Field Read API で取得する。
   実装時は Field 型 / Data 型の対応表（[Field Type & Data Type List][field-type-and-data-type-list]）も併用する。
 

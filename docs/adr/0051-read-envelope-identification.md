@@ -259,7 +259,7 @@
   [ADR-0022][adr22]（マスタ Read の封筒の形・事実5）／[ADR-0002][adr2]（実記事への接地）。
 
 [findings]: ../reviews/findings.md
-[guide]: ../usage/howto/handle-failures.md
+[guide]: ../usage/topics/errors.md
 [lv]: ../live-verification.md
 [ref-resource]: ../usage/reference/resource-api/README.md
 [ref-write]: ../usage/reference/resource-api/write-format.md

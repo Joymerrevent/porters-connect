@@ -12,7 +12,7 @@
 // (setting a lower resource requires its upper ones), plus P_Candidate and P_Resume must be
 // given together on create. A flat required-list cannot express that, so the library sends what
 // it is given and lets PORTERS arbitrate. The chain is spelled out for callers in
-// docs/usage/concepts/limits.md; why we do not encode it is in ADR-0083.
+// docs/usage/topics/limits.md; why we do not encode it is in ADR-0083.
 // VERIFY(live): the conditions are doc-only, and so is *how* PORTERS refuses a violation —
 // whether it comes back as a distinguishable Result Code or is silently accepted in part.
 // docs/live-verification.md (LV-28).
@@ -115,7 +115,7 @@ export type SalesSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
 /**
  * Fields for `create`: only `P_Owner` is unconditionally required. The six references are
  * required *conditionally* (a dependency chain PORTERS validates server-side), so they stay
- * optional here — see docs/usage/concepts/limits.md.
+ * optional here — see docs/usage/topics/limits.md.
  */
 export type SalesCreateInput = CreateInput<
   typeof FIELDS,

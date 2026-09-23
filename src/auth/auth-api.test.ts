@@ -116,17 +116,33 @@ describe("createAuthApi — authorizationUrl / revokeUrl (ADR-0034 SD-2/SD-4)", 
     expect(url.searchParams.get("response_type")).toBe("remove");
   });
 
-  it("throws PortersConfigError when no scope is available", () => {
+  // The class alone is not the contract: a caller branches on `category` (ADR-0006), so each
+  // configuration error pins it — a `{}` options object would compile and lose it silently.
+  it("throws PortersConfigError (category config) when no scope is available", () => {
     const auth = withDefault(dummyTransport, { scopes: undefined });
     expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
       PortersConfigError,
     );
+    expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
+      expect.objectContaining({
+        category: "config",
+        message: expect.stringContaining("at least one scope") as string,
+        hint: expect.stringContaining("`scopes`") as string,
+      }),
+    );
   });
 
-  it("throws PortersConfigError when appId is missing", () => {
+  it("throws PortersConfigError (category config) when appId is missing", () => {
     const auth = withDefault(dummyTransport, { appId: undefined });
     expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
       PortersConfigError,
+    );
+    expect(() => auth.authorizationUrl({ redirectUrl: "https://x" })).toThrow(
+      expect.objectContaining({
+        category: "config",
+        message: expect.stringContaining("appId is required") as string,
+        hint: expect.stringContaining("Set appId") as string,
+      }),
     );
   });
 });
@@ -145,6 +161,9 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     expect(tok).toHaveLength(1);
     expect(tok[0]?.body).toContain("grant_type=oauth_code");
     expect(tok[0]?.body).toContain("code=CODE_FROM_REDIRECT");
+    // The configured credentials reach the wire (not `undefined` from an empty lookup).
+    expect(tok[0]?.body).toContain("app_id=app");
+    expect(tok[0]?.body).toContain("secret=secret");
     // cached -> getToken must not trigger a code_direct acquisition.
     expect(oauthCalls(calls)).toHaveLength(0);
   });
@@ -165,6 +184,13 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     await expect(auth.exchangeAuthorizationCode("c")).rejects.toBeInstanceOf(
       PortersConfigError,
     );
+    await expect(auth.exchangeAuthorizationCode("c")).rejects.toMatchObject({
+      category: "config",
+      message: expect.stringContaining(
+        "appId and appSecret are required",
+      ) as string,
+      hint: expect.stringContaining("appId/appSecret") as string,
+    });
   });
 });
 
@@ -202,16 +228,32 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
     await expect(auth.ensureAuthenticated()).resolves.toBeUndefined();
   });
 
-  it("exchangeAuthorizationCode rejects under a custom strategy", async () => {
+  it("exchangeAuthorizationCode rejects under a custom strategy (category config)", async () => {
     await expect(
       customAuth().exchangeAuthorizationCode("c"),
     ).rejects.toBeInstanceOf(PortersConfigError);
+    await expect(
+      customAuth().exchangeAuthorizationCode("c"),
+    ).rejects.toMatchObject({
+      category: "config",
+      // Names the method so the caller knows which call is off-limits under a custom strategy.
+      message: expect.stringContaining(
+        "exchangeAuthorizationCode is only available",
+      ) as string,
+      hint: expect.stringContaining("custom `auth` strategy") as string,
+    });
   });
 
-  it("clearTokens rejects under a custom strategy", async () => {
+  it("clearTokens rejects under a custom strategy (category config)", async () => {
     await expect(customAuth().clearTokens()).rejects.toBeInstanceOf(
       PortersConfigError,
     );
+    await expect(customAuth().clearTokens()).rejects.toMatchObject({
+      category: "config",
+      message: expect.stringContaining(
+        "clearTokens is only available",
+      ) as string,
+    });
   });
 
   it("authorizationUrl still works under a custom strategy when appId is set", () => {
@@ -222,7 +264,7 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
   });
 
   it("defaults the clock to Date.now when `now` is not provided", async () => {
-    const { transport } = recording(defaultBodies);
+    const { transport, calls } = recording(defaultBodies);
     const provider = createDefaultTokenProvider({
       accessPoint: { hostname: "example.test" },
       appId: "app",
@@ -240,5 +282,8 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
     });
     await auth.exchangeAuthorizationCode("c");
     expect(await auth.getToken()).toBe("BROWSER_A");
+    // A default clock that returned nothing would stamp the tokens with `NaN` expiry, which the
+    // provider treats as expired — and it would silently re-acquire via code_direct.
+    expect(oauthCalls(calls)).toHaveLength(0);
   });
 });

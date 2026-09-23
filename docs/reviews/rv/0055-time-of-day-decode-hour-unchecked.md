@@ -121,6 +121,6 @@ Read 経路の安全性（`Date.parse` が弾く）まで確かめてから重�
 
 [adr86]: ../../adr/0086-time-of-day-fields.md
 [adr-readme]: ../../adr/README.md
-[datetime]: ../../usage/concepts/datetime.md
+[datetime]: ../../usage/topics/datetime.md
 [rv48]: 0048-option-alias-xml-injection.md
 [rv49]: 0049-throttle-options-unvalidated.md

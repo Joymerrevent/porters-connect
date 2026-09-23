@@ -5,6 +5,46 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-23
+
+**読み取りの値の検証を 1 つ増やし、使い方ドキュメントを組み直した版**です。破壊的変更はありませんが、
+**宣言が実際の項目と合っていないと、これまで通っていた読み取りがエラーになることがあります**（下の Changed）。
+
+### Changed
+
+- **数値でない文字列を `Number` として読まなくなりました**。`Number` / `System[Id]` の項目と
+  `Link` のスカラ形（Contact の ID）に数値として読めない値が来ると、`PortersResourceError`
+  （`category: "validation"`・項目名つき）で失敗します。これまでは `Number("社内候補")` の結果＝**`NaN`** が
+  黙って読み取り値に入り、`typeof === "number"` と `null` 判定の両方を通り、そのまま `update` に戻すと
+  `<Alias>NaN</Alias>` を送っていました。
+
+  ```text
+  U_score: declared Number, but "社内候補" is not a PORTERS Number value
+  ```
+
+  - 起きるのは**宣言が違うとき**です（テキストの項目を `f.number()` と宣言した、など）。PORTERS が
+    Number 項目に数値以外を返す書式は出典にありません。日時（`f.date()` 等）が 0.15.0 から同じ形で
+    エラーになるのと揃えました。
+  - 数値として読める値（`"87"` / `"-1.25"` / 前後の空白）と空（`null`）は変わりません。
+  - 書き込み側は変えていません（`NaN` を渡す JS コードはこれまでどおりそのまま送られます）。
+  - 上げる前に宣言を確かめるなら、これまでどおり `verifyFields` です。
+
+- **使い方ドキュメント（`docs/usage/`）を 7 章に組み直しました**。導入／主題別／クライアント／リソース別／
+  関数／実践例／リファレンスの順で、目次（`docs/usage/index.md`）から章を辿ります。
+  - **リソース別**は 18 種に 1 ページずつで、どのページも「呼べるメソッド → 固有の注意 → 新規作成の必須項目 →
+    項目と型」の同じ順に並びます。
+  - **クライアント**（`PortersClient` の構築オプション・`porters.auth` の 6 メソッド・`tenant(id)` のスコープ）と
+    **関数**（宣言と突合・上限と接続・値の変換）の章を新設し、導入と主題別に散らばっていた一覧をまとめました。
+  - **主題別**（検索・書き込み・認証・カスタム項目・上限など）は「まず知ること → 使い方 → 細かい規則」の順に
+    書き直し、言い回しを平易にしています。内容の食い違い（`Promise` を返さない関数の一覧の漏れなど）も直しました。
+
+### Fixed
+
+- **単件の `create` / `update` が、`of()` で指定済みの項目（Phase の `Resource`）を渡されたとき、
+  同期 throw していました**。`Promise` を返すほかの公開メソッドと同じく、reject で届くようにしました。
+  入力型が `Resource` を受け付けないので、TypeScript から普通に書く限り起きません（`as any` を通した場合と
+  JavaScript から呼んだ場合だけ）。例外の種類・`message`・`category` は変わりません。
+
 ## [0.21.0] - 2026-09-21
 
 **カスタム項目の宣言を、partition を束ねる `tenant(id)` で受け取るようにした版**です。
@@ -20,8 +60,9 @@
 
   カスタム項目（`U_` / `A_`）は **partition（Company DB）ごとのもの**です — 出典の各リソース記事が
   「テナント毎に異なる」としています。これまで宣言は client に 1 つしか持てず、項目構成の違う
-  テナントを同じ client で扱うと、**別テナントの宣言が黙って適用される**形でした（実物が Option の
-  項目をテキストで読めば値が `null` になり、例外も警告も出ません）。partition を束ねる `tenant(id)` が、
+  テナントを同じ client で扱うと、**別テナントの宣言が黙って適用される**形でした（ずれは読み取り時の
+  `validation` エラーで見えますが〔0.15.0〕、どのテナントの宣言を当てたのかをライブラリは知らないので、
+  正しい宣言に取り替える手掛かりがありません）。partition を束ねる `tenant(id)` が、
   その partition の項目の形も束ねます。
 
   ```ts
@@ -1245,7 +1286,7 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 - **エラー対処ガイド**: [docs/howto/handle-failures.md][guide]（症状別早見表＋2 系統のコード対応表）。
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
-[guide]: docs/usage/howto/handle-failures.md
+[guide]: docs/usage/topics/errors.md
 [adr44]: docs/adr/0044-http-status-handling.md
 [adr45]: docs/adr/0045-write-response-root-code.md
 [adr46]: docs/adr/0046-guard-error-contract.md
@@ -1254,12 +1295,12 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr50]: docs/adr/0050-auth-http-status-handling.md
 [adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
-[oauth-guide]: docs/usage/howto/authenticate.md
+[oauth-guide]: docs/usage/topics/auth.md
 [adr19]: docs/adr/0019-static-resource-types.md
 [adr20]: docs/adr/0020-read-field-default.md
 [adr35]: docs/adr/0035-usage-documentation-structure.md
-[custom-fields-guide]: docs/usage/howto/custom-fields.md
-[read-query-guide]: docs/usage/howto/search-records.md
+[custom-fields-guide]: docs/usage/topics/custom-fields.md
+[read-query-guide]: docs/usage/topics/query.md
 [adr55]: docs/adr/0055-partition-binding-guard.md
 [adr56]: docs/adr/0056-deleted-flag-typing.md
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
@@ -1272,7 +1313,7 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
 [rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
 [rv44]: docs/reviews/rv/0044-fields-excluded-from-coverage.md
-[write-constraints]: docs/usage/concepts/limits.md
+[write-constraints]: docs/usage/topics/limits.md
 [adr68]: docs/adr/0068-api-reference-tooling.md
 [adr69]: docs/adr/0069-tenant-field-catalog-tooling.md
 [adr73]: docs/adr/0073-throttle-sharing.md
@@ -1285,14 +1326,15 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr80]: docs/adr/0080-resource-parameter-binding.md
 [adr81]: docs/adr/0081-attachment-read-parameters.md
 [adr82]: docs/adr/0082-module-format-and-node-baseline.md
-[limits]: docs/usage/concepts/limits.md
-[failures]: docs/usage/howto/handle-failures.md
+[limits]: docs/usage/topics/limits.md
+[failures]: docs/usage/topics/errors.md
 [adr85]: docs/adr/0085-option-alias-validation.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
@@ -1330,5 +1372,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [fastcheck]: https://github.com/dubzzz/fast-check
 [adr86]: docs/adr/0086-time-of-day-fields.md
 [adr87]: docs/adr/0087-tenant-scoped-field-declarations.md
-[howto-custom-fields]: docs/usage/howto/custom-fields.md
+[howto-custom-fields]: docs/usage/topics/custom-fields.md
 [ref-department]: docs/usage/reference/resource-api/resources/department.md

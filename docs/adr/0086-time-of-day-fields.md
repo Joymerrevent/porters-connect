@@ -340,7 +340,7 @@ await t.job.search({
 [src-param]: https://hrbcapi.porters.jp/hc/ja/articles/115008016927-Read-API-Parameter
 [ref-fdt]: ../usage/reference/resource-api/field-data-types.md
 [ref-gotchas]: ../usage/reference/gotchas.md
-[concept-dt]: ../usage/concepts/datetime.md
+[concept-dt]: ../usage/topics/datetime.md
 [prd]: ../design/requirements.md
 [roadmap]: ../roadmap.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md

@@ -44,6 +44,13 @@
 > ADR-0006 が同じ箇所で「起動前に検出したい場合は Field Read と突き合わせる**任意の事前検証**
 > （opt-in・ライブ接続要・**将来の dev ツール**）。既定では行わない」と予告していた側を作る。
 > **決定は変わらない** — 2 つは同じ問題への実行時／事前の両輪であり、本 ADR の 7 論点はそのまま。
+>
+> **追記（2026-09-21）** — 上表には**逆向きの 1 行が無かった**: 「テキスト / `f.number()`」。
+> こちらは `Number(text)` が throw せず **`NaN`** を返すため、[RV-36][rv36] の是正（形の食い違い・
+> 日時の書式）の後も**黙って通る**唯一のスカラどうしの組み合わせとして残っていた
+> （[RV-58][rv58]。ガイドは #286 以降「`NaN` が入る」と書いて `verifyFields` を使う理由にしていたが、
+> ADR-0006 と矛盾したまま決定として記録されていなかった）。RV-58 の処置で `validation` に揃えた。
+> 表を測り直すなら、実物 / 宣言の**両向き**を並べること。
 
 ### 食い違いは「あり得る事故」ではなく、PORTERS 自身が警告している状況
 
@@ -358,4 +365,5 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 [fdt]: ../usage/reference/resource-api/field-data-types.md
 [lv]: ../live-verification.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
+[rv58]: ../reviews/rv/0058-number-decode-nan-unchecked.md
 [rv37]: ../reviews/rv/0037-field-read-missing-process.md

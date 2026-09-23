@@ -36,6 +36,8 @@
 - **移設前のパス表記**: 2026-09-12 より前の ADR 本文にある `docs/reference/…` / `docs/howto/…` /
   `docs/start/…` / `docs/api/` は、いずれも現在の `docs/usage/…` を指す（[ADR-0071][0071]）。
   リンクは移設時に直してあるが、**決定の文面は書き換えない**運用なので散文の表記は当時のまま残る。
+  同じく 2026-09-22 より前の `docs/usage/howto/…` / `docs/usage/concepts/…` は `docs/usage/topics/…`
+  （添付は `resources/attachment.md`、同期と複数テナントは `recipes/…`）を指す（[ADR-0088][0088]）。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
@@ -121,6 +123,21 @@
   **教訓**: ADR が「両方向」と書いた検証は、**両方向の実装を突き合わせて**初めて決定どおりになる。
   往復の property が正常域しか引かないと、片側の欠けは通り抜ける（拒否を証明するなら不正域も生成する）。
 
+- **Stryker の survivor 79 件の扱い**（[RV-59][rv59] 案 (b)）— **ADR 不要と判断**（2026-09-21・stakeholder）。
+  「規則（[0015][0015]: survived は撃破か、同値のみ `// Stryker disable` ＋理由）と実態（Survived 89 ／
+  Ignored 42・閾値 95 の下に溜まる）のどちらを直すか」を、**件数でなく行の一覧**で判断した。
+  79 件の内訳: **挙動 25**（Option search の `method: "GET"` を `""` にしても 1437 件緑・`itemstate === "all"`・
+  2MB 境界の計算違い・`field-type` の勝者規則が表の並び順で同値 …）／**契約 9**（`PortersConfigError` の
+  `category` を空にしても通る）／文言 34／`context` 8／同値 3。**43% は規則を改訂しても残る穴**で、
+  しかも穴の 2 つ（`method` / `itemstate`）は文字列変異＝「文字列は pin しない」と一括で除外すると
+  見えなくなる種類だった。文言の pin は部分文字列で足り、0.21.0 で見つかった「hint が廃止済みの
+  `host` を案内」のような陳腐化を仕組みで捕まえる価値もある。よって **0015 の決定をそのまま適用**
+  （全件撃破・同値 1 件のみ明示）し、ratchet の決定どおり `break` を **95 → 100** に上げた
+  （新しい survivor は PR で落ちる＝人の記憶でなく仕組みで守る）。実装は #374 と後続 PR。
+  **教訓**: 「survivor N 件・前回と同じ」を「中身も同じ」と読まない。同値と言うなら行ごとに言う。
+  静的初期化（module scope の `reduce`）の変異は**入力データの並び順に依存して同値**になることが
+  あり、純関数に切り出して合成データで試すと規則そのものを pin できる。
+
 ### 決定済み（ADR / PRD）
 
 - 型モデル: [ADR-0004][0004]／公開 API: [ADR-0005][0005]／エラーモデル: [ADR-0006][0006]／OAuth 公開 API: [ADR-0007][0007]／マルチテナント: [ADR-0008][0008]／日時の表現: PRD R-10（ISO 8601・UTC）／MVP: [ADR-0003][0003]／接地方針: [ADR-0002][0002]
@@ -131,6 +148,7 @@
 [lv-doc]: ../live-verification.md
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [0011]: 0011-xml-parse-serialize.md
+[0015]: 0015-mutation-testing.md
 [0047]: 0047-access-point-scheme.md
 [0048]: 0048-access-point-host-validation.md
 [0077]: 0077-fetch-transport-timeout.md
@@ -138,6 +156,7 @@
 [rv49]: ../reviews/rv/0049-throttle-options-unvalidated.md
 [rv54]: ../reviews/rv/0054-reserved-tag-name-read-throws.md
 [rv55]: ../reviews/rv/0055-time-of-day-decode-hour-unchecked.md
+[rv59]: ../reviews/rv/0059-tenant-fields-threading-unpinned.md
 [0086]: 0086-time-of-day-fields.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [0000-template-md]: 0000-template.md
@@ -156,3 +175,4 @@
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md
 [0071]: 0071-usage-docs-single-root.md
+[0088]: 0088-usage-docs-five-chapters.md

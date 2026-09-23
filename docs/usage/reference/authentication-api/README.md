@@ -19,7 +19,7 @@
 
 ## 全体フロー
 
-1. **（初回のみ）Company DB へのアクセス権付与**: `response_type=code` でブラウザから OAuth API を叩き、
+1. **（初回のみ）Company DB へのアクセス権付与**: `response_type=code` でブラウザから OAuth API を呼び、
    PORTERS にログイン → 権限付与を承諾。これを実施しないと以降の Resource アクセスはエラーになる。
 2. **code を取得**: OAuth API が `code` を返す（ブラウザは redirect、`code_direct` は XML）。**有効期限 30 秒**。
 3. **Access Token を取得**: Token API に `code` を渡して交換。Access / Refresh Token を得る。
@@ -27,7 +27,7 @@
 5. **更新**: Access Token 失効時は Refresh Token で更新。Refresh Token も失効したら 2 からやり直し。
 
 サーバ間の自動運用では、初回の権限付与（手順 1・ブラウザ必須）だけ手作業で済ませ、
-以降は **`code_direct`** で code 取得 → Token 交換を無人で回せる。
+以降は **`code_direct`** で code 取得 → Token 交換を無人で行える。
 
 ## 認証シーケンス（response_type 別）
 

@@ -85,6 +85,13 @@ describe("applyExpand — 展開を field エントリに畳み込む", () => {
     ]);
   });
 
+  it("明示的に undefined を渡した alias は無視する（`{ P_Client: undefined }`）", () => {
+    // 設定を spread で組むと出る形。空の選択と同じ扱いで、`.length` を読んで落ちない。
+    expect(
+      applyExpand(["Process.P_Client"], { P_Client: undefined }, ctx),
+    ).toEqual(["Process.P_Client"]);
+  });
+
   it("参照先が登録されていない alias は無視する（Recruiter の場合）", () => {
     expect(
       applyExpand(["Process.P_Recruiter"], { P_Recruiter: ["P_Id"] }, ctx),
@@ -154,6 +161,9 @@ describe("guardRawExpansion — field に手書きされた展開を弾く", () 
       error = e;
     }
     expect((error as PortersConfigError).category).toBe("config");
+    expect((error as PortersConfigError).message).toContain(
+      'field entry "Job.P_Client(Client.P_Id)" expands a reference',
+    );
     expect((error as PortersConfigError).hint).toContain(
       'expand: { P_Client: ["P_Id", ...] }',
     );
@@ -176,5 +186,12 @@ describe("guardRawExpansion — field に手書きされた展開を弾く", () 
     expect(() =>
       guardRawExpansion(["W.P_Id", "W.P_Client", "W.P_Deleted"], FIELDS),
     ).not.toThrow();
+  });
+
+  it("参照 alias で**始まるだけ**の別項目は素通し（`()` の有無で判定する）", () => {
+    // `W.P_ClientX` は P_Client の展開ではない。「`(` が無ければ見ない」を外して末尾 1 文字を
+    // 落として照合すると、こういう項目が参照と誤認される。
+    expect(() => guardRawExpansion(["W.P_ClientX"], FIELDS)).not.toThrow();
+    expect(() => guardRawExpansion(["W(.P_Client"], FIELDS)).not.toThrow();
   });
 });

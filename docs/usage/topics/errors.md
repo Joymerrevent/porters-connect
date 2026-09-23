@@ -1,0 +1,397 @@
+# エラーと再試行
+
+失敗したときに、止めるか・続けるか・再送するかを決めるためのページです。エラーの型と `category`、例外の
+届き方、ライブラリが自動で再試行する範囲、認証系とリソース系のコード対応が分かります。症状から引きたいときは
+[トラブルシューティング][troubleshooting]を開いてください。
+
+## まず知ること
+
+- **すべての PORTERS 由来のエラーは `PortersError` を継承**し、系統ごとに `PortersAuthError` / `PortersResourceError` /
+  `PortersNetworkError` / `PortersConfigError` に分かれます。
+- **横断的な判断は `category`**（`auth` / `permission` / `validation` / `notFound` / `conflict` / `rateLimit` / `transient` /
+  `network` / `server` / `config` / `unknown`）で、`retryable` が再試行してよいかを持ちます。
+- **`Promise` を返す公開メソッドは同期 throw しません。** 設定ミスも含め、すべて reject で届きます。
+- **一時的な失敗はライブラリが再試行します**（指数バックオフ・既定 3 回）。ただし **`create` は結果が不明でも再送しません**
+  （非冪等で、消せないため）。
+- **認証系とリソース系でコードの番号が重複し、意味が違います**。`instanceof` で系統を分けてから `code` を見ます。
+
+生コードの一次情報は [リソース Result Code][result-codes] と [認証エラーコード][auth-errors] を参照してください。
+
+<!-- 根拠: ADR-0006（エラーモデル） -->
+
+## エラーの型
+
+すべての PORTERS 由来エラーは `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
+
+| クラス                 | 系統                                       | `code` の元       |
+| ---------------------- | ------------------------------------------ | ----------------- |
+| `PortersAuthError`     | OAuth / Token（認証 API）                  | 認証 `<Error>`    |
+| `PortersResourceError` | Resource API（Read / Write）               | リソース `<Code>` |
+| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429 | `null`            |
+| `PortersConfigError`   | 設定・使い方の誤り／ HTTP 4xx              | `null`            |
+
+> **2 系統は番号が重複し意味が違います**（例: `401` は認証では Refresh Token 失効、リソースでは
+> Access Token 期限切れ）。`instanceof` で系統を分けてから `code` を見てください。
+
+**タイムアウトは `PortersNetworkError` で届きます。** 既定は **1 リクエスト 30 秒**で、本文の
+ダウンロードが終わるまでを数えます（大きな添付で影響します — [上限とレート][limits]）。
+
+## 例外の届き方
+
+<!-- 根拠: ADR-0046 -->
+
+**`Promise` を返す公開メソッドは、いかなる理由でも同期 throw しません。**
+設定ミス（`PortersConfigError`）も含め、すべて **reject** で届きます。
+
+```ts
+// どちらの書き方でも捕まえられます
+try {
+  await t.candidate.search({ keywords: ["…101 文字…"] });
+} catch (e) {
+  /* … */
+}
+
+t.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
+  /* こちらも届く */
+});
+```
+
+送信前の検査（リクエスト長 ~15000 字・`keywords` 100 字・`itemstate` の制限・Attachment 10MB・
+一括書き込みの単一レコード超過）は**送信前に働き**、無駄な呼び出しは起きません。
+同期 throw と違うのは**例外の届き方だけ**です。
+
+この規則の**例外は `Promise` を返さない関数**で、そちらは同期 throw します。reject する先が無いので、
+これが正しい挙動です。例: `new PortersClient(...)`・`defineFields`・`assertFieldsMatch`・
+`createThrottle`・`createFetchTransport`・`encodeTimeOfDay` / `decodeTimeOfDay`・`auth.authorizationUrl` /
+`auth.revokeUrl`（`string` を返す）。
+
+横断的な対処分岐には `category`（11 種）を使います。`PortersError` は次を持ちます。
+
+```ts
+e.category; // "auth" | "permission" | "validation" | "notFound" | "conflict" |
+//             "rateLimit" | "transient" | "network" | "server" | "config" | "unknown"
+e.code; // PORTERS の生コード（network / config は null）
+e.retryable; // 再試行してよいか（構築時に算出）
+e.hint; // 対処ヒント（既定は英語）
+e.httpStatus; // 応答の HTTP ステータス（応答を伴わない失敗では undefined）
+e.context; // { resource?, operation?, partition? }
+```
+
+## 基本の対処
+
+`PortersError` でまとめて捕捉し、`category`（横断）や `instanceof`（系統）で分岐します。
+
+```ts
+import {
+  PortersError,
+  PortersAuthError,
+  PortersResourceError,
+} from "@joymerrevent/porters-connect";
+
+try {
+  await t.candidate.create({ P_Owner: 5, P_Name: "山田 太郎" });
+} catch (e) {
+  if (!(e instanceof PortersError)) throw e; // PORTERS 由来でないものは再 throw
+
+  switch (e.category) {
+    case "auth":
+      // Refresh も失効 → 初回のブラウザ code 付与をやり直す
+      break;
+    case "permission":
+      // スコープ不足 / データ権限なし / IP 制限
+      break;
+    case "validation":
+      // 入力・書式・itemstate・version などの不備
+      break;
+    default:
+      console.error(e.category, e.code, e.hint);
+  }
+
+  if (e instanceof PortersAuthError) {
+    /* 認証系だけの分岐 */
+  }
+  if (e instanceof PortersResourceError) {
+    /* リソース系だけの分岐 */
+  }
+}
+```
+
+## ライブラリが自動で処理すること
+
+下記は**ライブラリ内部で処理**されるため、通常は利用者コードに現れません。現れたときは
+「自動回復でも直らなかった」状態なので、ヒントに従って対処します。
+
+- **トークン期限切れ → 自動リフレッシュ＋再試行**: リソース `401` / `402`・認証 `400`
+  （Access Token 期限切れ）は内部で Refresh して自動再試行します。`PortersAuthError`
+  （`category: "auth"`）が返るのは**Refresh も失効したとき**（認証 `401`）＝
+  **初回のブラウザ `code` 付与をやり直す**必要がある場合だけです。
+- **一時エラー・ネットワーク → 指数バックオフで自動リトライ**: リソース `9` / `302`（`transient`）と
+  接続エラー（`network`）は再試行します。ただし**非冪等な `create`** はネットワーク不確実時に
+  二重登録を避けるため再試行せず、隠さずにエラーとして返します。
+- **レート制限 → 内蔵スロットリングで超えない**: 1 分 Read 2000 / Write 500 を内蔵スロットルで
+  分散します。超過時 PORTERS は判別可能なコードを返さず**接続を切る**ため、`PortersNetworkError`
+  （`category: "network"`）として届きます。`category: "rateLimit"` になるのは**HTTP 429 が
+  受け取れた場合だけ**（プロキシ経由など。後述）。なお**月次クォータ（約 15 万アクセス/月）は契約条件**で、
+  内蔵スロットルは分単位のみを見ます。月次の消費管理は利用側の運用責務です。
+- **リクエストサイズ → 送信前の検査**: 全体 ~15000 文字を超える要求は、サーバーの原因の分からない 400 を
+  待たずに送信前へ `PortersConfigError`（`category: "config"`）で弾きます（`hint` に分割を提案）。
+
+## PORTERS 以外が返した HTTP エラー
+
+<!-- 根拠: ADR-0044・ADR-0050 -->
+
+PORTERS のリファレンスはエラーを **2 つの条件**で定義しています — 「**HTTP 200 以外**、または `<Code>` が 0 以外」。
+`<Code>` が 0 以外は PORTERS 自身の答えですが、HTTP 200 以外は **PORTERS まで届かなかった**ときにも起こります
+（ロードバランサ・プロキシ・WAF（Web アプリケーションファイアウォール）・メンテナンス画面が代わりに応答する）。この場合ボディは XML ですらないため、
+`<Code>` は存在しません。
+
+ライブラリは**情報量の多い方**を採ります。
+
+| 応答                                                                     | 届くエラー                                                                      |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| 200 ＋ `<Code>`≠0                                                        | その `<Code>` による分類 ＋ `httpStatus: 200`                                   |
+| 200 以外 ＋ PORTERS の `<Code>`                                          | **`<Code>` が優先**（PORTERS の応答が最も具体的）＋ `httpStatus`                |
+| 200 以外 ＋ PORTERS の応答ではないボディ                                 | **status から分類**（下表）・`code` は `null`                                   |
+| 200 以外 ＋ XML としては読めるが PORTERS の形ではないボディ（HTML など） | 0 件として返さずエラーにする（HTML を XML として読むと 0 件に見えてしまうため） |
+
+status からの分類は次のとおりです。
+
+| HTTP status | category     | クラス                | retryable |
+| ----------- | ------------ | --------------------- | --------- |
+| 5xx         | `server`     | `PortersNetworkError` | ✅        |
+| 429         | `rateLimit`  | `PortersNetworkError` | ✅        |
+| 408         | `network`    | `PortersNetworkError` | ✅        |
+| 401 / 403   | `permission` | `PortersAuthError`    | ❌        |
+| その他 4xx  | `config`     | `PortersConfigError`  | ❌        |
+| 上記以外    | `unknown`    | `PortersError`        | ❌        |
+
+```ts
+try {
+  await t.candidate.search();
+} catch (e) {
+  if (!(e instanceof PortersError)) throw e;
+  if (e.code === null && e.httpStatus !== undefined) {
+    // PORTERS の応答ではない（間に何かが挟まっている）
+    console.error(e.httpStatus, e.category, e.hint);
+  }
+}
+```
+
+この判定は**すべての経路で同じ**です — Resource API だけでなく、**OAuth / Token のやり取り**にも同じように適用されます<!-- 根拠: ADR-0050 -->。
+トークン取得は全リクエストの前段なので、そこで起きたゲートウェイの 5xx も
+`server`・retryable として分類され、**内蔵リトライで自動回復**しえます。
+
+> **再試行できるもの（`retryable: true`。5xx / 429 / 408）は `PortersNetworkError`** です。5xx は「書き込みが適用されたか
+> 分からない」状態なので、**非冪等な `create` は自動再送しません**（`create` を再送しない規則がそのまま適用される＝安全側）。
+>
+> なお**実 PORTERS がどの status を返すかは未確認**です（実機で未確認です）<!-- 根拠: LV-9 -->。
+> 上表は「PORTERS 以外が返す HTTP エラーを安全側へ倒す」ための対応表であり、確定した仕様ではありません。
+
+## 「0 件」と「届いていない」の区別
+
+<!-- 根拠: ADR-0051 -->
+
+上の節で扱ったのは **HTTP 200 以外**です。難しいのは **HTTP 200 を返す中間装置**——
+キャプティブポータル、SSO のログイン画面、200 で通知ページを返す WAF——で、
+ボディは「XML の形をした別物」になります。
+
+ライブラリは Read 応答を**ルート要素名と `<Code>` の両方**で見分けます。PORTERS のリファレンスにある成功時の形
+（`<{Resource} …><Code>0</Code>`）はルート要素名と `<Code>` の 2 つでできているため、**どちらかを欠くボディは PORTERS の応答ではない**と判断し、
+**0 件を返さずにエラーにします**。
+
+| 200 で返ってきたボディ                           | 届くもの                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------- |
+| HTML のログイン画面 / 通知ページ                 | `resource response root is <html>, expected <Candidate>`   |
+| 別リソースの正常な応答（`<Job …>`）              | `resource response root is <Job>, expected <Candidate>`    |
+| ルートは正しいが `<Code>` が無い                 | `resource response has no <Code> (not a PORTERS envelope)` |
+| XML として読めない（JSON・空・プレーンテキスト） | `unparseable resource response`                            |
+
+いずれも `PortersResourceError`・`category: "unknown"`・`code: null`・`retryable: false`・`httpStatus: 200` で、
+**中間装置を疑う `hint`** が付きます。
+
+**なぜエラーにするのか**。これらを「0 件」として返すと、**データが無いのか届いていないのかを区別できません**。
+`get(id)` は `undefined` を返すので、「無ければ作る」というよくあるコードが**重複レコードを作りにいきます**。
+読み取りの静かな失敗が、書き込みの実害になる——**止まる方が安全側**です。
+
+> **モックを手書きしている場合**（`createMockTransport`）は、**リソース名のルート要素と `<Code>`** を含めてください。
+> `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>…</Candidate>` のように、実際の応答と同じ形にします。
+
+## アクセスポイントの書式
+
+<!-- 根拠: ADR-0048・ADR-0078 -->
+
+`hostname` は**サーバー名だけ**を表します。**ポートは別項目**（`port`）で、スキーム・パス・
+`user:pass@` のような認証情報・空白を含む値は、**接続を試みる前に** `PortersConfigError`（`category: "config"`）で
+拒否されます。
+
+```ts
+new PortersClient({ hostname: "xxxxx.example.com" }); // ✅ 契約で渡されるのはこの形
+new PortersClient({ hostname: "127.0.0.1", port: 4010, scheme: "http" }); // ✅ ポートは別項目
+new PortersClient({ hostname: "[::1]", port: 4010, scheme: "http" }); // ✅ IPv6 は角括弧付き
+new PortersClient({ hostname: "127.0.0.1:4010" }); // ❌ ポートは `port` へ
+new PortersClient({ hostname: "https://xxxxx.example.com" }); // ❌ PortersConfigError
+new PortersClient({ hostname: "" }); // ❌ （環境変数が未設定のまま渡した場合）
+new PortersClient({ hostname: "xxxxx.example.com/gw" }); // ❌ パス付きは対象外
+new PortersClient({ hostname: "a.test", port: 0 }); // ❌ port は 1〜65535 の整数
+```
+
+**ポートを `hostname` に書いても黙って捨てられません。** そのまま通すと「指定したつもりで
+既定ポートに送られる」ことになるので、構築時に弾きます<!-- 根拠: ADR-0078 -->。
+
+構築時に弾くのは、検証しないとこれらが**例外にならず、別のホスト名として解決できる URL に変わり**、
+App ID / App Secret がそこへ実際に送られる（または直しようのない設定ミスが `network` として
+延々リトライされる）ためです。**曖昧な設定で黙って別の宛先へ繋がない**のがこのライブラリの方針です。
+
+**`port` は 1〜65535 のどの整数でも書けます**（`8080` も、冗長な `443` も通ります）。既知の制限は 2 つです
+（どちらもエラーの `hint` に出ます）。
+
+- **非 ASCII のサーバー名は punycode 表記**で渡してください（`xn--...`）。
+- **IPv6 は角括弧付き**で渡してください（`[::1]`）。角括弧の無いコロンは、ポートの書き忘れと区別が付きません。
+
+なお、パス付きのゲートウェイ（`https://gw/porters/v1/...`）経由の接続には対応していません<!-- 根拠: ADR-0047 -->。
+パス付きの `hostname` を弾くのはそのためです。
+
+## category 一覧と対処方針
+
+`category` の 11 種と、それぞれの主な原因と対処です。止めるか続けるかの分岐は、この表で決められます。
+
+| category     | 意味                                       | 主な原因 / 対処                                                              |
+| ------------ | ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `auth`       | 認証情報・トークン・コード                 | Refresh 失効 → 再認証（ブラウザ `code` 付与）／資格情報確認                  |
+| `permission` | スコープ・データ権限・IP 制限              | その Company DB へ権限付与／スコープ追加／IP 申請                            |
+| `validation` | 入力・パラメータ・書式・itemstate・version | 入力を見直す（後述の早見表）                                                 |
+| `notFound`   | リソース / パーティションが無い            | id・partition・契約期間を確認                                                |
+| `conflict`   | 重複・子要素あり・被参照                   | 重複作成を避ける／依存関係を解消                                             |
+| `rateLimit`  | レート上限（HTTP 429 を受け取れた場合）    | 送信ペースを落とす／時間をおく（PORTERS に直接接続している場合は `network`） |
+| `transient`  | 一時障害・トランザクション                 | 自動リトライ対象（再試行可）                                                 |
+| `network`    | 接続・タイムアウト・レート切断             | 自動リトライ後も失敗なら時間をおく／回線・レートを確認                       |
+| `server`     | PORTERS 内部エラー                         | 時間をおいて再試行／継続するなら PORTERS へ報告                              |
+| `config`     | 設定・使い方の誤り                         | 呼び出す前に分かる誤り。宣言・オプション・サイズを修正                       |
+| `unknown`    | 未知（どれにも当てはまらないもの）         | `code` と `hint` を確認／隠さず、エラーとして返している                      |
+
+## 宣言型と実データの食い違い（`validation`）
+
+宣言したカスタム項目の Data Type が実際の項目と違うと、読み取りは
+**`PortersResourceError`（`category: "validation"`）** で失敗します。どの項目かがメッセージに入ります。
+
+```text
+U_source: declared Option, but the value is not a nested record — PORTERS sends a nested record for Option
+```
+
+黙って `null` にすると、例外も警告も出ないので「その項目は空だった」と区別が付かず、気づけません<!-- 根拠: RV-36 -->。
+そのため、宣言型と実データの食い違いも `validation` のエラーとして返します（項目名付き。黙って別の値には
+しません）<!-- 根拠: ADR-0006 -->。
+
+事前に知りたいなら [`verifyFields`][custom-fields] です（起動時や CI で突き合わせられます）。
+
+判定は**形の食い違いだけ**に絞っています。PORTERS は値型（数値・文字列・日時）を単一の値で、
+複合型（Option / User / 参照 / Image）を入れ子で送るので、**単一の値が来るべき所に入れ子**（またはその逆）は
+Data Type が違うことしか意味しません。それより細かい違い（入れ子の中の想定外のタグ、`P_Id` の欠落）は
+**そのまま許容して `null`** にします — そこは値が本当に無いこともあり、弾くと偽の警報になるためです。
+
+`Link` は検査しません。Contact の ID は単一の値、User / Department は入れ子で、**形そのもので見分けられる**
+からです<!-- 根拠: ADR-0064 -->。
+
+**単一の値どうしのずれは、形の違いでは検出できません。** 検出できるのは**変換を伴う型**だけです — 日時（次の節）と
+数値。実際は `SinglelineText` の項目を `f.number()` と宣言すると、`"社内候補"` は数値に読めないので
+エラーになります（`Link` で単一の値として届く Contact の ID も同じです）<!-- 根拠: RV-58 -->:
+
+```text
+U_score: declared Number, but "社内候補" is not a PORTERS Number value
+```
+
+逆向き（実際は `Number` の項目を `f.singlelineText()` と宣言）は変換が無いので通り、`"123"` が**文字列のまま**
+入ります。**宣言が違うのに何も知らせない**のはこの組み合わせだけなので、**`verifyFields` で突き合わせる価値が
+いちばん高いのもここ**です。
+
+## 日時だけは変換するので、読み書きとも変換できない値でエラーになる
+
+日時（`Date` / `DateTime` / `Age`）はライブラリが **ISO 8601 ⇄ PORTERS 形式**を変換します。
+だから変換できない値は送れません。
+
+<!-- doccheck: fields -->
+
+```ts
+await t.candidate.update(1, { U_hiredOn: "2026/09/10" }); // ✗ PORTERS 形式をそのまま渡した
+// PortersConfigError: U_hiredOn: cannot write "2026/09/10" as Date
+//   category: "validation" / hint: ISO 8601 で渡す
+```
+
+他の型は**変換が無いので検査しません**（`Number` に `"abc"` を渡してもそのまま送られ、PORTERS が弾きます）。
+日時だけ扱いが違うのは意図したものです。日時が特別なのは検証があるからではなく**変換があるから**で、
+送る前の検査を厳しくすると、サーバーが受け付ける値をライブラリが弾いてしまいます<!-- 根拠: RV-36 #4 -->。
+
+**読み取り側も同じ理由でエラーになります。** 変換するということは、変換できない値を受け取ったときも
+返しようが無いということです。日時として読めない文字列が返ってきたら
+**`PortersResourceError`（`category: "validation"`）** になります。
+
+```text
+U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
+```
+
+実際にこれが出るのは、たいてい PORTERS の不調ではなく**宣言が違う**ときです（日時でない項目を
+`f.date()` と宣言した）。単一の値どうしのずれがエラーになるのは、変換を伴う日時と数値の経路だけです。
+
+条件（`condition`）の日時も同じ経路です。クラスは `PortersConfigError`（値を渡したのは呼び出し側なので
+「PORTERS 由来でない」＝このクラス）、`category` は `validation`（エラーモデルが
+「入力・パラメータ・**書式**」と定義している側）<!-- 根拠: ADR-0006 -->です。
+
+## コード対応表（2 系統）
+
+> 一次情報は [リソース Result Code][result-codes]・[認証エラーコード][auth-errors]。本ライブラリの
+> `code → category` の対応表はその一次情報に基づいています<!-- 根拠: ADR-0006 -->。
+
+### 認証系（`PortersAuthError` ＝ `<Authentication><Error>`）
+
+認証 API が返すコードと、ライブラリでの `category`・再試行の可否です。
+
+| code                                          | 意味（要約）                                           | category               |
+| --------------------------------------------- | ------------------------------------------------------ | ---------------------- |
+| `400`                                         | Access Token 期限切れ                                  | `auth`（自動 Refresh） |
+| `401`                                         | Refresh Token 期限切れ → 再認証                        | `auth`                 |
+| `103` / `106` / `117` / `109` / `114` / `107` | code / Token / セッション / ユーザー無効               | `auth`                 |
+| `104` / `105`                                 | app_id / secret が無効                                 | `auth`                 |
+| `100` / `101` / `102` / `110` / `112`         | redirect_url / scope / response_type / grant_type 無効 | `validation`           |
+| `111` / `115` / `116` / `402`                 | 権限なし・アクセス拒否                                 | `permission`           |
+| `108`                                         | 認証サーバー内部エラー                                 | `server`               |
+| 上記以外                                      | 未対応コード                                           | `unknown`              |
+
+### リソース系（`PortersResourceError` ＝ `<{Resource}><Code>`）
+
+Resource API が返す Result Code と、ライブラリでの `category`・再試行の可否です。
+
+| code                                                               | 意味（要約）                        | category     | retryable |
+| ------------------------------------------------------------------ | ----------------------------------- | ------------ | --------- |
+| `9` / `302`                                                        | 一時利用不可 / トランザクション     | `transient`  | ✅        |
+| `401` / `402`                                                      | Access Token 期限切れ / 無効        | `auth`       | 自動回復  |
+| `6` / `400` / `403` / `406` / `601`                                | 権限なし / データ権限 / IP / アプリ | `permission` | ❌        |
+| `7` / `404`                                                        | Resource / partition が無い         | `notFound`   | ❌        |
+| `301` / `303` / `304`                                              | 重複 / 子要素 / 被参照              | `conflict`   | ❌        |
+| `8` / `100`〜`116` / `124` / `126` / `127` / `133` / `146` / `500` | 入力・書式・範囲・件数              | `validation` | ❌        |
+| `1000`                                                             | 処理失敗（内部）                    | `server`     | ❌        |
+| 上記以外（例 `5`）                                                 | 未対応コード                        | `unknown`    | ❌        |
+
+## 関連
+
+- 主題: [書き込み][write]（部分成功と、再送してよいか）／[上限とレート][limits]（レート超過は `network` で届く）／
+  [認証とトークン][auth]（`PortersAuthError` のあと）／[カスタム項目][custom-fields]（宣言と実データの突き合わせ）
+- 実践例: [毎日の差分同期][sync-batch]（どこから再開するか）
+- リファレンス: [トラブルシューティング][troubleshooting]（症状から引く）／[リソース Result Code][result-codes]／[認証エラーコード][auth-errors]／[認証 API のフロー][auth-flow]
+- ほかの目的から探す: [目次][index]
+
+<!-- 根拠:
+- 設計判断: ADR-0006（エラーモデル） ／ ADR-0044（HTTP ステータスの扱い） ／
+  ADR-0046（例外の届き方） ／ ADR-0051（Read 応答の見分け方）
+- 契約後に確認する仮定: live-verification
+-->
+
+[custom-fields]: custom-fields.md
+[limits]: limits.md
+[result-codes]: ../reference/resource-api/result-codes.md
+[auth-errors]: ../reference/authentication-api/errors.md
+[auth-flow]: ../reference/authentication-api/README.md
+[index]: ../index.md
+[troubleshooting]: ../reference/troubleshooting.md
+[write]: write.md
+[auth]: auth.md
+[sync-batch]: ../recipes/sync-batch.md

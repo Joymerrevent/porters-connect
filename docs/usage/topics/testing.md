@@ -1,18 +1,28 @@
-# テストを書きたい（契約なし）
+# 契約なしでテストする（`createMockTransport`）
 
-PORTERS に繋がなくても、**このライブラリを通るコードはすべてテストできます**。
-公開ヘルパー `createMockTransport` に、PORTERS の代わりの XML を返させるだけです。
+PORTERS に繋がずにテストを書きたいときに読むページです。`createMockTransport` で PORTERS の代わりの応答を返し、
+送った内容と失敗の経路まで検証する方法が分かります。契約や権限付与を待っている間・CI・本番でしか出ない失敗を
+手元で起こすときに役立ちます。
 
-効くのは 3 つの場面です。
+## まず知ること
 
-- **CI で回す** — 本番の PORTERS を叩かずに、送信内容と失敗経路まで検証する
+- **差し替えるのはトランスポート 1 箇所**です。認証はモックが自動で応答し、XML の変換・スロットル・エラーの型は本物と同じ経路を通ります。
+- **モックし忘れは黙って通りません。** 応答を用意していないリクエストは失敗として届きます。
+- **送ったリクエストを検証できます。** URL と本文が記録されるので、送信内容のテストが書けます。
+- **失敗の経路も起こせます**（Result Code・レート・リクエスト長）。XML を書くのがつらいときはフェイクサーバーがあります。
+
+役立つのは 3 つの場面です。
+
+- **CI で動かす** — 本番の PORTERS に接続せずに、送信内容と失敗経路まで検証する
 - **契約や権限付与を待っている** — [始める前に][prereq]が揃う前に、書き進めておく
 - **本番でしか出ない失敗を手元で起こす** — レート制限・リクエスト長・Result Code
   （下記「XML を書くのがつらいとき」のフェイクサーバー）
 
-契約済みで、まず繋ぐところから始めたいなら[入門][start]へ。
+契約済みで、まず繋ぐところから始めたいなら[導入][start]へ。
 
 ## 差し替えるのは「トランスポート」1 箇所
+
+`transport` に `createMockTransport` を渡します。ほかのコードはそのままです。
 
 ```ts
 import {
@@ -34,7 +44,7 @@ const porters = new PortersClient({
 });
 ```
 
-差し替えているのは **`fetch` ではなく `Transport`** という公開の継ぎ目です。ライブラリ内部の
+差し替えているのは **`fetch` ではなく `Transport`** です。`Transport` は、差し替えを想定して公開しているインターフェースです。ライブラリ内部の
 HTTP 実装が変わってもテストは壊れません。
 
 **認証は自動で応答します。** `/v1/oauth` と `/v1/token` はモックしなくても通るので、書くのは
@@ -49,8 +59,8 @@ HTTP 実装が変わってもテストは壊れません。
 await porters.tenant(1).job.search();
 ```
 
-「モックし忘れたのに素通りして緑」が、テストのいちばん質の悪い壊れ方だからです。
-足りない route は必ず名前で分かります。
+「モックし忘れたのに、そのまま通って成功になる」のが、テストとしていちばん危険だからです。
+どのリクエストのモックが足りないかは、エラーに出る URL で分かります。
 
 ## 送ったリクエストを検証する
 
@@ -104,9 +114,11 @@ try {
 }
 ```
 
-`PortersError` の系統と `category` の対応は[失敗の扱い][handle-failures]にあります。
+`PortersError` の系統と `category` の対応は[エラーと再試行][handle-failures]にあります。
 
 ## テストの形（vitest の例）
+
+1 つのテストの全体を vitest で書くと、こうなります。
 
 <!-- doccheck: skip テストフレームワークの import はドキュメント検査の解決対象外 -->
 
@@ -144,7 +156,7 @@ describe("候補者の取得", () => {
 
 ## XML を書くのがつらいとき
 
-応答 XML は**テストしたい項目だけ**書けば足ります。要求していない項目は `null` で返るので、
+応答 XML は**テストしたい項目だけ**書けば足ります。応答に書かなかった項目は `null` で返るので、
 レコード全体を再現する必要はありません。
 
 それでも足りない場合 — レート制限・リクエスト長・Result Code まで**本物のように**振る舞わせたい
@@ -152,18 +164,18 @@ describe("候補者の取得", () => {
 ただし**リポジトリを clone したときの開発用**で、npm で入れたパッケージには含まれません
 （配布物は `dist` と `CHANGELOG.md` だけです）。使い方は[フェイクサーバー手順書][fake]にあります。
 
-### 向き先を env で切り替える
+### 接続先を環境変数で切り替える
 
 ローカルのフェイクは `http` で動きます。`scheme: "http"` は**明示したときだけ**有効で、
-平文になるので毎プロセス 1 回警告が出ます（抑止は専用の env のみ＝**許可と沈黙は別**）。
+平文になるので毎プロセス 1 回警告が出ます（警告を止めるには環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` が要ります。`http` を許可する設定と、警告を止める設定は別です）。
 
-**ライブラリは `hostname` / `port` / `scheme` を環境変数から読みません**（設定の出所を明示にするため）。
-env で本番とローカルを切り替えたいときは、アプリ側で渡してください。
+**ライブラリは `hostname` / `port` / `scheme` を環境変数から読みません**（設定がどこから来たかを明示するため）。
+環境変数で本番とローカルを切り替えたいときは、アプリ側で渡してください。
 
 ```ts
 const forLocal = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
-  // ポートは `hostname` に書けません（書くと構築時に落ちます）。env も 1 本ずつ分けます
+  // ポートは `hostname` に書けません（書くと構築時にエラーになります）。環境変数も項目ごとに分けます
   port: process.env.PORTERS_PORT ? Number(process.env.PORTERS_PORT) : undefined,
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID ?? "",
@@ -181,15 +193,15 @@ PORTERS_HOST=xxxxx.example.com node app.js                                # 本�
 
 ## 関連
 
-- 手順: [失敗の扱い][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
-- 入門: [始める前に][prereq]（契約済みなら、繋ぐのが先）
+- 導入: [始める前に][prereq]（契約済みなら、繋ぐのが先）
+- 主題: [エラーと再試行][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
 - 開発者向け: [フェイクサーバー手順書][fake]
 - ほかの目的から探す: [目次][index]
 
 [custom-fields]: custom-fields.md
 [fake]: ../../fake-server-runbook.md
-[handle-failures]: handle-failures.md
-[access-point]: handle-failures.md#アクセスポイントの書式
+[handle-failures]: errors.md
+[access-point]: errors.md#アクセスポイントの書式
 [prereq]: ../start/prerequisites.md
 [start]: ../index.md
 [index]: ../index.md

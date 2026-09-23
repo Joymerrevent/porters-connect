@@ -121,6 +121,33 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
     );
   });
 
+  it("writes a System[Department] value as its id (reachable via a cast, like System[DateTime])", () => {
+    // The static Write input excludes it, so only a cast gets here; it must still serialize as a
+    // scalar rather than fall out of the switch as the text "undefined".
+    const xml = buildWriteXml({
+      resource: "Candidate",
+      prefix: "Person",
+      fields: new Map<string, DataType | null>([
+        ["P_Dept", "System[Department]"],
+      ]),
+      items: [{ P_Dept: 7 }],
+    });
+    expect(xml).toContain("<Person.P_Dept>7</Person.P_Dept>");
+  });
+
+  it("writes a catalogued field with no Data Type (null — ADR-0056) through as Text", () => {
+    // Only reachable via a cast (the static Write input excludes it), but symmetric with decode's
+    // raw-string passthrough: a null type must not fall into the typed encoder and come out as
+    // the text "undefined".
+    const xml = buildWriteXml({
+      resource: "Candidate",
+      prefix: "Person",
+      fields: new Map<string, DataType | null>([["P_Deleted", null]]),
+      items: [{ P_Deleted: "1" }],
+    });
+    expect(xml).toContain("<Person.P_Deleted>1</Person.P_Deleted>");
+  });
+
   it("falls back to escaped Text for an unknown (custom) alias", () => {
     const xml = buildWriteXml({
       resource: "Candidate",
@@ -226,6 +253,8 @@ describe("変換できない値（RV-36）", () => {
       expect(err.category).toBe("validation");
       expect(err.message).toContain("U_hiredOn");
       expect(err.hint).toContain("ISO 8601");
+      // 失敗した工程（ADR-0006）。
+      expect(err.context).toEqual({ operation: "encode" });
       // 原因の RangeError は cause に残す（握り潰さない）。
       expect(err.cause).toBeInstanceOf(RangeError);
     }

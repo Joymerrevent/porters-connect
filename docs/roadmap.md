@@ -1,7 +1,7 @@
 # ロードマップ / 現況棚卸し
 
 - ステータス: living（随時更新）
-- 最終更新: 2026-09-20
+- 最終更新: 2026-09-22
 - 位置づけ: **「次に何をやるか」を確認する入口**。プロジェクト横断の「着手可能 / 待ち / 完了 / 将来」を 1 枚で見渡す。
   要件の正は [requirements][prd]（PRD）、決定の正は [docs/adr][adr]、レビュー指摘の正は [findings][findings]、
   契約後に確定する仮定は [live-verification][lv]。本書はそれらへの**インデックス＋進捗ビュー**であり、
@@ -14,7 +14,10 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.20.1**（2026-09-21）＝ 0.20.0 直後の定期レビュー（[2026-09-21-01][run20260921]）で見つけた
+**最新は 0.21.0**（2026-09-21）＝ カスタム項目の宣言を `tenant(id, { fields })` で受ける minor 版
+（[ADR-0087][adr87]・**破壊的変更 1 つ**＝コンストラクタの `fields` 廃止・移行は 1 対 1）。あわせて公開 JSDoc・
+使い方ドキュメント・エラーの `hint` から保守者向けの識別子と旧オプション名を除いた（`check:api` / `check:dts` /
+`check:usage` で再混入を弾く）。ひとつ前の **0.20.1**（2026-09-21）＝ 0.20.0 直後の定期レビュー（[2026-09-21-01][run20260921]）で見つけた
 3 件（RV-55〜57）を塞いだ patch 版（`decodeTimeOfDay` の範囲検証 ／ ADR 索引の「実装」列を CHANGELOG と
 突き合わせる検査）。**破壊的変更なし**。ひとつ前の **0.20.0**（2026-09-21）＝ 出典の再取得で見つかった
 未追従 2 件を埋めた minor 版（**Department Read**・マスタ 5 種目 ／ **時分型の変換関数**
@@ -40,7 +43,16 @@ findings の open も 0。[ADR-0084][adr84] の反映も済んだ（PRD §7・CI
 
 **2026-09-21 に判断待ちが 1 件に戻り、同日 accepted になった**: カスタム項目の宣言（`fields`）を client でなく
 `tenant(id)` で束ねる — [ADR-0087][adr87]（案B＝client から `fields` を外し `tenant(id, { fields })` のみ）。
-**同日実装**（破壊的・移行は 1 対 1・次の minor で公開）。
+**同日実装**（破壊的・移行は 1 対 1・**0.21.0 で公開**）。
+
+**2026-09-23 に判断待ちが 1 件に戻った**: カスタム項目を `create` の必須として宣言できるようにするか —
+[RV-62][rv62]（要 ADR。[ADR-0023][adr23] D7「カスタムは常に任意」を部分的に supersede する案）。
+
+**2026-09-22 に判断待ちが 1 件に戻り、同日 accepted になった**: 使い方ドキュメントの章立て — [ADR-0088][adr88]。
+[ADR-0070][adr70] の 4 層（形で切る）を、主題とリソースで切る 5 章（導入／主題別／リソース別／実践例／
+リファレンス）に組み直す。V2 の達成そのものは変えず、達成した原稿の並べ方を変える。
+**実装は同日に 1 本の PR（[#378][pr378]・修正ごとのコミット）で完了**。別 PR 4 本の予定は
+「1 本にまとめる」に改めた（ADR の訂正注記）。V2 の達成は 5 章の定義で読み替え、V3 は達成に戻る。
 
 **⚠️ 2026-09-20 に出典（PORTERS ヘルプセンター）を再取得したら、追いついていない変更が 2 つあった**
 （取得は 2026-06-12 以来）。**V1 の「達成」は 1 本欠けに戻り、V3 も着手可能 1・要 ADR 1 に戻った**。
@@ -55,7 +67,7 @@ Department は同日に実装して **V1 は再び達成**、時分型は同日�
   （accepted・実装済み・**0.20.0 で公開**）
 
 reference への反映（Department ページ新設・時分型・TLS 1.2 のみ・Result Code 9 の追記）は済んでいる
-（[reference README][ref-readme] の「再取得の手順」）。**V5・V6 は契約待ち**。
+（手順は [CONTRIBUTING][contributing] の「PORTERS ヘルプセンターの再取得」）。**V5・V6 は契約待ち**。
 
 ### 🎯 `1.0.0` の完成条件（2026-09-09・stakeholder）
 
@@ -69,14 +81,14 @@ reference への反映（Department ページ新設・時分型・TLS 1.2 のみ
 できること**（**API エンドポイント単位**で確認する）、**② ライブラリのリファレンスの完成**。
 D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
-| ID  | 条件                                   | 何で測るか                                                                                                                                 | 現在地                                                                                                                                                                                                        |
-| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **達成**（[表 A〜G][coverage]・18 エンドポイント・検査 97 件＝ 2026-09-20 実測）。2026-09-20 に `/v1/department` が 1 本欠けたが同日に実装して復帰。**根拠の無いずれは 0**                                    |
-| V2  | **使い方のドキュメント完成**           | 「入門（順に読む）→ 考え方 → 目的別 HOWTO」が揃い、**読者の目的から引ける**こと。検査は [ADR-0070][adr70] の 5 つ                          | **達成**（4 層 ＋ 検査①〜⑤ ＋ README を入口に絞る ＋ `docs/usage/` への集約）                                                                                                                                 |
-| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | **達成**（2026-09-21・[ADR-0087][adr87] の実装で着手可能 0 に戻った）。判断待ち 0・要 ADR 0（条件付き 1 件＝ [RV-54][rv54] 案 (b)・実例が出たら起票。分母に数えない）・open 0。README 英語版は `1.0.0` の後へ |
-| V4  | **残る未確認はライブ検証だけ**         | **`pnpm check:lv` が緑**＝コードの `VERIFY(live)` と [live-verification][lv] のエントリが双方向で対応する（[RV-50][rv50]）                 | **達成**（検査が CI に載った。未確認 28 ／ 確定 1 ／ 解消 2）                                                                                                                                                 |
-| V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の **`未確認` が 0 件**（`確定` と `解消` はどちらも終端 — [状態の意味][lvstate]）                                 | **未確認 28 件**（契約待ち）。`確定` 1・`解消` 2                                                                                                                                                              |
-| V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                                                                                                                                                                                  |
+| ID  | 条件                                   | 何で測るか                                                                                                                                 | 現在地                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V1  | **機能網羅**（エンドポイント単位）     | 「**API エンドポイント × 機能**」のマトリクスを reference から起こし、実装と**両方向**で突合（D4 と同じ形）。**非対応セルは ADR 番号必須** | **達成**（[表 A〜G][coverage]・18 エンドポイント・検査 97 件＝ 2026-09-20 実測）。2026-09-20 に `/v1/department` が 1 本欠けたが同日に実装して復帰。**根拠の無いずれは 0**                                                                                                                                                                                                                                                                                                                                       |
+| V2  | **使い方のドキュメント完成**           | 「入門（順に読む）→ 考え方 → 目的別 HOWTO」が揃い、**読者の目的から引ける**こと。検査は [ADR-0070][adr70] の 5 つ                          | **達成**（5 章 ＋ 検査①〜⑥ ＋ README を入口に絞る ＋ `docs/usage/` への集約。[ADR-0088][adr88] で 4 層から組み直し・2026-09-22・[#378][pr378]）                                                                                                                                                                                                                                                                                                                                                                  |
+| V3  | **自分で進められる作業が残っていない** | 本書の「着手可能」「判断待ち」「要 ADR」がすべて 0 件 ／ [findings][findings] の open が 0 件                                              | **判断待ち 1 件・open 2 件に戻った**（2026-09-23・[RV-62][rv62] 起票、要 ADR。[RV-63][rv63] は条件付き＝実例待ち）。それまでは達成（2026-09-22 に [ADR-0088][adr88] の実装が着手可能に 1 件戻ったが、同日 [#378][pr378] で完了）。それ以外も達成のまま（2026-09-21・run 2 の open 4 件＝ [RV-58][rv58]〜61 は同日にすべて処置・open 0。[RV-59][rv59] 案 (b) は「0015 をそのまま適用」で決着＝要 ADR 0）。条件付き 1 件（[RV-54][rv54] 案 (b)・実例が出たら起票。分母に数えない）。README 英語版は `1.0.0` の後へ |
+| V4  | **残る未確認はライブ検証だけ**         | **`pnpm check:lv` が緑**＝コードの `VERIFY(live)` と [live-verification][lv] のエントリが双方向で対応する（[RV-50][rv50]）                 | **達成**（検査が CI に載った。未確認 28 ／ 確定 1 ／ 解消 2）                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| V5  | **契約後、その検証を全件確定させる**   | [live-verification][lv] の **`未確認` が 0 件**（`確定` と `解消` はどちらも終端 — [状態の意味][lvstate]）                                 | **未確認 28 件**（契約待ち）。`確定` 1・`解消` 2                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| V6  | **検証で外れた仮定の修正が完了**       | V5 で判明した差分への対応（必要なら ADR ＋ 実装）が入っている                                                                              | —（V5 の後）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 > **件数は手で数えない**。`pnpm check:lv` が「未確認 N ／ 確定 N ／ 解消 N」を出すので、
 > V4・V5 の現在地はその出力を写す（[RV-52][rv52] — 以前は `0 / 25` のまま腐り、しかも
@@ -106,6 +118,16 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 着手可能（ブロック無し）
 
+- [x] ✅ **使い方ドキュメントに「クライアント」と「関数」の章を足す**（[ADR-0088][adr88] の訂正注記・2026-09-23）— **完了**（同日・[#378][pr378] に含めた。起票時の「クライアントと関数」1 章から、実装中に関数を別章に分けてリソース別の後に置いた）。
+      `docs/usage/client/` に `client.md`（`PortersClient`）・`auth.md`（`porters.auth`）・`tenant-scope.md`（`tenant(id)` のスコープ）、
+      `docs/usage/functions/` に `declare.md`・`transport.md`・`convert.md`（用途別）を、リソース別と同じ節構成（必須項目は無し・型の表あり）で書く。
+      主題別の `auth.md` / `tenant.md` からメソッドの表を移し、目次を 6 章にし、検査①③④⑤の定数に `client/` を足して
+      検査⑥を `auth` / `tenant` / `partition` にも広げる。
+- [x] ✅ **使い方ドキュメントを 5 章に組み直す**（[ADR-0088][adr88]・2026-09-22 accepted）— **完了**（同日・
+      [#378][pr378]）。別 PR 4 本の予定を **1 本の PR に修正ごとのコミット**で積む形に改め（ADR の訂正注記）、
+      ① 階層と検査（`git mv`・検査①③④⑤の階層差し替え）→ ② リソース別 18 本 ＋ 検査⑥ → ③ 主題別 11 本と
+      実践例 2 本の統合・書き直し、troubleshooting の切り出し → ④ 目次の全面書き直しと入口の文言、の順。
+      ADR の表から漏れていた `aliases.md` は `topics/fields.md` に
 - [x] ✅ 案D **`defineFields` 深掘りの残り**（[ADR-0023][adr23] D5）— **完了**（2026-09-10）。
       2026-09-09 に 2 つへ分割し（中身の性質が違い、片方の是非でもう片方が止まるのを避けるため）、
       **両方とも 0.15.0 で公開済み**（2026-09-13）。
@@ -201,6 +223,23 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 判断待ち（決めれば着手できる）
 
+- [ ] **トークンの取得だけを差し替えて管理はライブラリに任せる入口を公開するか** — [RV-63][rv63]（2026-09-23 起票・
+      **条件付き**＝実例が 1 件出たら ADR を起票）。既定の `TokenProvider` の内側にある取得（`code_direct`）と
+      管理（キャッシュ・`forceRefresh`・single-flight・`tokenStore`）の分離を、`createTokenProvider({ acquire, store })`
+      のような factory で公開する案。先にガイドへ `getToken()` → `TokenProvider` → `tokenStore` → PORTERS の
+      順の図を入れる（RV-63 推奨 (b)）。
+- [ ] **カスタム項目を `create` の必須として宣言できるようにするか** — [RV-62][rv62]（2026-09-23 起票・要 ADR）。
+      PORTERS はテナント管理者が項目を入力必須にでき（Field Read の `P_Required`）、標準項目は出典の `●` を
+      型の必須に写している（[ADR-0083][adr83]）のに、カスタム項目の宣言には必須の書き方が無い
+      （[ADR-0023][adr23] D7）。案は opt-in（`f.number({ required: true })`）＋ `generateFieldDecls` が
+      `P_Required=1` を写す ＋ `verifyFields` が食い違いを報告。前提として API が Write で `P_Required` を
+      強制するかを実機確認（LV に起票）。
+- [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
+      **案1a〜5a＝5 章・リソース別 18 本 1:1・実践例 2 本・名詞の題名＋目次の索引・検査⑥新設**）。実装は**着手可能**（上記）。
+      [ADR-0070][adr70] の 4 層（入門／目的別／考え方／リファレンス）は形で切っていて、目的別の本文が主題別に
+      なり、同じ主題が層をまたいで割れ、リソース固有の知識に置き場が無い（目次の備考欄に漏れている）。
+      導入／主題別／リソース別（18 本 1:1）／実践例（2 本で開始）／リファレンスの 5 章に切り直し、
+      検査①〜⑤の階層を差し替えて検査⑥（リソース別 ↔ アクセサの両方向突合）を足す。
 - [x] ✅ **カスタム項目の宣言（`fields`）を client でなく `tenant(id)` で束ねるか** — [ADR-0087][adr87] で決着
       （2026-09-21 起票・同日 accepted・**案B＝client から `fields` を外し `tenant(id, { fields })` のみにする**）
       （破壊的・移行は 1 対 1・`PortersClient` が非ジェネリックになる）。`A_` 共通 ＋ `U_` 固有は DSL の
@@ -232,7 +271,10 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 要 ADR（起票から）
 
-- **未起票の論点は無い**（時分型は [ADR-0086][adr86] として起票済み → 上記「判断待ち」）。
+- [x] ✅ **Stryker の survivor 79 件を撃破するか 0015 を改訂するか** — **ADR 不要**で決着（2026-09-21・
+      [RV-59][rv59] 案 (b)）。行ごとに分類すると 34 件は挙動・契約の穴で規則を変えても残るため、
+      [ADR-0015][adr15] をそのまま適用（全件撃破・同値 1 件のみ明示）し `break` を 100 に上げた。
+      経緯は [ADR README][adr-readme]「ADR を起こさずに決着した論点」。
 - **条件付き 1 件（実例が出たら起票・いまは数えない）**: `fast-xml-parser` が拒否する予約名
   （`prototype` 等）を**書き込み側でも弾くか** — [RV-54][rv54] 案 (b)。読み側で `PortersError` に
   包む案 (a) だけを入れて保留した（2026-09-20）。論点は [ADR-0002][adr2] との兼ね合い（PORTERS が
@@ -333,7 +375,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 | ------------ | -------------------------------------------------------------------------------------------------------- |
 | **契約待ち** | ライブ検証の **`未確認` 28 件**（[live-verification][lv]）。0.x のブロッカーではないが **`1.0.0` の V5** |
 | **需要待ち** | フェイクサーバー **フェーズ7**（package 昇格・配布。[実装計画][fake-plan]・stakeholder 2026-08-09）      |
-| **判断待ち** | **0 件** ✅（カスタム項目の宣言の束ね先は [ADR-0087][adr87] で決着・2026-09-21）                         |
+| **判断待ち** | **0 件** ✅（使い方ドキュメントの章立ては [ADR-0088][adr88] で決着・2026-09-22）                         |
 
 ### TODO の見取り図（どこを見れば何が分かるか）
 
@@ -425,10 +467,10 @@ Contract / Sales の `Currency` は **Data Type が `Number`** なので新し�
 > **MCP が露出できるのは第1層が持つものだけ**＝未実装 7 リソースはそのまま MCP の穴になる。
 > 排他ではなく**順序の問題**として、第1層を先に広げる。0033 は [ADR-0060][adr60] で **superseded**。
 
-**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/usage/howto/authenticate.md`）／
+**案F の内訳（すべて完了）**: F-1 OAuth 公開 API `porters.auth.*`（[ADR-0007][p7] SD-3/SD-6・[ADR-0034][adr34] ／ 0.3.0・`docs/usage/topics/auth.md`）／
 F-2 Read クエリ（`order`/`keywords`/`itemstate` ＋ typed `condition`・[ADR-0038][adr38] ／ 0.4.0）／
-F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/usage/howto/multi-tenant.md`）／
-F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/usage/howto/bulk-write.md`）。
+F-3 マルチテナント（`porters.tenant(id)` ＋ `TenantScope`・[ADR-0040][adr40] 案1c ／ 0.5.0・`docs/usage/recipes/multi-tenant.md`）／
+F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[ADR-0041][adr41] 案1a/案2a ／ 0.6.0・`docs/usage/topics/write.md`）。
 
 横断監査 [2026-06-22-03][rv3] の検出ドリフト RV-10〜12 はすべて `fixed`（RV-11 は [ADR-0036][adr36] で refresh 挙動を amend）。
 
@@ -504,8 +546,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.20.1`**（npm latest・2026-09-21 にレジストリで確認・**8 files / 932.5 kB**）。**全 28 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.21.0`**（npm latest・2026-09-21 にレジストリで確認・**8 files / 947.8 kB**）。**全 29 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1 → 0.21.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -526,7 +568,9 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **0.18.0 で URL パラメータのリソースを `of()` に揃え（[ADR-0080][adr80] / [ADR-0081][adr81]・破壊的）
       ＋ アクセスポイントを `hostname` / `port` に分割（[ADR-0078][adr78]・破壊的）**、
       **0.20.0 で Department マスタの Read（マスタ 5 種目）＋ 時分型の変換関数（[ADR-0086][adr86]）**、
-      0.20.1 で `decodeTimeOfDay` の範囲検証（RV-55）＋ ADR 索引の「実装」列の検査（RV-56））。
+      0.20.1 で `decodeTimeOfDay` の範囲検証（RV-55）＋ ADR 索引の「実装」列の検査（RV-56）、
+      **0.21.0 でカスタム項目の宣言を `tenant(id, { fields })` へ（[ADR-0087][adr87]・破壊的）＋ 公開 JSDoc / 使い方
+      ドキュメントから保守者向け識別子を除去（`check:api` / `check:dts` / `check:usage`）**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -601,7 +645,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.20.1 の**全 28 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.21.0 の**全 29 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
@@ -701,10 +745,14 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [run20260921]: reviews/2026-09-21-01.md
 [adr85]: adr/0085-option-alias-validation.md
 [findings]: reviews/findings.md
+[rv62]: reviews/rv/0062-custom-field-required-declaration.md
+[rv63]: reviews/rv/0063-token-provider-acquire-store-split.md
 [lvstate]: live-verification.md#状態の意味
 [rv50]: reviews/rv/0050-live-verification-traceability-broken.md
 [rv52]: reviews/rv/0052-lv-gate-definition-unsatisfiable.md
 [rv54]: reviews/rv/0054-reserved-tag-name-read-throws.md
+[rv58]: reviews/rv/0058-number-decode-nan-unchecked.md
+[rv59]: reviews/rv/0059-tenant-fields-threading-unpinned.md
 [rv57]: reviews/rv/0057-deferred-decision-not-in-backlog.md
 [adr2]: adr/0002-ground-design-in-live-api-docs.md
 [adr-backlog]: adr/README.md#論点バックログ（未起票）
@@ -729,8 +777,11 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [history]: history/README.md
 [adr73]: adr/0073-throttle-sharing.md
 [adr74]: adr/0074-custom-field-declaration-required.md
-[ref-readme]: usage/reference/README.md
+[contributing]: ../CONTRIBUTING.md
 [ref-department]: usage/reference/resource-api/resources/department.md
 [adr86]: adr/0086-time-of-day-fields.md
 [adr87]: adr/0087-tenant-scoped-field-declarations.md
+[adr88]: adr/0088-usage-docs-five-chapters.md
+[pr378]: https://github.com/Joymerrevent/porters-connect/pull/378
+[adr15]: adr/0015-mutation-testing.md
 [adr16]: adr/0016-field-type-granularity.md

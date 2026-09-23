@@ -1,9 +1,22 @@
-# Read クエリ（field / expand / image / condition / order / keywords / itemstate）
+# 検索（`search` / `searchAll` とクエリ）
 
-データ系リソースの `search` / `searchAll` が受けるクエリの使い方です。
-**演算子と対象は項目の Data Type から決まり**、型が合わないものはコンパイルエラーになります<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
+条件でレコードを探すときに読むページです。取る項目・参照先の項目・条件・並び順・キーワード・ページングを
+どう書くかと、マスタ 5 種で指定できるものが違う理由が分かります。読み終えると、欲しいレコードを必要な項目だけで取り出せます。
+
+## まず知ること
+
+- **PORTERS の Read は `field` を指定しないと主キーしか返しません**。ライブラリは省略時に、知っている項目
+  （標準項目と宣言済みのカスタム項目）を補って要求します。
+- **`condition` に書ける演算子は項目の Data Type で決まります**（文字列に `part` / `full`、数値や日時に
+  `ge` / `le` など）。型が合わないものはコンパイルエラーです<!-- 根拠: ADR-0038・ADR-0005 R-5（公開 API の形） -->。
+- **1 ページは最大 200 件**です。全件が要るときは `searchAll` が 200 件刻みで辿ります。
+- **削除済みのレコードは既定では返りません**。含めるかどうかは `itemstate` で選びます
+  （[削除と削除済みデータ][deleted]）。
+- **マスタ 5 種は指定できるものが違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
 
 ## 全体像
+
+1 回の `search` に書ける要素をすべて載せた例です。それぞれの要素は、以降の節で説明します。
 
 ```ts
 const page = await t.candidate.search({
@@ -18,7 +31,7 @@ const page = await t.candidate.search({
 // → { items, total, count, start }
 ```
 
-全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件刻みで yield します）。
+全件を辿るなら `searchAll`（`count` / `start` は指定せず、200 件ずつ順に返します）。
 
 ```ts
 for await (const c of t.candidate.searchAll({
@@ -31,16 +44,16 @@ for await (const c of t.candidate.searchAll({
 ## `field` — 取得する項目
 
 **省略が既定**です。PORTERS は `field` 未指定だと**主キーしか返さない**ため、
-ライブラリが[カタログ][aliases]（知っている項目の一覧）由来の既定 field を補います<!-- 根拠: ADR-0020 -->。
+ライブラリが[知っている項目の一覧][aliases]から既定の field を補います<!-- 根拠: ADR-0020 -->。
 3 通りの意味があります。
 
-| 書き方         | 送られるもの                                                 |
-| -------------- | ------------------------------------------------------------ |
-| 省略           | **カタログ上の全項目**（既定・型が約束するものが実際に返る） |
-| `field: []`    | **主キーのみ**（API 本来の挙動。件数だけ欲しいときに）       |
-| `field: [...]` | 指定したものだけ                                             |
+| 書き方         | 送られるもの                                                                 |
+| -------------- | ---------------------------------------------------------------------------- |
+| 省略           | **ライブラリが知っている全項目**（既定・型に定義されている項目が実際に返る） |
+| `field: []`    | **主キーのみ**（PORTERS 本来の挙動。件数だけ欲しいときに）                   |
+| `field: [...]` | 指定したものだけ                                                             |
 
-alias は **`condition` / `order` と同じ素の名前**（接頭辞なし）で書きます。
+alias は **`condition` / `order` と同じく、接頭辞を付けない名前**で書きます。
 接頭辞はリソースごとの定数なので**ライブラリが付けます**<!-- 根拠: ADR-0059 -->。
 
 ```ts
@@ -50,7 +63,7 @@ await t.candidate.search({ field: ["P_Id", "P_Name"] });
 await t.candidate.search({ field: [] }); // total だけ見たい
 ```
 
-**間違いはコンパイル時に止まります**。`field` が受け付けるのは**カタログ済みの alias** だけです
+**間違いはコンパイル時に止まります**。`field` が受け付けるのは**ライブラリが知っている alias** だけです
 （標準 `P_` ＋ [`defineFields`][custom-fields] で宣言したカスタム項目）。
 
 <!-- doccheck: expect-error -->
@@ -61,9 +74,9 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（�
 await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言していないカスタム項目）
 ```
 
-綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
-型で受けることでそこを手前に引き上げています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
-綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに触る必要があるときの逃げ道は
+綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけません。
+型で検査することで、書いた時点で分かるようにしています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
+綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに使う必要があるときの方法は
 [カスタム項目][custom-fields]にあります。
 
 > 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
@@ -82,7 +95,7 @@ const page = await t.job.search({
 page.items[0]?.P_Client; // { P_Id: number | null; P_Name: string | null } | null
 ```
 
-書かなければ従来どおりです。**`expand` を書いた項目だけ**型が変わるので、
+書かなければ、参照先の ID だけが返ります。**`expand` を書いた項目だけ**型が変わるので、
 参照を ID として使っているコードは何も影響を受けません。
 
 ```ts
@@ -90,11 +103,11 @@ const plain = await t.job.search();
 plain.items[0]?.P_Client; // number | null
 ```
 
-- **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく素の alias で指定し、
+- **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく接頭辞なしの alias で指定し、
   ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
   Candidate を参照するときの `Person.` もライブラリが付けます。
 - `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
-- 1 往復で済みます。参照先を別途 `client.get(id)` で引く必要はありません。
+- 1 回の呼び出しで済みます。参照先を別途 `client.get(id)` で引く必要はありません。
 
 ```ts
 const p = await t.process.get(id, {
@@ -120,17 +133,17 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 | `phase`       | —（参照型の項目を持ちません）                                                    |
 
 - **`Activity.P_ResourceId` は展開できません**。参照先が `P_Resource`（Resource List の数値 ID）で
-  実行時に決まるため、どのカタログで読むかを型では決められないからです。ID として読めるので、
+  実行時に決まるため、どのリソースの項目として読むかを型では決められないからです。ID として読めるので、
   `P_Resource` を見て対応するアクセサから取得してください。
-- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で束ねます。
-- **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
-  （宣言できるようになるまでの穴です）<!-- 根拠: ADR-0023 -->。
+- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で指定します。
+- **カスタム項目（`U_` / `A_`）の参照型は対象外**です。ライブラリが知っている項目に載らないため展開できません
+  （宣言できるようになるまでの制限です）<!-- 根拠: ADR-0023 -->。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
-  （型エラー。cast で通しても送信前に `PortersConfigError` で止まり、`expand` を案内します）。
+  （型エラー。cast（`as`）で通しても送信前に `PortersConfigError` で止まり、`expand` を案内します）。
 
 > 参照先の入れ子の形と、`()` の中に付ける接頭辞は**実機で未確認**です<!-- 根拠: LV-10・LV-16 -->。
 > 応答の解釈はタグ名に依存しない実装なので、
-> 外れた場合に直すのは要求側の文字列だけです。
+> 想定と違っていた場合に直すのはライブラリが送る要求の文字列だけで、利用側のコードは変わりません。
 
 ### ユーザー型は `expand` に書きません
 
@@ -143,7 +156,7 @@ const owner = page.items[0]?.P_Owner;
 console.log(owner?.P_Id, owner?.P_Name, owner?.P_Mail);
 ```
 
-送られるのはこの形です（`field` を省略したときの既定でも同じ形で要求されます）。
+PORTERS に送られる要求は、上のコードのとおりです（`field` を省略したときの既定でも同じ形で要求されます）。
 
 ```text
 field=Job.P_Position,Job.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)
@@ -168,7 +181,7 @@ await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // ✗ expand �
 
 ## `image` — 画像の中身も読む
 
-`Image` 型の項目は、**素で要求すると `FileName` だけ**が返ります（PORTERS の既定）。
+`Image` 型の項目は、**そのまま要求すると `FileName` だけ**が返ります（PORTERS の既定）。
 `ContentType` / `Content`（Base64 の本体）が要るときに `image` で明示します。
 
 <!-- doccheck: fields -->
@@ -181,17 +194,17 @@ page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
 ```
 
 - **選んだサブタグだけが戻り型に出ます**。書かなければ `{ FileName?, ContentType?, Content? }` のまま
-  （どれも「要求していない」ので optional）。`expand` と同じく、**税を払うのは選んだ人だけ**です。
+  （どれも「要求していない」ので optional）。`expand` と同じく、**転送量と型の複雑さが増えるのは、要求したときだけ**です。
 - **既定が軽いことが大事です**。1 件 2MB の画像を持つ項目を一覧で 200 件取ると、既定で本体まで
-  返す設計なら 1 往復で数百 MB になります。だから既定は `FileName` のみに委ねています。
-- `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が素直です。
+  返す設計なら 1 回の応答で数百 MB になります。だから既定は `FileName` のみにしています。
+- `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が簡単です。
 - `Image` 型の項目にしか書けません（`Link` 型やテキスト項目を書くと**コンパイルエラー**）。
-- **`Image` は `condition` に使えません**（reference が明記）。`Link` は記載が無いため、
+- **`Image` は `condition` に使えません**（PORTERS のリファレンスに明記されています）。`Link` は記載が無いため、
   安全側に倒して同じく対象外にしています（使えると分かれば緩めます）<!-- 根拠: LV-21 -->。
 
 > `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です<!-- 根拠: LV-20 -->。
 > 応答は**返ってきたサブタグを読む**実装なので、
-> 外れた場合に直すのは要求側の文字列だけです。
+> 想定と違っていた場合に直すのはライブラリが送る要求の文字列だけで、利用側のコードは変わりません。
 
 ## `condition` — 検索条件
 
@@ -222,7 +235,7 @@ await t.candidate.search({
 
 ### 上位リソースの絞り込み
 
-上位階層の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
+親にあたるリソース（Resume なら Candidate）の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
 
 ```ts
 await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
@@ -232,7 +245,7 @@ await t.resume.search({ condition: { P_Candidate: { eq: 10008 } } });
 
 アクティビティのように「どのリソースに付いているか」を持つ項目は、**数値**で絞ります。
 値は非連続（Candidate `1` / Job `3` / Client `5` / Recruiter `9` / Sales `11` …）で、
-数値リテラルだと欠番や取り違えに気づけないので、**名前から引いてください**<!-- 根拠: ADR-0079 -->。
+数値をそのまま書くと欠番や取り違えに気づけないので、**名前から引いてください**<!-- 根拠: ADR-0079 -->。
 
 ```ts
 import { resourceNameOf, resourceValueOf } from "@joymerrevent/porters-connect";
@@ -246,7 +259,7 @@ resourceNameOf(page.items[0]?.P_Resource ?? 0); // "candidate" | … | number
 `resourceNameOf` は**知らない数値をそのまま返します**。Resource List は PORTERS のもので増えるため、
 知らない値をエラーにせずデータとして通します。
 
-考え方は[alias と Data Type][aliases]の「どのリソースか」の節にまとめてあります。
+考え方は[項目と値のかたち][aliases]の「どのリソースか」の節にまとめてあります。
 
 ## `order` — 並び順
 
@@ -267,20 +280,14 @@ await t.job.search({
 await t.candidate.search({ keywords: ["東京", "営業"] });
 ```
 
-- **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` で落ちます。
+- **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` になります。
 - 電話番号はハイフンを除いた数字で照合されます。
 
-## `itemstate` — 削除済みの取得
+## `itemstate` — 削除済みを含めるか
 
-**PORTERS に削除 API はありません**。`delete()` を提供しないのはそのためで、
-削除済みレコードを読む唯一の手段がこの `itemstate` です。
-
-| 指定         | 意味                                 | 送信                 |
-| ------------ | ------------------------------------ | -------------------- |
-| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
-| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
-| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
-| `"all"`      | 両方                                 | `itemstate=all`      |
+PORTERS に削除 API はありませんが、画面で消されたレコードは `itemstate` で読めます。
+省略（PORTERS の既定に従う）と `"existing"`（生存のみを要求する）は別の意思表示で、`"deleted"` / `"all"` のときは
+`condition` に使える項目と期間に制限があります。表と制約は[削除と削除済みデータ][deleted]にまとめてあります。
 
 ```ts
 await t.candidate.search({
@@ -289,44 +296,9 @@ await t.candidate.search({
 });
 ```
 
-> **省略と `"existing"` は違います**<!-- 根拠: ADR-0057 -->。いまはどちらも生存レコードのみが返るので
-> 結果は同じですが、**省略は「PORTERS の既定に従う」**、**`"existing"` は「生存のみが欲しい」** という
-> 別の意思表示です。ライブラリは後者をそのまま送るので、**PORTERS が将来この既定を変えても
-> `"existing"` と書いたコードは生存のみを受け取り続けます**。生存のみであることが業務上重要なら、
-> 省略せず `itemstate: "existing"` と書いてください。
-
-**`deleted` / `all` のときは制約が 2 つ**あります。どちらも送信前に検査します。
-
-- `condition` に使えるのは **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**。
-  他の項目を指定すると `PortersConfigError`（hint 付き）になります。
-- **更新日は 90 日以内**。PORTERS が自動で 90 日条件を付けるため、
-  91 日以前を指定すると Result Code 124 が返ります。
-
-ここで言う `P_UpdateDate` は**削除された日時**、`P_UpdatedBy` は**最後に編集した人**です。
-
-### `P_Deleted` — どれが削除済みか
-
-`"all"` は生存と削除済みを混ぜて返します。**どちらかは `P_Deleted` で判別**します。
-
-```ts
-const page = await t.candidate.search({ itemstate: "all" });
-const deleted = page.items.filter((c) => c.P_Deleted === "1");
-```
-
-- **値は文字列**の `"0"`（生存）／`"1"`（削除済み）です。`number` でも `boolean` でもありません。
-  PORTERS がこの項目に **Data Type を与えていない**（reference の Field Type / Data Type 欄がともに「ー」）ため、
-  変換の基準がありません。勝手に決めればライブラリの発明になるので、**生の値のまま**返します<!-- 根拠: ADR-0056 -->。
-- **`condition` にも `order` にも指定できません**（PORTERS の制約）。型でも書けないので、
-  試みるとコンパイルエラーになります。**Write もできません**（`create` / `update` の入力に現れません）。
-- `field` を省略すれば**自動で要求**されます。自分で `field` を渡すときは
-  `"P_Deleted"` を明示してください。
-
-> 応答での出現条件と値域は**実機で未確認**です<!-- 根拠: LV-14 -->。
-> `itemstate` を省略したときも返るか、値が `0` / `1` 以外を取りうるかは契約環境で確かめます。
-
 ## `count` / `start` — ページング
 
-オフセット式です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
+オフセット方式（何件目から何件取るか）です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
 
 ```ts
 const page = await t.candidate.search({ count: 200, start: 0 });
@@ -338,10 +310,10 @@ page.start; // 今回の開始インデックス
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
 `total` に達するか空ページで停止します）。
 
-## マスタは語彙が違う
+## マスタは指定できるものが違う
 
 Partition / User / Department / Field / Option の 5 つは**読み取り専用のマスタ**で、データ系リソースとは
-別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
+指定できるものが別です。**`condition` と `get(id)` はありません** — PORTERS の API が受け付けるクエリだけを
 公開しているためです。
 
 | アクセサ            | リソース           | メソッド                           | 主なクエリ                                    |
@@ -349,14 +321,14 @@ Partition / User / Department / Field / Option の 5 つは**読み取り専用�
 | `porters.partition` | Partition          | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
 | `t.user`            | User               | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
 | `t.department`      | Department（部署） | `search` / `searchAll`             | `field` だけ（絞り込みは無い）                |
-| `t.field`           | Field（項目定義）  | `search` / `searchAll`             | `active`（先に `of("candidate")` で束ねる）   |
+| `t.field`           | Field（項目定義）  | `search` / `searchAll`             | `active`（先に `of("candidate")` で指定する） |
 | `t.option`          | Option（選択肢）   | `search`                           | `alias` / `level` / `enabled`                 |
 
 ```ts
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
 const partitions = await porters.partition.search();
 
-// 現在の API ユーザー（code_direct ではアプリ自身の User）＝自己同定
+// 現在の API ユーザー（code_direct ではアプリ自身の User）＝自分が誰か
 const me = await t.user.current();
 
 // 部署マスタ（ユーザー部署型の項目や User.P_Department が指す先）。非表示の部署は P_Hidden で見分ける
@@ -365,30 +337,31 @@ const departments = await t.department.search();
 // Job の項目定義（U_ / A_ のカスタム項目を含む）
 const fields = await t.field.of("job").search();
 
-// 選択肢マスタ。入れ子のツリーを深さ優先でフラットにして返す
+// 選択肢マスタ。階層を親から順に 1 つの配列で返す
 const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 
-- `t.option.search()` に `searchAll` はありません（API に `start` が無いため）。階層は
+- `t.option.search()` に `searchAll` はありません（PORTERS の Option Read に `start` が無いため）。階層は
   `P_ParentId` / `P_Order` で復元します。
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
-  認証では 403 になるためです（[Partition とテナント][partition]）。
+  認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
 
-## 送信前に落ちるもの
+## 送信前にエラーになるもの
 
-不透明なサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
+原因の分かりにくいサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
 
-| 条件                                                                 | 検査 |
-| -------------------------------------------------------------------- | ---- |
-| `keywords` が 100 文字超                                             | ✅   |
-| `itemstate` が `deleted` / `all` で許されない項目を condition に指定 | ✅   |
-| リクエスト全体が約 15000 文字超（**URL + body**）                    | ✅   |
-| `count` が 1〜200 の外（整数でない場合も）                           | ✅   |
+- `keywords` が 100 文字超
+- `itemstate` が `deleted` / `all` で許されない項目を condition に指定
+- リクエスト全体が約 15000 文字超（**URL + body**）
+- `count` が 1〜200 の外（整数でない場合も）
 
 ## 関連
 
-- カスタム項目を条件に使う: [カスタム項目ガイド][custom-fields]
-- API 事実: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
+- 主題: [削除と削除済みデータ][deleted]（`itemstate` と `P_Deleted`）／[項目と値のかたち][aliases]（alias と読みのかたち）／
+  [カスタム項目][custom-fields]（`U_` / `A_` を条件に使う）／[書き込み][write]
+- リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
+- 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` の条件で差分を取る）
+- リファレンス: [Resource API 概要][rapi]（パラメータ表・condition の演算子（suffix）の一覧）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -399,8 +372,12 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
   ADR-0057（`itemstate` の明示指定はそのまま送る）
 -->
 
-[aliases]: ../concepts/aliases.md
+[aliases]: fields.md
 [custom-fields]: custom-fields.md
 [rapi]: ../reference/resource-api/README.md
-[partition]: ../concepts/partition.md
+[partition]: tenant.md
 [index]: ../index.md
+[deleted]: deleted.md
+[write]: write.md
+[resources]: ../resources/README.md
+[sync-batch]: ../recipes/sync-batch.md

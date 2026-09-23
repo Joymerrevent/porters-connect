@@ -96,5 +96,5 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
   F-2〜F-4 も同じ型（`docs/guide/<topic>.md` ＋ README 短節）で追加する。
 
 [auth-ref]: ../usage/reference/authentication-api/README.md
-[error-handling]: ../usage/howto/handle-failures.md
+[error-handling]: ../usage/topics/errors.md
 [0070]: 0070-usage-documentation-architecture.md

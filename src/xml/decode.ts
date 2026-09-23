@@ -224,6 +224,27 @@ const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
   return out;
 };
 
+// A scalar that must be a number: `Number` / `System[Id]`, and the Contact-id form of `Link`.
+// `Number(text)` never throws — it yields `NaN` — so unlike the date conversions this is checked
+// rather than caught. `NaN` is the one decoded value that passes `typeof === "number"` and
+// `!= null` while carrying nothing: it would flow into arithmetic and, written back, go out as
+// the literal `NaN` (RV-58). Reaching this means the same thing `converted` below means: the
+// declared Data Type is wrong (a text field declared `number()`), or PORTERS sent a format the
+// reference does not describe. Either way it is a mismatch to report, not a number to invent
+// (ADR-0006: no silent mis-conversion).
+const numeric = (alias: string, type: DataType, value: string): number => {
+  const n = Number(value);
+  if (Number.isFinite(n)) return n;
+  throw new PortersResourceError(
+    `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
+    {
+      category: "validation",
+      hint: `${type === "Link" ? "A scalar Link is a Contact id, which PORTERS sends as a plain number" : `PORTERS sends ${type} as a plain number`}. Check the Data Type declared for "${alias}" against Field Read (verifyFields).`,
+      context: { operation: "decode" },
+    },
+  );
+};
+
 // Link Read (ADR-0064 案4a): the value is a Contact id, a User, or a Department, and PORTERS
 // sends **no discriminator** — the shapes differ and nothing else does. Read the shape:
 // a scalar is the Contact id, `<User>` is a user, `<Department>` a department. Anything else
@@ -231,12 +252,14 @@ const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
 // VERIFY(live): the User / Department forms are assumed to nest exactly like the `User` and
 // `System[Department]` Data Types do, which is what the reference implies but does not show for
 // Link specifically. See docs/live-verification.md (LV-19).
-const decodeLink = (raw: unknown): LinkValue | null => {
+const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   const scalar = asString(raw);
-  if (scalar !== undefined) return Number(scalar);
+  if (scalar !== undefined) return numeric(alias, "Link", scalar);
   const outer = asRecord(raw);
   if (!outer) return null;
   if ("User" in outer) return decodeUser(outer);
+  // Stryker disable next-line ConditionalExpression: equivalent — with no `Department` node,
+  // decodeDepartment returns null, which is exactly the fall-through below.
   if ("Department" in outer) return decodeDepartment(outer);
   return null;
 };
@@ -287,9 +310,10 @@ const mismatch = (
     },
   );
 
-// A value whose shape is right but whose *format* is not — the only case is a date-like type
-// whose text does not parse. `portersDate*ToIso` throw `RangeError`, which is outside the
-// PortersError family and so escapes the documented error contract (RV-36).
+// A value whose shape is right but whose *format* is not: a date-like type whose text does not
+// parse (the numeric case is `numeric` above — checked, because `Number()` does not throw).
+// `portersDate*ToIso` throw `RangeError`, which is outside the PortersError family and so escapes
+// the documented error contract (RV-36).
 //
 // Reaching this means one of two things, and both are the same finding: the field's declared Data
 // Type is wrong, or PORTERS sent a format the reference does not describe. Either way it is a
@@ -335,7 +359,7 @@ export const decodeField = (
   if (type === null) return asString(raw) ?? null;
   // Link is the one type where both shapes are correct — a Contact id is a scalar, a User /
   // Department is nested, and the shape is the discriminator (ADR-0064 案4a). So no shape check.
-  if (type === "Link") return decodeLink(raw);
+  if (type === "Link") return decodeLink(raw, alias);
   if (isRecordShaped(type)) {
     const outer = asRecord(raw);
     if (outer === undefined) throw mismatch(alias, type, "a nested record");
@@ -362,7 +386,7 @@ export const decodeField = (
   switch (scalarType) {
     case "System[Id]":
     case "Number":
-      return Number(value);
+      return numeric(alias, scalarType, value);
     // String Data Types share one decode (a plain string); they stay distinct
     // labels for fidelity / future per-type validation (ADR-0016).
     case "SinglelineText":

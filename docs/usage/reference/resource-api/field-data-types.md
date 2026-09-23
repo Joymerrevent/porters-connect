@@ -1,11 +1,13 @@
 # Field Type / Data Type（型システム）
 
+項目の Field Type と Data Type の対応と、Data Type ごとの値の書式を引くページです。ライブラリの型はこれに基づいています。
+
 出典: Field Type & Data Type List（updated_at 2026-07-28、取得 2026-06-12・2026-09-20 に差分反映）／
 時分型は [Data Type: DateTime（時分型）の追加][time-only]（2026-08-04・PORTERS 9.3.0）。
 
 - <https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List>
 
-各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。型設計の土台<!-- 根拠: ADR-0004 -->。
+各 Field の `Field Type` ごとに `Data Type`（XML 上の表現・値の書式）が決まる。ライブラリの型の元になる<!-- 根拠: ADR-0004 -->。
 
 ## Field Type 一覧
 
@@ -68,22 +70,22 @@
 | order     | 年月日時分型と同じ                                                                                                       |
 
 **既存連携への影響**（出典の注意）: 管理者が時分型項目を足すと、Field Read 上は年月日時分型に見えるため、
-任意の日時を書き込んだ連携が **Code 103** で落ちる。どの項目が時分型かは環境の管理者に確認するしかない。
+任意の日時を書き込んだ連携が **Code 103** で失敗する。どの項目が時分型かは環境の管理者に確認するしかない。
 
-**このライブラリでの扱い**<!-- 根拠: ADR-0086 -->: **型は増やさない**。時分型も `dateTime()` で宣言し、
+**このライブラリでの扱い**<!-- 根拠: ADR-0086 -->: **時分型専用の型は持たない**。時分型も `dateTime()` で宣言し、
 値は ISO（`1970-01-01T09:00:00Z`）のまま読み書きする（日時の正規化はタイムゾーン演算を
 しない書式変換なので、値は欠けない）<!-- 根拠: ADR-0011 -->。基準日の規則は `decodeTimeOfDay`（ISO → `"HH:mm"`・基準日以外は
-`PortersConfigError`・秒 ≠ 00 は保持）／ `encodeTimeOfDay`（`"HH:mm[:ss]"` 00:00〜47:59 → ISO・
-範囲外は送信前に `PortersConfigError`）が閉じ込める。**どの項目が時分型かは利用者の責務**（API から
-判別できないため）。`generateFieldDecls` は FT-12 の行に注記を出す。使い方は
+`PortersConfigError`・秒が 00 でない値もそのまま残す）／ `encodeTimeOfDay`（`"HH:mm[:ss]"` 00:00〜47:59 → ISO・
+範囲外は送信前に `PortersConfigError`）にまとめてある。**どの項目が時分型かは利用者の責務**（API から
+判別できないため）。`generateFieldDecls` は Field Type 12 の項目の行に注記を出す。使い方は
 [概念: 日時は UTC][concept-dt] の「時分型」節。
 
 ## 設計メモ（ライブラリ側の決定）
 
-上の事実に対して、このライブラリがどう決めたか。**いずれも決着済み**です。
+上の事実に対して、このライブラリがどう扱うかです。
 
-- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。ライブラリは境界で
-  **ISO 8601（UTC）に正規化**し、**JST など業務タイムゾーンへの変換はしない**（利用側の責務）<!-- 根拠: PRD R-10・ADR-0011 -->。
+- **日時はすべて UTC**・`yyyy/mm/dd HH:MM:SS`（Date は `yyyy/mm/dd`）。ライブラリは PORTERS との受け渡しの時点で
+  **ISO 8601（UTC）に変換**し、**JST など業務タイムゾーンへの変換はしない**（利用側の責務）<!-- 根拠: PRD R-10・ADR-0011 -->。
 - **参照・User・Link は Write 時 ID のみ**、読み取りは入れ子展開。**型は Read / Write で分けた**
   （`Candidate` と `CandidateUpdateInput`）<!-- 根拠: ADR-0016・ADR-0019 -->。
 - **Link は version 2 必須**。`X-P-ConnectAPI-Version: 2` を**既定で送る**<!-- 根拠: ADR-0042 -->。
@@ -92,5 +94,5 @@
 [write-format-md]: write-format.md
 [res-department]: resources/department.md
 [time-only]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
-[concept-dt]: ../../concepts/datetime.md
+[concept-dt]: ../../topics/datetime.md
 [resource-api-md]: README.md

@@ -40,6 +40,7 @@ describe("createOptionResource", () => {
     const calls: Call[] = [];
     const options = await res(calls).search();
     const url = calls[0].req.url;
+    expect(calls[0].req.method).toBe("GET"); // a Read, like every other master
     expect(url).toBe("https://h.test/v1/option?partition=12");
     // Depth-first: root, then its two children — every node present, none dropped.
     expect(options.map((o) => o.P_Id)).toEqual([22, 52, 53]);

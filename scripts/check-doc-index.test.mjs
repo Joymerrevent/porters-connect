@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  checkHowtoExits,
+  checkExits,
+  checkResourcePages,
+  accessorNames,
+  checkClientPages,
+  clientMemberNames,
+  checkFunctionPages,
+  listedFunctionNames,
   checkTarget,
   parseIndexTable,
 } from "./check-doc-index.mjs";
@@ -229,9 +235,10 @@ describe("checkTarget — 対象が存在しないとき", () => {
   });
 });
 
-// 検査⑤（[ADR-0070] 追記）: 目的別の各ページに出口があるか。
+// 検査⑤（[ADR-0070] 追記・階層は [ADR-0088]）: 引く層（主題別・リソース別・実践例）の各ページに出口があるか。
 // 黙って通る検査がいちばん質の悪い壊れ方なので、**落ちるべきケースで落ちる**ことを確かめる。
-describe("checkHowtoExits", () => {
+describe("checkExits", () => {
+  const ONE = ["docs/usage/topics"];
   const page = (related) =>
     `# 何かの手順\n\n本文。\n${related}\n[index]: ../index.md\n[other]: other.md\n`;
 
@@ -249,17 +256,19 @@ describe("checkHowtoExits", () => {
   };
 
   it("関連があり、そこから目次へ戻れれば問題なし", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       reader({ "a.md": WITH_EXIT, "b.md": WITH_EXIT }),
       () => ["a.md", "b.md"],
+      ONE,
     );
     expect(problems).toEqual([]);
   });
 
   it("関連の節が無いページを検出する", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       reader({ "a.md": WITH_EXIT, "b.md": NO_SECTION }),
       () => ["a.md", "b.md"],
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("b.md");
@@ -267,9 +276,11 @@ describe("checkHowtoExits", () => {
   });
 
   it("関連はあるが目次へ戻れないページを検出する", () => {
-    const problems = checkHowtoExits(reader({ "a.md": NO_EXIT }), () => [
-      "a.md",
-    ]);
+    const problems = checkExits(
+      reader({ "a.md": NO_EXIT }),
+      () => ["a.md"],
+      ONE,
+    );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("目次");
   });
@@ -278,38 +289,304 @@ describe("checkHowtoExits", () => {
     const inline = page(
       "\n## 関連\n\n- ほかの目的から探す: [目次](../index.md)\n\n",
     );
-    expect(checkHowtoExits(reader({ "a.md": inline }), () => ["a.md"])).toEqual(
+    expect(checkExits(reader({ "a.md": inline }), () => ["a.md"], ONE)).toEqual(
       [],
     );
   });
 
   it("md 以外は対象外", () => {
-    const problems = checkHowtoExits(reader({ "a.md": WITH_EXIT }), () => [
-      "a.md",
-      "notes.txt",
-    ]);
+    const problems = checkExits(
+      reader({ "a.md": WITH_EXIT }),
+      () => ["a.md", "notes.txt"],
+      ONE,
+    );
     expect(problems).toEqual([]);
   });
 
   // ここから番人（ADR-0071 論点2）。移設して定数を直し忘れると、検査は対象ゼロで
   // 黙って緑になる。「1 件も拾えない」を落とすことで、それを止める。
   it("階層が見つからなければ落ちる（対象ゼロで緑にしない）", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       () => "",
       () => {
         throw new Error("ENOENT");
       },
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("検査対象が見つかりません");
   });
 
+  it("3 階層のうち 1 つだけ消えても落ちる（残りが緑でも隠れない）", () => {
+    const list = (dir) => {
+      if (dir.endsWith("/resources")) throw new Error("ENOENT");
+      return ["a.md"];
+    };
+    const problems = checkExits(reader({ "a.md": WITH_EXIT }), list, [
+      "docs/usage/topics",
+      "docs/usage/resources",
+      "docs/usage/recipes",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/resources");
+  });
+
   it("md が 1 件も無ければ落ちる", () => {
-    const problems = checkHowtoExits(
+    const problems = checkExits(
       () => "",
       () => [],
+      ONE,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain(".md がありません");
+  });
+});
+
+// 検査⑥（[ADR-0088]）: リソース別のページとアクセサの両方向突合。
+describe("checkResourcePages", () => {
+  const CLIENT = `
+export type TenantScope<C> = {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+  readonly phase: PhaseAccessor;
+  readonly user: UserResource;
+};
+export class PortersClient {
+  readonly auth: AuthApi;
+  readonly partition: PartitionResource;
+  readonly tenant: <C>(partition: number) => TenantScope<C>;
+}
+`;
+  const reader = (source) => (path) => {
+    if (path.endsWith("src/client.ts")) return source;
+    throw new Error(`想定外の読み取り: ${path}`);
+  };
+
+  it("XResource / XAccessor の宣言だけをアクセサとして採る（auth / tenant は違う）", () => {
+    expect(accessorNames(CLIENT)).toEqual([
+      "candidate",
+      "phase",
+      "user",
+      "partition",
+    ]);
+  });
+
+  it("アクセサとページが 1:1 なら問題なし（README.md は一覧なので数えない）", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "README.md",
+      "candidate.md",
+      "phase.md",
+      "user.md",
+      "partition.md",
+    ]);
+    expect(problems).toEqual([]);
+  });
+
+  it("アクセサにページが無ければ落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "README.md",
+      "candidate.md",
+      "phase.md",
+      "user.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("partition.md");
+  });
+
+  it("アクセサの無いページがあれば落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => [
+      "candidate.md",
+      "phase.md",
+      "user.md",
+      "partition.md",
+      "ghost.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("ghost.md");
+  });
+
+  // 番人。宣言の形が変わる／階層を移す、のどちらでも「対象ゼロで緑」にしない。
+  it("アクセサが 1 つも拾えなければ落ちる", () => {
+    const problems = checkResourcePages(
+      reader("export class PortersClient {}"),
+      () => ["candidate.md"],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("見つかりません");
+  });
+
+  it("階層が見つからなければ落ちる", () => {
+    const problems = checkResourcePages(reader(CLIENT), () => {
+      throw new Error("ENOENT");
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/resources");
+  });
+
+  it("client.ts が読めなければ落ちる", () => {
+    const problems = checkResourcePages(
+      () => {
+        throw new Error("ENOENT");
+      },
+      () => ["candidate.md"],
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("src/client.ts");
+  });
+});
+
+describe("checkClientPages", () => {
+  const CLIENT = `
+export type TenantScope<C> = {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+};
+export class PortersClient {
+  readonly auth: AuthApi;
+  readonly partition: PartitionResource;
+  readonly tenant: <C>(partition: number) => TenantScope<C>;
+  readonly #accessPoint: AccessPoint;
+}
+`;
+  const reader = (source) => (path) => {
+    if (path.endsWith("src/client.ts")) return source;
+    throw new Error(`想定外の読み取り: ${path}`);
+  };
+  const PAGES = ["client.md", "auth.md", "tenant-scope.md"];
+
+  it("PortersClient の readonly メンバだけを採る（private の # は除く）", () => {
+    expect(clientMemberNames(CLIENT)).toEqual(["auth", "partition", "tenant"]);
+  });
+
+  it("固定ページとメンバのページが揃っていれば問題なし", () => {
+    expect(checkClientPages(reader(CLIENT), () => PAGES)).toEqual([]);
+  });
+
+  it("メンバのページが無ければ落ちる（partition はリソース別が持つので数えない）", () => {
+    const problems = checkClientPages(reader(CLIENT), () => [
+      "client.md",
+      "tenant-scope.md",
+    ]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("auth");
+    expect(problems[0]).toContain("auth.md");
+  });
+
+  it("どのメンバでもないページがあれば落ちる", () => {
+    const problems = checkClientPages(reader(CLIENT), () => [
+      ...PAGES,
+      "throttle.md",
+    ]);
+    expect(problems).toEqual([expect.stringContaining("throttle.md")]);
+  });
+
+  it("割り当ての無いメンバが増えたら落ちる（黙って章から漏れない）", () => {
+    const source = CLIENT.replace(
+      "readonly tenant:",
+      "readonly webhook: WebhookApi;\n  readonly tenant:",
+    );
+    const problems = checkClientPages(reader(source), () => PAGES);
+    expect(problems).toEqual([expect.stringContaining("webhook")]);
+  });
+
+  it("番人: メンバが 1 つも拾えなければ落ちる", () => {
+    const problems = checkClientPages(
+      reader("export const nothing = 1;"),
+      () => PAGES,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("clientMemberNames");
+  });
+
+  it("番人: 階層が無ければ落ちる", () => {
+    const problems = checkClientPages(reader(CLIENT), () => {
+      throw new Error("ENOENT");
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/client");
+  });
+});
+
+describe("checkFunctionPages", () => {
+  const DECLARE =
+    "# 宣言と突合\n\n| 関数 | 何をするか |\n| --- | --- |\n| `defineFields(decls)` | 宣言 |\n| `verifyFields(scope, fields)` | 突合 |\n";
+  const CONVERT =
+    "# 値の変換\n\n| 関数 | 何をするか |\n| --- | --- |\n| `encodeTimeOfDay(time)` | 時刻 |\n";
+  const reader = (byFile) => (path) => {
+    const name = path.split("/").pop();
+    const body = byFile[name];
+    if (body === undefined) throw new Error(`想定外の読み取り: ${path}`);
+    return body;
+  };
+  const FUNCS = ["defineFields.md", "verifyFields.md", "encodeTimeOfDay.md"];
+
+  it("表の第 1 列の `name(` から関数名を採る", () => {
+    expect(listedFunctionNames(DECLARE)).toEqual([
+      "defineFields",
+      "verifyFields",
+    ]);
+  });
+
+  it("公開関数がどれかのページに載り、表の名前がすべて公開関数なら問題なし", () => {
+    const problems = checkFunctionPages(
+      reader({ "declare.md": DECLARE, "convert.md": CONVERT }),
+      () => ["declare.md", "convert.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it("公開関数がどのページにも載っていなければ落ちる", () => {
+    const problems = checkFunctionPages(
+      reader({ "declare.md": DECLARE, "convert.md": CONVERT }),
+      () => ["declare.md", "convert.md"],
+      () => [...FUNCS, "rawValue.md"],
+    );
+    expect(problems).toEqual([expect.stringContaining("rawValue")]);
+  });
+
+  it("表にある名前が公開関数でなければ落ちる（綴り違い・消えた関数）", () => {
+    const problems = checkFunctionPages(
+      reader({
+        "declare.md": DECLARE.replace("verifyFields(", "verifyFeilds("),
+        "convert.md": CONVERT,
+      }),
+      () => ["declare.md", "convert.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([
+      expect.stringContaining("verifyFeilds"),
+      expect.stringContaining("verifyFields"),
+    ]);
+  });
+
+  it("表の無いページは落ちる", () => {
+    const problems = checkFunctionPages(
+      reader({
+        "declare.md": DECLARE,
+        "convert.md": CONVERT,
+        "empty.md": "# x\n",
+      }),
+      () => ["declare.md", "convert.md", "empty.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([expect.stringContaining("empty.md")]);
+  });
+
+  it("番人: 生成物が空・階層が無ければ落ちる", () => {
+    expect(
+      checkFunctionPages(
+        reader({}),
+        () => ["declare.md"],
+        () => [],
+      ),
+    ).toEqual([expect.stringContaining("api/functions")]);
+    expect(
+      checkFunctionPages(
+        reader({}),
+        () => {
+          throw new Error("ENOENT");
+        },
+        () => FUNCS,
+      ),
+    ).toEqual([expect.stringContaining("docs/usage/functions")]);
   });
 });

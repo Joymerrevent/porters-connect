@@ -1,5 +1,7 @@
 # Token API
 
+Token API の入力・応答・有効期限を引くページです。ライブラリが取得と更新を自動で行うので、普段は意識しません。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008017467-Token>（updated_at 2019-02-01、取得 2026-06-12）。
 全体像は [認証 README][readme]。
 

@@ -1,11 +1,24 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersClient } from "../client";
-import type { PortersClientOptions } from "../client";
+import type { PortersClientOptions, TenantScope } from "../client";
 import { PortersConfigError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { Transport, TransportRequest } from "../http/types";
-import { createCandidateResource } from "../resources/candidate";
+import { ACTIVITY_DESCRIPTOR } from "../resources/activity";
+import {
+  CANDIDATE_DESCRIPTOR,
+  createCandidateResource,
+} from "../resources/candidate";
+import { CLIENT_DESCRIPTOR } from "../resources/client";
+import { CONTACT_DESCRIPTOR } from "../resources/contact";
+import { CONTRACT_DESCRIPTOR } from "../resources/contract";
+import { JOB_DESCRIPTOR } from "../resources/job";
+import { OPPORTUNITY_DESCRIPTOR } from "../resources/opportunity";
+import { PROCESS_DESCRIPTOR } from "../resources/process";
+import { RECRUITER_DESCRIPTOR } from "../resources/recruiter";
+import { RESUME_DESCRIPTOR } from "../resources/resume";
+import { SALES_DESCRIPTOR } from "../resources/sales";
 import { defineFields } from "./define-fields";
 
 // R-16 end-to-end (ADR-0023): declared custom fields decode/encode by their declared Data
@@ -128,6 +141,84 @@ describe("custom fields — per-tenant declaration via tenant(id, { fields }) (A
     type Rec = NonNullable<Awaited<ReturnType<typeof plain.candidate.get>>>;
     expectTypeOf<Rec>().not.toHaveProperty("U_score");
   });
+});
+
+// `buildScope` hands each resource factory its own slice of the declaration by key —
+// `customFor("job")` and so on, eleven times. A key that is off by a character does not fail: it
+// resolves to `{}` and that resource silently loses its custom fields (raw-string passthrough, no
+// error). The tests above pin candidate only, which left the other ten lines unguarded (RV-59:
+// mutating any of them to `customFor("")` passed the whole suite). This table pins all eleven, one
+// alias per resource, so a key that is empty *or* swapped with another resource's is caught.
+describe("custom fields — tenant(id, { fields }) reaches every data resource (RV-59)", () => {
+  const fields = defineFields({
+    candidate: (f) => ({ U_candidate: f.number() }),
+    job: (f) => ({ U_job: f.number() }),
+    client: (f) => ({ U_client: f.number() }),
+    recruiter: (f) => ({ U_recruiter: f.number() }),
+    contact: (f) => ({ U_contact: f.number() }),
+    opportunity: (f) => ({ U_opportunity: f.number() }),
+    activity: (f) => ({ U_activity: f.number() }),
+    contract: (f) => ({ U_contract: f.number() }),
+    sales: (f) => ({ U_sales: f.number() }),
+    process: (f) => ({ U_process: f.number() }),
+    resume: (f) => ({ U_resume: f.number() }),
+  });
+  type Scope = TenantScope<typeof fields>;
+  type Searchable = {
+    search: () => Promise<{ items: readonly Record<string, unknown>[] }>;
+  };
+  // Descriptor (root element + alias prefix for the fixture) and the accessor it must reach.
+  const table: {
+    descriptor: { name: string; path: string; prefix: string };
+    pick: (t: Scope) => Searchable;
+  }[] = [
+    { descriptor: CANDIDATE_DESCRIPTOR, pick: (t) => t.candidate },
+    { descriptor: JOB_DESCRIPTOR, pick: (t) => t.job },
+    { descriptor: CLIENT_DESCRIPTOR, pick: (t) => t.client },
+    { descriptor: RECRUITER_DESCRIPTOR, pick: (t) => t.recruiter },
+    { descriptor: CONTACT_DESCRIPTOR, pick: (t) => t.contact },
+    { descriptor: OPPORTUNITY_DESCRIPTOR, pick: (t) => t.opportunity },
+    { descriptor: ACTIVITY_DESCRIPTOR, pick: (t) => t.activity },
+    { descriptor: CONTRACT_DESCRIPTOR, pick: (t) => t.contract },
+    { descriptor: SALES_DESCRIPTOR, pick: (t) => t.sales },
+    { descriptor: PROCESS_DESCRIPTOR, pick: (t) => t.process },
+    { descriptor: RESUME_DESCRIPTOR, pick: (t) => t.resume },
+  ];
+
+  it("covers every resource defineFields accepts", () => {
+    // If a resource is added to `CustomFieldResource`, this table (and `buildScope`) must grow with it.
+    expect(table.map((row) => row.descriptor.path).sort()).toEqual(
+      Object.keys(fields).sort(),
+    );
+  });
+
+  it.each(table)(
+    "$descriptor.path decodes its own declaration and asks for it",
+    async ({ descriptor, pick }) => {
+      const alias = `U_${descriptor.path}`;
+      const tag = `${descriptor.prefix}.${alias}`;
+      const body =
+        `<?xml version="1.0"?><${descriptor.name} Total="1" Count="1" Start="0"><Code>0</Code><Item>` +
+        `<${descriptor.prefix}.P_Id>42</${descriptor.prefix}.P_Id><${tag}>87</${tag}>` +
+        `</Item></${descriptor.name}>`;
+      const calls: TransportRequest[] = [];
+      const porters = new PortersClient({
+        hostname: "h.test",
+        transport: {
+          send: (req) => {
+            calls.push(req);
+            return Promise.resolve({ status: 200, body });
+          },
+        },
+        auth: { getAccessToken: () => Promise.resolve("TKN") },
+      });
+      const page = await pick(porters.tenant(1, { fields })).search();
+      // Number -> number: the declared Data Type was applied, not the raw-string passthrough.
+      expect(page.items[0]?.[alias]).toBe(87);
+      // And the declaration joined that resource's default `field` set (ADR-0020).
+      expect(decodeURIComponent(calls[0]?.url ?? "")).toContain(tag);
+    },
+  );
 });
 
 // Type-level: `tenant(id, { fields })` threads the declaration through to each accessor of that
