@@ -74,10 +74,6 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 | [`TokenProvider`][t-TokenProvider] / [`GetAccessTokenOptions`][t-GetAccessTokenOptions]                            | `auth` に渡す自前のトークン取得と、`getAccessToken` の引数    |
 | [`Transport`][t-Transport] / [`TransportRequest`][t-TransportRequest] / [`TransportResponse`][t-TransportResponse] | `transport` に渡す HTTP 送信と、その要求・応答のかたち        |
 | [`Throttle`][t-Throttle] / [`ThrottleOptions`][t-ThrottleOptions]                                                  | `throttle` に渡すスロットルと、`createThrottle` のオプション  |
-| [`PartitionId`][t-PartitionId]                                                                                     | `tenant(id)` に渡す id                                        |
-| [`TenantScope`][t-TenantScope] / [`TenantOptions`][t-TenantOptions]                                                | `tenant()` の戻り値と第 2 引数（[tenant(id)][cl-tenant]）     |
-| [`AuthApi`][t-AuthApi]                                                                                             | `auth` の型（[auth][cl-auth]）                                |
-| [`PartitionResource`][t-PartitionResource]                                                                         | `partition` の型（[Partition][r-partition]）                  |
 
 ## 関連
 
@@ -114,9 +110,4 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 [t-TransportResponse]: ../api/type-aliases/TransportResponse.md
 [t-Throttle]: ../api/type-aliases/Throttle.md
 [t-ThrottleOptions]: ../api/type-aliases/ThrottleOptions.md
-[t-PartitionId]: ../api/type-aliases/PartitionId.md
-[t-TenantScope]: ../api/type-aliases/TenantScope.md
-[t-TenantOptions]: ../api/type-aliases/TenantOptions.md
-[t-AuthApi]: ../api/type-aliases/AuthApi.md
-[t-PartitionResource]: ../api/type-aliases/PartitionResource.md
 [api]: ../api/index.md
