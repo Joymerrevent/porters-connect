@@ -116,8 +116,9 @@ await t.candidate.update(10001, { U_score: 80 } as CandidateUpdateInput);
 つねに任意です。`f.number()` などの宣言にも、必須を表す書き方はありません。
 
 ただし **PORTERS 側では項目を入力必須に設定できます**。その状態は Field Read の `P_Required`
-（`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まらず、
-PORTERS が弾きます**。必須で運用している項目があるなら、`t.field.of("candidate").search()`
+（`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まりません**。
+PORTERS の判定に委ねます（Connect API がこの設定を書き込み時に強制するかは、実機で未確認です）。
+必須で運用している項目があるなら、`t.field.of("candidate").search()`
 で `P_Required` を見て、アプリ側で確かめてください。
 
 `field` / `condition` / `order` / 書き込みのどこに書いても同じ扱いです。`U_hiredOn` を宣言していなければ、**4 つとも型エラー**になります。
