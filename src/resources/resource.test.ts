@@ -716,4 +716,22 @@ describe("createResource — 束ねた書き込み項目（RV-47）", () => {
     expect((err as PortersConfigError).hint).toContain("P_Name, P_Owner");
     expect(calls).toHaveLength(0);
   });
+
+  // RV-64: 束ねた alias の拒否は `write` に入る前（引数の評価中）に起きるので、`create` / `update` を
+  // `async` にしないと同期 throw になり、`.catch()` で拾えない（ADR-0046 の契約違反）。
+  it("create: 束ねた alias を渡しても同期 throw せず、reject で届く（ADR-0046）", async () => {
+    let promise: Promise<unknown> | undefined;
+    expect(() => {
+      promise = bound([]).create({ P_Name: "mine" });
+    }).not.toThrow();
+    await expect(promise).rejects.toBeInstanceOf(PortersConfigError);
+  });
+
+  it("update: 束ねた alias を渡しても同期 throw せず、reject で届く（ADR-0046）", async () => {
+    let promise: Promise<unknown> | undefined;
+    expect(() => {
+      promise = bound([]).update(7, { P_Owner: 9 });
+    }).not.toThrow();
+    await expect(promise).rejects.toBeInstanceOf(PortersConfigError);
+  });
 });
