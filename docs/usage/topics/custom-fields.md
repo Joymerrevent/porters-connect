@@ -7,7 +7,7 @@
 
 - **カスタム項目はテナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。**利用側が `defineFields` で
   宣言する**と、その項目が読み書きの型に現れます<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
-- **宣言は `tenant(id, { fields })` で Partition と一緒に束ねます。** client は宣言を持ちません。
+- **宣言は `tenant(id, { fields })` で Partition と一緒に渡します。** client は宣言を持ちません。
 - **宣言していないカスタム項目は型が受け付けません**（コンパイルエラー）。宣言せずに触る方法は別にあります。
 - **宣言はテナントの実物と突き合わせられます。** `generateFieldDecls` で自動生成し、`verifyFields` で食い違いを見つけます。
 - **テナントが必須にした項目の欠落は型では止まりません。** 必須かどうかは PORTERS 側の設定（`P_Required`）です。
@@ -22,14 +22,14 @@ const fields = defineFields({
 });
 
 const porters = new PortersClient({ hostname, appId, appSecret });
-const t = porters.tenant(partition, { fields }); // 宣言は partition と一緒に束ねる
+const t = porters.tenant(partition, { fields }); // 宣言は partition と一緒に渡す
 ```
 
 これで `t.candidate` の読み書きに `U_score` / `U_source` が**型付きで**現れます。
 
 宣言を渡す先が `tenant()` なのは、カスタム項目が **partition（Company DB）ごとのもの**だからです
 （出典の各リソース記事が `U_` / `A_` を「テナント毎に異なる」としています）<!-- 根拠: ADR-0087 -->。
-client は宣言を持ちません。partition を束ねる場所で、その partition の項目の形も束ねます。
+client は宣言を持ちません。partition を指定する場所で、その partition の項目の形も決めます。
 0.21 より前の形（コンストラクタの `fields`）が残っていると、**構築時に `PortersConfigError`**
 （`category: "config"`）で止まります — 黙って捨てると、カスタム項目が全部型から消えたまま動いてしまうためです。
 
@@ -374,7 +374,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 ## テナントごとに宣言を渡す
 
 宣言は **`tenant()` ごと**に渡します<!-- 根拠: ADR-0087 -->。カスタム項目は partition（Company DB）
-ごとのものなので、partition を束ねる呼び出しが、その partition の項目の形も束ねます。
+ごとのものなので、partition を指定する呼び出しが、その partition の項目の形も決めます。
 別のテナントの宣言が黙って効く、という状態はありません — `{ fields }` を渡し忘れたスコープで
 `U_` に触れば、コンパイルエラーです。
 
@@ -415,7 +415,7 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 
 ## 関連
 
-- 主題: [項目と値のかたち][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を束ねる場所）／
+- 主題: [項目と値のかたち][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を渡す場所）／
   [書き込み][write]／[エラーと再試行][error-handling]（宣言と実データの食い違い）
 - リソース別: [Field][r-field]（項目定義の Read）／[Option][r-option]（選択肢の alias）
 - 実践例: [複数テナント][multi-tenancy]（宣言をテナントごとに持つ・スコープを関数に渡す）
@@ -424,7 +424,7 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 
 <!-- 根拠:
 - 決定: ADR-0023（`defineFields` の詳細設計）／ADR-0004（型モデル）／
-  ADR-0087（宣言は `tenant()` で束ねる）
+  ADR-0087（宣言は `tenant()` で渡す）
 - 型の由来: ADR-0016（Data Type の粒度）／ADR-0017（Option は常に `string[]`）
 - 既定 field: ADR-0020／`field` の alias: ADR-0059
 -->

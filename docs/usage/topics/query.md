@@ -135,7 +135,7 @@ p?.P_Job; // 展開しなかった参照は ID のまま
 - **`Activity.P_ResourceId` は展開できません**。参照先が `P_Resource`（Resource List の数値 ID）で
   実行時に決まるため、どのカタログで読むかを型では決められないからです。ID として読めるので、
   `P_Resource` を見て対応するアクセサから取得してください。
-- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で束ねます。
+- **`Phase` は参照型の項目を持ちません**（`ResourceId` は `Number`）。対象リソースは `of(...)` で指定します。
 - **カスタム項目（`U_` / `A_`）の参照型は対象外**です。カタログに載らないため展開できません
   （宣言できるようになるまでの穴です）<!-- 根拠: ADR-0023 -->。
 - `field` に `"Job.P_Client(Client.P_Id)"` のような展開文字列を書くことはできません
@@ -321,7 +321,7 @@ Partition / User / Department / Field / Option の 5 つは**読み取り専用�
 | `porters.partition` | Partition          | `search` / `searchAll`             | `requestType`（1 = アクセス可能な一覧・既定） |
 | `t.user`            | User               | `search` / `searchAll` / `current` | `requestType` / `userType` / `field`          |
 | `t.department`      | Department（部署） | `search` / `searchAll`             | `field` だけ（絞り込みは無い）                |
-| `t.field`           | Field（項目定義）  | `search` / `searchAll`             | `active`（先に `of("candidate")` で束ねる）   |
+| `t.field`           | Field（項目定義）  | `search` / `searchAll`             | `active`（先に `of("candidate")` で指定する） |
 | `t.option`          | Option（選択肢）   | `search`                           | `alias` / `level` / `enabled`                 |
 
 ```ts

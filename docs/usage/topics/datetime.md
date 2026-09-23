@@ -131,7 +131,7 @@ const porters = new PortersClient({
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
-const t = porters.tenant(1, { fields }); // 宣言は partition と一緒に束ねる
+const t = porters.tenant(1, { fields }); // 宣言は partition と一緒に渡す
 
 // 読む: ISO で届く値を時刻に戻す
 const job = await t.job.get(10001);

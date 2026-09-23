@@ -107,7 +107,7 @@ await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00Z" }); // ←
 ## まとめて書く（`createMany` / `updateMany`）
 
 **データ系 11 種**（Candidate / Job / Client / Recruiter / Contact / Opportunity / Activity / Contract / Sales / Process / Resume）
-と **Phase**（`t.phase.of(...)` で束ねたもの）にあります。**Attachment にはありません**（本体が巨大な Base64 のため。下記「対象外」）。
+と **Phase**（`t.phase.of(...)` で指定したもの）にあります。**Attachment にはありません**（本体が巨大な Base64 のため。下記「対象外」）。
 書式の一次情報は [Write API（XML 形式）][write-format]<!-- 根拠: ADR-0041（実装） -->。
 
 ```ts

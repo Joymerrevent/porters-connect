@@ -15,7 +15,7 @@
 | 機能                                              | 何に使うか                                                               |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                    |
-| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を束ねる                  |
+| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する                |
 | `defineFields` の spread 合成                     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる               |
 | `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                     |
 | `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                             |
@@ -45,7 +45,7 @@ const user = await t.user.current(); // ログイン中 User（同上）
 ### 2. リクエストごとにスコープを作る
 
 `tenant(id)` は Partition を固定したアクセサ群（`TenantScope`）を返し、配下の呼び出しはすべてその Partition に
-送られます。トークンは client が持ち、`tenant(id)` はアクセサを束ね直すだけなので、リクエストごとに作って構いません。
+送られます。トークンは client が持ち、`tenant(id)` は Partition 付きのアクセサを作り直すだけなので、リクエストごとに作って構いません。
 
 ```ts
 // SaaS の 1 リクエスト = 1 テナント
@@ -62,8 +62,8 @@ await t.attachment.of("resume").create(file);
 
 ### 3. 宣言をテナントごとに持つ
 
-宣言は **`tenant()` ごと**に渡します。カスタム項目は Partition ごとのものなので、Partition を束ねる呼び出しが、
-その Partition の項目の形も束ねます。別のテナントの宣言が黙って効く、という状態はありません。
+宣言は **`tenant()` ごと**に渡します。カスタム項目は Partition ごとのものなので、Partition を指定する呼び出しが、
+その Partition の項目の形も決めます。別のテナントの宣言が黙って効く、という状態はありません。
 `{ fields }` を渡し忘れたスコープで `U_` に触れば、コンパイルエラーです。
 
 ```ts
@@ -293,7 +293,7 @@ const batch = new PortersClient({
 
 <!-- 根拠:
 - 決定: ADR-0008（マルチテナント）／ADR-0040（実装）／ADR-0055（client から partition を外す）／
-  ADR-0073（スロットルの共有単位）／ADR-0074 D1（宣言でスコープの型が決まる）／ADR-0087（宣言も `tenant()` で束ねる）
+  ADR-0073（スロットルの共有単位）／ADR-0074 D1（宣言でスコープの型が決まる）／ADR-0087（宣言も `tenant()` で渡す）
 -->
 
 [auth]: ../topics/auth.md

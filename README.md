@@ -60,7 +60,7 @@ const porters = new PortersClient({
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
 
-// partition（Company DB）は tenant で一度だけ束ねる。**単一テナントでもこの形**
+// partition（Company DB）は tenant で一度だけ指定する。**単一テナントでもこの形**
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({
@@ -90,7 +90,7 @@ console.log(page.total, page.items[0]?.P_Name);
 マスタ Read は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
 
 **どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of()` で
-束ねるものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
+指定するものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
 [API リファレンス][api-ref]が正確な定義です。
 
 ## ドキュメント
@@ -114,7 +114,7 @@ console.log(page.total, page.items[0]?.P_Name);
 
 - **削除 API が存在しない**。`delete()` は型の上でも用意していません（[削除と削除済みデータ][c-no-delete]）。
 - **日時は UTC 前提**。ISO 8601（`…Z`）で入出力し、JST 等への変換はしません（[日時と時分型][c-datetime]）。
-- **データは Partition に分かれる**。`tenant(id)` で毎回束ねます（[Partition とテナントスコープ][c-partition]）。
+- **データは Partition に分かれる**。`tenant(id)` で毎回指定します（[Partition とテナントスコープ][c-partition]）。
 - **上限がある**。リクエスト長 約 15000 文字・1 リクエスト 200 件・1 分あたり Read 2000 / Write 500 は
   ライブラリが自制しますが、**月 15 万アクセスは契約条件**で利用側の運用責務です（[上限とレート][c-limits]）。
 - **ホスト名は非公開**。`PORTERS_HOST` で受け取り、ハードコードしません。

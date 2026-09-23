@@ -1,39 +1,39 @@
 # Partition とテナントスコープ
 
 PORTERS のデータは **Partition**（Company DB）という単位に分かれていて、ほぼすべての操作が「どの Partition か」を
-要求します。このページを読むと、Partition をどう束ねて読み書きするか、id をどう探すか、複数の Partition を
+要求します。このページを読むと、Partition をどう指定して読み書きするか、id をどう探すか、複数の Partition を
 どう扱うかが分かります。ライブラリで最初につまずくところなので、読み書きの前に目を通してください。
 
 ## まず知ること
 
-- **client は Partition を持ちません。** `porters.tenant(id)` が Partition を束ねたスコープ（`TenantScope`）を返し、
+- **client は Partition を持ちません。** `porters.tenant(id)` が Partition を指定したスコープ（`TenantScope`）を返し、
   配下の呼び出しはすべてその Partition に送られます。**単一テナントでもこの形**です。
-- **カスタム項目の宣言も `tenant(id, { fields })` で束ねます。** カスタム項目は Partition ごとのものだからです。
+- **カスタム項目の宣言も `tenant(id, { fields })` で渡します。** カスタム項目は Partition ごとのものだからです。
 - **client 直下にあるのは Partition を取らないものだけ**です。`auth`・`partition` マスタ・`tenant()` 自身。
 - **Partition の id は `porters.partition.search()` で探します。** ログイン中の Partition を返す呼び方はありません。
 - 複数テナントを 1 プロセスで回す組み立て（登録・認証の分離・レート）は[実践例][multi-tenant]にあります。
 
 ## client は Partition を持たない
 
-`PortersClient` を作っただけでは、まだどのデータも読めません。**Partition を束ねるのは
+`PortersClient` を作っただけでは、まだどのデータも読めません。**Partition を指定するのは
 `tenant(id)` です**<!-- 根拠: ADR-0055 -->。
 
 ```ts
 const porters = new PortersClient({ hostname, appId, appSecret });
 
 // ✗ porters.candidate は無い
-const t = porters.tenant(123); // ← ここで Partition を束ねる
+const t = porters.tenant(123); // ← ここで Partition を指定する
 const page = await t.candidate.search();
 ```
 
 client 側に既定の Partition を置く形にはしていません。既定があると
 **「どの Partition に書いたか分からない書き込み」** が起こりえるためです。`tenant(id)` を通すと、
 読み書きのすべてがどの Partition のものか呼び出し側のコードに現れます。
-「Partition を束ね忘れたクライアント」という状態が**存在しない**ようにしてあります。
+「Partition を指定し忘れたクライアント」という状態が**存在しない**ようにしてあります。
 
 ## スコープを 1 回持つ（単一テナント）
 
-相手が 1 つの Partition なら、**起動時に一度束ねて使い回します**。以降は `t` をクライアントのように扱えます。
+相手が 1 つの Partition なら、**起動時に一度指定して使い回します**。以降は `t` をクライアントのように扱えます。
 
 ```ts
 const porters = new PortersClient({ hostname, appId, appSecret });
@@ -53,9 +53,9 @@ await porters.auth.ensureAuthenticated(); // トークンの事前取得
 const partitions = await porters.partition.search(); // 使える Partition の発見
 ```
 
-## リクエストごとに束ねる（複数テナント）
+## リクエストごとに指定する（複数テナント）
 
-リクエストごとにテナントが変わるなら、Partition を**スコープで束ね**ます。`tenant(id)` は Partition を固定した
+リクエストごとにテナントが変わるなら、Partition を**スコープで指定し**ます。`tenant(id)` は Partition を固定した
 アクセサ群（`TenantScope`）を返し、配下の呼び出しはすべてその Partition に送られます。
 
 ```ts
@@ -77,7 +77,7 @@ await t.attachment.of("resume").create(file);
   どちらが効いているかを考える必要はありません<!-- 根拠: ADR-0055 -->。
 - **カスタム項目の宣言も 1 層だけ**です<!-- 根拠: ADR-0087 -->。別のテナントの宣言が黙って効くことはありません。
 
-トークンは client が持ち、`tenant(id)` はアクセサを束ね直すだけなので、安い操作です。
+トークンは client が持ち、`tenant(id)` は Partition 付きのアクセサを作り直すだけなので、軽い操作です。
 
 ```ts
 const tokyo = porters.tenant(1);
@@ -124,8 +124,8 @@ Partition ごとに client を分ける形に切り替えてください — **�
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
-- 決定: ADR-0055（`tenant(id)` に束ねる）／ADR-0008（マルチテナント運用）／ADR-0040（実装・案1c）／
-  ADR-0087（カスタム項目の宣言も `tenant()` で束ねる）
+- 決定: ADR-0055（Partition は `tenant(id)` で指定する）／ADR-0008（マルチテナント運用）／ADR-0040（実装・案1c）／
+  ADR-0087（カスタム項目の宣言も `tenant()` で渡す）
 -->
 
 [custom-fields]: custom-fields.md
