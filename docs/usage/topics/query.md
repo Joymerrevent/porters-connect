@@ -348,7 +348,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 
 ## 送信前にエラーになるもの
 
-不透明なサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
+原因の分かりにくいサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
 
 | 条件                                                                 | 検査 |
 | -------------------------------------------------------------------- | ---- |

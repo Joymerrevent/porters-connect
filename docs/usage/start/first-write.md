@@ -85,7 +85,7 @@ await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00Z" }); // ←
 
 ## 失敗したとき
 
-投げられるのは `PortersError` の系統で、`category` で場合分けできます。
+失敗すると `PortersError` の系統の例外が投げられ、`category` で場合分けできます。
 
 ```ts
 try {

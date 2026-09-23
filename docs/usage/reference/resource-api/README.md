@@ -81,7 +81,7 @@ Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ
 
 - **ルート要素はリソース名**（`<Candidate>` `<Job>` `<Partition>` …）。総称形ではなく**各リソースの Read 記事すべてに
   実例がある**（Attachment は `<Attachment Total=… >`、Option は属性なしの `<Option>`）。
-  ライブラリはこの名前と `<Code>` の**両方**で「PORTERS の応答か」を同定する<!-- 根拠: ADR-0051 -->。
+  ライブラリはこの名前と `<Code>` の**両方**で「PORTERS の応答か」を見分ける<!-- 根拠: ADR-0051 -->。
 - `Total`=条件に合う総件数 / `Count`=今回の件数 / `Start`=今回の開始インデックス（**オフセット式ページング**）。
   ※ **Option だけは属性が付かない**<!-- 根拠: ADR-0022 事実5 -->。
 - `<Code>` は Result Code（[result-codes][result-codes]）。`<Item>` は 0 件以上。

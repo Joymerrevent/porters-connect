@@ -131,7 +131,7 @@ const porters = new PortersClient({
 | （組み合わせ）               | **`floor(上限 × safety)` が 1 以上** | —          | `{ readPerMin: 1 }`（既定 safety） |
 
 最後の行に注意が要ります。**`readPerMin: 1` も `safety: 0.9` も単体ではおかしくないので、
-積を見ないと捕まりません。**
+積を見ないと気づけません。**
 
 ```ts
 createThrottle({ readPerMin: 1 }); // PortersConfigError（floor(1 × 0.9) = 0）
@@ -148,9 +148,9 @@ createThrottle({ readPerMin: 1, safety: 1 }); // OK（floor(1) = 1）
 
 ### 超えたときに何が返るか
 
-**PORTERS はレート超過を判別できるコードで返さず、接続を切ります。** そのため表に出るのは
+**PORTERS はレート超過を判別できるコードで返さず、接続を切ります。** そのため利用側に返るのは
 `PortersNetworkError`（`category: "network"`）です。`category: "rateLimit"` になるのは、
-プロキシ経由などで **HTTP 429 を観測できた場合だけ**です（[エラーと再試行][failures]）<!-- 根拠: ADR-0044 -->。
+プロキシ経由などで **HTTP 429 を受け取れた場合だけ**です（[エラーと再試行][failures]）<!-- 根拠: ADR-0044 -->。
 
 ### 月次は数えません
 

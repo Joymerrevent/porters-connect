@@ -300,7 +300,7 @@ if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていま
 | `undeclared`   | テナントにあるが宣言していない                        | 低（そのまま動く＝現状どおり）                         |
 | `undeclarable` | 存在するが宣言では表せない                            | 情報                                                   |
 
-**`verifyFields` は投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
+**`verifyFields` は例外を投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、止めるかどうかは利用側が決めます。起動時に止めたいなら 1 行足します。
 
 ```ts
@@ -309,8 +309,8 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 //   candidate.U_source: declared SinglelineText, tenant has Option
 ```
 
-`assertFieldsMatch` は **`unverifiable` でも投げます**。「確かめられなかった」は「問題なし」ではない
-ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では投げません。
+`assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
+ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では例外を投げません。
 
 > **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。この 3 つは呼んだときだけ
 > Field Read を呼びます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
@@ -350,7 +350,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 
 3 つに分かれます。
 
-- **宣言と実データの食い違い**は、読み取り時に `validation` のエラーとして表に出します
+- **宣言と実データの食い違い**は、読み取り時に `validation` のエラーとして返します
   （黙って `null` にしません）<!-- 根拠: ADR-0006 -->。事前に知りたいなら上記 `verifyFields` です。
 - **変換を伴う値**は検査します。日時（ISO 8601 ⇄ PORTERS 形式）は**読み書きとも**、数値（文字列 →
   `number`）は**読み取りで**。変換できない値は送れず、読めもしないためです。他の型は変換が無いので
@@ -368,7 +368,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 （日時・数値に読めない文字列）に絞っています。それより細かい違い（入れ子の中の想定外のタグなど）は
 許容して `null` にします — 値が本当に無いこともあり、弾くと偽の警報になるためです。
 **変換を伴わない単一の値どうしのずれ**（`Number` の項目を `f.singlelineText()` と宣言した、など）は
-捕まらず、文字列のまま入ります（気づけないのはここだけ＝`verifyFields` の出番）。
+検出されず、文字列のまま入ります（気づけないのはここだけ＝`verifyFields` の出番）。
 詳しくは[エラーと再試行][error-handling]にあります<!-- 根拠: RV-36 -->。
 
 ## テナントごとに宣言を渡す

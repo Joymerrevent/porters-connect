@@ -160,7 +160,7 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 - **リクエスト全体の失敗**（HTTP エラー・通信断・パース不能・**リクエスト単位の拒否**）だけが throw されます。
 - リクエストごと拒否された場合（PORTERS が `<Item>` を返さず、ルートの `<Code>` だけで答える形）は、
   その **Result Code がそのまま `PortersResourceError` として** throw されます<!-- 根拠: ADR-0045 -->。
-  件数不一致のような不透明なエラーにはなりません。
+  件数不一致のような、原因の分かりにくいエラーにはなりません。
 - バッチ途中（2 つ目以降）で失敗した場合、**既に書き込まれた件数**を `hint` に付けて `PortersResourceError`
   を throw します。`createMany` はバッチ跨ぎで**非冪等**なので、**全体を再実行すると作成が重複**します。
   回復は「失敗位置以降のレコードだけ」を再送してください（`updateMany` は id 指定で冪等）。
@@ -175,7 +175,7 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 ## 失敗したとき
 
-投げられるのは `PortersError` の系統で、`category` で場合分けできます。
+失敗すると `PortersError` の系統の例外が投げられ、`category` で場合分けできます。
 
 ```ts
 try {
