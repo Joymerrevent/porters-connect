@@ -11,6 +11,8 @@ PORTERS の値と、コードで扱いやすい値を行き来する関数です
 
 <!-- 根拠: ADR-0079（リソース番号）・ADR-0086（時分型）・ADR-0064（Image の Base64） -->
 
+このページの関数と、使い方の例です。
+
 | 関数                    | 何をするか                                                                                                                     | 失敗の届き方                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
 | `encodeTimeOfDay(time)` | `"HH:mm"` / `"HH:mm:ss"`（00:00〜47:59）を、時分型の項目に書く ISO 8601 に変える（[日時と時分型][datetime]）                   | 同期 throw（範囲外・書式違い）         |
@@ -36,7 +38,7 @@ const name = resourceNameOf(3); // "job"
 
 ## 固有の注意
 
-これらの関数に共通する注意です。時分型の規則は[日時と時分型][datetime]、リソース番号の考え方は[項目と値のかたち][fields]にあります。
+これらの関数だけに当てはまる注意です。共通の規則（時分型・リソース番号・画像と添付の大きさ）は主題別のページにあります。
 
 - **どの項目が時分型かは、ライブラリには分かりません。** テナントの管理者に確かめたうえで、その項目の読み書きにだけ `encodeTimeOfDay` / `decodeTimeOfDay` を当てます。
 - **`encodeTimeOfDay` / `decodeTimeOfDay` は `Promise` を返さないので、失敗は同期 throw です。** 範囲外の時刻や基準日以外の日付は `PortersConfigError` になります。
@@ -45,7 +47,7 @@ const name = resourceNameOf(3); // "job"
 
 ## 型
 
-この章の関数の引数と戻り値に出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+このページで出てくる型と役割です。正確な定義は各リンク先（[公開 API リファレンス][api]）にあります。
 
 | 型                                       | 役割                                                  |
 | ---------------------------------------- | ----------------------------------------------------- |
@@ -55,10 +57,7 @@ const name = resourceNameOf(3); // "job"
 ## 関連
 
 - 主題: [日時と時分型][datetime]（時分型）／[項目と値のかたち][fields]（リソース番号の 2 つの現れ方）／[検索][query]（リソース種別で絞る）／[上限とレート][limits]（画像と添付の大きさ）
-- クライアント: [tenant(id)][cl-tenant]（`of()` に渡すリソース名）
-- リソース別: [Attachment][r-attachment]（Base64 の本体）／[Activity][r-activity]（`P_Resource`）
 - 関数: [宣言と突合][fn-declare]／[上限と接続][fn-transport]
-- リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -67,9 +66,7 @@ const name = resourceNameOf(3); // "job"
 [fields]: ../topics/fields.md
 [query]: ../topics/query.md
 [limits]: ../topics/limits.md
-[cl-tenant]: ../client/tenant-scope.md
 [r-attachment]: ../resources/attachment.md
-[r-activity]: ../resources/activity.md
 [fn-declare]: declare.md
 [fn-transport]: transport.md
 [t-ResourceName]: ../api/type-aliases/ResourceName.md

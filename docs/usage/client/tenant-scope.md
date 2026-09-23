@@ -1,17 +1,17 @@
 # tenant(id)（テナントスコープ）
 
-`porters.tenant(id)` が返す、Partition（Company DB）を指定したアクセサの束です。レコードの読み書きは
-すべてここから行います。単一テナントでも同じ書き方です。
+`porters.tenant(id)` が返す、Partition（Company DB）を指定したスコープです。レコードの読み書きはすべてここから行い、
+単一テナントでも同じ書き方です。
 
 - **作り方**: `porters.tenant(id, { fields })`（`fields` は任意）
 - **持っているもの**: データ系 13 種とマスタ 4 種のアクセサ
 
-## ぶら下がるアクセサ
+## 呼べるアクセサ
 
 <!-- 根拠: ADR-0040 F-3（tenant(id) 経由のみ）・ADR-0061（of() で束ねる）・ADR-0087（宣言は tenant で受ける） -->
 
-スコープ（下の例では `t`）から呼べるアクセサです。呼べるメソッドはリソースごとに違うので、一覧は
-[リソースと操作][resources]にあります。
+このスコープ（下の例では `t`）で呼べるアクセサと、使い方の例です。呼べるメソッドはリソースごとに違うので、
+一覧は[リソースと操作][resources]にあります。
 
 | 種類                     | アクセサ                                                                                                                                                                   |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,19 +28,9 @@ const page = await t.candidate.search({ field: ["P_Id", "P_Name"] });
 const phases = t.phase.of("candidate"); // Phase・Attachment・Field は対象リソースを先に指定する
 ```
 
-## オプション
-
-| オプション | 何を渡すか                                                                                                                                         |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`   | この Partition のカスタム項目の宣言（`defineFields` の戻り値）。渡すと `U_` / `A_` の項目が型付きで読み書きできる（[カスタム項目][custom-fields]） |
-
-```ts
-const scope = porters.tenant(123, { fields: myFields }); // カスタム項目を宣言つきで使う
-```
-
 ## 固有の注意
 
-このスコープだけに当てはまる注意です。Partition の考え方と探し方は[Partition とテナントスコープ][tenant]にあります。
+このスコープだけに当てはまる注意です。共通の規則（Partition の指定のしかた・id の探し方）は主題別のページにあります。
 
 - **`tenant(id)` は同期で、PORTERS を呼びません。** Partition 付きのアクセサを作り直すだけなので軽く、リクエストごとに作って構いません。トークンはクライアントが持ちます。
 - **id の存在は確かめません。** 無い Partition や権限の無い Partition は、最初のリクエストで PORTERS のエラーになります。id は `porters.partition.search()` で探します（[Partition][r-partition]）。
@@ -49,9 +39,21 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 - **呼び出しごとに Partition を渡す引数はありません。** Partition を決める場所は `tenant(id)` の 1 箇所だけです。
 - **スコープを関数の引数に取るときの型**は[複数テナント][multi-tenant]の「宣言したスコープを関数に渡す」にあります。
 
+## オプション
+
+`tenant(id, options)` の第 2 引数に渡すものです。
+
+| オプション | 何を渡すか                                                                                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`   | この Partition のカスタム項目の宣言（`defineFields` の戻り値。[宣言と突合][fn-declare]）。渡すと `U_` / `A_` の項目が型付きで読み書きできる（[カスタム項目][custom-fields]） |
+
+```ts
+const scope = porters.tenant(123, { fields: myFields }); // カスタム項目を宣言つきで使う
+```
+
 ## 型
 
-このページで出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+このページで出てくる型と役割です。正確な定義は各リンク先（[公開 API リファレンス][api]）にあります。
 
 | 型                                             | 役割                                                                                                                |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -66,20 +68,15 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 
 ## 関連
 
-- 導入: [はじめての読み取り][s-read]（まず Partition を指定する）
-- 主題: [Partition とテナントスコープ][tenant]／[カスタム項目][custom-fields]（宣言を渡す場所）
-- クライアント: [PortersClient][cl-client]
-- リソース別: [リソースと操作][resources]（アクセサ × メソッドの一覧）／[Partition][r-partition]
-- 関数: [宣言と突合][fn-declare]（`fields` に渡す宣言を作る・確かめる）
-- 実践例: [複数テナント][multi-tenant]（リクエストごとにスコープを作る）
-- リファレンス: [公開 API リファレンス][api]
+- 主題: [Partition とテナントスコープ][tenant]（Partition の考え方と探し方）／[カスタム項目][custom-fields]（宣言を渡す場所）
+- クライアント: [PortersClient][cl-client]／[auth][cl-auth]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
-[s-read]: ../start/first-read.md
 [tenant]: ../topics/tenant.md
 [custom-fields]: ../topics/custom-fields.md
 [cl-client]: client.md
+[cl-auth]: auth.md
 [fn-declare]: ../functions/declare.md
 [resources]: ../resources/README.md
 [r-partition]: ../resources/partition.md

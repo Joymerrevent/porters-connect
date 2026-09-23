@@ -1,18 +1,17 @@
 # auth（認証の操作）
 
-`porters.auth` は、初回の権限付与の補助・トークンの確認・権限の削除を行うメソッド群です。日々のトークンの
-取得と更新はライブラリが自動で行うので、普段は使いません。使うのは、初回の権限付与を自分のアプリに組み込むときと、
-起動時に設定の不備を確かめたいときです。
+初回の権限付与の補助・トークンの確認・権限の削除を行うメソッド群です。日々のトークンの取得と更新はライブラリが
+自動で行うので、使うのは初回の権限付与を自分のアプリに組み込むときと、起動時に設定の不備を確かめたいときだけです。
 
 - **アクセサ**: `porters.auth`（App 単位。`tenant(id)` の下にはない）
-- **既定の認証方式**: `code_direct` でトークンを取り、期限が切れたら自動で更新する
+- **持っているもの**: 6 メソッド（既定の認証方式は `code_direct`。期限が切れたトークンは自動で更新する）
 
 ## 呼べるメソッド
 
 <!-- 根拠: ADR-0007 SD-3 / SD-6（公開メソッドの範囲）・ADR-0034（詳細設計） -->
 
-6 つあります。`auth` オプションに独自の `TokenProvider` を渡している場合は、ライブラリが代行できない 4 つが
-`PortersConfigError` になります（右の列）。
+このアクセサで呼べるメソッドと、使い方の例です。`auth` オプションに独自の `TokenProvider` を渡している場合は、
+ライブラリが代行できない 4 つが `PortersConfigError` になります（右の列）。
 
 | メソッド                          | 戻り値            | 何をするか                                                                          | 独自 `TokenProvider` のとき |
 | --------------------------------- | ----------------- | ----------------------------------------------------------------------------------- | --------------------------- |
@@ -37,7 +36,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 固有の注意
 
-このアクセサだけに当てはまる注意です。認証の流れと考え方は[認証とトークン][auth]にあります。
+このアクセサだけに当てはまる注意です。共通の規則（認証の流れ・トークンの置き場所）は主題別のページにあります。
 
 - **`code` の有効期限は発行から 30 秒です。** リダイレクトを受けたハンドラの中でそのまま `exchangeAuthorizationCode` に渡してください。
 - **`authorizationUrl` / `revokeUrl` は `string` を返すので、失敗は同期 throw です。** `appId` が無い・スコープが空、のときに `PortersConfigError` になります。`Promise` を返す 4 つは、失敗も reject で届きます（[エラーと再試行][errors]）。
@@ -49,7 +48,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 型
 
-このページで出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+このページで出てくる型と役割です。正確な定義は各リンク先（[公開 API リファレンス][api]）にあります。
 
 | 型                                                                                      | 役割                                                                                                  |
 | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -63,21 +62,16 @@ await porters.auth.ensureAuthenticated();
 
 ## 関連
 
-- 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
 - 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・自前で管理するとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
-- クライアント: [PortersClient][cl-client]（構築オプションの `appId` / `appSecret` / `scopes` / `tokenStore` / `auth`）
-- リソース別: [Partition][r-partition]（権限付与した Company DB の一覧）／[User][r-user]（`current()`）
-- リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]／[公開 API リファレンス][api]
+- クライアント: [PortersClient][cl-client]（`appId` / `appSecret` / `scopes` / `tokenStore` / `auth` のオプション）／[tenant(id)][cl-tenant]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
-[s-auth]: ../start/authenticate.md
 [auth]: ../topics/auth.md
 [errors]: ../topics/errors.md
 [cl-client]: client.md
-[r-partition]: ../resources/partition.md
+[cl-tenant]: tenant-scope.md
 [r-user]: ../resources/user.md
-[auth-ref]: ../reference/authentication-api/README.md
 [t-AuthApi]: ../api/type-aliases/AuthApi.md
 [t-AuthorizationUrlOptions]: ../api/type-aliases/AuthorizationUrlOptions.md
 [t-RevokeUrlOptions]: ../api/type-aliases/RevokeUrlOptions.md

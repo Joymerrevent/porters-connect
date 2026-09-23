@@ -1,8 +1,7 @@
 # 上限と接続
 
 `new PortersClient({ throttle, transport })` に渡すものを作る関数です。1 分あたりの上限の枠を分ける・
-タイムアウトを変える・PORTERS に繋がずにテストする、の 3 つの場面で使います。上限の考え方は
-[上限とレート][limits]、テストの書き方は[契約なしでテストする][testing]にあります。
+タイムアウトを変える・PORTERS に繋がずにテストする、の 3 つの場面で使います。
 
 - **import 元**: `@joymerrevent/porters-connect`
 - **PORTERS を呼ぶもの**: なし（作ったものを `PortersClient` に渡してから通信が起きる）
@@ -12,11 +11,13 @@
 
 <!-- 根拠: ADR-0010（スロットリング）・ADR-0024（Transport）・ADR-0073（バケットの共有単位） -->
 
-| 関数                                     | 何をするか                                                                                                     | 失敗の届き方                                        |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `createThrottle(options?)`               | 1 分あたりの上限を守るスロットルを作る。`readPerMin`／`writePerMin`／`safety`。共有の枠から切り離すときに渡す  | 同期 throw（範囲外の値）                            |
-| `createFetchTransport(options?)`         | 既定の HTTP 送信を作る。`timeoutMs` でタイムアウトを延ばす・縮める、`fetchImpl` で `fetch` を差し替える        | 同期 throw（`timeoutMs` が正の整数でない）          |
-| `createMockTransport(handler, options?)` | PORTERS の代わりに応答を返す送信を作る。契約なしでテストするときに渡す。`auth: false` で認証の自動応答を止める | 失敗しない（応答が無いリクエストは実行時に reject） |
+このページの関数と、使い方の例です。
+
+| 関数                                     | 何をするか                                                                                                                                                  | 失敗の届き方                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `createThrottle(options?)`               | 1 分あたりの上限を守るスロットルを作る。`readPerMin`／`writePerMin`／`safety`。共有の枠から切り離すときに渡す                                               | 同期 throw（範囲外の値）                            |
+| `createFetchTransport(options?)`         | 既定の HTTP 送信を作る。`timeoutMs` でタイムアウトを延ばす（大きな添付を送るとき。[Attachment][r-attachment]）・縮める、`fetchImpl` で `fetch` を差し替える | 同期 throw（`timeoutMs` が正の整数でない）          |
+| `createMockTransport(handler, options?)` | PORTERS の代わりに応答を返す送信を作る。契約なしでテストするときに渡す。`auth: false` で認証の自動応答を止める                                              | 失敗しない（応答が無いリクエストは実行時に reject） |
 
 ```ts
 import {
@@ -36,16 +37,16 @@ const batchClient = new PortersClient({
 
 ## 固有の注意
 
-これらの関数に共通する注意です。上限の値と挙動は[上限とレート][limits]にあります。
+これらの関数だけに当てはまる注意です。共通の規則（上限の値と挙動・モックの書き方）は主題別のページにあります。
 
-- **`createThrottle` で作ったスロットルは、共有の枠に入りません。** 渡したクライアントだけの上限になります。プロセスを跨いで合計を守りたいときは、`Throttle` を自分で実装して渡します。
+- **`createThrottle` で作ったスロットルは、共有の枠に入りません。** 渡したクライアントだけの上限になります（バッチだけ枠を分ける例は[毎日の差分同期][sync-batch]）。プロセスを跨いで合計を守りたいときは、`Throttle` を自分で実装して渡します。
 - **`createThrottle` と `createFetchTransport` は `Promise` を返さないので、失敗は同期 throw です。** 範囲外の値は `PortersConfigError` になります。
 - **`createMockTransport` は、応答を用意していないリクエストをエラーにします。** 黙って空を返さないので、モックし忘れに気づけます（[契約なしでテストする][testing]）。
 - **既定の transport と throttle は、渡さなければライブラリが作ります。** 変えたいときだけ渡します（[PortersClient][cl-client]の「構築オプション」）。
 
 ## 型
 
-この章の関数の引数と戻り値に出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+このページで出てくる型と役割です。正確な定義は各リンク先（[公開 API リファレンス][api]）にあります。
 
 | 型                                                                                                                 | 役割                                                             |
 | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
@@ -57,11 +58,7 @@ const batchClient = new PortersClient({
 ## 関連
 
 - 主題: [上限とレート][limits]（スロットルとタイムアウト）／[契約なしでテストする][testing]（モック）
-- クライアント: [PortersClient][cl-client]（`throttle` / `transport` オプション）
-- リソース別: [Attachment][r-attachment]（大きな本体とタイムアウト）
 - 関数: [宣言と突合][fn-declare]／[値の変換][fn-convert]
-- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）／[複数テナント][multi-tenant]（スロットルの共有）
-- リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -73,7 +70,6 @@ const batchClient = new PortersClient({
 [fn-declare]: declare.md
 [fn-convert]: convert.md
 [sync-batch]: ../recipes/sync-batch.md
-[multi-tenant]: ../recipes/multi-tenant.md
 [t-Throttle]: ../api/type-aliases/Throttle.md
 [t-ThrottleOptions]: ../api/type-aliases/ThrottleOptions.md
 [t-Transport]: ../api/type-aliases/Transport.md
