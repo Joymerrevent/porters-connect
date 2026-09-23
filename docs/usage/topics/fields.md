@@ -10,7 +10,7 @@
 - **接頭辞は書きません。** PORTERS との通信では `Person.P_Name` ですが、書くのは `P_Name` だけで、接頭辞はライブラリが付けます。
 - **Data Type が値のかたちを決めます。** 選択肢は常に配列、ユーザー型は読むと入れ子、参照型は既定では参照先の id（`expand` で参照先の項目も読める）で、書くときはどちらも id だけです。
 - **型が無い項目もあります**（`P_Deleted`）。生の文字列のまま返します。
-- **alias はテナントと環境で変わります。** カスタム項目は本番と開発環境でずれることがあり、突合の道具があります。
+- **alias はテナントと環境で変わります。** カスタム項目は本番と開発環境でずれることがあり、突き合わせる道具があります。
 
 ## alias は 3 種類ある
 
@@ -47,7 +47,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 
 理由は 2 つあります。**接頭辞はリソース名と一致しないことがある**ので覚えられません。そして
 綴りを間違えた alias は **PORTERS に送っても黙って無視されるだけ**で、実行しても気づけません。
-型で受けると書いた時点で止まります。
+型で検査すると、書いた時点で止まります。
 
 一致しない例が実際にあります。
 
@@ -58,7 +58,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 | Attachment | **なし**     | `FileName` のように裸        |
 | その他     | リソース名   | `Job.P_Position` など        |
 
-`field` / `condition` / `order` はすべて**同じ語彙（接頭辞なしの alias）** で書けます。
+`field` / `condition` / `order` はすべて**同じ書き方（接頭辞なしの alias）** で書けます。
 
 ## Data Type が「値のかたち」を決める
 
@@ -150,7 +150,7 @@ PORTERS 自身が注意している点です。
 
 ## 関連
 
-- 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときのかたち）／
+- 主題: [カスタム項目][custom-fields]（宣言・生成・突き合わせ）／[検索][search-records]（`field` の書き方）／[書き込み][write]（書くときのかたち）／
   [日時と時分型][datetime]／[削除と削除済みデータ][deleted]（`P_Deleted`）
 - リソース別: [User][r-user]／[Department][r-department]（参照値のかたち）／[Option][r-option]（選択肢の alias）
 - リファレンス: [Field Type / Data Type][fdt]（対応表）／[リソース一覧][res-list]（接頭辞の一覧）

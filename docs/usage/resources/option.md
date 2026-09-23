@@ -19,7 +19,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" }); // 部分�
 for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 ```
 
-マスタ 5 種は語彙が違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは語彙が違う」）。
+マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 

@@ -6,12 +6,12 @@
 
 ## マスタ系（読み取り専用）
 
-語彙が違います。`condition` と `get(id)` はありません。
+指定できるものが違います。`condition` と `get(id)` はありません。
 
 | アクセサ            | リソース                      | 読み                               | 固有の注意                                             |
 | ------------------- | ----------------------------- | ---------------------------------- | ------------------------------------------------------ |
 | `porters.partition` | [Partition（Company DB）][pa] | `search` / `searchAll`             | **client 直下**（`tenant()` を通さない唯一の読み取り） |
-| `t.user`            | [User（ユーザー）][u]         | `search` / `searchAll` / `current` | `current()` は自己同定                                 |
+| `t.user`            | [User（ユーザー）][u]         | `search` / `searchAll` / `current` | `current()` で自分が誰かを知る                         |
 | `t.department`      | [Department（部署）][d]       | `search` / `searchAll`             | 絞り込み無し。スコープは `user_r`                      |
 | `t.field`           | [Field（項目定義）][f]        | `search` / `searchAll`             | **先に `of("candidate")` で束ねる**                    |
 | `t.option`          | [Option（選択肢）][op]        | `search`                           | **`searchAll` なし**                                   |
@@ -37,7 +37,7 @@
 **`delete` はどの行にもありません**（[削除と削除済みデータ][deleted]）。`createMany` / `updateMany` は 200 件を超えても
 自動で分割します（[書き込み][write]）。
 
-引数・戻り値の正典は [公開 API の全記号][api]、項目の一覧は [PORTERS API の事実][ref] です。
+引数・戻り値の正確な定義は [公開 API の全記号][api]、項目の一覧は [PORTERS API の事実][ref] です。
 
 ## 関連
 

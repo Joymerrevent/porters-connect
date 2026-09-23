@@ -68,7 +68,7 @@ const job = await t.job.get(jobId);
 await t.attachment.of("resume").create(file);
 ```
 
-- スコープに露出するのは **データ系 13 種**（`candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` /
+- スコープから使えるのは **データ系 13 種**（`candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` /
   `activity` / `contract` / `sales` / `process` / `resume` ＋ `phase` ＋ `attachment`）**＋ マスタ Read**
   （`user` / `department` / `field` / `option`）です（[リソースと操作][resources]）。
 - 含まれないもの: `auth`（App 単位・Partition 非依存）／`partition` マスタ（Partition の**発見**専用）／
@@ -113,7 +113,7 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 差し替えるだけです。1 つの App トークンで複数の Partition にアクセスできる前提です。
 
 **これは実機で確かめていません**<!-- 根拠: LV-13 -->。契約環境で不都合が出たら、
-Partition ごとに client を分ける形に切り替えてください — **設計は両対応**にしてあります。
+Partition ごとに client を分ける形に切り替えてください — **どちらでも動くように**してあります。
 
 ## 関連
 

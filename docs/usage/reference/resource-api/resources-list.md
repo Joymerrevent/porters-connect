@@ -50,7 +50,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
   `process_r, candidate_r, resume_r, client_r, recruiter_r, job_r, user_r, option_r`）。
   各リソースの正確な Read / Write スコープは [resources/][resources] の各ページを参照。
 - **Write は自リソースの `_w` だけ**で足りる（各 Write 記事が挙げるスコープは 1 つ）。
-  参照先のスコープまで要るのは Read 側だけで、ここが非対称になっている。
+  参照先のスコープまで要るのは Read 側だけで、Read と Write で要るスコープが違う。
 - **Department は Read だけ**（2025/03・Connect API 8.2.1 で追加。Write は「実装していない」と明記）。
   ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。公式の Resource List 記事
   （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` の選択子にはならない）。

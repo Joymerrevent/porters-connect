@@ -58,7 +58,7 @@ const url = porters.auth.authorizationUrl({
 
 // 2) redirect で戻ってきた ?code= を交換（code の有効期限は 30 秒）
 await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
-// 成功すると以後は透過運用（code_direct + 自動更新）に乗る
+// 成功すると以後は無人運用（code_direct + 自動更新）になる
 ```
 
 - `redirectUrl` は**アプリ登録時の Redirect URL** と一致させます（`code`/`remove` で必須）。
@@ -172,7 +172,7 @@ type TokenProvider = {
 
 - **返り値**: その時点で有効な Access Token（文字列）。リソース呼び出しのたびに呼ばれます。
 - **`opts.forceRefresh`**: ライブラリが `401`/`402`（トークン失効）を受けた直後に `true` で再呼び出しします。`true` のときは**キャッシュを使わず新しいトークンを取り直して**ください。
-- 再認証が必要で取得できないときは `PortersAuthError` を throw します（ライブラリはループせず表面化）。
+- 再認証が必要で取得できないときは `PortersAuthError` を throw します（ライブラリは繰り返さず、エラーとして返します）。
 
 ```ts
 import type { TokenProvider } from "@joymerrevent/porters-connect";

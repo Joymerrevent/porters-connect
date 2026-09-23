@@ -1,7 +1,7 @@
 # 検索（`search` / `searchAll` とクエリ）
 
 条件でレコードを探すときに読むページです。取る項目・参照先の項目・条件・並び順・キーワード・ページングを
-どう書くかと、マスタ 5 種で語彙が違う理由が分かります。読み終えると、欲しいレコードを必要な項目だけで取り出せます。
+どう書くかと、マスタ 5 種で指定できるものが違う理由が分かります。読み終えると、欲しいレコードを必要な項目だけで取り出せます。
 
 ## まず知ること
 
@@ -12,7 +12,7 @@
 - **1 ページは最大 200 件**です。全件が要るときは `searchAll` が 200 件刻みで辿ります。
 - **削除済みのレコードは既定では返りません**。含めるかどうかは `itemstate` で選びます
   （[削除と削除済みデータ][deleted]）。
-- **マスタ 5 種は語彙が違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
+- **マスタ 5 種は指定できるものが違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
 
 ## 全体像
 
@@ -75,7 +75,7 @@ await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言し
 ```
 
 綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
-型で受けることでそこを手前に引き上げています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
+型で検査することで、書いた時点で分かるようにしています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
 綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに触る必要があるときの方法は
 [カスタム項目][custom-fields]にあります。
 
@@ -107,7 +107,7 @@ plain.items[0]?.P_Client; // number | null
   ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
   Candidate を参照するときの `Person.` もライブラリが付けます。
 - `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
-- 1 往復で済みます。参照先を別途 `client.get(id)` で引く必要はありません。
+- 1 回の呼び出しで済みます。参照先を別途 `client.get(id)` で引く必要はありません。
 
 ```ts
 const p = await t.process.get(id, {
@@ -196,7 +196,7 @@ page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
 - **選んだサブタグだけが戻り型に出ます**。書かなければ `{ FileName?, ContentType?, Content? }` のまま
   （どれも「要求していない」ので optional）。`expand` と同じく、**転送量と型の複雑さが増えるのは、要求した人だけ**です。
 - **既定が軽いことが大事です**。1 件 2MB の画像を持つ項目を一覧で 200 件取ると、既定で本体まで
-  返す設計なら 1 往復で数百 MB になります。だから既定は `FileName` のみに委ねています。
+  返す設計なら 1 回の応答で数百 MB になります。だから既定は `FileName` のみに委ねています。
 - `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が素直です。
 - `Image` 型の項目にしか書けません（`Link` 型やテキスト項目を書くと**コンパイルエラー**）。
 - **`Image` は `condition` に使えません**（reference が明記）。`Link` は記載が無いため、
@@ -310,10 +310,10 @@ page.start; // 今回の開始インデックス
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
 `total` に達するか空ページで停止します）。
 
-## マスタは語彙が違う
+## マスタは指定できるものが違う
 
 Partition / User / Department / Field / Option の 5 つは**読み取り専用のマスタ**で、データ系リソースとは
-別の語彙を持ちます。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
+指定できるものが別です。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
 公開しているためです。
 
 | アクセサ            | リソース           | メソッド                           | 主なクエリ                                    |
@@ -328,7 +328,7 @@ Partition / User / Department / Field / Option の 5 つは**読み取り専用�
 // アクセスできる Partition（Company DB）を探す。client 直下なので tenant() を通さない
 const partitions = await porters.partition.search();
 
-// 現在の API ユーザー（code_direct ではアプリ自身の User）＝自己同定
+// 現在の API ユーザー（code_direct ではアプリ自身の User）＝自分が誰か
 const me = await t.user.current();
 
 // 部署マスタ（ユーザー部署型の項目や User.P_Department が指す先）。非表示の部署は P_Hidden で見分ける

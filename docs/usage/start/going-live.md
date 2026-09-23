@@ -84,7 +84,7 @@ for await (const c of t.candidate.searchAll({
 - [主題別][index] — 認証・検索・書き込み・上限……を 1 主題 1 ページで。冒頭の「まず知ること」に PORTERS 側の前提
 - [リソース別][resources] — 使うリソースの呼べるメソッドと固有の注意
 - [実践例][index] — 毎日の差分同期・複数テナントの組み立て
-- [公開 API の全記号][api] — 型とメソッドの正典
+- [公開 API の全記号][api] — 型とメソッドの正確な定義
 
 [api]: ../api/index.md
 [authenticate]: ../topics/auth.md

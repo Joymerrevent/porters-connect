@@ -19,7 +19,7 @@ for await (const d of t.department.searchAll())
   console.log(d.P_Id, d.P_Name, d.P_Hidden);
 ```
 
-マスタ 5 種は語彙が違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは語彙が違う」）。
+マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 

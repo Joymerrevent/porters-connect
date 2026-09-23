@@ -21,7 +21,7 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコープで読み書き
 ```
 
-マスタ 5 種は語彙が違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは語彙が違う」）。
+マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 

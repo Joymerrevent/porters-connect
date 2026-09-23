@@ -39,7 +39,7 @@ if (existing.total === 0) {
 
 このリソースだけに効く注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
-- **JOB × レジュメの組で一意**です。同じ組を二度作ると Result Code `301` で失敗します（`category` は `conflict`）。作る前に `P_Job` と `P_Resume` で `search` して有無を確かめると往復が減ります。
+- **JOB × レジュメの組で一意**です。同じ組を二度作ると Result Code `301` で失敗します（`category` は `conflict`）。作る前に `P_Job` と `P_Resume` で `search` して有無を確かめると、無駄な呼び出しが減ります。
 - **参照型の項目（`P_Client` / `P_Recruiter` / `P_Job` / `P_Candidate` / `P_Resume`）は、既定では参照先の id だけが返ります。**`expand` で参照先の項目も読めます（[検索][query]）。
 - **フェーズの項目には、最新フェーズに対する条件があります**（`P_Phase` / `P_PhaseDate` / `P_PhaseMemo`。日付が最新より新しいこと、など）。詳しくは [Phase][r-phase]。
 

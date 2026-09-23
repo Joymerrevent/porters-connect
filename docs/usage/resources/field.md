@@ -21,7 +21,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 }
 ```
 
-マスタ 5 種は語彙が違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは語彙が違う」）。
+マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 
@@ -54,7 +54,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 
 ## 関連
 
-- 主題: [カスタム項目][custom-fields]（宣言の生成と突合）／[日時と時分型][datetime]（時分型の見分け）
+- 主題: [カスタム項目][custom-fields]（宣言の生成と突き合わせ）／[日時と時分型][datetime]（時分型の見分け）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

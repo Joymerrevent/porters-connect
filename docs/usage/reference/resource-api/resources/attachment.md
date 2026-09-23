@@ -11,7 +11,7 @@
 
 ## Read パラメータ
 
-出典: [Attachment - Read][read]（Input Variables）。**共通の Read パラメータ表とは語彙が違う**
+出典: [Attachment - Read][read]（Input Variables）。**共通の Read パラメータ表とは受け付けるパラメータが違う**
 （[Resource API 概要][resource-api]）。
 
 | 必須 | パラメータ    | 内容                                                                    |

@@ -249,7 +249,7 @@ const t = clientFor(tokenStore).tenant(partition);
 
 > [!NOTE]
 > 「1 つの App トークンで複数 Partition を叩けるか」は実機未確認です<!-- 根拠: LV-13 -->。
-> 共有トークンで不都合があればテナント別 client に切り替えてください（設計は両対応）。
+> 共有トークンで不都合があればテナント別 client に切り替えてください（どちらでも動くようにしてあります）。
 
 ### 6. レートは全テナントで 1 つ
 
@@ -286,7 +286,7 @@ const batch = new PortersClient({
 ## 関連
 
 - 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
-  [カスタム項目][custom-fields]（宣言の書き方・自動生成・突合）／[上限とレート][limits]
+  [カスタム項目][custom-fields]（宣言の書き方・自動生成・突き合わせ）／[上限とレート][limits]
 - リソース別: [Partition][r-partition]／[User][r-user]
 - 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）
 - ほかの目的から探す: [目次][index]

@@ -57,7 +57,7 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
   `{Resource}.P_Id` / `{Resource}.P_UpdateDate` / `{Resource}.P_UpdatedBy` の 3 種のみ、
   かつ更新日は **90 日以内**（自動で 90 日条件が付く。91 日以上前の更新日を指定すると Result Code 124）。
 
-マスタ 5 種（Partition / User / Field / Option / Department）は**この共通表と語彙が違う**。各リソースの
+マスタ 5 種（Partition / User / Field / Option / Department）は**この共通表と受け付けるパラメータが違う**。各リソースの
 「Read パラメータ」節を参照（[Partition][res-partition] / [User][res-user] / [Field][res-field] /
 [Option][res-option] / [Department][res-department]）。
 

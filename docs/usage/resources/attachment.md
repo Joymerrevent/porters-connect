@@ -144,7 +144,7 @@ resourceNameOf(17); // "resume"
 | Client    | 5   | Contract  | 13  | Contact     | 27  |
 | Process   | 7   | Resume    | 17  |             |     |
 
-正典は[リソース一覧][res-list]の `Value` 列です。
+正しい値は[リソース一覧][res-list]の `Value` 列にあります。
 
 ### 上限は 10MB、送信前に弾かれる
 
