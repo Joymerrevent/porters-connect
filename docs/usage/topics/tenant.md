@@ -115,7 +115,7 @@ Partition ごとに client を分ける形に切り替えてください — **�
 ## 関連
 
 - 主題: [認証とトークン][auth]（権限付与は Company DB ごと）／[カスタム項目][custom-fields]（宣言を Partition ごとに渡す）
-- クライアントと関数: [tenant(id)][cl-tenant]（アクセサの一覧と `fields`）／[PortersClient][cl-client]（`tenant()` / `partition` / `auth`）
+- クライアント: [tenant(id)][cl-tenant]（アクセサの一覧と `fields`）／[PortersClient][cl-client]（`tenant()` / `partition` / `auth`）
 - リソース別: [Partition][r-partition]／[リソースと操作][resources]（スコープの下にあるもの）
 - 実践例: [複数テナント][multi-tenant]（登録・宣言の持ち方・認証の分離・レート）
 - リファレンス: [リソース一覧][res-list]（Partition は `/v1/partition`）

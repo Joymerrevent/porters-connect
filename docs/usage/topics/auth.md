@@ -230,7 +230,7 @@ try {
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
 - 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
-- クライアントと関数: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `auth` / `scopes` オプション）
+- クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `auth` / `scopes` オプション）
 - リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
 - 実践例: [複数テナント][multi-tenant]（認証を分けるか）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
