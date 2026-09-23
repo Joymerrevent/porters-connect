@@ -61,7 +61,7 @@ t.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
 同期 throw と違うのは**例外の届き方だけ**です。
 
 この規則の**例外は `Promise` を返さない関数**で、そちらは同期 throw します。reject する先が無いので、
-これが正しい挙動です。例: `new PortersClient(...)`・`tenant(id)`・`defineFields`・`assertFieldsMatch`・
+これが正しい挙動です。例: `new PortersClient(...)`・`defineFields`・`assertFieldsMatch`・
 `createThrottle`・`createFetchTransport`・`encodeTimeOfDay` / `decodeTimeOfDay`・`auth.authorizationUrl` /
 `auth.revokeUrl`（`string` を返す）。
 
