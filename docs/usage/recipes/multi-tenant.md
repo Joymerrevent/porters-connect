@@ -153,7 +153,7 @@ const wide = async (t: TenantScope<DeclaredCatalogs>) => {
 | `TenantScope<typeof fields>`    | その宣言のものだけ | **付く**              |
 | `TenantScope<DeclaredCatalogs>` | どれでも           | 付かない（`P_` のみ） |
 
-**カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分のカタログだけ
+**カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分の宣言だけ
 取り出したいときは `CustomFor<typeof fields, "candidate">` が使えます（名前の一覧は
 `CustomFieldResource`）。
 
@@ -185,9 +185,9 @@ const porters = new PortersClient({ hostname, appId, appSecret });
 void topScorers(porters.tenant(1, { fields: other })); // ✗ 型エラー：U_score を宣言していない
 ```
 
-カタログの alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
+宣言した項目の alias が `field` / `condition` / `order` / 書き込みの型を決めているので、**項目が違えば
 スコープの型も違います**<!-- 根拠: ADR-0074 D1 -->。(2) の `TenantScope<DeclaredCatalogs>` が
-どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**広いカタログ**だから
+どの宣言でも受け取れるのは、そちらが「何か宣言されているかもしれない」＝**受け付ける宣言の範囲が広い**から
 です。狭いものは広いほうへ渡せる、という向きだけが通ります。
 
 それでも**宣言はプロジェクトに 1 か所置いて export する**のが素直です
