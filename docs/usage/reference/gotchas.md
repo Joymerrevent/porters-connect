@@ -24,7 +24,7 @@ PORTERS 側の運用上の前提（レート・課金・実行環境・alias・�
 - **TLS 1.2 のみ**（2026/08/27 から。TLS 1.0 / 1.1 は廃止・暗号スイートは出典の 12 種）。Node 22 の `fetch` は
   既定で TLS 1.2 以上を使うのでライブラリ側の対応は不要。古い OpenSSL を同梱したランタイムや、独自
   transport<!-- 根拠: ADR-0077 -->で TLS を無効にしている場合だけ影響する。
-- **Result Code 9 は `x-forwarded-for` ヘッダでも出る**（2026/07 追記）。プロキシ経由で付く場合は除外する。
+- **Result Code 9 は `x-forwarded-for` ヘッダでも出る**（2026/07 追記）。プロキシが付けるヘッダなら、PORTERS へ送る前に取り除く。
 
 ## 実行環境
 
@@ -37,7 +37,7 @@ PORTERS 側の運用上の前提（レート・課金・実行環境・alias・�
   （マスタコピーで一致させる運用）。ライブラリはカスタム項目の alias を**ハードコードせず**、
   Field / Option Read で発見する手段（`generateFieldDecls` / `verifyFields`・[カスタム項目][custom-fields]）を提供する<!-- 根拠: ADR-0004 -->。
 - **keyword（フリーワード）検索は Option 型項目を対象にできない**（FAQ）。Option は `condition` で指定する。
-- **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。ライブラリは未知の alias をエラーにせず（応答に混ざっても無視する）、宣言との食い違いは `validation` で知らせる（[カスタム項目][custom-fields]）。
+- **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。ライブラリは未知の alias をエラーにせず（応答に混ざっても無視する）、宣言との食い違いは `category` が `validation` のエラーで知らせる（[カスタム項目][custom-fields]）。
 - **削除 API は無い**（データ・添付とも。提供予定なし）。`delete()` メソッドは用意しない。削除済みは `itemstate` で Read 可。
 - **時分型（2026/08・PORTERS 9.3.0）は Field Read で年月日時分型と見分けが付かない**（同じ Field Type 12）。
   基準日 `1970/01/01` 付きの書式でしか書けず、任意の日時を書くと Code 103。どの項目が時分型かは環境の

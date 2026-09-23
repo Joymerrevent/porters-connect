@@ -1,6 +1,6 @@
 # Attachment（添付ファイル）
 
-レコードに付くファイルです。ほかのリソースとはかたちが違い、一覧では本体を運ばず、1 件ずつ `get` で取ります。
+レコードに付くファイルです。ほかのリソースとはかたちが違い、一覧にはファイルの本体が含まれず、1 件ずつ `get` で取ります。
 
 - **アクセサ**: `t.attachment.of("resume")` のように、**どのリソースの添付かを先に指定する**
 - **画面名**: 各レコードの「添付ファイル」
@@ -39,10 +39,10 @@ await files.create(file); // 追加 → 採番された id
 await files.update(900, { fileName: "new.pdf" }); // 差し替え
 ```
 
-**作成と更新で受ける項目が違います。** `create` は 4 項目すべてが必須、`update` は
-`contentType` / `fileName` / `content` の 3 つだけが任意です。**付け先（`resourceId`）は
+**作成と更新で受ける項目が違います。** `create` は 4 項目すべてが必須です。`update` で渡せるのは
+`contentType` / `fileName` / `content` の 3 つで、いずれも省略できます。**付け先（`resourceId`）は
 更新の入力型に入れていません** — 付け替えができると PORTERS が公表していないので、
-できることにしていません。
+ライブラリでも変更できないようにしています。
 
 `delete` はありません（[削除と削除済みデータ][no-delete]）。
 
@@ -88,11 +88,11 @@ for (const a of page.items) console.log(a.fileName, a.contentType);
 
 一覧で本体まで返すと、**ファイル全部をダウンロードすることになる**からです。
 **本体を取れるのは `get` だけ**です<!-- 根拠: ADR-0075 -->。1 ページは最大 200 件なので、
-本体を混ぜると 1 回の応答が**読める大きさを越える**ことがあります（1 ファイル 2MB 超 × 200 件で、
-文字列の上限に当たって `RangeError` になります）。Attachment はファイルサイズを返さないので、
+本体を混ぜると 1 回の応答が **JavaScript が 1 つの文字列として扱える上限を超える**ことがあります
+（1 ファイル 2MB 超 × 200 件で `RangeError` になります）。Attachment はファイルサイズを返さないので、
 「何件までなら安全か」を呼び出し側が判断することもできません。
 
-この「本体を運ぶか」は PORTERS 側では `requestType` というパラメータで、ライブラリは
+この「本体を含めるか」は PORTERS 側では `requestType` というパラメータで、ライブラリは
 **メソッドから決めます** — `search` / `searchAll` が `1`（本体なし）、`get` が `0`（本体あり）です。
 呼び出し側が選ぶものではありません。
 
@@ -104,7 +104,7 @@ if (one?.content) {
 }
 ```
 
-200 件を超える添付を順に見るときは `searchAll` が使えます。こちらも**メタデータだけ**が流れるので、
+200 件を超える添付を順に見るときは `searchAll` が使えます。こちらも返るのは**メタデータだけ**なので、
 全件をたどっても本体はダウンロードされません。要るファイルだけ `get` で取ってください。
 
 ```ts
@@ -116,7 +116,7 @@ for await (const a of files.searchAll()) {
 ```
 
 本体が大きいと、既定の **30 秒**（1 リクエストあたり）に収まらないことがあります。
-その場合は transport を組んで延ばしてください（[上限とレート][limits]）。
+その場合は、タイムアウトを延ばした transport を `new PortersClient({ ... })` のオプションに渡してください（[上限とレート][limits]）。
 
 ```ts
 transport: createFetchTransport({ timeoutMs: 120_000 });
@@ -154,7 +154,7 @@ await files.create({ ...file, content: base64 });
 ```
 
 `category` は `config` です。通常の「リクエストが長すぎる」の検査（約 15000 文字）は
-**アップロードでは外している**ので、Attachment 専用の上限を別に持っています
+**アップロードには適用しない**ので、Attachment 専用の上限を別に持っています
 （詳しくは[上限とレート][limits]）。
 
 ### まとめて作成する方法は無い
@@ -179,7 +179,7 @@ await files.create({ ...file, content: base64 });
 
 このリソースに ※（条件付き必須）の項目はありません。
 
-`update` は `contentType` / `fileName` / `content` の 3 つだけが任意です（付け先 `resourceId` は更新で変えられません）。
+`update` で渡せるのは `contentType` / `fileName` / `content` の 3 つで、いずれも省略できます（付け先 `resourceId` は更新で変えられません）。
 
 ## 項目と型
 

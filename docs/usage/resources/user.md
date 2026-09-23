@@ -15,7 +15,7 @@ PORTERS のユーザーです。`P_Owner` のようなユーザー型の項目�
 | `search` / `searchAll` / `current` | —（読み取り専用） |
 
 ```ts
-const me = await t.user.current(); // code_direct ではアプリ自身の User
+const me = await t.user.current(); // サーバ間認証（code_direct）ではアプリ自身の User
 console.log(me?.P_Id, me?.P_Name);
 
 const page = await t.user.search({
@@ -23,7 +23,7 @@ const page = await t.user.search({
 });
 ```
 
-マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
+マスタ 5 種は、検索で指定できる引数がデータ系と違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 

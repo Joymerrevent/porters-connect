@@ -21,7 +21,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 }
 ```
 
-マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
+マスタ 5 種は、検索で指定できる引数がデータ系と違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 
@@ -29,7 +29,7 @@ for await (const f of fields.searchAll({ active: 1 })) {
 
 - **先に `of()` でリソースを指定します。** PORTERS は Field Read のすべてに `resource=` を要求し、ライブラリはそれを 1 回だけ受け取ります。名前はアクセサと同じ綴りで、打ち間違いはコンパイルエラーです。
 - **`active` で使用中か未使用かを選べます**（`1` 使用中／`0` 未使用／`-1` すべて・既定）。
-- **`P_Required` は、テナントが入力必須にした項目です。** これは `defineFields` の宣言には載らないので、必須の欠落は型では止まりません。
+- **`P_Required` は、テナントが入力必須にした項目です。** これはカスタム項目の宣言（`defineFields`）には載らないので、必須の欠落は型では止まりません。
 - **時分型はここからは見分けが付きません。** 年月日時分型と同じ Field Type で返るためです（[日時と時分型][datetime]）。
 - **カスタム項目の宣言を作る・確かめる関数は、このリソースを読んで動きます。** `generateFieldDecls` / `verifyFields` / `readCustomCatalog` です（[カスタム項目][custom-fields]）。
 

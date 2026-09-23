@@ -11,7 +11,7 @@
 ## カスタム項目
 
 - `Person.U_[Name]`（ユーザー作成）/ `Person.A_[Name]`（アプリ作成）はテナント毎に異なる。
-  上表に無い項目は **Field Read API**（`/v1/field`）で実行時に取得する。
+  下の「項目一覧」に無い項目は **Field Read API**（`/v1/field`）で実行時に取得する。
 
 ## 項目一覧
 

@@ -103,12 +103,12 @@ await t.candidate.update(10001, { P_Phase: [userInput] }); // 不正なら Porte
 ローカルのフェイクは別ホストなので、本番向けの枠を使いません。
 
 **プロセスを跨ぐと協調しません。** 複数インスタンスで動かすなら、PORTERS から見た合計は
-その足し算になります。そこまで守りたいなら、`Throttle` を自分で実装して渡します。
+インスタンスごとの上限の合計になります。そこまで守りたいなら、`Throttle` を自分で実装して渡します。
 
 ```ts
 import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
 
-// 共有から外れる／別の上限で動かす
+// 別の上限を与えて、共有の枠から切り離す
 const porters = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
@@ -117,8 +117,8 @@ const porters = new PortersClient({
 });
 ```
 
-`Throttle` は `take(write: boolean): Promise<void>` の 1 メソッドだけなので、Redis などに載せれば
-**プロセスを跨いだ協調**も書けます。ライブラリはそこまで行いません（月次のアクセス数と同じで、利用側の責務です）。
+`Throttle` は `take(write: boolean): Promise<void>` の 1 メソッドだけなので、Redis など共有ストアで実装すれば
+**プロセスを跨いで合計を守る**こともできます。ライブラリはそこまで行いません（月次のアクセス数と同じで、利用側の責務です）。
 
 #### 指定できる値
 

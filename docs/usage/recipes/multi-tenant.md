@@ -1,7 +1,7 @@
 # 複数テナントを 1 プロセスで扱う（SaaS の組み立て）
 
 複数の PORTERS 契約（Company DB）を 1 つのアプリケーションから扱う SaaS を組むときに読むページです。
-テナントの登録、リクエストごとのスコープ、宣言の持ち方、認証を分けるか、レートの共有をどう組むかが分かります。
+テナントの登録、リクエストごとのスコープ、カスタム項目の宣言の持ち方、認証を分けるか、レートの共有をどう組むかが分かります。
 読み終えると、テナントが増えてもデータもトークンも混ざらないかたちで PORTERS を呼べます。
 
 > [!NOTE]
@@ -12,14 +12,14 @@
 
 この用途で使うライブラリの機能と、それぞれの役割です。
 
-| 機能                                              | 何に使うか                                                             |
-| ------------------------------------------------- | ---------------------------------------------------------------------- |
-| `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                  |
-| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する              |
-| `defineFields` の結果を spread（`...`）で合成     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる             |
-| `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                   |
-| `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                           |
-| `createThrottle` ／ 自前の `Throttle`             | 共有から外れて別の上限で動かす／プロセスを跨いで協調する（自前の実装） |
+| 機能                                              | 何に使うか                                                                   |
+| ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                        |
+| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する                    |
+| `defineFields` の結果を spread（`...`）で合成     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる                   |
+| `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                         |
+| `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                                 |
+| `createThrottle` ／ 自前の `Throttle`             | 別の上限を与えて共有の枠から切り離す／プロセスを跨いで協調する（自前の実装） |
 
 ## 組み立て
 
@@ -27,10 +27,9 @@
 
 ### 1. テナントを登録する（Partition の発見）
 
-初回のブラウザでの権限付与（[認証とトークン][auth]）の直後は、`exchangeAuthorizationCode` で得た
-トークンが**ブラウザでログインした人のもの**なので、そのトークンが有効な間だけ `requestType: 0` で
-「ログイン中の Partition / User」を引けます。発見した Partition を SaaS の DB に「会社 ↔ Partition」で
-保存します。
+初回のブラウザでの権限付与（[認証とトークン][auth]）の直後は、トークンが**ブラウザでログインした人のもの**です。
+その間だけ、`requestType: 0`（ログイン中の Partition を返す指定）で「ログイン中の Partition / User」を引けます。
+発見した Partition を SaaS の DB に「会社 ↔ Partition」で保存します。
 
 ```ts
 const me = await porters.partition.search({ requestType: 0 }); // ログイン中 Partition（code 付与の直後だけ）
@@ -38,7 +37,7 @@ const user = await t.user.current(); // ログイン中 User（同上）
 ```
 
 以降の無人運用（`code_direct` で取り直したトークン）ではこの呼び方は使えません。`requestType: 0` は
-403 になり、`t.user.current()` はアプリ自身の User を返します（[Partition とテナントスコープ][tenant]）。
+Result Code `403`（`PortersResourceError`）になり、`t.user.current()` はアプリ自身の User を返します（[Partition とテナントスコープ][tenant]）。
 普段は `porters.partition.search()`（アクセスできる一覧）から選んでください。Company DB が複数あるなら、
 権限付与も Company DB ごとに繰り返します。
 
@@ -64,7 +63,7 @@ await t.attachment.of("resume").create(file);
 
 宣言は **`tenant()` ごと**に渡します。カスタム項目は Partition ごとのものなので、Partition を指定する呼び出しが、
 その Partition の項目の形も決めます。別のテナントの宣言が気づかないうちに適用される、という状態はありません。
-`{ fields }` を渡し忘れたスコープで `U_` に触れば、コンパイルエラーです。
+`{ fields }` を渡し忘れたスコープで `U_` の項目を使えば、コンパイルエラーです。
 
 ```ts
 import type { PartitionId } from "@joymerrevent/porters-connect";
@@ -78,7 +77,7 @@ const t2 = tenant(2);
 ```
 
 **`A_` を App 共通、`U_` をテナント固有にする**なら、共通部分を関数にして各テナントの宣言に spread します。
-ライブラリは `A_` と `U_` を区別しません（出典はどちらも「テナント毎に異なる」としているため）。
+ライブラリは `A_` と `U_` を区別しません（PORTERS の公式記事はどちらも「テナント毎に異なる」としているため）。
 書き方は[カスタム項目][custom-fields]の「テナントごとに宣言を渡す」にあります。
 
 ### 4. 宣言したスコープを関数に渡す
@@ -109,7 +108,7 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
   return page.items.filter((c) => (c.U_score ?? 0) > 80);
 };
 
-// (2) どの宣言のスコープでも受ける — 標準項目（P_）だけを触る共通処理
+// (2) どの宣言のスコープでも受ける — 標準項目（P_）だけを使う共通処理
 const countCandidates = async (t: TenantScope<DeclaredCatalogs>) =>
   (await t.candidate.search({ field: [] })).total;
 
@@ -153,11 +152,11 @@ const wide = async (t: TenantScope<DeclaredCatalogs>) => {
 | `TenantScope<typeof fields>`    | その宣言のものだけ | **型に出る**            |
 | `TenantScope<DeclaredCatalogs>` | どれでも           | 型に出ない（`P_` のみ） |
 
-**カスタム項目を触る関数は (1)、触らない共通処理は (2)** です。1 リソース分の宣言だけ
+**カスタム項目を使う関数は (1)、使わない共通処理は (2)** です。1 リソース分の宣言だけ
 取り出したいときは `CustomFor<typeof fields, "candidate">` が使えます（名前の一覧は
 `CustomFieldResource`）。
 
-`typeof t` で書くこともできますが、**値が先に無いと書けません**。関数を別ファイルに
+`typeof t` で書くこともできますが、**変数 `t` を先に定義していないと書けません**。関数を別ファイルに
 切り出すなら、上の型名で書くほうが簡単です。
 
 #### 宣言が違うスコープは渡せません
@@ -211,8 +210,8 @@ const t = porters.tenant(1, options);
 ```
 
 型引数を省いて `TenantOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
-エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — `TenantOptions` とだけ書いた型が、
-宣言なしの型（`EmptyCatalog`）に固定するためです。
+エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 型引数を省いた `TenantOptions` は、
+宣言なしの型（`EmptyCatalog`）に固定されるためです。
 
 <!-- doccheck: expect-error -->
 
@@ -256,7 +255,7 @@ const t = clientFor(tokenStore).tenant(partition);
 1 分あたりの上限（Read 2000 / Write 500）を守るバケットは **ホストごと**です<!-- 根拠: ADR-0073 -->。
 client を分けても、同じ PORTERS を向く client は何個作っても合計が上限に収まります。
 テナントが増えても上限は増えません。1 テナントの一括処理が他のテナントの応答を遅らせるなら、
-`createThrottle` で共有から外れるか、別の上限で動かします。
+`createThrottle` で別の上限を与え、共有の枠から切り離します。
 
 ```ts
 import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
@@ -270,7 +269,7 @@ const batch = new PortersClient({
 });
 ```
 
-**プロセスを跨ぐと協調しません。** 複数インスタンスで動かすなら、PORTERS から見た合計はその足し算です。
+**プロセスを跨ぐと協調しません。** 複数インスタンスで動かすなら、PORTERS から見た合計は、インスタンスごとの上限の合計になります。
 そこまで守りたいなら `Throttle`（`take(write): Promise<void>` の 1 メソッド）を自分で実装して渡します
 （[上限とレート][limits]）。
 

@@ -19,14 +19,14 @@ const options = await t.option.search({ alias: "Option.P_Gender" }); // 指定�
 for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 ```
 
-マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
+マスタ 5 種は、検索で指定できる引数がデータ系と違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 
 このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`searchAll` はありません**。PORTERS の Option Read に `start` が無く、ページを進める手段が無いためです。`search` の戻り値もページではなく **`Option[]`** です。
-- **読む範囲は `alias`（起点の選択肢）・`level`（階層の深さ）・`enabled`（使用中か）で選べます。** `level` は `-1` すべて（既定）、`0` 兄弟、`1` 以上は子孫です。階層は `P_ParentId` から復元できます。
+- **読む範囲は `alias`（起点の選択肢）・`level`（階層の深さ）・`enabled`（使用中か）で選べます。** `level` は `-1` ですべて（既定）、`0` で起点と同じ階層だけ、`1` 以上で子孫を何段までたどるかです。階層は `P_ParentId` から復元できます。
 - **実際の値は必ずここで読んでください。** 既定の選択肢の一覧（PORTERS の Default Option List）は、テナントで上書きされます。
 - **`keywords` では選択肢型の項目を絞れません。** 選択肢は `condition` で絞ります。
 

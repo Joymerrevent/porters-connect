@@ -8,7 +8,7 @@
 > PORTERS Connect API 8.2.1（2025/03）で追加されたマスタ。ユーザー部署型（Link）項目の参照先で、
 > `User.P_Department`（System[Department]）が持つ `Department.P_Id` / `Department.P_Name` と同じ部署を指す。
 > マスタ系（読み取り専用）。カスタム項目（`U_` / `A_`）は無い（出典「取扱可能な任意の Field はありません」）。
-> ライブラリでは `t.department`（`search` / `searchAll`）。6 項目を 1 度に並べて通るかは実機で未確認<!-- 根拠: LV-30 -->。
+> ライブラリでは `t.department`（`search` / `searchAll`）。`field` に 6 項目すべてを指定して読めるかは実機で未確認<!-- 根拠: LV-30 -->。
 
 ## Read パラメータ
 
@@ -27,8 +27,7 @@ User の `request_type` / `user_type` のような絞り込みも無く、Partit
 
 ## 応答
 
-`<Department Total="N" Count="N" Start="N">` ＋ `<Code>` ＋ `<Item>`（Partition / User / Field と同じ
-envelope。[Resource API 概要][resource-api]）。出典のサンプル:
+`<Department Total="N" Count="N" Start="N">` ＋ `<Code>` ＋ `<Item>`（Partition / User / Field と同じ応答の形。[Resource API 概要][resource-api]）。出典のサンプル:
 
 ```xml
 <Department Total="2" Count="2" Start="0">
@@ -55,7 +54,7 @@ envelope。[Resource API 概要][resource-api]）。出典のサンプル:
 | Department.P_RegistrationDate | データ登録日 | System[DateTime] | —        | —        | Resource APIでのRead時に、参照取得することはできません。 |
 | Department.P_UpdateDate       | データ更新日 | System[DateTime] | —        | —        | Resource APIでのRead時に、参照取得することはできません。 |
 
-「参照取得することはできません」＝ データ系リソースのユーザー部署型項目から `()` で引けるのは
+出典の「参照取得することはできません」は、データ系リソースのユーザー部署型項目から `field` の入れ子指定（`()`）で引けるのは
 `Department.P_Id` / `Department.P_Name` の 2 つだけ（[機能拡張のお知らせ][announce]）。残る 4 項目は
 `/v1/department` を直接 Read したときにだけ出る。
 

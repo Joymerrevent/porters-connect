@@ -53,7 +53,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
   参照先のスコープまで要るのは Read 側だけで、Read と Write で要るスコープが違う。
 - **Department は Read だけ**（2025/03・Connect API 8.2.1 で追加。Write は「実装していない」と明記）。
   ユーザー部署型（Link）項目の参照先で、スコープは `user_r` を使う。公式の Resource List 記事
-  （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` の選択子にはならない）。
+  （2023-08-21）にはまだ載っていない（`Value` も無い＝ `resource=` に指定できる値にはならない）。
 - **削除 API は無い**。`delete()` は型の上でも用意しない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。

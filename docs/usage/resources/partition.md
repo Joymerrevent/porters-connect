@@ -2,7 +2,7 @@
 
 Company DB の一覧です。データはすべていずれかの Partition に属し、`porters.tenant(id)` に渡す id はここで探します。
 
-- **アクセサ**: `porters.partition`（**client 直下**。`tenant()` を通さない）
+- **アクセサ**: `porters.partition`（`porters` 直下。`tenant()` を通さない）
 - **スコープ**: `partition_r`
 - **読み取り専用**（PORTERS に Write API が無い）
 
@@ -21,14 +21,14 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコープで読み書き
 ```
 
-マスタ 5 種は指定できるものが違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
+マスタ 5 種は、検索で指定できる引数がデータ系と違います。`condition` と `get(id)` はありません（[検索][query]の「マスタは指定できるものが違う」）。
 
 ## 固有の注意
 
 このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
 
 - **`tenant()` を通さない唯一の読み取り**です。Partition を探すための呼び出しなので、Partition を要求しません。
-- **ログイン中の Partition は取れません**。PORTERS の `request_type=0` はブラウザ経由の認証（`code`）でしか使えず、ライブラリの既定であるサーバ間認証（`code_direct`）では Result Code `403` になります。アクセスできる一覧（既定の `requestType: 1`）から選んでください。
+- **ログイン中の Partition は取れません**。ログイン中の Partition を返す指定（`requestType: 0`）はブラウザ経由の認証（`code`）でしか使えず、ライブラリの既定であるサーバ間認証（`code_direct`）では Result Code `403` になります。アクセスできる一覧（既定の `requestType: 1`）から選んでください。
 
 ## 新規作成の必須項目
 
