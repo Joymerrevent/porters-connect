@@ -216,7 +216,7 @@ await t.resume.update(id, {
 });
 ```
 
-画像の上限（2MB / 255 バイト / mime 4 種）と、**一括書き込みでは画像を送れない**ことは
+画像の上限（2MB / 255 バイト / ContentType は jpeg・gif・png・bmp の 4 種）と、**一括書き込みでは画像を送れない**ことは
 [書き込みの制約ガイド][write-constraints]にまとめています。
 
 ## 宣言を自動生成する
@@ -310,7 +310,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 `assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では例外を投げません。
 
-> **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。この 3 つは呼んだときだけ
+> **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。`generateFieldDecls` / `verifyFields` / `assertFieldsMatch` の 3 つは、呼んだときだけ
 > Field Read を呼びます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
 
 ### 素の Field Read を使う
@@ -324,7 +324,7 @@ for await (const f of t.field.of("candidate").searchAll()) {
 ```
 
 `P_Type` は PORTERS の Field Type コードです（3 = Number、5/6/7 = Option、17 = User など。
-対応は [Field Type / Data Type][fdt] を参照）。上の 3 つの関数はこの変換を代わりにやっています。
+対応は [Field Type / Data Type][fdt] を参照）。`generateFieldDecls` / `verifyFields` / `assertFieldsMatch` は、この変換を代わりに行います。
 
 ## 検証されること
 
@@ -340,7 +340,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 ```
 
 検証を通った宣言には**印が付き**、`tenant()` は再検証しません。
-なお `defineFields` は `Promise` を返さないため、**この 2 つだけは同期 throw** です
+なお `defineFields` は `Promise` を返さないため、**この 2 つの検査だけは同期 throw** です
 （`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
 ## どこまで検証するか

@@ -34,8 +34,8 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
 
 揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
-あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。配るのは ESM 1 本ですが、
-CJS からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
+あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。実行ファイルは ESM（`import`）の 1 つですが、
+CJS（`require`）からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
 
 契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
 （[契約なしでテストする][test-without-contract]）。
@@ -59,7 +59,7 @@ const porters = new PortersClient({
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
 
-// partition（Company DB）は tenant で一度だけ指定する。**単一テナントでもこの形**
+// partition（Company DB）は tenant で一度だけ指定する。**単一テナントでも同じ書き方**
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({

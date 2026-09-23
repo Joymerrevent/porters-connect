@@ -22,7 +22,7 @@ npm i @joymerrevent/porters-connect
 
 ### CJS から `require` する
 
-ESM（`import`）で書いているなら、この節は読み飛ばして構いません。
+CJS（`require`）で書いているときに読む節です。ESM（`import`）で書いているなら、読み飛ばして構いません。
 
 パッケージに入っている実行ファイルは **ESM の 1 つだけ**です。CJS からも、同じファイルを `require` で読みます。
 

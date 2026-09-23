@@ -7,7 +7,7 @@ PORTERS のデータは **Partition**（Company DB）という単位に分かれ
 ## まず知ること
 
 - **client は Partition を持ちません。** `porters.tenant(id)` が Partition を指定したスコープ（`TenantScope`）を返し、
-  配下の呼び出しはすべてその Partition に送られます。**単一テナントでもこの形**です。
+  配下の呼び出しはすべてその Partition に送られます。**単一テナントでも同じ書き方**です。
 - **カスタム項目の宣言も `tenant(id, { fields })` で渡します。** カスタム項目は Partition ごとのものだからです。
 - **client 直下にあるのは Partition を取らないものだけ**です。`auth`・`partition` マスタ・`tenant()` 自身。
 - **Partition の id は `porters.partition.search()` で探します。** ログイン中の Partition を返す呼び方はありません。

@@ -31,7 +31,7 @@ const page = await t.candidate.search({
 // → { items, total, count, start }
 ```
 
-全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件刻みで yield します）。
+全件を辿るなら `searchAll`（`count` / `start` は自分で持たず、200 件ずつ順に返します）。
 
 ```ts
 for await (const c of t.candidate.searchAll({
@@ -156,7 +156,7 @@ const owner = page.items[0]?.P_Owner;
 console.log(owner?.P_Id, owner?.P_Name, owner?.P_Mail);
 ```
 
-送られるのはこの形です（`field` を省略したときの既定でも同じ形で要求されます）。
+PORTERS に送られる要求は、上のコードのとおりです（`field` を省略したときの既定でも同じ形で要求されます）。
 
 ```text
 field=Job.P_Position,Job.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)
