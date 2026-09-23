@@ -143,8 +143,8 @@ PORTERS 自身が注意している点です。
 
 つまり**宣言した alias が今のテナントに実在するとは限りません**。宣言と実物を突き合わせる
 手段があります（[`verifyFields`][custom-fields]）。Data Type がずれていると読み取りは
-`PortersResourceError`（`category: "validation"`）で落ちます（形の違い、または日時・数値に
-読めない値）。落ちないずれ方（`Number` の項目を `SinglelineText` と宣言した、など）は値が
+`PortersResourceError`（`category: "validation"`）になります（形の違い、または日時・数値に
+読めない値）。エラーにならないずれ方（`Number` の項目を `SinglelineText` と宣言した、など）は値が
 文字列のまま入るだけで気づけません。ここは機械に確かめさせてください。
 
 ## 関連

@@ -52,7 +52,7 @@ const gone = await t.candidate.search({
 
 ### `"deleted"` / `"all"` のときの制約
 
-どちらも送信前に検査します（PORTERS に送れば 400 になるので、待たずに落とします）。
+どちらも送信前に検査します（PORTERS に送れば 400 になるので、待たずに弾きます）。
 
 - `condition` に使えるのは **`P_Id` / `P_UpdateDate` / `P_UpdatedBy` の 3 つだけ**です。他の項目を指定すると
   `PortersConfigError`（hint 付き）になります。生きているデータが混ざる `"all"` でも同じです。

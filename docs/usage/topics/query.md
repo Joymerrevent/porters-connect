@@ -280,7 +280,7 @@ await t.job.search({
 await t.candidate.search({ keywords: ["東京", "営業"] });
 ```
 
-- **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` で落ちます。
+- **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` になります。
 - 電話番号はハイフンを除いた数字で照合されます。
 
 ## `itemstate` — 削除済みを含めるか
@@ -346,7 +346,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
   認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
 
-## 送信前に落ちるもの
+## 送信前にエラーになるもの
 
 不透明なサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
 

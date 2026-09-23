@@ -211,7 +211,7 @@ const t = porters.tenant(1, options);
 ```
 
 型引数を省いて `TenantOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
-落ちるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 注釈が
+エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 注釈が
 `EmptyCatalog` に固定するためです。
 
 <!-- doccheck: expect-error -->

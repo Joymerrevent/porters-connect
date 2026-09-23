@@ -71,7 +71,7 @@ const page = await porters.tenant(123).candidate.search({ count: 1 });
 **ここが入門の中間の確認点**です。次の 2 行が通れば、契約・設定・権限付与のすべてが揃っています。
 
 ```ts
-await porters.auth.ensureAuthenticated(); // 通らなければ、この行で落ちる
+await porters.auth.ensureAuthenticated(); // 通らなければ、この行でエラーになる
 
 const partitions = await porters.partition.search();
 for (const p of partitions.items) console.log(p.P_Id, p.P_Name);
@@ -83,7 +83,7 @@ for (const p of partitions.items) console.log(p.P_Id, p.P_Name);
 
 `ensureAuthenticated()` は省略できます（最初のリクエストで自動的に取得されます）。それでも
 起動時に呼ぶ価値があるのは、設定ミスを「最初のリクエストのとき」ではなく**起動のとき**に
-落とせるからです。
+見つけられるからです。
 
 ## トークンはどこに置かれるか
 
@@ -99,7 +99,7 @@ Refresh Token を外に出すことになるので、置き場所の安全性は
 
 | 症状                                          | よくある原因                                                                 |
 | --------------------------------------------- | ---------------------------------------------------------------------------- |
-| 構築した瞬間に落ちる                          | `hostname` に `https://` ・パス・ポートが入っている（[前ページ][s-install]） |
+| 構築した瞬間にエラーになる                    | `hostname` に `https://` ・パス・ポートが入っている（[前ページ][s-install]） |
 | `PortersResourceError`（`403`・`permission`） | その Company DB の権限付与（初回のブラウザ手順）が済んでいない               |
 | `code` を交換すると失敗する                   | 30 秒を超えた／同じ `code` を 2 回使った                                     |
 | 一覧が空で返る                                | 権限付与した Company DB が無い／`partition_r` を付与していない               |

@@ -175,7 +175,7 @@ env で本番とローカルを切り替えたいときは、アプリ側で渡�
 ```ts
 const forLocal = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
-  // ポートは `hostname` に書けません（書くと構築時に落ちます）。env も 1 本ずつ分けます
+  // ポートは `hostname` に書けません（書くと構築時にエラーになります）。env も 1 本ずつ分けます
   port: process.env.PORTERS_PORT ? Number(process.env.PORTERS_PORT) : undefined,
   scheme: process.env.PORTERS_SCHEME === "http" ? "http" : undefined,
   appId: process.env.PORTERS_APP_ID ?? "",
