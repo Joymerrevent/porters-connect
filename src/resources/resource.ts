@@ -573,10 +573,13 @@ export const createResource = <
     );
   };
 
-  const create = (input: CreateInput<F, Req[number]>): Promise<number> =>
+  // `async` for the exception contract: `withDefaults` runs while the arguments are evaluated,
+  // i.e. before `write` is entered, so without it a refused bound alias (RV-47) would throw
+  // synchronously instead of rejecting (ADR-0046). Found as RV-64.
+  const create = async (input: CreateInput<F, Req[number]>): Promise<number> =>
     write(withDefaults({ ...input, [idAlias]: -1 }), false);
 
-  const update = (id: number, input: UpdateInput<F>): Promise<number> =>
+  const update = async (id: number, input: UpdateInput<F>): Promise<number> =>
     write(withDefaults({ ...input, [idAlias]: id }), true);
 
   // Bulk write (ADR-0041): map each input to a WriteItem with its P_Id (create = -1, update = id) —
