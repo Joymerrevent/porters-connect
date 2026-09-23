@@ -85,7 +85,7 @@ Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ
 - `Total`=条件に合う総件数 / `Count`=今回の件数 / `Start`=今回の開始インデックス（**オフセット式ページング**）。
   ※ **Option だけは属性が付かない**<!-- 根拠: ADR-0022 事実5 -->。
 - `<Code>` は Result Code（[result-codes][result-codes]）。`<Item>` は 0 件以上。
-  **成功応答にも必ず出力される**（`<Code>0`）ため、`<Code>` の有無が envelope かどうかの判定に使える。
+  **成功応答にも必ず出力される**（`<Code>0`）ため、`<Code>` の有無が PORTERS の応答かどうかの判定に使える。
 - データ型ごとの入れ子:
   - **Option**: `<Field><OptionRoot><OptionAlias><Option.P_Name/><Option.P_Id/></OptionAlias>...</OptionRoot></Field>`
     （末端 Alias のみ。親子関係は出力されない）
@@ -97,7 +97,7 @@ Write（`POST /v1/{resource}`）が取るパラメータは **`partition` だけ
 
 Read は HTTP 200 ＋ ルート直下の `<Code>0` が成功。**Write はルートに `<Code>` を持たず、
 `<Item>` ごとの `<Code>` で返る**（[write-format][write-format]）。コード一覧・出る場所・
-リトライ方針は [result-codes][result-codes] に分離（認証 API の [認証エラー][errors] と対称。
+リトライ方針は [result-codes][result-codes] に分離（認証 API の [認証エラー][errors] と同じ構成。
 番号体系が異なるので混同しない）。
 
 ## 各種制限（最新: 2026-04-28）
