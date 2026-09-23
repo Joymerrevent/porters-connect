@@ -10,7 +10,7 @@
 - **宣言は `tenant(id, { fields })` で Partition と一緒に渡します。**
 - **宣言していないカスタム項目は型が受け付けません**（コンパイルエラー）。宣言せずに使う方法は別にあります。
 - **宣言はテナントの実際の項目と突き合わせられます。** `generateFieldDecls` で自動生成し、`verifyFields` で食い違いを見つけます。
-- **テナントが必須にした項目の欠落は型では止まりません。** 必須かどうかは PORTERS 側の設定（`P_Required`）です。
+- **宣言したカスタム項目は `create` で任意です。** 必ず渡したい項目は、宣言に `{ required: true }` を付けると `create` の必須になります。
 
 ## 最小の例
 
@@ -41,6 +41,47 @@ one?.U_source; // string[] | null | undefined（Option は選択された alias 
 await t.candidate.update(10001, { U_score: 80 }); // 型チェックされる
 await t.candidate.update(10001, { U_score: "80" }); // ← 型エラー
 ```
+
+## 新規作成で必須にする
+
+宣言したカスタム項目は、ふだん `create` で任意です。**`create` で必ず渡したい項目は、宣言に
+`{ required: true }` を付けます**<!-- 根拠: ADR-0089 -->。渡し忘れると、標準項目の必須（Candidate の
+`P_Owner` など）と同じくコンパイルエラーになります。
+
+```ts
+import { defineFields } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({
+    U_score: f.number({ required: true }), // create で必須
+    U_source: f.option(), // 任意のまま
+  }),
+});
+const t = porters.tenant(1, { fields });
+
+await t.candidate.create({ P_Owner: 5, U_score: 80 });
+```
+
+<!-- doccheck: expect-error -->
+
+```ts
+import { defineFields } from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number({ required: true }) }),
+});
+const t = porters.tenant(1, { fields });
+
+await t.candidate.create({ P_Owner: 5 }); // ← 型エラー（U_score が無い）
+```
+
+- **必須になるのは `create` と `createMany` だけです。** `update` / `updateMany` では、これまでどおり任意です。
+- **型で止めるだけで、実行時には検査しません。** 標準項目の必須と同じ扱いです。
+- **PORTERS 側でも項目を入力必須に設定できます**（Field Read の `P_Required`）。`generateFieldDecls` で宣言を作ると、
+  入力必須の項目には `{ required: true }` が付いて出てきます。`create` で必須にしない項目は、生成したファイルから消します。
+- テナントの設定と宣言が食い違っているかは、`verifyFields` の `requiredMismatch` で分かります（後述）。
+- 宣言に `{ required: true }` が無い項目は、テナントが入力必須にしていても型では止まりません。書き込みを
+  受け付けるかどうかは PORTERS の判定になります（Connect API がこの設定を書き込み時に強制するかは、実機で未確認です）。
 
 ## 宣言しないとどうなるか
 
@@ -110,16 +151,6 @@ await t.candidate.update(10001, { U_score: 80 } as CandidateUpdateInput);
 入れ子（`Option` / `User` / `Image`）なら `null`、あれば生の文字列です。変換はしません。
 
 **型を外して読み書きするより、最初からその項目を宣言するのがおすすめです。** 型を外すと、綴りの検査も値の変換も行われないためです。
-
-**宣言しても必須項目は増えません。** `create` が必須にするのは各リソースの標準項目だけで
-（Candidate なら `P_Owner`。一覧は[書き込み][write]の「新規作成の必須項目」）、宣言したカスタム項目は
-つねに任意です。`f.number()` などの宣言にも、必須を表す書き方はありません。
-
-ただし **PORTERS 側では項目を入力必須に設定できます**。その状態は Field Read の `P_Required`
-（`0` = 通常 / `1` = 入力必須）で読めますが、宣言には載らないので**型では止まりません**。
-PORTERS の判定に委ねます（Connect API がこの設定を書き込み時に強制するかは、実機で未確認です）。
-必須で運用している項目があるなら、`t.field.of("candidate").search()`
-で `P_Required` を見て、アプリ側で確かめてください。
 
 `field` / `condition` / `order` / 書き込みのどこに書いても同じ扱いです。`U_hiredOn` を宣言していなければ、**4 つとも型エラー**になります。
 
@@ -270,6 +301,8 @@ export const myFields = defineFields({
   生成物はリポジトリにコミットされることが多く、テナントの業務上の項目名が混ざるのは既定にしたくないためです。
 - **ライブラリが宣言できない型はコメントで残ります**（消しません）。「テナントに無い」と
   読み違えないようにするためです。
+- **テナントが入力必須にした項目には `{ required: true }` が付きます**（`U_score: f.number({ required: true })`）。
+  `create` で渡さないとコンパイルエラーになります（上の「新規作成で必須にする」）。
 - **Field Type 12 の行には注記が付きます**（`f.dateTime(), // FT-12: …`）。時分型は年月日時分型と
   同じ `12` で、Field Read からは区別できないためです。その項目が時刻だけを持つなら、読み書きで
   `decodeTimeOfDay` / `encodeTimeOfDay` を当ててください（[日時と時分型][datetime]）。
@@ -279,6 +312,7 @@ export const myFields = defineFields({
 ```ts
 const catalog = await readCustomCatalog(porters.tenant(1), "candidate");
 catalog.fields; // { U_score: "Number", U_source: "Option" }
+catalog.required; // { U_score: true, U_source: false }（テナントの入力必須）
 catalog.undeclarable; // 宣言では表せない項目（理由つき）
 ```
 
@@ -304,15 +338,16 @@ const report = await verifyFields(porters.tenant(1), myFields);
 if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていません");
 ```
 
-レポートは 5 つに分かれます。
+レポートは 6 つに分かれます。
 
-| 区分           | 意味                                                  | 深刻度                                                   |
-| -------------- | ----------------------------------------------------- | -------------------------------------------------------- |
-| `typeMismatch` | 実在するが Data Type が違う                           | **最悪**（読み取りがエラーになるか、型が違う値が入る）   |
-| `missing`      | 宣言したがテナントに無い                              | 高                                                       |
-| `unverifiable` | そのリソースの項目定義を PORTERS から**読めなかった** | 中（項目が無いのか、読めなかっただけなのかは分からない） |
-| `undeclared`   | テナントにあるが宣言していない                        | 低（宣言しなくても動作は変わらない）                     |
-| `undeclarable` | 存在するが宣言では表せない                            | 情報                                                     |
+| 区分               | 意味                                                         | 深刻度                                                        |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| `typeMismatch`     | 実在するが Data Type が違う                                  | **最悪**（読み取りがエラーになるか、型が違う値が入る）        |
+| `missing`          | 宣言したがテナントに無い                                     | 高                                                            |
+| `unverifiable`     | そのリソースの項目定義を PORTERS から**読めなかった**        | 中（項目が無いのか、読めなかっただけなのかは分からない）      |
+| `undeclared`       | テナントにあるが宣言していない                               | 低（宣言しなくても動作は変わらない）                          |
+| `undeclarable`     | 存在するが宣言では表せない                                   | 情報                                                          |
+| `requiredMismatch` | 宣言の `required` とテナントの入力必須（`P_Required`）が違う | 情報（読み書きは壊れない。`create` で止まるかどうかが変わる） |
 
 **`verifyFields` は例外を投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、止めるかどうかは利用側が決めます。起動時に止めたいなら 1 行足します。
@@ -324,7 +359,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 ```
 
 `assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
-ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では例外を投げません。
+ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` / `requiredMismatch` では例外を投げません。
 
 > **`defineFields` は PORTERS を呼びません。** Field Read を呼ぶのは `generateFieldDecls` と `verifyFields` だけで、
 > 呼んだときだけです（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
