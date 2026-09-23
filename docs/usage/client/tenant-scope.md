@@ -50,6 +50,21 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 - **呼び出しごとに Partition を渡す引数はありません。** Partition を決める場所は `tenant(id)` の 1 箇所だけです。
 - **スコープを関数の引数に取るときの型**は[複数テナント][multi-tenant]の「宣言したスコープを関数に渡す」にあります。
 
+## 型
+
+このページで出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+
+| 型                                             | 役割                                                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [`TenantScope`][t-TenantScope]                 | `tenant(id)` の戻り値。型引数はその Partition のカスタム項目の宣言                                                  |
+| [`TenantOptions`][t-TenantOptions]             | `tenant()` の第 2 引数（`fields`）                                                                                  |
+| [`PartitionId`][t-PartitionId]                 | `id` の型                                                                                                           |
+| [`DefinedFields`][t-DefinedFields]             | `fields` に渡す、`defineFields` の戻り値                                                                            |
+| [`DeclaredCatalogs`][t-DeclaredCatalogs]       | 宣言の中身（リソース → カスタム項目）。どの宣言のスコープでも受ける関数の引数に使う（[複数テナント][multi-tenant]） |
+| [`CustomFor`][t-CustomFor]                     | 宣言から 1 リソース分のカスタム項目を取り出す型                                                                     |
+| [`CustomFieldResource`][t-CustomFieldResource] | カスタム項目を宣言できるリソース名の一覧                                                                            |
+| [`ResourceName`][t-ResourceName]               | `of()` に渡すリソース名（アクセサと同じ綴り）                                                                       |
+
 ## 関連
 
 - 導入: [はじめての読み取り][s-read]（まず Partition を指定する）
@@ -75,3 +90,8 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 [t-TenantScope]: ../api/type-aliases/TenantScope.md
 [t-TenantOptions]: ../api/type-aliases/TenantOptions.md
 [t-PartitionId]: ../api/type-aliases/PartitionId.md
+[t-DefinedFields]: ../api/type-aliases/DefinedFields.md
+[t-DeclaredCatalogs]: ../api/type-aliases/DeclaredCatalogs.md
+[t-CustomFor]: ../api/type-aliases/CustomFor.md
+[t-CustomFieldResource]: ../api/type-aliases/CustomFieldResource.md
+[t-ResourceName]: ../api/type-aliases/ResourceName.md

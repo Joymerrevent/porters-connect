@@ -61,6 +61,25 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 - **同じ接続先を向くクライアントは、上限の枠を 1 つ共有します。** クライアントを分けても 1 分あたりの上限は増えません（[上限とレート][limits]）。
 - **クライアントを分けるのは、トークンを分けたいときだけです。** テナントごとに項目が違うだけなら、同じクライアントから `tenant(id, { fields })` を作り分けます（[複数テナント][multi-tenant]）。
 
+## 型
+
+このページで出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+
+| 型                                                                                                                 | 役割                                                          |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| [`PortersClient`][t-PortersClient]                                                                                 | クライアントそのもの（クラス）                                |
+| [`PortersClientOptions`][t-PortersClientOptions]                                                                   | `new PortersClient()` に渡す構築オプション                    |
+| [`Scheme`][t-Scheme]                                                                                               | `scheme` に渡せる値（`"https"` / `"http"`）                   |
+| [`Scope`][t-Scope]                                                                                                 | `scopes` に渡すスコープ名（`candidate_r` など）               |
+| [`TokenStore`][t-TokenStore] / [`StoredTokens`][t-StoredTokens]                                                    | `tokenStore` に渡す保存先と、そこに保存されるトークンのかたち |
+| [`TokenProvider`][t-TokenProvider] / [`GetAccessTokenOptions`][t-GetAccessTokenOptions]                            | `auth` に渡す自前のトークン取得と、`getAccessToken` の引数    |
+| [`Transport`][t-Transport] / [`TransportRequest`][t-TransportRequest] / [`TransportResponse`][t-TransportResponse] | `transport` に渡す HTTP 送信と、その要求・応答のかたち        |
+| [`Throttle`][t-Throttle] / [`ThrottleOptions`][t-ThrottleOptions]                                                  | `throttle` に渡すスロットルと、`createThrottle` のオプション  |
+| [`PartitionId`][t-PartitionId]                                                                                     | `tenant(id)` に渡す id                                        |
+| [`TenantScope`][t-TenantScope] / [`TenantOptions`][t-TenantOptions]                                                | `tenant()` の戻り値と第 2 引数（[tenant(id)][cl-tenant]）     |
+| [`AuthApi`][t-AuthApi]                                                                                             | `auth` の型（[auth][cl-auth]）                                |
+| [`PartitionResource`][t-PartitionResource]                                                                         | `partition` の型（[Partition][r-partition]）                  |
+
 ## 関連
 
 - 導入: [インストールと、クライアントの構築][s-install]（3 つの値から作る）
@@ -85,3 +104,19 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 [multi-tenant]: ../recipes/multi-tenant.md
 [t-PortersClient]: ../api/classes/PortersClient.md
 [t-PortersClientOptions]: ../api/type-aliases/PortersClientOptions.md
+[t-Scheme]: ../api/type-aliases/Scheme.md
+[t-Scope]: ../api/type-aliases/Scope.md
+[t-TokenStore]: ../api/type-aliases/TokenStore.md
+[t-StoredTokens]: ../api/type-aliases/StoredTokens.md
+[t-TokenProvider]: ../api/type-aliases/TokenProvider.md
+[t-GetAccessTokenOptions]: ../api/type-aliases/GetAccessTokenOptions.md
+[t-Transport]: ../api/type-aliases/Transport.md
+[t-TransportRequest]: ../api/type-aliases/TransportRequest.md
+[t-TransportResponse]: ../api/type-aliases/TransportResponse.md
+[t-Throttle]: ../api/type-aliases/Throttle.md
+[t-ThrottleOptions]: ../api/type-aliases/ThrottleOptions.md
+[t-PartitionId]: ../api/type-aliases/PartitionId.md
+[t-TenantScope]: ../api/type-aliases/TenantScope.md
+[t-TenantOptions]: ../api/type-aliases/TenantOptions.md
+[t-AuthApi]: ../api/type-aliases/AuthApi.md
+[t-PartitionResource]: ../api/type-aliases/PartitionResource.md

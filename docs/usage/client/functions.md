@@ -70,6 +70,40 @@ const candidate = resourceValueOf("candidate"); // 1
 - **`verifyFields` は例外を投げません。** 止めるかどうかは利用側が決めます。起動時に止めたいときだけ `assertFieldsMatch` を続けて呼びます。
 - **`createThrottle` で作ったスロットルは、共有の枠に入りません。** 渡したクライアントだけの上限になります。
 
+## 型
+
+この章の関数の引数と戻り値に出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+
+**宣言と突合**
+
+| 型                                                                                                                                                                                                                                 | 役割                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [`FieldDecls`][t-FieldDecls] / [`FieldBuilder`][t-FieldBuilder] / [`FieldDef`][t-FieldDef]                                                                                                                                         | `defineFields` の引数・宣言に渡されるビルダー `f`・ビルダーの戻り値（1 項目の Data Type）                |
+| [`CustomDataType`][t-CustomDataType]                                                                                                                                                                                               | 宣言できる Data Type の名前                                                                              |
+| [`DefinedFields`][t-DefinedFields]                                                                                                                                                                                                 | `defineFields` の戻り値。`tenant(id, { fields })` に渡す                                                 |
+| [`FieldCatalogSource`][t-FieldCatalogSource]                                                                                                                                                                                       | `generateFieldDecls` / `verifyFields` / `readCustomCatalog` の第 1 引数。`tenant(id)` のスコープを渡す   |
+| [`CustomFieldResource`][t-CustomFieldResource]                                                                                                                                                                                     | 宣言できるリソース名                                                                                     |
+| [`GenerateFieldDeclsOptions`][t-GenerateFieldDeclsOptions] / [`VerifyFieldsOptions`][t-VerifyFieldsOptions] / [`ReadCustomCatalogOptions`][t-ReadCustomCatalogOptions]                                                             | 各関数のオプション（`active` など）                                                                      |
+| [`FieldVerification`][t-FieldVerification]                                                                                                                                                                                         | `verifyFields` のレポート（`missing` / `typeMismatch` / `undeclared` / `unverifiable` / `undeclarable`） |
+| [`MissingField`][t-MissingField] / [`FieldTypeMismatch`][t-FieldTypeMismatch] / [`UndeclaredField`][t-UndeclaredField] / [`UnverifiableResource`][t-UnverifiableResource] / [`UndeclarableTenantField`][t-UndeclarableTenantField] | レポートの各区分の要素                                                                                   |
+| [`TenantCustomCatalog`][t-TenantCustomCatalog] / [`UndeclarableField`][t-UndeclarableField] / [`UndeclarableReason`][t-UndeclarableReason]                                                                                         | `readCustomCatalog` の戻り値と、宣言できない項目とその理由                                               |
+
+**上限と接続**
+
+| 型                                                                                                                 | 役割                                                             |
+| ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| [`Throttle`][t-Throttle] / [`ThrottleOptions`][t-ThrottleOptions]                                                  | `createThrottle` の戻り値とオプション                            |
+| [`Transport`][t-Transport] / [`TransportRequest`][t-TransportRequest] / [`TransportResponse`][t-TransportResponse] | 送信の差し替え口と、その要求・応答のかたち                       |
+| [`FetchTransportOptions`][t-FetchTransportOptions]                                                                 | `createFetchTransport` のオプション（`timeoutMs` / `fetchImpl`） |
+| [`MockHandler`][t-MockHandler] / [`MockReply`][t-MockReply] / [`MockTransportOptions`][t-MockTransportOptions]     | `createMockTransport` に渡す応答の関数・その戻り値・オプション   |
+
+**値の変換**
+
+| 型                                       | 役割                                                  |
+| ---------------------------------------- | ----------------------------------------------------- |
+| [`ResourceName`][t-ResourceName]         | `resourceValueOf` の引数・`resourceNameOf` が返す名前 |
+| [`ImageContentType`][t-ImageContentType] | 画像の本体に付ける MIME の種類（4 種）                |
+
 ## 関連
 
 - 主題: [カスタム項目][custom-fields]（宣言・生成・突合）／[上限とレート][limits]（スロットルとタイムアウト）／[契約なしでテストする][testing]（モック）／[日時と時分型][datetime]（時分型）／[検索][query]（リソース種別で絞る）
@@ -90,3 +124,33 @@ const candidate = resourceValueOf("candidate"); // 1
 [cl-tenant]: tenant-scope.md
 [r-field]: ../resources/field.md
 [r-attachment]: ../resources/attachment.md
+[t-FieldDecls]: ../api/type-aliases/FieldDecls.md
+[t-FieldBuilder]: ../api/type-aliases/FieldBuilder.md
+[t-FieldDef]: ../api/type-aliases/FieldDef.md
+[t-CustomDataType]: ../api/type-aliases/CustomDataType.md
+[t-DefinedFields]: ../api/type-aliases/DefinedFields.md
+[t-FieldCatalogSource]: ../api/type-aliases/FieldCatalogSource.md
+[t-CustomFieldResource]: ../api/type-aliases/CustomFieldResource.md
+[t-GenerateFieldDeclsOptions]: ../api/type-aliases/GenerateFieldDeclsOptions.md
+[t-VerifyFieldsOptions]: ../api/type-aliases/VerifyFieldsOptions.md
+[t-ReadCustomCatalogOptions]: ../api/type-aliases/ReadCustomCatalogOptions.md
+[t-FieldVerification]: ../api/type-aliases/FieldVerification.md
+[t-MissingField]: ../api/type-aliases/MissingField.md
+[t-FieldTypeMismatch]: ../api/type-aliases/FieldTypeMismatch.md
+[t-UndeclaredField]: ../api/type-aliases/UndeclaredField.md
+[t-UnverifiableResource]: ../api/type-aliases/UnverifiableResource.md
+[t-UndeclarableTenantField]: ../api/type-aliases/UndeclarableTenantField.md
+[t-TenantCustomCatalog]: ../api/type-aliases/TenantCustomCatalog.md
+[t-UndeclarableField]: ../api/type-aliases/UndeclarableField.md
+[t-UndeclarableReason]: ../api/type-aliases/UndeclarableReason.md
+[t-Throttle]: ../api/type-aliases/Throttle.md
+[t-ThrottleOptions]: ../api/type-aliases/ThrottleOptions.md
+[t-Transport]: ../api/type-aliases/Transport.md
+[t-TransportRequest]: ../api/type-aliases/TransportRequest.md
+[t-TransportResponse]: ../api/type-aliases/TransportResponse.md
+[t-FetchTransportOptions]: ../api/type-aliases/FetchTransportOptions.md
+[t-MockHandler]: ../api/type-aliases/MockHandler.md
+[t-MockReply]: ../api/type-aliases/MockReply.md
+[t-MockTransportOptions]: ../api/type-aliases/MockTransportOptions.md
+[t-ResourceName]: ../api/type-aliases/ResourceName.md
+[t-ImageContentType]: ../api/type-aliases/ImageContentType.md

@@ -48,6 +48,20 @@ await porters.auth.ensureAuthenticated();
 - **`clearTokens` は手元のトークンを消すだけです。** PORTERS 側の権限を消すには `revokeUrl` の URL をブラウザで開いて承諾する必要があります。
 - **`current()` で「いま誰か」を確かめるのは [User][r-user] です。** 既定の方式ではアプリ自身の User が返ります。
 
+## 型
+
+このページで出てくる型と役割です。正確な定義は各リンク先（公開 API リファレンス）にあります。
+
+| 型                                                                                      | 役割                                                                                                  |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`AuthApi`][t-AuthApi]                                                                  | `porters.auth` の型                                                                                   |
+| [`AuthorizationUrlOptions`][t-AuthorizationUrlOptions]                                  | `authorizationUrl` の引数（`redirectUrl` / `scopes` / `state`）                                       |
+| [`RevokeUrlOptions`][t-RevokeUrlOptions]                                                | `revokeUrl` の引数（`authorizationUrl` と同じかたち）                                                 |
+| [`Scope`][t-Scope]                                                                      | `scopes` に渡すスコープ名                                                                             |
+| [`TokenProvider`][t-TokenProvider] / [`GetAccessTokenOptions`][t-GetAccessTokenOptions] | 自前でトークンを管理するときに `auth` オプションへ渡す型と、`getAccessToken` の引数（`forceRefresh`） |
+| [`TokenStore`][t-TokenStore] / [`StoredTokens`][t-StoredTokens]                         | `tokenStore` オプションに渡す保存先と、保存されるトークンのかたち                                     |
+| [`PortersAuthError`][t-PortersAuthError]                                                | 認証の失敗として届く例外（[エラーと再試行][errors]）                                                  |
+
 ## 関連
 
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
@@ -68,3 +82,9 @@ await porters.auth.ensureAuthenticated();
 [t-AuthApi]: ../api/type-aliases/AuthApi.md
 [t-AuthorizationUrlOptions]: ../api/type-aliases/AuthorizationUrlOptions.md
 [t-RevokeUrlOptions]: ../api/type-aliases/RevokeUrlOptions.md
+[t-Scope]: ../api/type-aliases/Scope.md
+[t-TokenProvider]: ../api/type-aliases/TokenProvider.md
+[t-GetAccessTokenOptions]: ../api/type-aliases/GetAccessTokenOptions.md
+[t-TokenStore]: ../api/type-aliases/TokenStore.md
+[t-StoredTokens]: ../api/type-aliases/StoredTokens.md
+[t-PortersAuthError]: ../api/classes/PortersAuthError.md

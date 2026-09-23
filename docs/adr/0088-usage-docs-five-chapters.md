@@ -244,8 +244,8 @@ stakeholder が指摘）。ページは `docs/usage/client/` に 4 本:
 | `tenant-scope.md` | `tenant(id)` が返すスコープ: ぶら下がるアクセサの一覧・`{ fields }`・`of()` が要るもの                                                                                                                                                                                                                                                                             |
 | `functions.md`    | 単独の関数を用途別に: 宣言と突合（`defineFields` / `generateFieldDecls` / `verifyFields` / `assertFieldsMatch` / `readCustomCatalog` / `rawValue`）／上限と接続（`createThrottle` / `createFetchTransport` / `createMockTransport`）／値の変換（`encodeTimeOfDay` / `decodeTimeOfDay` / `resourceValueOf` / `resourceNameOf` / `bytesToBase64` / `base64ToBytes`） |
 
-節構成はリソース別と同じ（説明 → メタ情報 → 呼べるメソッド → 固有の注意 → 関連）で、「新規作成の必須項目」と
-「項目と型」は持たない。主題別の `auth.md` / `tenant.md` は「なぜそう書くか」に残し、メソッドの表は新章へ移して
+節構成はリソース別と同じ（説明 → メタ情報 → 呼べるメソッド → 固有の注意 → 型 → 関連）で、「新規作成の必須項目」は
+持たず、「項目と型」はリソースの項目が無いので「型」（型と役割の表だけ）にする（2026-09-23・stakeholder）。主題別の `auth.md` / `tenant.md` は「なぜそう書くか」に残し、メソッドの表は新章へ移して
 2 か所に持たない。検査は、①③④⑤の定数（`USER_DOC_DIRS` / `EXIT_DIRS` / `GUIDE_GLOBS`）に `client/` を足し、
 検査⑥を `auth` / `tenant` / `partition` にも広げる（`src/client.ts` の `readonly` メンバ ↔ 新章のページ）。
 目次の章番号は 1 導入 / 2 主題別 / 3 クライアントと関数 / 4 リソース別 / 5 実践例 / 6 リファレンス になり、
