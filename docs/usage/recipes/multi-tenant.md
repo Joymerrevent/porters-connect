@@ -12,14 +12,14 @@
 
 この用途で使うライブラリの機能と、それぞれの役割です。
 
-| 機能                                              | 何に使うか                                                               |
-| ------------------------------------------------- | ------------------------------------------------------------------------ |
-| `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                    |
-| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する                |
-| `defineFields` の spread 合成                     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる               |
-| `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                     |
-| `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                             |
-| `createThrottle` ／ 自前の `Throttle`             | 共有から降りて別の上限で走らせる／プロセスを跨いで協調する（自前の実装） |
+| 機能                                              | 何に使うか                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                  |
+| `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する              |
+| `defineFields` の spread 合成                     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる             |
+| `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                   |
+| `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                           |
+| `createThrottle` ／ 自前の `Throttle`             | 共有から外れて別の上限で動かす／プロセスを跨いで協調する（自前の実装） |
 
 ## 組み立て
 
@@ -256,7 +256,7 @@ const t = clientFor(tokenStore).tenant(partition);
 1 分あたりの上限（Read 2000 / Write 500）を守るバケットは **ホストごと**です<!-- 根拠: ADR-0073 -->。
 client を分けても、同じ PORTERS を向く client は何個作っても合計が上限に収まります。
 テナントが増えても上限は増えません。1 テナントの一括処理が他のテナントの応答を遅らせるなら、
-`createThrottle` で共有から降りるか、別の上限で走らせます。
+`createThrottle` で共有から外れるか、別の上限で動かします。
 
 ```ts
 import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";

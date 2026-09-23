@@ -11,7 +11,7 @@ PORTERS のデータは **Partition**（Company DB）という単位に分かれ
 - **カスタム項目の宣言も `tenant(id, { fields })` で渡します。** カスタム項目は Partition ごとのものだからです。
 - **client 直下にあるのは Partition を取らないものだけ**です。`auth`・`partition` マスタ・`tenant()` 自身。
 - **Partition の id は `porters.partition.search()` で探します。** ログイン中の Partition を返す呼び方はありません。
-- 複数テナントを 1 プロセスで回す組み立て（登録・認証の分離・レート）は[実践例][multi-tenant]にあります。
+- 複数テナントを 1 プロセスで動かす組み立て（登録・認証の分離・レート）は[実践例][multi-tenant]にあります。
 
 ## client は Partition を持たない
 

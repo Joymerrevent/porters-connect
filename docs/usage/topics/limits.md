@@ -74,9 +74,9 @@ await t.candidate.update(10001, { P_Phase: [userInput] }); // 不正なら Porte
 | `ContentType` | `image/jpeg` / `image/gif` / `image/png` / `image/bmp` のみ |
 
 **一括書き込み（`createMany` / `updateMany`）では画像を送れません**。一括は「1 リクエスト
-約 15000 文字」を前提に 200 件ずつへ分割しており、画像はその前提を桁で壊します。黙って
-PORTERS に蹴られるより、**何件目が画像を持つか**を添えて送信前に弾き、単発の `create` /
-`update` へ誘導します（そちらは画像に対応しています）。
+約 15000 文字」を前提に 200 件ずつへ分割しており、画像は 1 件でその前提を大きく超えます。PORTERS から
+原因の分からないエラーが返るより、**何件目が画像を持つか**を添えて送信前に弾き、単発の `create` /
+`update` を使うよう案内します（そちらは画像に対応しています）。
 
 `Image` の値は 3 つのサブ要素すべてが必須です。**値を消す書き方は用意していません**
 （空要素を送ると消えるのか、reference に記載が無いため）<!-- 根拠: LV-22 -->。
@@ -108,7 +108,7 @@ PORTERS に蹴られるより、**何件目が画像を持つか**を添えて�
 ```ts
 import { createThrottle, PortersClient } from "@joymerrevent/porters-connect";
 
-// 共有から降りる／別の上限で走らせる
+// 共有から外れる／別の上限で動かす
 const porters = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
