@@ -5,7 +5,7 @@
 
 ## まず知ること
 
-- **カスタム項目はテナントごとに違う**ので、ライブラリに同梱の静的な型には含められません。**利用側が `defineFields` で
+- **カスタム項目はテナントごとに違う**ので、ライブラリがあらかじめ持っている型には含められません。**利用側が `defineFields` で
   宣言する**と、その項目が読み書きの型に現れます<!-- 根拠: ADR-0004（ハイブリッド方式）・ADR-0023（`defineFields` の詳細設計） -->。
 - **宣言は `tenant(id, { fields })` で Partition と一緒に渡します。** client は宣言を持ちません。
 - **宣言していないカスタム項目は型が受け付けません**（コンパイルエラー）。宣言せずに触る方法は別にあります。
@@ -333,7 +333,7 @@ for await (const f of t.field.of("candidate").searchAll()) {
 `defineFields` は**宣言の検証境界**です<!-- 根拠: ADR-0023 D4 -->。次の 2 つを**同期的に**検査し、
 違反すると `PortersConfigError` を投げます。
 
-- **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）は同梱済みなので宣言の対象外です。
+- **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）はライブラリがあらかじめ型を持っているので、宣言の対象外です。
 - **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume` のみ。
 
 ```ts
