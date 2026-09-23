@@ -31,7 +31,7 @@ Resource API が返す Result Code の一覧と、ライブラリがそれを再
 | 102       | パラメータが多すぎ                                                                     | 不可（入力）                                 |
 | 103       | パラメータ値が無効（Content-Type/version/日時/Option など）                            | 不可（入力）                                 |
 | 104〜116  | 値の書式・型・範囲エラー                                                               | 不可（入力）                                 |
-| 124       | 範囲超過（itemstate と 91 日以前の UpdateDate）                                        | 不可（入力）                                 |
+| 124       | 範囲超過（itemstate と、91 日以上前の UpdateDate）                                     | 不可（入力）                                 |
 | 126 / 127 | Phase 関連エラー                                                                       | 不可（入力）                                 |
 | 133       | itemstate 値が無効                                                                     | 不可（入力）                                 |
 | 146       | version 値が無効                                                                       | 不可（入力）                                 |
