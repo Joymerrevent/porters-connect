@@ -146,12 +146,12 @@ PORTERS の reference はエラーを **2 系統**で定義しています — �
 
 ライブラリは**情報量の多い方**を採ります。
 
-| 応答                            | 届くエラー                                                    |
-| ------------------------------- | ------------------------------------------------------------- |
-| 200 ＋ `<Code>`≠0               | その `<Code>` の分類（従来どおり）＋ `httpStatus: 200`        |
-| 200 以外 ＋ PORTERS の `<Code>` | **`<Code>` が優先**（envelope が最も具体的）＋ `httpStatus`   |
-| 200 以外 ＋ envelope 無し       | **status から分類**（下表）・`code` は `null`                 |
-| 200 以外 ＋ parse できるボディ  | 値は返さない（HTML のエラーページは「空ページ」に見えるため） |
+| 応答                                     | 届くエラー                                                       |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| 200 ＋ `<Code>`≠0                        | その `<Code>` による分類 ＋ `httpStatus: 200`                    |
+| 200 以外 ＋ PORTERS の `<Code>`          | **`<Code>` が優先**（PORTERS の応答が最も具体的）＋ `httpStatus` |
+| 200 以外 ＋ PORTERS の応答ではないボディ | **status から分類**（下表）・`code` は `null`                    |
+| 200 以外 ＋ XML として読めるボディ       | 値は返さない（HTML のエラーページは「空ページ」に見えるため）    |
 
 status からの分類は次のとおりです。
 
@@ -201,7 +201,7 @@ try {
 | 200 で返ってきたボディ                           | 届くもの                                                   |
 | ------------------------------------------------ | ---------------------------------------------------------- |
 | HTML のログイン画面 / 通知ページ                 | `resource response root is <html>, expected <Candidate>`   |
-| 別リソースの正規 envelope（`<Job …>`）           | `resource response root is <Job>, expected <Candidate>`    |
+| 別リソースの正常な応答（`<Job …>`）              | `resource response root is <Job>, expected <Candidate>`    |
 | ルートは正しいが `<Code>` が無い                 | `resource response has no <Code> (not a PORTERS envelope)` |
 | XML として読めない（JSON・空・プレーンテキスト） | `unparseable resource response`                            |
 
@@ -229,7 +229,7 @@ new PortersClient({ hostname: "127.0.0.1", port: 4010, scheme: "http" }); // ✅
 new PortersClient({ hostname: "[::1]", port: 4010, scheme: "http" }); // ✅ IPv6 は角括弧付き
 new PortersClient({ hostname: "127.0.0.1:4010" }); // ❌ ポートは `port` へ
 new PortersClient({ hostname: "https://xxxxx.example.com" }); // ❌ PortersConfigError
-new PortersClient({ hostname: "" }); // ❌ （env 未設定を押し通した場合）
+new PortersClient({ hostname: "" }); // ❌ （環境変数が未設定のまま渡した場合）
 new PortersClient({ hostname: "xxxxx.example.com/gw" }); // ❌ パス付きは対象外
 new PortersClient({ hostname: "a.test", port: 0 }); // ❌ port は 1〜65535 の整数
 ```
@@ -275,7 +275,7 @@ new PortersClient({ hostname: "xxxxx.example.com", fields: myFields }); // ❌ �
 | `transient`  | 一時障害・トランザクション                 | 自動リトライ対象（再試行可）                                                 |
 | `network`    | 接続・タイムアウト・レート切断             | 自動リトライ後も失敗なら時間をおく／回線・レートを確認                       |
 | `server`     | PORTERS 内部エラー                         | 時間をおいて再試行／継続するなら PORTERS へ報告                              |
-| `config`     | 設定・使い方の誤り                         | 呼び出し前の不正：宣言・オプション・サイズを修正                             |
+| `config`     | 設定・使い方の誤り                         | 呼び出す前に分かる誤り。宣言・オプション・サイズを修正                       |
 | `unknown`    | 未知（どれにも当てはまらないもの）         | `code` と `hint` を確認／隠さず、エラーとして返している                      |
 
 ## 宣言型と実データの食い違い（`validation`）

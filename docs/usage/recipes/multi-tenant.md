@@ -72,7 +72,7 @@ import type { PartitionId } from "@joymerrevent/porters-connect";
 // SaaS: Partition ↔ 宣言の対応は自分の DB から引く（ライブラリの責務ではありません）
 const t = porters.tenant(partition, { fields: fieldsFor(partition) });
 
-// 項目構成が同じテナント群: 1 行包んで使い回す
+// 項目構成が同じテナント群: 1 行の関数にして使い回す
 const tenant = (p: PartitionId) => porters.tenant(p, { fields: myFields });
 const t2 = tenant(2);
 ```

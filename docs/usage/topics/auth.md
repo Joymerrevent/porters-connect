@@ -93,7 +93,7 @@ const token = await porters.auth.getToken();
 永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（**認証のリクエストも API アクセス数に数えられます**）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
 ```ts
-// get / set / clear の 3 つ（StoredTokens とも型 export 済み）
+// get / set / clear の 3 つ（StoredTokens の型も export しています）
 type TokenStore = {
   get(): Promise<StoredTokens | undefined>; // 無ければ undefined
   set(tokens: StoredTokens): Promise<void>; // 取得・更新のたびに書き込まれる
@@ -103,8 +103,8 @@ type TokenStore = {
 type StoredTokens = {
   accessToken: string;
   refreshToken: string;
-  accessTokenExpiresAt: number; // epoch ms（絶対時刻）
-  refreshTokenExpiresAt: number; // epoch ms（絶対時刻）
+  accessTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
+  refreshTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
 };
 ```
 
@@ -114,7 +114,7 @@ type StoredTokens = {
 import { PortersClient } from "@joymerrevent/porters-connect";
 import type { TokenStore, StoredTokens } from "@joymerrevent/porters-connect";
 
-// 任意の KV ストアにバックする例
+// 任意の KV ストアに保存する例
 const tokenStore: TokenStore = {
   get: async () => {
     const json = await kv.get("porters:tokens");
@@ -164,7 +164,7 @@ await porters.auth.clearTokens();
 `auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
 
 ```ts
-// 実装するのは getAccessToken の 1 つだけ（opts は GetAccessTokenOptions として型 export 済み）
+// 実装するのは getAccessToken の 1 つだけ（opts の型は GetAccessTokenOptions）
 type TokenProvider = {
   getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
 };

@@ -31,7 +31,7 @@
 | **画像が 2MB 超**                                            | 送信前       | `PortersConfigError`（Base64 長から算出）                     |
 | **画像のファイル名が 255 バイト超**                          | 送信前       | `PortersConfigError`（文字数ではなくバイト数）                |
 | **画像の ContentType が 4 種（jpeg / gif / png / bmp）以外** | 送信前       | `PortersConfigError`                                          |
-| **一括書き込みに画像が混ざる**                               | 送信前       | `PortersConfigError`（単発 `create` / `update` へ）           |
+| **一括書き込みに画像が混ざる**                               | 送信前       | `PortersConfigError`（単件の `create` / `update` を案内）     |
 | **alias が XML の名前として不正**                            | 送信前       | `PortersConfigError`（選択肢 alias・項目 alias）              |
 | **スロットルの上限が範囲外**                                 | 構築時       | `PortersConfigError`（`createThrottle` の値。範囲は下記の表） |
 
@@ -67,15 +67,15 @@ await t.candidate.update(10001, { P_Phase: [userInput] }); // 不正なら Porte
 どうやってもその中に収まらないためです。ただし**外したぶんは別の検査で埋めます**<!-- 根拠: ADR-0064 -->。
 送信前に見るのは 3 つです。
 
-| 何を          | 上限                                                        |
-| ------------- | ----------------------------------------------------------- |
-| `Content`     | decode 後 **2MB**（Base64 の長さから算出します）            |
-| `FileName`    | 拡張子込み **255 バイト**（多バイト文字は 1 文字 3 バイト） |
-| `ContentType` | `image/jpeg` / `image/gif` / `image/png` / `image/bmp` のみ |
+| 何を          | 上限                                                          |
+| ------------- | ------------------------------------------------------------- |
+| `Content`     | 元のファイルの大きさが **2MB**（Base64 の長さから算出します） |
+| `FileName`    | 拡張子込み **255 バイト**（多バイト文字は 1 文字 3 バイト）   |
+| `ContentType` | `image/jpeg` / `image/gif` / `image/png` / `image/bmp` のみ   |
 
 **一括書き込み（`createMany` / `updateMany`）では画像を送れません**。一括は「1 リクエスト
 約 15000 文字」を前提に 200 件ずつへ分割しており、画像は 1 件でその前提を大きく超えます。PORTERS から
-原因の分からないエラーが返るより、**何件目が画像を持つか**を添えて送信前に弾き、単発の `create` /
+原因の分からないエラーが返るより、**何件目が画像を持つか**を添えて送信前に弾き、単件の `create` /
 `update` を使うよう案内します（そちらは画像に対応しています）。
 
 `Image` の値は 3 つのサブ要素すべてが必須です。**値を消す書き方は用意していません**

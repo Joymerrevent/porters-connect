@@ -337,7 +337,7 @@ const departments = await t.department.search();
 // Job の項目定義（U_ / A_ のカスタム項目を含む）
 const fields = await t.field.of("job").search();
 
-// 選択肢マスタ。入れ子のツリーを深さ優先でフラットにして返す
+// 選択肢マスタ。階層を親から順に 1 つの配列で返す
 const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 

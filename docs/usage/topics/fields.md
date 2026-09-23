@@ -92,9 +92,9 @@ Field Type は 21 種ありますが、Data Type は 17 種にまとまります
 
 PORTERS は「どのリソースか」を**非連続な数値**で表します（Candidate `1` / Job `3` / Client `5` /
 Process `7` / Recruiter `9` / Sales `11` / Contract `13` / Resume `17` / Activity `19` /
-Opportunity `25` / Contact `27`）。この値は**2 つの立場**で出てきて、ライブラリでの書き方が違います。
+Opportunity `25` / Contact `27`）。この値は**2 つの場所**で出てきて、ライブラリでの書き方が違います。
 
-| 立場                                           | 例                                            | ライブラリ                                  |
+| どこに現れるか                                 | 例                                            | ライブラリ                                  |
 | ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
 | **呼び出し全体**が何の話か（URL パラメータ）   | Phase / Field / Attachment の `resource=`     | **名前で指定する** — `t.phase.of("client")` |
 | **そのレコード**が何に付いているか（項目の値） | `Activity.P_Resource`、`Field.P_ResourceType` | **数値**（宣言した Data Type どおり）       |
