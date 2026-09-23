@@ -70,16 +70,16 @@ Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。
 
 読み書きで現れる代表的な形:
 
-| Data Type           | 読むと                             | 書くとき                     |
-| ------------------- | ---------------------------------- | ---------------------------- |
-| `Number`            | `number`                           | `number`                     |
-| `SinglelineText` 他 | `string`                           | `string`                     |
-| `Option`            | **`string[]`**（選択された alias） | `string[]`                   |
-| `DateTime` / `Date` | **ISO 8601**（[日時][datetime]）   | ISO 8601                     |
-| `User`              | `{ P_Id, P_Type, P_Name, P_Mail }` | **`User.P_Id` だけ**（数値） |
-| `System[Reference]` | 参照先の id（数値）                | **参照先の `P_Id` だけ**     |
-| `Image`             | 要求したサブ項目だけ               | 3 つとも必須                 |
-| `Link`              | Contact id ／ User ／ Department   | id だけ（数値）              |
+| Data Type           | 読むと                             | 書くとき                                               |
+| ------------------- | ---------------------------------- | ------------------------------------------------------ |
+| `Number`            | `number`                           | `number`                                               |
+| `SinglelineText` 他 | `string`                           | `string`                                               |
+| `Option`            | **`string[]`**（選択された alias） | `string[]`                                             |
+| `DateTime` / `Date` | **ISO 8601**（[日時][datetime]）   | ISO 8601                                               |
+| `User`              | `{ P_Id, P_Type, P_Name, P_Mail }` | **`User.P_Id` だけ**（数値）                           |
+| `System[Reference]` | 参照先の id（数値）                | **参照先の `P_Id` だけ**                               |
+| `Image`             | 要求したサブ項目だけ               | `FileName` / `ContentType` / `Content` の 3 つとも必須 |
+| `Link`              | Contact id ／ User ／ Department   | 参照先の id だけ（数値）                               |
 
 **読みと書きでかたちが違う**のが PORTERS Connect API の性質です。`User` は読むと入れ子で返り、参照は既定では参照先の id で返り
 （`expand` で入れ子にできる）、書くときはどちらも id だけを送ります。ライブラリはそれを型で分けています（`Candidate` と `CandidateUpdateInput` が

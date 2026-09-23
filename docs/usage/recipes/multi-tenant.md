@@ -16,7 +16,7 @@
 | ------------------------------------------------- | ---------------------------------------------------------------------- |
 | `porters.partition.search()`                      | テナント登録時に、アクセスできる Partition を発見する                  |
 | `porters.tenant(id, { fields })`                  | リクエストごとに Partition とカスタム項目の宣言を指定する              |
-| `defineFields` の spread 合成                     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる             |
+| `defineFields` の結果を spread（`...`）で合成     | App 共通（`A_`）とテナント固有（`U_`）の宣言を組み合わせる             |
 | `TenantScope<typeof fields>` / `TenantOptions<…>` | 宣言したスコープを関数に渡すときの型                                   |
 | `tokenStore` ／ client を分ける                   | 認証（トークン）をテナントごとに分けたいとき                           |
 | `createThrottle` ／ 自前の `Throttle`             | 共有から外れて別の上限で動かす／プロセスを跨いで協調する（自前の実装） |

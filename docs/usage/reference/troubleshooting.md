@@ -24,7 +24,7 @@
 | **書き込み・condition の日時が変換不能**        | —（渡した値の書式）                   | `validation` | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）                   |
 | `new PortersClient(...)` がその場でエラーになる | `hostname` / `port` / `scheme` の書式 | `config`     | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                       |
 | `PortersNetworkError` が断続的に出る            | —（切断 / タイムアウト）              | `network`    | 自動リトライ後も失敗なら時間をおく／レート・回線を確認                         |
-| `code` が `null` で `httpStatus` がある         | —（HTTP のみ）                        | status 由来  | PORTERS の応答ではない。間の LB / プロキシ / WAF を確認（上記の節）            |
+| `code` が `null` で `httpStatus` がある         | —（HTTP のみ）                        | status 由来  | PORTERS の応答ではない。間のロードバランサ / プロキシ / WAF を確認（上記の節） |
 | `resource response root is …` が出る            | —（200 ＋ 別物のボディ）              | `unknown`    | 中間装置が代わりに応答している。`hostname` と経路を確認                        |
 
 <!-- 根拠:

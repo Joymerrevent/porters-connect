@@ -15,7 +15,7 @@
 | `search` | —（読み取り専用） |
 
 ```ts
-const options = await t.option.search({ alias: "Option.P_Gender" }); // 部分木を深さ優先で平らに
+const options = await t.option.search({ alias: "Option.P_Gender" }); // 指定した alias 以下の選択肢を、階層順に 1 つの配列で返す
 for (const o of options) console.log(o.P_Alias, o.P_Name, o.P_ParentId);
 ```
 
