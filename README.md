@@ -28,7 +28,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 
 1. **PORTERS 契約 ＋ Connect API オプション契約**（オプションは別契約）。
 2. **API アプリの登録**。ここで Redirect URL を決め、**ホスト名・App ID・App Secret** が
-   通知されます（いずれも機密情報・ハードコード禁止）。
+   通知されます（いずれも機密情報なので、コードに直接書かず環境変数で渡します）。
 3. **初回のみブラウザで権限付与**（人手・Company DB ごとに 1 回）。以降はライブラリが
    `code_direct`（サーバ間）で無人運用します。
 4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
@@ -54,7 +54,7 @@ npm i @joymerrevent/porters-connect
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  hostname: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。ハードコード禁止
+  hostname: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。コードに直接書かず環境変数で渡す
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
