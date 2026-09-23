@@ -16,8 +16,8 @@
 const t = porters.tenant(123); // 以降 `t` をクライアントのように使う
 ```
 
-**id を知らないところから始めるなら**、Partition マスタを読みます。これが唯一
-`partition` を送らない読み取りです（Partition を探すためのものだから）。
+**id を知らないところから始めるなら**、Partition マスタを読みます。これだけは
+`tenant(id)` を通さず、`porters` から直接呼びます（Partition を探すためのものだから）。
 
 ```ts
 const partitions = await porters.partition.search();
@@ -44,7 +44,7 @@ console.log(page.items.length); // このページの件数
 ```
 
 `condition` に書ける演算子は**項目の Data Type ごとに違います**。文字列に `part` / `full`、
-数値や日時に `ge` / `le` のように、型が許すものだけがエディタの補完候補に出ます。書き方の全体像は
+数値や日時に `ge` / `le`（以上・以下）のように、型が許すものだけがエディタの補完候補に出ます。書き方の全体像は
 [検索][search-records] にあります。
 
 ### いま何が起きたか
@@ -121,7 +121,7 @@ for await (const c of t.candidate.searchAll({
 **PORTERS Connect API の性質**で、[項目と値のかたち][aliases] にまとめてあります。
 
 テナント固有の項目（`U_` / `A_`）も読めますが、**宣言しないと `field` に書けず（コンパイルエラー）、
-要求もされません**。宣言のしかたは[カスタム項目][custom-fields]にあります。
+PORTERS への取得対象にも入りません**。宣言のしかたは[カスタム項目][custom-fields]にあります。
 
 ## 次に読む
 

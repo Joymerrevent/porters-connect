@@ -46,7 +46,7 @@ await t.candidate.update(10001, { P_Mail: "new@example.com" });
 
 渡した項目だけが更新されます。
 
-**`P_RegistrationDate` / `P_UpdateDate` は書けません**（PORTERS が管理します）。入力型から外してあるので、
+**`P_RegistrationDate` / `P_UpdateDate` は書けません**（PORTERS が管理します）。`create` / `update` に渡す型に含めていないので、
 書こうとするとコンパイルが通りません。
 
 ## 書くときはかたちが変わる
@@ -63,12 +63,13 @@ await t.candidate.update(10001, { P_Mail: "new@example.com" });
 日時だけは**送る前に検査されます**。変換できない書式はライブラリが弾きます。
 
 ```ts
-// PortersConfigError: P_PhaseDate: cannot write "2026/09/10" as DateTime
+// await t.candidate.update(10001, { P_PhaseDate: "2026/09/10" });
+// → PortersConfigError: P_PhaseDate: cannot write "2026/09/10" as DateTime
 await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00Z" }); // ← これが正しい形
 ```
 
 他の型はそのまま送って PORTERS に判断させます。**送る前の検査を厳しくしすぎると、サーバーが受け付ける値を
-ライブラリが弾いてしまう**からです。読みと書きで検査の厳しさが違うのは、意図したものです。型ごとの値のかたちは
+ライブラリが弾いてしまう**からです。読み取りでは値を型どおりに変換し、書き込みでは日時だけを検査する、という違いは意図したものです。型ごとの値のかたちは
 [項目と値のかたち][fields]にあります。
 
 ## 新規作成の必須項目
@@ -175,7 +176,7 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 
 ## 失敗したとき
 
-失敗すると `PortersError` の系統の例外が投げられ、`category` で場合分けできます。
+失敗すると `PortersError` を継承した例外が投げられ、`category` で場合分けできます。
 
 ```ts
 try {

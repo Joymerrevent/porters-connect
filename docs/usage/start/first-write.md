@@ -14,7 +14,7 @@
 
 ```ts
 const newId = await t.candidate.create({
-  P_Owner: 5, // 担当ユーザーの id。**新規作成では必須**
+  P_Owner: 5, // 担当ユーザーの id。新規作成では必須
   P_Name: "山田 太郎",
   P_Mail: "taro@example.com",
 });
@@ -42,8 +42,8 @@ await t.candidate.update(10001, { P_Mail: "new@example.com" });
 
 渡した項目だけが更新されます。
 
-**`P_RegistrationDate` / `P_UpdateDate` は書けません**（PORTERS が管理します）。入力型から
-外してあるので、書こうとするとコンパイルが通りません。
+**`P_RegistrationDate` / `P_UpdateDate` は書けません**（PORTERS が管理します）。`create` / `update` に渡す型に
+含めていないので、書こうとするとコンパイルが通りません。
 
 ## 書くときはかたちが変わる
 
@@ -58,12 +58,13 @@ await t.candidate.update(10001, { P_Mail: "new@example.com" });
 日時だけは**送る前に検査されます**。変換できない書式はライブラリが弾きます。
 
 ```ts
-// PortersConfigError: P_PhaseDate: cannot write "2026/09/10" as DateTime
+// await t.candidate.update(10001, { P_PhaseDate: "2026/09/10" });
+// → PortersConfigError: P_PhaseDate: cannot write "2026/09/10" as DateTime
 await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00Z" }); // ← これが正しい形
 ```
 
 他の型はそのまま送って PORTERS に判断させます。**送る前の検査を厳しくしすぎると、PORTERS が受け付ける値を
-ライブラリが弾いてしまう**からです。読みと書きで検査の厳しさが違うのは、意図したものです。
+ライブラリが弾いてしまう**からです。読み取りでは値を型どおりに変換し、書き込みでは日時だけを検査する、という違いは意図したものです。
 
 ## 消せないことが書き方に影響するところ
 
@@ -85,7 +86,7 @@ await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00Z" }); // ←
 
 ## 失敗したとき
 
-失敗すると `PortersError` の系統の例外が投げられ、`category` で場合分けできます。
+失敗すると `PortersError` を継承した例外が投げられ、`category` で場合分けできます。
 
 ```ts
 try {

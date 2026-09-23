@@ -20,7 +20,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 - **独自 OAuth を意識させない**：`code_direct` によるトークン取得・キャッシュ・更新を自動化。
 - **上限を守る**：スロットリング・リトライ（指数バックオフ）・リクエストの長さの検査を内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
-- **PORTERS の全リソースに対応**：データ系 13 種（Phase・Attachment を含む）＋ マスタ Read 5 種。
+- **PORTERS の全リソースに対応**：データ系 13 種（Phase・Attachment を含む）＋ マスタ系 5 種（読み取り専用）。
 
 ## 前提
 
@@ -34,7 +34,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
 
 揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
-あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。実行ファイルは ESM（`import`）の 1 つですが、
+あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。ビルド済みの JavaScript ファイルは ESM（`import`）の 1 つですが、
 CJS（`require`）からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
 
 契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
@@ -59,7 +59,7 @@ const porters = new PortersClient({
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
 
-// partition（Company DB）は tenant で一度だけ指定する。**単一テナントでも同じ書き方**
+// partition（Company DB）は tenant(id) で指定する（既定の Partition は無い）。単一テナントでも同じ書き方
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({
@@ -72,7 +72,7 @@ const page = await t.candidate.search({
 console.log(page.total, page.items[0]?.P_Name);
 ```
 
-続きは[入門][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
+続きは[導入][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
 
 ## リソースと操作
 
@@ -86,10 +86,10 @@ console.log(page.total, page.items[0]?.P_Name);
 | `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴 |
 | `t.activity`    | アクティビティ |                |              |
 
-マスタ Read は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
+マスタ系は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
 
-**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of()` で
-指定するものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
+**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of("candidate")` のように
+対象リソースを指定するもの（Field・Phase・Attachment）があります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
 [API リファレンス][api-ref]が正確な定義です。
 
 ## ドキュメント
@@ -102,7 +102,7 @@ console.log(page.total, page.items[0]?.P_Name);
 | **主題別**       | 認証・検索・書き込み・カスタム項目・上限……の 11 主題を、考え方から細かい規則まで 1 ページで |
 | **リソース別**   | 18 リソースを 1 ページずつ。呼べるメソッド・固有の注意・必須項目・型                        |
 | **実践例**       | 毎日の差分同期・複数テナントなど、用途に沿った組み立て                                      |
-| **リファレンス** | [公開 API の全記号][api-ref]（JSDoc から生成）と [PORTERS API の事実][ref]                  |
+| **リファレンス** | [公開 API リファレンス][api-ref]（JSDoc から生成）と [PORTERS API の事実][ref]              |
 
 目次の末尾に「〜したい → 読む場所」の索引表があります。
 
@@ -120,15 +120,15 @@ console.log(page.total, page.items[0]?.P_Name);
 
 ## 対応バージョン
 
-- **契約は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定送信し、**v2 を動作の前提**とします（担当者型・部署型 Link 等は v2 必須）。互換性はこの **API version** で明示します。
+- **互換性の基準は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定で送信し、**v2 を動作の前提**とします（担当者型・部署型の参照項目（Link）などは v2 が必要）。互換性はこの **API version** で明示します。
 - **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正しい情報の出どころは [PORTERS API の事実][ref]**（PORTERS の公式ドキュメントに基づく）。
 
 ## リンク
 
 **この README は「最短で動かす」ところまで**です。全体は目次から読めます<!-- 根拠: ADR-0070 -->。
 
-- 利用者向け：[docs/usage][docs-index]（目次）／[公開 API の全記号][api-ref]／[PORTERS API の事実][ref]
-- 開発・保守：[docs/README.md][docs-readme]（ADR・基本設計・ロードマップ・台帳への入口）
+- 利用者向け：[docs/usage][docs-index]（目次）／[公開 API リファレンス][api-ref]／[PORTERS API の事実][ref]
+- 開発・保守：[docs/README.md][docs-readme]（ADR（設計判断の記録）・基本設計・ロードマップ・台帳）
 - 提供元：[Joymerrevent][joymerrevent]
 
 ## コントリビュート / セキュリティ

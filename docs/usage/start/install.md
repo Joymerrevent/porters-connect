@@ -18,13 +18,13 @@ npm i @joymerrevent/porters-connect
 
 **Node.js 22.12 以上**が要ります。型定義は同梱しているので、TypeScript なら追加の
 `@types` は要りません。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
-「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、対象にしていません。
+「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、動作を保証する対象にしていません。
 
 ### CJS から `require` する
 
-CJS（`require`）で書いているときに読む節です。ESM（`import`）で書いているなら、読み飛ばして構いません。
+CJS（CommonJS。`require` で読む形式）で書いているときに読む節です。ESM（`import`）で書いているなら、読み飛ばして構いません。
 
-パッケージに入っている実行ファイルは **ESM の 1 つだけ**です。CJS からも、同じファイルを `require` で読みます。
+パッケージに入っているビルド済みの JavaScript ファイルは **ESM の 1 つだけ**です。CJS からも、同じファイルを `require` で読みます。
 
 ```js
 const { PortersClient } = require("@joymerrevent/porters-connect");
@@ -40,7 +40,7 @@ Node が `require()` で ESM を読めるのは **22.12 以降**です（対応�
 ## クライアントを作成する
 
 渡すのは[前ページ][s-prereq]で受け取った 3 つの値です。**どれもコミットしないでください**
-（`.env.example` は値が空の雛形です）。
+（`.env` などに置き、リポジトリのコミット対象から外してください）。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -55,9 +55,6 @@ const porters = new PortersClient({
 初回の権限付与を自分のアプリから行うなら、**付与したいスコープ**もここで渡せます
 （次のページで使います）。
 
-この設定オブジェクトの型は **`PortersClientOptions`** という名前で export しています。設定を
-関数や別ファイルに切り出すときに使えます。
-
 ```ts
 const withScopes = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
@@ -66,6 +63,9 @@ const withScopes = new PortersClient({
   scopes: ["partition_r", "candidate_r", "user_r", "option_r"],
 });
 ```
+
+この設定オブジェクトの型は **`PortersClientOptions`** という名前で export しています。設定を
+関数や別ファイルに切り出すときに使えます。
 
 ## `hostname` は**サーバー名だけ**
 
@@ -86,7 +86,7 @@ const withScopes = new PortersClient({
 
 構築時にエラーにするのは、**気づかないまま別のホストに接続するより、起動時に止まるほうが安全**だからです。
 平文の `http` は `scheme: "http"` を**明示したときだけ**使えて、毎プロセス 1 回警告が出ます
-（警告を止めるには専用の環境変数が要ります。`http` を許可する設定と、警告を止める設定は別です）。
+（警告を止めるには環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` が要ります。`http` を許可する設定と、警告を止める設定は別です）。
 
 URL はライブラリが組み立てるので、利用側がエンドポイントの URL を書くことはありません。
 
@@ -97,7 +97,7 @@ URL はライブラリが組み立てるので、利用側がエンドポイン�
 - **認証**（トークン）— 次のページで通します
 - **どの Partition か** — `porters.tenant(id)` で指定します（[はじめての読み取り][s-read]）
 
-設定の誤りは**ここまでで**エラーになります。契約情報の誤りは**次のページ**でエラーになります。
+書き方の誤り（`hostname` の形式など）は**ここまでで**エラーになります。値そのものの誤り（App ID の間違いなど）は**次のページ**でエラーになります。
 原因を探すときは、この順に確かめてください。
 
 ## 次に読む

@@ -34,7 +34,7 @@ const files = t.attachment.of("resume"); // 履歴書に付く添付
 ```ts
 await files.search(); // 一覧（本体は含まない）
 await files.searchAll(); // 200 件を超える一覧を順に（本体は含まない）
-await files.get(900); // 1 件（**本体つき — 本体はここだけ**）
+await files.get(900); // 1 件（本体つき。本体はここだけ）
 await files.create(file); // 追加 → 採番された id
 await files.update(900, { fileName: "new.pdf" }); // 差し替え
 ```

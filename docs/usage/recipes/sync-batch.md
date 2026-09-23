@@ -120,7 +120,7 @@ for await (const c of t.candidate.searchAll({
   field: ["P_Id", "P_UpdateDate"],
   condition: { P_UpdateDate: { ge: since } },
 })) {
-  // 読み取った項目は **null になりうる**（要求しても PORTERS が返さない場合がある）。
+  // 読み取った項目は null になりうる（要求しても PORTERS が返さない場合がある）。
   // id が無いレコードは書き戻せないので飛ばす。
   if (typeof c.P_Id !== "number") continue;
   updates.push({ id: c.P_Id, fields: { P_Memo: "同期済み" } });
