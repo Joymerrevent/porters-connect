@@ -78,10 +78,10 @@ export type CandidateCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type CandidateUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Candidate accessor; `C` is the declared custom-field catalog merged on. */
-export type CandidateResource<C extends FieldCatalog = EmptyCatalog> = Resource<
-  typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
+export type CandidateResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
 
 export const createCandidateResource = <C extends FieldCatalog = EmptyCatalog>(
   deps: ResourceDeps,

@@ -39,6 +39,19 @@ own business vocabulary**, so it is carried but never printed unless a caller ex
 
 ***
 
+### required
+
+> `readonly` **required**: `Readonly`\<`Record`\<`string`, `boolean`\>\>
+
+Defined in: [src/fields/tenant-catalog.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L83)
+
+Bare alias -> whether the tenant marks the field required (`Field.P_Required` is `1`), for
+every field in [TenantCustomCatalog.fields](#fields). Any other value — `0`, absent, or one
+PORTERS does not document — reads as `false`: a wrong `true` would make generated code demand
+a value the tenant does not, and the caller would get a compile error with no visible reason.
+
+***
+
 ### resource
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)

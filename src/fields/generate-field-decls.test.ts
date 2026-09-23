@@ -285,3 +285,28 @@ describe("generateFieldDecls", () => {
     );
   });
 });
+
+// テナントの入力必須を既定で写す（ADR-0089 案3a）。
+describe("generateFieldDecls — required", () => {
+  it("prints { required: true } for a field the tenant marks required", async () => {
+    const source = sourceOf({
+      candidate: [
+        { P_Alias: "Person.U_score", P_Type: 3, P_Required: 1 },
+        { P_Alias: "Person.U_source", P_Type: 7, P_Required: 0 },
+      ],
+    });
+    const src = await generateFieldDecls(source, ["candidate"]);
+    expect(src).toContain("    U_score: f.number({ required: true }),\n");
+    expect(src).toContain("    U_source: f.option(),\n");
+  });
+
+  it("keeps the note after the call when the field is also required", async () => {
+    const source = sourceOf({
+      candidate: [{ P_Alias: "Person.U_seen", P_Type: 12, P_Required: 1 }],
+    });
+    const src = await generateFieldDecls(source, ["candidate"]);
+    expect(src).toContain(
+      "    U_seen: f.dateTime({ required: true }), // FT-12:",
+    );
+  });
+});

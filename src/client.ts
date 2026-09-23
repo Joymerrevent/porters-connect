@@ -56,7 +56,12 @@ import type {
   UserResource,
   DepartmentResource,
 } from "./resources";
-import type { CustomFor, DeclaredCatalogs, DefinedFields } from "./fields";
+import type {
+  CustomFor,
+  DeclaredCatalogs,
+  DefinedFields,
+  RequiredFor,
+} from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
 import type { PartitionId, Scheme, Scope } from "./types";
 
@@ -160,23 +165,50 @@ export type TenantOptions<C extends DeclaredCatalogs = EmptyCatalog> = {
  * (no nesting) are deliberately absent: none of them takes a partition.
  */
 export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
-  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
-  readonly job: JobResource<CustomFor<C, "job">>;
-  readonly client: ClientResource<CustomFor<C, "client">>;
-  readonly recruiter: RecruiterResource<CustomFor<C, "recruiter">>;
-  readonly contact: ContactResource<CustomFor<C, "contact">>;
-  readonly opportunity: OpportunityResource<CustomFor<C, "opportunity">>;
-  readonly activity: ActivityResource<CustomFor<C, "activity">>;
-  readonly contract: ContractResource<CustomFor<C, "contract">>;
-  readonly sales: SalesResource<CustomFor<C, "sales">>;
+  readonly candidate: CandidateResource<
+    CustomFor<C, "candidate">,
+    RequiredFor<C, "candidate">
+  >;
+  readonly job: JobResource<CustomFor<C, "job">, RequiredFor<C, "job">>;
+  readonly client: ClientResource<
+    CustomFor<C, "client">,
+    RequiredFor<C, "client">
+  >;
+  readonly recruiter: RecruiterResource<
+    CustomFor<C, "recruiter">,
+    RequiredFor<C, "recruiter">
+  >;
+  readonly contact: ContactResource<
+    CustomFor<C, "contact">,
+    RequiredFor<C, "contact">
+  >;
+  readonly opportunity: OpportunityResource<
+    CustomFor<C, "opportunity">,
+    RequiredFor<C, "opportunity">
+  >;
+  readonly activity: ActivityResource<
+    CustomFor<C, "activity">,
+    RequiredFor<C, "activity">
+  >;
+  readonly contract: ContractResource<
+    CustomFor<C, "contract">,
+    RequiredFor<C, "contract">
+  >;
+  readonly sales: SalesResource<CustomFor<C, "sales">, RequiredFor<C, "sales">>;
   // of(resource) で束ねる形は ADR-0061 案2a。
   /**
    * Phase history, reached through the resource it belongs to: `t.phase.of("client")`.
    * PORTERS requires that `resource` on every Phase call, so it is bound once.
    */
   readonly phase: PhaseAccessor;
-  readonly process: ProcessResource<CustomFor<C, "process">>;
-  readonly resume: ResumeResource<CustomFor<C, "resume">>;
+  readonly process: ProcessResource<
+    CustomFor<C, "process">,
+    RequiredFor<C, "process">
+  >;
+  readonly resume: ResumeResource<
+    CustomFor<C, "resume">,
+    RequiredFor<C, "resume">
+  >;
   // of(resource) で束ねる形は ADR-0080、write 側の <Resource> も同じ値で埋めるのは ADR-0081。
   /**
    * Attachments, reached through the resource they belong to: `t.attachment.of("resume")`.

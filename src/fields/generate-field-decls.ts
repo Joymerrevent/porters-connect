@@ -98,7 +98,9 @@ const resourceBlock = (
       ...(dataType === "DateTime" ? [TIME_OF_DAY_NOTE] : []),
     ];
     const comment = notes.length === 0 ? "" : ` // ${notes.join(" — ")}`;
-    return `    ${alias}: f.${BUILDER_METHOD[dataType]}(),${comment}`;
+    // テナントの入力必須（P_Required）を写す（ADR-0089 案3a）。厳しすぎれば生成物から消せる。
+    const args = catalog.required[alias] === true ? "{ required: true }" : "";
+    return `    ${alias}: f.${BUILDER_METHOD[dataType]}(${args}),${comment}`;
   });
   // Stryker disable EqualityOperator: equivalent — one alias appears once per resource, so the tie branch cannot occur
   const notes = [...catalog.undeclarable]

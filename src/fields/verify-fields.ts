@@ -8,10 +8,11 @@
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../xml/decode";
-import type {
-  CustomDataType,
-  CustomFieldResource,
-  DeclaredCatalogs,
+import {
+  declaredRequired,
+  type CustomDataType,
+  type CustomFieldResource,
+  type DeclaredCatalogs,
 } from "./define-fields";
 import {
   readCustomCatalog,
@@ -58,6 +59,22 @@ export type UnverifiableResource = {
   readonly cause: unknown;
 };
 
+// 報告だけで ok は倒さない（ADR-0089 案4a）。
+/**
+ * Declared `required: true` while the tenant does not mark the field required, or the reverse.
+ * Harmless either way — reads and writes work — so it does not clear {@link FieldVerification.ok}.
+ * `declared: true, tenant: false` is a declaration stricter than the tenant (perhaps on purpose);
+ * `declared: false, tenant: true` means `create` will not stop a missing value at compile time.
+ */
+export type RequiredMismatch = {
+  readonly resource: CustomFieldResource;
+  readonly alias: string;
+  /** Whether the declaration says `required: true`. */
+  readonly declared: boolean;
+  /** Whether the tenant marks the field required (`Field.P_Required` is `1`). */
+  readonly tenant: boolean;
+};
+
 /** A tenant field that exists but no declaration can express (carried through from the catalog). */
 export type UndeclarableTenantField = UndeclarableField & {
   readonly resource: CustomFieldResource;
@@ -70,8 +87,8 @@ export type FieldVerification = {
    * {@link FieldVerification.missing}, {@link FieldVerification.typeMismatch} or
    * {@link FieldVerification.unverifiable}.
    *
-   * `undeclared` and `undeclarable` do **not** clear this flag: neither breaks anything, they are
-   * there to be read.
+   * `undeclared`, `undeclarable` and `requiredMismatch` do **not** clear this flag: none of them
+   * breaks anything, they are there to be read.
    */
   readonly ok: boolean;
   readonly missing: readonly MissingField[];
@@ -79,6 +96,7 @@ export type FieldVerification = {
   readonly undeclared: readonly UndeclaredField[];
   readonly unverifiable: readonly UnverifiableResource[];
   readonly undeclarable: readonly UndeclarableTenantField[];
+  readonly requiredMismatch: readonly RequiredMismatch[];
 };
 
 /** Options for {@link verifyFields}. */
@@ -123,9 +141,11 @@ export const verifyFields = async (
   const undeclared: UndeclaredField[] = [];
   const unverifiable: UnverifiableResource[] = [];
   const undeclarable: UndeclarableTenantField[] = [];
+  const requiredMismatch: RequiredMismatch[] = [];
 
   for (const resource of declaredResources(fields)) {
     const declared = fields[resource] ?? {};
+    const declaredAsRequired = declaredRequired(fields, resource);
     let actual;
     try {
       actual = await readCustomCatalog(source, resource, {
@@ -159,6 +179,16 @@ export const verifyFields = async (
           actual: actualType,
         });
       }
+      const declaredReq = declaredAsRequired.has(alias);
+      const tenantReq = actual.required[alias] === true;
+      if (declaredReq !== tenantReq) {
+        requiredMismatch.push({
+          resource,
+          alias,
+          declared: declaredReq,
+          tenant: tenantReq,
+        });
+      }
     }
     for (const [alias, actualType] of Object.entries(actual.fields)) {
       if (declared[alias] === undefined) {
@@ -177,11 +207,20 @@ export const verifyFields = async (
     undeclared,
     unverifiable,
     undeclarable,
+    requiredMismatch,
   };
 };
 
 // One line per problem, so the thrown message says which field rather than just "some mismatch".
-const lines = (report: FieldVerification): readonly string[] => [
+// assertFieldsMatch が判定に使う区分だけ。報告の区分が増えても、報告を自分で組み立てている
+// 呼び出し側（テストのスタブなど）を壊さないよう、引数はこれだけを要求する（ADR-0089 で requiredMismatch を足したとき）。
+type Fatal = Pick<
+  FieldVerification,
+  "ok" | "missing" | "typeMismatch" | "unverifiable"
+> &
+  Partial<FieldVerification>;
+
+const lines = (report: Fatal): readonly string[] => [
   ...report.typeMismatch.map(
     (m) =>
       `${m.resource}.${m.alias}: declared ${m.declared}, tenant has ${m.actual}`,
@@ -204,12 +243,12 @@ const lines = (report: FieldVerification): readonly string[] => [
  * resource that could not be read**. That last one is deliberate: "we could not check" is not
  * "everything is fine", and passing it silently would defeat the point of asking.
  *
- * `undeclared` / `undeclarable` never throw — nothing is broken by either.
+ * `undeclared` / `undeclarable` / `requiredMismatch` never throw — nothing is broken by any of them.
  *
  * @example
  * assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
  */
-export const assertFieldsMatch = (report: FieldVerification): void => {
+export const assertFieldsMatch = (report: Fatal): void => {
   if (report.ok) return;
   const detail = lines(report);
   throw new PortersConfigError(

@@ -44,6 +44,7 @@ grep -rn "VERIFY(live)" src test
 | LV-29 | `System[Department]` は書けるか・書けるならどの形か      | 未確認 |
 | LV-30 | Department Read で 6 項目すべてを `field` に並べられるか | 未確認 |
 | LV-31 | 時分型の Read が秒 `00` 以外を返すことがあるか           | 未確認 |
+| LV-32 | Write API は `P_Required=1` の項目の欠落を弾くか         | 未確認 |
 
 ---
 
@@ -518,6 +519,23 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: 常に `00` と分かっても契約は変えない（`"HH:mm:ss"` の分岐が単に通らなくなるだけ）。
   `00` 以外があると分かれば、ガイドに「秒が付くことがある」を明記する
 
+## LV-32 Write API は `P_Required=1` の項目の欠落を弾くか
+
+- **現在の対応 / 仮定**: **前提にしない**。テナントが入力必須にした項目（Field Read の `P_Required=1`）は、
+  宣言で `required: true` と書いたときだけ `create` の入力型で必須にする（型だけ・実行時の検査はしない）。
+  `generateFieldDecls` は `P_Required=1` の項目に `{ required: true }` を出し、`verifyFields` は宣言との
+  食い違いを `requiredMismatch` で報告する（[ADR-0089][a89]）
+- **不確実な理由**: 出典（[Field の項目][ref-field]）は `P_Required` を「項目の必須設定状態」とだけ書き、
+  **Write API がその設定を強制するか**（欠けていたら Result Code で弾くのか、空のまま登録するのか）は
+  書かれていない。画面の入力必須と API の検査が同じとは限らない
+- **コード箇所**: `src/fields/tenant-catalog.ts`（`required` を読むところ）
+- **確認方法**: カスタム項目を入力必須にした環境で、その項目を渡さずに `create` を送り、Result Code で
+  弾かれるか・空のまま登録されるかを確かめる。標準項目の「新規必須」列の `●` と同じ扱いかも見る
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: どちらに転んでも型の振る舞いは変えない（弾くなら「PORTERS より手前で止める」、弾かないなら
+  「PORTERS が止めない欠落を止める」）。変わるのはガイド「カスタム項目」の説明だけ
+
 ## 状態の意味
 
 **3 値。`未確認` だけが「まだやることが残っている」状態**で、残る 2 つはどちらも終端です。
@@ -587,3 +605,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [lv18]: #lv-18-user-read-で拡張-13-項目を-field-に並べられるか
 [a86]: adr/0086-time-of-day-fields.md
 [src-tod]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
+[a89]: adr/0089-custom-field-required-on-create.md
+[ref-field]: usage/reference/resource-api/resources/field.md

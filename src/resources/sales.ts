@@ -124,9 +124,12 @@ export type SalesCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type SalesUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Sales accessor; `C` is the declared custom-field catalog merged on. */
-export type SalesResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+export type SalesResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number],
+  (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
 >;
 

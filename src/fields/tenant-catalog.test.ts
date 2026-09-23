@@ -226,3 +226,38 @@ describe("readCustomCatalog", () => {
     expect(catalog.undeclarable).toEqual([]);
   });
 });
+
+// テナントの入力必須（P_Required）を読む（ADR-0089）。1 だけが必須、それ以外は任意に倒す。
+describe("readCustomCatalog — required", () => {
+  it("reads P_Required = 1 as required, for each declarable field", async () => {
+    const source = sourceOf([
+      { P_Alias: "Person.U_must", P_Type: 3, P_Required: 1 },
+      { P_Alias: "Person.U_may", P_Type: 3, P_Required: 0 },
+    ]);
+    const catalog = await readCustomCatalog(source, "candidate");
+    expect(catalog.required).toStrictEqual({ U_must: true, U_may: false });
+  });
+
+  it("reads an absent or undocumented P_Required as not required (never the strict side)", async () => {
+    const source = sourceOf([
+      { P_Alias: "Person.U_absent", P_Type: 3 },
+      { P_Alias: "Person.U_null", P_Type: 3, P_Required: null },
+      { P_Alias: "Person.U_two", P_Type: 3, P_Required: 2 },
+    ]);
+    const catalog = await readCustomCatalog(source, "candidate");
+    expect(catalog.required).toStrictEqual({
+      U_absent: false,
+      U_null: false,
+      U_two: false,
+    });
+  });
+
+  it("does not list fields that cannot be declared", async () => {
+    const source = sourceOf([
+      { P_Alias: "Person.U_score", P_Type: 3, P_Required: 1 },
+      { P_Alias: "Person.U_weird", P_Type: 999, P_Required: 1 },
+    ]);
+    const catalog = await readCustomCatalog(source, "candidate");
+    expect(catalog.required).toStrictEqual({ U_score: true });
+  });
+});

@@ -8,7 +8,7 @@
 
 > **MissingField** = `object`
 
-Defined in: [src/fields/verify-fields.ts:23](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L23)
+Defined in: [src/fields/verify-fields.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L24)
 
 Declared, but the tenant has no such field. The read/write request would still ask for it.
 
@@ -18,7 +18,7 @@ Declared, but the tenant has no such field. The read/write request would still a
 
 > `readonly` **alias**: `string`
 
-Defined in: [src/fields/verify-fields.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L25)
+Defined in: [src/fields/verify-fields.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L26)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/fields/verify-fields.ts:25](https://github.com/Joymerrevent/por
 
 > `readonly` **declared**: `DataType`
 
-Defined in: [src/fields/verify-fields.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L26)
+Defined in: [src/fields/verify-fields.ts:27](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L27)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [src/fields/verify-fields.ts:26](https://github.com/Joymerrevent/por
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/verify-fields.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L24)
+Defined in: [src/fields/verify-fields.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L25)

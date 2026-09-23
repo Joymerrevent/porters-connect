@@ -1,7 +1,7 @@
 # RV-62 🟢 カスタム項目を `create` の必須として宣言できない（テナントの `P_Required` を型に写せない）
 
 - 重要度: 🟢 ／ 観点: DX / API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -69,12 +69,24 @@
 `generateFieldDecls` が `P_Required=1` を写す・`verifyFields` は報告だけ）。案 (b) のライブ検証の項目は、
 `pnpm check:lv` がコードの印と両方向で突き合わせるので実装の PR で足す。
 
-**accepted（2026-09-24）。** decider が推奨どおり（案1a ＋ 2a ＋ 3a ＋ 4a）を選んだ。実装待ち（状態は open のまま。
-実装の PR で fixed にする）。
+**accepted（2026-09-24）。** decider が推奨どおり（案1a ＋ 2a ＋ 3a ＋ 4a）を選んだ。
+
+**実施（2026-09-24・本 PR）。** 案 (a)(b)(c) をすべて処置した。
+
+- `defineFields` のビルダーが `{ required: true }` を受け、`create` / `createMany` の入力型で必須になる（`src/fields/define-fields.ts`・
+  `src/client.ts` の `RequiredFor`・11 リソースの型）。`update` は任意のまま、実行時の検査は無い
+- `readCustomCatalog` が `P_Required` を読み（`required`）、`generateFieldDecls` が `{ required: true }` を出し、
+  `verifyFields` が `requiredMismatch` を返す（`ok` は倒さない）
+- ライブ検証に [LV-32][lv] を足し、`src/fields/tenant-catalog.ts` に `VERIFY(live)` の印を置いた（案 (b)）
+- ガイド「カスタム項目」に「新規作成で必須にする」を足し、「PORTERS が弾きます」を断定しない書き方にした（案 (c)）
 
 ## 検証
 
-—
+- 型: 11 リソースそれぞれで、宣言した必須が `create` の入力で必須になること（`src/fields/custom-fields.test.ts`）。
+  `RequiredFor` のリソース名を取り違えると型検査が落ちることを、一時的に壊して確かめた
+- 実行時: 必須の記録・非真偽値の拒否（`define-fields.test.ts`）、`P_Required` の読み取り（`tenant-catalog.test.ts`）、
+  生成（`generate-field-decls.test.ts`）、食い違いの報告（`verify-fields.test.ts`）
+- ガイドのコード例は `pnpm check:docs` がコンパイルする（渡し忘れが型エラーになる例を含む）
 
 [adr04]: ../../adr/0004-field-type-model.md
 [adr23]: ../../adr/0023-custom-field-declaration-dsl.md

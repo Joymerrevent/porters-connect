@@ -103,9 +103,12 @@ export type ProcessCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Process accessor; `C` is the declared custom-field catalog merged on. */
-export type ProcessResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+export type ProcessResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number],
+  (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
 >;
 
