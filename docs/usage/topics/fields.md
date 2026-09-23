@@ -29,7 +29,7 @@
 **宣言したものが、ライブラリが知っている項目に加わる**、という関係です。
 
 > **`U_` / `A_` は宣言してから使います。** 宣言していない alias は `field` / `condition` /
-> `order` / 書き込みのどこに書いても型エラーです<!-- 根拠: ADR-0074 -->。実行時は寛容なままなので、
+> `order` / 書き込みのどこに書いても型エラーです<!-- 根拠: ADR-0074 -->。実行時は検査しないので、
 > cast（`as`）で型を外せば呼べます。詳しくは[カスタム項目][custom-fields]にあります。
 
 ## 接頭辞は書かない
@@ -64,7 +64,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー
 PORTERS は項目ごとに **Field Type**（画面上の種類）を持ち、それが **Data Type**（値のかたち）に
 対応します。このライブラリが型として扱うのは **Data Type** のほうです<!-- 根拠: ADR-0016 -->。
 
-Field Type は 21 種ありますが、Data Type は 17 種に畳まれます。たとえば
+Field Type は 21 種ありますが、Data Type は 17 種にまとまります。たとえば
 `Option[Checkbox]` / `Option[Radiobutton]` / `Option[Dropdown]` の 3 つは、値のかたちとしては
 どれも `Option` です。`Currency` の Data Type は `Number` です。
 

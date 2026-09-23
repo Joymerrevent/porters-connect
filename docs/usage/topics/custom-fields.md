@@ -12,7 +12,7 @@
 - **宣言はテナントの実際の項目と突き合わせられます。** `generateFieldDecls` で自動生成し、`verifyFields` で食い違いを見つけます。
 - **テナントが必須にした項目の欠落は型では止まりません。** 必須かどうかは PORTERS 側の設定（`P_Required`）です。
 
-## 3 行で
+## 最小の例
 
 ```ts
 import { PortersClient, defineFields } from "@joymerrevent/porters-connect";
@@ -170,7 +170,7 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 リソースが増えるとここも増えます<!-- 根拠: ADR-0060 -->。
 
 > **System 系（`System[Id]` / `System[DateTime]` / `System[Reference]`）は宣言できません**。
-> システムが管理する標準項目の領分なので、ビルダーに用意していません。
+> システムが管理する標準項目にしか無いので、ビルダーに用意していません。
 >
 > **時分型（PORTERS 9.3.0）も `f.dateTime()` で宣言します。** 専用のメソッドはありません — API 上は
 > 年月日時分型と同じ Field Type 12 で、ライブラリは Field Read からも区別できないためです。
@@ -232,7 +232,7 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 await writeFile("src/porters-fields.ts", src);
 ```
 
-出てくるのはソース文字列です（ライブラリはファイルを書きません）。中身はこうなります:
+出力は TypeScript のソースコードの文字列です（ライブラリはファイルを書きません）。中身はこうなります:
 
 ```ts
 export const myFields = defineFields({
@@ -313,7 +313,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 > **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。`generateFieldDecls` / `verifyFields` / `assertFieldsMatch` の 3 つは、呼んだときだけ
 > Field Read を呼びます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
 
-### 素の Field Read を使う
+### Field Read をそのまま使う
 
 生の項目定義が見たいときは `t.field` がそのまま使えます。
 
@@ -339,7 +339,7 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 //   must start with "U_" or "A_" (standard P_ fields are built in)
 ```
 
-検証を通った宣言には**印が付き**、`tenant()` は再検証しません。
+検証を通った宣言は、`tenant()` で再検証されません。
 なお `defineFields` は `Promise` を返さないため、**この 2 つの検査だけは同期 throw** です
 （`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
@@ -407,7 +407,7 @@ const a = porters.tenant(1, { fields: tenantA }); // A_score と U_memo が型�
 const b = porters.tenant(2, { fields: tenantB }); // A_score だけ
 ```
 
-client を分けるのは**トークンを分けたいとき**だけです（[複数テナント][multi-tenancy] の §3）。
+client を分けるのは**トークンを分けたいとき**だけです（[複数テナント][multi-tenancy] の「認証を分けるか」）。
 項目が違うだけなら、同じ client（同じトークン）から `tenant(id, { fields })` を作り分けます。
 
 ## 関連

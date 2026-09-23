@@ -50,10 +50,10 @@ for await (const c of t.candidate.searchAll({
 | 書き方         | 送られるもの                                                                 |
 | -------------- | ---------------------------------------------------------------------------- |
 | 省略           | **ライブラリが知っている全項目**（既定・型に定義されている項目が実際に返る） |
-| `field: []`    | **主キーのみ**（API 本来の挙動。件数だけ欲しいときに）                       |
+| `field: []`    | **主キーのみ**（PORTERS 本来の挙動。件数だけ欲しいときに）                   |
 | `field: [...]` | 指定したものだけ                                                             |
 
-alias は **`condition` / `order` と同じ素の名前**（接頭辞なし）で書きます。
+alias は **`condition` / `order` と同じく、接頭辞を付けない名前**で書きます。
 接頭辞はリソースごとの定数なので**ライブラリが付けます**<!-- 根拠: ADR-0059 -->。
 
 ```ts
@@ -74,7 +74,7 @@ await t.candidate.search({ field: ["Person.P_Name"] }); // ✗ 型エラー（�
 await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言していないカスタム項目）
 ```
 
-綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけませんでした。
+綴りを間違えた alias は PORTERS に送っても**黙って無視されるだけ**で、書いた時点では気づけません。
 型で検査することで、書いた時点で分かるようにしています。**カスタム項目も同じ扱い**で、宣言すれば `U_` 以降の
 綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに触る必要があるときの方法は
 [カスタム項目][custom-fields]にあります。
@@ -95,7 +95,7 @@ const page = await t.job.search({
 page.items[0]?.P_Client; // { P_Id: number | null; P_Name: string | null } | null
 ```
 
-書かなければ従来どおりです。**`expand` を書いた項目だけ**型が変わるので、
+書かなければ、参照先の ID だけが返ります。**`expand` を書いた項目だけ**型が変わるので、
 参照を ID として使っているコードは何も影響を受けません。
 
 ```ts
@@ -103,7 +103,7 @@ const plain = await t.job.search();
 plain.items[0]?.P_Client; // number | null
 ```
 
-- **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく素の alias で指定し、
+- **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく接頭辞なしの alias で指定し、
   ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
   Candidate を参照するときの `Person.` もライブラリが付けます。
 - `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
@@ -181,7 +181,7 @@ await t.job.search({ expand: { P_Owner: ["P_Id", "P_Name"] } }); // ✗ expand �
 
 ## `image` — 画像の中身も読む
 
-`Image` 型の項目は、**素で要求すると `FileName` だけ**が返ります（PORTERS の既定）。
+`Image` 型の項目は、**そのまま要求すると `FileName` だけ**が返ります（PORTERS の既定）。
 `ContentType` / `Content`（Base64 の本体）が要るときに `image` で明示します。
 
 <!-- doccheck: fields -->
@@ -194,12 +194,12 @@ page.items[0]?.U_photo; // { FileName: string | null; Content: string | null }
 ```
 
 - **選んだサブタグだけが戻り型に出ます**。書かなければ `{ FileName?, ContentType?, Content? }` のまま
-  （どれも「要求していない」ので optional）。`expand` と同じく、**転送量と型の複雑さが増えるのは、要求した人だけ**です。
+  （どれも「要求していない」ので optional）。`expand` と同じく、**転送量と型の複雑さが増えるのは、要求したときだけ**です。
 - **既定が軽いことが大事です**。1 件 2MB の画像を持つ項目を一覧で 200 件取ると、既定で本体まで
-  返す設計なら 1 回の応答で数百 MB になります。だから既定は `FileName` のみに委ねています。
+  返す設計なら 1 回の応答で数百 MB になります。だから既定は `FileName` のみにしています。
 - `Content` が要るのはたいてい 1 件のときなので、`get(id, { image: … })` が簡単です。
 - `Image` 型の項目にしか書けません（`Link` 型やテキスト項目を書くと**コンパイルエラー**）。
-- **`Image` は `condition` に使えません**（reference が明記）。`Link` は記載が無いため、
+- **`Image` は `condition` に使えません**（PORTERS のリファレンスに明記されています）。`Link` は記載が無いため、
   安全側に倒して同じく対象外にしています（使えると分かれば緩めます）<!-- 根拠: LV-21 -->。
 
 > `field` に括弧でサブタグを並べる記法（`U_photo(FileName,Content)`）は**実機で未確認**です<!-- 根拠: LV-20 -->。
@@ -298,7 +298,7 @@ await t.candidate.search({
 
 ## `count` / `start` — ページング
 
-オフセット式です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
+オフセット方式（何件目から何件取るか）です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
 
 ```ts
 const page = await t.candidate.search({ count: 200, start: 0 });
@@ -313,7 +313,7 @@ page.start; // 今回の開始インデックス
 ## マスタは指定できるものが違う
 
 Partition / User / Department / Field / Option の 5 つは**読み取り専用のマスタ**で、データ系リソースとは
-指定できるものが別です。**`condition` と `get(id)` はありません** — 実 API が受けるクエリだけを
+指定できるものが別です。**`condition` と `get(id)` はありません** — PORTERS の API が受け付けるクエリだけを
 公開しているためです。
 
 | アクセサ            | リソース           | メソッド                           | 主なクエリ                                    |
@@ -341,7 +341,7 @@ const fields = await t.field.of("job").search();
 const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 
-- `t.option.search()` に `searchAll` はありません（API に `start` が無いため）。階層は
+- `t.option.search()` に `searchAll` はありません（PORTERS の Option Read に `start` が無いため）。階層は
   `P_ParentId` / `P_Order` で復元します。
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
   認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
@@ -361,7 +361,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
   [カスタム項目][custom-fields]（`U_` / `A_` を条件に使う）／[書き込み][write]
 - リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
 - 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` の条件で差分を取る）
-- リファレンス: [Resource API 概要][rapi]（パラメータ表・condition の suffix 一覧）
+- リファレンス: [Resource API 概要][rapi]（パラメータ表・condition の演算子（suffix）の一覧）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
