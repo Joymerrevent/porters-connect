@@ -222,10 +222,26 @@ describe("defineFields — required on create", () => {
         U_a: { ...(f.number({}) as object), required: "yes" },
       }),
     } as unknown as FieldDecls;
-    expect(() => defineFields(decls)).toThrow(PortersConfigError);
     expect(() => defineFields(decls)).toThrow(
       '"required" for "U_a" on "candidate" must be true or false',
     );
+    let caught: unknown;
+    try {
+      defineFields(decls);
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(PortersConfigError);
+    expect((caught as PortersConfigError).category).toBe("config");
+  });
+
+  it("accepts a hand-built definition without `required` as optional (not an error)", () => {
+    const decls = {
+      candidate: () => ({ U_a: { dataType: "Number" } }),
+    } as unknown as FieldDecls;
+    const fields = defineFields(decls);
+    expect(fields.candidate).toEqual({ U_a: "Number" });
+    expect(declaredRequired(fields, "candidate").size).toBe(0);
   });
 
   it("types `required: true` as a literal, and everything else as false", () => {
