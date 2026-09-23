@@ -118,9 +118,9 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 着手可能（ブロック無し）
 
-- [x] ✅ **使い方ドキュメントに「クライアントと関数」の章を足す**（[ADR-0088][adr88] の訂正注記・2026-09-23）— **完了**（同日・[#378][pr378] に含めた）。
-      `docs/usage/client/` に `client.md`（`PortersClient`）・`auth.md`（`porters.auth`）・`tenant-scope.md`（`tenant(id)` のスコープ）・
-      `functions.md`（単独の関数を用途別に）の 4 本を、リソース別と同じ節構成（必須項目・項目と型は無し）で書く。
+- [x] ✅ **使い方ドキュメントに「クライアント」と「関数」の章を足す**（[ADR-0088][adr88] の訂正注記・2026-09-23）— **完了**（同日・[#378][pr378] に含めた。起票時の「クライアントと関数」1 章から、実装中に関数を別章に分けてリソース別の後に置いた）。
+      `docs/usage/client/` に `client.md`（`PortersClient`）・`auth.md`（`porters.auth`）・`tenant-scope.md`（`tenant(id)` のスコープ）、
+      `docs/usage/functions/` に `declare.md`・`transport.md`・`convert.md`（用途別）を、リソース別と同じ節構成（必須項目は無し・型の表あり）で書く。
       主題別の `auth.md` / `tenant.md` からメソッドの表を移し、目次を 6 章にし、検査①③④⑤の定数に `client/` を足して
       検査⑥を `auth` / `tenant` / `partition` にも広げる。
 - [x] ✅ **使い方ドキュメントを 5 章に組み直す**（[ADR-0088][adr88]・2026-09-22 accepted）— **完了**（同日・

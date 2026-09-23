@@ -231,25 +231,30 @@
 できるようになるか・読む順）を置き、章は学ぶ順に番号を付け、「目的から探す」は**末尾の付録**にする。
 目次にリソースの表のような内容を持たない、という趣旨は変わらない。
 
-**訂正（実装後 2026-09-23・stakeholder）**: 5 章に**「クライアントと関数」の章を 1 つ足し、6 章にする**。
-位置は主題別の後・リソース別の前（読者の順路が `porters` → `tenant(id)` → `t.candidate` の順なので、リソースの前に置く）。
+**訂正（実装後 2026-09-23・stakeholder）**: 5 章に**「クライアント」と「関数」の章を足し、7 章にする**（起票時は
+~~「クライアントと関数」1 章・6 章~~ だったが、同日の実装中に stakeholder が関数を別の章に分け、リソース別の後に置いた）。
+「クライアント」は主題別の後・リソース別の前（読者の順路が `porters` → `tenant(id)` → `t.candidate` の順なので、リソースの前に置く）、
+「関数」はリソース別の後（順路の外にある道具なので、順路に沿った章の後に置く）。
 リソース別が答える「このオブジェクトで何が呼べて、何に気をつけるか」が、`PortersClient`・`porters.auth`・`tenant(id)` の
 スコープ・単独の関数には無く、構築オプションや `auth` の 6 メソッドが導入と主題別に散らばっていた（#378 の校閲で
-stakeholder が指摘）。ページは `docs/usage/client/` に 4 本:
+stakeholder が指摘）。ページは `docs/usage/client/` に 3 本と `docs/usage/functions/` に 3 本:
 
-| ページ            | 対象                                                                                                                                                                                                                                                                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `client.md`       | `PortersClient`: 構築オプション（hostname / port / scheme / appId / appSecret / scopes / tokenStore / auth / transport / throttle）・`tenant()`・`partition`・`auth`                                                                                                                                                                                               |
-| `auth.md`         | `porters.auth` の 6 メソッドと、独自 `TokenProvider` のときに使えなくなるもの                                                                                                                                                                                                                                                                                      |
-| `tenant-scope.md` | `tenant(id)` が返すスコープ: ぶら下がるアクセサの一覧・`{ fields }`・`of()` が要るもの                                                                                                                                                                                                                                                                             |
-| `functions.md`    | 単独の関数を用途別に: 宣言と突合（`defineFields` / `generateFieldDecls` / `verifyFields` / `assertFieldsMatch` / `readCustomCatalog` / `rawValue`）／上限と接続（`createThrottle` / `createFetchTransport` / `createMockTransport`）／値の変換（`encodeTimeOfDay` / `decodeTimeOfDay` / `resourceValueOf` / `resourceNameOf` / `bytesToBase64` / `base64ToBytes`） |
+| ページ                   | 対象                                                                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client.md`              | `PortersClient`: 構築オプション（hostname / port / scheme / appId / appSecret / scopes / tokenStore / auth / transport / throttle）・`tenant()`・`partition`・`auth` |
+| `auth.md`                | `porters.auth` の 6 メソッドと、独自 `TokenProvider` のときに使えなくなるもの                                                                                        |
+| `tenant-scope.md`        | `tenant(id)` が返すスコープ: ぶら下がるアクセサの一覧・`{ fields }`・`of()` が要るもの                                                                               |
+| `functions/declare.md`   | 宣言と突合: `defineFields` / `generateFieldDecls` / `verifyFields` / `assertFieldsMatch` / `readCustomCatalog` / `rawValue`                                          |
+| `functions/transport.md` | 上限と接続: `createThrottle` / `createFetchTransport` / `createMockTransport`                                                                                        |
+| `functions/convert.md`   | 値の変換: `encodeTimeOfDay` / `decodeTimeOfDay` / `resourceValueOf` / `resourceNameOf` / `bytesToBase64` / `base64ToBytes`                                           |
 
 節構成はリソース別と同じ（説明 → メタ情報 → 呼べるメソッド → 固有の注意 → 型 → 関連）で、「新規作成の必須項目」は
 持たず、「項目と型」はリソースの項目が無いので「型」（型と役割の表だけ）にする（2026-09-23・stakeholder）。主題別の `auth.md` / `tenant.md` は「なぜそう書くか」に残し、メソッドの表は新章へ移して
-2 か所に持たない。検査は、①③④⑤の定数（`USER_DOC_DIRS` / `EXIT_DIRS` / `GUIDE_GLOBS`）に `client/` を足し、
-検査⑥を `auth` / `tenant` / `partition` にも広げる（`src/client.ts` の `readonly` メンバ ↔ 新章のページ）。
-目次の章番号は 1 導入 / 2 主題別 / 3 クライアントと関数 / 4 リソース別 / 5 実践例 / 6 リファレンス になり、
-手書きのページは約 39 → 43 本。~~実装は [#378][pr378] のマージ後・別 PR~~ **実装も [#378][pr378] に含めた**（同日・stakeholder。
+2 か所に持たない。検査は、①③④⑤の定数（`USER_DOC_DIRS` / `EXIT_DIRS` / `GUIDE_GLOBS`）に `client/` と `functions/` を足し、
+検査⑥を `auth` / `tenant` / `partition` にも広げる（`src/client.ts` の `readonly` メンバ ↔ クライアントのページ）ほか、
+公開関数（生成物 `api/functions/*.md`）↔ 関数の 3 ページの「呼べる関数」表を両方向で突き合わせる。
+目次の章番号は 1 導入 / 2 主題別 / 3 クライアント / 4 リソース別 / 5 関数 / 6 実践例 / 7 リファレンス になり、
+手書きのページは約 39 → 45 本。~~実装は [#378][pr378] のマージ後・別 PR~~ **実装も [#378][pr378] に含めた**（同日・stakeholder。
 訂正注記を付けた直後に同じブランチで 4 ページと検査の拡張を積んだ）。決定そのもの（主題・リソースで切る軸、
 リソース別 18 本 1:1、名詞の題名＋索引、検査⑥）は変わらず、章が 1 つ増える。
 
