@@ -248,8 +248,10 @@ stakeholder が指摘）。ページは `docs/usage/client/` に 3 本と `docs/
 | `functions/transport.md` | 上限と接続: `createThrottle` / `createFetchTransport` / `createMockTransport`                                                                                        |
 | `functions/convert.md`   | 値の変換: `encodeTimeOfDay` / `decodeTimeOfDay` / `resourceValueOf` / `resourceNameOf` / `bytesToBase64` / `base64ToBytes`                                           |
 
-節構成はリソース別と同じ（説明 → メタ情報 → 呼べるメソッド → 固有の注意 → 型 → 関連）で、「新規作成の必須項目」は
-持たず、「項目と型」はリソースの項目が無いので「型」（型と役割の表だけ）にする（2026-09-23・stakeholder）。主題別の `auth.md` / `tenant.md` は「なぜそう書くか」に残し、メソッドの表は新章へ移して
+節構成はリソース別と同じ（説明 → メタ情報 → 呼べるメソッド → 固有の注意 → 型 → 関連）で、「新規作成の必須項目」の
+位置には `client.md` / `tenant-scope.md` だけが構築のオプションの表を持ち、「項目と型」はリソースの項目が無いので
+「型」（型と役割の表だけ）にする。各節の先頭の 1 文と「関連」の 3 行（主題／同じ章／目次）もリソース別と同じ書き方に
+揃える（2026-09-23・stakeholder。「リソース別と比べて違和感がある」）。主題別の `auth.md` / `tenant.md` は「なぜそう書くか」に残し、メソッドの表は新章へ移して
 2 か所に持たない。検査は、①③④⑤の定数（`USER_DOC_DIRS` / `EXIT_DIRS` / `GUIDE_GLOBS`）に `client/` と `functions/` を足し、
 検査⑥を `auth` / `tenant` / `partition` にも広げる（`src/client.ts` の `readonly` メンバ ↔ クライアントのページ）ほか、
 公開関数（生成物 `api/functions/*.md`）↔ 関数の 3 ページの「呼べる関数」表を両方向で突き合わせる。
