@@ -80,9 +80,9 @@ PORTERS を扱ううえで避けて通れない主題を、1 つずつ深く理�
 
 ### 3. クライアント
 
-`porters`（PortersClient）・`porters.auth`・`tenant(id)` のスコープについて、何が呼べて、何を渡し、何に気をつけるかを
-調べる章です。読者の順路（`porters` → `tenant(id)` → `t.candidate`）のうち、リソースの手前にあるものを 1 ページずつ
-引けます。構築オプションや `auth` のメソッド一覧を確かめたいときに開いてください。
+クライアントの作り方と、そこから呼べるものを調べる章です。クライアントの構築オプション、認証の操作のメソッド、
+Partition を指定したスコープにぶら下がるものを、1 ページずつ引けます。構築オプションや呼べるメソッドの一覧を
+確かめたいときに開いてください。
 
 - [PortersClient][cl-client] — 構築オプションと、`tenant()` / `partition` / `auth`
 - [auth][cl-auth] — 初回の権限付与・トークンの確認・権限の削除の 6 メソッド
@@ -120,8 +120,9 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 
 ### 5. 関数
 
-クライアントやスコープに属さず、`import` して呼ぶ関数を用途別に引く章です。カスタム項目の宣言と突合、上限と接続の
-差し替え、値の変換の 3 つに分かれます。読者の順路の外にある道具なので、リソースの後に置いています。
+クライアントやスコープに属さず、`import` して呼ぶ関数を調べる章です。カスタム項目の宣言と突合、上限と接続の
+差し替え、値の変換の 3 つの用途に分けて、何をする関数で、どう失敗するかを 1 ページずつ引けます。
+使う関数は分かっていて、引数や注意を確かめたいときに開いてください。
 
 - [宣言と突合][fn-declare] — `defineFields` / `generateFieldDecls` / `verifyFields` / `assertFieldsMatch` / `readCustomCatalog` / `rawValue`
 - [上限と接続][fn-transport] — `createThrottle` / `createFetchTransport` / `createMockTransport`
