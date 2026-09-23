@@ -185,15 +185,15 @@ export const checkTarget = (target, read = readFileSync) => {
 
 /**
  * 利用者向けドキュメントの目次（`docs/usage/index.md`）と実ファイルの 1:1 突合
- * （[ADR-0070] 論点4 の検査①。階層は [ADR-0088] の 5 章）。
+ * （[ADR-0070] 論点4 の検査①。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアントと関数」）。
  *
  * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
  * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
  *
- * 対象は `docs/usage/{start,topics,resources,recipes}` の 4 階層だけ。`reference/` と `api/` は
+ * 対象は `docs/usage/{start,topics,client,resources,recipes}` の 5 階層だけ。`reference/` と `api/` は
  * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
  */
-const USER_DOC_DIRS = ["start", "topics", "resources", "recipes"];
+const USER_DOC_DIRS = ["start", "topics", "client", "resources", "recipes"];
 
 export const checkUserDocIndex = (read = readFileSync) => {
   const problems = [];
@@ -217,7 +217,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
       entries = readdirSync(join("docs", "usage", dir));
     } catch {
       // **番人**（ADR-0071 論点2）。以前は「まだ無いディレクトリは対象外」と読み飛ばしていたが、
-      // 移設したのに定数を直し忘れると検査が静かに空振りする。4 階層はすべて実在する前提。
+      // 移設したのに定数を直し忘れると検査が静かに空振りする。5 階層はすべて実在する前提。
       problems.push(
         `検査対象の階層が見つかりません: docs/usage/${dir}（USER_DOC_DIRS を直すか、移設を戻す）`,
       );
@@ -344,8 +344,9 @@ export const checkStartChain = (read = readFileSync) => {
 };
 
 /**
- * 引く層（`docs/usage/{topics,resources,recipes}`）の各ページに**出口**があるかの検査
- * （[ADR-0070] 追記の検査⑤。階層は [ADR-0088] の 5 章で、目的別 1 階層から 3 階層に広がった）。
+ * 引く層（`docs/usage/{topics,client,resources,recipes}`）の各ページに**出口**があるかの検査
+ * （[ADR-0070] 追記の検査⑤。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアントと関数」で、
+ * 目的別 1 階層から 4 階層に広がった）。
  *
  * 入門と違い、引く層は**順序が無い**（目次から主題・リソース・用途で引いて 1 本読む層）。だから鎖では
  * なく、「読み終えた人が次へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
@@ -355,6 +356,7 @@ export const checkStartChain = (read = readFileSync) => {
  */
 const EXIT_DIRS = [
   "docs/usage/topics",
+  "docs/usage/client",
   "docs/usage/resources",
   "docs/usage/recipes",
 ];
@@ -394,7 +396,7 @@ export const checkExits = (
       files = list(dir).filter((f) => f.endsWith(".md"));
     } catch {
       // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
-      // 3 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
+      // 4 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
       problems.push(
         `検査対象が見つかりません: ${dir}（EXIT_DIRS を直すか、移設を戻す）`,
       );
@@ -490,12 +492,127 @@ export const checkResourcePages = (
   return problems;
 };
 
+/**
+ * クライアントと関数（`docs/usage/client/`）と公開 API の**両方向**突合（[ADR-0088] 訂正注記で
+ * 検査⑥を広げたもの）。リソース別の ⑥ が `TenantScope` のアクセサを見るのに対し、こちらは
+ * **`PortersClient` 直下のメンバ**（`auth` / `tenant`。`partition` はリソース別が持つ）と、
+ * **公開している単独の関数**（`docs/usage/api/functions/*.md`＝生成物）を見る。
+ *
+ * 検出するもの: メンバのページが無い／対応の決まっていないメンバが増えた／どのメンバでもない
+ * ページがある／固定ページ（`client.md` / `functions.md`）が無い／公開関数が `functions.md` に載って
+ * いない／メンバも関数も 1 つも拾えない・階層が消えた（番人）。
+ */
+const CLIENT_DIR = "docs/usage/client";
+const CLIENT_FIXED_PAGES = ["client.md", "functions.md"];
+/** `PortersClient` のメンバ → ページ。`null` は別の章（リソース別）が持つ。 */
+const CLIENT_MEMBER_PAGES = {
+  auth: "auth.md",
+  tenant: "tenant-scope.md",
+  partition: null,
+};
+const API_FUNCTIONS_DIR = "docs/usage/api/functions";
+
+/** `export class PortersClient { … }` の本体から `readonly x` の名前を採る（`#` の private は除く）。 */
+export const clientMemberNames = (source) => {
+  const start = source.indexOf("export class PortersClient");
+  if (start === -1) return [];
+  const body = source.slice(start);
+  const end = body.indexOf("\n}");
+  return [
+    ...(end === -1 ? body : body.slice(0, end)).matchAll(
+      /^\s*readonly (\w+)\b/gm,
+    ),
+  ].map((m) => m[1]);
+};
+
+export const checkClientPages = (
+  read = readFileSync,
+  listPages = () => readdirSync(CLIENT_DIR),
+  listFunctions = () => readdirSync(API_FUNCTIONS_DIR),
+) => {
+  let source;
+  try {
+    source = read(CLIENT_SOURCE, "utf8");
+  } catch {
+    return [
+      `${CLIENT_SOURCE} が読めません（CLIENT_SOURCE を直すか、移設を戻す）`,
+    ];
+  }
+  const members = clientMemberNames(source);
+  // **番人**。クラスの書き方が変わると 0 個になり、「ページが要るメンバは無い」と読んで緑になる。
+  if (members.length === 0)
+    return [
+      `${CLIENT_SOURCE} に PortersClient のメンバ（readonly x）が見つかりません（宣言の形が変わったなら clientMemberNames を直す）`,
+    ];
+  let pages;
+  try {
+    pages = listPages().filter((f) => f.endsWith(".md"));
+  } catch {
+    return [
+      `検査対象が見つかりません: ${CLIENT_DIR}（CLIENT_DIR を直すか、移設を戻す）`,
+    ];
+  }
+  const problems = [];
+  for (const f of CLIENT_FIXED_PAGES)
+    if (!pages.includes(f))
+      problems.push(`${CLIENT_DIR}/${f} がありません（章の固定ページ）`);
+  const expected = new Set(CLIENT_FIXED_PAGES);
+  for (const m of members) {
+    if (!(m in CLIENT_MEMBER_PAGES)) {
+      problems.push(
+        `PortersClient のメンバ ${m} にページの割り当てがありません（CLIENT_MEMBER_PAGES に足す）`,
+      );
+      continue;
+    }
+    const page = CLIENT_MEMBER_PAGES[m];
+    if (page === null) continue;
+    expected.add(page);
+    if (!pages.includes(page))
+      problems.push(`メンバ ${m} のページがありません: ${CLIENT_DIR}/${page}`);
+  }
+  for (const p of pages)
+    if (!expected.has(p))
+      problems.push(
+        `ページに対応するメンバがありません: ${CLIENT_DIR}/${p}（PortersClient に無い）`,
+      );
+  // 単独の関数: 公開関数の実体（生成物）が functions.md に 1 つ残らず載っていること。
+  let functions;
+  try {
+    functions = listFunctions()
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => f.replace(/\.md$/, ""));
+  } catch {
+    return [
+      ...problems,
+      `検査対象が見つかりません: ${API_FUNCTIONS_DIR}（API_FUNCTIONS_DIR を直すか、pnpm docs:api を実行する）`,
+    ];
+  }
+  if (functions.length === 0)
+    return [
+      ...problems,
+      `${API_FUNCTIONS_DIR} に .md がありません（公開関数が 0 のはずはない。生成し直す）`,
+    ];
+  let body;
+  try {
+    body = read(join(CLIENT_DIR, "functions.md"), "utf8");
+  } catch {
+    return problems; // 固定ページの欠落として上で報告済み
+  }
+  for (const name of functions)
+    if (!body.includes(`\`${name}\``) && !body.includes(`${name}(`))
+      problems.push(
+        `公開関数 ${name} が ${CLIENT_DIR}/functions.md に載っていません（${API_FUNCTIONS_DIR}/${name}.md はある）`,
+      );
+  return problems;
+};
+
 export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...targets.flatMap((t) => checkTarget(t, read)),
   ...checkUserDocIndex(read),
   ...checkStartChain(read),
   ...checkExits(read),
   ...checkResourcePages(read),
+  ...checkClientPages(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。

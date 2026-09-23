@@ -4,6 +4,8 @@ import {
   checkExits,
   checkResourcePages,
   accessorNames,
+  checkClientPages,
+  clientMemberNames,
   checkTarget,
   parseIndexTable,
 } from "./check-doc-index.mjs";
@@ -427,5 +429,108 @@ export class PortersClient {
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("src/client.ts");
+  });
+});
+
+describe("checkClientPages", () => {
+  const CLIENT = `
+export type TenantScope<C> = {
+  readonly candidate: CandidateResource<CustomFor<C, "candidate">>;
+};
+export class PortersClient {
+  readonly auth: AuthApi;
+  readonly partition: PartitionResource;
+  readonly tenant: <C>(partition: number) => TenantScope<C>;
+  readonly #accessPoint: AccessPoint;
+}
+`;
+  const FUNCTIONS_MD =
+    "# 単独の関数\n\n| 関数 | 何をするか |\n| --- | --- |\n| `defineFields` | 宣言 |\n| `createThrottle` | 上限 |\n";
+  const reader =
+    (source, functionsMd = FUNCTIONS_MD) =>
+    (path) => {
+      if (path.endsWith("src/client.ts")) return source;
+      if (path.endsWith("client/functions.md")) return functionsMd;
+      throw new Error(`想定外の読み取り: ${path}`);
+    };
+  const PAGES = ["client.md", "auth.md", "tenant-scope.md", "functions.md"];
+  const FUNCS = ["defineFields.md", "createThrottle.md"];
+
+  it("PortersClient の readonly メンバだけを採る（private の # は除く）", () => {
+    expect(clientMemberNames(CLIENT)).toEqual(["auth", "partition", "tenant"]);
+  });
+
+  it("固定ページ・メンバのページ・関数の言及が揃っていれば問題なし", () => {
+    expect(
+      checkClientPages(
+        reader(CLIENT),
+        () => PAGES,
+        () => FUNCS,
+      ),
+    ).toEqual([]);
+  });
+
+  it("メンバのページが無ければ落ちる（partition はリソース別が持つので数えない）", () => {
+    const problems = checkClientPages(
+      reader(CLIENT),
+      () => ["client.md", "functions.md", "tenant-scope.md"],
+      () => FUNCS,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("auth");
+    expect(problems[0]).toContain("auth.md");
+  });
+
+  it("どのメンバでもないページがあれば落ちる", () => {
+    const problems = checkClientPages(
+      reader(CLIENT),
+      () => [...PAGES, "throttle.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([expect.stringContaining("throttle.md")]);
+  });
+
+  it("割り当ての無いメンバが増えたら落ちる（黙って章から漏れない）", () => {
+    const source = CLIENT.replace(
+      "readonly tenant:",
+      "readonly webhook: WebhookApi;\n  readonly tenant:",
+    );
+    const problems = checkClientPages(
+      reader(source),
+      () => PAGES,
+      () => FUNCS,
+    );
+    expect(problems).toEqual([expect.stringContaining("webhook")]);
+  });
+
+  it("公開関数が functions.md に載っていなければ落ちる", () => {
+    const problems = checkClientPages(
+      reader(CLIENT),
+      () => PAGES,
+      () => [...FUNCS, "rawValue.md"],
+    );
+    expect(problems).toEqual([expect.stringContaining("rawValue")]);
+  });
+
+  it("番人: メンバが 1 つも拾えなければ落ちる", () => {
+    const problems = checkClientPages(
+      reader("export const nothing = 1;"),
+      () => PAGES,
+      () => FUNCS,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("clientMemberNames");
+  });
+
+  it("番人: 階層が無ければ落ちる", () => {
+    const problems = checkClientPages(
+      reader(CLIENT),
+      () => {
+        throw new Error("ENOENT");
+      },
+      () => FUNCS,
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("docs/usage/client");
   });
 });
