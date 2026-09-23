@@ -30,12 +30,12 @@ await t.candidate.delete(10001);
 
 `itemstate` に渡す値と、それぞれ何が返るかです。
 
-| 指定         | 意味                                 | 送信                 |
-| ------------ | ------------------------------------ | -------------------- |
-| **省略**     | API の既定に委ねる（現在は生存のみ） | （載せない）         |
-| `"existing"` | **生存レコードのみを要求する**       | `itemstate=existing` |
-| `"deleted"`  | 削除済みのみ                         | `itemstate=deleted`  |
-| `"all"`      | 両方                                 | `itemstate=all`      |
+| 指定         | 意味                                   | 送信                   |
+| ------------ | -------------------------------------- | ---------------------- |
+| **省略**     | PORTERS の既定に従う（現在は生存のみ） | `itemstate` を送らない |
+| `"existing"` | **生存レコードのみを要求する**         | `itemstate=existing`   |
+| `"deleted"`  | 削除済みレコードのみを要求する         | `itemstate=deleted`    |
+| `"all"`      | 生存と削除済みの両方を要求する         | `itemstate=all`        |
 
 ```ts
 const gone = await t.candidate.search({

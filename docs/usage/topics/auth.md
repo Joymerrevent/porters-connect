@@ -197,11 +197,11 @@ const porters = new PortersClient({ hostname, auth });
 自前管理のとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
 残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
-| メソッド                                    | 既定の方式 | 自前管理             |
-| ------------------------------------------- | ---------- | -------------------- |
-| `authorizationUrl` / `revokeUrl`            | ○          | `PortersConfigError` |
-| `exchangeAuthorizationCode` / `clearTokens` | ○          | `PortersConfigError` |
-| `ensureAuthenticated` / `getToken`          | ○          | ○（委譲）            |
+| メソッド                                    | 既定の方式 | 自前管理                    |
+| ------------------------------------------- | ---------- | --------------------------- |
+| `authorizationUrl` / `revokeUrl`            | ○          | `PortersConfigError`        |
+| `exchangeAuthorizationCode` / `clearTokens` | ○          | `PortersConfigError`        |
+| `ensureAuthenticated` / `getToken`          | ○          | ○（`TokenProvider` に委譲） |
 
 ## エラー
 

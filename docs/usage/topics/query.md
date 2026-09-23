@@ -350,12 +350,10 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 
 原因の分かりにくいサーバーエラーになる前に、ライブラリが `PortersConfigError` で弾きます。
 
-| 条件                                                                 | 検査 |
-| -------------------------------------------------------------------- | ---- |
-| `keywords` が 100 文字超                                             | ✅   |
-| `itemstate` が `deleted` / `all` で許されない項目を condition に指定 | ✅   |
-| リクエスト全体が約 15000 文字超（**URL + body**）                    | ✅   |
-| `count` が 1〜200 の外（整数でない場合も）                           | ✅   |
+- `keywords` が 100 文字超
+- `itemstate` が `deleted` / `all` で許されない項目を condition に指定
+- リクエスト全体が約 15000 文字超（**URL + body**）
+- `count` が 1〜200 の外（整数でない場合も）
 
 ## 関連
 
