@@ -149,6 +149,7 @@
 - [ReferenceMap](type-aliases/ReferenceMap.md)
 - [ReferenceRecord](type-aliases/ReferenceRecord.md)
 - [RequiredFor](type-aliases/RequiredFor.md)
+- [RequiredMismatch](type-aliases/RequiredMismatch.md)
 - [ResourceName](type-aliases/ResourceName.md)
 - [ResourcePageOf](type-aliases/ResourcePageOf.md)
 - [ResourceType](type-aliases/ResourceType.md)

@@ -94,6 +94,7 @@ export type {
   TenantCustomCatalog,
   UndeclarableField,
   UndeclarableTenantField,
+  RequiredMismatch,
   UndeclarableReason,
   UndeclaredField,
   UnverifiableResource,
