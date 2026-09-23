@@ -102,7 +102,21 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.21.0**（npm latest・`v0.21.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.22.0**（npm latest・`v0.22.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **8 files / 955.9 kB**・2026-09-23）。**累計 30 版**（うち **0.2.0 以降の 28 版**がこの半自動フロー）。
+  changeset **2 枚**（minor 1・patch 1）を消費した minor リリースで、数値でない文字列を `Number` として読まず
+  `validation` で止める修正（[#372][pr372]）、単件の `create` / `update` を reject に揃える修正（[#379][pr379]）、
+  使い方ドキュメントの 7 章への組み直し（[#378][pr378]）。**破壊的変更なし**（宣言が実際の項目と違うと
+  読み取りがエラーになりうるので minor）。
+  - **unpacked が 947.8 → 955.9 kB（+8.1 kB）**。増えたのは同梱 CHANGELOG の追記と数値の検証で、
+    **同梱ファイル数は 8 のまま**。
+  - 手順の面では、**#379 に changeset が入っていなかった**ので、リリースブランチで足してから
+    `pnpm changeset:version` を実行した（記録漏れ＝§1 の注意どおり、手で `version` を書き換えない）。
+    リリース PR [#381][pr381]（merge commit）→ Tag ワークフロー green → `gh release create`（notes は CHANGELOG の
+    該当節・参照スタイルのリンクなし）→ Release ワークフロー green。publish 直後の `npm view` は 0.21.0 を
+    返した（伝播待ち）ので、ログの `+ @joymerrevent/porters-connect@0.22.0` を確認してから 30 秒間隔で再確認し、
+    約 1 分半後に 0.22.0 で確定した。back-merge は [#382][pr382]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.21.0**（npm latest・`v0.21.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **8 files / 947.8 kB**・2026-09-21）。**累計 29 版**（うち **0.2.0 以降の 27 版**がこの半自動フロー）。
   changeset **4 枚**（minor 1・patch 3）を消費した minor リリースで、カスタム項目の宣言を `tenant(id, { fields })` で
   受ける [ADR-0087][adr87]（[#362][pr362]・**破壊的変更 1 つ**＝コンストラクタの `fields` 廃止・移行は 1 対 1）と、
@@ -323,3 +337,8 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr366]: https://github.com/Joymerrevent/porters-connect/pull/366
 [pr367]: https://github.com/Joymerrevent/porters-connect/pull/367
 [pr368]: https://github.com/Joymerrevent/porters-connect/pull/368
+[pr372]: https://github.com/Joymerrevent/porters-connect/pull/372
+[pr378]: https://github.com/Joymerrevent/porters-connect/pull/378
+[pr379]: https://github.com/Joymerrevent/porters-connect/pull/379
+[pr381]: https://github.com/Joymerrevent/porters-connect/pull/381
+[pr382]: https://github.com/Joymerrevent/porters-connect/pull/382
