@@ -313,7 +313,7 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` では投げません。
 
 > **どれも、呼んだときだけ動きます。** `defineFields` 自体は PORTERS を呼びません。この 3 つは呼んだときだけ
-> Field Read を叩きます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
+> Field Read を呼びます（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
 
 ### 素の Field Read を使う
 

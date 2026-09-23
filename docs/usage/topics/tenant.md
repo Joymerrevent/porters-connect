@@ -107,7 +107,7 @@ for (const p of page.items) console.log(p.P_Id, p.P_Name);
 > `partition.current()` は**提供していません**<!-- 根拠: ADR-0022 -->。アクセスできる Partition の
 > 一覧から選んでください（[Partition][r-partition]）。
 
-## 1 つのトークンで複数 Partition を叩けるか — 未確認
+## 1 つのトークンで複数 Partition にアクセスできるか — 未確認
 
 このライブラリは既定で**トークンを client 単位で共有**し、`tenant(id)` は `partition=` を
 差し替えるだけです。1 つの App トークンで複数の Partition にアクセスできる前提です。
