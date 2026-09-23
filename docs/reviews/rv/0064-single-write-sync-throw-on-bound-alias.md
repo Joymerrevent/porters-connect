@@ -53,12 +53,19 @@ alias、いまは Phase の `Resource`）が**同期 throw** になっていた�
 
 **実施（案 (a)・(b)・2026-09-23・本 PR）。** `src/resources/resource.ts` の単件 `create` / `update` を `async` にし、
 根拠のコメントを添えた。`src/resources/resource.test.ts` の RV-47 の describe に、`create` / `update` それぞれで
-「同期 throw せず reject で届く」テストを足した。案 (c) は #378 で扱う。
+「同期 throw せず reject で届く」テストを足した。
+
+**実施（案 (c)・2026-09-23・#378）。** ガイド「例外の届き方」（`docs/usage/topics/errors.md`）を
+「`Promise` を返さない関数は同期 throw する」という規則で書き、列挙は「例:」にして漏れていた関数を足した。
+カスタム項目ガイド（`docs/usage/topics/custom-fields.md`）の「この 2 つの検査だけは同期 throw」
+「それ以外の公開メソッドは常に reject」も同じ誤りなので、`Promise` を返すかどうかで分ける書き方に直した。
 
 ## 検証
 
 - `pnpm exec vitest run src/resources/resource.test.ts` — 53 件 pass（新規 2 件を含む。修正前は `not.toThrow()` で落ちる）。
 - `pnpm typecheck` / `pnpm lint` / `pnpm check:api` — 緑（公開型は変わらないので API リファレンスに差分なし）。
+- 案 (c): 例に挙げた関数がすべて `src/index.ts` から公開され、`Promise` を返さないことを確認。
+  `pnpm check:usage` / `pnpm check:links` / markdownlint — 緑。
 
 [adr46]: ../../adr/0046-guard-error-contract.md
 [rv47]: 0047-phase-binding-overridable.md
