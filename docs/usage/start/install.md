@@ -81,7 +81,7 @@ const withScopes = new PortersClient({
 | `hostname: "https://xxxxx.example.com"` | ✗ 構築時にエラー     |
 | `hostname: "xxxxx.example.com/v1"`      | ✗ 構築時にエラー     |
 
-**`port` は普段要りません。** PORTERS は名前と https で届くので、使うのはローカルの
+**`port` は普段要りません。** PORTERS にはサーバー名と https だけで接続できるので、使うのはローカルの
 フェイクサーバーやプロキシに向けるときだけです。
 
 構築時にエラーにするのは、**気づかないまま別のホストに接続するより、起動時に止まるほうが安全**だからです。

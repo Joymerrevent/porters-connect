@@ -18,8 +18,8 @@
 | 重複・依存で作成/削除できない                   | リソース `301`/`303`/`304`            | `conflict`      | 重複作成を避ける／子要素・被参照を解消                                         |
 | IP 制限 / アプリ権限不足                        | リソース `406` / `601`                | `permission`    | IP アドレス申請／アプリ権限の申請                                              |
 | 登録最大件数超過                                | リソース `500`                        | `validation`    | 件数を減らす／200 件以下のバッチに分割                                         |
-| `PortersConfigError`（送信前）                  | サイズ超過                            | `config`        | field / condition を絞る／write を 200 件以下に分割（~15000 字上限）           |
-| `PortersConfigError`（`defineFields` 等）       | 宣言・オプション不正                  | `config`        | alias は `U_`/`A_`・既知リソースキー・オプションを修正                         |
+| `PortersConfigError`（送信前）                  | サイズ超過                            | `config`        | field / condition を絞る／書き込みを 200 件以下に分割（約 15000 字が上限）     |
+| `PortersConfigError`（`defineFields` 等）       | 宣言・オプション不正                  | `config`        | alias は `U_`/`A_` で始める・リソース名は既知のもの・オプションを修正          |
 | **読み取りで宣言型と実データが食い違う**        | —（応答のかたちが違う）               | `validation`    | 宣言した Data Type が実際の項目と違う。`verifyFields` で突き合わせて宣言を直す |
 | **書き込み・condition の日時が変換不能**        | —（渡した値の書式）                   | `validation`    | 日時は **ISO 8601** で渡す（`2026-09-10` / `...T12:00:00Z`）                   |
 | `new PortersClient(...)` がその場でエラーになる | `hostname` / `port` / `scheme` の書式 | `config`        | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                       |
