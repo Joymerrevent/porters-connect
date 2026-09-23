@@ -3,7 +3,7 @@
 PORTERS Connect API の仕様のうち、**このライブラリを使ううえで必要な PORTERS 側の事実**を、自分たちの言葉で
 整理したものです。公式ドキュメントの逐語コピーではありません（非公式・著作権配慮）。ライブラリが内側に隠しているもの
 （XML の書式・OAuth の細部）も載せていますが、読者に求めるのは「使ううえで必要な事実」までで、
-API の 2 本柱（Authentication API / Resource API）＋横断、で構成します。
+PORTERS の API 2 種（Authentication API / Resource API）と、両方に共通する事項で構成します。
 
 ## 出典
 
@@ -29,7 +29,7 @@ API の 2 本柱（Authentication API / Resource API）＋横断、で構成し�
 - [resources-list][rapi-list]: 全リソースの一覧・読み書き・必要スコープ・alias の注意点。
 - [resources/][rapi-resources]: リソース別の項目（フィールド）リファレンス（全 18）。
 
-### 横断
+### 両方に共通
 
 [glossary][glossary]（用語）／ [gotchas][gotchas]（レート/課金/実行環境/Alias/開発環境/仕様変更）／
 [troubleshooting][troubleshooting]（症状 → 原因 → 対処の早見表）。

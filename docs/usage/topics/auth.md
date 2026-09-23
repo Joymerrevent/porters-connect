@@ -108,7 +108,7 @@ type StoredTokens = {
 };
 ```
 
-`StoredTokens` は素直な JSON（`*ExpiresAt` は絶対時刻の epoch ms）なので、そのまま直列化して保存できます。
+`StoredTokens` はふつうの JSON（`*ExpiresAt` は絶対時刻の epoch ms）なので、そのまま直列化して保存できます。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";

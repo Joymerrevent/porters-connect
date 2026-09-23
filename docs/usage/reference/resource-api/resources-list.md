@@ -57,7 +57,7 @@ PORTERS の全リソースの endpoint・スコープ・alias の接頭辞・出
 - **削除 API は無い**。`delete()` は型の上でも用意しない。ただし `itemstate=deleted|all` で削除済みデータの
   Read は可能（[Resource API 概要][resource-api-md] 参照）。
 - Process は Job × Resume の組み合わせで一意（重複登録は Result Code 301）。
-- Phase の更新には専用の作法がある（[Phase の更新について][phase]）。
+- Phase の更新には専用の手順がある（[Phase の更新について][phase]）。
 - **Phase の接頭辞は出典記事の中で一致していない。** 散文は「省略した場合は `Phase.P_Id` が指定された
   ものとみなします」と書くが、Field List の Alias 列（`Id` / `Resource` / `ResourceId` …）も、
   サンプルの `field=Id,Resource,ResourceId,Phase,Date,Recent` も、応答の `<Id>10001</Id>` も

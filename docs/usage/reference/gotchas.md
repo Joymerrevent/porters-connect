@@ -1,7 +1,7 @@
 # 運用上の落とし穴・前提（使ううえで影響するもの）
 
 PORTERS 側の運用上の前提（レート・課金・実行環境・alias・開発環境・仕様変更）のうち、設計と運用に影響するものを引くページです。
-ライブラリがそれをどう受け止めているかも、各項目に添えています。
+ライブラリがそれにどう対応しているかも、各項目に添えています。
 
 出典: アプリ開発時の注意点（2025 系）／ サードパーティアプリ開発時の留意点（2025-11-21）／
 よくあるご質問 ／ 開発概要（2026-08-28）／ Rate limit（2024-03-21）／ 開発環境について ／
@@ -44,7 +44,7 @@ PORTERS 側の運用上の前提（レート・課金・実行環境・alias・�
   管理者に聞くしかない → 詳細は [field-data-types][fdt] の「時分型」節（ライブラリは `decodeTimeOfDay` /
   `encodeTimeOfDay` で変換する）<!-- 根拠: ADR-0086 -->。
 - **フィールド型は原典記事の値をそのまま転記**しているため、PORTERS 側の不揃いも残る。例: 携帯メール
-  `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と割れている（原典どおり）。<!-- 型生成時は原典差異に注意し、正典は resource-api/field-data-types.md の分類に寄せる（ADR-0004） -->
+  `P_MobileMail` の Field Type が Candidate=`Mail` / Recruiter・Contact=`Telephone` と異なっている（原典どおり）。<!-- 型生成時は原典差異に注意し、正典は resource-api/field-data-types.md の分類に寄せる（ADR-0004） -->
 
 ## ログイン中の企業 / ユーザーの特定
 
