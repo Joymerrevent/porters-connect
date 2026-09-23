@@ -65,7 +65,7 @@ await porters.auth.ensureAuthenticated();
 
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
 - 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・自前で管理するとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
-- クライアントと関数: [PortersClient][cl-client]（構築オプションの `appId` / `appSecret` / `scopes` / `tokenStore` / `auth`）
+- クライアント: [PortersClient][cl-client]（構築オプションの `appId` / `appSecret` / `scopes` / `tokenStore` / `auth`）
 - リソース別: [Partition][r-partition]（権限付与した Company DB の一覧）／[User][r-user]（`current()`）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]／[公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]

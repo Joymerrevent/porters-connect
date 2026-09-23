@@ -58,6 +58,7 @@ const MARKDOWN_ROOTS = [
   "docs/usage/topics/**/*.md",
   "docs/usage/client/**/*.md",
   "docs/usage/resources/**/*.md",
+  "docs/usage/functions/**/*.md",
   "docs/usage/recipes/**/*.md",
 ];
 

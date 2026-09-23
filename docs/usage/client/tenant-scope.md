@@ -68,8 +68,9 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 
 - 導入: [はじめての読み取り][s-read]（まず Partition を指定する）
 - 主題: [Partition とテナントスコープ][tenant]／[カスタム項目][custom-fields]（宣言を渡す場所）
-- クライアントと関数: [PortersClient][cl-client]／[単独の関数][cl-functions]（`defineFields`）
+- クライアント: [PortersClient][cl-client]
 - リソース別: [リソースと操作][resources]（アクセサ × メソッドの一覧）／[Partition][r-partition]
+- 関数: [宣言と突合][fn-declare]（`fields` に渡す宣言を作る・確かめる）
 - 実践例: [複数テナント][multi-tenant]（リクエストごとにスコープを作る）
 - リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
@@ -79,7 +80,7 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 [tenant]: ../topics/tenant.md
 [custom-fields]: ../topics/custom-fields.md
 [cl-client]: client.md
-[cl-functions]: functions.md
+[fn-declare]: ../functions/declare.md
 [resources]: ../resources/README.md
 [r-partition]: ../resources/partition.md
 [r-phase]: ../resources/phase.md

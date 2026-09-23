@@ -6,6 +6,8 @@ import {
   accessorNames,
   checkClientPages,
   clientMemberNames,
+  checkFunctionPages,
+  listedFunctionNames,
   checkTarget,
   parseIndexTable,
 } from "./check-doc-index.mjs";
@@ -444,49 +446,35 @@ export class PortersClient {
   readonly #accessPoint: AccessPoint;
 }
 `;
-  const FUNCTIONS_MD =
-    "# 単独の関数\n\n| 関数 | 何をするか |\n| --- | --- |\n| `defineFields` | 宣言 |\n| `createThrottle` | 上限 |\n";
-  const reader =
-    (source, functionsMd = FUNCTIONS_MD) =>
-    (path) => {
-      if (path.endsWith("src/client.ts")) return source;
-      if (path.endsWith("client/functions.md")) return functionsMd;
-      throw new Error(`想定外の読み取り: ${path}`);
-    };
-  const PAGES = ["client.md", "auth.md", "tenant-scope.md", "functions.md"];
-  const FUNCS = ["defineFields.md", "createThrottle.md"];
+  const reader = (source) => (path) => {
+    if (path.endsWith("src/client.ts")) return source;
+    throw new Error(`想定外の読み取り: ${path}`);
+  };
+  const PAGES = ["client.md", "auth.md", "tenant-scope.md"];
 
   it("PortersClient の readonly メンバだけを採る（private の # は除く）", () => {
     expect(clientMemberNames(CLIENT)).toEqual(["auth", "partition", "tenant"]);
   });
 
-  it("固定ページ・メンバのページ・関数の言及が揃っていれば問題なし", () => {
-    expect(
-      checkClientPages(
-        reader(CLIENT),
-        () => PAGES,
-        () => FUNCS,
-      ),
-    ).toEqual([]);
+  it("固定ページとメンバのページが揃っていれば問題なし", () => {
+    expect(checkClientPages(reader(CLIENT), () => PAGES)).toEqual([]);
   });
 
   it("メンバのページが無ければ落ちる（partition はリソース別が持つので数えない）", () => {
-    const problems = checkClientPages(
-      reader(CLIENT),
-      () => ["client.md", "functions.md", "tenant-scope.md"],
-      () => FUNCS,
-    );
+    const problems = checkClientPages(reader(CLIENT), () => [
+      "client.md",
+      "tenant-scope.md",
+    ]);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("auth");
     expect(problems[0]).toContain("auth.md");
   });
 
   it("どのメンバでもないページがあれば落ちる", () => {
-    const problems = checkClientPages(
-      reader(CLIENT),
-      () => [...PAGES, "throttle.md"],
-      () => FUNCS,
-    );
+    const problems = checkClientPages(reader(CLIENT), () => [
+      ...PAGES,
+      "throttle.md",
+    ]);
     expect(problems).toEqual([expect.stringContaining("throttle.md")]);
   });
 
@@ -495,42 +483,110 @@ export class PortersClient {
       "readonly tenant:",
       "readonly webhook: WebhookApi;\n  readonly tenant:",
     );
-    const problems = checkClientPages(
-      reader(source),
-      () => PAGES,
-      () => FUNCS,
-    );
+    const problems = checkClientPages(reader(source), () => PAGES);
     expect(problems).toEqual([expect.stringContaining("webhook")]);
-  });
-
-  it("公開関数が functions.md に載っていなければ落ちる", () => {
-    const problems = checkClientPages(
-      reader(CLIENT),
-      () => PAGES,
-      () => [...FUNCS, "rawValue.md"],
-    );
-    expect(problems).toEqual([expect.stringContaining("rawValue")]);
   });
 
   it("番人: メンバが 1 つも拾えなければ落ちる", () => {
     const problems = checkClientPages(
       reader("export const nothing = 1;"),
       () => PAGES,
-      () => FUNCS,
     );
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("clientMemberNames");
   });
 
   it("番人: 階層が無ければ落ちる", () => {
-    const problems = checkClientPages(
-      reader(CLIENT),
-      () => {
-        throw new Error("ENOENT");
-      },
-      () => FUNCS,
-    );
+    const problems = checkClientPages(reader(CLIENT), () => {
+      throw new Error("ENOENT");
+    });
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("docs/usage/client");
+  });
+});
+
+describe("checkFunctionPages", () => {
+  const DECLARE =
+    "# 宣言と突合\n\n| 関数 | 何をするか |\n| --- | --- |\n| `defineFields(decls)` | 宣言 |\n| `verifyFields(scope, fields)` | 突合 |\n";
+  const CONVERT =
+    "# 値の変換\n\n| 関数 | 何をするか |\n| --- | --- |\n| `encodeTimeOfDay(time)` | 時刻 |\n";
+  const reader = (byFile) => (path) => {
+    const name = path.split("/").pop();
+    const body = byFile[name];
+    if (body === undefined) throw new Error(`想定外の読み取り: ${path}`);
+    return body;
+  };
+  const FUNCS = ["defineFields.md", "verifyFields.md", "encodeTimeOfDay.md"];
+
+  it("表の第 1 列の `name(` から関数名を採る", () => {
+    expect(listedFunctionNames(DECLARE)).toEqual([
+      "defineFields",
+      "verifyFields",
+    ]);
+  });
+
+  it("公開関数がどれかのページに載り、表の名前がすべて公開関数なら問題なし", () => {
+    const problems = checkFunctionPages(
+      reader({ "declare.md": DECLARE, "convert.md": CONVERT }),
+      () => ["declare.md", "convert.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([]);
+  });
+
+  it("公開関数がどのページにも載っていなければ落ちる", () => {
+    const problems = checkFunctionPages(
+      reader({ "declare.md": DECLARE, "convert.md": CONVERT }),
+      () => ["declare.md", "convert.md"],
+      () => [...FUNCS, "rawValue.md"],
+    );
+    expect(problems).toEqual([expect.stringContaining("rawValue")]);
+  });
+
+  it("表にある名前が公開関数でなければ落ちる（綴り違い・消えた関数）", () => {
+    const problems = checkFunctionPages(
+      reader({
+        "declare.md": DECLARE.replace("verifyFields(", "verifyFeilds("),
+        "convert.md": CONVERT,
+      }),
+      () => ["declare.md", "convert.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([
+      expect.stringContaining("verifyFeilds"),
+      expect.stringContaining("verifyFields"),
+    ]);
+  });
+
+  it("表の無いページは落ちる", () => {
+    const problems = checkFunctionPages(
+      reader({
+        "declare.md": DECLARE,
+        "convert.md": CONVERT,
+        "empty.md": "# x\n",
+      }),
+      () => ["declare.md", "convert.md", "empty.md"],
+      () => FUNCS,
+    );
+    expect(problems).toEqual([expect.stringContaining("empty.md")]);
+  });
+
+  it("番人: 生成物が空・階層が無ければ落ちる", () => {
+    expect(
+      checkFunctionPages(
+        reader({}),
+        () => ["declare.md"],
+        () => [],
+      ),
+    ).toEqual([expect.stringContaining("api/functions")]);
+    expect(
+      checkFunctionPages(
+        reader({}),
+        () => {
+          throw new Error("ENOENT");
+        },
+        () => FUNCS,
+      ),
+    ).toEqual([expect.stringContaining("docs/usage/functions")]);
   });
 });

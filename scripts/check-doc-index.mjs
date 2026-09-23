@@ -185,15 +185,22 @@ export const checkTarget = (target, read = readFileSync) => {
 
 /**
  * 利用者向けドキュメントの目次（`docs/usage/index.md`）と実ファイルの 1:1 突合
- * （[ADR-0070] 論点4 の検査①。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアントと関数」）。
+ * （[ADR-0070] 論点4 の検査①。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアント」「関数」）。
  *
  * 目次に無いページは**誰からも辿れない**＝書いたのに読まれない。逆に目次にあるのに
  * ファイルが無いのは 404。どちらも「黙って起きる」ので機械で止める。
  *
- * 対象は `docs/usage/{start,topics,client,resources,recipes}` の 5 階層だけ。`reference/` と `api/` は
+ * 対象は `docs/usage/{start,topics,client,resources,functions,recipes}` の 6 階層だけ。`reference/` と `api/` は
  * それぞれ別の索引を持ち、`api/` は生成物（`pnpm check:api` が見る）。
  */
-const USER_DOC_DIRS = ["start", "topics", "client", "resources", "recipes"];
+const USER_DOC_DIRS = [
+  "start",
+  "topics",
+  "client",
+  "resources",
+  "functions",
+  "recipes",
+];
 
 export const checkUserDocIndex = (read = readFileSync) => {
   const problems = [];
@@ -217,7 +224,7 @@ export const checkUserDocIndex = (read = readFileSync) => {
       entries = readdirSync(join("docs", "usage", dir));
     } catch {
       // **番人**（ADR-0071 論点2）。以前は「まだ無いディレクトリは対象外」と読み飛ばしていたが、
-      // 移設したのに定数を直し忘れると検査が静かに空振りする。5 階層はすべて実在する前提。
+      // 移設したのに定数を直し忘れると検査が静かに空振りする。6 階層はすべて実在する前提。
       problems.push(
         `検査対象の階層が見つかりません: docs/usage/${dir}（USER_DOC_DIRS を直すか、移設を戻す）`,
       );
@@ -344,9 +351,9 @@ export const checkStartChain = (read = readFileSync) => {
 };
 
 /**
- * 引く層（`docs/usage/{topics,client,resources,recipes}`）の各ページに**出口**があるかの検査
- * （[ADR-0070] 追記の検査⑤。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアントと関数」で、
- * 目的別 1 階層から 4 階層に広がった）。
+ * 引く層（`docs/usage/{topics,client,resources,functions,recipes}`）の各ページに**出口**があるかの検査
+ * （[ADR-0070] 追記の検査⑤。階層は [ADR-0088] の 5 章 ＋ 訂正注記の「クライアント」「関数」で、
+ * 目的別 1 階層から 5 階層に広がった）。
  *
  * 入門と違い、引く層は**順序が無い**（目次から主題・リソース・用途で引いて 1 本読む層）。だから鎖では
  * なく、「読み終えた人が次へ移れること」だけを見る。具体的には `## 関連` を持ち、その節から
@@ -358,6 +365,7 @@ const EXIT_DIRS = [
   "docs/usage/topics",
   "docs/usage/client",
   "docs/usage/resources",
+  "docs/usage/functions",
   "docs/usage/recipes",
 ];
 const EXIT_SECTION = "## 関連";
@@ -396,7 +404,7 @@ export const checkExits = (
       files = list(dir).filter((f) => f.endsWith(".md"));
     } catch {
       // **番人**（ADR-0071 論点2）。階層を移すと、この検査は対象ゼロで黙って緑になる。
-      // 4 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
+      // 5 階層のどれか 1 つが消えても落ちるよう、階層ごとに見る。
       problems.push(
         `検査対象が見つかりません: ${dir}（EXIT_DIRS を直すか、移設を戻す）`,
       );
@@ -493,24 +501,21 @@ export const checkResourcePages = (
 };
 
 /**
- * クライアントと関数（`docs/usage/client/`）と公開 API の**両方向**突合（[ADR-0088] 訂正注記で
+ * クライアント（`docs/usage/client/`）と `PortersClient` の**両方向**突合（[ADR-0088] 訂正注記で
  * 検査⑥を広げたもの）。リソース別の ⑥ が `TenantScope` のアクセサを見るのに対し、こちらは
- * **`PortersClient` 直下のメンバ**（`auth` / `tenant`。`partition` はリソース別が持つ）と、
- * **公開している単独の関数**（`docs/usage/api/functions/*.md`＝生成物）を見る。
+ * **`PortersClient` 直下のメンバ**（`auth` / `tenant`。`partition` はリソース別が持つ）を見る。
  *
  * 検出するもの: メンバのページが無い／対応の決まっていないメンバが増えた／どのメンバでもない
- * ページがある／固定ページ（`client.md` / `functions.md`）が無い／公開関数が `functions.md` に載って
- * いない／メンバも関数も 1 つも拾えない・階層が消えた（番人）。
+ * ページがある／固定ページ（`client.md`）が無い／メンバが 1 つも拾えない・階層が消えた（番人）。
  */
 const CLIENT_DIR = "docs/usage/client";
-const CLIENT_FIXED_PAGES = ["client.md", "functions.md"];
+const CLIENT_FIXED_PAGES = ["client.md"];
 /** `PortersClient` のメンバ → ページ。`null` は別の章（リソース別）が持つ。 */
 const CLIENT_MEMBER_PAGES = {
   auth: "auth.md",
   tenant: "tenant-scope.md",
   partition: null,
 };
-const API_FUNCTIONS_DIR = "docs/usage/api/functions";
 
 /** `export class PortersClient { … }` の本体から `readonly x` の名前を採る（`#` の private は除く）。 */
 export const clientMemberNames = (source) => {
@@ -528,7 +533,6 @@ export const clientMemberNames = (source) => {
 export const checkClientPages = (
   read = readFileSync,
   listPages = () => readdirSync(CLIENT_DIR),
-  listFunctions = () => readdirSync(API_FUNCTIONS_DIR),
 ) => {
   let source;
   try {
@@ -575,7 +579,29 @@ export const checkClientPages = (
       problems.push(
         `ページに対応するメンバがありません: ${CLIENT_DIR}/${p}（PortersClient に無い）`,
       );
-  // 単独の関数: 公開関数の実体（生成物）が functions.md に 1 つ残らず載っていること。
+  return problems;
+};
+
+/**
+ * 関数（`docs/usage/functions/`）と公開関数の**両方向**突合（[ADR-0088] 訂正注記の検査⑥の一部）。
+ * 公開関数の実体は生成物 `docs/usage/api/functions/*.md`（`pnpm check:api` が最新を保つ）で、
+ * 用途別の 3 ページの「呼べる関数」表と突き合わせる。
+ *
+ * 検出するもの: 公開関数がどのページの表にも載っていない／表にある名前が公開関数でない（綴り違い・
+ * 消えた関数）／表が 1 つも無いページ／公開関数が 1 つも無い・階層が消えた（番人）。
+ */
+const FUNCTIONS_DIR = "docs/usage/functions";
+const API_FUNCTIONS_DIR = "docs/usage/api/functions";
+
+/** 表の行 `| \`name(...)\` | …` から関数名を採る（「呼べる関数」表の第 1 列だけ）。 */
+export const listedFunctionNames = (body) =>
+  [...body.matchAll(/^\| `(\w+)\(/gm)].map((m) => m[1]);
+
+export const checkFunctionPages = (
+  read = readFileSync,
+  listPages = () => readdirSync(FUNCTIONS_DIR),
+  listFunctions = () => readdirSync(API_FUNCTIONS_DIR),
+) => {
   let functions;
   try {
     functions = listFunctions()
@@ -583,25 +609,44 @@ export const checkClientPages = (
       .map((f) => f.replace(/\.md$/, ""));
   } catch {
     return [
-      ...problems,
       `検査対象が見つかりません: ${API_FUNCTIONS_DIR}（API_FUNCTIONS_DIR を直すか、pnpm docs:api を実行する）`,
     ];
   }
+  // **番人**。生成物が空だと「載せる関数は無い」と読んで緑になる。
   if (functions.length === 0)
     return [
-      ...problems,
       `${API_FUNCTIONS_DIR} に .md がありません（公開関数が 0 のはずはない。生成し直す）`,
     ];
-  let body;
+  let pages;
   try {
-    body = read(join(CLIENT_DIR, "functions.md"), "utf8");
+    pages = listPages().filter((f) => f.endsWith(".md"));
   } catch {
-    return problems; // 固定ページの欠落として上で報告済み
+    return [
+      `検査対象が見つかりません: ${FUNCTIONS_DIR}（FUNCTIONS_DIR を直すか、移設を戻す）`,
+    ];
   }
-  for (const name of functions)
-    if (!body.includes(`\`${name}\``) && !body.includes(`${name}(`))
+  if (pages.length === 0)
+    return [`${FUNCTIONS_DIR} に .md がありません（用途別のページを置く）`];
+  const problems = [];
+  const listed = new Map(); // name -> page
+  for (const f of pages.sort()) {
+    const names = listedFunctionNames(read(join(FUNCTIONS_DIR, f), "utf8"));
+    if (names.length === 0)
       problems.push(
-        `公開関数 ${name} が ${CLIENT_DIR}/functions.md に載っていません（${API_FUNCTIONS_DIR}/${name}.md はある）`,
+        `${FUNCTIONS_DIR}/${f}: 「呼べる関数」の表に関数がありません（\`| \\\`name(\` の行）`,
+      );
+    for (const n of names) {
+      if (!functions.includes(n))
+        problems.push(
+          `${FUNCTIONS_DIR}/${f}: ${n} は公開関数ではありません（${API_FUNCTIONS_DIR}/${n}.md が無い。綴りか、消えた関数）`,
+        );
+      listed.set(n, f);
+    }
+  }
+  for (const n of functions)
+    if (!listed.has(n))
+      problems.push(
+        `公開関数 ${n} が ${FUNCTIONS_DIR}/ のどのページにも載っていません（${API_FUNCTIONS_DIR}/${n}.md はある）`,
       );
   return problems;
 };
@@ -613,6 +658,7 @@ export const checkAll = (targets = TARGETS, read = readFileSync) => [
   ...checkExits(read),
   ...checkResourcePages(read),
   ...checkClientPages(read),
+  ...checkFunctionPages(read),
 ];
 
 // CLI として実行されたときだけ走らせる（テストからは import して関数を呼ぶ）。

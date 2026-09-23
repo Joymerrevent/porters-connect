@@ -46,7 +46,7 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 | `scopes`     | 無し                                     | 初回の権限付与で渡すスコープ。`authorizationUrl` で省略したときに使われる（[認証とトークン][auth]）                                   |
 | `tokenStore` | インメモリ                               | トークンの保存先を差し替える（[認証とトークン][auth]の「トークンの永続化」）                                                          |
 | `auth`       | 既定の方式（`code_direct`＋自動更新）    | トークンの取得を自前で管理する `TokenProvider`（[認証とトークン][auth]の「トークンを自前で管理するとき」）                            |
-| `transport`  | fetch                                    | HTTP の送信を差し替える。タイムアウトを延ばす・モックにする（[単独の関数][cl-functions]の「上限と接続」）                             |
+| `transport`  | fetch                                    | HTTP の送信を差し替える。タイムアウトを延ばす・モックにする（[上限と接続][fn-transport]）                                             |
 | `throttle`   | 接続先ごとにプロセス内で共有するバケット | 1 分あたりの上限を別に持つ・プロセスを跨いで協調する（[上限とレート][limits]）                                                        |
 
 ## 固有の注意
@@ -79,8 +79,9 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 
 - 導入: [インストールと、クライアントの構築][s-install]（3 つの値から作る）
 - 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]／[上限とレート][limits]／[契約なしでテストする][testing]
-- クライアントと関数: [tenant(id)][cl-tenant]／[auth][cl-auth]／[単独の関数][cl-functions]
+- クライアント: [tenant(id)][cl-tenant]／[auth][cl-auth]
 - リソース別: [Partition][r-partition]
+- 関数: [上限と接続][fn-transport]（`throttle` / `transport` に渡すものを作る）
 - 実践例: [複数テナント][multi-tenant]（クライアントを分けるか）
 - リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
@@ -94,7 +95,7 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 [custom-fields]: ../topics/custom-fields.md
 [cl-tenant]: tenant-scope.md
 [cl-auth]: auth.md
-[cl-functions]: functions.md
+[fn-transport]: ../functions/transport.md
 [r-partition]: ../resources/partition.md
 [multi-tenant]: ../recipes/multi-tenant.md
 [t-PortersClient]: ../api/classes/PortersClient.md
