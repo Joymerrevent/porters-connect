@@ -1,14 +1,26 @@
-# 認証を通したい（OAuth 認証）
+# 認証とトークン
 
-PORTERS の OAuth は独自仕様です。**普段の運用はライブラリが透過的に自動化**しますが、
-**初回だけは人手によるブラウザでの権限付与**が要ります。本ガイドは公開 API `porters.auth.*` の使い方を
-手順順にまとめます。
+PORTERS の OAuth は独自仕様で、初回だけは人がブラウザで権限を付与し、以降はライブラリが無人で運用します。
+このページを読むと、初回の権限付与をアプリに組み込む方法、トークンをどこに置くか、権限の削除、トークンを
+自前で管理する方法が分かります。手順を順に追うなら導入の[認証を通して、疎通を確認する][s-auth]から入ってください。
+
+## まず知ること
+
+- **認証は 2 つのフェーズ**です。初回の権限付与は人がブラウザで 1 回（`code`）、以降はライブラリが無人で
+  トークンを取り直します（`code_direct`）。順番は飛ばせません。
+- **認証コードは発行から 30 秒で失効**します。リダイレクトを受けたハンドラの中でそのまま交換します。
+- **トークンは既定でインメモリ**です。プロセスを跨いで共有するなら `tokenStore` を渡します。Refresh Token を
+  外に出すので、置き場所の安全性は利用側の責任です。
+- **認証のリクエストも API アクセス数に数えられます**（月 15 万は契約条件）。永続化すると取り直しが減ります。
+- **トークンを自前で管理する**なら `TokenProvider` を渡します。そのとき `porters.auth.*` の一部は使えません。
 
 API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照してください。
 
 <!-- 根拠: ADR-0007（OAuth 公開 API）・ADR-0034（実装） -->
 
 ## 全体像（2 つのフェーズ）
+
+認証は、人が 1 回だけやることと、ライブラリが毎回やることに分かれます。
 
 | フェーズ           | いつ                            | 誰が                 | 方式                                        |
 | ------------------ | ------------------------------- | -------------------- | ------------------------------------------- |
@@ -17,14 +29,14 @@ API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照して�
 
 `code_direct` を使うには**事前に一度 `code`（ブラウザ）で権限付与済み**である必要があります。
 権限付与を済ませれば、あとは `appId` / `appSecret` を渡すだけでトークンの取得・キャッシュ・更新まで
-自動で回ります（[認証を通して、疎通を確認する][s-auth]）。
+自動で行われます（[認証を通して、疎通を確認する][s-auth]）。
 
 `porters.auth.*` は、この**初回付与の補助**と、**運用中の確認・終了処理**を行うためのメソッド群です。
 
 ## 初回の権限付与（ブラウザ・人手で 1 回）
 
 ライブラリは**認可 URL の生成**と **`code` の交換**だけを担います。ブラウザでのログイン・承諾、
-および redirect（`?code=` の受け取り）は**利用者側の Web アプリの責務**です。
+およびリダイレクト（`?code=` の受け取り）は**利用者側の Web アプリの責務**です。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -39,17 +51,17 @@ const porters = new PortersClient({
 // 1) 認可 URL を生成 → ユーザーのブラウザで開く（ログイン → 権限付与の承諾）
 const url = porters.auth.authorizationUrl({
   redirectUrl: "https://app.example.com/porters/callback", // アプリ登録済みの Redirect URL
-  state: "csrf-token-xyz", // 任意（redirect に引き継がれる。CSRF 対策等）
+  state: "csrf-token-xyz", // 任意（リダイレクトに引き継がれる。CSRF 対策等）
   // scopes 省略時は client の `scopes` を使う
 });
 // → このURLへユーザーを誘導する
 
-// 2) redirect で戻ってきた ?code= を交換（code の有効期限は 30 秒）
+// 2) リダイレクトで戻ってきた ?code= を交換（code の有効期限は 30 秒）
 await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
-// 成功すると以後は透過運用（code_direct + 自動更新）に乗る
+// 成功すると以後は無人運用（code_direct + 自動更新）になる
 ```
 
-- `redirectUrl` は**アプリ登録時の Redirect URL** と一致させます（`code`/`remove` で必須）。
+- `redirectUrl` は**アプリ登録時の Redirect URL** と一致させます（認可 URL と、後述の権限削除 URL の両方で必須）。
 - `scopes` は付与したい権限。省略すると client に設定した `scopes` を使います（どちらも空だと
   `PortersConfigError`）。
 - `exchangeAuthorizationCode(code)` は**成功時に値を返しません（`Promise<void>`）**。取得したトークンは
@@ -61,8 +73,10 @@ await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
 
 ## 起動時の確認 / トークンの確認
 
+起動時に認証の不備を早く知りたいとき、または有効なトークンを確かめたいときに使います。
+
 ```ts
-// 起動時に前もってトークンを用意（取得できなければ即エラー＝fail-fast / ウォームアップ）
+// 起動時に前もってトークンを用意（取得できなければ、この時点でエラーになる）
 await porters.auth.ensureAuthenticated();
 
 // 現在有効な Access Token を取得（デバッグ用）。Refresh Token は返しません
@@ -74,12 +88,12 @@ const token = await porters.auth.getToken();
 
 ## トークンの永続化（`tokenStore`）
 
-既定（透過ストラテジ）のトークン保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を注入して Redis / DB / ファイルに永続化できます。
+既定の方式（ライブラリがトークンを取得・更新する）では、トークンの保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を渡して Redis / DB / ファイルに永続化できます。
 
 永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（**認証のリクエストも API アクセス数に数えられます**）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
 ```ts
-// get / set / clear の 3 つ（StoredTokens とも型 export 済み）
+// get / set / clear の 3 つ（StoredTokens の型も export しています）
 type TokenStore = {
   get(): Promise<StoredTokens | undefined>; // 無ければ undefined
   set(tokens: StoredTokens): Promise<void>; // 取得・更新のたびに書き込まれる
@@ -89,18 +103,18 @@ type TokenStore = {
 type StoredTokens = {
   accessToken: string;
   refreshToken: string;
-  accessTokenExpiresAt: number; // epoch ms（絶対時刻）
-  refreshTokenExpiresAt: number; // epoch ms（絶対時刻）
+  accessTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
+  refreshTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
 };
 ```
 
-`StoredTokens` は素直な JSON（`*ExpiresAt` は絶対時刻の epoch ms）なので、そのまま直列化して保存できます。
+`StoredTokens` はふつうの JSON（`*ExpiresAt` は 1970-01-01 からのミリ秒で表した絶対時刻）なので、そのまま直列化して保存できます。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
 import type { TokenStore, StoredTokens } from "@joymerrevent/porters-connect";
 
-// 任意の KV ストアにバックする例
+// 任意の KV ストアに保存する例
 const tokenStore: TokenStore = {
   get: async () => {
     const json = await kv.get("porters:tokens");
@@ -123,12 +137,12 @@ const porters = new PortersClient({
 });
 ```
 
-- `tokenStore` が効くのは**既定ストラテジのときだけ**です。独自 `TokenProvider`（後述の「カスタム認証ストラテジ使用時」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
-- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は契約環境での検証事項です<!-- 根拠: ADR-0012 -->。
+- `tokenStore` が使われるのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
+- 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は実機で未確認です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
 
-PORTERS にはサーバ間で完結する権限削除 API がなく、**`remove` もブラウザでの承諾が必要**です。
+PORTERS にはサーバ間で完結する権限削除 API がなく、**権限削除（`response_type=remove`）もブラウザでの承諾が必要**です。
 そのため削除は 2 段階に分けています。
 
 ```ts
@@ -145,12 +159,12 @@ await porters.auth.clearTokens();
 - `revokeUrl()` は**サーバ側**の権限削除（ブラウザ手順）。
 - `clearTokens()` は**ローカル**のトークン破棄のみ（サーバ側の権限は消しません）。
 
-## カスタム認証ストラテジ使用時
+## トークンを自前で管理するとき
 
-`auth` に独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の透過ストラテジを置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
+`PortersClient` の `auth` オプションに独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
 
 ```ts
-// 実装するのは getAccessToken の 1 つだけ（opts は GetAccessTokenOptions として型 export 済み）
+// 実装するのは getAccessToken の 1 つだけ（opts の型は GetAccessTokenOptions）
 type TokenProvider = {
   getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
 };
@@ -158,7 +172,7 @@ type TokenProvider = {
 
 - **返り値**: その時点で有効な Access Token（文字列）。リソース呼び出しのたびに呼ばれます。
 - **`opts.forceRefresh`**: ライブラリが `401`/`402`（トークン失効）を受けた直後に `true` で再呼び出しします。`true` のときは**キャッシュを使わず新しいトークンを取り直して**ください。
-- 再認証が必要で取得できないときは `PortersAuthError` を throw します（ライブラリはループせず表面化）。
+- 再認証が必要で取得できないときは、`TokenProvider` 側で `PortersAuthError` を throw してください（ライブラリは繰り返さず、エラーとして返します）。
 
 ```ts
 import type { TokenProvider } from "@joymerrevent/porters-connect";
@@ -180,23 +194,19 @@ const porters = new PortersClient({ hostname, auth });
 
 > 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。
 
-独自ストラテジのとき、`porters.auth.*` で**動くのは provider に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
+自前管理のとき、`porters.auth.*` で**動くのは `TokenProvider` に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
 残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
 
-| メソッド                                    | 既定ストラテジ | カスタムストラテジ   |
-| ------------------------------------------- | -------------- | -------------------- |
-| `authorizationUrl` / `revokeUrl`            | ○              | `PortersConfigError` |
-| `exchangeAuthorizationCode` / `clearTokens` | ○              | `PortersConfigError` |
-| `ensureAuthenticated` / `getToken`          | ○              | ○（委譲）            |
+6 メソッドの一覧と、それぞれの既定の方式／自前管理での挙動は [auth][cl-auth] にあります。
 
 ## エラー
 
 `exchangeAuthorizationCode` など非同期メソッドは、失敗を**戻り値ではなく throw**で表します
-（[エラーハンドリング ガイド][error-handling]）。
+（[エラーと再試行][error-handling]）。
 
 - Token エンドポイントがエラーを返す／`code` が失効（30 秒）→ `PortersAuthError`（`category: "auth"`）
 - ネットワーク不達・切断 → `PortersNetworkError`
-- `appId` / `appSecret` / `scopes` 不足、カスタムストラテジでの誤用 → `PortersConfigError`（`category: "config"`）
+- `appId` / `appSecret` / `scopes` 不足、自前管理のときの誤用 → `PortersConfigError`（`category: "config"`）
 
 ```ts
 import {
@@ -217,8 +227,13 @@ try {
 
 ## 関連
 
-- API 事実: [認証 API（OAuth/Token/フロー）][auth-ref]
-- 手順: [失敗の扱い][error-handling]（エラーの型と category）／ 透過運用は [認証を通して、疎通を確認する][s-auth]
+- 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
+- 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
+  [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
+- クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `auth` / `scopes` オプション）
+- リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
+- 実践例: [複数テナント][multi-tenant]（認証を分けるか）
+- リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -226,6 +241,13 @@ try {
 -->
 
 [auth-ref]: ../reference/authentication-api/README.md
-[error-handling]: ./handle-failures.md
+[error-handling]: ./errors.md
 [s-auth]: ../start/authenticate.md
 [index]: ../index.md
+[limits]: limits.md
+[tenant]: tenant.md
+[r-partition]: ../resources/partition.md
+[r-user]: ../resources/user.md
+[multi-tenant]: ../recipes/multi-tenant.md
+[cl-auth]: ../client/auth.md
+[cl-client]: ../client/client.md

@@ -263,6 +263,6 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [r-attachment]: ../usage/reference/resource-api/resources/attachment.md
 [wf]: ../usage/reference/resource-api/write-format.md
 [fdt]: ../usage/reference/resource-api/field-data-types.md
-[no-delete]: ../usage/concepts/no-delete.md
-[bulk-write]: ../usage/howto/bulk-write.md
+[no-delete]: ../usage/topics/deleted.md
+[bulk-write]: ../usage/topics/write.md
 [lv]: ../live-verification.md

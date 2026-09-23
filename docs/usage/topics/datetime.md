@@ -1,13 +1,23 @@
-# 日時は UTC で、ISO 8601 で入出力する
+# 日時と時分型
 
-PORTERS の日時は**すべて UTC** です。ローカル時刻ではありません。
+日時の項目を読み書きするときに読むページです。日時をどのかたちで渡し、どのかたちで受け取るか、変換できない値が
+どこで止まるか、時分型をどう扱うかが分かります。
 
-このライブラリは境界で **ISO 8601 に正規化**します。つまり**あなたのコードは ISO 8601 だけを
-扱えばよく、PORTERS の書式を知らなくて済みます**。
+## まず知ること
+
+- **PORTERS の日時はすべて UTC** です。ローカル時刻ではありません。
+- **ライブラリが PORTERS との受け渡しの時点で ISO 8601 に変換**します。利用側のコードは ISO 8601（`2026-09-11T12:00:00Z`）だけを扱えば
+  よく、PORTERS の書式（`yyyy/mm/dd HH:MM:SS`）を知らなくて済みます。
+- **JST などへの変換はしません。** 業務タイムゾーンは利用側の責務です。
+- **変換できない値は、送る前・読んだ直後に弾きます**（`category: "validation"`）。黙って別の値にはしません。
+- **時分型は年月日時分型と同じ Field Type** で返り、Field Read からは見分けが付きません。`decodeTimeOfDay` /
+  `encodeTimeOfDay` で変換します。
 
 ## 変換の対応
 
-| Data Type          | PORTERS の wire 形式         | このライブラリが渡す／受ける形               |
+Data Type ごとの、PORTERS の書式とライブラリが渡す・受けるかたちの対応です。利用側が扱うのは右の列だけです。
+
+| Data Type          | PORTERS との通信の書式       | このライブラリが渡す／受ける形               |
 | ------------------ | ---------------------------- | -------------------------------------------- |
 | `DateTime`         | `yyyy/mm/dd HH:MM:SS`（UTC） | `2026-09-11T12:00:00Z`（ISO・`Z` つき）      |
 | `System[DateTime]` | 同上（登録日 / 更新日）      | 同上。**書き込み不可**                       |
@@ -66,11 +76,11 @@ await t.candidate.update(1, { U_hiredOn: "2026/09/10" });
 ```
 
 これは**日時だけの扱い**です。他の Data Type はライブラリが変換しないので、書式を検査しません
-（`Number` に `"abc"` を渡しても素通しし、PORTERS が弾きます）。**この非対称は意図したもの**で、
-手前で厳しくするとサーバーが受け付ける値をライブラリが落としてしまうためです。詳しくは
-[失敗の扱い][handle-failures]にあります。
+（`Number` に `"abc"` を渡してもそのまま送られ、PORTERS が弾きます）。**日時だけ厳しいのは意図したもの**で、
+送る前の検査を厳しくすると、サーバーが受け付ける値をライブラリが弾いてしまうためです。詳しくは
+[エラーと再試行][handle-failures]にあります。
 
-**読み取りも同じです。** 変換できる形でなければ行き場が無いので、日時として読めない文字列が
+**読み取りも同じです。** 変換できない値は返しようがないので、日時として読めない文字列が
 返ってきたら `PortersResourceError`（`category: "validation"`）になります。実際にこれが出るのは、
 たいてい日時でない項目を `f.date()` と宣言したときです（[カスタム項目][custom-fields]）。
 
@@ -102,8 +112,8 @@ PORTERS 9.3.0（2026/08）で足された項目タイプ **「時分型」** は
 
 **どの項目が時分型かは、API からは分かりません**（Field Read でも `12` としか返りません）。
 分かるのはテナントの管理者だけです。そこでこのライブラリは型を増やさず、時分型の項目も
-**`f.dateTime()` のまま宣言し、値は ISO のまま読み書き**します。基準日の規則は、あなたが
-「この項目は時分型だ」と知っているところで**変換関数**に任せます<!-- 根拠: ADR-0086 -->。
+**`f.dateTime()` のまま宣言し、値は ISO のまま読み書き**します。基準日の規則は、利用側が
+「この項目は時分型だ」と分かっている箇所で**変換関数**を呼んで扱います<!-- 根拠: ADR-0086 -->。
 
 ```ts
 import {
@@ -121,7 +131,7 @@ const porters = new PortersClient({
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
-const t = porters.tenant(1, { fields }); // 宣言は partition と一緒に束ねる
+const t = porters.tenant(1, { fields }); // 宣言は partition と一緒に渡す
 
 // 読む: ISO で届く値を時刻に戻す
 const job = await t.job.get(10001);
@@ -138,22 +148,26 @@ await t.job.search({
 - `encodeTimeOfDay` は `"HH:mm"` か `"HH:mm:ss"`（`00:00`〜`47:59`）だけを受け付け、それ以外は
   `PortersConfigError`（`category: "validation"`）で**送る前に**止まります。PORTERS は基準日以外の
   値を Write では Code 103、`condition` では Code 100（**検索が実行されない**）で返すので、
-  手前で止めるほうが「0 件だった」との取り違えを防げます。
+  送る前に止めるほうが「0 件だった」との取り違えを防げます。
 - `decodeTimeOfDay` は基準日（`1970-01-01` / `1970-01-02`）の ISO だけを受け付けます。別の日付が
   来たら、その項目はたぶん時分型ではありません — エラーのヒントにそう書いてあります。
   時・分・秒が時計の範囲（時 `00`〜`23`・分と秒 `00`〜`59`）にない値（`1970-01-01T30:00:00Z` など）も
-  同じ `PortersConfigError` で止まります。Read で得た ISO をそのまま渡す限り届きませんが、手で組み立てた
-  ISO を通すと `"30:00"` → `1970-01-02T06:00:00Z` のように**別の値に化けて往復する**ためです。
-  秒が `00` でなければ `"HH:mm:ss"` で保持します（黙って落としません）。
+  同じ `PortersConfigError` で止まります。Read で得た ISO をそのまま渡す限りこうした値は現れませんが、手で組み立てた
+  ISO を通すと `"30:00"` → `1970-01-02T06:00:00Z` のように**別の値に変わって戻ってくる**ためです。
+  秒が `00` でなければ `"HH:mm:ss"` で保持します（黙って捨てません）。
 - **変換を呼ぶかどうかはあなたの責務**です。呼ばずにオフセット付きの ISO（`+09:00`）を書くと、
-  既存の日時の契約どおり UTC に換算されて**黙ってずれます**。`Z` 付きなら値は通ります。
-- 管理者が時分型の項目を足すと、既存の連携が普通の日時を書いて Code 103 で落ちることがあります。
+  ほかの日時と同じ規則で UTC に換算されて**値がずれます**。`Z` 付きなら値は通ります。
+- 管理者が時分型の項目を足すと、既存の連携が普通の日時を書いて Code 103 で失敗することがあります。
   `generateFieldDecls` は Field Type 12 の行にその注意を出します（[カスタム項目][custom-fields]）。
 
 ## 関連
 
-- 手順: [検索][search-records]（`condition` の書き方）／[失敗の扱い][handle-failures]
-- API 事実: [Field Type / Data Type][fdt]（wire 形式の一次情報）
+- 主題: [検索][search-records]（`condition` の書き方）／[書き込み][write]（送る前の検査）／[エラーと再試行][handle-failures]／
+  [項目と値のかたち][fields]
+- リソース別: [Field][r-field]（時分型は Field Read で見分けが付かない）
+- 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` は ISO 8601）
+- リファレンス: [Field Type / Data Type][fdt]（通信の書式の一次情報）
+- ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
 - 要件: PRD R-10（ISO 8601・UTC で正規化し、業務タイムゾーン変換はしない）
@@ -162,6 +176,11 @@ await t.job.search({
 -->
 
 [fdt]: ../reference/resource-api/field-data-types.md
-[handle-failures]: ../howto/handle-failures.md
-[custom-fields]: ../howto/custom-fields.md
-[search-records]: ../howto/search-records.md
+[handle-failures]: errors.md
+[custom-fields]: custom-fields.md
+[search-records]: query.md
+[index]: ../index.md
+[write]: write.md
+[fields]: fields.md
+[r-field]: ../resources/field.md
+[sync-batch]: ../recipes/sync-batch.md

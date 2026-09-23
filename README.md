@@ -10,36 +10,35 @@ PORTERS Connect API（旧 HRBC）を **TypeScript から型安全・簡単に**�
 > 利用には **PORTERS の契約 ＋ Connect API オプション契約**が必要です（ホスト名・App ID/Secret は契約時に通知されます）。
 
 XML レスポンスを型付きオブジェクトに変換し、独自仕様の OAuth・レート制御・エラー整理を内側に隠します。
-**薄く・堅く**を方針に、フェイルセーフ（壊れたときに安全側へ倒れる）設計です。
 
 ---
 
 ## 特徴
 
-- **型安全**：リソース・項目の値を型で表現。`any` を撒きません。
-- **XML を外に出さない**：返り値は型付きオブジェクト、入力も素直な JS の値。
-- **独自 OAuth を透過**：`code_direct` によるトークン取得・キャッシュ・更新を自動化。
-- **上限内に自制する**：スロットリング・リトライ（指数バックオフ）・リクエストサイズガード内蔵。
+- **型安全**：リソース・項目の値を型で表現。`any` を使いません。
+- **XML を外に出さない**：返り値は型付きオブジェクト、入力もふつうの JS の値。
+- **独自 OAuth を意識させない**：`code_direct` によるトークン取得・キャッシュ・更新を自動化。
+- **上限を守る**：スロットリング・リトライ（指数バックオフ）・リクエストの長さの検査を内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
-- **PORTERS の全リソースに対応**：データ系 13 種（Phase・Attachment を含む）＋ マスタ Read 5 種。
+- **PORTERS の全リソースに対応**：データ系 13 種（Phase・Attachment を含む）＋ マスタ系 5 種（読み取り専用）。
 
 ## 前提
 
-繋ぐ前に、**PORTERS 側で 4 つ**が要ります。揃っていないと 1 行も動きません。
+繋ぐ前に、**PORTERS 側で 4 つ**が要ります。揃っていないと PORTERS を呼べません。
 
 1. **PORTERS 契約 ＋ Connect API オプション契約**（オプションは別契約）。
 2. **API アプリの登録**。ここで Redirect URL を決め、**ホスト名・App ID・App Secret** が
-   通知されます（いずれも機密情報・ハードコード禁止）。
+   通知されます（いずれも機密情報なので、コードに直接書かず環境変数で渡します）。
 3. **初回のみブラウザで権限付与**（人手・Company DB ごとに 1 回）。以降はライブラリが
    `code_direct`（サーバ間）で無人運用します。
 4. **付与するスコープ**の決定（リソース別に `_r` / `_w`。Read でも複数要ることがあります）。
 
 揃えかたは[始める前に][s-prereq]に、権限付与の手順は[認証を通して、疎通を確認する][s-auth]に
-あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。配るのは ESM 1 本ですが、
-CJS からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
+あります。実行環境は **Node.js 22.12 以上**で、型定義は同梱です。ビルド済みの JavaScript ファイルは ESM（`import`）の 1 つですが、
+CJS（`require`）からも `require("@joymerrevent/porters-connect")` で読めます（[CJS から使う][s-cjs]）。
 
 契約や権限付与を**待っている間**も、PORTERS に繋がずにコードとテストは書けます
-（[契約なしでテストを書きたい][test-without-contract]）。
+（[契約なしでテストする][test-without-contract]）。
 
 ## インストール
 
@@ -55,12 +54,12 @@ npm i @joymerrevent/porters-connect
 import { PortersClient } from "@joymerrevent/porters-connect";
 
 const porters = new PortersClient({
-  hostname: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。ハードコード禁止
+  hostname: process.env.PORTERS_HOST ?? "", // 契約時に通知される値。コードに直接書かず環境変数で渡す
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
 });
 
-// partition（Company DB）は tenant で一度だけ束ねる。**単一テナントでもこの形**
+// partition（Company DB）は tenant(id) で指定する（既定の Partition は無い）。単一テナントでも同じ書き方
 const t = porters.tenant(456);
 
 const page = await t.candidate.search({
@@ -73,7 +72,7 @@ const page = await t.candidate.search({
 console.log(page.total, page.items[0]?.P_Name);
 ```
 
-続きは[入門][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
+続きは[導入][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
 
 ## リソースと操作
 
@@ -87,46 +86,51 @@ console.log(page.total, page.items[0]?.P_Name);
 | `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴 |
 | `t.activity`    | アクティビティ |                |              |
 
-マスタ Read は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
+マスタ系は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
 
-**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of()` で
-束ねるものがあります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
-[API リファレンス][api-ref]が正典です。
+**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of("candidate")` のように
+対象リソースを指定するもの（Field・Phase・Attachment）があります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
+[API リファレンス][api-ref]が正確な定義です。
 
 ## ドキュメント
 
-**[docs/usage][docs-index] が目次**です。4 層に分かれています。
+**[docs/usage][docs-index] が目次**です。7 つの章に分かれていて、順に読むのは導入だけです。
 
-| 層               | 何が書いてあるか                                                                   |
-| ---------------- | ---------------------------------------------------------------------------------- |
-| **入門**         | 順に読む 6 ページ。準備 → 導入 → 認証と疎通 → 読み → 書き → 本番前                 |
-| **目的別**       | 「〜したい」から引く 9 ページ（検索・一括書き込み・添付・同期バッチ・テスト ほか） |
-| **考え方**       | PORTERS 固有の前提（Partition ／ alias と Data Type ／ UTC ／ 削除が無い ／ 上限） |
-| **リファレンス** | [公開 API の全記号][api-ref]（JSDoc から生成）と [PORTERS API の事実][ref]         |
+| 章               | 何が書いてあるか                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| **導入**         | 順に読む 6 ページ。準備 → インストール → 認証と疎通 → 読み → 書き → 本番前                  |
+| **主題別**       | 認証・検索・書き込み・カスタム項目・上限……の 11 主題を、考え方から細かい規則まで 1 ページで |
+| **クライアント** | `PortersClient`・`auth`・`tenant(id)` のスコープ。構築オプションと呼べるメソッド            |
+| **リソース別**   | 18 リソースを 1 ページずつ。呼べるメソッド・固有の注意・必須項目・型                        |
+| **関数**         | `import` して呼ぶ関数を用途別に。宣言と突合・上限と接続・値の変換                           |
+| **実践例**       | 毎日の差分同期・複数テナントなど、用途に沿った組み立て                                      |
+| **リファレンス** | [公開 API リファレンス][api-ref]（JSDoc から生成）と [PORTERS API の事実][ref]              |
+
+目次の末尾に「〜したい → 読む場所」の索引表があります。
 
 ## PORTERS 固有の注意
 
 このライブラリを使ううえで、**PORTERS 側の前提**として先に知っておくと迷いません。詳しくは
-それぞれの「考え方」ページにあります。
+それぞれの主題ページの「まず知ること」にあります。
 
-- **削除 API が存在しない**。`delete()` は型の上でも生やしていません（[削除 API が無いということ][c-no-delete]）。
-- **日時は UTC 前提**。ISO 8601（`…Z`）で入出力し、JST 等への変換はしません（[日時は UTC][c-datetime]）。
-- **データは Partition に分かれる**。`tenant(id)` で毎回束ねます（[Partition とテナント][c-partition]）。
+- **削除 API が存在しない**。`delete()` は型の上でも用意していません（[削除と削除済みデータ][c-no-delete]）。
+- **日時は UTC 前提**。ISO 8601（`…Z`）で入出力し、JST 等への変換はしません（[日時と時分型][c-datetime]）。
+- **データは Partition に分かれる**。`tenant(id)` で毎回指定します（[Partition とテナントスコープ][c-partition]）。
 - **上限がある**。リクエスト長 約 15000 文字・1 リクエスト 200 件・1 分あたり Read 2000 / Write 500 は
-  ライブラリが自制しますが、**月 15 万アクセスは契約条件**で利用側の運用責務です（[上限][c-limits]）。
+  ライブラリが守りますが、**月 15 万アクセスは契約条件**で利用側の運用責務です（[上限とレート][c-limits]）。
 - **ホスト名は非公開**。`PORTERS_HOST` で受け取り、ハードコードしません。
 
 ## 対応バージョン
 
-- **契約は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定送信し、**v2 を動作の前提**とします（担当者型・部署型 Link 等は v2 必須）。互換性はこの **API version** で明示します。
-- **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正典は [PORTERS API の事実][ref]**（実 API ドキュメントに接地）。
+- **互換性の基準は Connect API Version 2**：`X-P-ConnectAPI-Version: 2` を既定で送信し、**v2 を動作の前提**とします（担当者型・部署型の参照項目（Link）などは v2 が必要）。互換性はこの **API version** で明示します。
+- **PORTERS 製品 8.x / 9.x は参考**：v2 が提供される製品世代です（個別マイナーの動作保証はしません）。**正しい情報の出どころは [PORTERS API の事実][ref]**（PORTERS の公式ドキュメントに基づく）。
 
 ## リンク
 
-**この README は「最短で動かす」ところまで**です。網羅は目次側が担当します<!-- 根拠: ADR-0070 -->。
+**この README は「最短で動かす」ところまで**です。全体は目次から読めます<!-- 根拠: ADR-0070 -->。
 
-- 利用者向け：[docs/usage][docs-index]（目次）／[公開 API の全記号][api-ref]／[PORTERS API の事実][ref]
-- 開発・保守：[docs/README.md][docs-readme]（ADR・基本設計・ロードマップ・台帳への入口）
+- 利用者向け：[docs/usage][docs-index]（目次）／[公開 API リファレンス][api-ref]／[PORTERS API の事実][ref]
+- 開発・保守：[docs/README.md][docs-readme]（ADR（設計判断の記録）・基本設計・ロードマップ・台帳）
 - 提供元：[Joymerrevent][joymerrevent]
 
 ## コントリビュート / セキュリティ
@@ -156,15 +160,15 @@ console.log(page.total, page.items[0]?.P_Name);
 [coc]: ./CODE_OF_CONDUCT.md
 [issues]: https://github.com/Joymerrevent/porters-connect/issues
 [api-ref]: docs/usage/api/index.md
-[c-datetime]: docs/usage/concepts/datetime.md
-[c-limits]: docs/usage/concepts/limits.md
-[c-no-delete]: docs/usage/concepts/no-delete.md
-[c-partition]: docs/usage/concepts/partition.md
+[c-datetime]: docs/usage/topics/datetime.md
+[c-limits]: docs/usage/topics/limits.md
+[c-no-delete]: docs/usage/topics/deleted.md
+[c-partition]: docs/usage/topics/tenant.md
 [s-auth]: docs/usage/start/authenticate.md
 [s-cjs]: docs/usage/start/install.md#cjs-から-require-する
 [s-prereq]: docs/usage/start/prerequisites.md
-[test-without-contract]: docs/usage/howto/test-without-contract.md
+[test-without-contract]: docs/usage/topics/testing.md
 [docs-index]: docs/usage/index.md
-[docs-resources]: docs/usage/index.md#リソースと操作
+[docs-resources]: docs/usage/resources/README.md
 [docs-readme]: ./docs/README.md
 [ref]: docs/usage/reference/README.md

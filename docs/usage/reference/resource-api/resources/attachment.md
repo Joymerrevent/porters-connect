@@ -6,12 +6,12 @@
 - alias 接頭辞: 接頭辞なし（`Id` / `Resource` などの短縮名）
 - 出典: [フィールド定義 記事][src]（updated_at 2019-02-01）／ scope は Read・Write 記事より。取得 2026-06-12
 
-> 記事の主要テーブルを機械抽出したもの（要約・整形済み）。正確な最新は出典を参照。
+> 出典記事の主要な表を抜き出して整えたものです。正確な最新は出典を参照してください。
 > 固定項目のみ（カスタム項目なし）。
 
 ## Read パラメータ
 
-出典: [Attachment - Read][read]（Input Variables）。**共通の Read パラメータ表とは語彙が違う**
+出典: [Attachment - Read][read]（Input Variables）。**共通の Read パラメータ表とは受け付けるパラメータが違う**
 （[Resource API 概要][resource-api]）。
 
 | 必須 | パラメータ    | 内容                                                                    |

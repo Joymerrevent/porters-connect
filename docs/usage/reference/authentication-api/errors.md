@@ -1,5 +1,7 @@
 # 認証エラーコード（リソースの Result Code とは別系統）
 
+認証 API が返すエラーコードの一覧です。ライブラリでは `PortersAuthError` の `code` に入ります。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008172688-Authentication-and-Authorization-Error>（updated_at 2021-06-03、取得 2026-06-12）。
 全体像は [認証 README][readme]。
 
@@ -39,10 +41,10 @@ redirect の場合は `?error=コード`。**Resource API の Result Code（[res
 | 401  | **Refresh Token の有効期限切れ** → 再認証 |
 | 402  | アクセス許可が無い                        |
 
-エラーモデル（ライブラリの `PortersError`）への対応と症状別の対処は [エラーハンドリング ガイド][guide] を参照。
+エラーモデル（ライブラリの `PortersError`）への対応と症状別の対処は [エラーと再試行][guide] を参照。
 
 <!-- 根拠: ADR-0006（エラーモデル） -->
 
 [readme]: README.md
 [result-codes]: ../resource-api/result-codes.md
-[guide]: ../../howto/handle-failures.md
+[guide]: ../../topics/errors.md

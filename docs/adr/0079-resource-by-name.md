@@ -168,5 +168,5 @@ allowlist か独自 Data Type が要り、どちらも上記の理由で採ら�
 [adr16]: 0016-field-type-granularity.md
 [adr44]: 0044-http-status-handling.md
 [adr60]: 0060-full-resource-coverage-direction.md
-[attachments]: ../usage/howto/attachments.md
+[attachments]: ../usage/resources/attachment.md
 [roadmap]: ../roadmap.md

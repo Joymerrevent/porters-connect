@@ -170,7 +170,7 @@ describe("data resources round-trip", () => {
     const { porters } = setup();
 
     // PORTERS validates the dependency chain server-side; the library does not pre-judge it
-    // (docs/usage/concepts/limits.md). A minimal Sales is accepted here.
+    // (docs/usage/topics/limits.md). A minimal Sales is accepted here.
     const id = await porters.tenant(1).sales.create({
       P_Owner: 5,
       P_SalesAmount: 1200000,

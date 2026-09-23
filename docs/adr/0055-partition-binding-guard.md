@@ -249,7 +249,7 @@ await t.candidate.search();
 [bd]: ../design/basic-design.md
 [glossary]: ../usage/reference/glossary.md
 [lv]: ../live-verification.md
-[mt]: ../usage/howto/multi-tenant.md
+[mt]: ../usage/recipes/multi-tenant.md
 [rc]: ../usage/reference/resource-api/result-codes.md
 [rv25]: ../reviews/rv/0025-partition-default-zero.md
 [rv28]: ../reviews/rv/0028-count-range-unvalidated.md

@@ -1246,7 +1246,7 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 - **エラー対処ガイド**: [docs/howto/handle-failures.md][guide]（症状別早見表＋2 系統のコード対応表）。
 - **配布**: ESM / Node.js 18+ / 型定義同梱 / MIT。`X-P-ConnectAPI-Version: 2` を既定送信（PORTERS 8.x・9.x 想定）。
 
-[guide]: docs/usage/howto/handle-failures.md
+[guide]: docs/usage/topics/errors.md
 [adr44]: docs/adr/0044-http-status-handling.md
 [adr45]: docs/adr/0045-write-response-root-code.md
 [adr46]: docs/adr/0046-guard-error-contract.md
@@ -1255,12 +1255,12 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr50]: docs/adr/0050-auth-http-status-handling.md
 [adr51]: docs/adr/0051-read-envelope-identification.md
 [adr47]: docs/adr/0047-access-point-scheme.md
-[oauth-guide]: docs/usage/howto/authenticate.md
+[oauth-guide]: docs/usage/topics/auth.md
 [adr19]: docs/adr/0019-static-resource-types.md
 [adr20]: docs/adr/0020-read-field-default.md
 [adr35]: docs/adr/0035-usage-documentation-structure.md
-[custom-fields-guide]: docs/usage/howto/custom-fields.md
-[read-query-guide]: docs/usage/howto/search-records.md
+[custom-fields-guide]: docs/usage/topics/custom-fields.md
+[read-query-guide]: docs/usage/topics/query.md
 [adr55]: docs/adr/0055-partition-binding-guard.md
 [adr56]: docs/adr/0056-deleted-flag-typing.md
 [adr57]: docs/adr/0057-itemstate-existing-explicit.md
@@ -1273,7 +1273,7 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [rv22]: docs/reviews/rv/0022-ratelimit-create-no-retry.md
 [rv32]: docs/reviews/rv/0032-searchall-query-mutation.md
 [rv44]: docs/reviews/rv/0044-fields-excluded-from-coverage.md
-[write-constraints]: docs/usage/concepts/limits.md
+[write-constraints]: docs/usage/topics/limits.md
 [adr68]: docs/adr/0068-api-reference-tooling.md
 [adr69]: docs/adr/0069-tenant-field-catalog-tooling.md
 [adr73]: docs/adr/0073-throttle-sharing.md
@@ -1286,8 +1286,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr80]: docs/adr/0080-resource-parameter-binding.md
 [adr81]: docs/adr/0081-attachment-read-parameters.md
 [adr82]: docs/adr/0082-module-format-and-node-baseline.md
-[limits]: docs/usage/concepts/limits.md
-[failures]: docs/usage/howto/handle-failures.md
+[limits]: docs/usage/topics/limits.md
+[failures]: docs/usage/topics/errors.md
 [adr85]: docs/adr/0085-option-alias-validation.md
 [lv]: docs/live-verification.md
 [ref]: docs/usage/reference/README.md
@@ -1331,5 +1331,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [fastcheck]: https://github.com/dubzzz/fast-check
 [adr86]: docs/adr/0086-time-of-day-fields.md
 [adr87]: docs/adr/0087-tenant-scoped-field-declarations.md
-[howto-custom-fields]: docs/usage/howto/custom-fields.md
+[howto-custom-fields]: docs/usage/topics/custom-fields.md
 [ref-department]: docs/usage/reference/resource-api/resources/department.md

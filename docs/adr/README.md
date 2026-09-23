@@ -36,6 +36,8 @@
 - **移設前のパス表記**: 2026-09-12 より前の ADR 本文にある `docs/reference/…` / `docs/howto/…` /
   `docs/start/…` / `docs/api/` は、いずれも現在の `docs/usage/…` を指す（[ADR-0071][0071]）。
   リンクは移設時に直してあるが、**決定の文面は書き換えない**運用なので散文の表記は当時のまま残る。
+  同じく 2026-09-22 より前の `docs/usage/howto/…` / `docs/usage/concepts/…` は `docs/usage/topics/…`
+  （添付は `resources/attachment.md`、同期と複数テナントは `recipes/…`）を指す（[ADR-0088][0088]）。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
@@ -173,3 +175,4 @@
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md
 [0071]: 0071-usage-docs-single-root.md
+[0088]: 0088-usage-docs-five-chapters.md

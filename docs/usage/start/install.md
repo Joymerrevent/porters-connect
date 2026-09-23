@@ -3,10 +3,12 @@
 - **前提**: [始める前に — PORTERS 側で用意するもの][s-prereq]（3 つの値が手元にあること）
 - **次に読む**: [認証を通して、疎通を確認する][s-auth]
 
-ここでやるのは 2 つだけです。**ライブラリを入れて、受け取った 3 つの値を渡す。**
-まだ PORTERS は呼びません（呼ぶには認証が要ります。次のページです）。
+このページでは、ライブラリを入れて、受け取った 3 つの値からクライアントを作ります。まだ PORTERS は呼びません
+（呼ぶには認証が要ります。次のページです）。終わると、設定の誤りが構築の時点でエラーになる状態になり、認証に進めます。
 
 ## インストール
+
+npm・pnpm・yarn のどれでも入ります。
 
 ```sh
 npm i @joymerrevent/porters-connect
@@ -16,29 +18,29 @@ npm i @joymerrevent/porters-connect
 
 **Node.js 22.12 以上**が要ります。型定義は同梱しているので、TypeScript なら追加の
 `@types` は要りません。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
-「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、対象にしていません。
+「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、動作を保証する対象にしていません。
 
 ### CJS から `require` する
 
-ESM（`import`）で書いているなら、この節は読み飛ばして構いません。
+CJS（CommonJS。`require` で読む形式）で書いているときに読む節です。ESM（`import`）で書いているなら、読み飛ばして構いません。
 
-配っているのは **ESM の 1 ファイルだけ**です。CJS からも、同じファイルを `require` で読みます。
+パッケージに入っているビルド済みの JavaScript ファイルは **ESM の 1 つだけ**です。CJS からも、同じファイルを `require` で読みます。
 
 ```js
 const { PortersClient } = require("@joymerrevent/porters-connect");
 ```
 
-Node が `require()` で ESM を読めるのは **22.12 以降**です（下限をここに置いているのはそのため。
-22.0〜22.11 では `ERR_REQUIRE_ESM` で落ちます）。
+Node が `require()` で ESM を読めるのは **22.12 以降**です（対応する Node.js の下限が 22.12 なのはそのためです。
+22.0〜22.11 では `ERR_REQUIRE_ESM` エラーになります）。
 
-**CJS 用の別ファイルは配りません。** 実体が 2 つあると ESM 側と CJS 側で**別のクラス**が読まれ、
-`catch (e) { if (e instanceof PortersError) … }` が `false` になって**握りつぶしではなく素通り**
-します<!-- 根拠: ADR-0082 -->。実体が 1 つなら、どちらから読んでも同じクラスです。
+**CJS 用の別ファイルは用意していません。** ファイルが 2 つあると ESM 側と CJS 側で**別のクラス**が読まれ、
+`catch (e) { if (e instanceof PortersError) … }` が `false` になって、**捕まえるつもりのエラーが
+`catch` を通り抜けます**<!-- 根拠: ADR-0082 -->。ファイルが 1 つなら、どちらから読んでも同じクラスです。
 
 ## クライアントを作成する
 
 渡すのは[前ページ][s-prereq]で受け取った 3 つの値です。**どれもコミットしないでください**
-（`.env.example` は値が空の雛形です）。
+（`.env` などに置き、リポジトリのコミット対象から外してください）。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -53,9 +55,6 @@ const porters = new PortersClient({
 初回の権限付与を自分のアプリから行うなら、**付与したいスコープ**もここで渡せます
 （次のページで使います）。
 
-この設定オブジェクトの型は **`PortersClientOptions`** という名前で export しています。設定を
-関数や別ファイルに切り出すときに使えます。
-
 ```ts
 const withScopes = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
@@ -65,39 +64,41 @@ const withScopes = new PortersClient({
 });
 ```
 
+この設定オブジェクトの型は **`PortersClientOptions`** という名前で export しています。設定を
+関数や別ファイルに切り出すときに使えます。
+
 ## `hostname` は**サーバー名だけ**
 
 契約で渡されるのは**サーバー名**です（PORTERS の記事も「該当のサーバー名を入れてください」と
-書いています）。スキーム・パス・**ポート**を混ぜると、**構築した瞬間に `PortersConfigError` で
-落ちます**。
+書いています）。スキーム・パス・**ポート**を混ぜると、**構築した瞬間に `PortersConfigError` に
+なります**。
 
 | 書き方                                  | どうなるか           |
 | --------------------------------------- | -------------------- |
 | `hostname: "xxxxx.example.com"`         | ✓                    |
 | `hostname: "127.0.0.1", port: 4010`     | ✓（ポートは別項目）  |
 | `hostname: "xxxxx.example.com:8443"`    | ✗ ポートは `port` へ |
-| `hostname: "https://xxxxx.example.com"` | ✗ 構築時に落ちる     |
-| `hostname: "xxxxx.example.com/v1"`      | ✗ 構築時に落ちる     |
+| `hostname: "https://xxxxx.example.com"` | ✗ 構築時にエラー     |
+| `hostname: "xxxxx.example.com/v1"`      | ✗ 構築時にエラー     |
 
-**`port` は普段要りません。** PORTERS は名前と https で届くので、使うのはローカルの
+**`port` は普段要りません。** PORTERS にはサーバー名と https だけで接続できるので、使うのはローカルの
 フェイクサーバーやプロキシに向けるときだけです。
 
-**黙って別のホストを叩くより、起動時に落ちるほうが安全**だからです。平文の `http` は
-`scheme: "http"` を**明示したときだけ**使えて、毎プロセス 1 回警告が出ます
-（抑止は専用の環境変数だけ＝**許可と沈黙は分ける**）。
+構築時にエラーにするのは、**気づかないまま別のホストに接続するより、起動時に止まるほうが安全**だからです。
+平文の `http` は `scheme: "http"` を**明示したときだけ**使えて、毎プロセス 1 回警告が出ます
+（警告を止めるには環境変数 `PORTERS_SUPPRESS_INSECURE_HTTP_WARNING=1` が要ります。`http` を許可する設定と、警告を止める設定は別です）。
 
-URL の組み立てはライブラリ内の 1 箇所に閉じているので、利用側がエンドポイントを組み立てることは
-ありません。
+URL はライブラリが組み立てるので、利用側がエンドポイントの URL を書くことはありません。
 
 ## ここではまだ、何も呼べない
 
 クライアントを作っただけでは PORTERS を呼べません。**2 つ足りない**からです。
 
 - **認証**（トークン）— 次のページで通します
-- **どの Partition か** — `porters.tenant(id)` で束ねます（[はじめての読み取り][s-read]）
+- **どの Partition か** — `porters.tenant(id)` で指定します（[はじめての読み取り][s-read]）
 
-設定の誤りは**ここまでで**落ちます。契約情報の誤りは**次のページ**で落ちます。
-切り分けが要るときはこの順に疑ってください。
+書き方の誤り（`hostname` の形式など）は**ここまでで**エラーになります。値そのものの誤り（App ID の間違いなど）は**次のページ**でエラーになります。
+原因を探すときは、この順に確かめてください。
 
 ## 次に読む
 

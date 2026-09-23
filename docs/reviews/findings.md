@@ -76,6 +76,8 @@
 | [RV-59][rv59] | 🟡     | テスト厳密性 / プロセス         | fixed   | `tenant(id, { fields })` の宣言配線を candidate 以外の 10 リソースで pin していない                  |
 | [RV-60][rv60] | 🟢     | ドキュメント / API 忠実性       | fixed   | 0.21.0 の CHANGELOG と ADR-0087 が 0.15.0 で直した「黙って `null`」を現在形で書く                    |
 | [RV-61][rv61] | 🟢     | ドキュメント / プロセス         | fixed   | roadmap が reference README の「再取得の手順」を指すが、その節は CONTRIBUTING に移動                 |
+| [RV-62][rv62] | 🟢     | DX / API 忠実性                 | open    | カスタム項目を `create` の必須として宣言できない（テナントの `P_Required` を型に写せない）           |
+| [RV-63][rv63] | 🟢     | DX / アーキテクチャ             | open    | トークンの「取得」だけを差し替えて「管理」をライブラリに任せる入口が無い                             |
 | [RV-64][rv64] | 🟢     | API 忠実性 / エラーモデル       | fixed   | 単件の `create` / `update` が、束ねた alias を渡されたときだけ同期 throw する（ADR-0046 の契約違反） |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
@@ -146,4 +148,6 @@
 [rv59]: rv/0059-tenant-fields-threading-unpinned.md
 [rv60]: rv/0060-changelog-stale-silent-null-premise.md
 [rv61]: rv/0061-roadmap-points-to-moved-section.md
+[rv62]: rv/0062-custom-field-required-declaration.md
+[rv63]: rv/0063-token-provider-acquire-store-split.md
 [rv64]: rv/0064-single-write-sync-throw-on-bound-alias.md

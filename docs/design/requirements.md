@@ -225,6 +225,6 @@ PORTERS Connect API は**レスポンスが XML 専用・OAuth が独自仕様�
 [s-prereq]: ../usage/start/prerequisites.md
 [s-read]: ../usage/start/first-read.md
 [s-install]: ../usage/start/install.md
-[test-wo]: ../usage/howto/test-without-contract.md
+[test-wo]: ../usage/topics/testing.md
 [lv]: ../live-verification.md
 [ref]: ../usage/reference/README.md

@@ -181,4 +181,4 @@ publish のたびに山が立ち、間の日はほぼ 0 — 利用者が増え�
 [s-auth]: ../usage/start/authenticate.md
 [s-prereq]: ../usage/start/prerequisites.md
 [s-read]: ../usage/start/first-read.md
-[test-wo]: ../usage/howto/test-without-contract.md
+[test-wo]: ../usage/topics/testing.md

@@ -1,5 +1,7 @@
 # HTTP ヘッダ
 
+Resource API を呼ぶときに付く HTTP ヘッダを引くページです。ライブラリが付けるので、自前の transport を組むとき以外は意識しません。
+
 出典: <https://hrbcapi.porters.jp/hc/ja/articles/115008016967-HTTP-Header>（updated_at 2025-03-27、取得 2026-06-12）。
 全体像は [認証 README][readme]。
 
