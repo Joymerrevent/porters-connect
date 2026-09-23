@@ -11,6 +11,9 @@
 >
 > **訂正（2026-09-22・decider）**: 実行戦略のうち「PR は差分（incremental）」は**取り下げ、PR もフル run**
 > にした。理由は下記 Decision Outcome の訂正。閾値は `break` 100 に到達済み（[RV-59][rv59]）。
+>
+> **訂正（2026-09-23・stakeholder）**: リリースの流れの PR（リリース PR・back-merge PR）で、コードが develop と
+> 同じときは skip する。判定と理由は [ADR-0028][0028] の訂正。
 
 ## Context and Problem Statement
 
@@ -109,3 +112,4 @@
 [readme]: README.md
 [pr12]: https://github.com/Joymerrevent/porters-connect/pull/12
 [pr13]: https://github.com/Joymerrevent/porters-connect/pull/13
+[0028]: 0028-ci-path-filtering.md
