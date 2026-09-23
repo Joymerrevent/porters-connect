@@ -95,9 +95,12 @@ export type RecruiterCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type RecruiterUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Recruiter accessor; `C` is the declared custom-field catalog merged on. */
-export type RecruiterResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+export type RecruiterResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number],
+  (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
 >;
 

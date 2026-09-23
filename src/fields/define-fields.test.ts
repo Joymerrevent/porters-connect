@@ -1,7 +1,11 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersConfigError } from "../errors";
-import { defineFields, type FieldDecls } from "./define-fields";
+import {
+  declaredRequired,
+  defineFields,
+  type FieldDecls,
+} from "./define-fields";
 
 // defineFields is the single validation boundary (ADR-0023 D4): it builds a per-resource
 // catalog (alias -> Data Type) from the typed builder and throws synchronously on bad input.
@@ -170,5 +174,73 @@ describe("defineFields — validation (fail-safe, synchronous)", () => {
       expect(e).toBeInstanceOf(PortersConfigError);
       expect((e as PortersConfigError).category).toBe("config");
     }
+  });
+});
+
+// 必須は宣言で明示したときだけ（ADR-0089 案1a / 案2a）。項目表の形は変えず、必須は別に持つ。
+describe("defineFields — required on create", () => {
+  it("keeps the catalog alias -> Data Type (required is not mixed into it)", () => {
+    const fields = defineFields({
+      candidate: (f) => ({
+        U_score: f.number({ required: true }),
+        U_memo: f.multilineText(),
+      }),
+    });
+    expect(fields.candidate).toEqual({
+      U_score: "Number",
+      U_memo: "MultilineText",
+    });
+    // The runtime marker is a symbol key: code that lists the declared resources does not see it.
+    expect(Object.keys(fields)).toEqual(["candidate"]);
+  });
+
+  it("records only `required: true` at runtime, per resource", () => {
+    const fields = defineFields({
+      candidate: (f) => ({
+        U_a: f.number({ required: true }),
+        U_b: f.number({ required: false }),
+        U_c: f.number(),
+      }),
+      job: (f) => ({ U_d: f.option({ required: true }) }),
+      client: (f) => ({ U_e: f.date() }),
+    });
+    expect([...declaredRequired(fields, "candidate")]).toEqual(["U_a"]);
+    expect([...declaredRequired(fields, "job")]).toEqual(["U_d"]);
+    expect(declaredRequired(fields, "client").size).toBe(0);
+    expect(declaredRequired(fields, "resume").size).toBe(0); // not declared at all
+  });
+
+  it("reads a declaration that did not come from defineFields as none required", () => {
+    expect(
+      declaredRequired({ candidate: { U_a: "Number" } }, "candidate").size,
+    ).toBe(0);
+  });
+
+  it("rejects a non-boolean `required` (a JS caller must not get a silently optional field)", () => {
+    const decls = {
+      candidate: (f: { number: (o: unknown) => unknown }) => ({
+        U_a: { ...(f.number({}) as object), required: "yes" },
+      }),
+    } as unknown as FieldDecls;
+    expect(() => defineFields(decls)).toThrow(PortersConfigError);
+    expect(() => defineFields(decls)).toThrow(
+      '"required" for "U_a" on "candidate" must be true or false',
+    );
+  });
+
+  it("types `required: true` as a literal, and everything else as false", () => {
+    const fields = defineFields({
+      candidate: (f) => ({
+        U_a: f.number({ required: true }),
+        U_b: f.number({ required: false }),
+        U_c: f.number(),
+      }),
+    });
+    // The catalog type is unchanged: only the Data Type per alias.
+    expectTypeOf(fields.candidate).toEqualTypeOf<{
+      U_a: "Number";
+      U_b: "Number";
+      U_c: "Number";
+    }>();
   });
 });

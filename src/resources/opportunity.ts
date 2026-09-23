@@ -83,12 +83,14 @@ export type OpportunityCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type OpportunityUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Opportunity accessor; `C` is the declared custom-field catalog merged on. */
-export type OpportunityResource<C extends FieldCatalog = EmptyCatalog> =
-  Resource<
-    typeof FIELDS & C,
-    (typeof REQUIRED_ON_CREATE)[number],
-    typeof REFERENCES
-  >;
+export type OpportunityResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<
+  typeof FIELDS & C,
+  (typeof REQUIRED_ON_CREATE)[number] | CR,
+  typeof REFERENCES
+>;
 
 export const createOpportunityResource = <
   C extends FieldCatalog = EmptyCatalog,

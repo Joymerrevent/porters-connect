@@ -4,9 +4,9 @@
 
 [@joymerrevent/porters-connect](../index.md) / ProcessResource
 
-# Type Alias: ProcessResource\<C\>
+# Type Alias: ProcessResource\<C, CR\>
 
-> **ProcessResource**\<`C`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], *typeof* `REFERENCES`\>
+> **ProcessResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/process.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L106)
 
@@ -17,3 +17,7 @@ The Process accessor; `C` is the declared custom-field catalog merged on.
 ### C
 
 `C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`
