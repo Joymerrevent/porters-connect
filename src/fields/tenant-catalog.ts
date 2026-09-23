@@ -192,6 +192,9 @@ export const readCustomCatalog = async (
     const result = classify(alias, row.P_Type ?? null);
     if (result.kind === "declarable") {
       fields[alias] = result.dataType;
+      // VERIFY(live): whether the Write API itself enforces `P_Required` (rejects a create that
+      // leaves the field out) is unconfirmed — docs/live-verification.md (LV-32). Nothing here
+      // depends on it: the flag only feeds the generated declaration and the verification report.
       required[alias] = row.P_Required === 1;
     } else undeclarable.push(result.entry);
   }
