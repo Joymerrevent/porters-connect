@@ -49,9 +49,10 @@ t.candidate.search({ keywords: ["…101 文字…"] }).catch((e) => {
 一括書き込みの単一レコード超過）は**従来どおり送信前に働き**、無駄な往復は起きません。
 変わったのは**例外の届き方だけ**です。
 
-この契約の**例外は `Promise` を返さない API** です — `new PortersClient(...)`・`defineFields`・
-`auth.authorizationUrl` / `auth.revokeUrl`（`string` を返す）。reject する先が無いので、
-ここは**同期 throw が正しい**挙動です。
+この契約の**例外は `Promise` を返さない関数**で、そちらは同期 throw します。reject する先が無いので、
+これが正しい挙動です。例: `new PortersClient(...)`・`tenant(id)`・`defineFields`・`assertFieldsMatch`・
+`createThrottle`・`createFetchTransport`・`encodeTimeOfDay` / `decodeTimeOfDay`・`auth.authorizationUrl` /
+`auth.revokeUrl`（`string` を返す）。
 
 横断的な対処分岐には `category`（11 種）を使います。`PortersError` は次を持ちます。
 

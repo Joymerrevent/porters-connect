@@ -333,8 +333,8 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 ```
 
 検証を通った宣言は**ブランド付き**になり、`tenant()` は再検証しません。
-なお `defineFields` は `Promise` を返さないため、**この 2 つだけは同期 throw** です
-（`PortersClient` の構築も同様）。それ以外の公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
+なお `defineFields` は `Promise` を返さないため、**この 2 つは同期 throw** です
+（`Promise` を返さない関数はすべて同様）。`Promise` を返す公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
 ## どこまで検証するか
 
