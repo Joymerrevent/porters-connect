@@ -5,6 +5,46 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-23
+
+**読み取りの値の検証を 1 つ増やし、使い方ドキュメントを組み直した版**です。破壊的変更はありませんが、
+**宣言が実際の項目と合っていないと、これまで通っていた読み取りがエラーになることがあります**（下の Changed）。
+
+### Changed
+
+- **数値でない文字列を `Number` として読まなくなりました**。`Number` / `System[Id]` の項目と
+  `Link` のスカラ形（Contact の ID）に数値として読めない値が来ると、`PortersResourceError`
+  （`category: "validation"`・項目名つき）で失敗します。これまでは `Number("社内候補")` の結果＝**`NaN`** が
+  黙って読み取り値に入り、`typeof === "number"` と `null` 判定の両方を通り、そのまま `update` に戻すと
+  `<Alias>NaN</Alias>` を送っていました。
+
+  ```text
+  U_score: declared Number, but "社内候補" is not a PORTERS Number value
+  ```
+
+  - 起きるのは**宣言が違うとき**です（テキストの項目を `f.number()` と宣言した、など）。PORTERS が
+    Number 項目に数値以外を返す書式は出典にありません。日時（`f.date()` 等）が 0.15.0 から同じ形で
+    エラーになるのと揃えました。
+  - 数値として読める値（`"87"` / `"-1.25"` / 前後の空白）と空（`null`）は変わりません。
+  - 書き込み側は変えていません（`NaN` を渡す JS コードはこれまでどおりそのまま送られます）。
+  - 上げる前に宣言を確かめるなら、これまでどおり `verifyFields` です。
+
+- **使い方ドキュメント（`docs/usage/`）を 7 章に組み直しました**。導入／主題別／クライアント／リソース別／
+  関数／実践例／リファレンスの順で、目次（`docs/usage/index.md`）から章を辿ります。
+  - **リソース別**は 18 種に 1 ページずつで、どのページも「呼べるメソッド → 固有の注意 → 新規作成の必須項目 →
+    項目と型」の同じ順に並びます。
+  - **クライアント**（`PortersClient` の構築オプション・`porters.auth` の 6 メソッド・`tenant(id)` のスコープ）と
+    **関数**（宣言と突合・上限と接続・値の変換）の章を新設し、導入と主題別に散らばっていた一覧をまとめました。
+  - **主題別**（検索・書き込み・認証・カスタム項目・上限など）は「まず知ること → 使い方 → 細かい規則」の順に
+    書き直し、言い回しを平易にしています。内容の食い違い（`Promise` を返さない関数の一覧の漏れなど）も直しました。
+
+### Fixed
+
+- **単件の `create` / `update` が、`of()` で指定済みの項目（Phase の `Resource`）を渡されたとき、
+  同期 throw していました**。`Promise` を返すほかの公開メソッドと同じく、reject で届くようにしました。
+  入力型が `Resource` を受け付けないので、TypeScript から普通に書く限り起きません（`as any` を通した場合と
+  JavaScript から呼んだ場合だけ）。例外の種類・`message`・`category` は変わりません。
+
 ## [0.21.0] - 2026-09-21
 
 **カスタム項目の宣言を、partition を束ねる `tenant(id)` で受け取るようにした版**です。
@@ -1293,7 +1333,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.19.1...v0.20.0
