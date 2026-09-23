@@ -5,7 +5,6 @@
 
 - **作り方**: `porters.tenant(id, { fields })`（`fields` は任意）
 - **持っているもの**: データ系 13 種とマスタ 4 種のアクセサ
-- **型**: [`TenantScope`][t-TenantScope]／[`TenantOptions`][t-TenantOptions]／[`PartitionId`][t-PartitionId]
 
 ## ぶら下がるアクセサ
 
@@ -72,7 +71,7 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 - クライアントと関数: [PortersClient][cl-client]／[単独の関数][cl-functions]（`defineFields`）
 - リソース別: [リソースと操作][resources]（アクセサ × メソッドの一覧）／[Partition][r-partition]
 - 実践例: [複数テナント][multi-tenant]（リクエストごとにスコープを作る）
-- リファレンス: [`TenantScope`][t-TenantScope]／[`TenantOptions`][t-TenantOptions]
+- リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -95,3 +94,4 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 [t-CustomFor]: ../api/type-aliases/CustomFor.md
 [t-CustomFieldResource]: ../api/type-aliases/CustomFieldResource.md
 [t-ResourceName]: ../api/type-aliases/ResourceName.md
+[api]: ../api/index.md

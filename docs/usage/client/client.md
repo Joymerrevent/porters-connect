@@ -5,7 +5,6 @@
 
 - **作り方**: `new PortersClient(options)`
 - **持っているもの**: `tenant(id, options?)`／`partition`／`auth`
-- **型**: [`PortersClient`][t-PortersClient]／[`PortersClientOptions`][t-PortersClientOptions]
 
 ## 呼べるメソッドとプロパティ
 
@@ -87,7 +86,7 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 - クライアントと関数: [tenant(id)][cl-tenant]／[auth][cl-auth]／[単独の関数][cl-functions]
 - リソース別: [Partition][r-partition]
 - 実践例: [複数テナント][multi-tenant]（クライアントを分けるか）
-- リファレンス: [`PortersClient`][t-PortersClient]／[`PortersClientOptions`][t-PortersClientOptions]
+- リファレンス: [公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -120,3 +119,4 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 [t-TenantOptions]: ../api/type-aliases/TenantOptions.md
 [t-AuthApi]: ../api/type-aliases/AuthApi.md
 [t-PartitionResource]: ../api/type-aliases/PartitionResource.md
+[api]: ../api/index.md

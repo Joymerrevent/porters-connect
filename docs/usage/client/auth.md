@@ -5,7 +5,6 @@
 起動時に設定の不備を確かめたいときです。
 
 - **アクセサ**: `porters.auth`（App 単位。`tenant(id)` の下にはない）
-- **型**: [`AuthApi`][t-AuthApi]／[`AuthorizationUrlOptions`][t-AuthorizationUrlOptions]／[`RevokeUrlOptions`][t-RevokeUrlOptions]
 - **既定の認証方式**: `code_direct` でトークンを取り、期限が切れたら自動で更新する
 
 ## 呼べるメソッド
@@ -68,7 +67,7 @@ await porters.auth.ensureAuthenticated();
 - 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・自前で管理するとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
 - クライアントと関数: [PortersClient][cl-client]（構築オプションの `appId` / `appSecret` / `scopes` / `tokenStore` / `auth`）
 - リソース別: [Partition][r-partition]（権限付与した Company DB の一覧）／[User][r-user]（`current()`）
-- リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]／[`AuthApi`][t-AuthApi]
+- リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]／[公開 API リファレンス][api]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -88,3 +87,4 @@ await porters.auth.ensureAuthenticated();
 [t-TokenStore]: ../api/type-aliases/TokenStore.md
 [t-StoredTokens]: ../api/type-aliases/StoredTokens.md
 [t-PortersAuthError]: ../api/classes/PortersAuthError.md
+[api]: ../api/index.md
