@@ -112,7 +112,7 @@ const topScorers = async (t: TenantScope<typeof fields>) => {
 const countCandidates = async (t: TenantScope<DeclaredCatalogs>) =>
   (await t.candidate.search({ field: [] })).total;
 
-// client を受ける関数は、型引数なしの PortersClient
+// client を受ける関数は、PortersClient をそのまま受ける（宣言はクライアントに付かない）
 const listPartitions = (client: PortersClient) => client.partition.search();
 
 // 呼ぶ側
@@ -211,7 +211,7 @@ const t = porters.tenant(1, options);
 
 型引数を省いて `TenantOptions` とだけ書いても**代入は通ります**（`fields` は受け取れます）。
 エラーになるのはそのあとで、**作ったスコープからカスタム項目が消えます** — 型引数を省いた `TenantOptions` は、
-宣言なしの型（`EmptyCatalog`）に固定されるためです。
+宣言なしの型に固定されるためです。
 
 <!-- doccheck: expect-error -->
 
@@ -278,7 +278,7 @@ const batch = new PortersClient({
 この用途で自分で用意するものです。ライブラリは持ちません。
 
 - 利用者 ↔ 会社 ↔ Partition の対応を保存し、リクエストごとに引くこと
-- Refresh Token の置き場所（`tokenStore`）の安全性
+- トークンの置き場所（`tokenStore`）の安全性
 - 月 15 万アクセスの累積（契約条件。テナントの合計で数える）
 - プロセスを跨いだレートの協調
 

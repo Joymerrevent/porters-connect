@@ -4,6 +4,7 @@ import { PortersAuthError, PortersConfigError } from "../errors/index";
 import type { Transport, TransportRequest } from "../http/index";
 import type { Scope } from "../types/index";
 import { createAuthApi } from "./auth-api";
+import { createTokenManager } from "./token-manager";
 import { createDefaultTokenProvider } from "./token-provider";
 import type { TokenProvider } from "./types";
 
@@ -46,25 +47,23 @@ const tokenCalls = (calls: TransportRequest[]): TransportRequest[] =>
 
 type Over = { appId?: string; appSecret?: string; scopes?: Scope[] };
 
-// A default-strategy auth API wired to its own provider (controls present). `over`
+// The auth API over the built-in provider and a token manager, as the client wires it. `over`
 // keys use presence (`in`) so a test can force a value to `undefined`.
 const withDefault = (transport: Transport, over: Over = {}) => {
+  const appId = "appId" in over ? over.appId : "app";
   const provider = createDefaultTokenProvider({
     accessPoint: { hostname: "example.test" },
-    appId: over.appId ?? "app",
-    appSecret: over.appSecret ?? "secret",
+    appId,
+    appSecret: "appSecret" in over ? over.appSecret : "secret",
     transport,
     now: () => 1000,
   });
   return createAuthApi({
     accessPoint: { hostname: "example.test" },
-    appId: "appId" in over ? over.appId : "app",
-    appSecret: "appSecret" in over ? over.appSecret : "secret",
+    appId,
     scopes: "scopes" in over ? over.scopes : ["candidate_r"],
-    transport,
     provider,
-    controls: provider,
-    now: () => 1000,
+    manager: createTokenManager({ provider, now: () => 1000 }),
   });
 };
 
@@ -178,7 +177,7 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     );
   });
 
-  it("throws PortersConfigError when credentials are missing (default strategy)", async () => {
+  it("throws PortersConfigError when the built-in provider has no appSecret", async () => {
     const { transport } = recording(defaultBodies);
     const auth = withDefault(transport, { appSecret: undefined });
     await expect(auth.exchangeAuthorizationCode("c")).rejects.toBeInstanceOf(
@@ -207,62 +206,100 @@ describe("createAuthApi — clearTokens (ADR-0034 SD-4)", () => {
   });
 });
 
-describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-7)", () => {
-  const customAuth = (): ReturnType<typeof createAuthApi> => {
-    const provider: TokenProvider = {
-      getAccessToken: () => Promise.resolve("CUSTOM"),
-    };
-    return createAuthApi({
+// 渡した取得（tokenProvider）でも、必要なものがあれば 6 メソッドとも動く（ADR-0091）。
+describe("createAuthApi — with a caller's tokenProvider (ADR-0091)", () => {
+  const withProvider = (provider: TokenProvider) =>
+    createAuthApi({
       accessPoint: { hostname: "example.test" },
       appId: "app",
-      appSecret: "secret",
       scopes: ["candidate_r"],
-      transport: dummyTransport,
-      provider, // no controls -> custom strategy
+      provider,
+      manager: createTokenManager({ provider, now: () => 1000 }),
     });
-  };
+  const issuing = (token: string): TokenProvider => ({
+    acquire: () => Promise.resolve({ accessToken: { token } }),
+  });
 
-  it("getToken / ensureAuthenticated delegate to the provider (custom strategy works)", async () => {
-    const auth = customAuth();
+  it("getToken / ensureAuthenticated go through acquire", async () => {
+    const auth = withProvider(issuing("CUSTOM"));
     expect(await auth.getToken()).toBe("CUSTOM");
     await expect(auth.ensureAuthenticated()).resolves.toBeUndefined();
   });
 
-  it("exchangeAuthorizationCode rejects under a custom strategy (category config)", async () => {
+  it("exchangeAuthorizationCode uses the provider's exchange and saves the result", async () => {
+    const seen: string[] = [];
+    let acquired = 0;
+    const auth = withProvider({
+      acquire: () => {
+        acquired += 1;
+        return Promise.resolve({ accessToken: { token: "ACQ" } });
+      },
+      exchange: (code) => {
+        seen.push(code);
+        return Promise.resolve({ accessToken: { token: "EXCHANGED" } });
+      },
+    });
+    await expect(auth.exchangeAuthorizationCode("C1")).resolves.toBeUndefined();
+    expect(seen).toEqual(["C1"]);
+    expect(await auth.getToken()).toBe("EXCHANGED");
+    expect(acquired).toBe(0); // the exchanged tokens are used, not re-obtained
+  });
+
+  it("exchangeAuthorizationCode rejects when the provider has no exchange", async () => {
     await expect(
-      customAuth().exchangeAuthorizationCode("c"),
-    ).rejects.toBeInstanceOf(PortersConfigError);
-    await expect(
-      customAuth().exchangeAuthorizationCode("c"),
+      withProvider(issuing("X")).exchangeAuthorizationCode("c"),
     ).rejects.toMatchObject({
+      name: "PortersConfigError",
       category: "config",
-      // Names the method so the caller knows which call is off-limits under a custom strategy.
-      message: expect.stringContaining(
-        "exchangeAuthorizationCode is only available",
-      ) as string,
-      hint: expect.stringContaining("custom `auth` strategy") as string,
+      message:
+        "exchangeAuthorizationCode needs a tokenProvider with exchange(code)",
+      hint: expect.stringContaining("Implement exchange(code)") as string,
     });
   });
 
-  it("clearTokens rejects under a custom strategy (category config)", async () => {
-    await expect(customAuth().clearTokens()).rejects.toBeInstanceOf(
-      PortersConfigError,
-    );
-    await expect(customAuth().clearTokens()).rejects.toMatchObject({
-      category: "config",
-      message: expect.stringContaining(
-        "clearTokens is only available",
-      ) as string,
+  it("exchangeAuthorizationCode rejects (not throws) when exchange throws synchronously", async () => {
+    const auth = withProvider({
+      acquire: () => Promise.resolve({ accessToken: { token: "A" } }),
+      exchange: () => {
+        throw new Error("sync");
+      },
     });
+    let result: Promise<void> | undefined;
+    expect(() => {
+      result = auth.exchangeAuthorizationCode("c");
+    }).not.toThrow();
+    await expect(result).rejects.toThrow("sync");
   });
 
-  it("authorizationUrl still works under a custom strategy when appId is set", () => {
-    const url = new URL(
-      customAuth().authorizationUrl({ redirectUrl: "https://x" }),
-    );
-    expect(url.searchParams.get("response_type")).toBe("code");
+  it("clearTokens forgets the cached token so the next call acquires again", async () => {
+    let acquired = 0;
+    const auth = withProvider({
+      acquire: () => {
+        acquired += 1;
+        return Promise.resolve({ accessToken: { token: `T${acquired}` } });
+      },
+    });
+    expect(await auth.getToken()).toBe("T1");
+    await auth.clearTokens();
+    expect(await auth.getToken()).toBe("T2");
   });
 
+  it("authorizationUrl / revokeUrl work whatever the provider, given appId", () => {
+    const auth = withProvider(issuing("X"));
+    expect(
+      new URL(
+        auth.authorizationUrl({ redirectUrl: "https://x" }),
+      ).searchParams.get("response_type"),
+    ).toBe("code");
+    expect(
+      new URL(auth.revokeUrl({ redirectUrl: "https://x" })).searchParams.get(
+        "response_type",
+      ),
+    ).toBe("remove");
+  });
+});
+
+describe("createAuthApi — clock", () => {
   it("defaults the clock to Date.now when `now` is not provided", async () => {
     const { transport, calls } = recording(defaultBodies);
     const provider = createDefaultTokenProvider({
@@ -274,16 +311,14 @@ describe("createAuthApi — delegation & custom strategy (ADR-0034 SD-5/SD-6/SD-
     const auth = createAuthApi({
       accessPoint: { hostname: "example.test" },
       appId: "app",
-      appSecret: "secret",
       scopes: ["candidate_r"],
-      transport,
       provider,
-      controls: provider,
+      manager: createTokenManager({ provider }),
     });
     await auth.exchangeAuthorizationCode("c");
     expect(await auth.getToken()).toBe("BROWSER_A");
-    // A default clock that returned nothing would stamp the tokens with `NaN` expiry, which the
-    // provider treats as expired — and it would silently re-acquire via code_direct.
+    // A default clock that returned nothing would stamp the tokens with `NaN` expiry — read as
+    // "unknown" now, but the stamp itself must be a real time for the proactive renewal to work.
     expect(oauthCalls(calls)).toHaveLength(0);
   });
 });

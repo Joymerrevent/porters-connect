@@ -5,6 +5,85 @@
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-24
+
+**トークンの取り方と置き場所を別々に渡せるようにした版**です。**破壊的変更を 2 つ**含みます
+（構築オプション `auth` の廃止と、日時（`DateTime`）に渡す値の制限）。あわせて、Refresh Token が拒否されたときに
+回復しなかった不具合を直し、使い方ドキュメントを実装と突き合わせて直しました。
+
+### Changed
+
+- **（破壊的）トークンの取り方を `tokenProvider` で、置き場所を `tokenStore` で別々に渡すようになりました**
+  （[ADR-0091][adr91]）。キャッシュ・期限の判断・失効時の取り直し・同時呼び出しの 1 本化・`tokenStore` への保存は、
+  既定の取り方でも、渡した取り方でもクライアントが受け持ちます。これまで取り方を差し替えるには
+  `getAccessToken` を丸ごと自前で書くしかなく、期限の判断や同時呼び出しのまとめ方まで利用者の実装に任されていました。
+
+  ```ts
+  // 変更前
+  const porters = new PortersClient({
+    hostname,
+    auth: { getAccessToken: async () => await myTokenService.get() },
+  });
+
+  // 変更後
+  const porters = new PortersClient({
+    hostname,
+    tokenProvider: {
+      acquire: async () => ({
+        accessToken: { token: await myTokenService.get() },
+      }),
+    },
+  });
+  ```
+
+  - `TokenProvider` は `{ acquire, refresh?, exchange? }` です。`acquire` は必須、`refresh` と `exchange` は
+    使うときだけ渡します。期限（`expiresAt`）を返せば、その 60 秒前に取り直します。
+  - **構築オプション `auth` は無くなりました**。`auth` や、`getAccessToken` だけを持つ古い形を渡すと、構築時に
+    `PortersConfigError`（`category: "config"`）で止まります（型でも弾きます）。
+  - **`StoredTokens` の形が変わりました**: `{ accessToken: { token, expiresAt? }, refreshToken?: { token, expiresAt? } }`。
+    `tokenStore` に以前の形で保存されていた値は「保存なし」として扱い、上げた直後の 1 回だけ `code_direct` で
+    取り直します（保存先を手で消す必要はありません）。
+  - `tokenStore` は `tokenProvider` を渡したときも使われます。
+  - `porters.auth` の 6 メソッドは、どの取り方でも動きます。`exchangeAuthorizationCode` には `tokenProvider` の
+    `exchange` が、`authorizationUrl` / `revokeUrl` には `appId` が要ります。
+  - 既定の取り方で `appId` / `appSecret` が無いときは、PORTERS へ何も送らずに `PortersConfigError` になります。
+  - 保存済みの Access Token がまだ有効なら、起動直後にも取りに行きません。
+  - `GetAccessTokenOptions` を公開 API から外し、`IssuedToken`（`{ token, expiresAt? }`）を足しました。
+  - 書き方は[認証とトークン][oauth-guide]の「トークンの取り方を差し替える」にあります。
+
+- **（破壊的）日時（`DateTime` / `System[DateTime]`）の項目に書く値と、`condition` に書く値は、時刻とタイムゾーンの
+  そろった ISO 8601 だけを受け付けるようになりました**。形は `YYYY-MM-DDTHH:MM[:SS[.sss]]` に `Z` か `±HH:MM` が
+  付いたものです。`new Date().toISOString()` の出力はそのまま渡せます。
+
+  これまでは、次の値が送る前に止まらず、**ずれた値が PORTERS に届いていました**。
+
+  | 渡した値                                 | これまで（実行環境が日本時間のとき） | これから             |
+  | ---------------------------------------- | ------------------------------------ | -------------------- |
+  | `"2026/09/10"`（PORTERS の形式）         | `2026/09/09 15:00:00` として送る     | `PortersConfigError` |
+  | `"2026-09-10T12:00:00"`（ゾーン無し）    | 実行環境のタイムゾーンで読んで送る   | `PortersConfigError` |
+  | `"2026-09-10"`（日付だけ）               | UTC の 0 時として送る                | `PortersConfigError` |
+  | `"2026-02-30T00:00:00Z"` / `…T24:00:00Z` | 3/2・翌日に繰り上げて送る            | `PortersConfigError` |
+  - エラーは `PortersConfigError`（`category: "validation"`）で、`hint` がゾーンの要ることを示します。
+  - 日本時間で考えているなら、`"2026-09-10T09:00:00+09:00"` のようにオフセットを付けて渡します。
+  - `Date` / `Age` の項目（日付だけ）は変わりません。
+
+### Fixed
+
+- **既定の取り方で、PORTERS が Refresh Token を受け付けなかったとき（期限切れ・無効）に、`code_direct` で取り直す
+  ようになりました**。手元に記録した期限がまだ先だと、これまでは同じ refresh を繰り返して `PortersAuthError` になり、
+  `porters.auth.clearTokens()` を呼ぶまで回復しませんでした。同じ `tokenStore` を使う別のプロセスが先に更新して、
+  手元の Refresh Token が古くなったときにも起きていました。`PortersAuthError` が返るのは、`code_direct` でも
+  取り直せないとき（初回の権限付与が済んでいない・取り消された、App ID / App Secret が違う、など）だけです。
+  渡した `tokenProvider` の失敗は、これまでどおりそのまま届けます。
+- トークンの取得が認証 API の 401 / 402 で失敗したときに、Access Token の期限切れと取り違えて、もう一度取り直しを
+  強いていたのをやめました（失敗する取得を 2 回送っていました）。
+- **使い方ドキュメントを実装と突き合わせ、挙動と食い違っていた記述を直しました**。主なもの:
+  `create` を自動で再送しないのは届いたか分からないときだけ／エラーの型と HTTP ステータスの対応／
+  Activity の `P_ResourceId` は `expand` できない／Attachment の `search` で絞れるのは `resourceId` だけ／
+  一括書き込みは約 15000 字でも分ける／`base64ToBytes` は読めない文字列で例外を投げる、など。
+  トークンの取得や OAuth の URL 作成で出る `PortersConfigError` を、メッセージから
+  [トラブルシューティング][troubleshooting]で引けるようにしました。
+
 ## [0.23.0] - 2026-09-24
 
 **カスタム項目を宣言で `create` の必須にできるようにした版**です。あわせて、利用者の TypeScript の下限を
@@ -1377,7 +1456,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...v0.21.0
@@ -1421,3 +1501,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref-department]: docs/usage/reference/resource-api/resources/department.md
 [adr89]: docs/adr/0089-custom-field-required-on-create.md
 [adr90]: docs/adr/0090-typescript-floor.md
+[adr91]: docs/adr/0091-token-provider-and-store.md
+[troubleshooting]: docs/usage/reference/troubleshooting.md

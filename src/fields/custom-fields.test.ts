@@ -103,7 +103,9 @@ describe("custom fields — per-tenant declaration via tenant(id, { fields }) (A
     return new PortersClient({
       hostname: "h.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
   };
 
@@ -210,7 +212,9 @@ describe("custom fields — tenant(id, { fields }) reaches every data resource (
             return Promise.resolve({ status: 200, body });
           },
         },
-        auth: { getAccessToken: () => Promise.resolve("TKN") },
+        tokenProvider: {
+          acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+        },
       });
       const page = await pick(porters.tenant(1, { fields })).search();
       // Number -> number: the declared Data Type was applied, not the raw-string passthrough.

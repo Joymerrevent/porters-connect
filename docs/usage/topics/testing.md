@@ -55,7 +55,7 @@ HTTP 実装が変わってもテストは壊れません。
 ハンドラが `undefined` を返すと、**空を返さずにエラーになります**。
 
 ```ts
-// PortersConfigError: createMockTransport: no mock response for GET /v1/job — add a case to your handler
+// PortersConfigError: createMockTransport: no mock response for GET /v1/job — add a case to your handler (or pass { auth: false } to mock the auth endpoints too)
 await porters.tenant(1).job.search();
 ```
 
@@ -156,7 +156,7 @@ describe("候補者の取得", () => {
 
 ## XML を書くのがつらいとき
 
-応答 XML は**テストしたい項目だけ**書けば足ります。応答に書かなかった項目は `null` で返るので、
+応答 XML は**テストしたい項目だけ**書けば足ります。応答に書かなかった項目はレコードに現れない（読むと `undefined`）ので、
 レコード全体を再現する必要はありません。
 
 それでも足りない場合 — レート制限・リクエスト長・Result Code まで**本物のように**振る舞わせたい

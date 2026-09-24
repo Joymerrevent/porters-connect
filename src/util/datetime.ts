@@ -14,6 +14,11 @@
 const DATETIME_RE = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
 const DATE_RE = /^(\d{4})\/(\d{2})\/(\d{2})$/;
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})/;
+// 時刻とゾーン（`Z` か `±hh:mm`）が揃った形だけを受ける。`Date.parse` に任せると、ゾーンの無い値を
+// 実行環境のタイムゾーンで読み（サーバーの TZ で送る値がずれる）、`2026-02-30` を 3/2 に、`24:00` を
+// 翌日に繰り上げて通してしまう。秒と小数秒は省略可（`Date#toISOString()` の出力をそのまま受けるため）。
+const ISO_DATETIME_RE =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|([+-])(\d{2}):(\d{2}))$/;
 
 /** PORTERS `yyyy/mm/dd HH:MM:SS` (UTC) -> ISO 8601 `...Z`. */
 export const portersDateTimeToIso = (value: string): string => {
@@ -26,17 +31,43 @@ export const portersDateTimeToIso = (value: string): string => {
   return iso;
 };
 
-/** ISO 8601 (with `Z` or offset) -> PORTERS `yyyy/mm/dd HH:MM:SS` (UTC). */
+/**
+ * ISO 8601 with a time and a zone (`Z` or `±hh:mm`) -> PORTERS `yyyy/mm/dd HH:MM:SS` (UTC).
+ * Fractional seconds are dropped (PORTERS keeps whole seconds).
+ */
 export const isoToPortersDateTime = (value: string): string => {
-  const t = Date.parse(value);
-  if (Number.isNaN(t)) throw new RangeError(`invalid ISO datetime: "${value}"`);
-  const d = new Date(t);
+  const m = ISO_DATETIME_RE.exec(value);
+  if (!m) throw new RangeError(`invalid ISO datetime: "${value}"`);
+  // 省略できる部分（秒・ゾーンのオフセット）は 0 として読む。
+  const num = (part: string | undefined): number =>
+    part === undefined ? 0 : Number(part);
+  const [y, mo, d, h, mi, sec, oh, om] = [1, 2, 3, 4, 5, 6, 8, 9].map((i) =>
+    num(m[i]),
+  ) as [number, number, number, number, number, number, number, number];
+  // 暦と時計の範囲は、UTC で組み直して同じ壁時計に戻るかで見る（2/30 や 24:00 は戻らない。
+  // 0〜99 年は Date.UTC が 1900 年代に読み替えるので、これも戻らずに弾かれる）。
+  const wall = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  const written = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6] ?? "00"}`;
+  if (wall.toISOString().slice(0, 19) !== written || oh > 23 || om > 59) {
+    throw new RangeError(`invalid ISO datetime: "${value}"`);
+  }
+  const sign = m[7] === "-" ? -1 : 1;
+  const utc = new Date(wall.getTime() - sign * (oh * 60 + om) * 60_000);
   const pad = (n: number): string => String(n).padStart(2, "0");
   return (
-    `${d.getUTCFullYear()}/${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())} ` +
-    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+    `${utc.getUTCFullYear()}/${pad(utc.getUTCMonth() + 1)}/${pad(utc.getUTCDate())} ` +
+    `${pad(utc.getUTCHours())}:${pad(utc.getUTCMinutes())}:${pad(utc.getUTCSeconds())}`
   );
 };
+
+/**
+ * The accepted input form, for an error hint: DateTime needs a time and a zone, Date / Age take the
+ * calendar date only.
+ */
+export const isoExample = (type: string): string =>
+  type === "DateTime" || type === "System[DateTime]"
+    ? 'ISO 8601 with a time and a zone (e.g. "2026-09-10T12:00:00Z" or "2026-09-10T21:00:00+09:00")'
+    : 'ISO 8601 (e.g. "2026-09-10")';
 
 /** PORTERS `yyyy/mm/dd` -> ISO date `yyyy-mm-dd` (no timezone). */
 export const portersDateToIso = (value: string): string => {

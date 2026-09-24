@@ -1,9 +1,9 @@
-// Default transparent TokenProvider (ADR-0007 / ADR-0012): code_direct -> token,
-// cache, hybrid refresh (proactive margin + on-demand), in-process single-flight.
-// Factory style per ADR-0013. Exposes internal cache/clear so the public auth API
-// (ADR-0034 F-1) can save a browser-`code` exchange and locally forget tokens.
+// The built-in token provider (ADR-0007 / ADR-0091): obtains tokens the PORTERS way —
+// `code_direct` -> Token API for a fresh start, the refresh-token grant for renewal, and the
+// browser `code` exchange for the initial grant. It only *obtains*; caching, expiry decisions,
+// single-flight and persistence are the token manager's (`token-manager.ts`). Factory per ADR-0013.
 
-import { PortersAuthError } from "../errors/index";
+import { PortersAuthError, PortersConfigError } from "../errors/index";
 import {
   apiUrl,
   readResponse,
@@ -11,88 +11,66 @@ import {
   type Transport,
 } from "../http/index";
 import { parseAuthentication } from "../xml/parser";
-import { createMemoryTokenStore } from "./memory-store";
-import { exchangeToken } from "./token-exchange";
-import type { StoredTokens, TokenProvider, TokenStore } from "./types";
+import { exchangeToken, type TokenGrantType } from "./token-exchange";
+import type { StoredTokens, TokenProvider } from "./types";
+
+// PORTERS が Refresh Token を受け付けないときの認証エラー: 401 = 期限切れ、107 = 無効（別のプロセスが先に
+// 更新して、手元の Refresh Token が古くなったときもこれになる）。どちらも code_direct からやり直せば回復する
+// （ADR-0036: Refresh Token が失効したら code_direct で取り直し、PortersAuthError は code_direct 自体の失敗だけ）。
+// 手元の期限だけで判断すると、期限より前に拒否されたときに同じ refresh を繰り返して止まる。
+const REFRESH_REJECTED: ReadonlySet<number | null> = new Set([401, 107]);
 
 export type DefaultTokenProviderOptions = {
   accessPoint: AccessPoint;
-  appId: string;
-  appSecret: string;
+  /** Needed by every step; missing values fail when a token is first needed, not at construction. */
+  appId?: string;
+  appSecret?: string;
   transport: Transport;
-  /** Token persistence; defaults to in-memory. */
-  tokenStore?: TokenStore;
-  /** Refresh this many ms before expiry (proactive). Default 60s. */
-  refreshMarginMs?: number;
   /** Injectable clock (tests). Default `Date.now`. */
   now?: () => number;
 };
 
-/**
- * The default provider plus internal controls used by the public auth API
- * (ADR-0034 SD-8): {@link DefaultTokenProvider.cache} saves externally-acquired
- * tokens (browser `code` exchange) to the in-memory cache + token store;
- * {@link DefaultTokenProvider.clear} forgets them (local revoke). Deliberately *not*
- * part of the public
- * {@link TokenProvider} contract — a custom strategy supplies neither.
- */
-export type DefaultTokenProvider = TokenProvider & {
-  cache(tokens: StoredTokens): Promise<void>;
-  clear(): Promise<void>;
-};
-
-const DEFAULT_MARGIN_MS = 60_000;
-
 export const createDefaultTokenProvider = (
   opts: DefaultTokenProviderOptions,
-): DefaultTokenProvider => {
-  const store = opts.tokenStore ?? createMemoryTokenStore();
-  const margin = opts.refreshMarginMs ?? DEFAULT_MARGIN_MS;
+): Required<TokenProvider> => {
   const now = opts.now ?? (() => Date.now());
 
-  let cached: StoredTokens | undefined;
-  let inflight: Promise<StoredTokens> | undefined;
-
-  const accessValid = (t: StoredTokens | undefined): t is StoredTokens =>
-    t !== undefined && now() < t.accessTokenExpiresAt - margin;
-
-  const canRefresh = (t: StoredTokens | undefined): t is StoredTokens =>
-    t !== undefined && now() < t.refreshTokenExpiresAt - margin;
-
-  // Cache + persist freshly minted tokens so the next call (and other instances) reuse them.
-  const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
-    cached = tokens;
-    await store.set(tokens);
-    return tokens;
+  // The App Secret only ever rides the Token POST body (ADR-0034 SD-9).
+  const credentials = (): { appId: string; appSecret: string } => {
+    if (!opts.appId || !opts.appSecret) {
+      throw new PortersConfigError(
+        "appId and appSecret are required to obtain a token",
+        {
+          category: "config",
+          hint: "Set appId/appSecret on PortersClient, or pass a tokenProvider that obtains tokens another way.",
+        },
+      );
+    }
+    return { appId: opts.appId, appSecret: opts.appSecret };
   };
 
-  const exchange = async (
-    grantType: "oauth_code" | "refresh_token",
+  const exchange = (
+    grantType: TokenGrantType,
     code: string,
   ): Promise<StoredTokens> =>
-    save(
-      await exchangeToken(
-        {
-          accessPoint: opts.accessPoint,
-          appId: opts.appId,
-          appSecret: opts.appSecret,
-          transport: opts.transport,
-          now,
-        },
-        grantType,
-        code,
-      ),
+    exchangeToken(
+      {
+        accessPoint: opts.accessPoint,
+        transport: opts.transport,
+        now,
+        ...credentials(),
+      },
+      grantType,
+      code,
     );
 
-  // code_direct -> token (initial acquisition; requires prior browser grant).
+  // code_direct -> token (a fresh start; requires the one-time browser grant).
   const acquire = async (): Promise<StoredTokens> => {
+    const { appId } = credentials();
     const url = apiUrl(
       opts.accessPoint,
       "oauth",
-      new URLSearchParams({
-        app_id: opts.appId,
-        response_type: "code_direct",
-      }),
+      new URLSearchParams({ app_id: appId, response_type: "code_direct" }),
     );
     const res = await opts.transport.send({ method: "GET", url, headers: {} });
     // Same reading as every other response (ADR-0050): an intermediary's 4xx/5xx is classified
@@ -106,30 +84,19 @@ export const createDefaultTokenProvider = (
     return exchange("oauth_code", code);
   };
 
-  const renew = async (): Promise<StoredTokens> => {
-    if (cached === undefined) cached = await store.get();
-    if (canRefresh(cached)) {
-      return exchange("refresh_token", cached.refreshToken);
-    }
-    return acquire();
-  };
-
-  const ensure = (forceRefresh: boolean): Promise<StoredTokens> => {
-    if (!forceRefresh && accessValid(cached)) return Promise.resolve(cached);
-    return (inflight ??= renew().finally(() => {
-      inflight = undefined;
-    }));
-  };
-
   return {
-    getAccessToken: async (o) =>
-      (await ensure(o?.forceRefresh ?? false)).accessToken,
-    cache: async (tokens) => {
-      await save(tokens);
+    acquire,
+    // Tokens without a refresh token (read back from a store, say) cannot use the grant: start over.
+    refresh: async (current) => {
+      if (current.refreshToken === undefined) return acquire();
+      try {
+        return await exchange("refresh_token", current.refreshToken.token);
+      } catch (e) {
+        if (e instanceof PortersAuthError && REFRESH_REJECTED.has(e.code))
+          return acquire();
+        throw e;
+      }
     },
-    clear: async () => {
-      cached = undefined;
-      await store.clear();
-    },
+    exchange: async (code) => exchange("oauth_code", code),
   };
 };

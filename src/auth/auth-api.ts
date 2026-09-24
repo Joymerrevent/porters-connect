@@ -1,16 +1,15 @@
 // Public OAuth surface `porters.auth.*` (ADR-0034 F-1 / ADR-0007 SD-3/SD-6). A thin
-// facade over the active token provider: it builds the browser `code` / `remove` URLs,
-// exchanges a redirect `?code=` for tokens (saving them into the default strategy),
-// warms up / inspects the token, and locally forgets tokens. Credential- and
-// default-strategy-dependent methods fail fast with a PortersConfigError under a custom
-// auth strategy (ADR-0034 SD-7). Factory style per ADR-0013; the App Secret never leaves
-// the Token POST body (SD-9).
+// facade over the token provider and the client's token manager: it builds the browser
+// `code` / `remove` URLs, exchanges a redirect `?code=` through the provider's `exchange` and saves
+// the result, warms up / inspects the token, and locally forgets tokens. Every method works with
+// any provider that supplies what it needs (ADR-0091) — there is no "default strategy only" method
+// any more. Factory style per ADR-0013; the App Secret never leaves the Token POST body (SD-9).
 
 import { PortersConfigError } from "../errors/index";
-import { apiUrl, type AccessPoint, type Transport } from "../http/index";
+import { apiUrl, type AccessPoint } from "../http/index";
 import type { Scope } from "../types/index";
-import { exchangeToken } from "./token-exchange";
-import type { StoredTokens, TokenProvider } from "./types";
+import type { TokenManager } from "./token-manager";
+import type { TokenProvider } from "./types";
 
 /** Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md). */
 export type AuthorizationUrlOptions = {
@@ -30,18 +29,18 @@ export type RevokeUrlOptions = AuthorizationUrlOptions;
  * The `porters.auth.*` surface. The initial per-Company-DB grant
  * needs a human to open {@link AuthApi.authorizationUrl} in a browser and consent; the
  * library only builds the URL and exchanges the returned `code`. Day-to-day token
- * acquisition/refresh stays transparent (the default strategy), so most callers never
- * touch this surface.
+ * acquisition and renewal are handled by the client, whichever token provider is in use, so
+ * most callers never touch this surface.
  */
 export type AuthApi = {
   /** Build the browser `code`-grant URL to open for the initial permission grant. */
   authorizationUrl(opts: AuthorizationUrlOptions): string;
   /**
-   * Exchange a redirect `?code=` for tokens and save them into the default strategy.
-   * Resolves `void` on success (tokens are stored internally — inspect via
-   * {@link AuthApi.getToken}); throws on failure: {@link PortersConfigError} (missing
-   * credentials / custom strategy), `PortersAuthError` (token-endpoint error or expired
-   * code), or `PortersNetworkError`.
+   * Exchange a redirect `?code=` for tokens through the token provider's `exchange`, and save
+   * them (cache and `tokenStore`). Resolves `void` on success (inspect via
+   * {@link AuthApi.getToken}); rejects with {@link PortersConfigError} when the provider has no
+   * `exchange` or the built-in one lacks `appId` / `appSecret`, `PortersAuthError` (token-endpoint
+   * error or expired code), or `PortersNetworkError`.
    */
   exchangeAuthorizationCode(code: string): Promise<void>;
   /**
@@ -58,63 +57,25 @@ export type AuthApi = {
   getToken(): Promise<string>;
 };
 
-/** Internal save/forget controls, present only when the default provider is in use. */
-export type AuthProviderControls = {
-  cache(tokens: StoredTokens): Promise<void>;
-  clear(): Promise<void>;
-};
-
 export type AuthApiOptions = {
   accessPoint: AccessPoint;
   appId?: string;
-  appSecret?: string;
   scopes?: Scope[];
-  transport: Transport;
-  /** The active token provider (default or custom) backing ensure/getToken. */
+  /** Where tokens come from (built-in or the caller's `tokenProvider`). */
   provider: TokenProvider;
-  /** Present only for the default provider; absent under a custom strategy. */
-  controls?: AuthProviderControls;
-  /** Injectable clock (tests). Default `Date.now`. */
-  now?: () => number;
+  /** The client's cache / renewal / persistence, shared with the request pipeline. */
+  manager: TokenManager;
 };
 
 export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
-  const now = opts.now ?? (() => Date.now());
-
   const requireAppId = (): string => {
     if (!opts.appId) {
       throw new PortersConfigError("appId is required to build an OAuth URL", {
         category: "config",
-        hint: "Set appId on PortersClient. A custom auth strategy that supplies its own tokens cannot run the browser grant.",
+        hint: "Set appId on PortersClient: the browser grant URL names the App.",
       });
     }
     return opts.appId;
-  };
-
-  const requireDefaultStrategy = (method: string): AuthProviderControls => {
-    if (opts.controls === undefined) {
-      throw new PortersConfigError(
-        `${method} is only available with the default auth strategy`,
-        {
-          category: "config",
-          hint: "Remove the custom `auth` strategy to let the library manage tokens, or perform this step in your own strategy.",
-        },
-      );
-    }
-    return opts.controls;
-  };
-
-  const requireCredentials = (): { appId: string; appSecret: string } => {
-    if (!opts.appId || !opts.appSecret) {
-      throw new PortersConfigError(
-        "appId and appSecret are required to exchange an authorization code",
-        {
-          category: "config",
-          hint: "Set appId/appSecret on PortersClient (the Token endpoint needs both).",
-        },
-      );
-    }
-    return { appId: opts.appId, appSecret: opts.appSecret };
   };
 
   const resolveScopes = (scopes: Scope[] | undefined): Scope[] => {
@@ -149,30 +110,26 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
     authorizationUrl: (o) => buildOAuthUrl("code", o),
     revokeUrl: (o) => buildOAuthUrl("remove", o),
     exchangeAuthorizationCode: async (code) => {
-      const controls = requireDefaultStrategy("exchangeAuthorizationCode");
-      const { appId, appSecret } = requireCredentials();
-      const tokens = await exchangeToken(
-        {
-          accessPoint: opts.accessPoint,
-          appId,
-          appSecret,
-          transport: opts.transport,
-          now,
-        },
-        "oauth_code",
-        code,
-      );
-      await controls.cache(tokens);
+      // 交換も更新も同じ tokenProvider が行う＝別の発行元のトークンが混ざらない（ADR-0091）。
+      if (opts.provider.exchange === undefined) {
+        throw new PortersConfigError(
+          "exchangeAuthorizationCode needs a tokenProvider with exchange(code)",
+          {
+            category: "config",
+            hint: "Implement exchange(code) on your tokenProvider (for example, forward the code to the service that holds the App Secret). A code expires 30 seconds after it is issued.",
+          },
+        );
+      }
+      await opts.manager.cache(await opts.provider.exchange(code));
     },
     clearTokens: async () => {
-      const controls = requireDefaultStrategy("clearTokens");
-      await controls.clear();
+      await opts.manager.clear();
     },
     ensureAuthenticated: async () => {
-      await opts.provider.getAccessToken();
+      await opts.manager.getAccessToken();
     },
-    // `async` so a custom strategy that throws synchronously still reaches the caller as a
+    // `async` so a provider that throws synchronously still reaches the caller as a
     // rejection — a Promise-returning method never throws (ADR-0046).
-    getToken: async () => opts.provider.getAccessToken(),
+    getToken: async () => opts.manager.getAccessToken(),
   };
 };

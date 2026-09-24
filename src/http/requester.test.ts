@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { TokenProvider } from "../auth/types";
+import type { AccessTokenSource } from "../auth/types";
 import {
+  PortersAuthError,
   PortersConfigError,
   PortersNetworkError,
   PortersResourceError,
@@ -13,7 +14,7 @@ import type { Transport, TransportRequest } from "./types";
 const noThrottle: Throttle = { take: () => Promise.resolve() };
 const noBackoff = (): number => 0;
 
-const mockAuth = (calls: { force: boolean }[]): TokenProvider => ({
+const mockAuth = (calls: { force: boolean }[]): AccessTokenSource => ({
   getAccessToken: (o) => {
     calls.push({ force: o?.forceRefresh ?? false });
     return Promise.resolve("TKN");
@@ -150,7 +151,7 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
   it("retries create after a token fetch failure (the request never left)", async () => {
     let tokens = 0;
     let sends = 0;
-    const auth: TokenProvider = {
+    const auth: AccessTokenSource = {
       getAccessToken: () => {
         tokens += 1;
         return tokens === 1
@@ -338,6 +339,40 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     ).rejects.toBeInstanceOf(PortersResourceError);
     expect(n).toBe(2); // initial + one refresh retry, then give up
     expect(calls.filter((c) => c.force).length).toBe(1);
+  });
+
+  it("does not force another refresh when the token fetch fails with an Authentication API 401 / 402", async () => {
+    // 認証 API の 401 は「Refresh Token の期限切れ」、402 は「アクセス許可が無い」で、リソースの 401 / 402
+    // （Access Token の期限切れ）とは番号が同じだけの別物。取り直しを強いても、いま失敗した取得を繰り返すだけ。
+    for (const code of [401, 402]) {
+      const calls: { force: boolean }[] = [];
+      const sent: TransportRequest[] = [];
+      const r = createRequester({
+        transport: {
+          send: (req) => {
+            sent.push(req);
+            return Promise.resolve({ status: 200, body: "x" });
+          },
+        },
+        auth: {
+          getAccessToken: (o) => {
+            calls.push({ force: o?.forceRefresh ?? false });
+            return Promise.reject(
+              new PortersAuthError("rejected", { category: "auth", code }),
+            );
+          },
+        },
+        throttle: noThrottle,
+        backoff: noBackoff,
+      });
+
+      await expect(r.request(base, (b) => b)).rejects.toMatchObject({
+        name: "PortersAuthError",
+        code,
+      });
+      expect(calls).toEqual([{ force: false }]);
+      expect(sent).toHaveLength(0);
+    }
   });
 
   it("retries an idempotent GET on a network error", async () => {

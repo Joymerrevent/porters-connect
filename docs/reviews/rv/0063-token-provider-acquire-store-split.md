@@ -1,7 +1,7 @@
 # RV-63 🟢 トークンの「取得」だけを差し替えて「管理」（キャッシュ・更新・`tokenStore`）をライブラリに任せる入口が無い
 
 - 重要度: 🟢 ／ 観点: DX / アーキテクチャ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -65,11 +65,28 @@ stakeholder の提案（2026-09-23）: 「TokenProvider を組み替えて token
 
 ## 処置
 
-未着手。(b) の図はドキュメントの作業として先に入れられる。(a) はロードマップの「条件付き（実例が出たら起票）」。
+**起票（案 (a)・2026-09-24）。** stakeholder が実例を待たずに進めると決め、[ADR-0091][adr91] を proposed で起票した。
+起票時の推奨は `createTokenProvider({ acquire })` の公開だったが、decider との議論で「取得（`tokenProvider`）と保存
+（`tokenStore`）を `PortersClient` に別々に渡し、管理はクライアントが受け持つ」形に改めた（`auth` オプションと
+`getAccessToken` を丸ごと自前で書く入口は無くす）。(b)(c) のガイドの作業は先にはやらない（stakeholder の判断）。
+(c) の実装例は、ADR-0091 の実装の PR でガイドを書き直すときに直す。
+
+**accepted（2026-09-24）。** decider が案1a ＋ 2a ＋ 3a ＋ 4a ＋ 5a を選んだ。
+
+**実施（2026-09-24・本 PR）。** 取得（`tokenProvider`・`{ acquire, refresh?, exchange? }`）と保存（`tokenStore`）を別々に受け、
+キャッシュ・期限の判断・失効時の取り直し・同時呼び出しの 1 本化・保存を `src/auth/token-manager.ts` に切り出した。
+既定の取得（`code_direct`）もこの形に組み直した。構築オプション `auth` と `getAccessToken` の形は構築時に止める。
+ガイド「認証とトークン」に取り方・置き場所・管理の表を足し（(b) の図の代わり）、自前の実装例は `tokenProvider` の例に
+置き換えた（(c)。期限の判断と同時呼び出しはライブラリ側に移ったので、例に書く必要が無くなった）。
 
 ## 検証
 
-—
+- `src/auth/token-manager.test.ts`: `refresh` の有無・Refresh Token の有無と期限・期限不明・同時呼び出し・形の検査・
+  `tokenStore`（渡した取得でも保存・再起動で読み戻し・旧形式は無いものとして扱う）
+- `src/auth/token-provider.test.ts`: 既定の取得の従来の振る舞いを「既定の取得 ＋ 管理」の組み合わせで走らせ、変わっていないこと
+- `src/client.test.ts`: `auth` の拒否（型と実行時）、`tokenProvider` の形の検査
+- ミューテーション: 全体で生き残り 0（同値変異 1 件を注記して除外）
 
 [adr07]: ../../adr/0007-oauth-public-surface.md
 [adr12]: ../../adr/0012-token-cache-refresh.md
+[adr91]: ../../adr/0091-token-provider-and-store.md

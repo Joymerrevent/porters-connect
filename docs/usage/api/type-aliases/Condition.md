@@ -8,7 +8,7 @@
 
 > **Condition**\<`F`\> = `{ [K in keyof F]?: ConditionFor<F[K]> }`
 
-Defined in: [src/resources/query.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/query.ts#L117)
+Defined in: [src/resources/query.ts:121](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/query.ts#L121)
 
 A typed search condition over a catalog: each field maps to the operator object its Data Type
 allows. Multiple fields are AND-joined (reference). Unknown aliases / wrong

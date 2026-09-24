@@ -16,6 +16,11 @@
 > `await porters.candidate.search(...)` は現在 **`porters.tenant(id).candidate.search(...)`**。
 > また `host` は**必須で既定値を持たない**（例の「既定 …porterscloud.com」は正典 reference の代表値であって
 > ライブラリの既定ではない）。案4（注入可能ストラテジ）と SD-1〜SD-6 の核は不変。
+>
+> **Amended by [ADR-0091][0091]（2026-09-24）**: **案4 の「自前＝独自ストラテジ（`getAccessToken` を丸ごと差し替える）」は
+> supersede された**。構築オプション `auth` は `tokenProvider`（`{ acquire, refresh?, exchange? }`＝取得だけ）に置き換わり、
+> キャッシュ・期限の判断・更新の判断・`tokenStore` はどの取得でも `PortersClient` が受け持つ。「既定＝透過」と
+> 「取得を差し替えられる」という案4 の核は不変で、差し替えの単位が「丸ごと」から「取得だけ」に変わった。
 
 ## Context and Problem Statement
 
@@ -174,3 +179,4 @@ interface TokenStore {
 [0034]: 0034-oauth-public-surface-impl.md
 [0040]: 0040-multitenancy-surface-impl.md
 [0055]: 0055-partition-binding-guard.md
+[0091]: 0091-token-provider-and-store.md

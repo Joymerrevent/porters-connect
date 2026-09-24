@@ -1,11 +1,10 @@
-import { createAuthApi, createDefaultTokenProvider } from "./auth";
-import { PortersConfigError } from "./errors";
-import type {
-  AuthApi,
-  AuthProviderControls,
-  TokenProvider,
-  TokenStore,
+import {
+  createAuthApi,
+  createDefaultTokenProvider,
+  createTokenManager,
 } from "./auth";
+import { PortersConfigError } from "./errors";
+import type { AuthApi, TokenProvider, TokenStore } from "./auth";
 import {
   authorityOf,
   createFetchTransport,
@@ -104,10 +103,24 @@ export type PortersClientOptions = {
   appId?: string;
   appSecret?: string;
   scopes?: Scope[];
-  /** Custom auth strategy; defaults to the transparent code_direct strategy. */
-  auth?: TokenProvider;
-  /** Token persistence; defaults to in-memory. */
+  // 取得と保存を別々に受け、管理はクライアントが持つのは ADR-0091。
+  /**
+   * Where tokens come from. Leave it out for the built-in flow (`code_direct` with `appId` /
+   * `appSecret`); pass one to obtain tokens another way — for example from a central service that
+   * holds the App Secret. Either way the client caches, renews before expiry, retries once on an
+   * expired token, and saves to `tokenStore`.
+   */
+  tokenProvider?: TokenProvider;
+  /** Token persistence, used with every token provider; defaults to in-memory. */
   tokenStore?: TokenStore;
+  // 取得を丸ごと差し替える auth は ADR-0091 で廃止。黙って無視すると認証が既定の方式に戻って
+  // 動き続けるので、fields と同じく型と実行時の両方で弾く。
+  /**
+   * **Not a client option any more.** Pass a `tokenProvider` (`{ acquire, refresh?, exchange? }`)
+   * instead; the client manages caching and renewal for it. Typed `never` so a leftover `auth`
+   * fails to compile; at runtime the constructor rejects it with {@link PortersConfigError}.
+   */
+  auth?: never;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
   // 宛先ごとのプロセス共有バケットは ADR-0073。プロセス横断（Redis 等）は ADR-0010 で
@@ -234,6 +247,35 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
 };
 
 // 既定 partition を持たない（ADR-0055）・宣言は tenant で受ける（ADR-0087）。
+
+// tokenProvider の形を構築時に確かめる（ADR-0091）。古い形（getAccessToken だけ）を黙って
+// 受けると、最初のリクエストまで壊れていることに気づけない。
+const validateTokenProvider = (provider: unknown): void => {
+  if (provider === undefined) return;
+  // 文字列などの値でもプロパティは読める（undefined になる）ので、null だけを先に除けば足りる。
+  const p = provider as Record<string, unknown> | null;
+  if (p === null || typeof p.acquire !== "function") {
+    const old = p !== null && typeof p.getAccessToken === "function";
+    throw new PortersConfigError(
+      old
+        ? "PortersClient: tokenProvider has getAccessToken but no acquire — the old custom-auth shape"
+        : "PortersClient: tokenProvider must have an acquire() method",
+      {
+        category: "config",
+        hint: "Pass { acquire: async () => ({ accessToken: { token, expiresAt? } }) }, optionally with refresh(current) and exchange(code). The client caches and renews for you.",
+      },
+    );
+  }
+  for (const name of ["refresh", "exchange"] as const) {
+    if (p[name] !== undefined && typeof p[name] !== "function") {
+      throw new PortersConfigError(
+        `PortersClient: tokenProvider.${name} must be a function when given`,
+        { category: "config", hint: `Remove ${name} or make it a method.` },
+      );
+    }
+  }
+};
+
 /**
  * Entry point of the library. Wires the default transport / auth / throttle / requester and exposes
  * the **App-level** surface: `auth`, the `partition` master (discovery), and {@link PortersClient.tenant}.
@@ -304,6 +346,18 @@ export class PortersClient {
         },
       );
     }
+    // A pre-0.24 `auth` must not be ignored: the client would fall back to the built-in flow and
+    // keep running on credentials the caller meant to replace (ADR-0091).
+    if ((options as { auth?: unknown }).auth !== undefined) {
+      throw new PortersConfigError(
+        'PortersClient: "auth" is not a client option — pass a tokenProvider instead',
+        {
+          category: "config",
+          hint: "Replace auth: { getAccessToken } with tokenProvider: { acquire: async () => ({ accessToken: { token } }) }. The client caches and renews the token for you.",
+        },
+      );
+    }
+    validateTokenProvider(options.tokenProvider);
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
     // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
     // problem, so it fails where the configuration was handed over — before any credential can
@@ -319,35 +373,30 @@ export class PortersClient {
     // port are different destinations (ADR-0078).
     warnIfInsecureScheme(options.scheme, authorityOf(accessPoint));
     const transport = options.transport ?? createFetchTransport();
-    // Custom strategy (案3) takes over token supply; otherwise the default transparent
-    // provider also exposes cache/clear controls for the auth surface (ADR-0034 SD-7/SD-8).
-    let auth: TokenProvider;
-    let controls: AuthProviderControls | undefined = undefined;
-    if (options.auth) {
-      auth = options.auth;
-    } else {
-      const provider = createDefaultTokenProvider({
+    // Obtaining is the provider's; caching, renewal and persistence are the manager's, for every
+    // provider (ADR-0091). `porters.auth` and the request pipeline share the one manager.
+    const provider =
+      options.tokenProvider ??
+      createDefaultTokenProvider({
         accessPoint,
-        appId: options.appId ?? "",
-        appSecret: options.appSecret ?? "",
+        appId: options.appId,
+        appSecret: options.appSecret,
         transport,
-        tokenStore: options.tokenStore,
       });
-      auth = provider;
-      controls = provider;
-    }
+    const manager = createTokenManager({
+      provider,
+      tokenStore: options.tokenStore,
+    });
     this.auth = createAuthApi({
       accessPoint,
       appId: options.appId,
-      appSecret: options.appSecret,
       scopes: options.scopes,
-      transport,
-      provider: auth,
-      controls,
+      provider,
+      manager,
     });
     const requester = createRequester({
       transport,
-      auth,
+      auth: manager,
       // Per destination, not per client (ADR-0073): building a client per tenant is something the guides
       // recommend, and a bucket each would let the process issue N times the limit — silently
       // (RV-43). An injected throttle takes over entirely, sharing included.

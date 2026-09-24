@@ -379,10 +379,11 @@ for await (const f of t.field.of("candidate").searchAll()) {
 
 ## 検証されること
 
-`defineFields` は、次の 2 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
+`defineFields` は、次の 3 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）はライブラリがあらかじめ型を持っているので、宣言の対象外です。
 - **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume` のみ。
+- **`required` を付けるなら `true` か `false` であること** — `"true"` のような文字列は、黙って任意の項目として扱わずにエラーにします。
 
 ```ts
 defineFields({ candidate: (f) => ({ score: f.number() }) });

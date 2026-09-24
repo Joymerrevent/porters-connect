@@ -9,6 +9,8 @@
 - **ライブラリが PORTERS との受け渡しの時点で ISO 8601 に変換**します。利用側のコードは ISO 8601（`2026-09-11T12:00:00Z`）だけを扱えば
   よく、PORTERS の書式（`yyyy/mm/dd HH:MM:SS`）を知らなくて済みます。
 - **JST などへの変換はしません。** 業務タイムゾーンは利用側の責務です。
+- **`DateTime` に渡す値には、時刻とタイムゾーン（`Z` か `+09:00` のようなオフセット）が要ります。** タイムゾーンの無い値や
+  日付だけの値は、どの時点を指すか決まらないので、送る前に弾きます。
 - **変換できない値は、送る前・読んだ直後に弾きます**（`category: "validation"`）。黙って別の値にはしません。
 - **時分型は年月日時分型と同じ Field Type** で返り、Field Read からは見分けが付きません。`decodeTimeOfDay` /
   `encodeTimeOfDay` で変換します。
@@ -17,12 +19,12 @@
 
 Data Type ごとの、PORTERS の書式とライブラリが渡す・受けるかたちの対応です。利用側が扱うのは右の列だけです。
 
-| Data Type          | PORTERS との通信の書式       | このライブラリが渡す／受ける形               |
-| ------------------ | ---------------------------- | -------------------------------------------- |
-| `DateTime`         | `yyyy/mm/dd HH:MM:SS`（UTC） | `2026-09-11T12:00:00Z`（ISO・`Z` つき）      |
-| `System[DateTime]` | 同上（登録日 / 更新日）      | 同上。**書き込み不可**                       |
-| `Date`             | `yyyy/mm/dd`                 | `2026-09-11`（日付だけ・時刻もゾーンも無し） |
-| `Age`              | `yyyy/mm/dd`                 | 同上（**値は生年月日**。下記）               |
+| Data Type          | PORTERS との通信の書式       | このライブラリが渡す／受ける形                                 |
+| ------------------ | ---------------------------- | -------------------------------------------------------------- |
+| `DateTime`         | `yyyy/mm/dd HH:MM:SS`（UTC） | `2026-09-11T12:00:00Z`（ISO。渡すときは `Z` かオフセットつき） |
+| `System[DateTime]` | 同上（登録日 / 更新日）      | 同上。**書き込み不可**                                         |
+| `Date`             | `yyyy/mm/dd`                 | `2026-09-11`（日付だけ・時刻もゾーンも無し）                   |
+| `Age`              | `yyyy/mm/dd`                 | 同上（**値は生年月日**。下記）                                 |
 
 ```ts
 const one = await t.candidate.get(10001);
@@ -73,6 +75,14 @@ UTC の 0 時として解釈されるので、タイムゾーンを足して表�
 await t.candidate.update(1, { U_hiredOn: "2026/09/10" });
 // PortersConfigError: U_hiredOn: cannot write "2026/09/10" as Date
 //   category: "validation" / hint: ISO 8601 で渡す
+```
+
+`DateTime` では、日付だけの値やタイムゾーンの無い値も弾きます。日本時間で考えているなら、オフセットを付けて渡します。
+
+```ts
+// await t.candidate.update(10001, { P_PhaseDate: "2026-09-10" });
+// → PortersConfigError: P_PhaseDate: cannot write "2026-09-10" as DateTime
+await t.candidate.update(10001, { P_PhaseDate: "2026-09-10T00:00:00+09:00" }); // 日本時間の 0 時
 ```
 
 これは**日時だけの扱い**です。他の Data Type はライブラリが変換しないので、書式を検査しません

@@ -136,6 +136,12 @@ const fileBytes: Uint8Array;
 const base64: string;
 const codeFromRedirect: string;
 const fetchMyAccessToken: () => Promise<string>;
+// トークンを発行する別のサービス（tokenProvider の例で使う）
+const myTokenService: {
+  issue: () => Promise<{ token: string; expiresAt: number }>;
+  refresh: (refreshToken: string) => Promise<{ token: string; expiresAt: number; refreshToken: string }>;
+  exchange: (code: string) => Promise<{ token: string; expiresAt: number; refreshToken: string }>;
+};
 const kv: {
   get: (key: string) => Promise<string | null>;
   set: (key: string, value: string) => Promise<void>;

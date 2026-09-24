@@ -8,7 +8,7 @@
 
 > **AuthorizationUrlOptions** = `object`
 
-Defined in: [src/auth/auth-api.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L16)
+Defined in: [src/auth/auth-api.ts:15](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L15)
 
 Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md).
 
@@ -18,7 +18,7 @@ Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/referenc
 
 > **redirectUrl**: `string`
 
-Defined in: [src/auth/auth-api.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L18)
+Defined in: [src/auth/auth-api.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L17)
 
 Registered Redirect URL the browser returns to (required for code/remove).
 
@@ -28,7 +28,7 @@ Registered Redirect URL the browser returns to (required for code/remove).
 
 > `optional` **scopes?**: [`Scope`](Scope.md)[]
 
-Defined in: [src/auth/auth-api.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L20)
+Defined in: [src/auth/auth-api.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L19)
 
 Scopes to grant/remove; defaults to the client's configured `scopes`.
 
@@ -38,6 +38,6 @@ Scopes to grant/remove; defaults to the client's configured `scopes`.
 
 > `optional` **state?**: `string`
 
-Defined in: [src/auth/auth-api.ts:22](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L22)
+Defined in: [src/auth/auth-api.ts:21](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L21)
 
 Opaque value echoed back on redirect (e.g. CSRF defense).

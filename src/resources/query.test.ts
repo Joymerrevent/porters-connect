@@ -262,6 +262,18 @@ describe("condition の変換できない日時（RV-36）", () => {
     }
   });
 
+  it("DateTime の条件も、日付だけ・ゾーンの無い値は弾く", () => {
+    expect(() =>
+      encode({ condition: { P_When: { ge: "2026-09-10" } } }),
+    ).toThrow(PortersConfigError);
+    try {
+      encode({ condition: { P_When: { ge: "2026-09-10T00:00:00" } } });
+      expect.unreachable();
+    } catch (e) {
+      expect((e as PortersConfigError).hint).toContain("a time and a zone");
+    }
+  });
+
   it("Age も同じ経路", () => {
     expect(() => encode({ condition: { P_Age: { eq: "nope" } } })).toThrow(
       PortersConfigError,

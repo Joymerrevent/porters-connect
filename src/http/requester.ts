@@ -5,11 +5,12 @@
 // The response is read through both error channels — HTTP status and PORTERS
 // envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
-import type { TokenProvider } from "../auth/types";
+import type { AccessTokenSource } from "../auth/types";
 import {
   PortersConfigError,
   PortersError,
   PortersNetworkError,
+  PortersResourceError,
 } from "../errors/index";
 import { readResponse } from "./read-response";
 import type { Backoff } from "./retry";
@@ -46,7 +47,7 @@ const withAuth = (
 
 export type RequesterOptions = {
   transport: Transport;
-  auth: TokenProvider;
+  auth: AccessTokenSource;
   throttle: Throttle;
   backoff: Backoff;
   maxRetries?: number;
@@ -115,8 +116,15 @@ export const createRequester = (o: RequesterOptions): Requester => {
         return readResponse(res, parse);
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
-        // reactive: token expired -> refresh once and retry (safe even for create).
-        if ((e.code === 401 || e.code === 402) && !authRetried) {
+        // reactive: token expired -> refresh once and retry (safe even for create). Only the
+        // Resource API's 401 / 402 mean "Access Token expired": the Authentication API numbers its
+        // codes separately (its 401 is "Refresh Token expired", raised while fetching the token), and
+        // forcing another refresh on that only repeats the request that just failed.
+        if (
+          e instanceof PortersResourceError &&
+          (e.code === 401 || e.code === 402) &&
+          !authRetried
+        ) {
           authRetried = true;
           forceRefresh = true;
           continue;

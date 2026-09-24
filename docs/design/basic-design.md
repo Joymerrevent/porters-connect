@@ -14,7 +14,7 @@
         │
    ┌────▼─────────────────── 第1層 @joymerrevent/porters-connect（本書） ──────────────┐
    │ PortersClient（エントリ）                                                          │
-   │   ├─ auth/         TokenProvider（既定=透過 code_direct / 自前）・tokenStore        │
+   │   ├─ auth/         取得 tokenProvider・保存 tokenStore・管理 token manager          │
    │   ├─ http/         transport（注入可・既定 fetch）・headers・throttle/retry         │
    │   ├─ xml/          XML パース/シリアライズ（外に XML を漏らさない）                 │
    │   ├─ errors/       PortersError 階層（Auth/Resource/Network/Config）＋ category     │
@@ -34,7 +34,7 @@
 src/
   index.ts            # public export（ここからのみ公開）
   client.ts           # PortersClient・porters.tenant(id) スコープ
-  auth/               # TokenProvider・code_direct 既定戦略・TokenStore・authorizationUrl/revoke
+  auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・retry
   xml/                # parse / serialize（データ型別エンコード）
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
@@ -100,7 +100,7 @@ await t.attachment.of("resume").get(id); // 添付の本体は get だけ（ADR-
 accessor 呼び出し
   → 入力検証（fields/クエリ。不正は PortersConfigError を同期 throw）
   → partition 解決（tenant(id) スコープの 1 層のみ・ADR-0040 / ADR-0055）
-  → トークン取得（TokenProvider：既定は code_direct＋キャッシュ、失効時 Refresh）
+  → トークン取得（token manager：キャッシュ・期限の判断・失効時の取り直し。取得は tokenProvider、既定は code_direct）
   → リクエスト組み立て（Read=クエリ / Write=XML、サイズ ~15000字 ガード）
   → transport 送信（自前スロットリングで分散、retryable は指数バックオフ）
   → レスポンス XML をパース → 型付きオブジェクトへ
@@ -122,7 +122,8 @@ accessor 呼び出し
 
 ## 7. 認証 & マルチテナント（[ADR-0007][a7] / [ADR-0008][a8]）
 
-- **認証ストラテジ seam**：既定＝透過（`code_direct`＋キャッシュ＋Refresh）／自前 `TokenProvider`。`connect()` は不要（任意 `ensureAuthenticated()`）。
+- **認証の差し替え口**：取得（`tokenProvider`・`{ acquire, refresh?, exchange? }`・既定は `code_direct`）と保存（`tokenStore`・既定はインメモリ）を
+  別々に受け、キャッシュ・期限の判断・更新・同時呼び出しの 1 本化はクライアントが受け持つ（[ADR-0091][a91]）。`connect()` は不要（任意 `ensureAuthenticated()`）。
 - **初回権限付与**（ブラウザ `code`・人間）は前提手順。補助 `authorizationUrl()` / `exchangeAuthorizationCode()` / `revoke()`。
 - **マルチテナント**：partition は **`porters.tenant(id)` スコープ**（旧称 `partition(id)`・改名 ADR-0021・実装 ADR-0040 案1c）で束ね、未束ねの呼び出しは **client 既定 partition**。完全分離は**テナント別 client**。per-call 引数は設けない（解決は scope ／ client 既定の 2 層）。認証は**両対応**（共有トークン＋partition 切替＝scope／partition 別トークン＝テナント別 client）。
 - **オンボーディング補助（L1 が提供）**：`authorizationUrl()` で初回権限付与に誘導し、`Partition Read` / `User Read`（`request_type=0`）でログイン中 partition を**発見**できる。
@@ -177,3 +178,4 @@ accessor 呼び出し
 [a11]: ../adr/0011-xml-parse-serialize.md
 [a12]: ../adr/0012-token-cache-refresh.md
 [a47]: ../adr/0047-access-point-scheme.md
+[a91]: ../adr/0091-token-provider-and-store.md

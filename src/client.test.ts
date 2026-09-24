@@ -39,7 +39,9 @@ const mockClient = (): PortersClient => {
   return new PortersClient({
     hostname: "example.test",
     transport,
-    auth: { getAccessToken: () => Promise.resolve("TKN") },
+    tokenProvider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+    },
   });
 };
 
@@ -134,6 +136,7 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
       port: 4010,
       scheme: "http",
       appId: "AID",
+      appSecret: "SECRET",
       transport,
     });
     await client.tenant(999).candidate.search();
@@ -179,15 +182,16 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     warn.mockRestore();
   });
 
-  it("defaults missing appId / appSecret to empty (not a placeholder)", async () => {
+  // appId / appSecret を省いた既定の取得は、送る前に止まる（空の値を PORTERS へ送らない）。
+  it("stops before sending when the built-in flow has no appId / appSecret", async () => {
     const { transport, calls } = recordingTransport();
     const client = new PortersClient({ hostname: "h.test", transport });
-    await client.tenant(999).candidate.search();
-
-    const oauth = calls.find((c) => c.url.includes("/v1/oauth"));
-    const token = calls.find((c) => c.url.includes("/v1/token"));
-    expect(oauth?.url).toContain("app_id=&response_type=code_direct");
-    expect(token?.body).toContain("secret=&");
+    await expect(client.tenant(999).candidate.search()).rejects.toMatchObject({
+      name: "PortersConfigError",
+      category: "config",
+      message: "appId and appSecret are required to obtain a token",
+    });
+    expect(calls).toHaveLength(0);
   });
 });
 
@@ -204,7 +208,9 @@ describe("PortersClient + job (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).job.search();
@@ -228,7 +234,9 @@ describe("PortersClient + client resource (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const one = await client.tenant(999).client.get(33);
@@ -257,7 +265,9 @@ describe("PortersClient + recruiter (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).recruiter.search();
@@ -284,7 +294,9 @@ describe("PortersClient + contact (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).contact.search();
@@ -311,7 +323,9 @@ describe("PortersClient + opportunity (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).opportunity.search();
@@ -337,7 +351,9 @@ describe("PortersClient + activity (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).activity.search();
@@ -364,7 +380,9 @@ describe("PortersClient + contract (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).contract.search();
@@ -390,7 +408,9 @@ describe("PortersClient + phase (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).phase.of("client").search();
@@ -414,7 +434,9 @@ describe("PortersClient + process (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).process.search();
@@ -436,7 +458,9 @@ describe("PortersClient + resume (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).resume.search();
@@ -457,7 +481,9 @@ describe("PortersClient + attachment (E2E, mock transport)", () => {
     const client = new PortersClient({
       hostname: "example.test",
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
     const page = await client.tenant(999).attachment.of("resume").search();
@@ -484,7 +510,9 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     new PortersClient({
       hostname: "t.test", // client default
       transport,
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
   it("routes tenant(id) calls to partition=<id>, overriding the client default", async () => {
@@ -585,7 +613,9 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
                 : "<Candidate><Item><Id>10001</Id><Code>0</Code></Item></Candidate>",
           }),
       },
-      auth: { getAccessToken: () => Promise.resolve("TKN") },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "TKN" } }),
+      },
     });
 
   it("同じホストの client は同じバケットを通る", async () => {
@@ -635,5 +665,124 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
       .candidate.create({ P_Owner: 1 });
 
     expect(mineTake).toHaveBeenCalledWith(true);
+  });
+});
+
+// 構築時に tokenProvider の形と、廃止した auth を確かめる（ADR-0091）。黙って受けると、
+// 認証が既定の方式に戻って動き続けるか、最初のリクエストまで壊れていることに気づけない。
+describe("PortersClient — tokenProvider and the retired auth option (ADR-0091)", () => {
+  const build = (extra: Record<string, unknown>) => () =>
+    new PortersClient({
+      hostname: "h.test",
+      ...extra,
+    });
+
+  it("rejects a leftover auth option, pointing at tokenProvider", () => {
+    expect(
+      build({ auth: { getAccessToken: () => Promise.resolve("T") } }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message:
+          'PortersClient: "auth" is not a client option — pass a tokenProvider instead',
+        hint: expect.stringContaining("tokenProvider: { acquire") as string,
+      }),
+    );
+  });
+
+  it("accepts auth: undefined (an optional spread is not a leftover)", () => {
+    expect(build({ auth: undefined })).not.toThrow();
+  });
+
+  it("refuses auth at compile time too", () => {
+    expectTypeOf<PortersClientOptions["auth"]>().toEqualTypeOf<undefined>();
+    // @ts-expect-error -- auth is no longer a client option: pass tokenProvider
+    void (() => new PortersClient({ hostname: "h.test", auth: {} }));
+  });
+
+  it("names the old getAccessToken shape when it is passed as tokenProvider", () => {
+    expect(
+      build({ tokenProvider: { getAccessToken: () => Promise.resolve("T") } }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message:
+          "PortersClient: tokenProvider has getAccessToken but no acquire — the old custom-auth shape",
+        hint: expect.stringContaining("acquire: async () =>") as string,
+      }),
+    );
+  });
+
+  it.each([
+    ["null", null],
+    ["a string", "token"],
+    ["an object without acquire", {}],
+    ["acquire that is not a function", { acquire: "x" }],
+    ["getAccessToken that is not a function", { getAccessToken: "x" }],
+  ])("rejects %s as tokenProvider", (_, tokenProvider) => {
+    expect(build({ tokenProvider })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: "PortersClient: tokenProvider must have an acquire() method",
+      }),
+    );
+  });
+
+  it.each(["refresh", "exchange"])(
+    "rejects a %s that is not a function",
+    (name) => {
+      expect(
+        build({
+          tokenProvider: { acquire: () => Promise.resolve(), [name]: "x" },
+        }),
+      ).toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          category: "config",
+          message: `PortersClient: tokenProvider.${name} must be a function when given`,
+          hint: `Remove ${name} or make it a method.`,
+        }),
+      );
+    },
+  );
+
+  it("accepts acquire alone, and refresh / exchange as functions", () => {
+    const acquire = () => Promise.resolve({ accessToken: { token: "T" } });
+    expect(build({ tokenProvider: { acquire } })).not.toThrow();
+    expect(
+      build({
+        tokenProvider: { acquire, refresh: acquire, exchange: acquire },
+      }),
+    ).not.toThrow();
+  });
+
+  it("uses tokenStore with a caller's tokenProvider", async () => {
+    const saved: unknown[] = [];
+    const porters = new PortersClient({
+      hostname: "h.test",
+      transport: {
+        send: () =>
+          Promise.resolve({
+            status: 200,
+            body: `<Candidate Total="0" Count="0" Start="0"><Code>0</Code></Candidate>`,
+          }),
+      },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+      },
+      tokenStore: {
+        get: () => Promise.resolve(undefined),
+        set: (t) => {
+          saved.push(t);
+          return Promise.resolve();
+        },
+        clear: () => Promise.resolve(),
+      },
+    });
+    await porters.tenant(1).candidate.search();
+    expect(saved).toEqual([{ accessToken: { token: "T" } }]);
   });
 });

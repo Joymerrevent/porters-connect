@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
+  isoExample,
   isoToPortersDate,
   isoToPortersDateTime,
   portersDateToIso,
@@ -68,6 +69,79 @@ describe("datetime (PORTERS <-> ISO, UTC)", () => {
 // Property-based tests (fast-check). 例示テストは代表値を 1 点ずつ確かめるだけなので、
 // 「どの日時でも往復して戻る」という不変条件は境界（うるう年・年跨ぎ・エポック前）で
 // 崩れても気づけない。ここは値を機械に選ばせて往復性そのものを検査する。
+// DateTime の入力は「時刻とゾーンがそろった ISO 8601」だけ。Date.parse に任せていたときは、
+// ゾーンの無い値を実行環境の TZ で読み（TZ=Asia/Tokyo で "2026/09/10" が 2026/09/09 15:00:00 に
+// なった）、存在しない日付や 24:00 を繰り上げて通していた。
+describe("isoToPortersDateTime: 受け付ける形", () => {
+  it("秒・小数秒は省略でき、小数秒は切り捨てる", () => {
+    expect(isoToPortersDateTime("2026-09-10T12:34Z")).toBe(
+      "2026/09/10 12:34:00",
+    );
+    expect(isoToPortersDateTime("2026-09-10T12:34:56.789Z")).toBe(
+      "2026/09/10 12:34:56",
+    );
+  });
+
+  it("オフセットは符号の向きどおりに UTC へ寄せ、日付もまたぐ", () => {
+    expect(isoToPortersDateTime("2026-01-01T00:30:00+09:00")).toBe(
+      "2025/12/31 15:30:00",
+    );
+    expect(isoToPortersDateTime("2026-12-31T20:00:00-05:30")).toBe(
+      "2027/01/01 01:30:00",
+    );
+  });
+
+  it("オフセットは ±23:59 まで", () => {
+    expect(isoToPortersDateTime("2026-09-10T23:00:00+23:00")).toBe(
+      "2026/09/10 00:00:00",
+    );
+    expect(isoToPortersDateTime("2026-09-10T00:59:00+00:59")).toBe(
+      "2026/09/10 00:00:00",
+    );
+  });
+
+  it("うるう日は通す", () => {
+    expect(isoToPortersDateTime("2028-02-29T00:00:00Z")).toBe(
+      "2028/02/29 00:00:00",
+    );
+  });
+
+  it.each([
+    ["ゾーンが無い", "2026-09-10T12:00:00"],
+    ["日付だけ", "2026-09-10"],
+    ["PORTERS の形式", "2026/09/10 12:00:00"],
+    ["PORTERS の日付", "2026/09/10"],
+    ["Date.parse は読む英語表記", "Sep 10 2026"],
+    ["T の代わりに空白", "2026-09-10 12:00:00Z"],
+    ["小文字の z", "2026-09-10T12:00:00z"],
+    ["コロンの無いオフセット", "2026-09-10T12:00:00+0900"],
+    ["存在しない日付", "2026-02-30T00:00:00Z"],
+    ["うるう年でない 2/29", "2026-02-29T00:00:00Z"],
+    ["13 月", "2026-13-01T00:00:00Z"],
+    ["24 時", "2026-09-10T24:00:00Z"],
+    ["60 分", "2026-09-10T12:60:00Z"],
+    ["60 秒", "2026-09-10T12:00:60Z"],
+    ["オフセットの時が範囲外", "2026-09-10T12:00:00+24:00"],
+    ["オフセットの分が範囲外", "2026-09-10T12:00:00+09:60"],
+    ["前に余分な文字", "x2026-09-10T12:00:00Z"],
+    ["後ろに余分な文字", "2026-09-10T12:00:00Zx"],
+    ["0 月", "2026-00-10T12:00:00Z"],
+    ["0 日", "2026-09-00T12:00:00Z"],
+    ["2 桁の年（Date.UTC が 1900 年代に読み替える）", "0050-09-10T12:00:00Z"],
+  ])("%s（%s）は弾く", (_label, value) => {
+    expect(() => isoToPortersDateTime(value)).toThrow(/invalid ISO datetime/);
+  });
+});
+
+describe("isoExample", () => {
+  it("DateTime はゾーンつきの例を、Date / Age は日付だけの例を返す", () => {
+    expect(isoExample("DateTime")).toContain("a time and a zone");
+    expect(isoExample("System[DateTime]")).toContain("a time and a zone");
+    expect(isoExample("Date")).toBe('ISO 8601 (e.g. "2026-09-10")');
+    expect(isoExample("Age")).toBe('ISO 8601 (e.g. "2026-09-10")');
+  });
+});
+
 describe("datetime: 往復の不変条件（property-based）", () => {
   // PORTERS 形式は年が 4 桁固定なので、往復が定義できるのは 1000-9999 年。
   // ミリ秒も表現できないため、生成した時刻は秒に切り捨てる。
