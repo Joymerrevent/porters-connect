@@ -667,3 +667,122 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
     expect(mineTake).toHaveBeenCalledWith(true);
   });
 });
+
+// 構築時に tokenProvider の形と、廃止した auth を確かめる（ADR-0091）。黙って受けると、
+// 認証が既定の方式に戻って動き続けるか、最初のリクエストまで壊れていることに気づけない。
+describe("PortersClient — tokenProvider and the retired auth option (ADR-0091)", () => {
+  const build = (extra: Record<string, unknown>) => () =>
+    new PortersClient({
+      hostname: "h.test",
+      ...extra,
+    });
+
+  it("rejects a leftover auth option, pointing at tokenProvider", () => {
+    expect(
+      build({ auth: { getAccessToken: () => Promise.resolve("T") } }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message:
+          'PortersClient: "auth" is not a client option — pass a tokenProvider instead',
+        hint: expect.stringContaining("tokenProvider: { acquire") as string,
+      }),
+    );
+  });
+
+  it("accepts auth: undefined (an optional spread is not a leftover)", () => {
+    expect(build({ auth: undefined })).not.toThrow();
+  });
+
+  it("refuses auth at compile time too", () => {
+    expectTypeOf<PortersClientOptions["auth"]>().toEqualTypeOf<undefined>();
+    // @ts-expect-error -- auth is no longer a client option: pass tokenProvider
+    void (() => new PortersClient({ hostname: "h.test", auth: {} }));
+  });
+
+  it("names the old getAccessToken shape when it is passed as tokenProvider", () => {
+    expect(
+      build({ tokenProvider: { getAccessToken: () => Promise.resolve("T") } }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message:
+          "PortersClient: tokenProvider has getAccessToken but no acquire — the old custom-auth shape",
+        hint: expect.stringContaining("acquire: async () =>") as string,
+      }),
+    );
+  });
+
+  it.each([
+    ["null", null],
+    ["a string", "token"],
+    ["an object without acquire", {}],
+    ["acquire that is not a function", { acquire: "x" }],
+    ["getAccessToken that is not a function", { getAccessToken: "x" }],
+  ])("rejects %s as tokenProvider", (_, tokenProvider) => {
+    expect(build({ tokenProvider })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: "PortersClient: tokenProvider must have an acquire() method",
+      }),
+    );
+  });
+
+  it.each(["refresh", "exchange"])(
+    "rejects a %s that is not a function",
+    (name) => {
+      expect(
+        build({
+          tokenProvider: { acquire: () => Promise.resolve(), [name]: "x" },
+        }),
+      ).toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          category: "config",
+          message: `PortersClient: tokenProvider.${name} must be a function when given`,
+          hint: `Remove ${name} or make it a method.`,
+        }),
+      );
+    },
+  );
+
+  it("accepts acquire alone, and refresh / exchange as functions", () => {
+    const acquire = () => Promise.resolve({ accessToken: { token: "T" } });
+    expect(build({ tokenProvider: { acquire } })).not.toThrow();
+    expect(
+      build({
+        tokenProvider: { acquire, refresh: acquire, exchange: acquire },
+      }),
+    ).not.toThrow();
+  });
+
+  it("uses tokenStore with a caller's tokenProvider", async () => {
+    const saved: unknown[] = [];
+    const porters = new PortersClient({
+      hostname: "h.test",
+      transport: {
+        send: () =>
+          Promise.resolve({
+            status: 200,
+            body: `<Candidate Total="0" Count="0" Start="0"><Code>0</Code></Candidate>`,
+          }),
+      },
+      tokenProvider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+      },
+      tokenStore: {
+        get: () => Promise.resolve(undefined),
+        set: (t) => {
+          saved.push(t);
+          return Promise.resolve();
+        },
+        clear: () => Promise.resolve(),
+      },
+    });
+    await porters.tenant(1).candidate.search();
+    expect(saved).toEqual([{ accessToken: { token: "T" } }]);
+  });
+});
