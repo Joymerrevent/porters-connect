@@ -1,8 +1,8 @@
 # 認証とトークン
 
 PORTERS の OAuth は独自仕様で、初回だけは人がブラウザで権限を付与し、以降はライブラリが無人で運用します。
-このページを読むと、初回の権限付与をアプリに組み込む方法、トークンをどこに置くか、権限の削除、トークンを
-自前で管理する方法が分かります。手順を順に追うなら導入の[認証を通して、疎通を確認する][s-auth]から入ってください。
+このページを読むと、初回の権限付与をアプリに組み込む方法、トークンをどこに置くか、権限の削除、トークンの
+取り方を差し替える方法が分かります。手順を順に追うなら導入の[認証を通して、疎通を確認する][s-auth]から入ってください。
 
 ## まず知ること
 
@@ -12,11 +12,12 @@ PORTERS の OAuth は独自仕様で、初回だけは人がブラウザで権�
 - **トークンは既定でインメモリ**です。プロセスを跨いで共有するなら `tokenStore` を渡します。Refresh Token を
   外に出すので、置き場所の安全性は利用側の責任です。
 - **認証のリクエストも API アクセス数に数えられます**（月 15 万は契約条件）。永続化すると取り直しが減ります。
-- **トークンを自前で管理する**なら `TokenProvider` を渡します。そのとき `porters.auth.*` の一部は使えません。
+- **トークンの取り方を差し替える**なら `tokenProvider` を渡します（例: トークンを一括で発行する別のサービスから受け取る）。
+  キャッシュ・期限の判断・更新・`tokenStore` への保存は、取り方にかかわらずライブラリが受け持ちます。
 
 API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照してください。
 
-<!-- 根拠: ADR-0007（OAuth 公開 API）・ADR-0034（実装） -->
+<!-- 根拠: ADR-0007（OAuth 公開 API）・ADR-0034（実装）・ADR-0091（取得と保存を分ける） -->
 
 ## 全体像（2 つのフェーズ）
 
@@ -32,6 +33,14 @@ API の一次情報は [認証 API（OAuth/Token）][auth-ref] を参照して�
 自動で行われます（[認証を通して、疎通を確認する][s-auth]）。
 
 `porters.auth.*` は、この**初回付与の補助**と、**運用中の確認・終了処理**を行うためのメソッド群です。
+
+トークンまわりは「取り方」「置き場所」「管理」の 3 つに分かれていて、利用者が差し替えられるのは前の 2 つです。
+
+| 役割     | 何をするか                                                            | 差し替え方                                  |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------- |
+| 取り方   | トークンを取る・更新する・権限付与の `code` を交換する                | `tokenProvider`（省略すると `code_direct`） |
+| 置き場所 | 取ったトークンを保存し、再起動のときに読み戻す                        | `tokenStore`（省略するとインメモリ）        |
+| 管理     | キャッシュ・期限の判断・失効したときの取り直し・同時呼び出しの 1 本化 | 差し替えない（ライブラリが受け持つ）        |
 
 ## 初回の権限付与（ブラウザ・人手で 1 回）
 
@@ -88,7 +97,7 @@ const token = await porters.auth.getToken();
 
 ## トークンの永続化（`tokenStore`）
 
-既定の方式（ライブラリがトークンを取得・更新する）では、トークンの保存先は**インメモリ**で、プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を渡して Redis / DB / ファイルに永続化できます。
+トークンの保存先は、既定で**インメモリ**です。プロセス再起動で失われ、複数インスタンス間でも共有されません。サーバ運用では `tokenStore` を渡して Redis / DB / ファイルに永続化できます。
 
 永続化すると、再起動や別インスタンスでも**有効な Refresh Token（約 2 時間）を再利用**でき、毎回 `code_direct` でトークンを取り直さずに済みます（**認証のリクエストも API アクセス数に数えられます**）。`TokenStore` が実装するメソッドは `get` / `set` / `clear` の**3 つ**（すべて非同期）です。
 
@@ -101,14 +110,13 @@ type TokenStore = {
 };
 
 type StoredTokens = {
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
-  refreshTokenExpiresAt: number; // 1970-01-01 からのミリ秒（絶対時刻）
+  accessToken: { token: string; expiresAt?: number }; // expiresAt は 1970-01-01 からのミリ秒（絶対時刻）
+  refreshToken?: { token: string; expiresAt?: number }; // 無い取り方もある
 };
 ```
 
-`StoredTokens` はふつうの JSON（`*ExpiresAt` は 1970-01-01 からのミリ秒で表した絶対時刻）なので、そのまま直列化して保存できます。
+`StoredTokens` はふつうの JSON（`expiresAt` は 1970-01-01 からのミリ秒で表した絶対時刻）なので、そのまま直列化して保存できます。
+読み戻した値がこの形でなければ、ライブラリは「保存されていない」として扱い、トークンを取り直します。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -137,7 +145,7 @@ const porters = new PortersClient({
 });
 ```
 
-- `tokenStore` が使われるのは**既定の方式のときだけ**です。独自 `TokenProvider`（後述の「トークンを自前で管理するとき」）を渡した場合は、永続化も自前の責務になります（`tokenStore` は使われません）。
+- `tokenStore` は、**どの取り方でも使われます**（後述の `tokenProvider` を渡したときも）。
 - 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は実機で未確認です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
@@ -238,7 +246,7 @@ const porters = new PortersClient({
 
 - Token エンドポイントがエラーを返す／`code` が失効（30 秒）→ `PortersAuthError`（`category: "auth"`）
 - ネットワーク不達・切断 → `PortersNetworkError`
-- `appId` / `appSecret` / `scopes` 不足、自前管理のときの誤用 → `PortersConfigError`（`category: "config"`）
+- `appId` / `appSecret` / `scopes` 不足、`tokenProvider` の形の誤り・`exchange` の無い `tokenProvider` での `exchangeAuthorizationCode` → `PortersConfigError`（`category: "config"`）
 
 ```ts
 import {
@@ -262,7 +270,7 @@ try {
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
 - 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
-- クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `auth` / `scopes` オプション）
+- クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `tokenProvider` / `scopes` オプション）
 - リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
 - 実践例: [複数テナント][multi-tenant]（認証を分けるか）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
