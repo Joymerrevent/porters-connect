@@ -5,7 +5,11 @@
 
 import { PortersConfigError } from "../errors/index";
 import { qualify } from "../util/alias";
-import { isoToPortersDate, isoToPortersDateTime } from "../util/datetime";
+import {
+  isoExample,
+  isoToPortersDate,
+  isoToPortersDateTime,
+} from "../util/datetime";
 import { isXmlName } from "../util/xml-name";
 import type { DataType, ImageSubField } from "./decode";
 
@@ -194,7 +198,7 @@ const invalidValue = (
     `${alias}: cannot write ${JSON.stringify(value)} as ${type}`,
     {
       category: "validation",
-      hint: `${type} values are written in ISO 8601 (e.g. "2026-09-10" / "2026-09-10T12:00:00Z"); the library converts them to PORTERS' format.`,
+      hint: `${type} values are written in ${isoExample(type)}; the library converts them to PORTERS' format.`,
       // The underlying RangeError stays on `cause` rather than in the message: the message
       // already names the field, the value and the type, which is what a reader needs.
       context: { operation: "encode" },
