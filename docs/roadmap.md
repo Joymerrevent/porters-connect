@@ -14,7 +14,9 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.23.0**（2026-09-24）＝ カスタム項目を宣言で `create` の必須にする（[ADR-0089][adr89]）・
+**最新は 0.24.0**（2026-09-24）＝ トークンの取り方（`tokenProvider`）と置き場所（`tokenStore`）を分ける（[ADR-0091][adr91]）・
+日時（`DateTime`）の入力をタイムゾーンつきの ISO 8601 に絞る・Refresh Token が拒否されたら `code_direct` で取り直す minor 版。
+**破壊的変更 2 つ**（`auth` オプションの廃止と、日時の入力の制限）。ひとつ前の **0.23.0**（2026-09-24）＝ カスタム項目を宣言で `create` の必須にする（[ADR-0089][adr89]）・
 利用者の TypeScript の下限を 5.4 にし、古い版は明示の型エラーに向け CI で下限の版を走らせる（[ADR-0090][adr90]）minor 版。
 **5.4 より前の TypeScript の利用者には破壊的**。ひとつ前の **0.22.0**（2026-09-23）＝ 数値でない文字列を `Number` として読まず `validation` で止める（RV-58）・
 単件の `create` / `update` を reject に揃える（RV-64）・使い方ドキュメントを 7 章に組み直す（[ADR-0088][adr88]）minor 版。
@@ -556,8 +558,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.23.0`**（npm latest・2026-09-24 にレジストリで確認・**10 files / 1037.5 kB**）。**全 31 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1 → 0.21.0 → 0.22.0 → 0.23.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.24.0`**（npm latest・2026-09-24 にレジストリで確認・**10 files / 1063.5 kB**）。**全 32 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1 → 0.21.0 → 0.22.0 → 0.23.0 → 0.24.0
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -582,7 +584,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       **0.21.0 でカスタム項目の宣言を `tenant(id, { fields })` へ（[ADR-0087][adr87]・破壊的）＋ 公開 JSDoc / 使い方
       ドキュメントから保守者向け識別子を除去（`check:api` / `check:dts` / `check:usage`）**、
       0.22.0 で数値でない文字列の `validation`（RV-58）＋ 単件の書き込みの reject（RV-64）＋ 使い方ドキュメントを 7 章に（[ADR-0088][adr88]）、
-      0.23.0 でカスタム項目の `create` の必須（[ADR-0089][adr89]）＋ TypeScript の下限 5.4 と CI の検査（[ADR-0090][adr90]））。
+      0.23.0 でカスタム項目の `create` の必須（[ADR-0089][adr89]）＋ TypeScript の下限 5.4 と CI の検査（[ADR-0090][adr90]）、
+      **0.24.0 でトークンの取り方と置き場所の分離（[ADR-0091][adr91]・破壊的）＋ 日時の入力の制限（破壊的）＋ Refresh Token の取り直し**）。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -657,7 +660,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.23.0 の**全 31 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.24.0 の**全 32 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
