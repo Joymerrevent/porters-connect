@@ -16,7 +16,18 @@
 
 ## 組み立て
 
-次の順に組みます。テーブルを定義する → `tokenStore` を書く → クライアントに渡す、の 3 段です。
+次の順に組みます。DB につなぐ → テーブルを定義する → `tokenStore` を書く → クライアントに渡す、の 4 段です。
+
+### 0. DB につなぐ
+
+Drizzle の `db` を作ります。以降の手順で使う `db` はこれです。例は PostgreSQL のドライバ `pg`（node-postgres）を
+使います（`pnpm add drizzle-orm pg`）。
+
+```ts
+import { drizzle } from "drizzle-orm/node-postgres";
+
+export const db = drizzle(process.env.DATABASE_URL ?? ""); // 接続文字列から作る
+```
 
 ### 1. テーブルを定義する
 
@@ -76,12 +87,14 @@ export const createDbTokenStore = (
 });
 ```
 
-- `db` の型は `PgDatabase` なので、`drizzle-orm/node-postgres`・`drizzle-orm/postgres-js` など、どの PostgreSQL の
-  ドライバで作った `db` でも渡せます。
+- `db` を引数で受け取るのは、どこで作った `db` でも使えるようにするためです。型は `PgDatabase` なので、
+  `drizzle-orm/node-postgres`（手順 0）・`drizzle-orm/postgres-js` など、どの PostgreSQL のドライバで作った `db` でも渡せます。
 - 読み戻した値が `StoredTokens` の形でなければ（手で書き換えた、古い形のまま残っている、など）、ライブラリは
   「保存されていない」として扱い、トークンを取り直します。`get` の中で形を確かめる必要はありません。
 
 ### 3. クライアントに渡す
+
+手順 0 の `db` と、手順 2 の `createDbTokenStore` を使います。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";

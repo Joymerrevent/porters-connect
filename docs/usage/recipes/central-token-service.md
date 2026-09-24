@@ -36,7 +36,8 @@ PORTERS のトークンを 1 か所で取り、複数のアプリ（やプロセ
 ### 1. 中央のサービス
 
 中央は、ふつうのクライアント（既定の取り方）を 1 つ持ち、トークンを返す口を公開します。トークンの保存先には、
-[トークンを DB に保存する][token-store-db]の `tokenStore` を使います。
+[トークンを DB に保存する][token-store-db]の `tokenStore` を使います（`db` と `createDbTokenStore` は、そのページの
+手順 0 と手順 2 で作ったものです）。
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
