@@ -23,12 +23,12 @@
 
 すべての PORTERS 由来エラーは `PortersError` を継承し、発生**系統**でサブクラスが分かれます。
 
-| クラス                 | 系統                                       | `code` の元       |
-| ---------------------- | ------------------------------------------ | ----------------- |
-| `PortersAuthError`     | OAuth / Token（認証 API）                  | 認証 `<Error>`    |
-| `PortersResourceError` | Resource API（Read / Write）               | リソース `<Code>` |
-| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429 | `null`            |
-| `PortersConfigError`   | 設定・使い方の誤り／ HTTP 4xx              | `null`            |
+| クラス                 | 系統                                            | `code` の元                                         |
+| ---------------------- | ----------------------------------------------- | --------------------------------------------------- |
+| `PortersAuthError`     | OAuth / Token（認証 API）／ HTTP 401・403       | 認証 `<Error>`（HTTP 401・403 だけのときは `null`） |
+| `PortersResourceError` | Resource API（Read / Write）                    | リソース `<Code>`                                   |
+| `PortersNetworkError`  | 接続 / タイムアウト / 切断 / HTTP 5xx・429・408 | `null`                                              |
+| `PortersConfigError`   | 設定・使い方の誤り／ HTTP 4xx（上記以外）       | `null`                                              |
 
 > **2 系統は番号が重複し意味が違います**（例: `401` は認証では Refresh Token 失効、リソースでは
 > Access Token 期限切れ）。`instanceof` で系統を分けてから `code` を見てください。
@@ -121,8 +121,8 @@ try {
 下記は**ライブラリ内部で処理**されるため、通常は利用者コードに現れません。現れたときは
 「自動回復でも直らなかった」状態なので、ヒントに従って対処します。
 
-- **トークン期限切れ → 自動リフレッシュ＋再試行**: リソース `401` / `402`・認証 `400`
-  （Access Token 期限切れ）は内部で Refresh して自動再試行します。`PortersAuthError`
+- **トークン期限切れ → 自動リフレッシュ＋再試行**: リソース `401` / `402`
+  （Access Token 期限切れ）は内部で Refresh して 1 回だけ自動再試行します。`PortersAuthError`
   （`category: "auth"`）が返るのは**Refresh も失効したとき**（認証 `401`）＝
   **初回のブラウザ `code` 付与をやり直す**必要がある場合だけです。
 - **一時エラー・ネットワーク → 指数バックオフで自動リトライ**: リソース `9` / `302`（`transient`）と
@@ -345,16 +345,16 @@ U_hiredOn: declared Date, but "社内候補" is not a PORTERS Date value
 
 認証 API が返すコードと、ライブラリでの `category`・再試行の可否です。
 
-| code                                          | 意味（要約）                                           | category               |
-| --------------------------------------------- | ------------------------------------------------------ | ---------------------- |
-| `400`                                         | Access Token 期限切れ                                  | `auth`（自動 Refresh） |
-| `401`                                         | Refresh Token 期限切れ → 再認証                        | `auth`                 |
-| `103` / `106` / `117` / `109` / `114` / `107` | code / Token / セッション / ユーザー無効               | `auth`                 |
-| `104` / `105`                                 | app_id / secret が無効                                 | `auth`                 |
-| `100` / `101` / `102` / `110` / `112`         | redirect_url / scope / response_type / grant_type 無効 | `validation`           |
-| `111` / `115` / `116` / `402`                 | 権限なし・アクセス拒否                                 | `permission`           |
-| `108`                                         | 認証サーバー内部エラー                                 | `server`               |
-| 上記以外                                      | 未対応コード                                           | `unknown`              |
+| code                                          | 意味（要約）                                           | category     |
+| --------------------------------------------- | ------------------------------------------------------ | ------------ |
+| `400`                                         | Access Token 期限切れ                                  | `auth`       |
+| `401`                                         | Refresh Token 期限切れ → 再認証                        | `auth`       |
+| `103` / `106` / `117` / `109` / `114` / `107` | code / Token / セッション / ユーザー無効               | `auth`       |
+| `104` / `105`                                 | app_id / secret が無効                                 | `auth`       |
+| `100` / `101` / `102` / `110` / `112`         | redirect_url / scope / response_type / grant_type 無効 | `validation` |
+| `111` / `115` / `116` / `402`                 | 権限なし・アクセス拒否                                 | `permission` |
+| `108`                                         | 認証サーバー内部エラー                                 | `server`     |
+| 上記以外                                      | 未対応コード                                           | `unknown`    |
 
 ### リソース系（`PortersResourceError` ＝ `<{Resource}><Code>`）
 
