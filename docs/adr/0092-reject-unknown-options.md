@@ -1,6 +1,6 @@
 # 92. 構築オプションと `tenant()` のオプションは、定義していないキーをすべて実行時に弾く
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -11,6 +11,8 @@
 > [ADR-0087][adr87]（追記 7: `PortersClientOptions.fields` を `never` で型付け）と [ADR-0091][adr91]
 > （論点2 の帰結: `auth?: never`）の、型で弾く部分を**改める**。実行時に弾く考え方（[ADR-0048][adr48] の系列の
 > fail-closed）は据え置き、弾く範囲を広げる。
+>
+> **decider が案1a ＋ 案2a ＋ 案3a ＋ 案4a を選択し `accepted`（2026-09-24）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -75,7 +77,7 @@
 
 ## Decision Outcome
 
-推奨: **案1a ＋ 案2a ＋ 案3a ＋ 案4a**（proposed）。
+採用: **案1a ＋ 案2a ＋ 案3a ＋ 案4a**（decider が 2026-09-24 に選択）。
 
 ### 決めること
 
