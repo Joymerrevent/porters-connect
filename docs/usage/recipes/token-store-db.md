@@ -39,7 +39,8 @@ export const db = drizzle(process.env.DATABASE_URL ?? ""); // 接続文字列か
 
 ### 1. テーブルを定義する
 
-1 行に 1 組のトークンを保存します。`StoredTokens` は JSON なので、`jsonb` の列にそのまま入れます。
+`porters_tokens` テーブルの 1 行に、1 組のトークン（Access Token と Refresh Token）を保存します。どの行を使うかは
+`key` 列で決めます。`StoredTokens` は JSON なので、`jsonb` の列にそのまま入れます。
 
 ```ts
 // ファイル: schema.ts
@@ -55,7 +56,7 @@ export const portersTokens = pgTable("porters_tokens", {
 
 ### 2. `tokenStore` を書く
 
-`get` / `set` / `clear` の 3 つを、この行の読み・書き・削除に対応させます。テーブルは手順 1 の `schema.ts` から読みます。
+`get` / `set` / `clear` の 3 つを、`key` が一致する行の読み取り・書き込み（無ければ追加）・削除に対応させます。テーブルは手順 1 の `schema.ts` から読みます。
 
 ```ts
 // ファイル: token-store.ts
@@ -114,7 +115,8 @@ export const porters = new PortersClient({
 });
 ```
 
-これで、取得・更新のたびにトークンがこの行に書かれ、次に起動したときは、まだ使えるトークンがあればそれを使います。
+これで、トークンを取得・更新するたびに、`porters_tokens` テーブルの `key` が `"porters"` の行に書き込まれます。
+次に起動したときはその行を読み、まだ使えるトークンがあればそれを使います。
 Access Token の期限（約 30 分）が切れていても、Refresh Token（約 2 時間）が残っていれば、`code_direct` からではなく
 更新で取り直します。
 
@@ -128,7 +130,7 @@ Access Token の期限（約 30 分）が切れていても、Refresh Token（�
   （[複数テナント][multi-tenant]の「認証を分けるか」）。
 - 同じキーを、別の App の資格情報を持つクライアントと共有しないでください。
 
-## 複数のプロセスで同じ行を使うとき
+## 複数のプロセスで同じキーを使うとき
 
 同じキーを複数のプロセスで使うこともできますが、次の動きを知っておいてください。
 
