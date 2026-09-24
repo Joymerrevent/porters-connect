@@ -287,7 +287,7 @@ const batch = new PortersClient({
 - 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
   [カスタム項目][custom-fields]（宣言の書き方・自動生成・突き合わせ）／[上限とレート][limits]
 - リソース別: [Partition][r-partition]／[User][r-user]
-- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）
+- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）／[トークンを DB に保存する][token-store-db]（テナントごとのキー）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -303,3 +303,4 @@ const batch = new PortersClient({
 [r-user]: ../resources/user.md
 [index]: ../index.md
 [sync-batch]: sync-batch.md
+[token-store-db]: token-store-db.md

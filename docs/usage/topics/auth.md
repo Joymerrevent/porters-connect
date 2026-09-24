@@ -285,7 +285,7 @@ try {
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
 - クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `tokenProvider` / `scopes` オプション）
 - リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
-- 実践例: [複数テナント][multi-tenant]（認証を分けるか）
+- 実践例: [複数テナント][multi-tenant]（認証を分けるか）／[トークンを DB に保存する][token-store-db]（`tokenStore` を ORM で組む）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
 - ほかの目的から探す: [目次][index]
 
@@ -302,5 +302,6 @@ try {
 [r-partition]: ../resources/partition.md
 [r-user]: ../resources/user.md
 [multi-tenant]: ../recipes/multi-tenant.md
+[token-store-db]: ../recipes/token-store-db.md
 [cl-auth]: ../client/auth.md
 [cl-client]: ../client/client.md
