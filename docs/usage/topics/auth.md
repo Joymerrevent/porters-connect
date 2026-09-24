@@ -146,6 +146,8 @@ const porters = new PortersClient({
 ```
 
 - `tokenStore` は、**どの取り方でも使われます**（後述の `tokenProvider` を渡したときも）。
+- 既定の取り方では、PORTERS が Refresh Token を受け付けないとき（期限切れ・無効。同じ `tokenStore` を使う別のプロセスが
+  先に更新した場合など）は、`code_direct` で取り直します。
 - 複数プロセスで同時に refresh する際の協調（ストアレベルのロック等）や、PORTERS の Refresh Token ローテーション挙動は実機で未確認です<!-- 根拠: ADR-0012 -->。
 
 ## 利用終了（権限の削除）
