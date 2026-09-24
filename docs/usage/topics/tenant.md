@@ -68,7 +68,7 @@ const job = await t.job.get(jobId);
 await t.attachment.of("resume").create(file);
 ```
 
-- スコープにぶら下がるアクセサ（データ系 13 種 ＋ マスタ 4 種）と、含まれないもの（`auth`・`partition`・`tenant` 自身）の
+- スコープにぶら下がるアクセサ（マスタ 4 種 ＋ データ系 13 種）と、含まれないもの（`auth`・`partition`・`tenant` 自身）の
   一覧は [tenant(id)][cl-tenant] にあります。
 - **呼び出しごとの Partition 引数はありません**<!-- 根拠: ADR-0040 案1c -->。Partition を決める場所は **`tenant(id)` の 1 箇所だけ**で、
   呼び出しごとの引数とスコープのどちらが優先されるか、を考える必要はありません<!-- 根拠: ADR-0055 -->。
