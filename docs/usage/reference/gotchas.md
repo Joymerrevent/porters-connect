@@ -37,7 +37,7 @@ PORTERS 側の運用上の前提（レート・課金・実行環境・alias・�
   （マスタコピーで一致させる運用）。ライブラリはカスタム項目の alias を**ハードコードせず**、
   Field / Option Read で発見する手段（`generateFieldDecls` / `verifyFields`・[カスタム項目][custom-fields]）を提供する<!-- 根拠: ADR-0004 -->。
 - **keyword（フリーワード）検索は Option 型項目を対象にできない**（FAQ）。Option は `condition` で指定する。
-- **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。ライブラリは未知の alias をエラーにせず（応答に混ざっても無視する）、宣言との食い違いは `category` が `validation` のエラーで知らせる（[カスタム項目][custom-fields]）。
+- **PORTERS 側で項目が変更・削除される**とアプリが壊れ得る。ライブラリは未知の alias をエラーにせず（応答に混ざっても型の付かない値としてそのまま返す）、宣言との食い違いは `category` が `validation` のエラーで知らせる（[カスタム項目][custom-fields]）。
 - **削除 API は無い**（データ・添付とも。提供予定なし）。`delete()` メソッドは用意しない。削除済みは `itemstate` で Read 可。
 - **時分型（2026/08・PORTERS 9.3.0）は Field Read で年月日時分型と見分けが付かない**（同じ Field Type 12）。
   基準日 `1970/01/01` 付きの書式でしか書けず、任意の日時を書くと Code 103。どの項目が時分型かは環境の
