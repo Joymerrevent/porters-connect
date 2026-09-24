@@ -76,7 +76,7 @@
 | [RV-59][rv59] | 🟡     | テスト厳密性 / プロセス         | fixed   | `tenant(id, { fields })` の宣言配線を candidate 以外の 10 リソースで pin していない                  |
 | [RV-60][rv60] | 🟢     | ドキュメント / API 忠実性       | fixed   | 0.21.0 の CHANGELOG と ADR-0087 が 0.15.0 で直した「黙って `null`」を現在形で書く                    |
 | [RV-61][rv61] | 🟢     | ドキュメント / プロセス         | fixed   | roadmap が reference README の「再取得の手順」を指すが、その節は CONTRIBUTING に移動                 |
-| [RV-62][rv62] | 🟢     | DX / API 忠実性                 | open    | カスタム項目を `create` の必須として宣言できない（テナントの `P_Required` を型に写せない）           |
+| [RV-62][rv62] | 🟢     | DX / API 忠実性                 | fixed   | カスタム項目を `create` の必須として宣言できない（テナントの `P_Required` を型に写せない）           |
 | [RV-63][rv63] | 🟢     | DX / アーキテクチャ             | open    | トークンの「取得」だけを差し替えて「管理」をライブラリに任せる入口が無い                             |
 | [RV-64][rv64] | 🟢     | API 忠実性 / エラーモデル       | fixed   | 単件の `create` / `update` が、束ねた alias を渡されたときだけ同期 throw する（ADR-0046 の契約違反） |
 

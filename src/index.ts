@@ -60,6 +60,7 @@ export type {
   FieldBuilder,
   FieldDecls,
   FieldDef,
+  FieldOptions,
 } from "./fields";
 // Constraint types of the public generics (`TenantScope<C>` / `TenantOptions<C>`). Exported so a
 // helper that takes a scope can name its type instead of relying on `typeof t` (RV-30).
@@ -67,6 +68,8 @@ export type {
   CustomFieldResource,
   CustomFor,
   DeclaredCatalogs,
+  DeclaredRequiredOf,
+  RequiredFor,
 } from "./fields";
 
 // Checking a declaration against the tenant it will run against, and writing one from it
@@ -91,6 +94,7 @@ export type {
   TenantCustomCatalog,
   UndeclarableField,
   UndeclarableTenantField,
+  RequiredMismatch,
   UndeclarableReason,
   UndeclaredField,
   UnverifiableResource,

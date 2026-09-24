@@ -17,7 +17,11 @@ npm i @joymerrevent/porters-connect
 ```
 
 **Node.js 22.12 以上**が要ります。型定義は同梱しているので、TypeScript なら追加の
-`@types` は要りません。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
+`@types` は要りません。
+
+TypeScript で使うなら **5.4 以上**にしてください。同梱の型定義が 5.4 で入った型（`NoInfer`）を使っているためです。
+5.4 より前の TypeScript では、このパッケージから `import` したものを使った行が、
+`requires TypeScript 5.4 or later` という文言を含む型エラーになります。そのときは TypeScript を上げてください。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
 「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、動作を保証する対象にしていません。
 
 ### CJS から `require` する

@@ -105,9 +105,12 @@ export type JobCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type JobUpdateInput = UpdateInput<typeof FIELDS>;
 /** The Job accessor; `C` is the declared custom-field catalog merged on. */
-export type JobResource<C extends FieldCatalog = EmptyCatalog> = Resource<
+export type JobResource<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = Resource<
   typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number],
+  (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
 >;
 

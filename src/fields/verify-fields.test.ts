@@ -288,6 +288,7 @@ describe("assertFieldsMatch", () => {
         undeclared: [],
         unverifiable: [],
         undeclarable: [],
+        requiredMismatch: [],
       }),
     ).not.toThrow();
   });
@@ -313,6 +314,7 @@ describe("assertFieldsMatch", () => {
       undeclared: [],
       unverifiable: [],
       undeclarable: [],
+      requiredMismatch: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(PortersConfigError);
@@ -346,6 +348,7 @@ describe("assertFieldsMatch", () => {
         { resource: "job" as const, cause: new Error("403 forbidden") },
       ],
       undeclarable: [],
+      requiredMismatch: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(
@@ -375,7 +378,91 @@ describe("assertFieldsMatch", () => {
             reason: "unknown-field-type",
           },
         ],
+        requiredMismatch: [],
       }),
     ).not.toThrow();
+  });
+});
+
+// 必須の食い違いは報告だけで ok は倒さない（ADR-0089 案4a）。
+describe("verifyFields — required", () => {
+  it("reports nothing when the declaration and the tenant agree", async () => {
+    const fields = defineFields({
+      candidate: (f) => ({
+        U_must: f.number({ required: true }),
+        U_may: f.number(),
+      }),
+    });
+    const source = sourceOf({
+      candidate: [
+        { P_Alias: "Person.U_must", P_Type: 3, P_Required: 1 },
+        { P_Alias: "Person.U_may", P_Type: 3, P_Required: 0 },
+      ],
+    });
+    const report = await verifyFields(source, fields);
+    expect(report.requiredMismatch).toStrictEqual([]);
+    expect(report.ok).toBe(true);
+  });
+
+  it("reports both directions without clearing ok", async () => {
+    const fields = defineFields({
+      candidate: (f) => ({
+        U_stricter: f.number({ required: true }),
+        U_looser: f.number(),
+      }),
+    });
+    const source = sourceOf({
+      candidate: [
+        { P_Alias: "Person.U_stricter", P_Type: 3, P_Required: 0 },
+        { P_Alias: "Person.U_looser", P_Type: 3, P_Required: 1 },
+      ],
+    });
+    const report = await verifyFields(source, fields);
+    expect(report.requiredMismatch).toStrictEqual([
+      {
+        resource: "candidate",
+        alias: "U_stricter",
+        declared: true,
+        tenant: false,
+      },
+      {
+        resource: "candidate",
+        alias: "U_looser",
+        declared: false,
+        tenant: true,
+      },
+    ]);
+    expect(report.ok).toBe(true);
+    expect(() => assertFieldsMatch(report)).not.toThrow();
+  });
+
+  it("compares required only for fields present on both sides", async () => {
+    const fields = defineFields({
+      candidate: (f) => ({ U_gone: f.number({ required: true }) }),
+    });
+    const source = sourceOf({
+      candidate: [{ P_Alias: "Person.U_extra", P_Type: 3, P_Required: 1 }],
+    });
+    const report = await verifyFields(source, fields);
+    expect(report.requiredMismatch).toStrictEqual([]);
+    expect(report.missing).toHaveLength(1);
+    expect(report.undeclared).toHaveLength(1);
+  });
+
+  it("reads a plain catalog map (no defineFields marker) as nothing declared required", async () => {
+    const source = sourceOf({
+      candidate: [{ P_Alias: "Person.U_score", P_Type: 3, P_Required: 1 }],
+    });
+    const report = await verifyFields(source, {
+      candidate: { U_score: "Number" },
+    });
+    expect(report.requiredMismatch).toStrictEqual([
+      {
+        resource: "candidate",
+        alias: "U_score",
+        declared: false,
+        tenant: true,
+      },
+    ]);
   });
 });

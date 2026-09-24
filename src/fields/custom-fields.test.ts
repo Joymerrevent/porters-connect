@@ -19,7 +19,7 @@ import { PROCESS_DESCRIPTOR } from "../resources/process";
 import { RECRUITER_DESCRIPTOR } from "../resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../resources/resume";
 import { SALES_DESCRIPTOR } from "../resources/sales";
-import { defineFields } from "./define-fields";
+import { defineFields, type DeclaredCatalogs } from "./define-fields";
 
 // R-16 end-to-end (ADR-0023): declared custom fields decode/encode by their declared Data
 // Type (not the raw-string passthrough) and appear typed on reads / writes via PortersClient.
@@ -288,5 +288,125 @@ describe("custom fields — tenant(id, { fields }) typing", () => {
     ).not.toThrow();
     // @ts-expect-error -- PortersClient is not generic: the catalog lives on TenantScope
     type _Never = PortersClient<typeof fields>;
+  });
+});
+
+// 宣言で明示した必須は create / createMany の入力型で必須になる（ADR-0089）。update は任意のまま。
+// 型だけの規則なので、実行時の断言は無い（typecheck が検証する）。
+describe("custom fields — required on create (ADR-0089)", () => {
+  const fields = defineFields({
+    candidate: (f) => ({
+      U_score: f.number({ required: true }),
+      U_memo: f.multilineText(),
+    }),
+  });
+
+  it("makes a `required: true` field required on create and createMany", () => {
+    const t = new PortersClient({ hostname: "h.test" }).tenant(1, { fields });
+    expect(t.candidate).toBeDefined();
+    type Create = Parameters<typeof t.candidate.create>[0];
+    expectTypeOf<Create>().toHaveProperty("U_score").toEqualTypeOf<number>();
+    expectTypeOf<Create>()
+      .toHaveProperty("U_memo")
+      .toEqualTypeOf<string | null | undefined>(); // not declared required
+    // @ts-expect-error -- U_score was declared required
+    void (() => t.candidate.create({ P_Owner: 1 }));
+    // @ts-expect-error -- createMany takes the same input
+    void (() => t.candidate.createMany([{ P_Owner: 1 }]));
+    void (() => t.candidate.create({ P_Owner: 1, U_score: 3 }));
+  });
+
+  it("leaves update optional", () => {
+    const t = new PortersClient({ hostname: "h.test" }).tenant(1, { fields });
+    expect(t.candidate).toBeDefined();
+    type Update = Parameters<typeof t.candidate.update>[1];
+    expectTypeOf<Update>()
+      .toHaveProperty("U_score")
+      .toEqualTypeOf<number | null | undefined>();
+  });
+
+  it("carries through TenantScope<typeof fields> with no extra type argument", () => {
+    const use = (t: TenantScope<typeof fields>) => {
+      // @ts-expect-error -- required even when the scope is typed by hand
+      void t.candidate.create({ P_Owner: 1 });
+    };
+    expect(use).toBeTypeOf("function");
+  });
+
+  it("requires nothing when no field says so (the behaviour before `required` existed)", () => {
+    const loose = defineFields({
+      candidate: (f) => ({
+        U_a: f.number({ required: false }),
+        U_b: f.number(),
+      }),
+    });
+    const t = new PortersClient({ hostname: "h.test" }).tenant(1, {
+      fields: loose,
+    });
+    expect(t.candidate).toBeDefined();
+    type Create = Parameters<typeof t.candidate.create>[0];
+    expectTypeOf<Create>()
+      .toHaveProperty("U_a")
+      .toEqualTypeOf<number | null | undefined>();
+    // The wide type every declaration fits: nothing is known to be required.
+    type Wide = Parameters<
+      TenantScope<DeclaredCatalogs>["candidate"]["create"]
+    >[0];
+    expectTypeOf<Wide>().toHaveProperty("P_Owner").toEqualTypeOf<number>();
+  });
+
+  // RV-59 と同じ理由で 11 種を 1 つずつ押さえる（RequiredFor のリソース名の取り違えを検出する）。
+  it("threads each resource's own required fields to that resource", () => {
+    const all = defineFields({
+      candidate: (f) => ({ U_candidate: f.number({ required: true }) }),
+      job: (f) => ({ U_job: f.number({ required: true }) }),
+      client: (f) => ({ U_client: f.number({ required: true }) }),
+      recruiter: (f) => ({ U_recruiter: f.number({ required: true }) }),
+      contact: (f) => ({ U_contact: f.number({ required: true }) }),
+      opportunity: (f) => ({ U_opportunity: f.number({ required: true }) }),
+      activity: (f) => ({ U_activity: f.number({ required: true }) }),
+      contract: (f) => ({ U_contract: f.number({ required: true }) }),
+      sales: (f) => ({ U_sales: f.number({ required: true }) }),
+      process: (f) => ({ U_process: f.number({ required: true }) }),
+      resume: (f) => ({ U_resume: f.number({ required: true }) }),
+    });
+    type S = TenantScope<typeof all>;
+    type In<K extends keyof S> = S[K] extends {
+      create: (input: infer I) => unknown;
+    }
+      ? I
+      : never;
+    expectTypeOf<In<"candidate">>()
+      .toHaveProperty("U_candidate")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"job">>().toHaveProperty("U_job").toEqualTypeOf<number>();
+    expectTypeOf<In<"client">>()
+      .toHaveProperty("U_client")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"recruiter">>()
+      .toHaveProperty("U_recruiter")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"contact">>()
+      .toHaveProperty("U_contact")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"opportunity">>()
+      .toHaveProperty("U_opportunity")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"activity">>()
+      .toHaveProperty("U_activity")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"contract">>()
+      .toHaveProperty("U_contract")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"sales">>()
+      .toHaveProperty("U_sales")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"process">>()
+      .toHaveProperty("U_process")
+      .toEqualTypeOf<number>();
+    expectTypeOf<In<"resume">>()
+      .toHaveProperty("U_resume")
+      .toEqualTypeOf<number>();
+    expect(Object.keys(all)).toHaveLength(11);
   });
 });

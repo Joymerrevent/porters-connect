@@ -8,7 +8,7 @@
 
 > **assertFieldsMatch**(`report`): `void`
 
-Defined in: [src/fields/verify-fields.ts:212](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L212)
+Defined in: [src/fields/verify-fields.ts:243](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L243)
 
 Throw unless [verifyFields](verifyFields.md) came back clean — for callers who would rather fail at startup
 than read a `null` in production.
@@ -17,7 +17,7 @@ Throws [PortersConfigError](../classes/PortersConfigError.md) (`category: "confi
 resource that could not be read**. That last one is deliberate: "we could not check" is not
 "everything is fine", and passing it silently would defeat the point of asking.
 
-`undeclared` / `undeclarable` never throw — nothing is broken by either.
+`undeclared` / `undeclarable` / `requiredMismatch` never throw — nothing is broken by any of them.
 
 ## Parameters
 

@@ -4,9 +4,9 @@
 
 [@joymerrevent/porters-connect](../index.md) / ContactResource
 
-# Type Alias: ContactResource\<C\>
+# Type Alias: ContactResource\<C, CR\>
 
-> **ContactResource**\<`C`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], *typeof* `REFERENCES`\>
+> **ContactResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/contact.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L98)
 
@@ -17,3 +17,7 @@ The Contact accessor; `C` is the declared custom-field catalog merged on.
 ### C
 
 `C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`

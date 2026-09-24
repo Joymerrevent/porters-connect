@@ -8,7 +8,7 @@
 
 > **verifyFields**(`source`, `fields`, `options?`): `Promise`\<[`FieldVerification`](../type-aliases/FieldVerification.md)\>
 
-Defined in: [src/fields/verify-fields.ts:116](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L116)
+Defined in: [src/fields/verify-fields.ts:134](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L134)
 
 Read each declared resource's real catalog and compare it with the declaration.
 

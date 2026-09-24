@@ -4,9 +4,9 @@
 
 [@joymerrevent/porters-connect](../index.md) / OpportunityResource
 
-# Type Alias: OpportunityResource\<C\>
+# Type Alias: OpportunityResource\<C, CR\>
 
-> **OpportunityResource**\<`C`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], *typeof* `REFERENCES`\>
+> **OpportunityResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/opportunity.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L86)
 
@@ -17,3 +17,7 @@ The Opportunity accessor; `C` is the declared custom-field catalog merged on.
 ### C
 
 `C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`

@@ -63,6 +63,7 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 | [`DefinedFields`][t-DefinedFields]             | `fields` に渡す、`defineFields` の戻り値                                                                            |
 | [`DeclaredCatalogs`][t-DeclaredCatalogs]       | 宣言の中身（リソース → カスタム項目）。どの宣言のスコープでも受ける関数の引数に使う（[複数テナント][multi-tenant]） |
 | [`CustomFor`][t-CustomFor]                     | 宣言から 1 リソース分のカスタム項目を取り出す型                                                                     |
+| [`RequiredFor`][t-RequiredFor]                 | 宣言から 1 リソース分の、`create` で必須にした alias を取り出す型                                                   |
 | [`CustomFieldResource`][t-CustomFieldResource] | カスタム項目を宣言できるリソース名の一覧                                                                            |
 | [`ResourceName`][t-ResourceName]               | `of()` に渡すリソース名（アクセサと同じ綴り）                                                                       |
 
@@ -93,3 +94,4 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 [t-CustomFieldResource]: ../api/type-aliases/CustomFieldResource.md
 [t-ResourceName]: ../api/type-aliases/ResourceName.md
 [api]: ../api/index.md
+[t-RequiredFor]: ../api/type-aliases/RequiredFor.md

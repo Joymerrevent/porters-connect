@@ -73,6 +73,14 @@ export type TenantCustomCatalog = {
    * (`generateFieldDecls` has it off by default). A field PORTERS returned without a name is absent.
    */
   readonly names: Readonly<Record<string, string>>;
+  // 必須は ADR-0089 案3a（generateFieldDecls が写す）/ 案4a（verifyFields が報告する）。
+  /**
+   * Bare alias -> whether the tenant marks the field required (`Field.P_Required` is `1`), for
+   * every field in {@link TenantCustomCatalog.fields}. Any other value — `0`, absent, or one
+   * PORTERS does not document — reads as `false`: a wrong `true` would make generated code demand
+   * a value the tenant does not, and the caller would get a compile error with no visible reason.
+   */
+  readonly required: Readonly<Record<string, boolean>>;
 };
 
 /** Options for {@link readCustomCatalog}. */
@@ -169,6 +177,7 @@ export const readCustomCatalog = async (
   const fields: Record<string, CustomDataType> = {};
   const undeclarable: UndeclarableField[] = [];
   const names: Record<string, string> = {};
+  const required: Record<string, boolean> = {};
   for await (const row of source.field.of(resource).searchAll({
     active: options.active ?? -1,
   })) {
@@ -181,8 +190,13 @@ export const readCustomCatalog = async (
     if (row.P_Name !== null && row.P_Name !== undefined)
       names[alias] = row.P_Name;
     const result = classify(alias, row.P_Type ?? null);
-    if (result.kind === "declarable") fields[alias] = result.dataType;
-    else undeclarable.push(result.entry);
+    if (result.kind === "declarable") {
+      fields[alias] = result.dataType;
+      // VERIFY(live): whether the Write API itself enforces `P_Required` (rejects a create that
+      // leaves the field out) is unconfirmed — docs/live-verification.md (LV-32). Nothing here
+      // depends on it: the flag only feeds the generated declaration and the verification report.
+      required[alias] = row.P_Required === 1;
+    } else undeclarable.push(result.entry);
   }
-  return { resource, fields, undeclarable, names };
+  return { resource, fields, undeclarable, names, required };
 };
