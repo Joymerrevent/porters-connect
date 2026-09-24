@@ -8,16 +8,16 @@ PORTERS のトークンを 1 か所で取り、複数のアプリ（やプロセ
 
 この用途で使うライブラリの機能と、それぞれの役割です。
 
-| 機能                         | どこで   | 何に使うか                                                               |
-| ---------------------------- | -------- | ------------------------------------------------------------------------ |
-| 既定の取り方 ＋ `tokenStore` | 中央     | `code_direct` でトークンを取り、DB に保存する                            |
-| `porters.auth.getToken()`    | 中央     | いま使っている Access Token と期限（`{ token, expiresAt? }`）を取り出す  |
-| `tokenProvider`（`acquire`） | 各アプリ | 中央からトークンを受け取る。キャッシュと期限の判断はライブラリが受け持つ |
+| 機能                                  | どこで   | 何に使うか                                                               |
+| ------------------------------------- | -------- | ------------------------------------------------------------------------ |
+| 既定の取り方（`appId` / `appSecret`） | 中央     | `code_direct` でトークンを取る                                           |
+| `porters.auth.getToken()`             | 中央     | いま使っている Access Token と期限（`{ token, expiresAt? }`）を取り出す  |
+| `tokenProvider`（`acquire`）          | 各アプリ | 中央からトークンを受け取る。キャッシュと期限の判断はライブラリが受け持つ |
 
 ## 全体像
 
 ```text
-[中央のサービス]  PortersClient（appId / appSecret ＋ tokenStore）
+[中央のサービス]  PortersClient（appId / appSecret）
       │  GET /porters-token  → { token, expiresAt }
       ▼
 [各アプリ]  PortersClient（hostname ＋ tokenProvider）
@@ -31,21 +31,34 @@ PORTERS のトークンを 1 か所で取り、複数のアプリ（やプロセ
 
 ## 組み立て
 
-次の順に組みます。中央のサービス → 各アプリ、の 2 段です。
+次の順に組みます。中央のサービス → 各アプリ、の 2 段です。例は 3 つのファイルに分けています
+（コード例の 1 行目がファイル名です）。中央とアプリは別のプロジェクトです。
+
+```text
+central/porters.ts        … 中央のクライアント（手順 1）
+central/token-service.ts  … アプリにトークンを返す（手順 1）
+app/porters.ts            … 各アプリのクライアント（手順 2）
+```
 
 ### 1. 中央のサービス
 
-中央は、ふつうのクライアント（既定の取り方）を 1 つ持ち、トークンを返す口を公開します。クライアントとトークンの
-保存先は、[トークンを DB に保存する][token-store-db]の 4 つのファイル（`db.ts` / `schema.ts` / `token-store.ts` /
-`porters.ts`）をそのまま使い、トークンを返す `token-service.ts` を足します（コード例の 1 行目がファイル名です）。
-
-```text
-db.ts / schema.ts / token-store.ts / porters.ts   … 「トークンを DB に保存する」の手順 0〜3
-token-service.ts                                   … アプリにトークンを返す（ここで足す）
-```
+中央は、ふつうのクライアント（既定の取り方）を 1 つ持ちます。App Secret を持つのはここだけです。
 
 ```ts
-// ファイル: token-service.ts
+// ファイル: central/porters.ts
+import { PortersClient } from "@joymerrevent/porters-connect";
+
+export const porters = new PortersClient({
+  hostname: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
+});
+```
+
+このクライアントのトークンを、アプリからの問い合わせに返します。
+
+```ts
+// ファイル: central/token-service.ts
 import { porters } from "./porters";
 
 // アプリからの問い合わせに答える（Web 標準の Request / Response で書いた例）
@@ -67,6 +80,8 @@ export const handleTokenRequest = async (
 - `getToken()` は、リソースの呼び出しに使うのと同じトークンを返します。期限の 60 秒前を過ぎていれば、
   取り直してから返します。Refresh Token は返しません。
 - 初回の権限付与（ブラウザでの `code` の付与）も中央で済ませます（[認証とトークン][auth]）。
+- 中央が再起動してもトークンを使い回したいときは、`central/porters.ts` のクライアントに `tokenStore` も渡します
+  （[トークンを DB に保存する][token-store-db]）。
 
 ### 2. 各アプリ
 
@@ -124,7 +139,7 @@ export const porters = new PortersClient({
 
 - 主題: [認証とトークン][auth]（`tokenProvider` の型と `getToken()`）／[上限とレート][limits]
 - クライアント: [auth][cl-auth]（`getToken()` ほか 6 メソッド）
-- 実践例: [トークンを DB に保存する][token-store-db]（中央の `tokenStore`）／[複数テナント][multi-tenant]
+- 実践例: [トークンを DB に保存する][token-store-db]（中央でトークンを保存するとき）／[複数テナント][multi-tenant]
 - ほかの目的から探す: [目次][index]
 
 [auth]: ../topics/auth.md
