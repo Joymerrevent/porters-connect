@@ -8,7 +8,7 @@
 
 > **PartitionResource** = `object`
 
-Defined in: [src/resources/partition.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L49)
+Defined in: [src/resources/partition.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L50)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/partition.ts:49](https://github.com/Joymerrevent/port
 
 > **search**(`query?`): `Promise`\<[`PartitionPage`](PartitionPage.md)\>
 
-Defined in: [src/resources/partition.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L50)
+Defined in: [src/resources/partition.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L51)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/partition.ts:50](https://github.com/Joymerrevent/port
 
 > **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_CompanyId`: `"SinglelineText"`; `P_Id`: `"System[Id]"`; `P_Name`: `"SinglelineText"`; \}\>\>
 
-Defined in: [src/resources/partition.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L52)
+Defined in: [src/resources/partition.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L53)
 
 Auto-paginating search: yields every accessible partition.
 

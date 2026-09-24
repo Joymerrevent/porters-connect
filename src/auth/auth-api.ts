@@ -29,8 +29,8 @@ export type RevokeUrlOptions = AuthorizationUrlOptions;
  * The `porters.auth.*` surface. The initial per-Company-DB grant
  * needs a human to open {@link AuthApi.authorizationUrl} in a browser and consent; the
  * library only builds the URL and exchanges the returned `code`. Day-to-day token
- * acquisition/refresh stays transparent (the default strategy), so most callers never
- * touch this surface.
+ * acquisition and renewal are handled by the client, whichever token provider is in use, so
+ * most callers never touch this surface.
  */
 export type AuthApi = {
   /** Build the browser `code`-grant URL to open for the initial permission grant. */
