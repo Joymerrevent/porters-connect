@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.24.0
 
 > 起票元は [RV-63][rv63]（2026-09-23）。RV-63 は「実例が 1 件出たら ADR を起票する」条件付きだったが、
 > stakeholder が 2026-09-24 に**条件を待たずに進める**と決めた。ガイドの図と実装例を先に直す案（RV-63 推奨 (b)(c)）は
