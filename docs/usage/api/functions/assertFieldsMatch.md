@@ -8,7 +8,7 @@
 
 > **assertFieldsMatch**(`report`): `void`
 
-Defined in: [src/fields/verify-fields.ts:251](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L251)
+Defined in: [src/fields/verify-fields.ts:243](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L243)
 
 Throw unless [verifyFields](verifyFields.md) came back clean — for callers who would rather fail at startup
 than read a `null` in production.
@@ -23,7 +23,7 @@ resource that could not be read**. That last one is deliberate: "we could not ch
 
 ### report
 
-`Fatal`
+[`FieldVerification`](../type-aliases/FieldVerification.md)
 
 ## Returns
 
