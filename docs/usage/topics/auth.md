@@ -204,7 +204,8 @@ const porters = new PortersClient({
 - **`exchange`**: `porters.auth.exchangeAuthorizationCode(code)` を使うときに渡します。権限付与のリダイレクトで
   戻ってきた `code` を、App Secret を持つサービスに送って交換してもらう、といった使い方です。
   **`code` は発行から 30 秒で失効する**ので、`exchange` の中で時間のかかる処理をしないでください。
-- 取れないときは、`acquire` などが例外を投げてください。ライブラリは繰り返さず、そのまま呼び出し側に届けます。
+- 取れないときは、`acquire` などが例外を投げてください。ライブラリは繰り返さず、そのまま呼び出し側に届けます
+  （`retryable` が `true` の `PortersError` を投げたときだけは、通常の再試行の対象になります）。
   空のトークンや形の違う値を返すと `PortersConfigError` になります。
 - `tokenProvider` を渡すと `appId` / `appSecret` は要りません（`authorizationUrl` / `revokeUrl` を使うなら `appId` だけ要ります）。
 
