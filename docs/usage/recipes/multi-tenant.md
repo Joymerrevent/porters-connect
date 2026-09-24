@@ -235,8 +235,9 @@ const score = async () => {
 ### 5. 認証を分けるか
 
 既定では `tenant(id)` は client のトークンを**共有**します（トークンは 1 つで、Partition だけを切り替える）。
-**Partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
-client を分ける理由は**これだけ**です。カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
+テナント別に `PortersClient` を構築するのは、**Partition ごとに別のトークンを使いたいときだけ**です。
+カスタム項目がテナントごとに違う、というだけなら client を分ける必要はありません。同じ client から
+`tenant(id, { fields })` をテナントごとに作ります（上の 3.）。
 
 ```ts
 // Partition ごとに別のトークン置き場を与える＝トークンが混ざらない
