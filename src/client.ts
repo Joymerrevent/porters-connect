@@ -252,12 +252,10 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
 // 受けると、最初のリクエストまで壊れていることに気づけない。
 const validateTokenProvider = (provider: unknown): void => {
   if (provider === undefined) return;
+  // 文字列などの値でもプロパティは読める（undefined になる）ので、null だけを先に除けば足りる。
   const p = provider as Record<string, unknown> | null;
-  if (typeof p !== "object" || p === null || typeof p.acquire !== "function") {
-    const old =
-      p !== null &&
-      typeof p === "object" &&
-      typeof p.getAccessToken === "function";
+  if (p === null || typeof p.acquire !== "function") {
+    const old = p !== null && typeof p.getAccessToken === "function";
     throw new PortersConfigError(
       old
         ? "PortersClient: tokenProvider has getAccessToken but no acquire — the old custom-auth shape"
