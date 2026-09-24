@@ -31,32 +31,6 @@ Defined in: [src/client.ts:104](https://github.com/Joymerrevent/porters-connect/
 
 ***
 
-### auth?
-
-> `optional` **auth?**: `never`
-
-Defined in: [src/client.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L123)
-
-**Not a client option any more.** Pass a `tokenProvider` (`{ acquire, refresh?, exchange? }`)
-instead; the client manages caching and renewal for it. Typed `never` so a leftover `auth`
-fails to compile; at runtime the constructor rejects it with [PortersConfigError](../classes/PortersConfigError.md).
-
-***
-
-### fields?
-
-> `optional` **fields?**: `never`
-
-Defined in: [src/client.ts:146](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L146)
-
-**Not a client option any more.** Custom fields belong to a partition, so the
-declaration goes to [PortersClient.tenant](../classes/PortersClient.md#tenant) as `tenant(id, { fields })`. Typed `never`
-so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
-it is not a fresh literal; at runtime the constructor rejects it with [PortersConfigError](../classes/PortersConfigError.md)
-rather than silently dropping the declaration (the same fail-closed stance as `hostname`).
-
-***
-
 ### hostname
 
 > **hostname**: `string`
@@ -114,7 +88,7 @@ Defined in: [src/client.ts:105](https://github.com/Joymerrevent/porters-connect/
 
 > `optional` **throttle?**: [`Throttle`](Throttle.md)
 
-Defined in: [src/client.ts:136](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L136)
+Defined in: [src/client.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L128)
 
 Rate-limit self-restraint. Defaults to the **process-wide bucket for this destination**,
 so several clients aimed at the same PORTERS add up to one limit instead of one each.
@@ -152,6 +126,6 @@ Token persistence, used with every token provider; defaults to in-memory.
 
 > `optional` **transport?**: [`Transport`](Transport.md)
 
-Defined in: [src/client.ts:125](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L125)
+Defined in: [src/client.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L117)
 
 Injectable HTTP transport; defaults to a fetch-based transport.
