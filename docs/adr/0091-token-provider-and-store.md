@@ -72,7 +72,7 @@
 
 ### 論点3: 取得で渡す形
 
-- **案3a: `acquire()` と、省略可能な `refresh(current)`** — decider が選択
+- **案3a: `acquire()` と、省略可能な `refresh(current)` と `exchange(code)`** — decider が選択
 - 案3b: `acquire()` だけ（更新は常に取り直し）
 - 案3c: `acquire()` と `refresh()` の両方を必須
 
@@ -132,11 +132,16 @@ type StoredTokens = {
 type TokenProvider = {
   acquire(): Promise<StoredTokens>;
   refresh?(current: StoredTokens): Promise<StoredTokens>;
+  exchange?(code: string): Promise<StoredTokens>;
 };
 ```
 
-既定の取得は、この形の 1 つとして組み直す（`acquire` = `code_direct` と Token API の交換、`refresh` = Refresh Token での
-交換）。既定の方式の動き（保存・更新・`porters.auth` の 6 メソッド）は変えない。
+- `acquire`: 最初の取得。`refresh`: 更新。`exchange`: 権限付与のリダイレクトで戻ってきた `code` をトークンに交換する。
+- 既定の取得は、この形の 1 つとして組み直す（`acquire` = `code_direct` と Token API の交換、`refresh` = Refresh Token での
+  交換、`exchange` = `code` を Token API で交換）。既定の方式の動き（保存・更新・`porters.auth` の 6 メソッド）は変えない。
+- `exchange` を渡す場面の例: 中央のサービスが `appSecret` を持ち、各アプリは持たない構成で、アプリに戻ってきた `code` を
+  中央のサービスへ送って交換してもらう。アプリは `appSecret` を持たないまま、`porters.auth` の権限付与の流れを使える。
+  PORTERS の `code` の有効期限は発行から 30 秒なので、`exchange` の中で時間のかかる処理をしない（ガイドに書く）。
 
 ### 管理（`PortersClient` が受け持つ）
 
@@ -164,16 +169,18 @@ type TokenProvider = {
 
 ### `porters.auth` の 6 メソッド
 
-| メソッド                    | 既定の取得 | 渡した取得（`tokenProvider`）                                                |
-| --------------------------- | ---------- | ---------------------------------------------------------------------------- |
-| `ensureAuthenticated`       | 動く       | 動く（`acquire` を呼ぶ）                                                     |
-| `getToken`                  | 動く       | 動く                                                                         |
-| `clearTokens`               | 動く       | **動く**（メモリのキャッシュと `tokenStore` を消す。発行側のトークンは残る） |
-| `authorizationUrl`          | 動く       | `PortersConfigError`（PORTERS の権限付与は既定の取得の仕事）                 |
-| `exchangeAuthorizationCode` | 動く       | `PortersConfigError`                                                         |
-| `revokeUrl`                 | 動く       | `PortersConfigError`                                                         |
+| メソッド                    | 既定の取得 | 渡した取得（`tokenProvider`）                                                                                                                             |
+| --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ensureAuthenticated`       | 動く       | 動く（`acquire` を呼ぶ）                                                                                                                                  |
+| `getToken`                  | 動く       | 動く                                                                                                                                                      |
+| `clearTokens`               | 動く       | 動く（メモリのキャッシュと `tokenStore` を消す。発行側のトークンは残る）                                                                                  |
+| `authorizationUrl`          | 動く       | 動く（URL を組み立てるだけ。`appId` が要る点は既定と同じ）                                                                                                |
+| `revokeUrl`                 | 動く       | 動く（同上）                                                                                                                                              |
+| `exchangeAuthorizationCode` | 動く       | `exchange` を渡していれば動く（返ったトークンをキャッシュと `tokenStore` に保存する）。無ければ `PortersConfigError`（`hint` で `exchange` の実装を示す） |
 
+規則は「**必要なものを渡していれば、どのメソッドも動く**」の 1 つで、既定の取得かどうかでは分けない。
 `clearTokens` は既定の取得でも「手元のトークンを消すだけで、PORTERS 側の権限は残る」ので、意味がそろう。
+`exchangeAuthorizationCode` のトークンも同じ `tokenProvider` が出すので、更新（`refresh`）に別の発行元のトークンが混ざらない。
 
 ### 論点ごとの理由
 
@@ -182,6 +189,7 @@ type TokenProvider = {
 - **案2a**: 入口が「取得」と「保存」の 2 つに収まる。案2b / 案2c は「丸ごと自前」を残す代わりに、どちらの形を
   渡したかで `tokenStore` や `clearTokens` の動きが変わる説明が要る。
 - **案3a**: 発行側が更新の手段（Refresh Token や更新用の API）を持っていれば、取り直しより軽い更新を使える。
+  `exchange` があれば、`appSecret` を持たないアプリでも権限付与の流れ（`exchangeAuthorizationCode`）を使える。
   持っていなければ省略できる。
 - **案4a**: 受け取るだけの場面では、期限や Refresh Token が無いことがある。案4b では埋め草の値を書かせることになる。
   既定の取得は、これまでどおりすべてを埋めて保存する。
@@ -192,7 +200,7 @@ type TokenProvider = {
 
 - Good: 別のサービスからトークンを受け取るアプリが、管理の部分を書かずに済む。期限切れのトークンを使い続ける・
   同時に何本も取り直す、という自前の実装で起きやすい失敗が無くなる。
-- Good: `tokenStore` がどの取得でも使われる。黙って無視される組み合わせが無くなる。`clearTokens` がどの取得でも動く。
+- Good: `tokenStore` がどの取得でも使われる。黙って無視される組み合わせが無くなる。`porters.auth` の 6 メソッドが、必要なものを渡していればどの取得でも動く。
 - Good: 管理の部分が 1 か所に集まり、既定の取得と渡した取得で同じテストが効く。
 - Bad: **破壊的変更**。`auth` オプションと、`getAccessToken` の形の `TokenProvider` を使っているコードは書き換えが要る
   （0.x の minor で出し、CHANGELOG に移行を書く）。「丸ごと自前」でしかできなかったことはできなくなる。
@@ -220,7 +228,7 @@ type TokenProvider = {
 - 案1c — Good: 何も増えない。Bad: 上の 4 つの問題が残る。
 - 案2a — Good: 入口が 2 つに収まる。Bad: 破壊的。丸ごと自前でしかできないことが無くなる。
 - 案2b / 案2c — Good: 逃げ道が残る。Bad: 渡した形で `tokenStore` や `clearTokens` の動きが変わる。
-- 案3a — Good: 更新の手段があれば使え、無ければ省ける。案3b — Bad: 軽い更新を使えない。案3c — Bad: 受け取るだけの場面で書けない。
+- 案3a — Good: 更新と `code` の交換の手段があれば使え、無ければ省ける。案3b — Bad: 軽い更新を使えない。案3c — Bad: 受け取るだけの場面で書けない。
 - 案4a — Good: 受け取るだけの場面で自然に書ける。Bad: 自前の `tokenStore` の型に影響しうる。案4b — Bad: 埋め草の値を書かせる。
 - 案5a — Good: なじみがあり、`porters.auth` と重ならない。Bad: 型の名前 `TokenProvider` が違う形で残る（古い形は構築時に止める）。
 - 案5b — Good: `tokenStore` と語呂が合う。Bad: JavaScript ではなじみが薄い。案5c — Bad: `porters.auth` と紛らわしいまま。
