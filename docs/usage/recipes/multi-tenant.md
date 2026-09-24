@@ -239,34 +239,15 @@ const score = async () => {
 カスタム項目がテナントごとに違う、というだけなら client を分ける必要はありません。同じ client から
 `tenant(id, { fields })` をテナントごとに作ります（上の 3.）。
 
-Partition と、そのテナント専用のトークンの保存先を 1 つの関数の中で結び付け、client は外に出しません。
-client を外に出すと、テナント A の保存先を持つ client でテナント B を読めてしまうからです。保存先は
-[トークンを DB に保存する][token-store-db]の `db.ts` と `token-store.ts` を使い、名前をテナントごとに分けます。
-
 ```ts
-// ファイル: tenant-scopes.ts
-import { PortersClient, type TenantScope } from "@joymerrevent/porters-connect";
-import { db } from "./db";
-import { createDbTokenStore } from "./token-store";
-
-// Partition ごとに 1 度だけ作り、あとは使い回す（作り直すとトークンを保存先から読み直すことになる）
-const scopes = new Map<number, TenantScope>();
-
-export const scopeFor = (partition: number): TenantScope => {
-  const known = scopes.get(partition);
-  if (known !== undefined) return known;
-  const scope = new PortersClient({
-    hostname: process.env.PORTERS_HOST ?? "",
-    appId: process.env.PORTERS_APP_ID ?? "",
-    appSecret: process.env.PORTERS_APP_SECRET ?? "",
-    tokenStore: createDbTokenStore(db, `tenant-${String(partition)}`), // テナントごとの保存先
-  }).tenant(partition); // この client から作るスコープは、この Partition だけ
-  scopes.set(partition, scope);
-  return scope;
+// Partition ごとに別のトークン置き場を与え、その Partition のスコープだけを返す＝トークンが混ざらない
+const scopeFor = (partition: number, tokenStore: TokenStore) => {
+  const client = new PortersClient({ hostname, appId, appSecret, tokenStore });
+  return client.tenant(partition);
 };
-```
 
-使う側は `scopeFor(partition)` でスコープを受け取るだけで、client にも保存先にも触れません。
+const t = scopeFor(partition, tokenStore);
+```
 
 > [!NOTE]
 > 「1 つの App トークンで複数 Partition にアクセスできるか」は実機未確認です<!-- 根拠: LV-13 -->。
