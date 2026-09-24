@@ -149,6 +149,9 @@ const kv: {
 };
 const req: { user: string };
 const tokenStore: TokenStore;
+// 実践例「トークンを DB に保存する」の Drizzle の db と、そこで作る保存先（中央のサービスの例が使う）
+const db: import("drizzle-orm/pg-core").PgDatabase<import("drizzle-orm/pg-core").PgQueryResultHKT>;
+const createDbTokenStore: (db: import("drizzle-orm/pg-core").PgDatabase<import("drizzle-orm/pg-core").PgQueryResultHKT>, key: string) => TokenStore;
 const transport: Transport;
 const lookupPartitionForUser: (user: string) => Promise<number>;
 // partition ↔ 宣言の対応は SaaS の責務（ADR-0008 / ADR-0087）。例では引くだけ
@@ -396,6 +399,11 @@ try {
     return name;
   });
 
+  // paths は tsconfig からの相対で解決されるので、リポジトリの node_modules への相対に直す。
+  const repoModule = (p) =>
+    relative(caseDir, resolve(REPO, "node_modules", p))
+      .split(sep)
+      .join("/");
   writeFileSync(
     join(caseDir, "tsconfig.json"),
     JSON.stringify(
@@ -422,6 +430,11 @@ try {
                 .split(sep)
                 .join("/"),
             ],
+            // 実践例（トークンを DB に保存する）が使う ORM。例が読者の書く形で import するので、
+            // 開発依存に入れた本物の型へ向ける。ここに無いパッケージを import した例は解決できずに落ちる
+            // （devDependencies を丸ごと見せない＝利用者が持っていないものを使った例は通さない）。
+            "drizzle-orm": [repoModule("drizzle-orm/index.d.ts")],
+            "drizzle-orm/*": [repoModule("drizzle-orm/*")],
           },
           // 例は「使わない変数」を持ちがち（説明のための宣言）。そこは咎めない。
           noUnusedLocals: false,
