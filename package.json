@@ -77,7 +77,7 @@
     "changeset": "changeset",
     "changeset:version": "changeset version",
     "changeset:publish": "pnpm build && changeset publish",
-    "check": "pnpm run \"/^check:(?!publish$|cjs$|dts$)[^:]+$/\"",
+    "check": "pnpm run \"/^check:(?!publish$|cjs$|dts$|ts-floor$)[^:]+$/\"",
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm false-cjs",
     "check:cjs": "node scripts/check-cjs-entry.mjs",
     "check:ts-floor": "node scripts/check-typescript-floor.mjs",

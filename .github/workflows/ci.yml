@@ -59,7 +59,7 @@ jobs:
       # `pnpm check` は `package.json` の `check:*` をパターンで束ねたもの＝**一覧はここに
       # 写さない**。個別のステップに並べると、検査を足したときに CI だけ古くなる
       # （実際 `check:docs` / `check:links` / `check:api` は各所の一覧から漏れていた）。
-      # `check:publish` と `check:cjs` だけは `dist` を見るので束ねず、build の後で回す。
+      # `check:publish` / `check:cjs` / `check:dts` / `check:ts-floor` は `dist` を見るので束ねず、build の後で回す。
       #
       # 中身と、いずれも**コード変更の有無に関わらず常時実行**する理由:
       #   check:release  リリース連動文書の整合（ADR-0027）。README/CHANGELOG の変更も拾う。
