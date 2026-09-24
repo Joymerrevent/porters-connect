@@ -176,6 +176,7 @@ describe("createTokenManager — checking what the provider returns", () => {
     expect(err).toMatchObject({
       category: "config",
       message: "tokenProvider.acquire returned no usable access token",
+      hint: "Return { accessToken: { token, expiresAt? } } with a non-empty token string (expiresAt in epoch ms, optional).",
     });
   });
 
@@ -242,6 +243,39 @@ describe("createTokenManager — tokenStore", () => {
     expect(await m.getAccessToken()).toBe("T2");
   });
 
+  it("reads the store once, even when acquiring keeps failing", async () => {
+    let gets = 0;
+    const store: TokenStore = {
+      get: () => {
+        gets += 1;
+        return Promise.resolve(undefined);
+      },
+      set: () => Promise.resolve(),
+      clear: () => Promise.resolve(),
+    };
+    const m = createTokenManager({
+      provider: { acquire: () => Promise.reject(new Error("down")) },
+      tokenStore: store,
+    });
+    await expect(m.getAccessToken()).rejects.toThrow("down");
+    await expect(m.getAccessToken()).rejects.toThrow("down");
+    expect(gets).toBe(1);
+  });
+
+  it("keeps exchanged tokens even when the store would return something else", async () => {
+    const stale: TokenStore = {
+      get: () => Promise.resolve({ accessToken: { token: "STALE" } }),
+      set: () => Promise.resolve(), // a store that did not keep what it was given
+      clear: () => Promise.resolve(),
+    };
+    const m = createTokenManager({
+      provider: provider("ACQ"),
+      tokenStore: stale,
+    });
+    await m.cache({ accessToken: { token: "EXCHANGED" } });
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+  });
+
   it("cache() saves exchanged tokens to the store", async () => {
     const store: TokenStore & { saved: unknown[] } = {
       saved: [],
@@ -288,7 +322,8 @@ describe("readStoredTokens", () => {
         accessToken: { token: "A" },
         refreshToken: { token: "" },
       }),
-    ).toEqual({ accessToken: { token: "A" } });
+      // toStrictEqual: no `refreshToken: undefined` key is left behind.
+    ).toStrictEqual({ accessToken: { token: "A" } });
     expect(
       readStoredTokens({
         accessToken: { token: "A" },

@@ -474,4 +474,22 @@ describe("createDefaultTokenProvider — acquire / refresh / exchange", () => {
     });
     expect(calls).toHaveLength(0);
   });
+
+  it("stamps a real expiry with the default clock when `now` is not given", async () => {
+    const { transport } = makeTransport();
+    const before = Date.now();
+    const p = createDefaultTokenProvider({
+      accessPoint: { hostname: "example.test" },
+      appId: "app",
+      appSecret: "secret",
+      transport,
+    });
+    const tokens = await p.acquire();
+    expect(tokens.accessToken.expiresAt).toBeGreaterThanOrEqual(
+      before + ACCESS_EXPIRES_IN,
+    );
+    expect(tokens.refreshToken?.expiresAt).toBeGreaterThanOrEqual(
+      before + REFRESH_EXPIRES_IN,
+    );
+  });
 });
