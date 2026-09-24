@@ -365,7 +365,7 @@ describe("error paths against the fake server", () => {
     await porters.auth.exchangeAuthorizationCode(
       fake.control.issueAuthorizationCode(),
     );
-    expect(await porters.auth.getToken()).toMatch(/^fake-access-/);
+    expect((await porters.auth.getToken()).token).toMatch(/^fake-access-/);
 
     await expect(
       porters.auth.exchangeAuthorizationCode("never-issued"),

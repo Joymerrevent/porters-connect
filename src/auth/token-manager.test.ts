@@ -158,6 +158,63 @@ describe("createTokenManager — obtaining and caching", () => {
   });
 });
 
+// getToken() が返す値（ADR-0093）。リクエストに使うのと同じトークンを、期限つきで写しとして返す。
+describe("createTokenManager — getIssuedToken", () => {
+  it("returns the usable Access Token with its expiry, renewing first when it is due", async () => {
+    let t = 0;
+    const p = counting((_, n) => ({
+      accessToken: { token: `A${n}`, expiresAt: 100_000 * n },
+    }));
+    const m = createTokenManager({ provider: p, now: () => t });
+    expect(await m.getIssuedToken()).toEqual({
+      token: "A1",
+      expiresAt: 100_000,
+    });
+    t = 100_000 - MARGIN; // inside the margin: renewed before it is handed out
+    expect(await m.getIssuedToken()).toEqual({
+      token: "A2",
+      expiresAt: 200_000,
+    });
+    expect(await m.getAccessToken()).toBe("A2"); // the same token a request would use
+  });
+
+  it("leaves expiresAt out when the provider reported none", async () => {
+    const m = createTokenManager({
+      provider: counting(() => ({ accessToken: { token: "A" } })),
+      now: () => 0,
+    });
+    expect(await m.getIssuedToken()).toStrictEqual({ token: "A" });
+  });
+
+  it("hands out a copy: changing it does not change the cached token", async () => {
+    const m = createTokenManager({
+      provider: counting(() => ({
+        accessToken: { token: "A", expiresAt: 100_000 },
+      })),
+      now: () => 0,
+    });
+    const issued = await m.getIssuedToken();
+    issued.token = "tampered";
+    issued.expiresAt = 0;
+    expect(await m.getIssuedToken()).toEqual({
+      token: "A",
+      expiresAt: 100_000,
+    });
+    expect(await m.getAccessToken()).toBe("A");
+  });
+
+  it("never includes the Refresh Token", async () => {
+    const m = createTokenManager({
+      provider: counting(() => ({
+        accessToken: { token: "A" },
+        refreshToken: { token: "R" },
+      })),
+      now: () => 0,
+    });
+    expect(Object.keys(await m.getIssuedToken())).toEqual(["token"]);
+  });
+});
+
 describe("createTokenManager — checking what the provider returns", () => {
   it.each([
     ["an empty token", { accessToken: { token: "" } }],

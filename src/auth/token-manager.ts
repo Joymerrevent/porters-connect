@@ -25,6 +25,8 @@ export type TokenManagerOptions = {
 
 /** The request pipeline's token source, plus the save/forget controls behind `porters.auth`. */
 export type TokenManager = AccessTokenSource & {
+  /** The usable Access Token with its expiry (renewed first when due) — what `getToken()` returns. */
+  getIssuedToken(): Promise<IssuedToken>;
   /** Validate and save tokens obtained outside renewal (the browser `code` exchange). */
   cache(tokens: unknown): Promise<void>;
   /** Forget the cached and stored tokens (local only; the issuer's tokens stay valid). */
@@ -133,6 +135,8 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   return {
     getAccessToken: async (o) =>
       (await ensure(o?.forceRefresh ?? false)).accessToken.token,
+    // 写しを返す: 受け取った側が書き換えても、キャッシュの値（リクエストに使う値）は変わらない。
+    getIssuedToken: async () => ({ ...(await ensure(false)).accessToken }),
     cache: async (tokens) => {
       await save(requireTokens(tokens, "exchange"));
     },
