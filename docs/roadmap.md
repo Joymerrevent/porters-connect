@@ -238,10 +238,11 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 判断待ち（決めれば着手できる）
 
-- [ ] **トークンの取得だけを差し替えて管理はライブラリに任せる入口を公開するか** — [ADR-0091][adr91]（2026-09-24 起票・**proposed**・
-      起票元 [RV-63][rv63]。条件付きだったが stakeholder が条件を待たずに進めると決めた）。推奨は `createTokenProvider({ acquire })`:
-      `acquire` が Access Token と期限（任意）を返し、期限の判断・`forceRefresh`・同時呼び出しの 1 本化はライブラリが受け持つ。
-      `tokenStore` は使わず、`porters.auth` は独自 `TokenProvider` と同じ動き。
+- [ ] **トークンの取得と保存を別々に受け取り、管理は `PortersClient` が受け持つか** — [ADR-0091][adr91]（2026-09-24 起票・**proposed**・
+      起票元 [RV-63][rv63]。条件付きだったが stakeholder が条件を待たずに進めると決めた）。decider が議論で選んだ案:
+      構築オプション `auth` を `tokenProvider`（`{ acquire, refresh? }`）に置き換え、`tokenStore` はどの取得でも使い、
+      期限の判断・`forceRefresh`・同時呼び出しの 1 本化・`clearTokens` はクライアントが受け持つ。`getAccessToken` を
+      丸ごと自前で書く入口は無くす（破壊的）。`StoredTokens` の Refresh Token と期限は任意にする。
 - [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
       **案1a〜5a＝5 章・リソース別 18 本 1:1・実践例 2 本・名詞の題名＋目次の索引・検査⑥新設**）。実装は**着手可能**（上記）。
       [ADR-0070][adr70] の 4 層（入門／目的別／考え方／リファレンス）は形で切っていて、目的別の本文が主題別に
@@ -794,7 +795,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr88]: adr/0088-usage-docs-five-chapters.md
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
-[adr91]: adr/0091-token-provider-factory.md
+[adr91]: adr/0091-token-provider-and-store.md
 [pr378]: https://github.com/Joymerrevent/porters-connect/pull/378
 [adr15]: adr/0015-mutation-testing.md
 [adr16]: adr/0016-field-type-granularity.md

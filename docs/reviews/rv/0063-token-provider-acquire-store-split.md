@@ -66,9 +66,10 @@ stakeholder の提案（2026-09-23）: 「TokenProvider を組み替えて token
 ## 処置
 
 **起票（案 (a)・2026-09-24）。** stakeholder が実例を待たずに進めると決め、[ADR-0091][adr91] を proposed で起票した。
-推奨は `createTokenProvider({ acquire })`（`acquire` は Access Token と期限（任意）を返す・`tokenStore` は使わない・
-`porters.auth` は独自 `TokenProvider` と同じ）。(b)(c) のガイドの作業は先にはやらない（stakeholder の判断）。(c) の実装例は、
-ADR-0091 の実装の PR でガイドを書き直すときに直す。decider の判断待ち。
+起票時の推奨は `createTokenProvider({ acquire })` の公開だったが、decider との議論で「取得（`tokenProvider`）と保存
+（`tokenStore`）を `PortersClient` に別々に渡し、管理はクライアントが受け持つ」形に改めた（`auth` オプションと
+`getAccessToken` を丸ごと自前で書く入口は無くす）。(b)(c) のガイドの作業は先にはやらない（stakeholder の判断）。
+(c) の実装例は、ADR-0091 の実装の PR でガイドを書き直すときに直す。decider の判断待ち。
 
 ## 検証
 
@@ -76,4 +77,4 @@ ADR-0091 の実装の PR でガイドを書き直すときに直す。decider �
 
 [adr07]: ../../adr/0007-oauth-public-surface.md
 [adr12]: ../../adr/0012-token-cache-refresh.md
-[adr91]: ../../adr/0091-token-provider-factory.md
+[adr91]: ../../adr/0091-token-provider-and-store.md
