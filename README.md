@@ -52,7 +52,7 @@ npm i @joymerrevent/porters-connect
 # yarn add @joymerrevent/porters-connect
 ```
 
-## 最短で動かす
+## クイックスタート
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
@@ -116,7 +116,7 @@ PORTERS 側の仕様で、使い始める前に知っておきたいものです
 
 ## リンク
 
-**この README で扱うのは「最短で動かす」ところまで**です。全体は目次から読めます<!-- 根拠: ADR-0070 -->。
+**この README で扱うのは「クイックスタート」まで**です。全体は目次から読めます<!-- 根拠: ADR-0070 -->。
 
 - 利用者向け：[docs/usage][docs-index]（目次）／[公開 API リファレンス][api-ref]／[PORTERS API の事実][ref]
 - 開発・保守：[docs/README.md][docs-readme]（ADR（設計判断の記録）・基本設計・ロードマップ・台帳）
