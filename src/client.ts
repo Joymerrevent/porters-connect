@@ -113,14 +113,6 @@ export type PortersClientOptions = {
   tokenProvider?: TokenProvider;
   /** Token persistence, used with every token provider; defaults to in-memory. */
   tokenStore?: TokenStore;
-  // 取得を丸ごと差し替える auth は ADR-0091 で廃止。黙って無視すると認証が既定の方式に戻って
-  // 動き続けるので、fields と同じく型と実行時の両方で弾く。
-  /**
-   * **Not a client option any more.** Pass a `tokenProvider` (`{ acquire, refresh?, exchange? }`)
-   * instead; the client manages caching and renewal for it. Typed `never` so a leftover `auth`
-   * fails to compile; at runtime the constructor rejects it with {@link PortersConfigError}.
-   */
-  auth?: never;
   /** Injectable HTTP transport; defaults to a fetch-based transport. */
   transport?: Transport;
   // 宛先ごとのプロセス共有バケットは ADR-0073。プロセス横断（Redis 等）は ADR-0010 で
@@ -134,16 +126,6 @@ export type PortersClientOptions = {
    * library leaves that to you. `createThrottle()` builds the default implementation.
    */
   throttle?: Throttle;
-  // 宣言を tenant へ移した経緯は ADR-0087。黙って捨てずに弾くのは hostname と同じ
-  // fail-closed（ADR-0048）。
-  /**
-   * **Not a client option any more.** Custom fields belong to a partition, so the
-   * declaration goes to {@link PortersClient.tenant} as `tenant(id, { fields })`. Typed `never`
-   * so a configuration object that still carries the pre-0.21 `fields` fails to compile even when
-   * it is not a fresh literal; at runtime the constructor rejects it with {@link PortersConfigError}
-   * rather than silently dropping the declaration (the same fail-closed stance as `hostname`).
-   */
-  fields?: never;
 };
 
 // 宣言 DSL は ADR-0023、partition スコープで受ける決定は ADR-0087。
@@ -250,6 +232,47 @@ export type TenantScope<C extends DeclaredCatalogs = EmptyCatalog> = {
 
 // tokenProvider の形を構築時に確かめる（ADR-0091）。古い形（getAccessToken だけ）を黙って
 // 受けると、最初のリクエストまで壊れていることに気づけない。
+// 定義していないキーは、名前を問わず構築時・tenant() の呼び出し時に弾く（ADR-0092）。黙って無視すると、
+// 打ち間違えた設定（`hostName`・`feilds` など）のまま動く。値が undefined のキーは未指定と同じ扱い
+// （設定をスプレッドで組むと混ざりやすい）。許可する一覧は satisfies で型のキーと突き合わせるので、
+// 型にオプションを足して一覧に足し忘れると（逆も）コンパイルが通らない。
+const CLIENT_OPTION_KEYS = {
+  hostname: true,
+  port: true,
+  scheme: true,
+  appId: true,
+  appSecret: true,
+  scopes: true,
+  tokenProvider: true,
+  tokenStore: true,
+  transport: true,
+  throttle: true,
+} as const satisfies Record<keyof PortersClientOptions, true>;
+
+const TENANT_OPTION_KEYS = {
+  fields: true,
+} as const satisfies Record<keyof TenantOptions, true>;
+
+const rejectUnknownKeys = (
+  where: string,
+  options: object,
+  allowed: Readonly<Record<string, true>>,
+): void => {
+  const unknown = Object.entries(options)
+    .filter(
+      ([key, value]) => !Object.hasOwn(allowed, key) && value !== undefined,
+    )
+    .map(([key]) => JSON.stringify(key));
+  if (unknown.length === 0) return;
+  throw new PortersConfigError(
+    `${where}: unknown option${unknown.length > 1 ? "s" : ""} ${unknown.join(", ")}`,
+    {
+      category: "config",
+      hint: `Valid options: ${Object.keys(allowed).join(", ")}.`,
+    },
+  );
+};
+
 const validateTokenProvider = (provider: unknown): void => {
   if (provider === undefined) return;
   // 文字列などの値でもプロパティは読める（undefined になる）ので、null だけを先に除けば足りる。
@@ -333,30 +356,7 @@ export class PortersClient {
   readonly #accessPoint: AccessPoint;
 
   constructor(options: PortersClientOptions) {
-    // A `fields` left over from before ADR-0087 must not be ignored: the declaration would be
-    // dropped and every custom field would silently come back untyped (or not at all). The type
-    // already refuses it (`fields?: never`); this is the runtime side for JavaScript callers and
-    // casts. Read through `unknown` because the declared type says the key is never there.
-    if ((options as { fields?: unknown }).fields !== undefined) {
-      throw new PortersConfigError(
-        'PortersClient: "fields" is not a client option — custom fields belong to a partition',
-        {
-          category: "config",
-          hint: "Declare them where you bind the partition: porters.tenant(id, { fields })",
-        },
-      );
-    }
-    // A pre-0.24 `auth` must not be ignored: the client would fall back to the built-in flow and
-    // keep running on credentials the caller meant to replace (ADR-0091).
-    if ((options as { auth?: unknown }).auth !== undefined) {
-      throw new PortersConfigError(
-        'PortersClient: "auth" is not a client option — pass a tokenProvider instead',
-        {
-          category: "config",
-          hint: "Replace auth: { getAccessToken } with tokenProvider: { acquire: async () => ({ accessToken: { token } }) }. The client caches and renews the token for you.",
-        },
-      );
-    }
+    rejectUnknownKeys("PortersClient", options, CLIENT_OPTION_KEYS);
     validateTokenProvider(options.tokenProvider);
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
     // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
@@ -419,6 +419,7 @@ export class PortersClient {
       partition: number,
       scope: TenantOptions<C> = {},
     ): TenantScope<C> => {
+      rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
       // The per-resource custom catalog declared via defineFields (or {} when none). Branded
       // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
       const customFor = <K extends keyof DeclaredCatalogs>(

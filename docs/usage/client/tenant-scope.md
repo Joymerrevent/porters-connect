@@ -36,6 +36,7 @@ const phases = t.phase.of("candidate"); // Phase・Attachment・Field は対象�
 - **id の存在は確かめません。** 無い Partition や権限の無い Partition は、最初のリクエストで PORTERS のエラーになります。id は `porters.partition.search()` で探します（[Partition][r-partition]）。
 - **`auth`・`partition`・`tenant` はスコープにありません。** どれも Partition を取らないので、`porters` から直接呼びます（[PortersClient][cl-client]）。スコープを入れ子にすることもできません。
 - **カスタム項目の宣言は Partition ごとです。** `{ fields }` を渡し忘れたスコープで `U_` の項目を使うとコンパイルエラーになります。別のテナントの宣言が気づかないうちに適用されることはありません。
+- **`tenant()` に渡せるオプションは `fields` だけです。** ほかのキー（打ち間違いを含む）を渡すと、その場で `PortersConfigError` になります。
 - **呼び出しごとに Partition を渡す引数はありません。** Partition を決める場所は `tenant(id)` の 1 箇所だけです。
 - **スコープを関数の引数に取るときの型**は[複数テナント][multi-tenant]の「宣言したスコープを関数に渡す」にあります。
 

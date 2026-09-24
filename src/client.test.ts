@@ -573,9 +573,8 @@ describe("PortersClient.tenant (multi-tenant scope, ADR-0040 / F-3)", () => {
     expectTypeOf(porters.tenant(3, options)).toEqualTypeOf<
       TenantScope<typeof fields>
     >();
-    // The client itself carries no declaration: not generic, and `fields` is typed `never` so a
-    // stale config object (not a fresh literal, hence no excess property check) fails to compile.
-    expectTypeOf<PortersClientOptions["fields"]>().toEqualTypeOf<undefined>();
+    // The client itself carries no declaration: it is not generic and has no `fields` option.
+    expectTypeOf<PortersClientOptions>().not.toHaveProperty("fields");
     // @ts-expect-error -- PortersClient takes no type argument (ADR-0087)
     type _NotGeneric = PortersClient<typeof fields>;
   });
@@ -668,38 +667,14 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
   });
 });
 
-// 構築時に tokenProvider の形と、廃止した auth を確かめる（ADR-0091）。黙って受けると、
-// 認証が既定の方式に戻って動き続けるか、最初のリクエストまで壊れていることに気づけない。
-describe("PortersClient — tokenProvider and the retired auth option (ADR-0091)", () => {
+// 構築時に tokenProvider の形を確かめる（ADR-0091）。黙って受けると、最初のリクエストまで壊れていることに
+// 気づけない。定義していないキー（auth など）の検査は下の describe（ADR-0092）。
+describe("PortersClient — tokenProvider shape (ADR-0091)", () => {
   const build = (extra: Record<string, unknown>) => () =>
     new PortersClient({
       hostname: "h.test",
       ...extra,
     });
-
-  it("rejects a leftover auth option, pointing at tokenProvider", () => {
-    expect(
-      build({ auth: { getAccessToken: () => Promise.resolve("T") } }),
-    ).toThrow(
-      expect.objectContaining({
-        name: "PortersConfigError",
-        category: "config",
-        message:
-          'PortersClient: "auth" is not a client option — pass a tokenProvider instead',
-        hint: expect.stringContaining("tokenProvider: { acquire") as string,
-      }),
-    );
-  });
-
-  it("accepts auth: undefined (an optional spread is not a leftover)", () => {
-    expect(build({ auth: undefined })).not.toThrow();
-  });
-
-  it("refuses auth at compile time too", () => {
-    expectTypeOf<PortersClientOptions["auth"]>().toEqualTypeOf<undefined>();
-    // @ts-expect-error -- auth is no longer a client option: pass tokenProvider
-    void (() => new PortersClient({ hostname: "h.test", auth: {} }));
-  });
 
   it("names the old getAccessToken shape when it is passed as tokenProvider", () => {
     expect(
@@ -784,5 +759,111 @@ describe("PortersClient — tokenProvider and the retired auth option (ADR-0091)
     });
     await porters.tenant(1).candidate.search();
     expect(saved).toEqual([{ accessToken: { token: "T" } }]);
+  });
+});
+
+// 定義していないキーは、名前を問わず構築時・tenant() の呼び出し時に止める（ADR-0092）。黙って無視すると、
+// 打ち間違えた設定のまま動く。許可する一覧は型のキーと satisfies で突き合わせている。
+describe("unknown options are rejected (ADR-0092)", () => {
+  const acquire = () => Promise.resolve({ accessToken: { token: "TKN" } });
+  const construct = (options: Record<string, unknown>) => () =>
+    new PortersClient({ hostname: "h.test", ...options });
+  const VALID_CLIENT_KEYS =
+    "Valid options: hostname, port, scheme, appId, appSecret, scopes, tokenProvider, tokenStore, transport, throttle.";
+
+  it("rejects a key the client does not define, naming it and listing the valid ones", () => {
+    expect(construct({ hostName: "typo.test" })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: 'PortersClient: unknown option "hostName"',
+        hint: VALID_CLIENT_KEYS,
+      }),
+    );
+  });
+
+  it("names every unknown key at once", () => {
+    expect(construct({ auth: {}, timeout: 5 })).toThrow(
+      'PortersClient: unknown options "auth", "timeout"',
+    );
+  });
+
+  it("treats a retired name like any other unknown key", () => {
+    expect(
+      construct({ auth: { getAccessToken: () => Promise.resolve("T") } }),
+    ).toThrow(
+      expect.objectContaining({
+        message: 'PortersClient: unknown option "auth"',
+        hint: VALID_CLIENT_KEYS,
+      }),
+    );
+  });
+
+  it("does not count keys inherited from Object.prototype as defined", () => {
+    expect(construct({ toString: "x" })).toThrow(
+      'PortersClient: unknown option "toString"',
+    );
+  });
+
+  it("lets an unknown key whose value is undefined through (an optional spread)", () => {
+    expect(construct({ auth: undefined, fields: undefined })).not.toThrow();
+  });
+
+  it("accepts every key it defines", () => {
+    expect(
+      construct({
+        port: 4010,
+        scheme: "https",
+        appId: "a",
+        appSecret: "s",
+        scopes: ["candidate_r"],
+        tokenProvider: { acquire },
+        tokenStore: {
+          get: () => Promise.resolve(undefined),
+          set: () => Promise.resolve(),
+          clear: () => Promise.resolve(),
+        },
+        transport: {
+          send: () => Promise.resolve({ status: 200, body: "" }),
+        },
+        throttle: { take: () => Promise.resolve() },
+      }),
+    ).not.toThrow();
+  });
+
+  it("refuses an unknown key in a fresh literal at compile time", () => {
+    // @ts-expect-error -- not a PortersClientOptions key
+    void (() => new PortersClient({ hostname: "h.test", hostName: "x" }));
+    expectTypeOf<PortersClientOptions>().not.toHaveProperty("auth");
+  });
+
+  describe("tenant(id, options)", () => {
+    const porters = new PortersClient({
+      hostname: "h.test",
+      tokenProvider: { acquire },
+    });
+    const fields = defineFields({
+      candidate: (f) => ({ U_score: f.number() }),
+    });
+
+    it("rejects a key tenant() does not define, synchronously", () => {
+      const options = { feilds: fields };
+      expect(() =>
+        porters.tenant(1, options as unknown as TenantOptions),
+      ).toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          category: "config",
+          message: 'tenant: unknown option "feilds"',
+          hint: "Valid options: fields.",
+        }),
+      );
+    });
+
+    it("accepts fields, fields: undefined, and no options", () => {
+      expect(() => porters.tenant(1, { fields })).not.toThrow();
+      expect(() => porters.tenant(1, { fields: undefined })).not.toThrow();
+      expect(() => porters.tenant(1)).not.toThrow();
+    });
   });
 });
