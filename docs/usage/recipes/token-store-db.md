@@ -111,11 +111,11 @@ export const porters = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
-  tokenStore: createDbTokenStore(db, "porters"), // "porters" は保存先の名前
+  tokenStore: createDbTokenStore(db, "my-app"), // "my-app" は保存先の名前（自分で決める）
 });
 ```
 
-これで、トークンを取得・更新するたびに、`porters_tokens` テーブルの `name` が `"porters"` の行に書き込まれます。
+これで、トークンを取得・更新するたびに、`porters_tokens` テーブルの `name` が `"my-app"` の行に書き込まれます。
 次に起動したときはその行を読み、まだ使えるトークンがあればそれを使います。
 Access Token の期限（約 30 分）が切れていても、Refresh Token（約 2 時間）が残っていれば、`code_direct` からではなく
 更新で取り直します。
@@ -125,7 +125,7 @@ Access Token の期限（約 30 分）が切れていても、Refresh Token（�
 `name` 列の値は、どのクライアントのトークンを入れた行かを見分けるための、ただの名前です。
 App Secret のような秘密の値ではありません。
 
-- **App が 1 つで、Company DB をすべて同じクライアントで扱う**なら、固定の 1 つ（例の `"porters"`）で足ります。
+- **App が 1 つで、Company DB をすべて同じクライアントで扱う**なら、固定の 1 つ（例の `"my-app"`）で足ります。
   トークンは App ごとに 1 組で、Partition を変えても同じトークンを使うからです。
 - **テナントごとにクライアント（とトークン）を分けている**なら、テナントごとに別の名前にします
   （[複数テナント][multi-tenant]の「認証を分けるか」）。
