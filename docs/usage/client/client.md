@@ -18,7 +18,8 @@
 | `tenant(id, options?)` | Partition を指定したスコープを返す（[tenant(id)][cl-tenant]）。同期で、PORTERS は呼ばない                     |
 | `partition`            | アクセスできる Company DB の一覧を読むマスタ（[Partition][r-partition]）。`tenant()` を通さない唯一の読み取り |
 | `auth`                 | 初回の権限付与・トークンの確認・権限の削除（[auth][cl-auth]）                                                 |
-| `hostname` / `port`    | 構築時に渡した接続先（読み取り専用）。`port` は渡していなければ `undefined`                                   |
+| `hostname`             | 構築時に渡したサーバー名（読み取り専用）                                                                      |
+| `port`                 | 構築時に渡したポート（読み取り専用）。渡していなければ `undefined`                                            |
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
