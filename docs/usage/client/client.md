@@ -4,7 +4,7 @@
 `tenant(id)` が返すスコープから行います。
 
 - **作り方**: `new PortersClient(options)`
-- **持っているもの**: `tenant(id, options?)`／`partition`／`auth`（Partition を取らないものだけ）
+- **持っているもの**: `tenant(id, options?)`／`partition`／`auth`（Partition を取らないものだけ）と、読み取り専用の `hostname`／`port`
 
 ## 呼べるメソッドとプロパティ
 
@@ -18,6 +18,7 @@
 | `tenant(id, options?)` | Partition を指定したスコープを返す（[tenant(id)][cl-tenant]）。同期で、PORTERS は呼ばない                     |
 | `partition`            | アクセスできる Company DB の一覧を読むマスタ（[Partition][r-partition]）。`tenant()` を通さない唯一の読み取り |
 | `auth`                 | 初回の権限付与・トークンの確認・権限の削除（[auth][cl-auth]）                                                 |
+| `hostname` / `port`    | 構築時に渡した接続先（読み取り専用）。`port` は渡していなければ `undefined`                                   |
 
 ```ts
 import { PortersClient } from "@joymerrevent/porters-connect";
