@@ -41,6 +41,8 @@ const readIssued = (value: unknown): IssuedToken | undefined => {
     expiresAt?: unknown;
   };
   if (typeof token !== "string" || token === "") return undefined;
+  // typeof は型を絞るためだけ（Number.isFinite は数値以外に false を返すので、結果は変わらない）。
+  // Stryker disable next-line ConditionalExpression: equivalent — Number.isFinite already rejects every non-number
   return typeof expiresAt === "number" && Number.isFinite(expiresAt)
     ? { token, expiresAt }
     : { token };
@@ -89,9 +91,8 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   let inflight: Promise<StoredTokens> | undefined;
 
   // An unknown expiry counts as usable: the reactive 401/402 retry is the backstop.
-  const usable = (t: IssuedToken | undefined): boolean =>
-    t !== undefined &&
-    (t.expiresAt === undefined || now() < t.expiresAt - margin);
+  const usable = (t: IssuedToken): boolean =>
+    t.expiresAt === undefined || now() < t.expiresAt - margin;
 
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     cached = tokens;
@@ -133,12 +134,10 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
     getAccessToken: async (o) =>
       (await ensure(o?.forceRefresh ?? false)).accessToken.token,
     cache: async (tokens) => {
-      loaded = true;
       await save(requireTokens(tokens, "exchange"));
     },
     clear: async () => {
       cached = undefined;
-      loaded = true;
       await store.clear();
     },
   };
