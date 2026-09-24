@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-23
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.23.0
 
 > 起票元は [RV-62][rv62]（2026-09-23）。使い方ドキュメントの校閲中に stakeholder が
 > 「PORTERS の項目では必須を設定できるのだから、カスタム項目の宣言でも必須を表せるようにしてほしい」と提案した。

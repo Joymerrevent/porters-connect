@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.23.0
 
 > 起票元は [ADR-0089][adr89] の実装（[#388][pr388]）。同梱の型定義が `NoInfer`（TypeScript 5.4 で追加）を
 > 使うようになり、古い TypeScript では**黙って誤った型**になることを確かめた（下記）。stakeholder は

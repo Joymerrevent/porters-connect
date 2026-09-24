@@ -5,6 +5,50 @@
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-24
+
+**カスタム項目を宣言で `create` の必須にできるようにした版**です。あわせて、利用者の TypeScript の下限を
+**5.4** と定め、それより古い版でははっきりした型エラーになるようにしました。**TypeScript 5.4 より前を使っている
+場合は破壊的変更です**（下の Changed）。
+
+### Added
+
+- **カスタム項目を宣言で `create` の必須にできるようになりました**（[ADR-0089][adr89]）。宣言のビルダーに
+  `{ required: true }` を渡すと、その項目は `create` / `createMany` の入力型で必須になります。
+
+  ```ts
+  const fields = defineFields({
+    candidate: (f) => ({
+      U_score: f.number({ required: true }), // create で必須
+      U_source: f.option(), // 任意のまま
+    }),
+  });
+  const t = porters.tenant(1, { fields });
+
+  await t.candidate.create({ P_Owner: 5, U_score: 80 }); // U_score を渡さないとコンパイルエラー
+  ```
+
+  - `required` を書かなければ、これまでと同じく任意です。`update` / `updateMany` では常に任意です。
+  - 型で止めるだけで、実行時には検査しません（標準項目の必須と同じ扱い）。
+  - `TenantScope<typeof fields>` と書いた型でも必須になります。新しい型引数は要りません。
+  - `generateFieldDecls` は、テナントが入力必須にしている項目（Field Read の `P_Required` が `1`）に
+    `{ required: true }` を付けて出します。`create` で必須にしない項目は、生成したファイルから消します。
+  - `readCustomCatalog` の戻り値に `required`（alias → 入力必須かどうか）が増えました。
+  - `verifyFields` の報告に `requiredMismatch`（宣言の `required` とテナントの入力必須の食い違い）が増えました。
+    読み書きは壊れないので、`ok` は変わらず、`assertFieldsMatch` も止めません。
+  - 新しく公開した型: `FieldOptions` / `RequiredFor` / `DeclaredRequiredOf` / `RequiredMismatch`。
+
+### Changed
+
+- **（TypeScript 5.4 より前を使っている場合は破壊的）型を読むには TypeScript 5.4 以上が要ります**
+  （[ADR-0090][adr90]）。同梱の型定義が、5.4 で入った型（`NoInfer`）を使うためです。5.4 より前の TypeScript では、
+  このパッケージから `import` したものを使った行が、`requires TypeScript 5.4 or later` を含む型エラーになります。
+  そのときは TypeScript を上げてください。`bundler` / `node16` / `node` のどの解決方式でも同じです。
+- **`verifyFields` の報告を自分で組み立てているコード**（テストのスタブなど）は、`requiredMismatch: []` を
+  足してください。`FieldVerification` に項目が増えたためで、`verifyFields` の戻り値を読むだけのコードは変わりません。
+- 内部の検査を増やしました（利用者への影響はありません）。CI で、TypeScript の下限の版（5.4 の系で最も古い安定版）と
+  開発で使う版で利用者のコードをコンパイルし、下限より前の版では上の型エラーになることを確かめます。
+
 ## [0.22.0] - 2026-09-23
 
 **読み取りの値の検証を 1 つ増やし、使い方ドキュメントを組み直した版**です。破壊的変更はありませんが、
@@ -1333,7 +1377,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.1...v0.21.0
 [0.20.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.20.0...v0.20.1
@@ -1374,3 +1419,5 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr87]: docs/adr/0087-tenant-scoped-field-declarations.md
 [howto-custom-fields]: docs/usage/topics/custom-fields.md
 [ref-department]: docs/usage/reference/resource-api/resources/department.md
+[adr89]: docs/adr/0089-custom-field-required-on-create.md
+[adr90]: docs/adr/0090-typescript-floor.md
