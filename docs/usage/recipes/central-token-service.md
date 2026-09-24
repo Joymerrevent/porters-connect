@@ -35,19 +35,18 @@ PORTERS のトークンを 1 か所で取り、複数のアプリ（やプロセ
 
 ### 1. 中央のサービス
 
-中央は、ふつうのクライアント（既定の取り方）を 1 つ持ち、トークンを返す口を公開します。トークンの保存先には、
-[トークンを DB に保存する][token-store-db]の `tokenStore` を使います（`db` と `createDbTokenStore` は、そのページの
-手順 0 と手順 2 で作ったものです）。
+中央は、ふつうのクライアント（既定の取り方）を 1 つ持ち、トークンを返す口を公開します。クライアントとトークンの
+保存先は、[トークンを DB に保存する][token-store-db]の 4 つのファイル（`db.ts` / `schema.ts` / `token-store.ts` /
+`porters.ts`）をそのまま使い、トークンを返す `token-service.ts` を足します（コード例の 1 行目がファイル名です）。
+
+```text
+db.ts / schema.ts / token-store.ts / porters.ts   … 「トークンを DB に保存する」の手順 0〜3
+token-service.ts                                   … アプリにトークンを返す（ここで足す）
+```
 
 ```ts
-import { PortersClient } from "@joymerrevent/porters-connect";
-
-const porters = new PortersClient({
-  hostname,
-  appId,
-  appSecret,
-  tokenStore: createDbTokenStore(db, "porters"),
-});
+// ファイル: token-service.ts
+import { porters } from "./porters";
 
 // アプリからの問い合わせに答える（Web 標準の Request / Response で書いた例）
 export const handleTokenRequest = async (
@@ -71,14 +70,15 @@ export const handleTokenRequest = async (
 
 ### 2. 各アプリ
 
-アプリは `tokenProvider` の `acquire` で中央を呼び、受け取った値をそのまま `accessToken` として返します。
-`appId` / `appSecret` は渡しません。
+アプリは中央とは別のプロジェクトです。`tokenProvider` の `acquire` で中央を呼び、受け取った値をそのまま
+`accessToken` として返します。`appId` / `appSecret` は渡しません。
 
 ```ts
+// ファイル: app/porters.ts
 import { PortersClient, type IssuedToken } from "@joymerrevent/porters-connect";
 
-const porters = new PortersClient({
-  hostname,
+export const porters = new PortersClient({
+  hostname: process.env.PORTERS_HOST ?? "",
   tokenProvider: {
     acquire: async () => {
       const res = await fetch("https://token.internal.example/porters-token", {
@@ -92,10 +92,9 @@ const porters = new PortersClient({
     },
   },
 });
-
-const t = porters.tenant(partition);
-await t.candidate.search();
 ```
+
+あとは、ふつうのクライアントと同じように `porters.tenant(id)` から読み書きします。
 
 - **`refresh` は渡しません。** 期限が近づくと、ライブラリはもう一度 `acquire` を呼びます。中央はそのとき
   期限の近いトークンを取り直して返すので、アプリ側で更新の手段を持つ必要はありません。

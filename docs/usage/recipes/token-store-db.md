@@ -17,13 +17,21 @@
 ## 組み立て
 
 次の順に組みます。DB につなぐ → テーブルを定義する → `tokenStore` を書く → クライアントに渡す、の 4 段です。
+例は 4 つのファイルに分けています（コード例の 1 行目がファイル名です）。
+
+```text
+db.ts           … DB の接続（手順 0）
+schema.ts       … テーブルの定義（手順 1）
+token-store.ts  … tokenStore（手順 2。db.ts と schema.ts を使う）
+porters.ts      … PortersClient（手順 3。db.ts と token-store.ts を使う）
+```
 
 ### 0. DB につなぐ
 
-Drizzle の `db` を作ります。以降の手順で使う `db` はこれです。例は PostgreSQL のドライバ `pg`（node-postgres）を
-使います（`pnpm add drizzle-orm pg`）。
+Drizzle の `db` を作ります。例は PostgreSQL のドライバ `pg`（node-postgres）を使います（`pnpm add drizzle-orm pg`）。
 
 ```ts
+// ファイル: db.ts
 import { drizzle } from "drizzle-orm/node-postgres";
 
 export const db = drizzle(process.env.DATABASE_URL ?? ""); // 接続文字列から作る
@@ -34,6 +42,7 @@ export const db = drizzle(process.env.DATABASE_URL ?? ""); // 接続文字列か
 1 行に 1 組のトークンを保存します。`StoredTokens` は JSON なので、`jsonb` の列にそのまま入れます。
 
 ```ts
+// ファイル: schema.ts
 import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { StoredTokens } from "@joymerrevent/porters-connect";
 
@@ -46,19 +55,14 @@ export const portersTokens = pgTable("porters_tokens", {
 
 ### 2. `tokenStore` を書く
 
-`get` / `set` / `clear` の 3 つを、この行の読み・書き・削除に対応させます。
+`get` / `set` / `clear` の 3 つを、この行の読み・書き・削除に対応させます。テーブルは手順 1 の `schema.ts` から読みます。
 
 ```ts
+// ファイル: token-store.ts
 import { eq } from "drizzle-orm";
-import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
-import type { StoredTokens, TokenStore } from "@joymerrevent/porters-connect";
-
-const portersTokens = pgTable("porters_tokens", {
-  key: text("key").primaryKey(),
-  tokens: jsonb("tokens").$type<StoredTokens>().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-});
+import type { TokenStore } from "@joymerrevent/porters-connect";
+import { portersTokens } from "./schema";
 
 export const createDbTokenStore = (
   db: PgDatabase<PgQueryResultHKT>,
@@ -97,12 +101,15 @@ export const createDbTokenStore = (
 手順 0 の `db` と、手順 2 の `createDbTokenStore` を使います。
 
 ```ts
+// ファイル: porters.ts
 import { PortersClient } from "@joymerrevent/porters-connect";
+import { db } from "./db";
+import { createDbTokenStore } from "./token-store";
 
-const porters = new PortersClient({
-  hostname,
-  appId,
-  appSecret,
+export const porters = new PortersClient({
+  hostname: process.env.PORTERS_HOST ?? "",
+  appId: process.env.PORTERS_APP_ID ?? "",
+  appSecret: process.env.PORTERS_APP_SECRET ?? "",
   tokenStore: createDbTokenStore(db, "porters"),
 });
 ```

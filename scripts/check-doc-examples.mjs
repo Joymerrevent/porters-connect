@@ -155,9 +155,6 @@ const kv: {
 };
 const req: { user: string };
 const tokenStore: TokenStore;
-// 実践例「トークンを DB に保存する」の Drizzle の db と、そこで作る保存先（中央のサービスの例が使う）
-const db: import("drizzle-orm/pg-core").PgDatabase<import("drizzle-orm/pg-core").PgQueryResultHKT>;
-const createDbTokenStore: (db: import("drizzle-orm/pg-core").PgDatabase<import("drizzle-orm/pg-core").PgQueryResultHKT>, key: string) => TokenStore;
 const transport: Transport;
 const lookupPartitionForUser: (user: string) => Promise<number>;
 // partition ↔ 宣言の対応は SaaS の責務（ADR-0008 / ADR-0087）。例では引くだけ
