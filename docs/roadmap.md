@@ -243,7 +243,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
       構築オプション `auth` を `tokenProvider`（`{ acquire, refresh?, exchange? }`）に置き換え、`tokenStore` はどの取得でも使い、
       期限の判断・`forceRefresh`・同時呼び出しの 1 本化・`clearTokens` はクライアントが受け持ち、`porters.auth` の 6 メソッドは
       必要なものを渡していればどの取得でも動く。`getAccessToken` を
-      丸ごと自前で書く入口は無くす（破壊的）。`StoredTokens` の Refresh Token と期限は任意にする。
+      丸ごと自前で書く入口は無くす（破壊的）。`StoredTokens` は `accessToken` と省略可能な `refreshToken` に分け、それぞれ `{ token, expiresAt? }` にする。
 - [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
       **案1a〜5a＝5 章・リソース別 18 本 1:1・実践例 2 本・名詞の題名＋目次の索引・検査⑥新設**）。実装は**着手可能**（上記）。
       [ADR-0070][adr70] の 4 層（入門／目的別／考え方／リファレンス）は形で切っていて、目的別の本文が主題別に

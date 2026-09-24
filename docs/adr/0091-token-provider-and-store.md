@@ -78,8 +78,9 @@
 
 ### 論点4: やり取りするトークンの形
 
-- **案4a: `StoredTokens` の Refresh Token と 2 つの期限を任意にする** — decider が選択
-- 案4b: いまの `StoredTokens`（すべて必須）をそのまま返させる
+- **案4a: `StoredTokens` を `accessToken` と省略可能な `refreshToken` に分け、それぞれを `{ token, expiresAt? }` にする** — decider が選択
+- 案4b: いまの平たい形のまま、Refresh Token と 2 つの期限を任意にする
+- 案4c: いまの `StoredTokens`（すべて必須）をそのまま返させる
 
 ### 論点5: 構築オプションの名前
 
@@ -100,7 +101,7 @@ const porters = new PortersClient({
   tokenProvider: {
     acquire: async () => {
       const t = await myTokenService.issue();
-      return { accessToken: t.token, accessTokenExpiresAt: t.expiresAt };
+      return { accessToken: { token: t.token, expiresAt: t.expiresAt } };
     },
     // 更新の手段があれば（省略すると期限が近づいたときに acquire を呼び直す）
     refresh: async (current) => myTokenService.refresh(current),
@@ -123,10 +124,8 @@ const porters = new PortersClient({
 
 ```ts
 type StoredTokens = {
-  accessToken: string;
-  accessTokenExpiresAt?: number; // エポックミリ秒。無ければ「期限不明」
-  refreshToken?: string;
-  refreshTokenExpiresAt?: number;
+  accessToken: { token: string; expiresAt?: number }; // expiresAt はエポックミリ秒。無ければ「期限不明」
+  refreshToken?: { token: string; expiresAt?: number }; // 持っていれば値と期限を組で
 };
 
 type TokenProvider = {
@@ -146,13 +145,14 @@ type TokenProvider = {
 ### 管理（`PortersClient` が受け持つ）
 
 - **キャッシュ**: 取得したトークンをメモリに持ち、`tokenStore` に書く。起動後の最初の取得では `tokenStore` から読む。
-- **期限の判断**: `accessTokenExpiresAt` があれば、その 60 秒前（既定の余裕。オプションで変えられる）を過ぎたら
+- **期限の判断**: `accessToken.expiresAt` があれば、その 60 秒前（既定の余裕。オプションで変えられる）を過ぎたら
   取り直す。**無ければ期限不明として扱い、PORTERS が 401 / 402 を返したときに 1 回だけ取り直す**（いまもある仕組み）。
-- **取り直しの手段**: `refresh` があり、Refresh Token があって（期限があるならその期限内で）使えるなら `refresh`、
-  そうでなければ `acquire`。
+- **取り直しの手段**: `refresh` が無ければ `acquire`。`refresh` があれば、`refreshToken` が無いとき（Refresh Token を
+  使わない更新の方式）と、`refreshToken` があってその期限内（期限が無ければ使えるものとして扱う）のときは `refresh`、
+  `refreshToken` の期限が切れていれば `acquire`。
 - **同時呼び出しの 1 本化**: 取り直し中の呼び出しは、同じ取り直しの結果を待つ。
 - **失敗**: `acquire` / `refresh` の失敗はそのまま届ける（繰り返さない）。同期で throw しても reject で届く
-  （Promise を返す公開メソッドは同期で throw しない、の約束）。`accessToken` が空・文字列でないときは
+  （Promise を返す公開メソッドは同期で throw しない、の約束）。`accessToken.token` が空・文字列でないときは
   `PortersConfigError`（送る前に分かる誤りは送らない）。
 
 ### 論点2: 案2a の帰結（無くす入口と移行）
@@ -164,7 +164,7 @@ type TokenProvider = {
   - 構築オプション `auth` は無くす。型では `auth?: never` で弾き、JavaScript から渡されたら構築時に
     `PortersConfigError`（`hint` で `tokenProvider` を示す）。0.21.0 のコンストラクタの `fields` と同じ扱い。
   - `tokenProvider` に古い形（`getAccessToken` だけを持ち `acquire` が無い）を渡したら、構築時に `PortersConfigError`。
-  - 移行は短い: `auth: { getAccessToken: async () => t() }` → `tokenProvider: { acquire: async () => ({ accessToken: await t() }) }`。
+  - 移行は短い: `auth: { getAccessToken: async () => t() }` → `tokenProvider: { acquire: async () => ({ accessToken: { token: await t() } }) }`。
 - 「丸ごと自前」でしか使わなかった `GetAccessTokenOptions`（`forceRefresh`）は公開 API から外す。
 
 ### `porters.auth` の 6 メソッド
@@ -191,7 +191,10 @@ type TokenProvider = {
 - **案3a**: 発行側が更新の手段（Refresh Token や更新用の API）を持っていれば、取り直しより軽い更新を使える。
   `exchange` があれば、`appSecret` を持たないアプリでも権限付与の流れ（`exchangeAuthorizationCode`）を使える。
   持っていなければ省略できる。
-- **案4a**: 受け取るだけの場面では、期限や Refresh Token が無いことがある。案4b では埋め草の値を書かせることになる。
+- **案4a**: 値と期限が必ず組になり、「Refresh Token は無いのに、その期限だけはある」組み合わせを型で作れない。
+  Refresh Token を持っているかは `refreshToken` の有無 1 か所で分かる。受け取るだけの場面は
+  `{ accessToken: { token } }` で書ける。案4b は 2 つの項目がばらばらに欠けうる。案4c は持っていない値の埋め草を
+  書かせ、埋め草の期限（`0` など）で「更新できない」と判断されうる。
   既定の取得は、これまでどおりすべてを埋めて保存する。
 - **案5a**: 「取ってくる関数を渡し、キャッシュと期限切れ前の取り直しは SDK が受け持つ」形は、AWS SDK for JavaScript の
   credential provider と同じで、JavaScript の利用者になじみがある。`porters.auth` と名前が重ならなくなる。
@@ -204,8 +207,11 @@ type TokenProvider = {
 - Good: 管理の部分が 1 か所に集まり、既定の取得と渡した取得で同じテストが効く。
 - Bad: **破壊的変更**。`auth` オプションと、`getAccessToken` の形の `TokenProvider` を使っているコードは書き換えが要る
   （0.x の minor で出し、CHANGELOG に移行を書く）。「丸ごと自前」でしかできなかったことはできなくなる。
-- Bad: `StoredTokens` の 3 つの項目が任意になる。自前の `tokenStore` の中でこれらを必須の値として扱っているコードは
-  型のエラーになりうる（保存先はトークンを丸ごと JSON にするだけのことが多く、影響は小さい見込み）。
+- Bad: `StoredTokens` の形が変わる（平たい 4 項目 → `accessToken` と `refreshToken` の入れ子）。自前の `tokenStore` は
+  型を合わせる必要がある（保存先はトークンを丸ごと JSON にするだけのことが多く、書き換えはほとんど要らない見込み）。
+- Bad: 0.23.0 までの既定の方式が `tokenStore` に保存したデータは平たい形のまま残る。上げた直後に読むと形が合わないので、
+  「読めない値は無いものとして取り直す」（下の「信じている入力」）により、**最初の 1 回だけ `code_direct` で取り直す**
+  （権限付与が生きていれば人手は要らない）。古い形を読み替える変換は書かない。CHANGELOG に書く。
 - Bad: このリポジトリのテストとガイドの多くが `auth: { getAccessToken: … }` で認証を省いているので、実装の PR が大きくなる
   （機械的に書き換えられる）。
 - Neutral: 期限不明のトークンは、401 / 402 を受けたときの 1 回の取り直しで回復する。発行側が取り消したトークンを
@@ -216,7 +222,7 @@ type TokenProvider = {
 | 値                                    | 出どころ                             | 誰が書けるか   | 守り方                                                                  | 取れなかったら       | 誤っていたら                                                       |
 | ------------------------------------- | ------------------------------------ | -------------- | ----------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------ |
 | `acquire` / `refresh` の Access Token | 利用者の関数（別のサービス）         | 利用者・発行側 | 空・文字列でなければ `PortersConfigError`                               | 失敗をそのまま届ける | PORTERS が 401 / 402 → 1 回だけ取り直し、それでも駄目ならエラー    |
-| 期限（`…ExpiresAt`・任意）            | 利用者の関数（別のサービス）         | 利用者・発行側 | 有限の数値でなければ「期限不明」として扱う                              | 期限不明として扱う   | 早すぎれば無駄に取り直すだけ。遅すぎれば 401 を受けて 1 回取り直す |
+| 期限（`expiresAt`・任意）             | 利用者の関数（別のサービス）         | 利用者・発行側 | 有限の数値でなければ「期限不明」として扱う                              | 期限不明として扱う   | 早すぎれば無駄に取り直すだけ。遅すぎれば 401 を受けて 1 回取り直す |
 | `tokenStore` から読んだトークン       | 利用者の保存先（他のプロセスも書く） | 利用者         | 読んだ値も上の 2 行と同じ検査を通す。読めない値は「無い」として取り直す | 取り直す             | 取り消されたトークンなら 401 を受けて 1 回取り直す                 |
 
 期限を信用しすぎないのが要点で、期限が誤っていても、失効の応答を受けたときの取り直しで回復する。
@@ -229,7 +235,8 @@ type TokenProvider = {
 - 案2a — Good: 入口が 2 つに収まる。Bad: 破壊的。丸ごと自前でしかできないことが無くなる。
 - 案2b / 案2c — Good: 逃げ道が残る。Bad: 渡した形で `tokenStore` や `clearTokens` の動きが変わる。
 - 案3a — Good: 更新と `code` の交換の手段があれば使え、無ければ省ける。案3b — Bad: 軽い更新を使えない。案3c — Bad: 受け取るだけの場面で書けない。
-- 案4a — Good: 受け取るだけの場面で自然に書ける。Bad: 自前の `tokenStore` の型に影響しうる。案4b — Bad: 埋め草の値を書かせる。
+- 案4a — Good: 値と期限が組になり、ありえない組み合わせを作れない。Bad: 形が大きく変わり、保存済みのデータは上げた直後に 1 回取り直す。
+- 案4b — Good: 形の変わり方が小さい。Bad: 項目がばらばらに欠けうる。案4c — Bad: 埋め草の値を書かせ、ライブラリの判断がそれに引きずられる。
 - 案5a — Good: なじみがあり、`porters.auth` と重ならない。Bad: 型の名前 `TokenProvider` が違う形で残る（古い形は構築時に止める）。
 - 案5b — Good: `tokenStore` と語呂が合う。Bad: JavaScript ではなじみが薄い。案5c — Bad: `porters.auth` と紛らわしいまま。
 
