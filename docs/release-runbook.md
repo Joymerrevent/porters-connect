@@ -102,7 +102,18 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.22.0**（npm latest・`v0.22.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.23.0**（npm latest・`v0.23.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1037.5 kB**・2026-09-24）。**累計 31 版**（うち **0.2.0 以降の 29 版**がこの半自動フロー）。
+  changeset **2 枚**（minor 2）を消費した minor リリースで、カスタム項目を宣言で `create` の必須にする
+  （[#388][pr388]・[ADR-0089][adr89]）と、利用者の TypeScript の下限を 5.4 にする（[#392][pr392]・[ADR-0090][adr90]）。
+  **5.4 より前の TypeScript の利用者には破壊的**（CHANGELOG の Changed に明記）。
+  - **同梱ファイルが 8 → 10**（`dist/requires-newer-typescript.d.ts` と `.d.cts`。5.4 より前の TypeScript の向け先）。
+    **unpacked は 955.9 → 1037.5 kB（+81.6 kB）**で、うち 57.7 kB がこの 2 ファイル（各 28.9 kB）。
+  - 手順の面では、**リリース PR で stryker が skip された最初の版**（[#385][pr385]）。判定は「develop との違いは
+    文書と version だけ」で、stryker は 7 秒（前版は約 11 分）。リリース PR [#393][pr393]（merge commit）→
+    Tag ワークフロー green → `gh release create`（notes は CHANGELOG の該当節・参照スタイルのリンクを絶対 URL に
+    解決）→ Release ワークフロー green → `npm view` で 0.23.0 を確認。back-merge は [#394][pr394]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.22.0**（npm latest・`v0.22.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **8 files / 955.9 kB**・2026-09-23）。**累計 30 版**（うち **0.2.0 以降の 28 版**がこの半自動フロー）。
   changeset **2 枚**（minor 1・patch 1）を消費した minor リリースで、数値でない文字列を `Number` として読まず
   `validation` で止める修正（[#372][pr372]）、単件の `create` / `update` を reject に揃える修正（[#379][pr379]）、
@@ -342,3 +353,10 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr379]: https://github.com/Joymerrevent/porters-connect/pull/379
 [pr381]: https://github.com/Joymerrevent/porters-connect/pull/381
 [pr382]: https://github.com/Joymerrevent/porters-connect/pull/382
+[pr385]: https://github.com/Joymerrevent/porters-connect/pull/385
+[pr388]: https://github.com/Joymerrevent/porters-connect/pull/388
+[pr392]: https://github.com/Joymerrevent/porters-connect/pull/392
+[pr393]: https://github.com/Joymerrevent/porters-connect/pull/393
+[pr394]: https://github.com/Joymerrevent/porters-connect/pull/394
+[adr89]: adr/0089-custom-field-required-on-create.md
+[adr90]: adr/0090-typescript-floor.md
