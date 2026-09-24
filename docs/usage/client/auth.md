@@ -10,17 +10,17 @@
 
 <!-- 根拠: ADR-0007 SD-3 / SD-6（公開メソッドの範囲）・ADR-0034（詳細設計） -->
 
-このアクセサで呼べるメソッドと、使い方の例です。`auth` オプションに独自の `TokenProvider` を渡している場合は、
-ライブラリが代行できない 4 つが `PortersConfigError` になります（右の列）。
+このアクセサで呼べるメソッドと、使い方の例です。`tokenProvider` を渡していても、6 つとも動きます
+（`exchangeAuthorizationCode` だけは、`tokenProvider` に `exchange` が要ります）。
 
-| メソッド                          | 戻り値            | 何をするか                                                                          | 独自 `TokenProvider` のとき |
-| --------------------------------- | ----------------- | ----------------------------------------------------------------------------------- | --------------------------- |
-| `authorizationUrl(options)`       | `string`          | 初回の権限付与のためにブラウザで開く URL を作る                                     | `PortersConfigError`        |
-| `exchangeAuthorizationCode(code)` | `Promise<void>`   | リダイレクトで戻ってきた `code` をトークンに交換し、ライブラリの中に保存する        | `PortersConfigError`        |
-| `ensureAuthenticated()`           | `Promise<void>`   | いまトークンを取りに行く。起動時に設定の不備を見つけるために使う                    | ○（`TokenProvider` に委譲） |
-| `getToken()`                      | `Promise<string>` | 有効な Access Token を返す（デバッグ用）。Refresh Token は返さない                  | ○（`TokenProvider` に委譲） |
-| `revokeUrl(options)`              | `string`          | 権限を削除するためにブラウザで開く URL を作る                                       | `PortersConfigError`        |
-| `clearTokens()`                   | `Promise<void>`   | ライブラリが持つトークン（キャッシュと `tokenStore`）を消す。PORTERS 側の権限は残る | `PortersConfigError`        |
+| メソッド                          | 戻り値            | 何をするか                                                                                   |
+| --------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| `authorizationUrl(options)`       | `string`          | 初回の権限付与のためにブラウザで開く URL を作る（`appId` が要る）                            |
+| `exchangeAuthorizationCode(code)` | `Promise<void>`   | リダイレクトで戻ってきた `code` をトークンに交換し、ライブラリの中と `tokenStore` に保存する |
+| `ensureAuthenticated()`           | `Promise<void>`   | いまトークンを取りに行く。起動時に設定の不備を見つけるために使う                             |
+| `getToken()`                      | `Promise<string>` | 有効な Access Token を返す（デバッグ用）。Refresh Token は返さない                           |
+| `revokeUrl(options)`              | `string`          | 権限を削除するためにブラウザで開く URL を作る（`appId` が要る）                              |
+| `clearTokens()`                   | `Promise<void>`   | ライブラリが持つトークン（キャッシュと `tokenStore`）を消す。PORTERS 側の権限は残る          |
 
 ```ts
 // 初回の権限付与: URL を人がブラウザで開いて承諾し、戻ってきた ?code= を 30 秒以内に交換する
@@ -43,6 +43,7 @@ await porters.auth.ensureAuthenticated();
 - **`scopes` を省略すると、クライアントに渡した `scopes` を使います。** どちらも空なら `PortersConfigError` です。
 - **`state` はリダイレクトにそのまま引き継がれます。** CSRF 対策などに使えます。
 - **`exchangeAuthorizationCode` は値を返しません。** 取得したトークンはライブラリの中（と `tokenStore`）に保存され、以降のリソース呼び出しが自動で使います。
+- **`tokenProvider` を渡しているときの `exchangeAuthorizationCode`** は、`tokenProvider.exchange(code)` で交換します。`exchange` が無ければ `PortersConfigError` です（[認証とトークン][auth]の「トークンの取り方を差し替える」）。
 - **`clearTokens` は手元のトークンを消すだけです。** PORTERS 側の権限を消すには `revokeUrl` の URL をブラウザで開いて承諾する必要があります。
 - **`current()` で「いま誰か」を確かめるのは [User][r-user] です。** 既定の方式ではアプリ自身の User が返ります。
 
@@ -50,20 +51,20 @@ await porters.auth.ensureAuthenticated();
 
 このページで出てくる型と役割です。正確な定義は各リンク先（[公開 API リファレンス][api]）にあります。
 
-| 型                                                                                      | 役割                                                                                                  |
-| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| [`AuthApi`][t-AuthApi]                                                                  | `porters.auth` の型                                                                                   |
-| [`AuthorizationUrlOptions`][t-AuthorizationUrlOptions]                                  | `authorizationUrl` の引数（`redirectUrl` / `scopes` / `state`）                                       |
-| [`RevokeUrlOptions`][t-RevokeUrlOptions]                                                | `revokeUrl` の引数（`authorizationUrl` と同じかたち）                                                 |
-| [`Scope`][t-Scope]                                                                      | `scopes` に渡すスコープ名                                                                             |
-| [`TokenProvider`][t-TokenProvider] / [`GetAccessTokenOptions`][t-GetAccessTokenOptions] | 自前でトークンを管理するときに `auth` オプションへ渡す型と、`getAccessToken` の引数（`forceRefresh`） |
-| [`TokenStore`][t-TokenStore] / [`StoredTokens`][t-StoredTokens]                         | `tokenStore` オプションに渡す保存先と、保存されるトークンのかたち                                     |
-| [`PortersAuthError`][t-PortersAuthError]                                                | 認証の失敗として届く例外（[エラーと再試行][errors]）                                                  |
+| 型                                                                  | 役割                                                                                                  |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| [`AuthApi`][t-AuthApi]                                              | `porters.auth` の型                                                                                   |
+| [`AuthorizationUrlOptions`][t-AuthorizationUrlOptions]              | `authorizationUrl` の引数（`redirectUrl` / `scopes` / `state`）                                       |
+| [`RevokeUrlOptions`][t-RevokeUrlOptions]                            | `revokeUrl` の引数（`authorizationUrl` と同じかたち）                                                 |
+| [`Scope`][t-Scope]                                                  | `scopes` に渡すスコープ名                                                                             |
+| [`TokenProvider`][t-TokenProvider] / [`IssuedToken`][t-IssuedToken] | `tokenProvider` オプションに渡す取り方（`acquire` / `refresh` / `exchange`）と、トークン 1 つのかたち |
+| [`TokenStore`][t-TokenStore] / [`StoredTokens`][t-StoredTokens]     | `tokenStore` オプションに渡す保存先と、保存されるトークンのかたち                                     |
+| [`PortersAuthError`][t-PortersAuthError]                            | 認証の失敗として届く例外（[エラーと再試行][errors]）                                                  |
 
 ## 関連
 
-- 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・自前で管理するとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
-- クライアント: [PortersClient][cl-client]（`appId` / `appSecret` / `scopes` / `tokenStore` / `auth` のオプション）／[tenant(id)][cl-tenant]
+- 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・取り方を差し替えるとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
+- クライアント: [PortersClient][cl-client]（`appId` / `appSecret` / `scopes` / `tokenStore` / `tokenProvider` のオプション）／[tenant(id)][cl-tenant]
 - ほかの目的から探す: [目次][index]
 
 [index]: ../index.md
@@ -77,7 +78,7 @@ await porters.auth.ensureAuthenticated();
 [t-RevokeUrlOptions]: ../api/type-aliases/RevokeUrlOptions.md
 [t-Scope]: ../api/type-aliases/Scope.md
 [t-TokenProvider]: ../api/type-aliases/TokenProvider.md
-[t-GetAccessTokenOptions]: ../api/type-aliases/GetAccessTokenOptions.md
+[t-IssuedToken]: ../api/type-aliases/IssuedToken.md
 [t-TokenStore]: ../api/type-aliases/TokenStore.md
 [t-StoredTokens]: ../api/type-aliases/StoredTokens.md
 [t-PortersAuthError]: ../api/classes/PortersAuthError.md

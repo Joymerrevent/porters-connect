@@ -5,7 +5,7 @@
 // The response is read through both error channels — HTTP status and PORTERS
 // envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
-import type { TokenProvider } from "../auth/types";
+import type { AccessTokenSource } from "../auth/types";
 import {
   PortersConfigError,
   PortersError,
@@ -46,7 +46,7 @@ const withAuth = (
 
 export type RequesterOptions = {
   transport: Transport;
-  auth: TokenProvider;
+  auth: AccessTokenSource;
   throttle: Throttle;
   backoff: Backoff;
   maxRetries?: number;

@@ -59,10 +59,15 @@ export const exchangeToken = async (
       category: "auth",
     });
   }
+  // 欠けた ExpiresIn は 0（＝すぐ期限切れ扱い）のまま。PORTERS は常に返すので、欠けたら取り直す側に倒す。
   return {
-    accessToken: a.accessToken,
-    refreshToken: a.refreshToken,
-    accessTokenExpiresAt: deps.now() + (a.accessTokenExpiresIn ?? 0),
-    refreshTokenExpiresAt: deps.now() + (a.refreshTokenExpiresIn ?? 0),
+    accessToken: {
+      token: a.accessToken,
+      expiresAt: deps.now() + (a.accessTokenExpiresIn ?? 0),
+    },
+    refreshToken: {
+      token: a.refreshToken,
+      expiresAt: deps.now() + (a.refreshTokenExpiresIn ?? 0),
+    },
   };
 };

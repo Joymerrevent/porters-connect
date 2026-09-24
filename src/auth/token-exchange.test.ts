@@ -83,10 +83,8 @@ describe("exchangeToken — POST /v1/token", () => {
     const { deps } = setup(ok());
     const tokens = await exchangeToken(deps, "oauth_code", "CODE123");
     expect(tokens).toEqual({
-      accessToken: "ACCESS1",
-      refreshToken: "REF1",
-      accessTokenExpiresAt: NOW + ACCESS_EXPIRES_IN,
-      refreshTokenExpiresAt: NOW + REFRESH_EXPIRES_IN,
+      accessToken: { token: "ACCESS1", expiresAt: NOW + ACCESS_EXPIRES_IN },
+      refreshToken: { token: "REF1", expiresAt: NOW + REFRESH_EXPIRES_IN },
     });
   });
 
@@ -98,8 +96,8 @@ describe("exchangeToken — POST /v1/token", () => {
       ),
     );
     const tokens = await exchangeToken(deps, "oauth_code", "CODE123");
-    expect(tokens.accessTokenExpiresAt).toBe(NOW);
-    expect(tokens.refreshTokenExpiresAt).toBe(NOW);
+    expect(tokens.accessToken.expiresAt).toBe(NOW);
+    expect(tokens.refreshToken?.expiresAt).toBe(NOW);
   });
 
   it("rejects an envelope without an access token", async () => {

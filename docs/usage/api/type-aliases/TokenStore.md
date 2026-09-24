@@ -8,10 +8,10 @@
 
 > **TokenStore** = `object`
 
-Defined in: [src/auth/types.ts:27](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L27)
+Defined in: [src/auth/types.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L49)
 
 Pluggable token persistence (default: in-memory). Async so it can back onto
-redis / DB / file for multi-instance server use.
+redis / DB / file for multi-instance server use. Used with every token provider.
 
 ## Methods
 
@@ -19,7 +19,7 @@ redis / DB / file for multi-instance server use.
 
 > **clear**(): `Promise`\<`void`\>
 
-Defined in: [src/auth/types.ts:30](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L30)
+Defined in: [src/auth/types.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L52)
 
 #### Returns
 
@@ -31,7 +31,7 @@ Defined in: [src/auth/types.ts:30](https://github.com/Joymerrevent/porters-conne
 
 > **get**(): `Promise`\<[`StoredTokens`](StoredTokens.md) \| `undefined`\>
 
-Defined in: [src/auth/types.ts:28](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L28)
+Defined in: [src/auth/types.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L50)
 
 #### Returns
 
@@ -43,7 +43,7 @@ Defined in: [src/auth/types.ts:28](https://github.com/Joymerrevent/porters-conne
 
 > **set**(`tokens`): `Promise`\<`void`\>
 
-Defined in: [src/auth/types.ts:29](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L29)
+Defined in: [src/auth/types.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/types.ts#L51)
 
 #### Parameters
 

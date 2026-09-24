@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { TokenProvider } from "../auth/types";
+import type { AccessTokenSource } from "../auth/types";
 import {
   PortersConfigError,
   PortersNetworkError,
@@ -13,7 +13,7 @@ import type { Transport, TransportRequest } from "./types";
 const noThrottle: Throttle = { take: () => Promise.resolve() };
 const noBackoff = (): number => 0;
 
-const mockAuth = (calls: { force: boolean }[]): TokenProvider => ({
+const mockAuth = (calls: { force: boolean }[]): AccessTokenSource => ({
   getAccessToken: (o) => {
     calls.push({ force: o?.forceRefresh ?? false });
     return Promise.resolve("TKN");
@@ -150,7 +150,7 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
   it("retries create after a token fetch failure (the request never left)", async () => {
     let tokens = 0;
     let sends = 0;
-    const auth: TokenProvider = {
+    const auth: AccessTokenSource = {
       getAccessToken: () => {
         tokens += 1;
         return tokens === 1

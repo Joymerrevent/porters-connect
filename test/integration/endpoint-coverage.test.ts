@@ -755,7 +755,10 @@ describe("V1 マトリクス: 表 F ↔ 実装（Authentication API）", () => {
         Promise.resolve(
           issued === undefined
             ? undefined
-            : { ...issued, accessTokenExpiresAt: 0 },
+            : {
+                ...issued,
+                accessToken: { ...issued.accessToken, expiresAt: 0 },
+              },
         ),
       set: () => Promise.resolve(),
       clear: () => Promise.resolve(),
