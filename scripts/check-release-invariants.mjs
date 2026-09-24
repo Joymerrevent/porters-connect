@@ -5,11 +5,15 @@
 //       — (2) は base=main の PR（リリース PR）でのみ検査（ADR-0032・back-merge ラグの誤検知回避）
 // あわせて **CI の Node マトリクスが engines の下限を実際に走らせているか**も見る（RV-53）。
 // さらに **CHANGELOG が名指しした設計 ADR が「実装」（世に出た版）を持っているか**も見る（RV-56）。
+// **利用者の TypeScript の下限**が `exports` の `types@<X`・`typesVersions`・README・導入のページで
+// 揃っているかも見る（ADR-0090 案2a。下限の値は `exports` の条件が正）。
 // CI 必須チェックに組み込み、リリース PR で文書更新漏れ・版番号ミスを構造的に防ぐ。
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { argv } from "node:process";
 import { fileURLToPath } from "node:url";
+
+import { floorOf } from "./emit-too-old-types.mjs";
 
 // semver 形式（prerelease は現状未使用。将来使うならここを拡張する・ADR-0031）。
 const SEMVER_RE = /^\d+\.\d+\.\d+$/;
@@ -255,6 +259,49 @@ export const checkRelease = ({
   return errors;
 };
 
+// 文書に書いた「TypeScript X 以上」の X。README は `TypeScript 5.4 以上`、導入のページは
+// `TypeScript で使うなら **5.4 以上**` と書くので、間に語や強調が挟まる形も拾う。
+const TS_FLOOR_IN_DOC_RE = /TypeScript[^\n。]*?(\d+\.\d+) 以上/g;
+
+/**
+ * 利用者の TypeScript の下限が 1 つの値に揃っているか（ADR-0090 案2a）。
+ * 正は `exports` の `types@<X`。`typesVersions` の `<X`（`moduleResolution: node` の向け先）と、
+ * README・導入のページの「TypeScript X 以上」を突き合わせる。下限を上げたとき、片方だけ直す事故を防ぐ。
+ */
+export const checkTypeScriptFloor = ({ pkg, readme, install }) => {
+  let floor;
+  try {
+    ({ floor } = floorOf(pkg));
+  } catch (error) {
+    return [
+      `TypeScript の下限を package.json から読めません: ${error.message}`,
+    ];
+  }
+  const errors = [];
+  const tv = Object.keys(pkg.typesVersions ?? {});
+  if (!tv.includes(`<${floor}`) || tv.length !== 1) {
+    errors.push(
+      `package.json の typesVersions が "<${floor}" の 1 つだけになっていません（${JSON.stringify(tv)}）。` +
+        `exports の types@<${floor} と同じ下限にしてください（moduleResolution: node の利用者の向け先）。`,
+    );
+  }
+  for (const [name, text] of [
+    ["README.md", readme],
+    ["docs/usage/start/install.md", install],
+  ]) {
+    const found = [...text.matchAll(TS_FLOOR_IN_DOC_RE)].map((m) => m[1]);
+    if (found.length === 0) {
+      errors.push(`${name} に「TypeScript ${floor} 以上」がありません。`);
+    }
+    for (const v of found.filter((v) => v !== floor)) {
+      errors.push(
+        `${name} の「TypeScript ${v} 以上」が、exports の下限 ${floor} と違います。`,
+      );
+    }
+  }
+  return errors;
+};
+
 // git タグ一覧を取得（impure）。git が無い等で失敗したら [] を返し baseline=0.0.0 で素通り（フェイルセーフ）。
 const readTags = () => {
   try {
@@ -283,7 +330,13 @@ const main = () => {
     adrIndex: read("docs/adr/index.md"),
     baseline,
     releaseContext,
-  });
+  }).concat(
+    checkTypeScriptFloor({
+      pkg,
+      readme: read("README.md"),
+      install: read("docs/usage/start/install.md"),
+    }),
+  );
 
   if (errors.length > 0) {
     console.error("✖ リリース不変条件チェック失敗:");

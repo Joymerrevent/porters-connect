@@ -152,6 +152,14 @@ jobs:
         if: steps.changes.outputs.code == 'true'
         run: pnpm check:cjs
 
+      # 利用者の TypeScript の下限を**実際の版で**確かめる（ADR-0090）。下限の系で最も古い安定版と
+      # 開発で使う版で利用者のコードが通り、下限より前の版では「requires TypeScript X or later」で
+      # 止まることを、4 つの解決方式で見る。README に下限を書くだけでは約束にならない（RV-53 と同じ考え）。
+      # 古い TypeScript は pnpm dlx で npm レジストリから取るので、ネットワークが要る。
+      - name: Check TypeScript floor (floor / dev / below-floor message)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm check:ts-floor
+
       # 公開する型定義 dist/index.d.ts の JSDoc が規約（英語・保守者向けの識別子を書かない）を
       # 守っているか。check:api が見る TypeDoc 生成物には **export されていない型の JSDoc が
       # 出ない**（`Resource` の各メソッドなど 43 ブロック）が、d.ts には載って IDE のホバーに

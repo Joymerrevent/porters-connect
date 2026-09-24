@@ -37,10 +37,12 @@
   "exports": {
     ".": {
       "import": {
+        "types@<5.4": "./dist/requires-newer-typescript.d.ts",
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       },
       "require": {
+        "types@<5.4": "./dist/requires-newer-typescript.d.cts",
         "types": "./dist/index.d.cts",
         "default": "./dist/index.js"
       }
@@ -65,7 +67,7 @@
     "format:md": "prettier --write \"**/*.md\"",
     "format:md:check": "prettier --check \"**/*.md\"",
     "typecheck": "tsc --noEmit && tsc -p test",
-    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node22 && node scripts/emit-cts-types.mjs",
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean --target node22 && node scripts/emit-cts-types.mjs && node scripts/emit-too-old-types.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -78,6 +80,7 @@
     "check": "pnpm run \"/^check:(?!publish$|cjs$|dts$)[^:]+$/\"",
     "check:publish": "publint && attw --pack --ignore-rules cjs-resolves-to-esm false-cjs",
     "check:cjs": "node scripts/check-cjs-entry.mjs",
+    "check:ts-floor": "node scripts/check-typescript-floor.mjs",
     "check:dts": "node scripts/check-dts-comments.mjs",
     "check:release": "node scripts/check-release-invariants.mjs",
     "check:index": "node scripts/check-doc-index.mjs",
@@ -133,6 +136,13 @@
       "qs": ">=6.16.0",
       "brace-expansion": ">=5.0.9",
       "smol-toml": ">=1.7.1"
+    }
+  },
+  "typesVersions": {
+    "<5.4": {
+      "*": [
+        "dist/requires-newer-typescript.d.ts"
+      ]
     }
   }
 }

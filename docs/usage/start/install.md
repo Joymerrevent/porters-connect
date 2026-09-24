@@ -20,8 +20,8 @@ npm i @joymerrevent/porters-connect
 `@types` は要りません。
 
 TypeScript で使うなら **5.4 以上**にしてください。同梱の型定義が 5.4 で入った型（`NoInfer`）を使っているためです。
-5.4 より前では、カスタム項目の宣言で `{ required: true }` を付けていない項目まで `create` の必須になります。
-`skipLibCheck: true` の設定ではエラーも出ないので、原因に気づきにくくなります。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
+5.4 より前の TypeScript では、このパッケージから `import` したものを使った行が、
+`requires TypeScript 5.4 or later` という文言を含む型エラーになります。そのときは TypeScript を上げてください。GAS（Google Apps Script）や Cloudflare Workers については PORTERS 側が
 「期待どおり応答しないことがある」としており（[運用上の落とし穴][gotchas]）、動作を保証する対象にしていません。
 
 ### CJS から `require` する
