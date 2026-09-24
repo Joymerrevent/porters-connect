@@ -90,6 +90,20 @@
   （`const token = await porters.auth.getToken()` → `const { token } = await porters.auth.getToken()`）。
 - Neutral: Refresh Token の扱いは変わらない。
 
+### 追記（accepted 後 2026-09-24）: Refresh Token を取り出すメソッドは足さない
+
+accept の後、decider と「Refresh Token を取り出すメソッドも一緒に足すか」を検討し、**足さない**と決めた。
+
+- **Refresh Token は使うたびに入れ替わる**。PORTERS の Token の記事では、refresh の応答に新しい Refresh Token が入る。
+  中央のサービスが各アプリへ配ると、誰かが refresh した時点でほかの全員の手元の Refresh Token が無効（認証 `107`）になり、
+  取り合いになる。
+- **受け取った側では使えない**。refresh には App ID と App Secret も要る。中央のサービスの構成ではアプリは App Secret を
+  持たないので、Refresh Token だけ渡しても自分では更新できない。アプリの更新は `tokenProvider` の `acquire`（または
+  `refresh`）で中央に頼めば足り、中央は `getToken()` で期限の近いトークンを取り直して返す。
+- **秘密が外へ出る口が増える**。Access Token と期限で足りる構成で、より長く効く値まで取り出せるようにすると、
+  ログや応答に漏れる経路が 1 つ増える（[ADR-0034][adr34] SD-6 の「Refresh Token は返さない」と同じ理由）。
+- 移行や調べもので Refresh Token が要るときは、利用者が持つ `tokenStore` から `StoredTokens` を読めば足りる。
+
 ## 信じている入力
 
 | 値               | 出どころ                          | 誰が書けるか | 守り方                                                     | 誤っていたら                                                         |
