@@ -266,6 +266,17 @@ describe("変換できない値（RV-36）", () => {
     expect(() => enc("Date", "2026/09/09")).toThrow(PortersConfigError);
   });
 
+  it("DateTime はゾーンの無い値・日付だけの値を弾き、hint でゾーンが要ると伝える", () => {
+    expect(() => enc("DateTime", "2026/09/10")).toThrow(PortersConfigError);
+    expect(() => enc("DateTime", "2026-09-10")).toThrow(PortersConfigError);
+    try {
+      enc("DateTime", "2026-09-10T12:00:00", "P_PhaseDate");
+      expect.unreachable();
+    } catch (e) {
+      expect((e as PortersConfigError).hint).toContain("a time and a zone");
+    }
+  });
+
   it("DateTime / Age も同じ経路", () => {
     expect(() => enc("DateTime", "nope")).toThrow(PortersConfigError);
     expect(() => enc("Age", "nope")).toThrow(PortersConfigError);
