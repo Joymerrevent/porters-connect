@@ -457,6 +457,91 @@ describe("createDefaultTokenProvider — acquire / refresh / exchange", () => {
     expect(oauthCalls(calls)).toHaveLength(1);
   });
 
+  // PORTERS が Refresh Token を拒否したら code_direct からやり直す（ADR-0036）。手元の期限だけで
+  // 判断していたときは、期限より前に拒否されると同じ refresh を繰り返して止まっていた。
+  const refreshAnswers = (status: number, body: string): MockTransport => {
+    const calls: TransportRequest[] = [];
+    const transport: Transport = {
+      send: (req) => {
+        calls.push(req);
+        if (req.url.includes("/v1/oauth"))
+          return Promise.resolve({ status: 200, body: CODE_DIRECT_XML });
+        if (req.body?.includes("grant_type=refresh_token"))
+          return Promise.resolve({ status, body });
+        return Promise.resolve({ status: 200, body: tokenXml("ACCESS1") });
+      },
+    };
+    return { transport, calls };
+  };
+  const authErrorXml = (code: number): string =>
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Authentication><Error>${code}</Error><Message>rejected</Message></Authentication>`;
+  const withRefresh: StoredTokens = {
+    accessToken: { token: "OLD_A" },
+    refreshToken: { token: "OLD_R" },
+  };
+
+  it.each([
+    [401, "期限切れ"],
+    [107, "無効（別のプロセスが先に更新した）"],
+  ])(
+    "refresh rejected with auth %i (%s) starts over with code_direct",
+    async (code) => {
+      const { transport, calls } = refreshAnswers(200, authErrorXml(code));
+      const p = createDefaultTokenProvider(opts(transport, () => 1000));
+      const tokens = await p.refresh(withRefresh);
+      expect(tokens.accessToken.token).toBe("ACCESS1");
+      expect(tokenCalls(calls)[0]?.body).toContain("grant_type=refresh_token");
+      expect(oauthCalls(calls)).toHaveLength(1);
+    },
+  );
+
+  it("other refresh failures are not retried with code_direct", async () => {
+    // 資格情報の誤り（105）は code_direct でも直らない。
+    const secret = refreshAnswers(200, authErrorXml(105));
+    await expect(
+      createDefaultTokenProvider(opts(secret.transport, () => 1000)).refresh(
+        withRefresh,
+      ),
+    ).rejects.toMatchObject({ name: "PortersAuthError", code: 105 });
+    expect(oauthCalls(secret.calls)).toHaveLength(0);
+
+    // PORTERS の応答でない 401（code: null）は、Refresh Token の拒否と読めない。
+    const gateway = refreshAnswers(401, "<html>Unauthorized</html>");
+    await expect(
+      createDefaultTokenProvider(opts(gateway.transport, () => 1000)).refresh(
+        withRefresh,
+      ),
+    ).rejects.toMatchObject({ name: "PortersAuthError", code: null });
+    expect(oauthCalls(gateway.calls)).toHaveLength(0);
+
+    // 接続の失敗は再試行の側に任せる。
+    const down = refreshAnswers(503, "<html>down</html>");
+    await expect(
+      createDefaultTokenProvider(opts(down.transport, () => 1000)).refresh(
+        withRefresh,
+      ),
+    ).rejects.toMatchObject({ name: "PortersNetworkError" });
+    expect(oauthCalls(down.calls)).toHaveLength(0);
+  });
+
+  it("with the manager, a rejected refresh recovers once and the new tokens are kept", async () => {
+    // 保存先の Refresh Token は手元の期限内なので、manager は refresh を選ぶ。PORTERS がそれを拒否しても、
+    // 1 回の code_direct で回復し、2 回目の呼び出しは何も送らない。
+    const { transport, calls } = refreshAnswers(200, authErrorXml(401));
+    const tokenStore = createMemoryTokenStore();
+    await tokenStore.set({
+      accessToken: { token: "OLD_A", expiresAt: 0 },
+      refreshToken: { token: "OLD_R", expiresAt: 10_000_000 },
+    });
+    const auth = managed({ ...opts(transport, () => 1000), tokenStore });
+    expect(await auth.getAccessToken()).toBe("ACCESS1");
+    expect(await auth.getAccessToken()).toBe("ACCESS1");
+    expect(tokenCalls(calls)).toHaveLength(2); // refresh（拒否）＋ code_direct の交換
+    expect(oauthCalls(calls)).toHaveLength(1);
+    expect((await tokenStore.get())?.refreshToken?.token).toBe("REF1");
+  });
+
   it("stops before sending anything when appId or appSecret is missing", async () => {
     const { transport, calls } = makeTransport();
     const p = createDefaultTokenProvider({

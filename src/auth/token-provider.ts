@@ -14,6 +14,12 @@ import { parseAuthentication } from "../xml/parser";
 import { exchangeToken, type TokenGrantType } from "./token-exchange";
 import type { StoredTokens, TokenProvider } from "./types";
 
+// PORTERS が Refresh Token を受け付けないときの認証エラー: 401 = 期限切れ、107 = 無効（別のプロセスが先に
+// 更新して、手元の Refresh Token が古くなったときもこれになる）。どちらも code_direct からやり直せば回復する
+// （ADR-0036: Refresh Token が失効したら code_direct で取り直し、PortersAuthError は code_direct 自体の失敗だけ）。
+// 手元の期限だけで判断すると、期限より前に拒否されたときに同じ refresh を繰り返して止まる。
+const REFRESH_REJECTED: ReadonlySet<number | null> = new Set([401, 107]);
+
 export type DefaultTokenProviderOptions = {
   accessPoint: AccessPoint;
   /** Needed by every step; missing values fail when a token is first needed, not at construction. */
@@ -81,10 +87,16 @@ export const createDefaultTokenProvider = (
   return {
     acquire,
     // Tokens without a refresh token (read back from a store, say) cannot use the grant: start over.
-    refresh: async (current) =>
-      current.refreshToken === undefined
-        ? acquire()
-        : exchange("refresh_token", current.refreshToken.token),
+    refresh: async (current) => {
+      if (current.refreshToken === undefined) return acquire();
+      try {
+        return await exchange("refresh_token", current.refreshToken.token);
+      } catch (e) {
+        if (e instanceof PortersAuthError && REFRESH_REJECTED.has(e.code))
+          return acquire();
+        throw e;
+      }
+    },
     exchange: async (code) => exchange("oauth_code", code),
   };
 };
