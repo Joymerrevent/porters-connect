@@ -1,6 +1,6 @@
 # 93. `porters.auth.getToken()` は Access Token の期限も返す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -10,6 +10,8 @@
 >
 > [ADR-0034][adr34] SD-6（`getToken(): Promise<string>`・デバッグ用）を**改める**。Refresh Token を返さない決定
 > （SD-6 の後半）は据え置く。
+>
+> **decider が案A を選択し `accepted`（2026-09-24）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -61,7 +63,7 @@
 
 ## Decision Outcome
 
-推奨: **案A**（proposed）。
+採用: **案A**（decider が 2026-09-24 に選択）。
 
 ### 決めること
 
