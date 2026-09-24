@@ -20,6 +20,12 @@
 //   <!-- doccheck: expect-error --> … 型エラーになることを示す例（ならなかったら落とす）
 //   <!-- doccheck: fields -->        … 宣言済みカスタム項目を前提にした例（サンプルのカタログを与える）
 //
+// ファイル名（ブロックの 1 行目に書く。読者にも見える）:
+//   // ファイル: token-store.ts        … そのパスのファイルとして置く。別のブロックが `./token-store` で
+//                                      import でき、実践例の複数ファイルの組み立てをそのまま検査できる。
+//                                      パスは全ドキュメントで 1 つの名前空間なので、同じパスを 2 つの
+//                                      ブロックが名乗ったら落とす（どちらを import したか曖昧になる）。
+//
 // 限界（承知のうえ）:
 //   - `expect-error` は**ブロック単位**なので、意図した型エラーがあるブロックでは
 //     **意図しない別のエラーが隠れる**。行単位にすると目印が本文に散らかるので採らない。
@@ -40,7 +46,7 @@ import {
 } from "node:fs";
 import { globSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 
 // 検査対象。ADR / レビュー台帳 / 生成物は対象外 — 決定の記録や生成物のコードは
 // 「動くこと」を約束していない（README とガイドは約束している）。
@@ -385,8 +391,27 @@ try {
   for (const c of CANARIES) writeFileSync(join(caseDir, c.name), c.code);
 
   // 1 ブロック = 1 モジュール。`export {}` を足して module 扱いにする（ambient を使うため）。
+  // 1 行目に `// ファイル: <パス>` があるブロックは、そのパスに置く（`files/` の下・全ドキュメント共通）。
+  const FILE_MARK = /^\/\/ ファイル: ([\w.-]+(?:\/[\w.-]+)*\.ts)\s*$/;
+  const claimed = new Map();
   const names = checked.map((b, i) => {
-    const name = `case-${String(i).padStart(3, "0")}.ts`;
+    const mark = FILE_MARK.exec(b.code.split("\n")[0] ?? "");
+    const name =
+      mark === null
+        ? `case-${String(i).padStart(3, "0")}.ts`
+        : `files/${mark[1]}`;
+    if (mark !== null) {
+      const other = claimed.get(name);
+      if (other !== undefined) {
+        console.error(
+          `同じファイル名 ${mark[1]} を 2 つのブロックが名乗っています（どちらを import したか曖昧になる）:\n` +
+            `  ${relative(REPO, other.file)}:${String(other.firstLine)}\n  ${relative(REPO, b.file)}:${String(b.firstLine)}`,
+        );
+        process.exit(1);
+      }
+      claimed.set(name, b);
+      mkdirSync(dirname(join(caseDir, name)), { recursive: true });
+    }
     // `fields` の例だけ、宣言済みカスタム項目つきの `t` に差し替える。
     // ブロックが自分で同名を宣言している場合は入れない（再宣言になる）。
     const pre = b.directive?.kinds.has("fields") ? withFieldsFor(b.code) : "";
@@ -396,6 +421,11 @@ try {
     return name;
   });
 
+  // paths は tsconfig からの相対で解決されるので、リポジトリの node_modules への相対に直す。
+  const repoModule = (p) =>
+    relative(caseDir, resolve(REPO, "node_modules", p))
+      .split(sep)
+      .join("/");
   writeFileSync(
     join(caseDir, "tsconfig.json"),
     JSON.stringify(
@@ -422,12 +452,17 @@ try {
                 .split(sep)
                 .join("/"),
             ],
+            // 実践例（トークンを DB に保存する）が使う ORM。例が読者の書く形で import するので、
+            // 開発依存に入れた本物の型へ向ける。ここに無いパッケージを import した例は解決できずに落ちる
+            // （devDependencies を丸ごと見せない＝利用者が持っていないものを使った例は通さない）。
+            "drizzle-orm": [repoModule("drizzle-orm/index.d.ts")],
+            "drizzle-orm/*": [repoModule("drizzle-orm/*")],
           },
           // 例は「使わない変数」を持ちがち（説明のための宣言）。そこは咎めない。
           noUnusedLocals: false,
           noUnusedParameters: false,
         },
-        include: ["*.ts"],
+        include: ["*.ts", "files/**/*.ts"],
       },
       null,
       2,
@@ -448,9 +483,11 @@ try {
   // ケース名 -> エラー行
   const errors = new Map();
   for (const line of raw.split("\n")) {
-    const m = /^(?:.*[/\\])?(case-\d+)\.ts\((\d+),(\d+)\): (.*)$/.exec(line);
+    const m = /^(.*?\.ts)\((\d+),(\d+)\): (.*)$/.exec(line);
     if (!m) continue;
-    const idx = names.indexOf(`${m[1]}.ts`);
+    // tsc の出力のパスは cwd からの相対。caseDir の下の部分（case-NNN.ts / files/…）に直して引く。
+    const rel = m[1].replace(/\\/g, "/").split("/cases/").pop() ?? "";
+    const idx = names.indexOf(rel);
     if (idx < 0) continue;
     (errors.get(idx) ?? errors.set(idx, []).get(idx)).push({
       line: Number(m[2]),
