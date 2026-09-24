@@ -4,7 +4,7 @@
 
 - **アクセサ**: `t.attachment.of("resume")` のように、**どのリソースの添付かを先に指定する**
 - **画面名**: 各レコードの「添付ファイル」
-- **スコープ**: 読み `attachment_r`（＋ 指定したリソースの `_r`）／ 書き `attachment_w`
+- **スコープ**: 読み `attachment_r` ＋ 付け先のリソースの `_r`（PORTERS の一覧では `process_r` / `resume_r` / `candidate_r` / `job_r` / `recruiter_r` / `client_r` も並びます）／ 書き `attachment_w`
 - **項目の接頭辞**: 無し（`id` / `resource` / `resourceId` / `contentType` / `fileName` / `content`）
 
 ## まず、どのリソースの添付かを指定する
@@ -54,7 +54,7 @@ await files.update(900, { fileName: "new.pdf" }); // 差し替え
 - **先に `of()` でリソースを指定します。** 指定した値は作成時の付け先にもなります（上の「まず、どのリソースの添付かを指定する」）。
 - **付け先（`resourceId`）は更新で変えられません。** 間違えたら正しい先に作り直し、間違えたほうは消せません。
 - **一覧は本体（`content`）を返しません。** 本体は `get` で 1 件ずつ取ります。
-- **絞り込めるのは `resourceId` と `id` だけです。** ファイル名や Mime Type では探せません。
+- **`search` で絞り込めるのは `resourceId` だけです。** 1 件は `get(id)` で取ります。ファイル名や Mime Type では探せません。
 - **本体は 10MB までです。** 超えると送信前に `PortersConfigError` で止まります。
 - **一括はありません。** `createMany` / `updateMany` が無く、ファイルは 1 件ずつです。
 
