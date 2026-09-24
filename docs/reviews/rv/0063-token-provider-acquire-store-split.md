@@ -69,7 +69,9 @@ stakeholder の提案（2026-09-23）: 「TokenProvider を組み替えて token
 起票時の推奨は `createTokenProvider({ acquire })` の公開だったが、decider との議論で「取得（`tokenProvider`）と保存
 （`tokenStore`）を `PortersClient` に別々に渡し、管理はクライアントが受け持つ」形に改めた（`auth` オプションと
 `getAccessToken` を丸ごと自前で書く入口は無くす）。(b)(c) のガイドの作業は先にはやらない（stakeholder の判断）。
-(c) の実装例は、ADR-0091 の実装の PR でガイドを書き直すときに直す。decider の判断待ち。
+(c) の実装例は、ADR-0091 の実装の PR でガイドを書き直すときに直す。
+
+**accepted（2026-09-24）。** decider が案1a ＋ 2a ＋ 3a ＋ 4a ＋ 5a を選んだ。実装待ち（状態は open のまま。実装の PR で fixed にする）。
 
 ## 検証
 

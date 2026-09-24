@@ -1,6 +1,6 @@
 # 91. トークンの取得（`tokenProvider`）と保存（`tokenStore`）を別々に受け取り、管理は `PortersClient` が受け持つ
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -11,7 +11,9 @@
 > 議論の経緯: 起票時の推奨は「取得の関数を受け取って `TokenProvider` を返す `createTokenProvider({ acquire })` を
 > 公開する」（既存の入口は変えない）だった。decider との議論で、**取得と保存を `PortersClient` に別々に渡し、
 > 管理は常にクライアントが受け持つ**形に改め、いまの「`getAccessToken` を丸ごと自前で書く」入口は無くすことにした。
-> オプションの名前は `auth` から `tokenProvider` に変える。以下はその形で書き直したもの（decider の判断待ち）。
+> オプションの名前は `auth` から `tokenProvider` に変える。以下はその形で書き直したもの。
+>
+> **decider が案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5a を選択し `accepted`（2026-09-24）。** 実装は accept 後・別 PR。
 >
 > [ADR-0007][adr07] 案4 の「自前＝独自ストラテジ（`getAccessToken` を丸ごと差し替える）」を**改める**。
 > [ADR-0012][adr12]（既定のキャッシュと更新）の中身は、既定の取得にかぎらずすべての取得に広がる。
@@ -60,39 +62,37 @@
 
 ### 論点1: 取得・保存・管理の分け方
 
-- **案1a: 取得（`tokenProvider`）と保存（`tokenStore`）を `PortersClient` に別々に渡し、管理は常にクライアントが受け持つ** — decider が選択
+- **案1a: 取得（`tokenProvider`）と保存（`tokenStore`）を `PortersClient` に別々に渡し、管理は常にクライアントが受け持つ** — **採用**
 - 案1b: 取得の関数から `TokenProvider` を作る `createTokenProvider({ acquire })` を公開し、既存の入口は変えない（起票時の推奨）
 - 案1c: 現状維持（ガイドの実装例を直すだけ）
 
 ### 論点2: いまの「`getAccessToken` を丸ごと自前」の入口
 
-- **案2a: 無くす** — decider が選択
+- **案2a: 無くす** — **採用**
 - 案2b: 別のオプション名で残す
 - 案2c: 同じオプションが両方の形を受ける
 
 ### 論点3: 取得で渡す形
 
-- **案3a: `acquire()` と、省略可能な `refresh(current)` と `exchange(code)`** — decider が選択
+- **案3a: `acquire()` と、省略可能な `refresh(current)` と `exchange(code)`** — **採用**
 - 案3b: `acquire()` だけ（更新は常に取り直し）
 - 案3c: `acquire()` と `refresh()` の両方を必須
 
 ### 論点4: やり取りするトークンの形
 
-- **案4a: `StoredTokens` を `accessToken` と省略可能な `refreshToken` に分け、それぞれを `{ token, expiresAt? }` にする** — decider が選択
+- **案4a: `StoredTokens` を `accessToken` と省略可能な `refreshToken` に分け、それぞれを `{ token, expiresAt? }` にする** — **採用**
 - 案4b: いまの平たい形のまま、Refresh Token と 2 つの期限を任意にする
 - 案4c: いまの `StoredTokens`（すべて必須）をそのまま返させる
 
 ### 論点5: 構築オプションの名前
 
-- **案5a: `tokenProvider`（型 `TokenProvider`）** — decider が選択
+- **案5a: `tokenProvider`（型 `TokenProvider`）** — **採用**
 - 案5b: `tokenSource`（型 `TokenSource`）
 - 案5c: `auth` のまま
 
 ## Decision Outcome
 
-（proposed。以下は decider が議論で選んだ案で、accepted は decider が行う。）
-
-採用候補: **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5a**。
+採用: **案1a ＋ 案2a ＋ 案3a ＋ 案4a ＋ 案5a**（decider・2026-09-24。議論で選んだ案）。
 
 ```ts
 const porters = new PortersClient({
