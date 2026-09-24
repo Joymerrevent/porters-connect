@@ -10,6 +10,7 @@ import {
   maxTagVersion,
   minNodeOf,
   parseAdrIndex,
+  checkTypeScriptFloor,
 } from "./check-release-invariants.mjs";
 
 // 文書が整合し版番号も正当な「全部 OK」の入力（各テストで一部だけ崩す）。
@@ -404,5 +405,64 @@ describe("checkRelease: CHANGELOG が名指しした設計 ADR の「実装」(R
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("ADR-0090");
     expect(errors[0]).toContain("0.3.0");
+  });
+});
+
+describe("checkTypeScriptFloor (ADR-0090)", () => {
+  const pkg = {
+    exports: {
+      ".": {
+        import: { "types@<5.4": "./dist/old.d.ts", types: "./dist/index.d.ts" },
+        require: {
+          "types@<5.4": "./dist/old.d.cts",
+          types: "./dist/index.d.cts",
+        },
+      },
+    },
+    typesVersions: { "<5.4": { "*": ["dist/old.d.ts"] } },
+  };
+  const readme = "型を読むには **TypeScript 5.4 以上**が要ります";
+  const install = "TypeScript で使うなら **5.4 以上**にしてください。";
+
+  it("accepts one floor everywhere", () => {
+    expect(checkTypeScriptFloor({ pkg, readme, install })).toEqual([]);
+  });
+
+  it("reports a document naming another version", () => {
+    expect(
+      checkTypeScriptFloor({
+        pkg,
+        readme: readme.replace("5.4", "5.5"),
+        install,
+      }),
+    ).toEqual([
+      "README.md の「TypeScript 5.5 以上」が、exports の下限 5.4 と違います。",
+    ]);
+  });
+
+  it("reports a document that does not state the floor at all", () => {
+    expect(
+      checkTypeScriptFloor({ pkg, readme, install: "何も書いていない" }),
+    ).toEqual([
+      "docs/usage/start/install.md に「TypeScript 5.4 以上」がありません。",
+    ]);
+  });
+
+  it("reports typesVersions that disagrees with exports", () => {
+    const errors = checkTypeScriptFloor({
+      pkg: { ...pkg, typesVersions: { "<5.3": { "*": ["x"] } } },
+      readme,
+      install,
+    });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain(
+      'typesVersions が "<5.4" の 1 つだけになっていません',
+    );
+  });
+
+  it("reports an unreadable floor instead of skipping the check", () => {
+    expect(checkTypeScriptFloor({ pkg: {}, readme, install })[0]).toContain(
+      "TypeScript の下限を package.json から読めません",
+    );
   });
 });

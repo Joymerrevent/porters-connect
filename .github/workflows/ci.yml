@@ -59,7 +59,7 @@ jobs:
       # `pnpm check` は `package.json` の `check:*` をパターンで束ねたもの＝**一覧はここに
       # 写さない**。個別のステップに並べると、検査を足したときに CI だけ古くなる
       # （実際 `check:docs` / `check:links` / `check:api` は各所の一覧から漏れていた）。
-      # `check:publish` と `check:cjs` だけは `dist` を見るので束ねず、build の後で回す。
+      # `check:publish` / `check:cjs` / `check:dts` / `check:ts-floor` は `dist` を見るので束ねず、build の後で回す。
       #
       # 中身と、いずれも**コード変更の有無に関わらず常時実行**する理由:
       #   check:release  リリース連動文書の整合（ADR-0027）。README/CHANGELOG の変更も拾う。
@@ -151,6 +151,14 @@ jobs:
       - name: Check CJS entry (require + node16 types)
         if: steps.changes.outputs.code == 'true'
         run: pnpm check:cjs
+
+      # 利用者の TypeScript の下限を**実際の版で**確かめる（ADR-0090）。下限の系で最も古い安定版と
+      # 開発で使う版で利用者のコードが通り、下限より前の版では「requires TypeScript X or later」で
+      # 止まることを、4 つの解決方式で見る。README に下限を書くだけでは約束にならない（RV-53 と同じ考え）。
+      # 古い TypeScript は pnpm dlx で npm レジストリから取るので、ネットワークが要る。
+      - name: Check TypeScript floor (floor / dev / below-floor message)
+        if: steps.changes.outputs.code == 'true'
+        run: pnpm check:ts-floor
 
       # 公開する型定義 dist/index.d.ts の JSDoc が規約（英語・保守者向けの識別子を書かない）を
       # 守っているか。check:api が見る TypeDoc 生成物には **export されていない型の JSDoc が
