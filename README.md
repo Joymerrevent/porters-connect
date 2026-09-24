@@ -21,6 +21,7 @@ XML レスポンスを型付きオブジェクトに変換し、独自仕様の 
 - **上限を守る**：スロットリング・リトライ（指数バックオフ）・リクエストの長さの検査を内蔵。
 - **日時は ISO 8601（UTC）に正規化**。業務タイムゾーン変換はしません（利用側の責務）。
 - **PORTERS の全リソースに対応**：データ系 13 種（Phase・Attachment を含む）＋ マスタ系 5 種（読み取り専用）。
+  一覧と呼べるメソッドは[リソースと操作][docs-resources]にあります。
 
 ## 前提
 
@@ -73,24 +74,6 @@ console.log(page.total, page.items[0]?.P_Name);
 ```
 
 続きは[導入][s-prereq]（6 ページ）へ。準備・認証・読み取り・書き込み・本番に出す前の確認まで順に進みます。
-
-## リソースと操作
-
-| アクセサ        | リソース       | アクセサ       | リソース     |
-| --------------- | -------------- | -------------- | ------------ |
-| `t.candidate`   | 個人連絡先     | `t.contract`   | 契約         |
-| `t.job`         | JOB            | `t.sales`      | 成約・売上   |
-| `t.client`      | 企業           | `t.process`    | 選考プロセス |
-| `t.recruiter`   | 企業担当者     | `t.resume`     | レジュメ     |
-| `t.contact`     | コンタクト     | `t.attachment` | 添付ファイル |
-| `t.opportunity` | 商談管理       | `t.phase`      | フェーズ履歴 |
-| `t.activity`    | アクティビティ |                |              |
-
-マスタ系は `porters.partition` / `t.user` / `t.department` / `t.field` / `t.option` の 5 種（読み取り専用）。
-
-**どのメソッドが呼べるかはリソースごとに違います**（`searchAll` が無いもの、先に `of("candidate")` のように
-対象リソースを指定するもの（Field・Phase・Attachment）があります）。一覧は[リソースと操作][docs-resources]、引数・戻り値・項目の一覧は
-[API リファレンス][api-ref]が正確な定義です。
 
 ## ドキュメント
 
