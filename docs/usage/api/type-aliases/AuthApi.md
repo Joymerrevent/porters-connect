@@ -92,15 +92,19 @@ error or expired code), or `PortersNetworkError`.
 
 ### getToken()
 
-> **getToken**(): `Promise`\<`string`\>
+> **getToken**(): `Promise`\<[`IssuedToken`](IssuedToken.md)\>
 
-Defined in: [src/auth/auth-api.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L57)
+Defined in: [src/auth/auth-api.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L64)
 
-Return the current valid Access Token (debug). The Refresh Token is never exposed.
+The Access Token the client currently uses, with its expiry — renewed first when it is within
+the refresh margin, exactly as a request would. `expiresAt` is epoch milliseconds, or absent
+when the token provider did not report one. Use it to hand the token to another process (for
+example, a central service answering its apps' `tokenProvider.acquire`). The Refresh Token is
+never exposed.
 
 #### Returns
 
-`Promise`\<`string`\>
+`Promise`\<[`IssuedToken`](IssuedToken.md)\>
 
 ***
 

@@ -9,7 +9,7 @@ import { PortersConfigError } from "../errors/index";
 import { apiUrl, type AccessPoint } from "../http/index";
 import type { Scope } from "../types/index";
 import type { TokenManager } from "./token-manager";
-import type { TokenProvider } from "./types";
+import type { IssuedToken, TokenProvider } from "./types";
 
 /** Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md). */
 export type AuthorizationUrlOptions = {
@@ -53,8 +53,15 @@ export type AuthApi = {
   clearTokens(): Promise<void>;
   /** Acquire a token now (startup fail-fast / warm-up); throws if auth is unavailable. */
   ensureAuthenticated(): Promise<void>;
-  /** Return the current valid Access Token (debug). The Refresh Token is never exposed. */
-  getToken(): Promise<string>;
+  // 期限も返すのは ADR-0093（中央のサービスが各アプリへ期限つきで渡せるように）。
+  /**
+   * The Access Token the client currently uses, with its expiry — renewed first when it is within
+   * the refresh margin, exactly as a request would. `expiresAt` is epoch milliseconds, or absent
+   * when the token provider did not report one. Use it to hand the token to another process (for
+   * example, a central service answering its apps' `tokenProvider.acquire`). The Refresh Token is
+   * never exposed.
+   */
+  getToken(): Promise<IssuedToken>;
 };
 
 export type AuthApiOptions = {
@@ -130,6 +137,6 @@ export const createAuthApi = (opts: AuthApiOptions): AuthApi => {
     },
     // `async` so a provider that throws synchronously still reaches the caller as a
     // rejection — a Promise-returning method never throws (ADR-0046).
-    getToken: async () => opts.manager.getAccessToken(),
+    getToken: async () => opts.manager.getIssuedToken(),
   };
 };

@@ -88,9 +88,14 @@ await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
 // 起動時に前もってトークンを用意（取得できなければ、この時点でエラーになる）
 await porters.auth.ensureAuthenticated();
 
-// 現在有効な Access Token を取得（デバッグ用）。Refresh Token は返しません
-const token = await porters.auth.getToken();
+// いま使っている Access Token と期限を取得。Refresh Token は返しません
+const { token, expiresAt } = await porters.auth.getToken();
 ```
+
+`getToken()` は、リソースの呼び出しに使うのと同じトークンを返します（期限の 60 秒前を過ぎていれば、取り直してから返します）。
+`expiresAt` は 1970-01-01 からのミリ秒で、取り方が期限を返さなかったときは `undefined` です。
+別のプロセスへトークンを渡すとき（中央のサービスが、各アプリの `tokenProvider` の `acquire` に答えるときなど）は、
+この値をそのまま `accessToken` として返せます。
 
 どちらも省略可能です（通常はリソース呼び出し時に自動取得されます）。`ensureAuthenticated()` は
 「起動直後に認証の不備を検知したい」ときに有効です。
