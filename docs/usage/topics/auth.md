@@ -159,45 +159,77 @@ await porters.auth.clearTokens();
 - `revokeUrl()` は**サーバ側**の権限削除（ブラウザ手順）。
 - `clearTokens()` は**ローカル**のトークン破棄のみ（サーバ側の権限は消しません）。
 
-## トークンを自前で管理するとき
+## トークンの取り方を差し替える（`tokenProvider`）
 
-`PortersClient` の `auth` オプションに独自 `TokenProvider` を渡すと、トークンの取得・更新を**自前で管理**できます（既定の方式を置き換え）。`TokenProvider` が実装するメソッドは `getAccessToken` の**1 つだけ**です。
+`PortersClient` の `tokenProvider` に、トークンの取り方を渡せます。たとえば、App Secret を持つ別のサービスが
+トークンを一括で発行し、アプリはそこから受け取る構成です。渡すのは**取り方だけ**で、キャッシュ・期限の判断・
+失効したときの取り直し・同時呼び出しの 1 本化・`tokenStore` への保存は、ライブラリが受け持ちます。
 
 ```ts
-// 実装するのは getAccessToken の 1 つだけ（opts の型は GetAccessTokenOptions）
+// acquire は必須。refresh と exchange は、使うときだけ
 type TokenProvider = {
-  getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
+  acquire(): Promise<StoredTokens>; // 最初の取得
+  refresh?(current: StoredTokens): Promise<StoredTokens>; // 更新
+  exchange?(code: string): Promise<StoredTokens>; // 権限付与の code をトークンに交換
 };
 ```
-
-- **返り値**: その時点で有効な Access Token（文字列）。リソース呼び出しのたびに呼ばれます。
-- **`opts.forceRefresh`**: ライブラリが `401`/`402`（トークン失効）を受けた直後に `true` で再呼び出しします。`true` のときは**キャッシュを使わず新しいトークンを取り直して**ください。
-- 再認証が必要で取得できないときは、`TokenProvider` 側で `PortersAuthError` を throw してください（ライブラリは繰り返さず、エラーとして返します）。
 
 ```ts
-import type { TokenProvider } from "@joymerrevent/porters-connect";
+import { PortersClient } from "@joymerrevent/porters-connect";
 
-// キャッシュし、forceRefresh のときだけ取り直す実装例
-let cached: string | undefined;
-const auth: TokenProvider = {
-  getAccessToken: async (opts) => {
-    if (opts?.forceRefresh || cached === undefined) {
-      cached = await fetchMyAccessToken(); // 自前のトークン取得
-    }
-    return cached;
+const porters = new PortersClient({
+  hostname,
+  tokenProvider: {
+    acquire: async () => {
+      const t = await myTokenService.issue();
+      return { accessToken: { token: t.token, expiresAt: t.expiresAt } };
+    },
   },
-};
-
-// トークンは自前供給なので appId / appSecret は不要
-const porters = new PortersClient({ hostname, auth });
+  tokenStore, // 省略時はインメモリ
+});
 ```
 
-> 最小実装は `{ getAccessToken: async () => token }` の 1 行でも構いません（キャッシュや `forceRefresh` を気にしない場合）。
+- **`acquire`**: トークンを最初から取ります。期限（`expiresAt`）が分かれば一緒に返してください。ライブラリは
+  期限の 60 秒前に取り直します。期限を返さなければ、PORTERS がトークンの失効（401 / 402）を返したときに 1 回だけ取り直します。
+- **`refresh`**: 更新の手段があるときに渡します。ライブラリは、`refreshToken` が無いか、その期限内なら `refresh` を、
+  期限が切れていれば `acquire` を呼びます。渡さなければ、いつも `acquire` で取り直します。
+- **`exchange`**: `porters.auth.exchangeAuthorizationCode(code)` を使うときに渡します。権限付与のリダイレクトで
+  戻ってきた `code` を、App Secret を持つサービスに送って交換してもらう、といった使い方です。
+  **`code` は発行から 30 秒で失効する**ので、`exchange` の中で時間のかかる処理をしないでください。
+- 取れないときは、`acquire` などが例外を投げてください。ライブラリは繰り返さず、そのまま呼び出し側に届けます。
+  空のトークンや形の違う値を返すと `PortersConfigError` になります。
+- `tokenProvider` を渡すと `appId` / `appSecret` は要りません（`authorizationUrl` / `revokeUrl` を使うなら `appId` だけ要ります）。
 
-自前管理のとき、`porters.auth.*` で**動くのは `TokenProvider` に委譲する `getToken` と `ensureAuthenticated` の 2 つだけ**です。
-残る 4 つ（`authorizationUrl` / `exchangeAuthorizationCode` / `revokeUrl` / `clearTokens`）は、初回付与やトークン破棄をライブラリが代行する前提のもので、自前管理に置き換えると代行できないため **`PortersConfigError`** になります。
+```ts
+// 更新と code の交換も別のサービスに任せる例
+const porters = new PortersClient({
+  hostname,
+  appId, // authorizationUrl / revokeUrl で使う
+  tokenProvider: {
+    acquire: async () => {
+      const t = await myTokenService.issue();
+      return { accessToken: { token: t.token, expiresAt: t.expiresAt } };
+    },
+    refresh: async (current) => {
+      const t = await myTokenService.refresh(current.refreshToken?.token ?? "");
+      return {
+        accessToken: { token: t.token, expiresAt: t.expiresAt },
+        refreshToken: { token: t.refreshToken },
+      };
+    },
+    exchange: async (code) => {
+      const t = await myTokenService.exchange(code);
+      return {
+        accessToken: { token: t.token, expiresAt: t.expiresAt },
+        refreshToken: { token: t.refreshToken },
+      };
+    },
+  },
+});
+```
 
-6 メソッドの一覧と、それぞれの既定の方式／自前管理での挙動は [auth][cl-auth] にあります。
+`porters.auth.*` の 6 メソッドは、`tokenProvider` を渡しても動きます。`exchangeAuthorizationCode` だけは
+`exchange` が要り、無ければ `PortersConfigError` になります。一覧は [auth][cl-auth] にあります。
 
 ## エラー
 

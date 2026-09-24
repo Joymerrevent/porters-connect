@@ -23,7 +23,7 @@ export type {
 } from "./errors";
 
 export type {
-  GetAccessTokenOptions,
+  IssuedToken,
   StoredTokens,
   TokenProvider,
   TokenStore,

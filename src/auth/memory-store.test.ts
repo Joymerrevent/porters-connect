@@ -4,10 +4,8 @@ import { createMemoryTokenStore } from "./memory-store";
 import type { StoredTokens } from "./index";
 
 const tokens: StoredTokens = {
-  accessToken: "a",
-  refreshToken: "r",
-  accessTokenExpiresAt: 1,
-  refreshTokenExpiresAt: 2,
+  accessToken: { token: "a", expiresAt: 1 },
+  refreshToken: { token: "r", expiresAt: 2 },
 };
 
 describe("createMemoryTokenStore", () => {

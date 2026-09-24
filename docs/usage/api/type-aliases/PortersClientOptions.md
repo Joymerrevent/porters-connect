@@ -8,7 +8,7 @@
 
 > **PortersClientOptions** = `object`
 
-Defined in: [src/client.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L73)
+Defined in: [src/client.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L72)
 
 Options for constructing a [PortersClient](../classes/PortersClient.md). App-level only: custom field declarations
 belong to a partition and go to [PortersClient.tenant](../classes/PortersClient.md#tenant) as [TenantOptions](TenantOptions.md).
@@ -19,7 +19,7 @@ belong to a partition and go to [PortersClient.tenant](../classes/PortersClient.
 
 > `optional` **appId?**: `string`
 
-Defined in: [src/client.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L104)
+Defined in: [src/client.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L103)
 
 ***
 
@@ -27,17 +27,19 @@ Defined in: [src/client.ts:104](https://github.com/Joymerrevent/porters-connect/
 
 > `optional` **appSecret?**: `string`
 
-Defined in: [src/client.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L105)
+Defined in: [src/client.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L104)
 
 ***
 
 ### auth?
 
-> `optional` **auth?**: [`TokenProvider`](TokenProvider.md)
+> `optional` **auth?**: `never`
 
-Defined in: [src/client.ts:108](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L108)
+Defined in: [src/client.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L123)
 
-Custom auth strategy; defaults to the transparent code_direct strategy.
+**Not a client option any more.** Pass a `tokenProvider` (`{ acquire, refresh?, exchange? }`)
+instead; the client manages caching and renewal for it. Typed `never` so a leftover `auth`
+fails to compile; at runtime the constructor rejects it with [PortersConfigError](../classes/PortersConfigError.md).
 
 ***
 
@@ -45,7 +47,7 @@ Custom auth strategy; defaults to the transparent code_direct strategy.
 
 > `optional` **fields?**: `never`
 
-Defined in: [src/client.ts:133](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L133)
+Defined in: [src/client.ts:146](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L146)
 
 **Not a client option any more.** Custom fields belong to a partition, so the
 declaration goes to [PortersClient.tenant](../classes/PortersClient.md#tenant) as `tenant(id, { fields })`. Typed `never`
@@ -59,7 +61,7 @@ rather than silently dropping the declaration (the same fail-closed stance as `h
 
 > **hostname**: `string`
 
-Defined in: [src/client.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L87)
+Defined in: [src/client.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L86)
 
 API server name. Required and supplied via `PORTERS_HOST` — never hard-code it.
 (A representative value lives in docs/usage/reference.)
@@ -77,7 +79,7 @@ Write a non-ASCII name in punycode; bracket an IPv6 address (`[::1]`).
 
 > `optional` **port?**: `number`
 
-Defined in: [src/client.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L94)
+Defined in: [src/client.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L93)
 
 Port of the access point. **Omit it for PORTERS** — the contract gives you a name
 and the scheme decides the port. Set it only for a local fake server or a proxy:
@@ -90,7 +92,7 @@ is rejected at construction.
 
 > `optional` **scheme?**: [`Scheme`](Scheme.md)
 
-Defined in: [src/client.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L103)
+Defined in: [src/client.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L102)
 
 URL scheme of the access point. Defaults to `"https"`. Set `"http"` only for a
 local fake server or a trusted tunnel: it sends every request — the OAuth token header
@@ -104,7 +106,7 @@ Silence it only where cleartext is intended, with the env var
 
 > `optional` **scopes?**: [`Scope`](Scope.md)[]
 
-Defined in: [src/client.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L106)
+Defined in: [src/client.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L105)
 
 ***
 
@@ -112,7 +114,7 @@ Defined in: [src/client.ts:106](https://github.com/Joymerrevent/porters-connect/
 
 > `optional` **throttle?**: [`Throttle`](Throttle.md)
 
-Defined in: [src/client.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L123)
+Defined in: [src/client.ts:136](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L136)
 
 Rate-limit self-restraint. Defaults to the **process-wide bucket for this destination**,
 so several clients aimed at the same PORTERS add up to one limit instead of one each.
@@ -123,13 +125,26 @@ library leaves that to you. `createThrottle()` builds the default implementation
 
 ***
 
+### tokenProvider?
+
+> `optional` **tokenProvider?**: [`TokenProvider`](TokenProvider.md)
+
+Defined in: [src/client.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L113)
+
+Where tokens come from. Leave it out for the built-in flow (`code_direct` with `appId` /
+`appSecret`); pass one to obtain tokens another way — for example from a central service that
+holds the App Secret. Either way the client caches, renews before expiry, retries once on an
+expired token, and saves to `tokenStore`.
+
+***
+
 ### tokenStore?
 
 > `optional` **tokenStore?**: [`TokenStore`](TokenStore.md)
 
-Defined in: [src/client.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L110)
+Defined in: [src/client.ts:115](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L115)
 
-Token persistence; defaults to in-memory.
+Token persistence, used with every token provider; defaults to in-memory.
 
 ***
 
@@ -137,6 +152,6 @@ Token persistence; defaults to in-memory.
 
 > `optional` **transport?**: [`Transport`](Transport.md)
 
-Defined in: [src/client.ts:112](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L112)
+Defined in: [src/client.ts:125](https://github.com/Joymerrevent/porters-connect/blob/main/src/client.ts#L125)
 
 Injectable HTTP transport; defaults to a fetch-based transport.
