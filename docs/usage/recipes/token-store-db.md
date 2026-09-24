@@ -40,7 +40,7 @@ export const db = drizzle(process.env.DATABASE_URL ?? ""); // 接続文字列か
 ### 1. テーブルを定義する
 
 `porters_tokens` テーブルの 1 行に、1 組のトークン（Access Token と Refresh Token）を保存します。どの行を使うかは
-`key` 列で決めます。`StoredTokens` は JSON なので、`jsonb` の列にそのまま入れます。
+`name` 列（保存先の名前）で決めます。`StoredTokens` は JSON なので、`jsonb` の列にそのまま入れます。
 
 ```ts
 // ファイル: schema.ts
@@ -48,7 +48,7 @@ import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { StoredTokens } from "@joymerrevent/porters-connect";
 
 export const portersTokens = pgTable("porters_tokens", {
-  key: text("key").primaryKey(), // どのクライアントのトークンか（下の「キーの決め方」）
+  name: text("name").primaryKey(), // 保存先の名前（下の「保存先の名前の決め方」）
   tokens: jsonb("tokens").$type<StoredTokens>().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
@@ -56,7 +56,7 @@ export const portersTokens = pgTable("porters_tokens", {
 
 ### 2. `tokenStore` を書く
 
-`get` / `set` / `clear` の 3 つを、`key` が一致する行の読み取り・書き込み（無ければ追加）・削除に対応させます。テーブルは手順 1 の `schema.ts` から読みます。
+`get` / `set` / `clear` の 3 つを、`name` が一致する行の読み取り・書き込み（無ければ追加）・削除に対応させます。テーブルは手順 1 の `schema.ts` から読みます。
 
 ```ts
 // ファイル: token-store.ts
@@ -67,27 +67,27 @@ import { portersTokens } from "./schema";
 
 export const createDbTokenStore = (
   db: PgDatabase<PgQueryResultHKT>,
-  key: string,
+  name: string, // 保存先の名前（name 列の値）
 ): TokenStore => ({
   get: async () => {
     const rows = await db
       .select({ tokens: portersTokens.tokens })
       .from(portersTokens)
-      .where(eq(portersTokens.key, key))
+      .where(eq(portersTokens.name, name))
       .limit(1);
     return rows[0]?.tokens; // 行が無ければ undefined（＝保存なし）
   },
   set: async (tokens) => {
     await db
       .insert(portersTokens)
-      .values({ key, tokens, updatedAt: new Date() })
+      .values({ name, tokens, updatedAt: new Date() })
       .onConflictDoUpdate({
-        target: portersTokens.key,
+        target: portersTokens.name,
         set: { tokens, updatedAt: new Date() },
       });
   },
   clear: async () => {
-    await db.delete(portersTokens).where(eq(portersTokens.key, key));
+    await db.delete(portersTokens).where(eq(portersTokens.name, name));
   },
 });
 ```
@@ -111,28 +111,29 @@ export const porters = new PortersClient({
   hostname: process.env.PORTERS_HOST ?? "",
   appId: process.env.PORTERS_APP_ID ?? "",
   appSecret: process.env.PORTERS_APP_SECRET ?? "",
-  tokenStore: createDbTokenStore(db, "porters"),
+  tokenStore: createDbTokenStore(db, "porters"), // "porters" は保存先の名前
 });
 ```
 
-これで、トークンを取得・更新するたびに、`porters_tokens` テーブルの `key` が `"porters"` の行に書き込まれます。
+これで、トークンを取得・更新するたびに、`porters_tokens` テーブルの `name` が `"porters"` の行に書き込まれます。
 次に起動したときはその行を読み、まだ使えるトークンがあればそれを使います。
 Access Token の期限（約 30 分）が切れていても、Refresh Token（約 2 時間）が残っていれば、`code_direct` からではなく
 更新で取り直します。
 
-## キーの決め方
+## 保存先の名前（`name`）の決め方
 
-`key` は「どのクライアントのトークンか」を分けるためのものです。
+`name` 列の値は、どのクライアントのトークンを入れた行かを見分けるための、ただの名前です。
+App Secret のような秘密の値ではありません。
 
 - **App が 1 つで、Company DB をすべて同じクライアントで扱う**なら、固定の 1 つ（例の `"porters"`）で足ります。
   トークンは App ごとに 1 組で、Partition を変えても同じトークンを使うからです。
-- **テナントごとにクライアント（とトークン）を分けている**なら、テナントごとに別のキーにします
+- **テナントごとにクライアント（とトークン）を分けている**なら、テナントごとに別の名前にします
   （[複数テナント][multi-tenant]の「認証を分けるか」）。
-- 同じキーを、別の App の資格情報を持つクライアントと共有しないでください。
+- 同じ名前を、別の App（別の App ID / App Secret）のクライアントと共有しないでください。
 
-## 複数のプロセスで同じキーを使うとき
+## 複数のプロセスで同じ保存先を使うとき
 
-同じキーを複数のプロセスで使うこともできますが、次の動きを知っておいてください。
+同じ名前の保存先を複数のプロセスで使うこともできますが、次の動きを知っておいてください。
 
 - **ライブラリが保存先を読むのは、プロセスごとに最初の 1 回だけです。** それ以降は手元に持っているトークンを使い、
   ほかのプロセスが書いた新しい値は読み直しません。
