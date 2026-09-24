@@ -103,6 +103,7 @@
 | [0087][0087] | カスタム項目の宣言は `tenant(id)` で束ねる（client から外す）      | 基本設計 | accepted           | 0.21.0 |
 | [0088][0088] | 使い方ドキュメントを主題別・リソース別の 5 章に組み直す            | プロセス | accepted           | —      |
 | [0089][0089] | カスタム項目を宣言で明示したときだけ `create` の必須にする         | 基本設計 | accepted           | —      |
+| [0090][0090] | 利用者の TypeScript の下限を 5.4 とし、CI で下限の版を走らせる     | 基本設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -196,3 +197,4 @@
 [0087]: 0087-tenant-scoped-field-declarations.md
 [0088]: 0088-usage-docs-five-chapters.md
 [0089]: 0089-custom-field-required-on-create.md
+[0090]: 0090-typescript-floor.md
