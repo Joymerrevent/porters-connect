@@ -102,7 +102,18 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.23.0**（npm latest・`v0.23.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.24.0**（npm latest・`v0.24.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1063.5 kB**・2026-09-24）。**累計 32 版**（うち **0.2.0 以降の 30 版**がこの半自動フロー）。
+  changeset **3 枚**（minor 2・patch 1）を消費した minor リリースで、トークンの取り方と置き場所を分ける
+  （[#397][pr397]・[ADR-0091][adr91]）、日時（`DateTime`）の入力をタイムゾーンつきの ISO 8601 に絞る（[#399][pr399]）、
+  Refresh Token が拒否されたら `code_direct` で取り直す（[#400][pr400]）。**破壊的変更 2 つ**（CHANGELOG の Changed に明記）。
+  - **unpacked は 1037.5 → 1063.5 kB（+26.0 kB）**。同梱ファイル数は 10 のまま。
+  - 手順の面では、**#399 と #400 に changeset が入っていなかった**のをリリース準備で見つけ、リリース PR [#402][pr402] の
+    最初のコミットで足してから `changeset:version` を実行した（CHANGELOG は手書きなので内容は変わらない）。
+    リリース PR の stryker は 10 秒（skip の判定どおり）。`main` の Test / CI / Mutation が green になるのを待ってから
+    `gh release create`（notes は CHANGELOG の該当節・参照スタイルのリンクを絶対 URL に解決）→ Release ワークフロー green
+    → 直後の `npm view` は 0.23.0 を返し、待って再確認すると 0.24.0（伝播待ち）。back-merge は [#403][pr403]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.23.0**（npm latest・`v0.23.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **10 files / 1037.5 kB**・2026-09-24）。**累計 31 版**（うち **0.2.0 以降の 29 版**がこの半自動フロー）。
   changeset **2 枚**（minor 2）を消費した minor リリースで、カスタム項目を宣言で `create` の必須にする
   （[#388][pr388]・[ADR-0089][adr89]）と、利用者の TypeScript の下限を 5.4 にする（[#392][pr392]・[ADR-0090][adr90]）。
@@ -358,5 +369,11 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr392]: https://github.com/Joymerrevent/porters-connect/pull/392
 [pr393]: https://github.com/Joymerrevent/porters-connect/pull/393
 [pr394]: https://github.com/Joymerrevent/porters-connect/pull/394
+[pr397]: https://github.com/Joymerrevent/porters-connect/pull/397
+[pr399]: https://github.com/Joymerrevent/porters-connect/pull/399
+[pr400]: https://github.com/Joymerrevent/porters-connect/pull/400
+[pr402]: https://github.com/Joymerrevent/porters-connect/pull/402
+[pr403]: https://github.com/Joymerrevent/porters-connect/pull/403
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
+[adr91]: adr/0091-token-provider-and-store.md
