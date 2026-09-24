@@ -117,7 +117,8 @@ Access Token の期限（約 30 分）が切れていても、Refresh Token（�
 - **更新のたびに Refresh Token が入れ替わります。** あるプロセスが更新すると、ほかのプロセスが手元に持っている
   Refresh Token は使えなくなります。そのプロセスが次に更新しようとすると PORTERS に拒否されますが、ライブラリは
   `code_direct` で取り直して続けます（処理は止まりません）。
-- そのぶん、認証のリクエストが増えます。
+- そのぶん、認証のリクエストが増えます。**トークンを 1 か所で取り、各プロセスはそれを受け取る**形にしたいときは、
+  [中央のサービスからトークンを受け取る][central-token-service]を使います。
 
 ## ライブラリの外（利用側の責務）
 
@@ -131,11 +132,12 @@ Access Token の期限（約 30 分）が切れていても、Refresh Token（�
 
 - 主題: [認証とトークン][auth]（`tokenStore` の型と、トークンの取り方）
 - クライアント: [PortersClient][cl-client]（構築オプションの `tokenStore`）
-- 実践例: [複数テナント][multi-tenant]
+- 実践例: [中央のサービスからトークンを受け取る][central-token-service]／[複数テナント][multi-tenant]
 - ほかの目的から探す: [目次][index]
 
 [drizzle]: https://orm.drizzle.team/
 [auth]: ../topics/auth.md
 [cl-client]: ../client/client.md
+[central-token-service]: central-token-service.md
 [multi-tenant]: multi-tenant.md
 [index]: ../index.md

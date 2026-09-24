@@ -138,6 +138,7 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 - [毎日の差分同期][sync-batch] — 前回からの差分だけを取って書き戻し、失敗したところから再開するバッチをどう組むか
 - [複数テナント][multi-tenant] — 複数の Company DB を 1 プロセスで扱うとき、テナントの登録・宣言・認証・レートをどう分けるか
 - [トークンを DB に保存する][token-store-db] — 再起動してもトークンを使い回せるよう、`tokenStore` を ORM（Drizzle）と PostgreSQL で組む
+- [中央のサービスからトークンを受け取る][central-token-service] — App Secret を中央だけに置き、各アプリは `tokenProvider` でトークンを受け取る
 
 ### 7. リファレンス
 
@@ -187,6 +188,7 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 | 毎日の差分同期を組みたい                             | [毎日の差分同期][sync-batch]                                             |
 | 複数の Company DB を 1 プロセスで扱いたい            | [複数テナント][multi-tenant]                                             |
 | トークンを DB に保存したい                           | [トークンを DB に保存する][token-store-db]                               |
+| アプリに App Secret を持たせたくない                 | [中央のサービスからトークンを受け取る][central-token-service]            |
 | このエラーは何か、症状から引きたい                   | [トラブルシューティング][troubleshooting]                                |
 
 ---
@@ -225,6 +227,7 @@ Candidate や Job など、PORTERS の 18 のリソースそれぞれについ�
 [sync-batch]: recipes/sync-batch.md
 [multi-tenant]: recipes/multi-tenant.md
 [token-store-db]: recipes/token-store-db.md
+[central-token-service]: recipes/central-token-service.md
 [resources]: resources/README.md
 [r-candidate]: resources/candidate.md
 [r-job]: resources/job.md
