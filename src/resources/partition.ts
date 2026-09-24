@@ -2,7 +2,8 @@
 // partitions an App can access. It takes neither `partition` nor `field`/`condition`, only
 // `request_type`: 1 = the accessible-partition list (works under code_direct; the default),
 // 0 = the login partition (only under the browser `code` grant — 403s under code_direct, so
-// it is not exposed; ADR-0022 D3b). No `get(id)`: the API has no id/condition filter.
+// Partition has no `current()`; ADR-0022 D3b). `requestType: 0` stays on the query for a caller
+// whose token came from the browser grant. No `get(id)`: the API has no id/condition filter.
 
 import type { ResourceDeps, ResourceDescriptor } from "./resource";
 import {
