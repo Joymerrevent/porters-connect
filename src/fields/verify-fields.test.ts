@@ -288,6 +288,7 @@ describe("assertFieldsMatch", () => {
         undeclared: [],
         unverifiable: [],
         undeclarable: [],
+        requiredMismatch: [],
       }),
     ).not.toThrow();
   });
@@ -313,6 +314,7 @@ describe("assertFieldsMatch", () => {
       undeclared: [],
       unverifiable: [],
       undeclarable: [],
+      requiredMismatch: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(PortersConfigError);
@@ -346,6 +348,7 @@ describe("assertFieldsMatch", () => {
         { resource: "job" as const, cause: new Error("403 forbidden") },
       ],
       undeclarable: [],
+      requiredMismatch: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(
@@ -375,6 +378,7 @@ describe("assertFieldsMatch", () => {
             reason: "unknown-field-type",
           },
         ],
+        requiredMismatch: [],
       }),
     ).not.toThrow();
   });

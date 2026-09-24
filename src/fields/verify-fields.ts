@@ -212,15 +212,7 @@ export const verifyFields = async (
 };
 
 // One line per problem, so the thrown message says which field rather than just "some mismatch".
-// assertFieldsMatch が判定に使う区分だけ。報告の区分が増えても、報告を自分で組み立てている
-// 呼び出し側（テストのスタブなど）を壊さないよう、引数はこれだけを要求する（ADR-0089 で requiredMismatch を足したとき）。
-type Fatal = Pick<
-  FieldVerification,
-  "ok" | "missing" | "typeMismatch" | "unverifiable"
-> &
-  Partial<FieldVerification>;
-
-const lines = (report: Fatal): readonly string[] => [
+const lines = (report: FieldVerification): readonly string[] => [
   ...report.typeMismatch.map(
     (m) =>
       `${m.resource}.${m.alias}: declared ${m.declared}, tenant has ${m.actual}`,
@@ -248,7 +240,7 @@ const lines = (report: Fatal): readonly string[] => [
  * @example
  * assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
  */
-export const assertFieldsMatch = (report: Fatal): void => {
+export const assertFieldsMatch = (report: FieldVerification): void => {
   if (report.ok) return;
   const detail = lines(report);
   throw new PortersConfigError(
