@@ -5,13 +5,19 @@
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
-import { buildReadUrl } from "../../src/resources/core/query";
+import { buildReadUrl } from "../../src/resources/core/query-encode";
 import { parseReadQuery, runReadQuery } from "./query";
 import type { FakeRecord } from "./types";
 
 const FIELDS = CANDIDATE_DESCRIPTOR.fields;
 const PREFIX = CANDIDATE_DESCRIPTOR.prefix;
-const ctx = { prefix: PREFIX, fields: new Map(Object.entries(FIELDS)) };
+// `defaults: []`: a query without `field` sends none, so these cases pin the filters alone.
+const ctx = {
+  prefix: PREFIX,
+  fields: new Map(Object.entries(FIELDS)),
+  defaults: [],
+  references: {},
+};
 
 const parse = (query: Parameters<typeof buildReadUrl>[3]) =>
   parseReadQuery(

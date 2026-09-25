@@ -7,13 +7,11 @@ import type { RawItem } from "../../xml/parser";
 import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
 import { decoderFor } from "./decoder";
 import { paginateOnce, type Paging } from "./paging";
-import {
-  fieldTypesOf,
-  type FieldCatalog,
-  type ReadFieldAlias,
-} from "./catalog";
+import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { ResourceDeps } from "./deps";
-import { buildReadParams, type Condition, type SearchQuery } from "./query";
+import type { Condition, SearchQuery } from "./query";
+import { buildReadParams, type ReadParamsContext } from "./query-encode";
+import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
 import { packIds, recordsById } from "./get-many";
 import {
@@ -132,32 +130,21 @@ export const createDataReader = <
   config: DataReadConfig<F, R>,
   deps: ResourceDeps,
 ) => {
-  const fieldMap = fieldTypesOf(config.fields);
   const references: ReferenceMap = config.references ?? {};
   // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
   const idAlias = config.idAlias ?? "P_Id";
   const decode = decoderFor(config.fields);
-  // The default field set sent when a caller omits `field` (ADR-0020, 案A+2a): every catalogued
-  // alias. PORTERS returns only `{Resource}.P_Id` for a fieldless request, so a typed-record read
-  // would otherwise drop every known field despite the type promising them. These are bare aliases
-  // like a caller's own list — `buildReadUrl` prefixes both through the same assembly (ADR-0059).
-  // The API-native "primary key only" stays reachable via `field: []` (透明化).
-  const defaultFields = Object.keys(config.fields) as ReadFieldAlias<F>[];
-
-  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
-  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059). The default is applied
-  // here, once, so every Read (search / searchAll / get / getMany) gets it the same way.
+  // `field` omitted -> every catalogued alias (ADR-0020): PORTERS returns only `{Resource}.P_Id` for
+  // a fieldless request, so a typed-record read would otherwise drop every known field despite the
+  // type promising them. `[]` stays empty (API-native primary key only). The default and the rest of
+  // the `field` assembly are `fieldParam`'s, the same for every Read (search / searchAll / get /
+  // getMany) and for the masters.
+  const readContext: ReadParamsContext = {
+    ...fieldParamContext(config.prefix, config.fields, references),
+    params: config.readParams,
+  };
   const readParams = (q: SearchQuery<F, R>): URLSearchParams =>
-    buildReadParams(
-      deps.partition,
-      { ...q, field: q.field ?? defaultFields },
-      {
-        prefix: config.prefix,
-        fields: fieldMap,
-        references,
-        params: config.readParams,
-      },
-    );
+    buildReadParams(deps.partition, q, readContext);
 
   const readUrl = (q: SearchQuery<F, R> & Paging): string =>
     readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);

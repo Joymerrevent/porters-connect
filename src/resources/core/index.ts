@@ -12,6 +12,7 @@ export * from "./decoder";
 export * from "./paging";
 export * from "./field-param";
 export * from "./query";
+export * from "./query-encode";
 export * from "./expand";
 export * from "./image";
 export * from "./bulk-write";
