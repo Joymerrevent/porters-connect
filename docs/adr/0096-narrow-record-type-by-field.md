@@ -1,11 +1,17 @@
 # 96. `field` で読み取りの戻り値の型を絞る
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 起票元は [ADR-0095][adr95] の議論（2026-09-25）。`get` と `getMany` に `field` を足すときに「戻り値の型を `field` で
 > 絞るか」が問いになり、`search` / `searchAll` とまとめて別の ADR で決めることにした。
+>
+> [ADR-0005][adr5] SD-3「`field` 選択と返り値型 → 簡易（全既知項目を持つ型・選択は実行時）。選択で型を絞る案は将来」を**改める**
+> （SD-3 が「将来」とした案を、この ADR で採る）。[ADR-0059][adr59] が射程外とした「`field` で取れる項目と戻り型を連動させること」も
+> この ADR で扱う。
+>
+> **decider が案1b ＋ 案2a を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（[ADR-0095][adr95] の実装の後）。
 
 ## Context and Problem Statement
 
@@ -79,9 +85,9 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
 
 ## Decision Outcome
 
-**未決（proposed）**。以下は推奨案（1b ＋ 2a）で書いた場合の形。
+採用: **案1b ＋ 案2a**（decider が 2026-09-25 に選択）。
 
-### 決めること（推奨案）
+### 決めること
 
 - 読み取りの戻り値の型のキーを、**要求した項目**に絞る。要求した項目は次の和:
   - `field` に渡した alias（`field` を省略したときは、知っている項目すべて＝いまと同じ型）
@@ -142,6 +148,7 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
 - 実機で確かめたい点（「空の項目のタグが出るか」「`field` に主キーが無いとき主キーが返るか」）は、実装 PR で
   live-verification に足す。案1c に進むかの判断材料になる。
 
+[adr5]: 0005-public-api-shape.md
 [adr20]: 0020-read-field-default.md
 [adr59]: 0059-read-field-bare-alias.md
 [adr95]: 0095-get-many-by-ids.md
