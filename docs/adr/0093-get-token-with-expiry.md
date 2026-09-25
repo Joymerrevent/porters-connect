@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.25.0
 
 > 起票元は stakeholder との議論（2026-09-24）。実践例「中央のサービスがトークンを発行し、各アプリは `tokenProvider` で
 > 受け取る」を書こうとしたところ、中央のサービスがトークンを取り出す `getToken()` が文字列しか返さず、アプリへ期限を
