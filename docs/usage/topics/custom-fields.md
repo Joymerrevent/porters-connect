@@ -83,6 +83,41 @@ await t.candidate.create({ P_Owner: 5 }); // ← 型エラー（U_score が無�
 - 宣言に `{ required: true }` が無い項目は、テナントが入力必須にしていても型では止まりません。書き込みを
   受け付けるかどうかは PORTERS の判定になります（Connect API がこの設定を書き込み時に強制するかは、実機で未確認です）。
 
+### 入力を変数に取るとき
+
+`create` / `update` の入力を変数に取って型を付けるときは、`CandidateCreateInput` / `CandidateUpdateInput` の
+型引数に、宣言から取り出したその 1 リソース分の項目を渡します。項目は [`CustomFor`][t-CustomFor] で、
+`create` で必須の項目は [`RequiredFor`][t-RequiredFor] で取り出します。型引数を省くと、標準項目だけの型です。
+
+```ts
+import { defineFields } from "@joymerrevent/porters-connect";
+import type {
+  CandidateCreateInput,
+  CandidateUpdateInput,
+  CustomFor,
+  RequiredFor,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({
+    U_score: f.number({ required: true }),
+    U_memo: f.multilineText(),
+  }),
+});
+type Custom = CustomFor<typeof fields, "candidate">;
+type Required = RequiredFor<typeof fields, "candidate">;
+
+const input: CandidateCreateInput<Custom, Required> = {
+  P_Owner: 5,
+  U_score: 80,
+};
+const change: CandidateUpdateInput<Custom> = { U_memo: "面談済み" };
+
+const t = porters.tenant(1, { fields });
+const id = await t.candidate.create(input);
+await t.candidate.update(id, change);
+```
+
 ## 宣言しないとどうなるか
 
 **型が受け付けません。** 宣言していないカスタム項目は、`field` / `condition` / `order` /
@@ -490,3 +525,5 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 [write]: write.md
 [r-field]: ../resources/field.md
 [r-option]: ../resources/option.md
+[t-CustomFor]: ../api/type-aliases/CustomFor.md
+[t-RequiredFor]: ../api/type-aliases/RequiredFor.md
