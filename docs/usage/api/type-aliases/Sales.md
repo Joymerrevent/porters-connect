@@ -8,6 +8,6 @@
 
 > **Sales** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/sales.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L113)
+Defined in: [src/resources/sales.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L123)
 
 A decoded Sales (a placement / revenue record): known `P_` fields, each `value | null`.

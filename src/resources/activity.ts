@@ -13,17 +13,28 @@
 
 import {
   createDataResource,
+  type catalogMark,
   type CreateInput,
-  type DataResource,
+  type EmptyImages,
+  type GetOptions,
+  type GetRecord,
+  type ReadSelection,
+  type SearchRecord,
   type UpdateInput,
 } from "./core/data-resource";
 import type {
   EmptyCatalog,
   FieldCatalog,
+  Paging,
+  ReadFieldAlias,
   ReadRecord,
   ResourceDeps,
   ResourcePage,
+  ResourcePageOf,
 } from "./core/read";
+import type { EmptyReferences, Expand } from "./core/expand";
+import type { ImageOption } from "./core/image";
+import type { BulkWriteResult } from "./core/bulk-write";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import type { ResourceName } from "../porters/resource-list";
@@ -89,11 +100,116 @@ export type ActivityCreateInput = CreateInput<
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type ActivityUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Activity accessor; `C` is the declared custom-field catalog merged on. */
+
+// 公開の型の書き出しで繰り返す組み合わせ：利用者が宣言した項目を足した一覧と、新規で必須の項目。
+type Fields<C extends FieldCatalog> = typeof FIELDS & C;
+type RequiredOnCreate<C extends FieldCatalog, CR extends keyof C> =
+  (typeof REQUIRED_ON_CREATE)[number] | CR;
+
+// メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
+// data-resource-shapes.test.ts が確かめる。
+/**
+ * The Activity accessor. `C` is the declared custom-field catalog merged on; `CR` names the
+ * custom fields that are required on `create`.
+ */
 export type ActivityResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = DataResource<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = {
+  /** @internal Type-level mark of the field catalog; never present at runtime. */
+  [catalogMark]?(field: ReadFieldAlias<Fields<C>>): void;
+  /**
+   * Search Activity records: resolves to one page of the records matching `query`. `field` picks
+   * the fields to read (omit it to read every known field), `expand` reads referenced records
+   * too, `image` picks an Image field's sub-fields, and `count` / `start` choose the page.
+   */
+  search<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: SearchQuery<Fields<C>, EmptyReferences> &
+      Paging &
+      ReadSelection<FL, E, I>,
+  ): Promise<
+    ResourcePageOf<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>
+  >;
+  /**
+   * Search every Activity record matching `query`, page after page (200 records per request).
+   * Takes the same `field` / `expand` / `image` as `search`.
+   */
+  searchAll<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: SearchQuery<Fields<C>, EmptyReferences> & ReadSelection<FL, E, I>,
+  ): AsyncIterable<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>;
+  /**
+   * Read one Activity record by id; `undefined` when there is none. `field` picks the fields to
+   * read, the same way it does for `search` (omit it to read every known field); the record's id
+   * is always read, even when `field` leaves it out. `expand` reads referenced records too;
+   * `image` picks an Image field's sub-fields — `get` is where asking for a `Content` belongs,
+   * since it fetches one record rather than a page.
+   */
+  get<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    id: number,
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<GetRecord<Fields<C>, EmptyReferences, E, I, FL> | undefined>;
+  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+  /**
+   * Read many Activity records by id. Resolves to an array in the order of `ids`, holding
+   * `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
+   * id gets the same record at each of its positions; an empty `ids` sends no request.
+   *
+   * The ids are sent together (up to 200 per request, and as many as fit under the request size
+   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
+   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
+   *
+   * Every record that comes back is checked against the ids that were asked for. If PORTERS
+   * returns one that was not requested, the call rejects instead of returning it.
+   */
+  getMany<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    ids: readonly number[],
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<(GetRecord<Fields<C>, EmptyReferences, E, I, FL> | undefined)[]>;
+  /** Create one Activity record; resolves to the newly assigned id. */
+  create(
+    input: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>,
+  ): Promise<number>;
+  /** Update one Activity record by id; resolves to that id. */
+  update(id: number, input: UpdateInput<Fields<C>>): Promise<number>;
+  // 一括書き込みの設計は ADR-0041 / F-4。
+  /**
+   * Create many Activity records in one call. Auto-batched to ≤200 records and under the request
+   * size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
+   * (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
+   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
+   * duplicate creates. Empty input sends no request.
+   */
+  createMany(
+    inputs: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>[],
+  ): Promise<BulkWriteResult>;
+  /**
+   * Update many Activity records by id in one call. Auto-batched like `createMany`; per-record
+   * failures are returned in the `BulkWriteResult`, not thrown.
+   */
+  updateMany(
+    items: { id: number; fields: UpdateInput<Fields<C>> }[],
+  ): Promise<BulkWriteResult>;
+};
 
 export const createActivityResource = <C extends FieldCatalog = EmptyCatalog>(
   deps: ResourceDeps,
@@ -102,8 +218,11 @@ export const createActivityResource = <C extends FieldCatalog = EmptyCatalog>(
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
+  // `C` が型引数のままだと、共通の実装の型（DataResource）とこのファイルで書き出した型が同じだと
+  // コンパイラが示しきれないので、ここで名前を付け替える（ADR-0100）。同じであることは
+  // data-resource-shapes.test.ts が具体的な `C` で確かめる。
   return createDataResource(
     { ...ACTIVITY_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
-  );
+  ) as ActivityResource<C>;
 };

@@ -8,4 +8,4 @@
 
 > **JobSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/job.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L101)
+Defined in: [src/resources/job.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L111)

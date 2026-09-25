@@ -8,4 +8,4 @@
 
 > **ActivitySearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/activity.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L83)
+Defined in: [src/resources/activity.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L94)

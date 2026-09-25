@@ -8,6 +8,6 @@
 
 > **PhaseCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/phase.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L111)
+Defined in: [src/resources/phase.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L122)
 
 Fields for `create`: `ResourceId` required (`Id` and `Resource` are supplied for you).

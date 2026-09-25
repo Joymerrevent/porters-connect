@@ -8,4 +8,4 @@
 
 > **CandidatePage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/candidate.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L73)
+Defined in: [src/resources/candidate.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L84)

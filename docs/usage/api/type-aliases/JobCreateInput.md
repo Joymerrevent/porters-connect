@@ -8,6 +8,6 @@
 
 > **JobCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/job.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L104)
+Defined in: [src/resources/job.ts:114](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L114)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable.

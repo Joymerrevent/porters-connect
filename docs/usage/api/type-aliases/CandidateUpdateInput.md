@@ -8,6 +8,6 @@
 
 > **CandidateUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/candidate.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L82)
+Defined in: [src/resources/candidate.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L93)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

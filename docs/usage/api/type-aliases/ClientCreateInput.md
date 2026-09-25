@@ -8,6 +8,6 @@
 
 > **ClientCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/client.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L71)
+Defined in: [src/resources/client.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L82)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable.

@@ -8,4 +8,4 @@
 
 > **OpportunitySearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/opportunity.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L76)
+Defined in: [src/resources/opportunity.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L86)

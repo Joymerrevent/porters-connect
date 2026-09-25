@@ -8,4 +8,4 @@
 
 > **ContractSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/contract.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L105)
+Defined in: [src/resources/contract.ts:115](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L115)

@@ -105,7 +105,10 @@ export type EmptyImages = Record<never, never>;
 // `field` を型引数で受けるようにしたら（ADR-0096）、それまで `field` の引数の型が担っていた比べ方
 // （一方の項目名がもう一方にすべて含まれるときだけ通る）が消えたので、同じ比べ方をするメソッドを印として置く。
 // メソッドの引数は双方向に比べられる（bivariant）ので、含む向き・含まれる向きのどちらかで通り、どちらでもなければ落ちる。
-declare const catalogMark: unique symbol;
+// 各リソースの公開の型が `import type` してメンバーに置く（ADR-0100）。交差型（`{ [catalogMark]?… } & { search… }`）
+// にすると、`TenantScope<DeclaredCatalogs>` が宣言したスコープを受けなくなる（型引数の比べ方が変わる）ので、
+// 必ずメソッドと同じオブジェクト型のメンバーにする。
+export declare const catalogMark: unique symbol;
 
 // PORTERS の主キーの alias。データ系は `P_Id`、Phase だけ `Id`（ADR-0061）。レコードの型に在る方だけが残る。
 type IdKey = "P_Id" | "Id";
@@ -138,24 +141,65 @@ export type RequestedRecord<
       >
     >;
 
-// `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。Unsupported は ADR-0076、
-// Bound は ADR-0061 / ADR-0080。
+// `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。使い道は Phase の受けないクエリのキー
+// （ADR-0076）と束ねる項目（ADR-0061 / ADR-0080）。
 /**
  * An object with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
  * (excess-property checking); a variable that happens to carry the key still assigns. Re-declaring
  * each removed key as `?: never` closes that hole, so the call fails whichever way the object was
- * built — including `create({ ...recordFromRead })`, which is how the binding actually gets
- * contradicted in practice.
- *
- * Used for two different exclusions: query keys the endpoint does not take (`Unsupported`)
- * and write aliases the accessor itself fills (`Bound`).
- * `searchAll` keeps a plain `Omit` for `count` / `start`: those are not "PORTERS does not take
- * this", they are "the walk decides them", and tightening that is a different decision.
+ * built — including `create({ ...recordFromRead })`.
  */
-type Without<T, K extends keyof T> = Omit<T, K> & {
+export type Without<T, K extends keyof T> = Omit<T, K> & {
   [P in K]?: never;
 };
 
+/**
+ * What a Read selects besides its conditions: the `field` list, the references to `expand` and
+ * the Image sub-fields to read (`image`). Each is captured as a type parameter so the record type
+ * can follow it.
+ */
+export type ReadSelection<FL, E, I> = {
+  field?: FL;
+  expand?: E;
+  image?: I;
+};
+
+/** The options of `get` / `getMany`: the same selection a search takes. */
+export type GetOptions<F extends FieldCatalog, FL, E, I> = {
+  field?: FL & readonly ReadFieldAlias<F>[];
+  expand?: E;
+  image?: I;
+};
+
+/** The record `search` / `searchAll` resolve to for a given `expand` / `image` / `field`. */
+export type SearchRecord<
+  F extends FieldCatalog,
+  R extends ReferenceMap,
+  E extends Expand<R>,
+  I extends ImageOption<F>,
+  FL,
+> = RequestedRecord<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>, FL, E, I>;
+
+/**
+ * The record `get` / `getMany` resolve to: like {@link SearchRecord}, plus the id and whatever
+ * `expand` / `image` name, which are read even when `field` leaves them out.
+ */
+export type GetRecord<
+  F extends FieldCatalog,
+  R extends ReferenceMap,
+  E extends Expand<R>,
+  I extends ImageOption<F>,
+  FL,
+> = RequestedRecord<
+  ImageReadRecord<ExpandedReadRecord<F, R, E>, I>,
+  FL,
+  E,
+  I,
+  IdKey | keyof E | keyof I
+>;
+
+// 各リソースの公開の型は、それぞれのファイルでメソッドを書き出す（ADR-0100）。この型は factory が返す
+// 実装の形で、データ系の公開の型が揃っていることを確かめる型のテストの基準にもなる。
 // Every Read method takes the same shape: the query's `expand` / `image` are captured as `E` / `I`
 // (`const` type parameters, so the alias lists stay literal) and the record type widens accordingly
 // (ADR-0058 / ADR-0064). Omitting them leaves both at the empty default, which collapses back to
@@ -164,27 +208,6 @@ export type DataResource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
-  // 端点ごとに語彙を狭める設計は ADR-0076。実行時は寛容のまま（ADR-0074）。
-  /**
-   * Query keys **this endpoint does not take**. The common Read vocabulary is not
-   * universal: PORTERS lists `keywords` / `itemstate` for the 11 common data resources and for
-   * none of the others, so a resource on this factory can say which of them its own endpoint
-   * leaves out. `never` — the default — means "takes the whole vocabulary".
-   *
-   * Sending a parameter the endpoint does not list can fail the *whole* Read (Result Code 100 /
-   * 102), so the safe side is not to offer it. The runtime stays permissive: a key
-   * forced in through a cast is still sent, which is how a live contract can test whether
-   * PORTERS accepts it at all.
-   */
-  Unsupported extends keyof SearchQuery<F, R> = never,
-  // of() で束ねた alias を入力から外す設計は ADR-0061、型で塞ぐ経緯は RV-47。
-  /**
-   * Write aliases **the accessor itself fills**, so a caller cannot supply them.
-   * `t.phase.of("client")` binds `Resource`; passing it again could only mean contradicting the
-   * binding, and a phase written to the wrong resource cannot be deleted (there is no delete API).
-   * `never` — the default — means the caller supplies every writable field.
-   */
-  Bound extends WritableKeys<F> = never,
 > = {
   /** @internal Type-level mark of the field catalog; never present at runtime. */
   [catalogMark]?(field: ReadFieldAlias<F>): void;
@@ -193,130 +216,36 @@ export type DataResource<
     const I extends ImageOption<F> = EmptyImages,
     const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
-    query?: Without<SearchQuery<F, R>, Unsupported> &
-      Paging & {
-        field?: FL;
-        expand?: E;
-        image?: I;
-      },
-  ): Promise<
-    ResourcePageOf<
-      RequestedRecord<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>, FL, E, I>
-    >
-  >;
-  /** Auto-paginating search: yields every matching record (200 per page). */
+    query?: SearchQuery<F, R> & Paging & ReadSelection<FL, E, I>,
+  ): Promise<ResourcePageOf<SearchRecord<F, R, E, I, FL>>>;
   searchAll<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
     const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
-    query?: Without<SearchQuery<F, R>, Unsupported> & {
-      field?: FL;
-      expand?: E;
-      image?: I;
-    },
-  ): AsyncIterable<
-    RequestedRecord<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>, FL, E, I>
-  >;
-  /**
-   * Read one record by id; `undefined` when there is none. `field` picks the fields to read, the
-   * same way it does for `search` (omit it to read every known field); the record's id is always
-   * read, even when `field` leaves it out. `expand` reads referenced records too; `image` picks an
-   * Image field's sub-tags — `get` is where asking for a `Content` belongs, since it
-   * fetches one record rather than a page.
-   */
+    query?: SearchQuery<F, R> & ReadSelection<FL, E, I>,
+  ): AsyncIterable<SearchRecord<F, R, E, I, FL>>;
   get<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
     const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     id: number,
-    options?: {
-      field?: FL & readonly ReadFieldAlias<F>[];
-      expand?: E;
-      image?: I;
-    },
-  ): Promise<
-    | RequestedRecord<
-        ImageReadRecord<ExpandedReadRecord<F, R, E>, I>,
-        FL,
-        E,
-        I,
-        IdKey | keyof E | keyof I
-      >
-    | undefined
-  >;
-  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
-  /**
-   * Read many records by id. Resolves to an array in the order of `ids`, holding `undefined`
-   * where no record has that id — the same answer {@link get} gives for one id. A repeated id
-   * gets the same record at each of its positions; an empty `ids` sends no request.
-   *
-   * The ids are sent together (up to 200 per request, and as many as fit under the request size
-   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
-   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
-   *
-   * Every record that comes back is checked against the ids that were asked for. If PORTERS
-   * returns one that was not requested, the call rejects instead of returning it.
-   */
+    options?: GetOptions<F, FL, E, I>,
+  ): Promise<GetRecord<F, R, E, I, FL> | undefined>;
   getMany<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
     const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     ids: readonly number[],
-    options?: {
-      field?: FL & readonly ReadFieldAlias<F>[];
-      expand?: E;
-      image?: I;
-    },
-  ): Promise<
-    (
-      | RequestedRecord<
-          ImageReadRecord<ExpandedReadRecord<F, R, E>, I>,
-          FL,
-          E,
-          I,
-          IdKey | keyof E | keyof I
-        >
-      | undefined
-    )[]
-  >;
-  /** Create one record; resolves to the newly assigned id. */
-  create(
-    input: Without<
-      CreateInput<F, Req>,
-      Extract<Bound, keyof CreateInput<F, Req>>
-    >,
-  ): Promise<number>;
-  /** Update one record by id; resolves to that id. */
-  update(
-    id: number,
-    input: Without<UpdateInput<F>, Extract<Bound, keyof UpdateInput<F>>>,
-  ): Promise<number>;
-  // 一括書き込みの設計は ADR-0041 / F-4。
-  /**
-   * Create many records in one call. Auto-batched to ≤200 records and under the
-   * request size cap. **Not atomic** — inspect the {@link BulkWriteResult}: per-record failures are
-   * returned (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
-   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
-   * duplicate creates. Empty input sends no request.
-   */
-  createMany(
-    inputs: Without<
-      CreateInput<F, Req>,
-      Extract<Bound, keyof CreateInput<F, Req>>
-    >[],
-  ): Promise<BulkWriteResult>;
-  /**
-   * Update many records by id in one call. Auto-batched like {@link createMany};
-   * per-record failures are returned in the {@link BulkWriteResult}, not thrown.
-   */
+    options?: GetOptions<F, FL, E, I>,
+  ): Promise<(GetRecord<F, R, E, I, FL> | undefined)[]>;
+  create(input: CreateInput<F, Req>): Promise<number>;
+  update(id: number, input: UpdateInput<F>): Promise<number>;
+  createMany(inputs: CreateInput<F, Req>[]): Promise<BulkWriteResult>;
   updateMany(
-    items: {
-      id: number;
-      fields: Without<UpdateInput<F>, Extract<Bound, keyof UpdateInput<F>>>;
-    }[],
+    items: { id: number; fields: UpdateInput<F> }[],
   ): Promise<BulkWriteResult>;
 };
 

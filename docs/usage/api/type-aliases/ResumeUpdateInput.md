@@ -8,6 +8,6 @@
 
 > **ResumeUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/resume.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L105)
+Defined in: [src/resources/resume.ts:115](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L115)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

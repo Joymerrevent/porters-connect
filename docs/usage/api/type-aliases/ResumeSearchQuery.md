@@ -8,4 +8,4 @@
 
 > **ResumeSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/resume.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L97)
+Defined in: [src/resources/resume.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L107)

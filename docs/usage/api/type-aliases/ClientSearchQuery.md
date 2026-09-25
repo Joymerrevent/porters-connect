@@ -8,4 +8,4 @@
 
 > **ClientSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/client.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L68)
+Defined in: [src/resources/client.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L79)
