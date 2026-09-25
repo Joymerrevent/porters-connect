@@ -8,7 +8,7 @@
 
 > **Limit** = `object`
 
-Defined in: [src/resources/core/read.ts:267](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L267)
+Defined in: [src/resources/core/read.ts:270](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L270)
 
 How many records a Read returns at most: `count`, 1–200 (checked before sending). Option's
 `search` takes only this, because Option Read has no `start`.
@@ -19,4 +19,4 @@ How many records a Read returns at most: `count`, 1–200 (checked before sendin
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/core/read.ts:268](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L268)
+Defined in: [src/resources/core/read.ts:271](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L271)

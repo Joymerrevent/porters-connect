@@ -40,13 +40,16 @@ export type FieldCatalog = Record<string, DataType | null>;
  * partitions, so it has none to bind, and a master's shared sending never reads one (each master
  * sends its own `partition` through `params`).
  */
-export type Connection = {
+export type ConnectionDeps = {
   requester: Requester;
   accessPoint: AccessPoint;
 };
 
-/** What a partition-bound resource accessor is handed: the {@link Connection} and its partition. */
-export type ResourceDeps = Connection & {
+/**
+ * What a partition-bound resource accessor is handed: the {@link ConnectionDeps} and the partition
+ * it is bound to.
+ */
+export type ResourceDeps = ConnectionDeps & {
   partition: number;
 };
 

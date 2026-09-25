@@ -5,7 +5,7 @@
 // Partition has no `current()`; ADR-0022 D3b). `requestType: 0` stays on the query for a caller
 // whose token came from the browser grant. No `get(id)`: the API has no id/condition filter.
 
-import type { Connection } from "./core/read";
+import type { ConnectionDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   type FieldCatalog,
@@ -59,5 +59,7 @@ const buildParams = (q: PartitionSearchQuery): URLSearchParams => {
   return p;
 };
 
-export const createPartitionResource = (deps: Connection): PartitionResource =>
+export const createPartitionResource = (
+  deps: ConnectionDeps,
+): PartitionResource =>
   createMasterResource({ ...PARTITION_DESCRIPTOR, params: buildParams }, deps);

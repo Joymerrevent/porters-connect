@@ -4,7 +4,7 @@
 // (ADR-0022).
 
 import type {
-  Connection,
+  ConnectionDeps,
   FieldCatalog,
   Paging,
   ReadRecord,
@@ -29,7 +29,7 @@ export type MasterResourceConfig<F extends FieldCatalog, Q> = MasterReadConfig<
 /** The accessor for a read-only master resource: its `search` and `searchAll`. */
 export const createMasterResource = <const F extends FieldCatalog, Q>(
   config: MasterResourceConfig<F, Q>,
-  deps: Connection,
+  deps: ConnectionDeps,
 ): MasterResource<Q, ReadRecord<F>> => ({
   ...createMasterReader(config, deps),
 });
