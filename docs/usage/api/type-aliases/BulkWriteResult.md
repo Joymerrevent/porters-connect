@@ -8,7 +8,7 @@
 
 > **BulkWriteResult** = `object`
 
-Defined in: [src/resources/core/bulk-write.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/bulk-write.ts#L39)
+Defined in: [src/resources/core/write-many.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/write-many.ts#L39)
 
 The result of `createMany` / `updateMany`. `results` holds every record's outcome in
 input order; `failed` is the `ok === false` subset. A per-item `code !== 0` does **not** throw —
@@ -20,7 +20,7 @@ a bulk write mixes successes and failures — so always inspect `hasFailures` / 
 
 > **failed**: [`BulkWriteResultItem`](BulkWriteResultItem.md)[]
 
-Defined in: [src/resources/core/bulk-write.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/bulk-write.ts#L41)
+Defined in: [src/resources/core/write-many.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/write-many.ts#L41)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [src/resources/core/bulk-write.ts:41](https://github.com/Joymerreven
 
 > **hasFailures**: `boolean`
 
-Defined in: [src/resources/core/bulk-write.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/bulk-write.ts#L42)
+Defined in: [src/resources/core/write-many.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/write-many.ts#L42)
 
 ***
 
@@ -36,4 +36,4 @@ Defined in: [src/resources/core/bulk-write.ts:42](https://github.com/Joymerreven
 
 > **results**: [`BulkWriteResultItem`](BulkWriteResultItem.md)[]
 
-Defined in: [src/resources/core/bulk-write.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/bulk-write.ts#L40)
+Defined in: [src/resources/core/write-many.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/write-many.ts#L40)

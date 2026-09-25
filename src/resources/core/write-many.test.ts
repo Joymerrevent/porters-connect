@@ -101,7 +101,7 @@ const smallResource = (requester: Requester) =>
     { requester, accessPoint: { hostname: "h.test" }, partition: 7 },
   );
 
-// Exact per-request budget for the `resource` above (must match runBulkWrite's math), and a helper
+// Exact per-request budget for the `resource` above (must match writeMany's math), and a helper
 // that builds a create input whose *sent* record (with the forced P_Id) serializes to `target` chars
 // — for the size-boundary tests (P_Memo pads with unescaped 'z', 1 char = 1 output char).
 const FIELD_MAP = new Map(Object.entries(FIELDS));

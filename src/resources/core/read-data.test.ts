@@ -5,7 +5,7 @@ import type { Requester, RequestSpec } from "../../http/requester";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import type { TransportRequest } from "../../http/types";
 import type { FieldValue } from "../../xml/decode";
-import { createDataReader } from "./data-read";
+import { createDataReader } from "./read-data";
 import type { Expand } from "./expand";
 import type { FieldCatalog } from "./catalog";
 import type { SearchQuery } from "./query";

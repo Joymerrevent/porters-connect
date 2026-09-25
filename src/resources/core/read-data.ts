@@ -1,7 +1,7 @@
 // The data resources' Read (search / searchAll / get / getMany): the factory that sends them. The
-// record type they resolve to is `requested-record.ts`. `data-resource.ts` puts this together with
-// the Write half (`data-write.ts`) into one accessor. Master resources have their own, smaller Read
-// (`master-read.ts`); both share the paging / decoding / sending in `read.ts`.
+// record type they resolve to is `read-record.ts`. `data-resource.ts` puts this together with
+// the Write half (`write-data.ts`) into one accessor. Master resources have their own, smaller Read
+// (`read-master.ts`); both share the paging / decoding / sending in `read.ts`.
 
 import type { RawItem } from "../../xml/parser";
 import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
@@ -13,7 +13,7 @@ import type { Condition, SearchQuery } from "./query";
 import { buildReadParams, type ReadParamsContext } from "./query-encode";
 import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
-import { readByIds } from "./get-many";
+import { readMany } from "./read-many";
 import {
   expansionCatalogs,
   type EmptyReferences,
@@ -24,7 +24,7 @@ import {
 } from "./expand";
 import type { ImageOption, ImageReadRecord } from "./image";
 import { idAliasOf, type ResourceDescriptor } from "./descriptor";
-import type { EmptyImages } from "./requested-record";
+import type { EmptyImages } from "./read-record";
 
 /**
  * What the Read half needs: the resource's {@link ResourceDescriptor}, plus any Read query
@@ -173,7 +173,7 @@ export const createDataReader = <
     return page.items[0];
   };
 
-  // The chunking, the check against the requested ids and the ordering are `readByIds`'s
+  // The chunking, the check against the requested ids and the ordering are `readMany`'s
   // (ADR-0095); what this resource supplies is how to read one chunk.
   const getMany = async <
     const E extends Expand<R> = EmptyReferences,
@@ -190,7 +190,7 @@ export const createDataReader = <
       expand: options.expand,
       image: options.image,
     });
-    return readByIds(ids, {
+    return readMany(ids, {
       read: (chunk) => search<E, I>(query(chunk, chunk.length)),
       // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
       urlLength: (chunk) => readUrl(query(chunk, MAX_READ_COUNT)).length,

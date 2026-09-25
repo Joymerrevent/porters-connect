@@ -20,7 +20,7 @@ export type {
   ImageSelectedValue,
 } from "./core/image";
 // Bulk write result (ADR-0041 / F-4): shared across every data resource's createMany / updateMany.
-export type { BulkWriteResult, BulkWriteResultItem } from "./core/bulk-write";
+export type { BulkWriteResult, BulkWriteResultItem } from "./core/write-many";
 // Escape hatch for a field the catalog does not know (ADR-0074 D2).
 export { rawValue } from "./core/catalog";
 export * from "./candidate";

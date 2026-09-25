@@ -14,8 +14,8 @@ import type {
   GetRecord,
   ReadSelection,
   SearchRecord,
-} from "./core/requested-record";
-import type { CreateInput, UpdateInput } from "./core/data-write";
+} from "./core/read-record";
+import type { CreateInput, UpdateInput } from "./core/write-record";
 import type {
   EmptyCatalog,
   FieldCatalog,
@@ -27,7 +27,7 @@ import type { ResourceDeps } from "./core/deps";
 import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { EmptyReferences, Expand, ReferenceMap } from "./core/expand";
 import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/bulk-write";
+import type { BulkWriteResult } from "./core/write-many";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CLIENT_DESCRIPTOR } from "./client";

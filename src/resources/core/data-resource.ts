@@ -1,7 +1,7 @@
 // The data resources' accessor (ADR-0004/0005/0011): the Read (search / searchAll / get / getMany)
 // + Write (create / update / bulk) shape shared by every PORTERS data resource. A resource
-// module supplies its names + Data-Type catalog; this puts the Read half (`data-read.ts`) and the
-// Write half (`data-write.ts`) together and keeps XML out of resources/ (parse/encode live in
+// module supplies its names + Data-Type catalog; this puts the Read half (`read-data.ts`) and the
+// Write half (`write-data.ts`) together and keeps XML out of resources/ (parse/encode live in
 // xml/). Standard `P_` fields use the catalog; custom `U_`/`A_` pass through (decode: raw string /
 // encode: Text). The read-only master resources have their own, smaller counterpart:
 // `master-resource.ts`.
@@ -11,23 +11,19 @@ import type { Paging } from "./paging";
 import type { ResourceDeps } from "./deps";
 import type { ResourcePageOf } from "./read";
 import type { SearchQuery } from "./query";
-import type { BulkWriteResult } from "./bulk-write";
+import type { BulkWriteResult } from "./write-many";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
-import { createDataReader, type DataReadConfig } from "./data-read";
+import { createDataReader, type DataReadConfig } from "./read-data";
 import type {
   EmptyImages,
   GetOptions,
   GetRecord,
   ReadSelection,
   SearchRecord,
-} from "./requested-record";
-import {
-  createDataWriter,
-  type CreateInput,
-  type DataWriteConfig,
-  type UpdateInput,
-} from "./data-write";
+} from "./read-record";
+import { createDataWriter, type DataWriteConfig } from "./write-data";
+import type { CreateInput, UpdateInput } from "./write-record";
 
 /** Static description of a data resource: what its Read half and its Write half need. */
 export type DataResourceConfig<

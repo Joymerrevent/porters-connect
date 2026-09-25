@@ -20,7 +20,7 @@ export const buildWriteUrl = (
 /**
  * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a
  * resource error (mapped, not swallowed); a missing result Item is unparseable. Shared by
- * the data resources' Write (data-write.ts) and the bespoke Attachment accessor. `path` names the error code
+ * the data resources' Write (write-data.ts) and the bespoke Attachment accessor. `path` names the error code
  * message, `name` the error context resource.
  */
 export const firstWriteResultId = (

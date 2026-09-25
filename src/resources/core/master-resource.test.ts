@@ -5,7 +5,7 @@ import type { TransportRequest } from "../../http/types";
 import { createMasterResource } from "./master-resource";
 import type { FieldCatalog } from "./catalog";
 
-// 読み込み（master-read.ts）の中身は master-read.test.ts で確かめる。ここでは、アクセサが読み込みを
+// 読み込み（read-master.ts）の中身は read-master.test.ts で確かめる。ここでは、アクセサが読み込みを
 // そのまま出していること（同じ設定と接続で送ること）を確かめる。
 const FIELDS = {
   P_Id: "System[Id]",

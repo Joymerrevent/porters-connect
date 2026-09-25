@@ -1,44 +1,21 @@
-// The data resources' Write (create / update / createMany / updateMany): the inputs they take and
-// the factory that sends them. `data-resource.ts` puts this together with the Read half
-// (`data-read.ts`) into one accessor. The Write URL and reading the id back are shared with the
-// Attachment accessor in `write.ts`; batching is `bulk-write.ts`.
+// The data resources' Write (create / update / createMany / updateMany): the factory that sends
+// them. The inputs they take are `write-record.ts`. `data-resource.ts` puts this together with the
+// Read half (`read-data.ts`) into one accessor. The Write URL and reading the id back are shared
+// with the Attachment accessor in `write.ts`; batching is `write-many.ts`.
 
 import { PortersConfigError } from "../../errors";
 import {
   buildWriteXml,
-  type WritableDataType,
   type WriteItem,
   type WriteValue,
-  type WriteValueOf,
 } from "../../xml/encode";
 import { fieldTypesOf, type FieldCatalog } from "./catalog";
 import type { ResourceDeps } from "./deps";
-import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
+import { writeMany, type BulkWriteResult } from "./write-many";
+import type { CreateInput, UpdateInput } from "./write-record";
 import { guardImageWrite, guardNoImageInBulk } from "./image";
 import { idAliasOf, type ResourceDescriptor } from "./descriptor";
 import { buildWriteUrl, firstWriteResultId } from "./write";
-
-// Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
-// System[DateTime] — ADR-0016/0019).
-type WritableKeys<F extends FieldCatalog> = {
-  [K in keyof F]: F[K] extends WritableDataType ? K : never;
-}[keyof F];
-
-// 書き込み入力の形は ADR-0019 W2。
-/**
- * Create input: the `requiredOnCreate` aliases are **required** (non-null); every
- * other writable field is optional (`null` omits). `P_Id` is supplied by the library — not here.
- */
-export type CreateInput<F extends FieldCatalog, Req extends keyof F> = {
-  [K in Req]: WriteValueOf<F[K]>;
-} & {
-  [K in Exclude<WritableKeys<F>, Req>]?: WriteValueOf<F[K]> | null;
-};
-
-/** Update input: every writable field optional (`null` omits, `""` clears). */
-export type UpdateInput<F extends FieldCatalog> = {
-  [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
-};
 
 /**
  * What the Write half needs: the resource's {@link ResourceDescriptor}, the aliases required on
@@ -139,13 +116,13 @@ export const createDataWriter = <
 
   // Bulk write (ADR-0041): the records go to the batching executor as they are — same items as
   // a single write. An image cannot ride in a batch (ADR-0064 論点3), so that is refused first.
-  const writeMany = (
+  const writeAll = (
     records: WriteItem[],
     method: "createMany" | "updateMany",
     idempotent: boolean,
   ): Promise<BulkWriteResult> => {
     guardNoImageInBulk(records, fieldMap, method);
-    return runBulkWrite(
+    return writeMany(
       deps.requester,
       {
         name: config.name,
@@ -171,7 +148,7 @@ export const createDataWriter = <
   const createMany = async (
     inputs: CreateInput<F, Req[number]>[],
   ): Promise<BulkWriteResult> =>
-    writeMany(
+    writeAll(
       inputs.map((input) => toItem(input, NEW_RECORD)),
       "createMany",
       false,
@@ -180,7 +157,7 @@ export const createDataWriter = <
   const updateMany = async (
     items: { id: number; fields: UpdateInput<F> }[],
   ): Promise<BulkWriteResult> =>
-    writeMany(
+    writeAll(
       items.map(({ id, fields }) => toItem(fields, id)),
       "updateMany",
       true,

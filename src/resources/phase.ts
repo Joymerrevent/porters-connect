@@ -29,12 +29,12 @@ import type {
   GetRecord,
   ReadSelection,
   SearchRecord,
-} from "./core/requested-record";
-import type { CreateInput, UpdateInput } from "./core/data-write";
+} from "./core/read-record";
+import type { CreateInput, UpdateInput } from "./core/write-record";
 import type { Without } from "../util/types";
 import type { EmptyReferences, Expand } from "./core/expand";
 import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/bulk-write";
+import type { BulkWriteResult } from "./core/write-many";
 import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
 import type { Paging } from "./core/paging";
 import type { ResourceDeps } from "./core/deps";

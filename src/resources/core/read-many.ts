@@ -1,7 +1,7 @@
 // getMany (ADR-0095): read many records by id through the `{idAlias}:or=` condition. This file owns
 // what is not plain `search`: how the ids are split into requests, how each response is checked
 // against what was asked for, and putting the answers back in the order of the ids. The data
-// resources' Read (data-read.ts) hands it a way to read one chunk; nothing here builds a URL or
+// resources' Read (read-data.ts) hands it a way to read one chunk; nothing here builds a URL or
 // parses XML.
 
 import { PortersResourceError } from "../../errors";
@@ -100,7 +100,7 @@ export const recordsById = <T>(
   return out;
 };
 
-/** How `readByIds` reads: one chunk of ids at a time, through the resource's own search. */
+/** How `readMany` reads: one chunk of ids at a time, through the resource's own search. */
 export type IdReader<T> = {
   /** Read the records of one chunk of ids (a Read with `{idAlias}:or=` over the chunk). */
   read: (
@@ -124,7 +124,7 @@ export type IdReader<T> = {
  * A failure in any chunk rejects the whole call: a Read is safe to repeat, and a partial answer
  * would look like "those ids do not exist".
  */
-export const readByIds = async <T>(
+export const readMany = async <T>(
   ids: readonly number[],
   reader: IdReader<T>,
 ): Promise<(T | undefined)[]> => {

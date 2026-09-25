@@ -294,8 +294,9 @@ const encodeItem = (
 };
 
 /**
- * One record as its full `<Item>…</Item>` element. Exposed so the bulk-write chunker can
- * measure each record's serialized length when packing a request under the size cap (ADR-0041).
+ * One record as its full `<Item>…</Item>` element. Exposed so the bulk write chunker
+ * (resources/core/write-many.ts) can measure each record's serialized length when packing a
+ * request under the size cap (ADR-0041).
  */
 export const encodeWriteItem = (
   prefix: string,

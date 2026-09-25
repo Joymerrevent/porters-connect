@@ -7,7 +7,7 @@
 // This file owns the vocabulary (what a reference target is, what `expand` accepts, what the read
 // record becomes) plus the three mechanical halves: the `field` entries to send, the catalogs to
 // decode the answer with, and the guard that turns a hand-written expansion into a clear error.
-// The `field` assembly (field-param.ts) and the data resources' Read (data-read.ts) use it; XML
+// The `field` assembly (field-param.ts) and the data resources' Read (read-data.ts) use it; XML
 // stays in xml/.
 
 import { PortersConfigError } from "../../errors";

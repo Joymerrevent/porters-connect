@@ -1,5 +1,5 @@
 // The master resources' accessor: the read-only masters' counterpart of `data-resource.ts`. A
-// master has no Write, so the accessor is its Read (`master-read.ts`) alone; this file names the
+// master has no Write, so the accessor is its Read (`read-master.ts`) alone; this file names the
 // shape it takes. What each master's Read accepts stays with that master, passed in as `params`
 // (ADR-0022).
 
@@ -7,7 +7,7 @@ import type { ConnectionDeps } from "./deps";
 import type { FieldCatalog, ReadRecord } from "./catalog";
 import type { Paging } from "./paging";
 import type { ResourcePageOf } from "./read";
-import { createMasterReader, type MasterReadConfig } from "./master-read";
+import { createMasterReader, type MasterReadConfig } from "./read-master";
 
 // Function-typed properties rather than methods: they close over the config, never `this`, so a
 // caller may take them apart (`const { search } = …`).
