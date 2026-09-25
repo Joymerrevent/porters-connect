@@ -131,19 +131,22 @@ export type SalesSearchQuery<C extends FieldCatalog = EmptyCatalog> =
 /**
  * Fields for `create`: only `P_Owner` is unconditionally required. The six references are
  * required *conditionally* (a dependency chain PORTERS validates server-side), so they stay
- * optional here — see docs/usage/topics/limits.md.
+ * optional here — see docs/usage/topics/limits.md. `C` is the declared custom-field catalog
+ * merged on; `CR` names the custom fields that are required on `create`.
  */
-export type SalesCreateInput = CreateInput<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
-/** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
-export type SalesUpdateInput = UpdateInput<typeof FIELDS>;
+export type SalesCreateInput<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+/**
+ * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+ * declared custom-field catalog merged on.
+ */
+export type SalesUpdateInput<C extends FieldCatalog = EmptyCatalog> =
+  UpdateInput<typeof FIELDS & C>;
 
-// 公開の型の書き出しで繰り返す組み合わせ：利用者が宣言した項目を足した一覧と、新規で必須の項目。
+// 公開の型の書き出しで繰り返す、利用者が宣言した項目を足した一覧。
 type Fields<C extends FieldCatalog> = typeof FIELDS & C;
-type RequiredOnCreate<C extends FieldCatalog, CR extends keyof C> =
-  (typeof REQUIRED_ON_CREATE)[number] | CR;
 
 // メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
 // data-resource-shapes.test.ts が確かめる。
@@ -223,11 +226,9 @@ export type SalesResource<
     options?: GetOptions<Fields<C>, FL, E, I>,
   ): Promise<(GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined)[]>;
   /** Create one Sales record; resolves to the newly assigned id. */
-  create(
-    input: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>,
-  ): Promise<number>;
+  create(input: SalesCreateInput<C, CR>): Promise<number>;
   /** Update one Sales record by id; resolves to that id. */
-  update(id: number, input: UpdateInput<Fields<C>>): Promise<number>;
+  update(id: number, input: SalesUpdateInput<C>): Promise<number>;
   // 一括書き込みの設計は ADR-0041 / F-4。
   /**
    * Create many Sales records in one call. Auto-batched to ≤200 records and under the request
@@ -236,15 +237,13 @@ export type SalesResource<
    * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
    * duplicate creates. Empty input sends no request.
    */
-  createMany(
-    inputs: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>[],
-  ): Promise<BulkWriteResult>;
+  createMany(inputs: SalesCreateInput<C, CR>[]): Promise<BulkWriteResult>;
   /**
    * Update many Sales records by id in one call. Auto-batched like `createMany`; per-record
    * failures are returned in the `BulkWriteResult`, not thrown.
    */
   updateMany(
-    items: { id: number; fields: UpdateInput<Fields<C>> }[],
+    items: { id: number; fields: SalesUpdateInput<C> }[],
   ): Promise<BulkWriteResult>;
 };
 

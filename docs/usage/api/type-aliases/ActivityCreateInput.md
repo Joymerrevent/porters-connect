@@ -4,10 +4,22 @@
 
 [@joymerrevent/porters-connect](../index.md) / ActivityCreateInput
 
-# Type Alias: ActivityCreateInput
+# Type Alias: ActivityCreateInput\<C, CR\>
 
-> **ActivityCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
+> **ActivityCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/activity.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L100)
+Defined in: [src/resources/activity.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L104)
 
-Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable.
+Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable. `C`
+is the declared custom-field catalog merged on; `CR` names the custom fields that are required
+on `create`.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`

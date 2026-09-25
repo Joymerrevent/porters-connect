@@ -8,7 +8,7 @@
 
 > **RecruiterResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/recruiter.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L122)
+Defined in: [src/resources/recruiter.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L128)
 
 The Recruiter accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/recruiter.ts:194](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L194)
+Defined in: [src/resources/recruiter.ts:200](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L200)
 
 Create one Recruiter record; resolves to the newly assigned id.
 
@@ -37,7 +37,7 @@ Create one Recruiter record; resolves to the newly assigned id.
 
 ##### input
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>
+[`RecruiterCreateInput`](RecruiterCreateInput.md)\<`C`, `CR`\>
 
 #### Returns
 
@@ -49,7 +49,7 @@ Create one Recruiter record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/recruiter.ts:207](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L207)
+Defined in: [src/resources/recruiter.ts:211](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L211)
 
 Create many Recruiter records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -61,7 +61,7 @@ duplicate creates. Empty input sends no request.
 
 ##### inputs
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>[]
+[`RecruiterCreateInput`](RecruiterCreateInput.md)\<`C`, `CR`\>[]
 
 #### Returns
 
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/recruiter.ts:162](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L162)
+Defined in: [src/resources/recruiter.ts:168](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L168)
 
 Read one Recruiter record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/recruiter.ts:184](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L184)
+Defined in: [src/resources/recruiter.ts:190](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L190)
 
 Read many Recruiter records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/recruiter.ts:133](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L133)
+Defined in: [src/resources/recruiter.ts:139](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L139)
 
 Search Recruiter records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/recruiter.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L147)
+Defined in: [src/resources/recruiter.ts:153](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L153)
 
 Search every Recruiter record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/recruiter.ts:198](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L198)
+Defined in: [src/resources/recruiter.ts:202](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L202)
 
 Update one Recruiter record by id; resolves to that id.
 
@@ -245,7 +245,7 @@ Update one Recruiter record by id; resolves to that id.
 
 ##### input
 
-`UpdateInput`\<`Fields`\<`C`\>\>
+[`RecruiterUpdateInput`](RecruiterUpdateInput.md)\<`C`\>
 
 #### Returns
 
@@ -257,7 +257,7 @@ Update one Recruiter record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/recruiter.ts:214](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L214)
+Defined in: [src/resources/recruiter.ts:216](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L216)
 
 Update many Recruiter records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

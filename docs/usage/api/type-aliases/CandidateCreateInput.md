@@ -4,10 +4,22 @@
 
 [@joymerrevent/porters-connect](../index.md) / CandidateCreateInput
 
-# Type Alias: CandidateCreateInput
+# Type Alias: CandidateCreateInput\<C, CR\>
 
-> **CandidateCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
+> **CandidateCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/candidate.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L91)
+Defined in: [src/resources/candidate.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L95)
 
-Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable.
+Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable. `C`
+is the declared custom-field catalog merged on; `CR` names the custom fields that are required
+on `create`.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`
