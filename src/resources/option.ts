@@ -14,7 +14,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
 } from "./core/read";
-import type { ResourceDeps } from "./core/read";
+import type { Limit, ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 
 const FIELDS = {
@@ -54,18 +54,17 @@ export type OptionSearchQuery = {
   level?: number;
   /** -1 = all (default), 0 = unused only, 1 = in-use only. */
   enabled?: -1 | 0 | 1;
-  count?: number;
 };
 
 export type OptionResource = {
   /** Read options, flattened depth-first (all nodes; tree is reconstructable via `P_ParentId`). */
-  search(query?: OptionSearchQuery): Promise<Option[]>;
+  search(query?: OptionSearchQuery & Limit): Promise<Option[]>;
 };
 
 const buildUrl = (
   accessPoint: AccessPoint,
   partition: number,
-  q: OptionSearchQuery,
+  q: OptionSearchQuery & Limit,
 ): string => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -93,7 +92,9 @@ export const createOptionResource = (deps: ResourceDeps): OptionResource => {
     }
   };
   // `async` for the exception contract (ADR-0046).
-  const search = async (query: OptionSearchQuery = {}): Promise<Option[]> =>
+  const search = async (
+    query: OptionSearchQuery & Limit = {},
+  ): Promise<Option[]> =>
     deps.requester.request(
       {
         method: "GET",

@@ -86,3 +86,16 @@ describe("createOptionResource", () => {
     expect(options[1].P_Id).toBeUndefined();
   });
 });
+
+describe("createOptionResource — 件数の上限だけを受ける（ADR-0099）", () => {
+  it("takes count (Limit) but not start: Option Read has no offset", async () => {
+    const calls: Call[] = [];
+    await res(calls).search({ alias: "Option.P_Gender", count: 3 });
+    expect(calls[0].req.url).toContain("count=3");
+    const typeOnly = (r: ReturnType<typeof res>) => {
+      // @ts-expect-error — Option Read takes no start
+      void r.search({ start: 10 });
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+});

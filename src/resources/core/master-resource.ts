@@ -19,13 +19,11 @@ import {
   decoderFor,
   paginateOnce,
   type FieldCatalog,
+  type Paging,
   type ReadRecord,
   type ResourceDeps,
   type ResourcePageOf,
 } from "./read";
-
-/** The paging half of a Read query; the rest is the resource's own (`Q`). */
-type Paging = { count?: number; start?: number };
 
 // Function-typed properties rather than methods: they close over the config, never `this`, so a
 // caller may take them apart (`const { search } = …`).

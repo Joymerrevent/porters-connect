@@ -8,25 +8,17 @@
 
 > **UserSearchQuery** = `object`
 
-Defined in: [src/resources/user.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L68)
+Defined in: [src/resources/user.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L69)
 
 User Read query. `requestType` 1 = all users (default); `userType` -1 = any (default).
 
 ## Properties
 
-### count?
-
-> `optional` **count?**: `number`
-
-Defined in: [src/resources/user.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L81)
-
-***
-
 ### field?
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<*typeof* `FIELDS`\>[]
 
-Defined in: [src/resources/user.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L80)
+Defined in: [src/resources/user.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L81)
 
 Output fields as **bare aliases** (`P_Name`); the library adds the `User.` prefix.
 **Omit** to fetch every catalogued field; narrow it when the extra HR fields
@@ -39,17 +31,9 @@ the 4 core fields it returns for a fieldless read.
 
 > `optional` **requestType?**: `0` \| `1`
 
-Defined in: [src/resources/user.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L70)
+Defined in: [src/resources/user.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L71)
 
 1 = all users (default). 0 = the current user (code_direct → the App's own user).
-
-***
-
-### start?
-
-> `optional` **start?**: `number`
-
-Defined in: [src/resources/user.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L82)
 
 ***
 
@@ -57,6 +41,6 @@ Defined in: [src/resources/user.ts:82](https://github.com/Joymerrevent/porters-c
 
 > `optional` **userType?**: `-1` \| `0` \| `1`
 
-Defined in: [src/resources/user.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L72)
+Defined in: [src/resources/user.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L73)
 
 -1 = any (default), 0 = system admins, 1 = standard users.

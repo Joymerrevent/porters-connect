@@ -8,7 +8,7 @@
 
 > **FieldSearchQuery** = `object`
 
-Defined in: [src/resources/field.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L67)
+Defined in: [src/resources/field.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L68)
 
 Field Read query. The resource itself is bound by `of(name)`.
 
@@ -18,22 +18,6 @@ Field Read query. The resource itself is bound by `of(name)`.
 
 > `optional` **active?**: `-1` \| `0` \| `1`
 
-Defined in: [src/resources/field.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L69)
-
--1 = all (default), 0 = unused only, 1 = in-use only.
-
-***
-
-### count?
-
-> `optional` **count?**: `number`
-
 Defined in: [src/resources/field.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L70)
 
-***
-
-### start?
-
-> `optional` **start?**: `number`
-
-Defined in: [src/resources/field.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L71)
+-1 = all (default), 0 = unused only, 1 = in-use only.

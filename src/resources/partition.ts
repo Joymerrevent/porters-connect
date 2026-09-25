@@ -9,6 +9,7 @@ import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   type FieldCatalog,
+  type Paging,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
@@ -41,24 +42,18 @@ export type PartitionPage = ResourcePage<typeof FIELDS>;
 export type PartitionSearchQuery = {
   /** 1 = accessible partitions (default). 0 = login partition (browser `code` grant only). */
   requestType?: 0 | 1;
-  count?: number;
-  start?: number;
 };
 
 export type PartitionResource = {
-  search(query?: PartitionSearchQuery): Promise<PartitionPage>;
+  search(query?: PartitionSearchQuery & Paging): Promise<PartitionPage>;
   /** Auto-paginating search: yields every accessible partition. */
-  searchAll(
-    query?: Omit<PartitionSearchQuery, "count" | "start">,
-  ): AsyncIterable<Partition>;
+  searchAll(query?: PartitionSearchQuery): AsyncIterable<Partition>;
 };
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
 // The parameters Partition Read takes; paging and sending are the shared `createMasterResource`.
-const buildParams = (
-  q: Omit<PartitionSearchQuery, "count" | "start">,
-): URLSearchParams => {
+const buildParams = (q: PartitionSearchQuery): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("request_type", String(q.requestType ?? 1));
   return p;

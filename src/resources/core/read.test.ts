@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersConfigError } from "../../errors";
 import type { Requester } from "../../http/requester";
@@ -12,6 +12,8 @@ import {
   paginateOnce,
   rawValue,
   type FieldCatalog,
+  type Limit,
+  type Paging,
 } from "./read";
 
 // runRead / paginate are exercised through resource.test.ts and the master tests; here we pin
@@ -226,5 +228,12 @@ describe("core/read — createPageReader（1 ページ読む）", () => {
       count: 1,
       start: 2,
     });
+  });
+});
+
+describe("core/read — Limit / Paging（ADR-0099）", () => {
+  it("Paging is Limit plus start", () => {
+    expectTypeOf<Paging>().toEqualTypeOf<Limit & { start?: number }>();
+    expectTypeOf<Limit>().toEqualTypeOf<{ count?: number }>();
   });
 });

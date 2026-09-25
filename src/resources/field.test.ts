@@ -99,7 +99,7 @@ describe("createFieldAccessor", () => {
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const query: Omit<FieldSearchQuery, "count" | "start"> = { active: 1 };
+    const query: FieldSearchQuery = { active: 1 };
     for await (const item of r.of("job").searchAll(query)) {
       expect(item.P_Id).toBeGreaterThan(0);
       query.active = 0;

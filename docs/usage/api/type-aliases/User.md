@@ -8,6 +8,6 @@
 
 > **User** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/user.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L64)
+Defined in: [src/resources/user.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L65)
 
 A decoded User (PORTERS operator). `P_Type`: 0 = standard user, 1 = system admin.

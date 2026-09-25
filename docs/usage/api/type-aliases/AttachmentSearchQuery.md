@@ -12,14 +12,6 @@ Defined in: [src/resources/attachment.ts:70](https://github.com/Joymerrevent/por
 
 ## Properties
 
-### count?
-
-> `optional` **count?**: `number`
-
-Defined in: [src/resources/attachment.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L77)
-
-***
-
 ### resourceId?
 
 > `optional` **resourceId?**: `number`
@@ -29,11 +21,3 @@ Defined in: [src/resources/attachment.ts:76](https://github.com/Joymerrevent/por
 Narrow to one record's attachments — the id **within the bound resource**
 (`t.attachment.of("resume")` -> a `Resume.P_Id`). Omit to read the whole resource's
 attachments.
-
-***
-
-### start?
-
-> `optional` **start?**: `number`
-
-Defined in: [src/resources/attachment.ts:78](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L78)

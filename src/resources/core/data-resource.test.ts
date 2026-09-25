@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester, RequestSpec } from "../../http/requester";
@@ -7,6 +7,7 @@ import type { TransportRequest } from "../../http/types";
 import type { FieldValue } from "../../xml/decode";
 import { createDataResource } from "./data-resource";
 import type { Expand } from "./expand";
+import type { Paging } from "./read";
 import type { FieldCatalog } from "./read";
 import type { SearchQuery } from "./query";
 import type { ResourceDescriptor } from "./descriptor";
@@ -899,5 +900,29 @@ describe("createDataResource — get の field と getMany（ADR-0095）", () =>
     expect(conditionOf(calls[0])).toBe("Id:or=1:2");
     expect(fieldOf(calls)).toBe("Id,Memo");
     expect(out.map((r) => r?.Id)).toEqual([1, 2]);
+  });
+});
+
+describe("createDataResource — クエリとページ送りは別の型（ADR-0099）", () => {
+  it("SearchQuery holds what to look for only; paging is Paging", () => {
+    expectTypeOf<SearchQuery<typeof FIELDS>>().not.toHaveProperty("count");
+    expectTypeOf<SearchQuery<typeof FIELDS>>().not.toHaveProperty("start");
+    const q: SearchQuery<typeof FIELDS> & Paging = {
+      field: ["P_Name"],
+      count: 5,
+      start: 10,
+    };
+    expect(q.count).toBe(5);
+  });
+
+  it("search takes paging; searchAll does not (it walks the pages itself)", async () => {
+    const calls: Call[] = [];
+    await res(calls).search({ field: ["P_Name"], count: 5, start: 10 });
+    expect(calls[0].req.url).toContain("count=5&start=10");
+    const typeOnly = (r: ReturnType<typeof res>) => {
+      // @ts-expect-error — searchAll decides count / start itself
+      void r.searchAll({ count: 5 });
+    };
+    expect(typeOnly).toBeTypeOf("function");
   });
 });

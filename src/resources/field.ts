@@ -12,6 +12,7 @@ import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   type FieldCatalog,
+  type Paging,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
@@ -67,17 +68,13 @@ export type FieldPage = ResourcePage<typeof FIELDS>;
 export type FieldSearchQuery = {
   /** -1 = all (default), 0 = unused only, 1 = in-use only. */
   active?: -1 | 0 | 1;
-  count?: number;
-  start?: number;
 };
 
 /** The Field accessor for one bound resource. */
 export type FieldResource = {
-  search(query?: FieldSearchQuery): Promise<FieldPage>;
+  search(query?: FieldSearchQuery & Paging): Promise<FieldPage>;
   /** Auto-paginating search: yields every field of the resource. */
-  searchAll(
-    query?: Omit<FieldSearchQuery, "count" | "start">,
-  ): AsyncIterable<Field>;
+  searchAll(query?: FieldSearchQuery): AsyncIterable<Field>;
 };
 
 // of(resource) で束ねる形は ADR-0080。
@@ -101,7 +98,7 @@ export type FieldAccessor = {
 const buildParams = (
   partition: number,
   resource: ResourceType,
-  q: Omit<FieldSearchQuery, "count" | "start">,
+  q: FieldSearchQuery,
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -115,7 +112,7 @@ export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
     createMasterResource(
       {
         ...FIELD_DESCRIPTOR,
-        params: (q: Omit<FieldSearchQuery, "count" | "start">) =>
+        params: (q: FieldSearchQuery) =>
           buildParams(deps.partition, resource, q),
       },
       deps,

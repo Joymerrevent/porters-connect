@@ -162,7 +162,7 @@ describe("createUserResource", () => {
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const query: Omit<UserSearchQuery, "count" | "start"> = {
+    const query: UserSearchQuery = {
       userType: 1,
       field: ["P_Name", "P_Type"],
     };

@@ -17,7 +17,7 @@ import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
 import { appendPaging, paginateOnce } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
-import type { ResourceDeps } from "./core/read";
+import type { Paging, ResourceDeps } from "./core/read";
 import { buildWriteUrl, firstWriteResultId } from "./core/write";
 import {
   ATTACHMENT_REQUEST_TYPE,
@@ -74,15 +74,7 @@ export type AttachmentSearchQuery = {
    * attachments.
    */
   resourceId?: number;
-  count?: number;
-  start?: number;
 };
-
-/** A walking Read: `count` / `start` are the walk's to decide. */
-export type AttachmentWalkQuery = Omit<
-  AttachmentSearchQuery,
-  "count" | "start"
->;
 
 // resource は of(name) で束ねる（ADR-0080）・write でも同じ値を使う（ADR-0081）。
 /**
@@ -122,14 +114,14 @@ export type AttachmentAccessor = {
 };
 
 export type AttachmentResource = {
-  search(query?: AttachmentSearchQuery): Promise<AttachmentPage>;
+  search(query?: AttachmentSearchQuery & Paging): Promise<AttachmentPage>;
   // 本体は get だけが運ぶ（search / searchAll はメタデータのみ）: ADR-0075。
   /**
    * Auto-paginating search: yields every matching attachment (200 per page). Metadata only —
    * the body stays behind {@link AttachmentResource.get}, so walking every attachment
    * in a partition never drags the files along with it.
    */
-  searchAll(query?: AttachmentWalkQuery): AsyncIterable<Attachment>;
+  searchAll(query?: AttachmentSearchQuery): AsyncIterable<Attachment>;
   /**
    * Read one attachment **with its body** (`content`). This is the only method that carries it:
    * one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable.
@@ -233,14 +225,14 @@ export const createAttachmentAccessor = (
     // A listing never carries bodies (ADR-0075): `requestType=1`. `async` for the exception
     // contract (ADR-0046).
     const search = async (
-      query: AttachmentSearchQuery = {},
+      query: AttachmentSearchQuery & Paging = {},
     ): Promise<AttachmentPage> =>
       read({ ...query, requestType: WITHOUT_CONTENT, resource });
 
     // Offset walk over the same Read. The query is read once, before the first page, so mutating
     // the object mid-iteration cannot change a later page (RV-32).
     const searchAll = (
-      query: AttachmentWalkQuery = {},
+      query: AttachmentSearchQuery = {},
     ): AsyncIterable<Attachment> =>
       paginateOnce(() => {
         const resourceId = query.resourceId;

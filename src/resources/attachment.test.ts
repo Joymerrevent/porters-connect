@@ -331,3 +331,15 @@ describe("createAttachmentAccessor — 10MB guard", () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+describe("attachment — search はページ送りを受け、searchAll は受けない（ADR-0099）", () => {
+  it("search takes paging next to the query; searchAll takes the query only", () => {
+    const typeOnly = (f: ReturnType<typeof files>) => {
+      void f.search({ resourceId: 1, count: 5, start: 0 });
+      void f.searchAll({ resourceId: 1 });
+      // @ts-expect-error — searchAll decides count / start itself
+      void f.searchAll({ resourceId: 1, count: 5 });
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+});
