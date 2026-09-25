@@ -10,7 +10,8 @@
 // Resource wiring lives in resource.ts, XML in xml/.
 
 import { PortersConfigError } from "../../errors";
-import type { DataType, DecodedValue } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
+import type { DecodedValue } from "../../xml/decode";
 import { bareAlias, type FieldCatalog, type ReadRecord } from "./read";
 
 /**

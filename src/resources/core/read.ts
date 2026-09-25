@@ -8,10 +8,10 @@ import { PortersConfigError } from "../../errors";
 import { qualify } from "../../util/alias";
 import { apiUrl, type AccessPoint } from "../../http/access-point";
 import type { Requester } from "../../http/requester";
+import type { DataType } from "../../porters/data-type";
 import {
   decodeField,
   decodeReferenceRecord,
-  type DataType,
   type DecodedValue,
   type FieldValue,
 } from "../../xml/decode";

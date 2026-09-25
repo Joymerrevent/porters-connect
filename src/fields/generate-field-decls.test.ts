@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Field } from "../resources/field";
 import { CUSTOM_DATA_TYPES } from "./define-fields";
 import { generateFieldDecls } from "./generate-field-decls";
-import { fieldTypeValueOf } from "../resources/field-type";
+import { fieldTypeValueOf } from "../porters/field-type";
 import type { FieldCatalogSource } from "./tenant-catalog";
 
 const sourceOf = (

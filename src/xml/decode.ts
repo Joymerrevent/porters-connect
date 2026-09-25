@@ -4,34 +4,7 @@
 import { PortersResourceError } from "../errors/index";
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
 import { asRecord, asString } from "./raw";
-
-// Granularity = PORTERS Data Type (ADR-0016). Labels are the literal Data Type
-// strings, incl. the System family (`System[Id]` / `System[DateTime]` / `System[Reference]`).
-// Currency collapses to Number and the three Option subtypes to Option (PORTERS' own
-// Data Type does the same); the string Data Types stay distinct (room for future
-// validation / normalisation). Image (FT-18) and Link (FT-20) complete the set (ADR-0064);
-// neither appears in any standard catalog — they reach the library only as tenant custom
-// fields declared with `defineFields`. The `System[…]` qualifier marks system-managed values
-// (auto-assigned, often Write-restricted); that lifecycle is enforced via input types,
-// not here — decoding is by value shape.
-export type DataType =
-  | "System[Id]"
-  | "Number"
-  | "DateTime"
-  | "System[DateTime]"
-  | "Date"
-  | "Age"
-  | "SinglelineText"
-  | "MultilineText"
-  | "Mail"
-  | "Telephone"
-  | "URL"
-  | "User"
-  | "Option"
-  | "System[Reference]"
-  | "System[Department]"
-  | "Image"
-  | "Link";
+import type { DataType } from "../porters/data-type";
 
 // System[Department] を User と同じ入れ子として扱う判断は ADR-0061 案3a。
 /**

@@ -10,7 +10,7 @@ import {
   resourceError,
 } from "../../errors";
 import { apiUrl, type AccessPoint } from "../../http/access-point";
-import type { DataType } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
 import {
   buildWriteXml,
   type WritableDataType,

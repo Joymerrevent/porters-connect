@@ -11,7 +11,8 @@ import {
   isoToPortersDateTime,
 } from "../util/datetime";
 import { isXmlName } from "../util/xml-name";
-import type { DataType, ImageSubField } from "./decode";
+import type { DataType } from "../porters/data-type";
+import type { ImageSubField } from "./decode";
 
 // Option を string[] で読み書き対称にするのは ADR-0017。項目ごとの静的 Write 型は
 // 基本設計 SD-3 の残課題。

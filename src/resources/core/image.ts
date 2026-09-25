@@ -13,7 +13,8 @@
 
 import { PortersConfigError } from "../../errors";
 import { qualify } from "../../util/alias";
-import type { DataType, ImageSubField, ImageValue } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
+import type { ImageSubField, ImageValue } from "../../xml/decode";
 import { IMAGE_CONTENT_TYPES, type WriteItem } from "../../xml/encode";
 import type { FieldCatalog } from "./read";
 

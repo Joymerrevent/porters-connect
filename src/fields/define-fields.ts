@@ -6,7 +6,7 @@
 
 import { PortersConfigError } from "../errors";
 import type { EmptyCatalog } from "../resources/core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 
 // ADR-0023 D2。必須（required）は ADR-0089。
 /**

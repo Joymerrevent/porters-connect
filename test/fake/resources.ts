@@ -29,7 +29,7 @@ import {
   RESUME_DESCRIPTOR,
 } from "../../src/resources/index";
 import type { ResourceDescriptor } from "../../src/resources/core/resource";
-import type { DataType } from "../../src/xml/decode";
+import type { DataType } from "../../src/porters/data-type";
 import {
   parseAttachmentReadQuery,
   type AttachmentReadQuery,

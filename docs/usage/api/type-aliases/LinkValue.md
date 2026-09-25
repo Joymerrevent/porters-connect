@@ -8,7 +8,7 @@
 
 > **LinkValue** = `number` \| [`UserRef`](UserRef.md) \| [`DepartmentRef`](DepartmentRef.md)
 
-Defined in: [src/xml/decode.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L74)
+Defined in: [src/xml/decode.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L47)
 
 A decoded Link value. PORTERS resolves a Link to **a Contact id, a User, or a
 Department**, decided by the tenant's own field setting, and the response carries no

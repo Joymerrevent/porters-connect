@@ -11,7 +11,7 @@ import {
   PortersResourceError,
 } from "../../errors";
 import { MAX_REQUEST_LENGTH, type Requester } from "../../http/requester";
-import type { DataType } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
 import { encodeWriteItem, type WriteItem } from "../../xml/encode";
 import { parseWriteResult, type WriteResultItem } from "../../xml/parser";
 

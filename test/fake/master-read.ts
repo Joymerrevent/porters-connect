@@ -16,14 +16,14 @@
 
 import { DEPARTMENT_DESCRIPTOR } from "../../src/resources/department";
 import { FIELD_DESCRIPTOR } from "../../src/resources/field";
-import { fieldTypeValueOf } from "../../src/resources/field-type";
+import { fieldTypeValueOf } from "../../src/porters/field-type";
 import { RESOURCE_VALUES } from "../../src/resources/resource-list";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
 import type { ResourceDescriptor } from "../../src/resources/core/resource";
 import { USER_DESCRIPTOR } from "../../src/resources/user";
 import type { TransportResponse } from "../../src/http/types";
-import type { DataType } from "../../src/xml/decode";
+import type { DataType } from "../../src/porters/data-type";
 import type { FakeMasters } from "./masters";
 import {
   buildItemXml,
@@ -60,7 +60,7 @@ export type MasterReadHandler = (
 // Data permission error — what `code_direct` gets for the login-partition read (ADR-0022 fact 4).
 const CODE_NO_DATA_PERMISSION = 403;
 
-// Data Type -> Field Type Value: the single table in src/resources/field-type.ts (ADR-0069
+// Data Type -> Field Type Value: the single table in src/porters/field-type.ts (ADR-0069
 // 論点3). This file used to keep its own copy; the representative choices (Option -> 7, the
 // System family -> 11) and the LV-12 caveat now live there.
 

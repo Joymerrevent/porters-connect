@@ -6,10 +6,10 @@
 //
 // Direction note: `fields/` may import `resources/`, never the other way round (RV-8).
 
-import { dataTypeOfFieldType, fieldTypeLabel } from "../resources/field-type";
+import { dataTypeOfFieldType, fieldTypeLabel } from "../porters/field-type";
 import type { Field, FieldSearchQuery } from "../resources/field";
 import { bareAlias } from "../resources/core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 import {
   CUSTOM_DATA_TYPES,
   type CustomDataType,

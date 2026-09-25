@@ -15,7 +15,7 @@
 //   - 16 Reference has **no** Data Type (the field carries no value of its own).
 // So each direction has to *choose* where a key repeats: `reverse` / `forward` mark the winner.
 
-import type { DataType } from "../xml/decode";
+import type { DataType } from "./data-type";
 
 /** One published (Field Type Value, Data Type) pair. */
 export type FieldTypeRow = {

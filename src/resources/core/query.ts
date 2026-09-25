@@ -12,7 +12,7 @@ import {
   isoToPortersDate,
   isoToPortersDateTime,
 } from "../../util/datetime";
-import type { DataType } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
 import type { FieldCatalog, ReadFieldAlias } from "./read";
