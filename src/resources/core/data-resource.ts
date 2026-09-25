@@ -14,15 +14,14 @@ import type { SearchQuery } from "./query";
 import type { BulkWriteResult } from "./bulk-write";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
-import {
-  createDataReader,
-  type DataReadConfig,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-} from "./data-read";
+import { createDataReader, type DataReadConfig } from "./data-read";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./requested-record";
 import {
   createDataWriter,
   type CreateInput,

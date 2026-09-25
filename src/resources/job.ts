@@ -14,7 +14,7 @@ import type {
   GetRecord,
   ReadSelection,
   SearchRecord,
-} from "./core/data-read";
+} from "./core/requested-record";
 import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,

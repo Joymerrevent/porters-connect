@@ -2,6 +2,7 @@
 
 export * from "./data-resource";
 export * from "./data-read";
+export type * from "./requested-record";
 export * from "./data-write";
 export type * from "./descriptor";
 export * from "./write";
