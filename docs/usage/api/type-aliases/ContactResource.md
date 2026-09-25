@@ -8,7 +8,7 @@
 
 > **ContactResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/contact.ts:127](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L127)
+Defined in: [src/resources/contact.ts:133](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L133)
 
 The Contact accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/contact.ts:199](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L199)
+Defined in: [src/resources/contact.ts:205](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L205)
 
 Create one Contact record; resolves to the newly assigned id.
 
@@ -37,7 +37,7 @@ Create one Contact record; resolves to the newly assigned id.
 
 ##### input
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>
+[`ContactCreateInput`](ContactCreateInput.md)\<`C`, `CR`\>
 
 #### Returns
 
@@ -49,7 +49,7 @@ Create one Contact record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/contact.ts:212](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L212)
+Defined in: [src/resources/contact.ts:216](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L216)
 
 Create many Contact records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -61,7 +61,7 @@ duplicate creates. Empty input sends no request.
 
 ##### inputs
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>[]
+[`ContactCreateInput`](ContactCreateInput.md)\<`C`, `CR`\>[]
 
 #### Returns
 
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/contact.ts:167](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L167)
+Defined in: [src/resources/contact.ts:173](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L173)
 
 Read one Contact record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/contact.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L189)
+Defined in: [src/resources/contact.ts:195](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L195)
 
 Read many Contact records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/contact.ts:138](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L138)
+Defined in: [src/resources/contact.ts:144](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L144)
 
 Search Contact records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/contact.ts:152](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L152)
+Defined in: [src/resources/contact.ts:158](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L158)
 
 Search every Contact record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/contact.ts:203](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L203)
+Defined in: [src/resources/contact.ts:207](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L207)
 
 Update one Contact record by id; resolves to that id.
 
@@ -245,7 +245,7 @@ Update one Contact record by id; resolves to that id.
 
 ##### input
 
-`UpdateInput`\<`Fields`\<`C`\>\>
+[`ContactUpdateInput`](ContactUpdateInput.md)\<`C`\>
 
 #### Returns
 
@@ -257,7 +257,7 @@ Update one Contact record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/contact.ts:219](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L219)
+Defined in: [src/resources/contact.ts:221](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L221)
 
 Update many Contact records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

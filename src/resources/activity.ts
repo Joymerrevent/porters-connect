@@ -98,18 +98,24 @@ export type ActivityPage = ResourcePage<typeof FIELDS>;
 export type ActivitySearchQuery<C extends FieldCatalog = EmptyCatalog> =
   SearchQuery<typeof FIELDS & C>;
 
-/** Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable. */
-export type ActivityCreateInput = CreateInput<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
-/** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
-export type ActivityUpdateInput = UpdateInput<typeof FIELDS>;
+/**
+ * Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable. `C`
+ * is the declared custom-field catalog merged on; `CR` names the custom fields that are required
+ * on `create`.
+ */
+export type ActivityCreateInput<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+/**
+ * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+ * declared custom-field catalog merged on.
+ */
+export type ActivityUpdateInput<C extends FieldCatalog = EmptyCatalog> =
+  UpdateInput<typeof FIELDS & C>;
 
-// 公開の型の書き出しで繰り返す組み合わせ：利用者が宣言した項目を足した一覧と、新規で必須の項目。
+// 公開の型の書き出しで繰り返す、利用者が宣言した項目を足した一覧。
 type Fields<C extends FieldCatalog> = typeof FIELDS & C;
-type RequiredOnCreate<C extends FieldCatalog, CR extends keyof C> =
-  (typeof REQUIRED_ON_CREATE)[number] | CR;
 
 // メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
 // data-resource-shapes.test.ts が確かめる。
@@ -189,11 +195,9 @@ export type ActivityResource<
     options?: GetOptions<Fields<C>, FL, E, I>,
   ): Promise<(GetRecord<Fields<C>, EmptyReferences, E, I, FL> | undefined)[]>;
   /** Create one Activity record; resolves to the newly assigned id. */
-  create(
-    input: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>,
-  ): Promise<number>;
+  create(input: ActivityCreateInput<C, CR>): Promise<number>;
   /** Update one Activity record by id; resolves to that id. */
-  update(id: number, input: UpdateInput<Fields<C>>): Promise<number>;
+  update(id: number, input: ActivityUpdateInput<C>): Promise<number>;
   // 一括書き込みの設計は ADR-0041 / F-4。
   /**
    * Create many Activity records in one call. Auto-batched to ≤200 records and under the request
@@ -202,15 +206,13 @@ export type ActivityResource<
    * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
    * duplicate creates. Empty input sends no request.
    */
-  createMany(
-    inputs: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>[],
-  ): Promise<BulkWriteResult>;
+  createMany(inputs: ActivityCreateInput<C, CR>[]): Promise<BulkWriteResult>;
   /**
    * Update many Activity records by id in one call. Auto-batched like `createMany`; per-record
    * failures are returned in the `BulkWriteResult`, not thrown.
    */
   updateMany(
-    items: { id: number; fields: UpdateInput<Fields<C>> }[],
+    items: { id: number; fields: ActivityUpdateInput<C> }[],
   ): Promise<BulkWriteResult>;
 };
 

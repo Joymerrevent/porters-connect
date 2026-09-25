@@ -111,18 +111,24 @@ export type ResumePage = ResourcePage<typeof FIELDS>;
 export type ResumeSearchQuery<C extends FieldCatalog = EmptyCatalog> =
   SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
-/** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
-export type ResumeCreateInput = CreateInput<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
-/** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
-export type ResumeUpdateInput = UpdateInput<typeof FIELDS>;
+/**
+ * Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. `C` is
+ * the declared custom-field catalog merged on; `CR` names the custom fields that are required on
+ * `create`.
+ */
+export type ResumeCreateInput<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+/**
+ * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+ * declared custom-field catalog merged on.
+ */
+export type ResumeUpdateInput<C extends FieldCatalog = EmptyCatalog> =
+  UpdateInput<typeof FIELDS & C>;
 
-// 公開の型の書き出しで繰り返す組み合わせ：利用者が宣言した項目を足した一覧と、新規で必須の項目。
+// 公開の型の書き出しで繰り返す、利用者が宣言した項目を足した一覧。
 type Fields<C extends FieldCatalog> = typeof FIELDS & C;
-type RequiredOnCreate<C extends FieldCatalog, CR extends keyof C> =
-  (typeof REQUIRED_ON_CREATE)[number] | CR;
 
 // メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
 // data-resource-shapes.test.ts が確かめる。
@@ -202,11 +208,9 @@ export type ResumeResource<
     options?: GetOptions<Fields<C>, FL, E, I>,
   ): Promise<(GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined)[]>;
   /** Create one Resume record; resolves to the newly assigned id. */
-  create(
-    input: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>,
-  ): Promise<number>;
+  create(input: ResumeCreateInput<C, CR>): Promise<number>;
   /** Update one Resume record by id; resolves to that id. */
-  update(id: number, input: UpdateInput<Fields<C>>): Promise<number>;
+  update(id: number, input: ResumeUpdateInput<C>): Promise<number>;
   // 一括書き込みの設計は ADR-0041 / F-4。
   /**
    * Create many Resume records in one call. Auto-batched to ≤200 records and under the request
@@ -215,15 +219,13 @@ export type ResumeResource<
    * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
    * duplicate creates. Empty input sends no request.
    */
-  createMany(
-    inputs: CreateInput<Fields<C>, RequiredOnCreate<C, CR>>[],
-  ): Promise<BulkWriteResult>;
+  createMany(inputs: ResumeCreateInput<C, CR>[]): Promise<BulkWriteResult>;
   /**
    * Update many Resume records by id in one call. Auto-batched like `createMany`; per-record
    * failures are returned in the `BulkWriteResult`, not thrown.
    */
   updateMany(
-    items: { id: number; fields: UpdateInput<Fields<C>> }[],
+    items: { id: number; fields: ResumeUpdateInput<C> }[],
   ): Promise<BulkWriteResult>;
 };
 

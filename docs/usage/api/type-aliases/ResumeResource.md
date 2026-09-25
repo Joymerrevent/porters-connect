@@ -8,7 +8,7 @@
 
 > **ResumeResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/resume.ts:133](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L133)
+Defined in: [src/resources/resume.ts:139](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L139)
 
 The Resume accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/resume.ts:205](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L205)
+Defined in: [src/resources/resume.ts:211](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L211)
 
 Create one Resume record; resolves to the newly assigned id.
 
@@ -37,7 +37,7 @@ Create one Resume record; resolves to the newly assigned id.
 
 ##### input
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>
+[`ResumeCreateInput`](ResumeCreateInput.md)\<`C`, `CR`\>
 
 #### Returns
 
@@ -49,7 +49,7 @@ Create one Resume record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/resume.ts:218](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L218)
+Defined in: [src/resources/resume.ts:222](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L222)
 
 Create many Resume records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -61,7 +61,7 @@ duplicate creates. Empty input sends no request.
 
 ##### inputs
 
-`CreateInput`\<`Fields`\<`C`\>, `RequiredOnCreate`\<`C`, `CR`\>\>[]
+[`ResumeCreateInput`](ResumeCreateInput.md)\<`C`, `CR`\>[]
 
 #### Returns
 
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, \{ `P_Candidate`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Candidate"`; `path`: `"candidate"`; `prefix`: `"Person"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/resume.ts:173](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L173)
+Defined in: [src/resources/resume.ts:179](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L179)
 
 Read one Resume record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, \{ `P_Candidate`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Candidate"`; `path`: `"candidate"`; `prefix`: `"Person"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/resume.ts:195](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L195)
+Defined in: [src/resources/resume.ts:201](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L201)
 
 Read many Resume records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Candidate`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Candidate"`; `path`: `"candidate"`; `prefix`: `"Person"`; \}; \}, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/resume.ts:144](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L144)
+Defined in: [src/resources/resume.ts:150](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L150)
 
 Search Resume records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Candidate`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Candidate"`; `path`: `"candidate"`; `prefix`: `"Person"`; \}; \}, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/resume.ts:158](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L158)
+Defined in: [src/resources/resume.ts:164](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L164)
 
 Search every Resume record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/resume.ts:209](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L209)
+Defined in: [src/resources/resume.ts:213](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L213)
 
 Update one Resume record by id; resolves to that id.
 
@@ -245,7 +245,7 @@ Update one Resume record by id; resolves to that id.
 
 ##### input
 
-`UpdateInput`\<`Fields`\<`C`\>\>
+[`ResumeUpdateInput`](ResumeUpdateInput.md)\<`C`\>
 
 #### Returns
 
@@ -257,7 +257,7 @@ Update one Resume record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/resume.ts:225](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L225)
+Defined in: [src/resources/resume.ts:227](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L227)
 
 Update many Resume records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.
