@@ -104,7 +104,17 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.24.0**（npm latest・`v0.24.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.25.0**（npm latest・`v0.25.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1067.7 kB**・2026-09-25）。**累計 33 版**（うち **0.2.0 以降の 31 版**がこの半自動フロー）。
+  changeset **2 枚**（minor 2）を消費した minor リリースで、定義していないオプションのキーを弾く（[#406][pr406]・
+  [ADR-0092][adr92]）と、`porters.auth.getToken()` が期限も返す（[#409][pr409]・[ADR-0093][adr93]）。**破壊的変更 2 つ**。
+  - **unpacked は 1063.5 → 1067.7 kB（+4.2 kB）**。同梱ファイル数は 10 のまま。
+  - 手順の面では、**`main` への PR の stryker が必ずフル run になった最初の版**（[ADR-0094][adr94]）。リリース PR
+    [#416][pr416]（merge commit）の stryker は 11 分 4 秒。**`main` への push の Mutation は 8 秒で skip**（[#413][pr413] の判定が
+    初めて本番で効いた。0.24.0 では約 11 分待った）。Test / CI の green を待って `gh release create`（notes は CHANGELOG の
+    該当節・参照スタイルのリンクを絶対 URL に解決）→ Release ワークフロー green → `npm view` で 0.25.0 を確認。
+    back-merge は [#417][pr417]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.24.0**（npm latest・`v0.24.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **10 files / 1063.5 kB**・2026-09-24）。**累計 32 版**（うち **0.2.0 以降の 30 版**がこの半自動フロー）。
   changeset **3 枚**（minor 2・patch 1）を消費した minor リリースで、トークンの取り方と置き場所を分ける
   （[#397][pr397]・[ADR-0091][adr91]）、日時（`DateTime`）の入力をタイムゾーンつきの ISO 8601 に絞る（[#399][pr399]）、
@@ -376,7 +386,14 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr400]: https://github.com/Joymerrevent/porters-connect/pull/400
 [pr402]: https://github.com/Joymerrevent/porters-connect/pull/402
 [pr403]: https://github.com/Joymerrevent/porters-connect/pull/403
+[pr406]: https://github.com/Joymerrevent/porters-connect/pull/406
+[pr409]: https://github.com/Joymerrevent/porters-connect/pull/409
+[pr413]: https://github.com/Joymerrevent/porters-connect/pull/413
+[pr416]: https://github.com/Joymerrevent/porters-connect/pull/416
+[pr417]: https://github.com/Joymerrevent/porters-connect/pull/417
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
 [adr91]: adr/0091-token-provider-and-store.md
 [adr94]: adr/0094-mutation-changed-files-on-pr.md
+[adr92]: adr/0092-reject-unknown-options.md
+[adr93]: adr/0093-get-token-with-expiry.md
