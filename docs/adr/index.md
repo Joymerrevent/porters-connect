@@ -113,6 +113,7 @@
 | [0097][0097] | `src/` のモジュールを層に並べ、依存の向きを lint で守る            | 基本設計 | accepted           | —      |
 | [0098][0098] | PORTERS が決めた値と定義表を `src/porters/` にまとめる             | 基本設計 | accepted           | —      |
 | [0099][0099] | 検索クエリの型からページ送りを外し、`Paging` / `Limit` を足す      | 詳細設計 | accepted           | —      |
+| [0100][0100] | リソースの公開の型は、各リソースのファイルでメソッドを書き出す     | 基本設計 | proposed           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -216,3 +217,4 @@
 [0097]: 0097-src-module-layout.md
 [0098]: 0098-porters-rules-folder.md
 [0099]: 0099-search-query-without-paging.md
+[0100]: 0100-expand-resource-types.md
