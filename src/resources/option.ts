@@ -13,8 +13,8 @@ import {
   decoderFor,
   type FieldCatalog,
   type ReadRecord,
-} from "./read-core";
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
+} from "./core/read";
+import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 
 const FIELDS = {
   P_Id: "System[Id]",

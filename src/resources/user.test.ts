@@ -78,7 +78,7 @@ describe("createUserResource", () => {
         "User.P_StartDate",
         "User.P_EndDate",
         "User.P_RegistrationDate",
-        // User 型の項目だけ 4 サブ項目付きで要求する（read-core の USER_SUBFIELDS）。
+        // User 型の項目だけ 4 サブ項目付きで要求する（core/read の USER_SUBFIELDS）。
         "User.P_RegisteredBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
         "User.P_UpdateDate",
         "User.P_UpdatedBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",

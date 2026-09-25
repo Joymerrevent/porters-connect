@@ -3,8 +3,8 @@
 // response is checked against what was asked for. The accessor (resource.ts) wires them to
 // `search`; nothing here builds a URL or parses XML.
 
-import { PortersResourceError } from "../errors";
-import { MAX_REQUEST_LENGTH } from "../http/requester";
+import { PortersResourceError } from "../../errors";
+import { MAX_REQUEST_LENGTH } from "../../http/requester";
 
 /** PORTERS returns at most 200 records per Read (`count` is 1–200), so a chunk holds ≤200 ids. */
 export const MAX_IDS_PER_READ = 200;

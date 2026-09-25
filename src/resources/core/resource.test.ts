@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersConfigError, PortersResourceError } from "../errors";
+import { PortersConfigError, PortersResourceError } from "../../errors";
 import {
   MAX_REQUEST_LENGTH,
   type Requester,
   type RequestSpec,
-} from "../http/requester";
-import type { TransportRequest } from "../http/types";
-import type { FieldValue } from "../xml/decode";
+} from "../../http/requester";
+import type { TransportRequest } from "../../http/types";
+import type { FieldValue } from "../../xml/decode";
 import {
   createResource,
   type Expand,

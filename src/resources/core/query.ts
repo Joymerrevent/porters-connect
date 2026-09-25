@@ -5,17 +5,17 @@
 // the caller-side limits (keywords length, itemstate condition restriction) before send (fail-safe).
 // XML/value formatting stays in xml/; this owns only the Read query string.
 
-import { PortersConfigError } from "../errors";
-import { qualify } from "../util/alias";
+import { PortersConfigError } from "../../errors";
+import { qualify } from "../../util/alias";
 import {
   isoExample,
   isoToPortersDate,
   isoToPortersDateTime,
-} from "../util/datetime";
-import type { DataType } from "../xml/decode";
+} from "../../util/datetime";
+import type { DataType } from "../../xml/decode";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
-import type { FieldCatalog, ReadFieldAlias } from "./read-core";
+import type { FieldCatalog, ReadFieldAlias } from "./read";
 
 // --- condition: per-Data-Type operator objects (reference: Read - Condition) ---
 

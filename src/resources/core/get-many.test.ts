@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersResourceError } from "../errors";
-import { MAX_REQUEST_LENGTH } from "../http/requester";
+import { PortersResourceError } from "../../errors";
+import { MAX_REQUEST_LENGTH } from "../../http/requester";
 import { MAX_IDS_PER_READ, packIds, recordsById } from "./get-many";
 
 // A stand-in for the real URL: a fixed base of 10 characters plus the ids joined by a 3-character

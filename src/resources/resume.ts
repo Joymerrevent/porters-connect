@@ -22,7 +22,7 @@ import {
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./resource";
+} from "./core/resource";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 
 const FIELDS = {

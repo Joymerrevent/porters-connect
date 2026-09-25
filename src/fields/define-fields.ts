@@ -5,7 +5,7 @@
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
 import { PortersConfigError } from "../errors";
-import type { EmptyCatalog } from "../resources/read-core";
+import type { EmptyCatalog } from "../resources/core/read";
 import type { DataType } from "../xml/decode";
 
 // ADR-0023 D2。必須（required）は ADR-0089。

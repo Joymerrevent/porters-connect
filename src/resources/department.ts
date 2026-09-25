@@ -4,7 +4,7 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
+import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
   paginateOnce,
@@ -15,7 +15,7 @@ import {
   type ReadFieldAlias,
   type ReadRecord,
   type ResourcePage,
-} from "./read-core";
+} from "./core/read";
 import type { DataType } from "../xml/decode";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。

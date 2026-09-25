@@ -9,11 +9,11 @@ import {
   PortersConfigError,
   PortersError,
   PortersResourceError,
-} from "../errors";
-import { MAX_REQUEST_LENGTH, type Requester } from "../http/requester";
-import type { DataType } from "../xml/decode";
-import { encodeWriteItem, type WriteItem } from "../xml/encode";
-import { parseWriteResult, type WriteResultItem } from "../xml/parser";
+} from "../../errors";
+import { MAX_REQUEST_LENGTH, type Requester } from "../../http/requester";
+import type { DataType } from "../../xml/decode";
+import { encodeWriteItem, type WriteItem } from "../../xml/encode";
+import { parseWriteResult, type WriteResultItem } from "../../xml/parser";
 
 /** PORTERS caps a Write request at 200 records; larger inputs are split into batches of 200. */
 const MAX_ITEMS_PER_REQUEST = 200;

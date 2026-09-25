@@ -23,7 +23,7 @@ import {
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./resource";
+} from "./core/resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
