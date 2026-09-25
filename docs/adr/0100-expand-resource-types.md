@@ -1,6 +1,6 @@
 # 100. リソースの公開の型は、各リソースのファイルでメソッドを書き出す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,6 +8,8 @@
 > 別名で書こうとしたところ、API リファレンスからメソッドの説明が消えることが分かった。調べると、データ系は以前から同じ
 > 状態だった。stakeholder は「共通の型でまとめると、リソースごとにメソッドが変わったとき足かせになる。どんなメソッドを
 > 持つかはリソースごとの責任」として、**データ系・マスタとも、共通の型をやめて各リソースで書き出す**と決めた。
+>
+> **decider が案A を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（[ADR-0096][adr96] の実装の後）。
 
 ## Context and Problem Statement
 
@@ -54,9 +56,9 @@
 
 ## Decision Outcome
 
-**未決（proposed）**。stakeholder は案A を選んだ（2026-09-25）。以下は案A で書いた場合の形。
+採用: **案A**（decider が 2026-09-25 に選択）。
 
-### 決めること（案A）
+### 決めること
 
 - 各リソースの公開の型（`CandidateResource` / `PartitionResource` など）は、そのリソースのファイルで、持つメソッドを
   1 つずつ書き出す（引数・戻り値・JSDoc の説明）。
