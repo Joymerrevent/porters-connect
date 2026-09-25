@@ -80,8 +80,30 @@ await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言し
 綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに使う必要があるときの方法は
 [カスタム項目][custom-fields]にあります。
 
-> 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
-> 型が `値 | null | undefined` になっているのはこのためです。
+<!-- 根拠: ADR-0096 -->
+
+**戻り値の型は、要求した項目だけを持ちます**。要求した項目とは、`field` に書いた項目と、`expand` / `image` で
+選んだ項目です（`get` / `getMany` では ID も）。読んでいない項目に触ると型エラーになるので、`field` に足し忘れた
+項目にコンパイル時に気づけます。
+
+```ts
+const page = await t.candidate.search({ field: ["P_Name"] });
+const name = page.items[0]?.P_Name; // string | null | undefined
+```
+
+<!-- doccheck: expect-error -->
+
+```ts
+const page = await t.candidate.search({ field: ["P_Name"] });
+page.items[0]?.P_Mail; // ✗ 型エラー（読んでいない項目）
+```
+
+- `field` を省略したとき、または中身をコンパイラが読めない配列（`string[]` の変数など）を渡したときは、知っている
+  項目すべてを持つ型になります。
+- `search` / `searchAll` に `field: []` を渡すと、項目を 1 つも持たない型になります（件数だけを見るとき）。
+- 読んだ項目も、値が空なら `null`、PORTERS が返さなければキーごと無い（`undefined`）ので、型は
+  `値 | null | undefined` です。
+- 型に無い項目を読む必要があるときは [`rawValue`][f-rawValue] を使います。
 
 ## `expand` — 参照先の項目も読む
 
@@ -433,3 +455,4 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [sync-batch]: ../recipes/sync-batch.md
 [t-Paging]: ../api/type-aliases/Paging.md
 [t-Limit]: ../api/type-aliases/Limit.md
+[f-rawValue]: ../api/functions/rawValue.md

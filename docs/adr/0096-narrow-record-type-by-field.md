@@ -95,8 +95,12 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
   - `get` / `getMany` では ID の項目（[ADR-0095][adr95] でライブラリが必ず足して読むので）
 - 絞ったあとも、各キーは**省略可能のまま**（`?:`）。値の型（`DecodedValue | null`、`expand` / `image` の形）はいまと同じ。
 - `field: []` は、`get` / `getMany` では ID の項目だけ、`search` / `searchAll` ではキーを持たない型にする。
-  `field: []` と `expand` / `image` を一緒に渡したときは、送られるのが主キーだけなので、`expand` / `image` のキーも型に
-  入れない（実際の送り方に型を合わせる）。
+  ~~`field: []` と `expand` / `image` を一緒に渡したときは、送られるのが主キーだけなので、`expand` / `image` のキーも型に
+  入れない（実際の送り方に型を合わせる）。~~
+  **訂正（実装時 2026-09-25）**: ①この記述は `search` / `searchAll` の場合だけ正しかった。`get` / `getMany` は `field` に
+  ID の項目を足して送る（[ADR-0095][adr95]）ので `field` が空にならず、`expand` / `image` も実際に送られる。②実装では、
+  `search` / `searchAll` の `field: []` は `expand` / `image` のキーも型に入れず、`get` / `getMany` の `field: []` は ID と
+  `expand` / `image` のキーを型に入れる。③「実際の送り方に型を合わせる」という決定そのものは変わらない。
 - `field` が型引数から読めない（`string[]` の変数など、リテラルでない）ときは、知っている項目すべてに戻す
   （いまと同じ型になる）。
 - 型に無い項目を読みたいときの逃げ道は、いまある `rawValue` を使う。
@@ -145,6 +149,11 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
   （要求した項目で絞る型）、`src/resources/resource.ts`（`search` / `searchAll` / `get` / `getMany` の型引数に `field` を
   足す）、型のテスト（`@ts-expect-error` で読んでいない項目・リテラルでない `field`・`field: []` と `expand` の組）、
   API リファレンスの生成し直し、使い方ドキュメント（「検索」の章の `field` の節）、changeset（minor・型の破壊的変更）。
+- **実装時の補足（2026-09-25）**: `field` を型引数で受けるようにしたら、宣言が違うスコープ（例: `U_score` を宣言した
+  スコープと `U_memo` を宣言したスコープ）を取り違えても型エラーにならなくなった。それまでは `field` の引数の型が、
+  「一方の項目名がもう一方にすべて含まれるときだけ通る」比べ方を担っていた（[ADR-0074][adr74] D1 の「項目が違えば
+  スコープの型も違う」）。同じ比べ方をする印のメソッド（型だけ・実行時には無い）をリソースの型に置いて保った。
+  使い方ドキュメントの例（`doccheck: expect-error`）が、この後退を見つけた。
 - 実機で確かめたい点（「空の項目のタグが出るか」「`field` に主キーが無いとき主キーが返るか」）は、実装 PR で
   live-verification に足す。案1c に進むかの判断材料になる。
 
@@ -152,3 +161,4 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
 [adr20]: 0020-read-field-default.md
 [adr59]: 0059-read-field-bare-alias.md
 [adr95]: 0095-get-many-by-ids.md
+[adr74]: 0074-custom-field-declaration-required.md

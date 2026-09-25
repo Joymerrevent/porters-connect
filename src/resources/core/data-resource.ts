@@ -101,6 +101,43 @@ export type DataResourceConfig<
  */
 export type EmptyImages = Record<never, never>;
 
+// 宣言が違うスコープを取り違えないための印（ADR-0074 D1 の「項目が違えばスコープの型も違う」を保つ）。
+// `field` を型引数で受けるようにしたら（ADR-0096）、それまで `field` の引数の型が担っていた比べ方
+// （一方の項目名がもう一方にすべて含まれるときだけ通る）が消えたので、同じ比べ方をするメソッドを印として置く。
+// メソッドの引数は双方向に比べられる（bivariant）ので、含む向き・含まれる向きのどちらかで通り、どちらでもなければ落ちる。
+declare const catalogMark: unique symbol;
+
+// PORTERS の主キーの alias。データ系は `P_Id`、Phase だけ `Id`（ADR-0061）。レコードの型に在る方だけが残る。
+type IdKey = "P_Id" | "Id";
+
+// 戻り値の型を要求した項目に絞るのは ADR-0096。キーは省略可能のまま（要求した項目が必ず返るとは約束しない）。
+/**
+ * The record a Read returns, keyed by what was asked for. `FL` is the `field` list as written:
+ * omitted (`undefined`) keeps every known field; a literal list keeps those fields plus the ones
+ * named in `expand` / `image` (they are requested too); `[]` keeps nothing but `Always`. A list the
+ * compiler cannot see as literal (a `string[]` variable) keeps every field. Keys stay optional.
+ * `Always` is what the method requests regardless of `field` — `get` / `getMany` read the id and,
+ * because the id keeps `field` non-empty, whatever `expand` / `image` name.
+ */
+export type RequestedRecord<
+  Rec,
+  FL,
+  E,
+  I,
+  Always extends PropertyKey = never,
+> = [FL] extends [undefined]
+  ? Rec
+  : Pick<
+      Rec,
+      Extract<
+        keyof Rec,
+        | (FL extends readonly []
+            ? never
+            : (FL extends readonly (infer A)[] ? A : never) | keyof E | keyof I)
+        | Always
+      >
+    >;
+
 // `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。Unsupported は ADR-0076、
 // Bound は ADR-0061 / ADR-0080。
 /**
@@ -149,26 +186,38 @@ export type DataResource<
    */
   Bound extends WritableKeys<F> = never,
 > = {
+  /** @internal Type-level mark of the field catalog; never present at runtime. */
+  [catalogMark]?(field: ReadFieldAlias<F>): void;
   search<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     query?: Without<SearchQuery<F, R>, Unsupported> &
       Paging & {
+        field?: FL;
         expand?: E;
         image?: I;
       },
-  ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>>;
+  ): Promise<
+    ResourcePageOf<
+      RequestedRecord<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>, FL, E, I>
+    >
+  >;
   /** Auto-paginating search: yields every matching record (200 per page). */
   searchAll<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     query?: Without<SearchQuery<F, R>, Unsupported> & {
+      field?: FL;
       expand?: E;
       image?: I;
     },
-  ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>;
+  ): AsyncIterable<
+    RequestedRecord<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>, FL, E, I>
+  >;
   /**
    * Read one record by id; `undefined` when there is none. `field` picks the fields to read, the
    * same way it does for `search` (omit it to read every known field); the record's id is always
@@ -179,10 +228,24 @@ export type DataResource<
   get<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     id: number,
-    options?: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I },
-  ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined>;
+    options?: {
+      field?: FL & readonly ReadFieldAlias<F>[];
+      expand?: E;
+      image?: I;
+    },
+  ): Promise<
+    | RequestedRecord<
+        ImageReadRecord<ExpandedReadRecord<F, R, E>, I>,
+        FL,
+        E,
+        I,
+        IdKey | keyof E | keyof I
+      >
+    | undefined
+  >;
   // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
   /**
    * Read many records by id. Resolves to an array in the order of `ids`, holding `undefined`
@@ -199,10 +262,26 @@ export type DataResource<
   getMany<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<F>[] | undefined = undefined,
   >(
     ids: readonly number[],
-    options?: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I },
-  ): Promise<(ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined)[]>;
+    options?: {
+      field?: FL & readonly ReadFieldAlias<F>[];
+      expand?: E;
+      image?: I;
+    },
+  ): Promise<
+    (
+      | RequestedRecord<
+          ImageReadRecord<ExpandedReadRecord<F, R, E>, I>,
+          FL,
+          E,
+          I,
+          IdKey | keyof E | keyof I
+        >
+      | undefined
+    )[]
+  >;
   /** Create one record; resolves to the newly assigned id. */
   create(
     input: Without<
@@ -353,8 +432,8 @@ export const createDataResource = <
   // matches every record back to a requested id, and `get` follows the same rule so the two agree
   // (ADR-0095). Omitted `field` stays omitted — the catalog default already holds the id.
   const withIdField = (
-    field: ReadFieldAlias<F>[] | undefined,
-  ): ReadFieldAlias<F>[] | undefined =>
+    field: readonly ReadFieldAlias<F>[] | undefined,
+  ): readonly ReadFieldAlias<F>[] | undefined =>
     field === undefined || field.includes(idAlias)
       ? field
       : [idAlias, ...field];
@@ -373,7 +452,11 @@ export const createDataResource = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     id: number,
-    options: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I } = {},
+    options: {
+      field?: readonly ReadFieldAlias<F>[];
+      expand?: E;
+      image?: I;
+    } = {},
   ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined> => {
     const page = await search<E, I>({
       condition: idCondition("eq", id),
@@ -394,7 +477,11 @@ export const createDataResource = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     ids: readonly number[],
-    options: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I } = {},
+    options: {
+      field?: readonly ReadFieldAlias<F>[];
+      expand?: E;
+      image?: I;
+    } = {},
   ): Promise<
     (ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined)[]
   > => {

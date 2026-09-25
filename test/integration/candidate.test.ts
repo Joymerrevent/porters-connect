@@ -87,7 +87,8 @@ describe("candidate round-trip against the fake server", () => {
     const one = await t.candidate.get(id, { field: ["P_Name"] });
     expect(one?.P_Id).toBe(id);
     expect(one?.P_Name).toBe("山田 太郎");
-    expect(one?.P_Mail).toBeUndefined(); // not read
+    // Not read: absent at runtime, and absent from the type too (reading it would not compile).
+    expect(one).not.toHaveProperty("P_Mail");
   });
 
   it("searches with a typed condition, order and paging", async () => {

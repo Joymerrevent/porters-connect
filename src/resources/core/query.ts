@@ -186,7 +186,7 @@ export type SearchQuery<
    * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
    * API-native "primary key only" response (e.g. counting).
    */
-  field?: ReadFieldAlias<F>[];
+  field?: readonly ReadFieldAlias<F>[];
   // expand の設計は ADR-0058。
   /**
    * Read the *fields* of a referenced record, not just its id: map an expandable

@@ -56,7 +56,7 @@ requested twice.
 
 ### field?
 
-> `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<`F`\>[]
+> `optional` **field?**: readonly [`ReadFieldAlias`](ReadFieldAlias.md)\<`F`\>[]
 
 Defined in: [src/resources/core/query.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L189)
 

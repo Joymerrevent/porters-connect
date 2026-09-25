@@ -9,7 +9,7 @@ import type {
   TenantOptions,
   TenantScope,
 } from "./client";
-import { defineFields } from "./fields";
+import { defineFields, type DeclaredCatalogs } from "./fields";
 import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
 import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
 import type { Throttle } from "./http/throttle";
@@ -50,7 +50,16 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
     const page = await mockClient()
       .tenant(999)
       .candidate.search({
-        field: ["P_Id", "P_Name"],
+        // Every field the assertions below read is requested: reading one that was not is a type
+        // error now that the record is narrowed to `field` (ADR-0096).
+        field: [
+          "P_Id",
+          "P_Name",
+          "P_UpdateDate",
+          "P_Owner",
+          "P_Phase",
+          "P_Mail",
+        ],
         count: 200,
       });
 
@@ -865,5 +874,28 @@ describe("unknown options are rejected (ADR-0092)", () => {
       expect(() => porters.tenant(1, { fields: undefined })).not.toThrow();
       expect(() => porters.tenant(1)).not.toThrow();
     });
+  });
+});
+
+// 型を field で絞ったあとも、宣言が違うスコープは取り違えられない（ADR-0074 D1・ADR-0096）。
+describe("TenantScope — 宣言が違うスコープは渡せない", () => {
+  it("rejects a scope declared differently, and accepts a declared scope where any is taken", () => {
+    const scored = defineFields({
+      candidate: (f) => ({ U_score: f.number() }),
+    });
+    const memo = defineFields({
+      candidate: (f) => ({ U_memo: f.singlelineText() }),
+    });
+    const typeOnly = (
+      a: TenantScope<typeof memo>,
+      b: TenantScope<typeof scored>,
+    ) => {
+      // @ts-expect-error — U_score is not declared on this scope
+      const wrong: TenantScope<typeof scored> = a;
+      const any: TenantScope<DeclaredCatalogs> = b;
+      return [wrong, any];
+    };
+    expect(typeOnly).toBeTypeOf("function");
+    expect([scored, memo]).toHaveLength(2);
   });
 });

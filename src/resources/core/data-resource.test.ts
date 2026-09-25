@@ -926,3 +926,81 @@ describe("createDataResource — クエリとページ送りは別の型（ADR-0
     expect(typeOnly).toBeTypeOf("function");
   });
 });
+
+describe("createDataResource — 戻り値の型は要求した項目に絞る（ADR-0096）", () => {
+  // Types only: each case is a function the compiler checks and the test never calls.
+  type R = ReturnType<typeof res>;
+  type G = ReturnType<typeof gadget>;
+  type A = ReturnType<typeof album>;
+
+  it("a literal field list keeps just those keys (still optional)", () => {
+    const typeOnly = async (r: R) => {
+      const page = await r.search({ field: ["P_Name"] });
+      expectTypeOf<
+        keyof (typeof page.items)[number]
+      >().toEqualTypeOf<"P_Name">();
+      const name: string | null | undefined = page.items[0]?.P_Name;
+      void name;
+      // @ts-expect-error — P_Owner was not requested
+      void page.items[0]?.P_Owner;
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+
+  it("omitting field keeps every known field, and so does a list the compiler cannot see", () => {
+    const typeOnly = async (r: R, list: (keyof typeof FIELDS)[]) => {
+      const all = await r.search();
+      void all.items[0]?.P_Owner;
+      void all.items[0]?.P_Deleted;
+      for await (const x of r.searchAll({ field: list })) void x.P_When;
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+
+  it("expand / image keys are requested too, even when field leaves them out", () => {
+    const typeOnly = async (g: G, a: A) => {
+      const page = await g.search({
+        field: ["P_Name"],
+        expand: { P_Part: ["P_Name"] },
+      });
+      void page.items[0]?.P_Part?.P_Name;
+      const photos = await a.search({
+        field: ["P_Name"],
+        image: { U_photo: ["FileName"] },
+      });
+      void photos.items[0]?.U_photo?.FileName;
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+
+  it("field: [] keeps nothing on search (expand is not sent then)", () => {
+    const typeOnly = async (g: G) => {
+      const page = await g.search({
+        field: [],
+        expand: { P_Part: ["P_Name"] },
+      });
+      expectTypeOf<keyof (typeof page.items)[number]>().toEqualTypeOf<never>();
+      expect(page.items).toBeDefined();
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+
+  it("get / getMany always keep the id, and expand with field: [] (the id keeps field non-empty)", () => {
+    const typeOnly = async (r: R, g: G) => {
+      const one = await r.get(1, { field: ["P_Name"] });
+      void one?.P_Id;
+      void one?.P_Name;
+      // @ts-expect-error — P_Owner was not requested
+      void one?.P_Owner;
+      const ids = await g.getMany([1], {
+        field: [],
+        expand: { P_Part: ["P_Name"] },
+      });
+      void ids[0]?.P_Id;
+      void ids[0]?.P_Part;
+      // @ts-expect-error — P_Name was not requested
+      void ids[0]?.P_Name;
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+});
