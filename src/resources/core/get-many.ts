@@ -1,7 +1,8 @@
 // getMany (ADR-0095): read many records by id through the `{idAlias}:or=` condition. This file owns
-// the two decisions that are not plain `search`: how the ids are split into requests, and how a
-// response is checked against what was asked for. The accessor (resource.ts) wires them to
-// `search`; nothing here builds a URL or parses XML.
+// what is not plain `search`: how the ids are split into requests, how each response is checked
+// against what was asked for, and putting the answers back in the order of the ids. The data
+// resources' Read (data-read.ts) hands it a way to read one chunk; nothing here builds a URL or
+// parses XML.
 
 import { PortersResourceError } from "../../errors";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
@@ -97,4 +98,47 @@ export const recordsById = <T>(
     out.set(id as number, record);
   }
   return out;
+};
+
+/** How `readByIds` reads: one chunk of ids at a time, through the resource's own search. */
+export type IdReader<T> = {
+  /** Read the records of one chunk of ids (a Read with `{idAlias}:or=` over the chunk). */
+  read: (
+    chunk: readonly number[],
+  ) => Promise<{ items: readonly T[]; total: number }>;
+  /** The length of the Read URL for a chunk, so the chunks can be sized under the request limit. */
+  urlLength: (chunk: readonly number[]) => number;
+  /** The id a returned record carries. */
+  idOf: (record: T) => unknown;
+  /** The resource name, for the error when a response does not match. */
+  resource: string;
+};
+
+// 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+/**
+ * Read many records by id: the distinct ids are split into chunks (see {@link packIds}), each
+ * chunk is read in turn and checked against the ids it asked for (see {@link recordsById}), and
+ * the answer comes back in the order of `ids` — `undefined` where no record has that id, the same
+ * record at each position of a repeated id. An empty `ids` reads nothing.
+ *
+ * A failure in any chunk rejects the whole call: a Read is safe to repeat, and a partial answer
+ * would look like "those ids do not exist".
+ */
+export const readByIds = async <T>(
+  ids: readonly number[],
+  reader: IdReader<T>,
+): Promise<(T | undefined)[]> => {
+  const found = new Map<number, T>();
+  for (const chunk of packIds([...new Set(ids)], reader.urlLength)) {
+    const page = await reader.read(chunk);
+    for (const [id, record] of recordsById(
+      page,
+      chunk,
+      reader.idOf,
+      reader.resource,
+    )) {
+      found.set(id, record);
+    }
+  }
+  return ids.map((id) => found.get(id));
 };

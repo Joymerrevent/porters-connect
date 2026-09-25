@@ -13,7 +13,7 @@ import type { Condition, SearchQuery } from "./query";
 import { buildReadParams, type ReadParamsContext } from "./query-encode";
 import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
-import { packIds, recordsById } from "./get-many";
+import { readByIds } from "./get-many";
 import {
   expansionCatalogs,
   type EmptyReferences,
@@ -173,10 +173,8 @@ export const createDataReader = <
     return page.items[0];
   };
 
-  // ids are de-duplicated, split into requests that fit (≤200 and under the size limit), read in
-  // turn, and every page is checked against its own chunk before anything is kept (ADR-0095).
-  // A failure in any chunk rejects the whole call: a Read is safe to repeat, and a partial answer
-  // would look like "those ids do not exist".
+  // The chunking, the check against the requested ids and the ordering are `readByIds`'s
+  // (ADR-0095); what this resource supplies is how to read one chunk.
   const getMany = async <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
@@ -184,7 +182,6 @@ export const createDataReader = <
     ids: readonly number[],
     options: IdReadOptions<E, I> = {},
   ): Promise<(Selected<E, I> | undefined)[]> => {
-    type Rec = Selected<E, I>;
     const field = withIdField(options.field);
     const query = (chunk: readonly number[], count: number) => ({
       condition: idCondition("or", [...chunk]),
@@ -193,23 +190,13 @@ export const createDataReader = <
       expand: options.expand,
       image: options.image,
     });
-    // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
-    const chunks = packIds(
-      [...new Set(ids)],
-      (chunk) => readUrl(query(chunk, MAX_READ_COUNT)).length,
-    );
-    const found = new Map<number, Rec>();
-    for (const chunk of chunks) {
-      const page = await search<E, I>(query(chunk, chunk.length));
-      const matched = recordsById(
-        page,
-        chunk,
-        (record) => (record as Record<string, unknown>)[idAlias],
-        config.name,
-      );
-      for (const [id, record] of matched) found.set(id, record);
-    }
-    return ids.map((id) => found.get(id));
+    return readByIds(ids, {
+      read: (chunk) => search<E, I>(query(chunk, chunk.length)),
+      // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
+      urlLength: (chunk) => readUrl(query(chunk, MAX_READ_COUNT)).length,
+      idOf: (record) => (record as Record<string, unknown>)[idAlias],
+      resource: config.name,
+    });
   };
 
   return { search, searchAll, get, getMany };
