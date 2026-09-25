@@ -169,6 +169,7 @@ export type {
 } from "./resources";
 // 文字列 union にするのは ADR-0061 案5b。
 /** The resource names `t.phase.of(...)` accepts. */
+export type { Limit, Paging } from "./resources";
 export type { ResourceName } from "./porters";
 export type { ImageContentType } from "./porters";
 // Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
@@ -246,7 +247,6 @@ export type {
   AttachmentResource,
   AttachmentSearchQuery,
   AttachmentUpdate,
-  AttachmentWalkQuery,
 } from "./resources";
 
 // Master Read resources (read-only — ADR-0021/0022).

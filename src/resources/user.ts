@@ -13,6 +13,7 @@ import {
   createFieldParam,
   type FieldCatalog,
   type ReadFieldAlias,
+  type Paging,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
@@ -78,16 +79,12 @@ export type UserSearchQuery = {
    * the 4 core fields it returns for a fieldless read.
    */
   field?: ReadFieldAlias<typeof FIELDS>[];
-  count?: number;
-  start?: number;
 };
 
 export type UserResource = {
-  search(query?: UserSearchQuery): Promise<UserPage>;
+  search(query?: UserSearchQuery & Paging): Promise<UserPage>;
   /** Auto-paginating search: yields every matching user. */
-  searchAll(
-    query?: Omit<UserSearchQuery, "count" | "start">,
-  ): AsyncIterable<User>;
+  searchAll(query?: UserSearchQuery): AsyncIterable<User>;
   /**
    * The current API user (`request_type=0`). Under the library's default `code_direct` auth
    * this resolves to the App's own user (username = app name) — useful for self-identification.
@@ -110,7 +107,7 @@ const setField = createFieldParam(USER_DESCRIPTOR.prefix, FIELDS);
 // The parameters User Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
-  q: Omit<UserSearchQuery, "count" | "start">,
+  q: UserSearchQuery,
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -124,8 +121,7 @@ export const createUserResource = (deps: ResourceDeps): UserResource => {
   const { search, searchAll } = createMasterResource(
     {
       ...USER_DESCRIPTOR,
-      params: (q: Omit<UserSearchQuery, "count" | "start">) =>
-        buildParams(deps.partition, q),
+      params: (q: UserSearchQuery) => buildParams(deps.partition, q),
     },
     deps,
   );

@@ -24,14 +24,6 @@ Root alias of the subtree to read (e.g. `Option.P_Gender`). Omit for all.
 
 ***
 
-### count?
-
-> `optional` **count?**: `number`
-
-Defined in: [src/resources/option.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L57)
-
-***
-
 ### enabled?
 
 > `optional` **enabled?**: `-1` \| `0` \| `1`

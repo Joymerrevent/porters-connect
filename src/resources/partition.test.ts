@@ -83,7 +83,7 @@ describe("createPartitionResource", () => {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
       accessPoint: { hostname: "h.test" },
     });
-    const query: Omit<PartitionSearchQuery, "count" | "start"> = {
+    const query: PartitionSearchQuery = {
       requestType: 1,
     };
     for await (const item of r.searchAll(query)) {

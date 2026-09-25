@@ -10,6 +10,7 @@ import {
   createFieldParam,
   type FieldCatalog,
   type ReadFieldAlias,
+  type Paging,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
@@ -55,16 +56,12 @@ export type DepartmentSearchQuery = {
    * default — `P_Id` alone, which is what a fieldless read returns.
    */
   field?: ReadFieldAlias<typeof FIELDS>[];
-  count?: number;
-  start?: number;
 };
 
 export type DepartmentResource = {
-  search(query?: DepartmentSearchQuery): Promise<DepartmentPage>;
+  search(query?: DepartmentSearchQuery & Paging): Promise<DepartmentPage>;
   /** Auto-paginating search: yields every department of the partition. */
-  searchAll(
-    query?: Omit<DepartmentSearchQuery, "count" | "start">,
-  ): AsyncIterable<Department>;
+  searchAll(query?: DepartmentSearchQuery): AsyncIterable<Department>;
 };
 
 // Sent when the caller omits `field` (ADR-0020). A fieldless Department Read answers with `P_Id`
@@ -80,7 +77,7 @@ const setField = createFieldParam(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
 // The parameters Department Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
-  q: Omit<DepartmentSearchQuery, "count" | "start">,
+  q: DepartmentSearchQuery,
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -94,8 +91,7 @@ export const createDepartmentResource = (
   createMasterResource(
     {
       ...DEPARTMENT_DESCRIPTOR,
-      params: (q: Omit<DepartmentSearchQuery, "count" | "start">) =>
-        buildParams(deps.partition, q),
+      params: (q: DepartmentSearchQuery) => buildParams(deps.partition, q),
     },
     deps,
   );

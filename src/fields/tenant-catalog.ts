@@ -24,9 +24,7 @@ import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 export type FieldCatalogSource = {
   readonly field: {
     of(resource: CustomFieldResource): {
-      searchAll(
-        query?: Omit<FieldSearchQuery, "count" | "start">,
-      ): AsyncIterable<Field>;
+      searchAll(query?: FieldSearchQuery): AsyncIterable<Field>;
     };
   };
 };

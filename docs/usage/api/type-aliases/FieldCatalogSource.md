@@ -43,7 +43,7 @@ Defined in: [src/fields/tenant-catalog.ts:25](https://github.com/Joymerrevent/po
 
 ###### query?
 
-`Omit`\<[`FieldSearchQuery`](FieldSearchQuery.md), `"count"` \| `"start"`\>
+[`FieldSearchQuery`](FieldSearchQuery.md)
 
 ###### Returns
 

@@ -8,7 +8,7 @@
 
 > **SearchQuery**\<`F`, `R`\> = `object`
 
-Defined in: [src/resources/core/query.ts:176](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L176)
+Defined in: [src/resources/core/query.ts:177](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L177)
 
 ## Type Parameters
 
@@ -26,17 +26,9 @@ Defined in: [src/resources/core/query.ts:176](https://github.com/Joymerrevent/po
 
 > `optional` **condition?**: [`Condition`](Condition.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:223](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L223)
+Defined in: [src/resources/core/query.ts:224](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L224)
 
 Typed AND-conditions; each field's operators derive from its Data Type.
-
-***
-
-### count?
-
-> `optional` **count?**: `number`
-
-Defined in: [src/resources/core/query.ts:233](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L233)
 
 ***
 
@@ -44,7 +36,7 @@ Defined in: [src/resources/core/query.ts:233](https://github.com/Joymerrevent/po
 
 > `optional` **expand?**: [`Expand`](Expand.md)\<`R`\>
 
-Defined in: [src/resources/core/query.ts:205](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L205)
+Defined in: [src/resources/core/query.ts:206](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L206)
 
 Read the *fields* of a referenced record, not just its id: map an expandable
 `System[Reference]` field to the bare aliases you want from the resource it points at. The
@@ -66,7 +58,7 @@ requested twice.
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<`F`\>[]
 
-Defined in: [src/resources/core/query.ts:188](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L188)
+Defined in: [src/resources/core/query.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L189)
 
 Output fields as **bare aliases** (e.g. `P_Name`) — the same vocabulary as `condition` and
 `order`; the library adds the resource's prefix. **Omit** to fetch every catalogued
@@ -80,7 +72,7 @@ API-native "primary key only" response (e.g. counting).
 
 > `optional` **image?**: [`ImageOption`](ImageOption.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:221](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L221)
+Defined in: [src/resources/core/query.ts:222](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L222)
 
 Read an Image field's `ContentType` / `Content`, not just its `FileName`: map an
 Image-typed field to the sub-tags you want. Only what you select comes back, and the record
@@ -101,7 +93,7 @@ drags every image body along with it. Like `expand`, a selected alias replaces i
 
 > `optional` **itemstate?**: [`ItemState`](ItemState.md)
 
-Defined in: [src/resources/core/query.ts:232](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L232)
+Defined in: [src/resources/core/query.ts:233](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L233)
 
 Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` — see [ItemState](ItemState.md).
 
@@ -111,7 +103,7 @@ Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` �
 
 > `optional` **keywords?**: `string`[]
 
-Defined in: [src/resources/core/query.ts:230](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L230)
+Defined in: [src/resources/core/query.ts:231](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L231)
 
 Keyword AND-search over text fields (MultilineText/SinglelineText/Mail/URL; Telephone digits
 only). OR is not supported. Max 100 characters including commas — guarded before send.
@@ -122,14 +114,6 @@ only). OR is not supported. Max 100 characters including commas — guarded befo
 
 > `optional` **order?**: [`Order`](Order.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:225](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L225)
+Defined in: [src/resources/core/query.ts:226](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L226)
 
 Sort order; orderable Data Types only (Number/Date/DateTime/Age/System).
-
-***
-
-### start?
-
-> `optional` **start?**: `number`
-
-Defined in: [src/resources/core/query.ts:234](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L234)

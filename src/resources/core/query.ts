@@ -26,6 +26,7 @@ import {
   qualifyReadFields,
   readUrlOf,
   type FieldCatalog,
+  type Paging,
   type ReadFieldAlias,
 } from "./read";
 import {
@@ -230,8 +231,6 @@ export type SearchQuery<
   keywords?: string[];
   /** Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` — see {@link ItemState}. */
   itemstate?: ItemState;
-  count?: number;
-  start?: number;
 };
 
 // --- encoder (typed query -> wire params) ---
@@ -446,7 +445,7 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
   accessPoint: AccessPoint,
   partition: number,
   path: string,
-  q: SearchQuery<F, R>,
+  q: SearchQuery<F, R> & Paging,
   ctx: Parameters<typeof buildReadParams<F, R>>[2],
 ): string =>
   readUrlOf(

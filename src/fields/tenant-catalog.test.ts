@@ -10,13 +10,13 @@ const sourceOf = (
 ): FieldCatalogSource & {
   readonly queries: {
     resource: CustomFieldResource;
-    query: Omit<FieldSearchQuery, "count" | "start"> | undefined;
+    query: FieldSearchQuery | undefined;
   }[];
 } => {
   // `of()` で束ねたリソースと、各 searchAll に渡されたクエリを記録する（ADR-0080）。
   const queries: {
     resource: CustomFieldResource;
-    query: Omit<FieldSearchQuery, "count" | "start"> | undefined;
+    query: FieldSearchQuery | undefined;
   }[] = [];
   return {
     queries,

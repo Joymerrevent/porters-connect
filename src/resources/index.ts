@@ -3,7 +3,7 @@
 // Typed Read query surface (ADR-0038 / F-2): shared, catalog-parametrised query types.
 // `ReadFieldAlias` is the bare-alias `field` entry type (ADR-0059).
 export type { Condition, ItemState, Order, SearchQuery } from "./core/query";
-export type { ReadFieldAlias } from "./core/read";
+export type { Limit, Paging, ReadFieldAlias } from "./core/read";
 // Reference expansion (ADR-0058): the `expand` option's types and the record it produces.
 export type {
   Expand,

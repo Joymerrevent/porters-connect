@@ -21,6 +21,7 @@ import {
   paginateOnce,
   readUrlOf,
   type FieldCatalog,
+  type Paging,
   type ReadFieldAlias,
   type ResourceDeps,
   type ResourcePageOf,
@@ -152,17 +153,18 @@ export type DataResource<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: Without<SearchQuery<F, R>, Unsupported> & {
-      expand?: E;
-      image?: I;
-    },
+    query?: Without<SearchQuery<F, R>, Unsupported> &
+      Paging & {
+        expand?: E;
+        image?: I;
+      },
   ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>>;
   /** Auto-paginating search: yields every matching record (200 per page). */
   searchAll<
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query?: Omit<Without<SearchQuery<F, R>, Unsupported>, "count" | "start"> & {
+    query?: Without<SearchQuery<F, R>, Unsupported> & {
       expand?: E;
       image?: I;
     },
@@ -277,7 +279,7 @@ export const createDataResource = <
       },
     );
 
-  const readUrl = (q: SearchQuery<F, R>): string =>
+  const readUrl = (q: SearchQuery<F, R> & Paging): string =>
     readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
 
   const writeUrl = (): string =>
@@ -313,7 +315,7 @@ export const createDataResource = <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
+    query: SearchQuery<F, R> & Paging & { expand?: E; image?: I } = {},
   ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>> =>
     read(
       readParams(query),
@@ -334,7 +336,7 @@ export const createDataResource = <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query: Omit<SearchQuery<F, R>, "count" | "start"> & {
+    query: SearchQuery<F, R> & {
       expand?: E;
       image?: I;
     } = {},
