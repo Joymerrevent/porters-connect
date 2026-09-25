@@ -68,6 +68,19 @@ export const createDataReader = <
   const readUrl = (q: SearchQuery<F, R> & Paging): string =>
     readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
 
+  // What a Read resolves to for a given `expand` / `image`: the record widened by the expansion,
+  // with the selected Image sub-fields. The public types narrow it further by `field` (ADR-0096).
+  type Selected<
+    E extends Expand<R>,
+    I extends ImageOption<F>,
+  > = ImageReadRecord<ExpandedReadRecord<F, R, E>, I>;
+  // What `get` / `getMany` take besides the ids: the same selection a search takes.
+  type IdReadOptions<E, I> = {
+    field?: readonly ReadFieldAlias<F>[];
+    expand?: E;
+    image?: I;
+  };
+
   // An expanded read needs a decoder that knows the *referenced* catalogs (ADR-0058); a plain one
   // reuses the cached decoder. `Record<K, T>` cannot express "the record widens with E", so the
   // decoder is cast at this one seam — `expansionCatalogs` and `ExpandedReadRecord` are derived
@@ -88,44 +101,39 @@ export const createDataReader = <
     path: config.path,
   });
 
-  // `async` for the exception contract, not for the body: URL building runs the typed-query
-  // guards (keyword length, itemstate, raw expansions), and a Promise-returning method must never
-  // throw synchronously — every failure reaches the caller as a rejection (ADR-0046).
+  // One query, ready to send: its serialised parameters and the decoder its `expand` needs. Running
+  // it evaluates the typed-query guards (keyword length, itemstate, raw expansions), so both callers
+  // run it where a failure becomes a rejection, never a synchronous throw (ADR-0046).
+  const prepare = <E extends Expand<R>, I extends ImageOption<F>>(
+    query: SearchQuery<F, R>,
+  ) => ({
+    base: readParams(query),
+    decode: decoderWith<Selected<E, I>>(query.expand),
+  });
+
   const search = async <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
     query: SearchQuery<F, R> & Paging & { expand?: E; image?: I } = {},
-  ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>> =>
-    read(
-      readParams(query),
-      decoderWith<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>(
-        query.expand,
-      ),
-      query.count,
-      query.start,
-    );
+  ): Promise<ResourcePageOf<Selected<E, I>>> => {
+    const { base, decode } = prepare<E, I>(query);
+    return read(base, decode, query.count, query.start);
+  };
 
   // The caller's query object is read **once**, when the first page is asked for: what the walk
-  // keeps is the serialised parameters and the decoder, not the object. Writing to that object
+  // keeps is the prepared parameters and decoder, not the object. Writing to that object
   // (`q.condition.P_Name.part = …`) between pages therefore cannot change a later page — the walk
-  // stays "every record matching the query as it was handed over" (RV-32). Building inside the
-  // generator keeps guard failures arriving as a rejected iteration (ADR-0046), and drops the
-  // per-page re-serialisation the old form paid for.
+  // stays "every record matching the query as it was handed over" (RV-32). Preparing inside the
+  // generator keeps guard failures arriving as a rejected iteration (ADR-0046).
   const searchAll = <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query: SearchQuery<F, R> & {
-      expand?: E;
-      image?: I;
-    } = {},
-  ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>> =>
+    query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
+  ): AsyncIterable<Selected<E, I>> =>
     paginateOnce(() => {
-      const base = readParams(query);
-      const decode = decoderWith<
-        ImageReadRecord<ExpandedReadRecord<F, R, E>, I>
-      >(query.expand);
+      const { base, decode } = prepare<E, I>(query);
       return (count, start) => read(base, decode, count, start);
     });
 
@@ -153,12 +161,8 @@ export const createDataReader = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     id: number,
-    options: {
-      field?: readonly ReadFieldAlias<F>[];
-      expand?: E;
-      image?: I;
-    } = {},
-  ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined> => {
+    options: IdReadOptions<E, I> = {},
+  ): Promise<Selected<E, I> | undefined> => {
     const page = await search<E, I>({
       condition: idCondition("eq", id),
       count: 1,
@@ -178,15 +182,9 @@ export const createDataReader = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     ids: readonly number[],
-    options: {
-      field?: readonly ReadFieldAlias<F>[];
-      expand?: E;
-      image?: I;
-    } = {},
-  ): Promise<
-    (ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined)[]
-  > => {
-    type Rec = ImageReadRecord<ExpandedReadRecord<F, R, E>, I>;
+    options: IdReadOptions<E, I> = {},
+  ): Promise<(Selected<E, I> | undefined)[]> => {
+    type Rec = Selected<E, I>;
     const field = withIdField(options.field);
     const query = (chunk: readonly number[], count: number) => ({
       condition: idCondition("or", [...chunk]),
