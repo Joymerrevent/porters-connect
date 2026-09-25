@@ -62,6 +62,34 @@ describe("candidate round-trip against the fake server", () => {
     expect(updated?.P_Mail).toBe("taro@example.com"); // untouched field survives
   });
 
+  it("reads several records by id in one request, in order, undefined where missing", async () => {
+    const { porters } = setup();
+    const t = porters.tenant(1);
+    const a = await t.candidate.create({ P_Owner: 5, P_Name: "A" });
+    const b = await t.candidate.create({ P_Owner: 5, P_Name: "B" });
+
+    const out = await t.candidate.getMany([b, 99999, a, b], {
+      field: ["P_Name"],
+    });
+    expect(out.map((r) => r?.P_Name)).toEqual(["B", undefined, "A", "B"]);
+    // The id is read even though `field` left it out.
+    expect(out.map((r) => r?.P_Id)).toEqual([b, undefined, a, b]);
+  });
+
+  it("get(id, { field }) reads just those fields and the id", async () => {
+    const { porters } = setup();
+    const t = porters.tenant(1);
+    const id = await t.candidate.create({
+      P_Owner: 5,
+      P_Name: "山田 太郎",
+      P_Mail: "taro@example.com",
+    });
+    const one = await t.candidate.get(id, { field: ["P_Name"] });
+    expect(one?.P_Id).toBe(id);
+    expect(one?.P_Name).toBe("山田 太郎");
+    expect(one?.P_Mail).toBeUndefined(); // not read
+  });
+
   it("searches with a typed condition, order and paging", async () => {
     const { porters } = setup();
     await porters
