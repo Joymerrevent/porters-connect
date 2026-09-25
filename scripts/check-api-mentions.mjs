@@ -23,7 +23,7 @@ const API_DIR = "docs/usage/api";
 const SCOPE = ["classes", "functions"];
 
 // 言及を探す先。ADR-0070 の「HOWTO / 入門ページ」＝ ADR-0088 の 5 章（＋訂正注記の「クライアント」「関数」）では
-// 導入と、引く 5 章（主題別・クライアント・リソース別・関数・実践例）。リファレンス（`reference/` と生成物）は探す先に数えない。
+// 導入と、引く 5 章（ガイド・クライアント・リソース・関数・実践例）。リファレンス（`reference/` と生成物）は探す先に数えない。
 const GUIDE_GLOBS = [
   "docs/usage/start/**/*.md",
   "docs/usage/topics/**/*.md",
@@ -94,7 +94,7 @@ console.error(
 for (const u of unmentioned)
   console.error(`  ${u.name}（${API_DIR}/${u.from}）`);
 console.error(
-  `\n導入（docs/usage/start）か、主題別・クライアント・リソース別・関数・実践例（docs/usage/{topics,client,resources,functions,recipes}）の\n` +
+  `\n導入（docs/usage/start）か、ガイド・クライアント・リソース・関数・実践例（docs/usage/{topics,client,resources,functions,recipes}）の\n` +
     `どこかで使い方に触れてください。\n` +
     `触れないと決めたなら、${"scripts/check-api-mentions.mjs"} の EXEMPT に理由つきで足します。`,
 );
