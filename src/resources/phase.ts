@@ -29,7 +29,8 @@ import type {
   ReadSelection,
   SearchRecord,
 } from "./core/data-read";
-import type { CreateInput, UpdateInput, Without } from "./core/data-write";
+import type { CreateInput, UpdateInput } from "./core/data-write";
+import type { Without } from "../util/types";
 import type { EmptyReferences, Expand } from "./core/expand";
 import type { ImageOption } from "./core/image";
 import type { BulkWriteResult } from "./core/bulk-write";

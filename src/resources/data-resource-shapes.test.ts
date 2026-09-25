@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { DataResource } from "./core/data-resource";
-import type { Without } from "./core/data-write";
+import type { Without } from "../util/types";
 import type { EmptyReferences, ReferenceMap } from "./core/expand";
 import type { EmptyCatalog, FieldCatalog } from "./core/catalog";
 import {

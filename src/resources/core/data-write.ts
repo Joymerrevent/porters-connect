@@ -40,18 +40,6 @@ export type UpdateInput<F extends FieldCatalog> = {
   [K in WritableKeys<F>]?: WriteValueOf<F[K]> | null;
 };
 
-// `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。使い道は Phase の受けないクエリのキー
-// （ADR-0076）と束ねる項目（ADR-0061 / ADR-0080）。
-/**
- * An object with `K` taken out — and **kept out**. `Omit` alone only stops a fresh object literal
- * (excess-property checking); a variable that happens to carry the key still assigns. Re-declaring
- * each removed key as `?: never` closes that hole, so the call fails whichever way the object was
- * built — including `create({ ...recordFromRead })`.
- */
-export type Without<T, K extends keyof T> = Omit<T, K> & {
-  [P in K]?: never;
-};
-
 /**
  * What the Write half needs: the resource's {@link ResourceDescriptor}, the aliases required on
  * `create`, and any field the resource writes on every record, independent of the caller. Phase is
