@@ -35,18 +35,19 @@
 src/
   index.ts            # public export（ここからのみ公開）
   client.ts           # PortersClient・porters.tenant(id) スコープ
+  porters/            # PORTERS が決めた値と定義表（上限・Data Type・Field Type・Resource List 等）。何も import しない
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
   util/               # 他のモジュールに依存しない関数（datetime：PORTERS 形式 ⇄ ISO8601（UTC）ほか）
   xml/                # parse / serialize（データ型別エンコード）
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
   auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
-  resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）・定義表
+  resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
     core/             # アクセサを組み立てる共通の仕組み（resource / read / query / expand / image / bulk-write / get-many）
   fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
 
-- **モジュールの層**（[ADR-0097][a97]）：上の一覧の順（`errors` → `util` → `xml` → `http` → `auth` → `resources` →
-  `fields` → 直下）に下から並ぶ。各モジュールは自分より下の層だけを import する。`resources/core/` は `resources/` 直下
+- **モジュールの層**（[ADR-0097][a97] / [ADR-0098][a98]）：上の一覧の順（`porters` → `errors` → `util` → `xml` → `http` →
+  `auth` → `resources` → `fields` → 直下）に下から並ぶ。`porters/` は PORTERS が決めた値だけを持ち、判断や検査のコードは置かない。各モジュールは自分より下の層だけを import する。`resources/core/` は `resources/` 直下
   （リソース本体と定義表）を import しない。eslint の `no-restricted-imports` で止める（テストは対象外）。
 
 - **UT は co-located**：`src/xml/parser.ts` ↔ `src/xml/parser.test.ts`（vitest 既定の `**/*.test.ts`）。
@@ -185,3 +186,4 @@ accessor 呼び出し
 [a47]: ../adr/0047-access-point-scheme.md
 [a91]: ../adr/0091-token-provider-and-store.md
 [a97]: ../adr/0097-src-module-layout.md
+[a98]: ../adr/0098-porters-rules-folder.md

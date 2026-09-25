@@ -42,7 +42,7 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
    - スコープはリソース別 R/W（例 `candidate_r` / `candidate_w`）。
 3. **UTC 前提**。ライブラリは日時を **ISO 8601（UTC, `...Z`）に正規化**して入出力し、**JST 等の業務タイムゾーン変換はしない**（利用側の責務）。`util/datetime.ts`（PORTERS 形式 ⇄ ISO）に集約。
 4. **削除 API は存在しない**。`delete()` メソッドを生やさない（型レベルで非対応を明示）。
-5. **リクエストが長すぎると 400 エラー**。正典は**約 15000 文字**（`docs/usage/reference` 準拠。旧 SPEC_v1 の「32KB」は陳腐化。将来 16KB 上限を検討中・未確定 → 追従）。送信前に検知し弾く（`http/requester.ts` の `MAX_REQUEST_LENGTH`）。200 件超は 200 件ずつに分割。
+5. **リクエストが長すぎると 400 エラー**。正典は**約 15000 文字**（`docs/usage/reference` 準拠。旧 SPEC_v1 の「32KB」は陳腐化。将来 16KB 上限を検討中・未確定 → 追従）。送信前に検知し弾く（値は `porters/request.ts` の `MAX_REQUEST_LENGTH`、検査は `http/requester.ts`）。200 件超は 200 件ずつに分割。
 6. **レート制限**：1 分あたり Read 2000 / Write 500 は**内蔵スロットリング＋リトライで自制**（`http/throttle.ts` は分バケットのみ）。
    **月 15 万アクセスは契約条件**であり、プロセス横断の累積管理はライブラリの責務にしない（利用側の運用責務）。
 7. **ホスト名は非公開**：契約時に通知される値を環境変数（`PORTERS_HOST`）で受け取る。ハードコード禁止。
@@ -103,7 +103,7 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 ## ディレクトリ構成
 
 モジュール構成（ディレクトリ＝責務境界）とテスト配置は `docs/design/basic-design.md` §2 が正。
-**モジュールの層**（errors → util → xml → http → auth → resources → fields → 直下）は ADR-0097 で決め、
+**モジュールの層**（porters → errors → util → xml → http → auth → resources → fields → 直下）は ADR-0097 / ADR-0098 で決め、
 下の層から上の層を import すると eslint が止める。
 ファイル単位の分割は詳細設計／実装で確定する。下記は要点のみ（雛形・非確定）：
 
@@ -116,6 +116,7 @@ src/
   xml/parser.ts
   resources/{candidate,job,client,process,...}.ts
   resources/core/           # アクセサを組み立てる共通の仕組み（ADR-0097）
+  porters/                  # PORTERS が決めた値と定義表（上限・Data Type・Resource List 等。ADR-0098）
   fields/define-fields.ts   # カスタム項目宣言 DSL（ADR-0023）
   util/datetime.ts
 ```
