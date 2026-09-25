@@ -59,6 +59,9 @@ export type DataWriteConfig<
   writeDefaults?: Readonly<Record<string, WriteValue>>;
 };
 
+// PORTERS reads this id on a Write item as "create a new record".
+const NEW_RECORD = -1;
+
 /** `create` / `update` / `createMany` / `updateMany` for a data resource. */
 export const createDataWriter = <
   const F extends FieldCatalog,
@@ -77,9 +80,6 @@ export const createDataWriter = <
   const firstWriteId = (body: string): number =>
     firstWriteResultId(body, config.path, config.name);
 
-  // create forces P_Id=-1 (non-idempotent: a retry would duplicate); update forces
-  // the target id (idempotent: re-applying the same write is safe). Forcing P_Id
-  // after the spread means a caller-supplied P_Id never overrides it.
   // Fields the accessor itself contributes to every record (Phase's `Resource` — ADR-0061).
   //
   // The binding is **authoritative**: a caller who supplies one of these aliases can only be
@@ -102,6 +102,13 @@ export const createDataWriter = <
     }
     return { ...item, ...config.writeDefaults };
   };
+
+  // One record to write: the caller's input, the accessor's bound fields, and the id — `NEW_RECORD`
+  // for create (non-idempotent: a retry would duplicate), the target id for update (idempotent:
+  // re-applying the same write is safe). The id goes on after the spread, so a caller-supplied
+  // id never overrides it.
+  const toItem = (input: object, id: number): WriteItem =>
+    withDefaults({ ...input, [idAlias]: id });
 
   const write = async (
     item: WriteItem,
@@ -130,56 +137,54 @@ export const createDataWriter = <
     );
   };
 
-  // `async` for the exception contract: `withDefaults` runs while the arguments are evaluated,
-  // i.e. before `write` is entered, so without it a refused bound alias (RV-47) would throw
-  // synchronously instead of rejecting (ADR-0046). Found as RV-64.
-  const create = async (input: CreateInput<F, Req[number]>): Promise<number> =>
-    write(withDefaults({ ...input, [idAlias]: -1 }), false);
-
-  const update = async (id: number, input: UpdateInput<F>): Promise<number> =>
-    write(withDefaults({ ...input, [idAlias]: id }), true);
-
-  // Bulk write (ADR-0041): map each input to a WriteItem with its P_Id (create = -1, update = id) —
-  // mirroring single write — and hand the array to the batching executor. createMany is
-  // non-idempotent (P_Id=-1), updateMany idempotent (targets ids).
-  const target = {
-    name: config.name,
-    prefix: config.prefix,
-    fields: fieldMap,
-    partition: deps.partition,
-  };
-  // `async` for the exception contract: the arguments (URL build, per-item mapping) are evaluated
-  // before `runBulkWrite` is entered, so without it a failure there would throw synchronously
-  // instead of rejecting (ADR-0046).
-  const createMany = async (
-    inputs: CreateInput<F, Req[number]>[],
+  // Bulk write (ADR-0041): the records go to the batching executor as they are — same items as
+  // a single write. An image cannot ride in a batch (ADR-0064 論点3), so that is refused first.
+  const writeMany = (
+    records: WriteItem[],
+    method: "createMany" | "updateMany",
+    idempotent: boolean,
   ): Promise<BulkWriteResult> => {
-    const records = inputs.map((input) =>
-      withDefaults({ ...input, [idAlias]: -1 }),
-    );
-    guardNoImageInBulk(records, fieldMap, "createMany");
+    guardNoImageInBulk(records, fieldMap, method);
     return runBulkWrite(
       deps.requester,
-      { ...target, url: writeUrl() },
+      {
+        name: config.name,
+        prefix: config.prefix,
+        fields: fieldMap,
+        partition: deps.partition,
+        url: writeUrl(),
+      },
       records,
-      false,
+      idempotent,
     );
   };
+
+  // `async` for the exception contract: `toItem` (and so the bound-alias check) runs while the
+  // arguments are evaluated, before `write` / `writeMany` is entered, so without it a refused
+  // bound alias (RV-47) would throw synchronously instead of rejecting (ADR-0046). Found as RV-64.
+  const create = async (input: CreateInput<F, Req[number]>): Promise<number> =>
+    write(toItem(input, NEW_RECORD), false);
+
+  const update = async (id: number, input: UpdateInput<F>): Promise<number> =>
+    write(toItem(input, id), true);
+
+  const createMany = async (
+    inputs: CreateInput<F, Req[number]>[],
+  ): Promise<BulkWriteResult> =>
+    writeMany(
+      inputs.map((input) => toItem(input, NEW_RECORD)),
+      "createMany",
+      false,
+    );
 
   const updateMany = async (
     items: { id: number; fields: UpdateInput<F> }[],
-  ): Promise<BulkWriteResult> => {
-    const records = items.map(({ id, fields }) =>
-      withDefaults({ ...fields, [idAlias]: id }),
-    );
-    guardNoImageInBulk(records, fieldMap, "updateMany");
-    return runBulkWrite(
-      deps.requester,
-      { ...target, url: writeUrl() },
-      records,
+  ): Promise<BulkWriteResult> =>
+    writeMany(
+      items.map(({ id, fields }) => toItem(fields, id)),
+      "updateMany",
       true,
     );
-  };
 
   return { create, update, createMany, updateMany };
 };
