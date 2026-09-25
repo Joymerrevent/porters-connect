@@ -8,13 +8,11 @@
 import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
-  paginateOnce,
-  readUrlOf,
-  runRead,
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
+import { createReadMethods } from "./core/read-methods";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -57,7 +55,7 @@ export type PartitionResource = {
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
-// Paging is left out on purpose — see `field.ts` / RV-32.
+// The parameters Partition Read takes; paging and sending are the shared `createReadMethods`.
 const buildParams = (
   q: Omit<PartitionSearchQuery, "count" | "start">,
 ): URLSearchParams => {
@@ -68,29 +66,12 @@ const buildParams = (
 
 export const createPartitionResource = (
   deps: Omit<ResourceDeps, "partition">,
-): PartitionResource => {
-  const decode = decoderFor(FIELDS);
-  // `async` for the exception contract: a Promise-returning public method never throws
-  // synchronously, whatever URL building does (ADR-0046).
-  const readUrl = (q: PartitionSearchQuery): string =>
-    readUrlOf(deps.accessPoint, "partition", buildParams(q), q.count, q.start);
-  const search = async (
-    query: PartitionSearchQuery = {},
-  ): Promise<PartitionPage> =>
-    runRead(deps.requester, PARTITION_DESCRIPTOR.name, readUrl(query), decode);
-  // The query is read once, at the first page (RV-32).
-  const searchAll = (
-    query: Omit<PartitionSearchQuery, "count" | "start"> = {},
-  ): AsyncIterable<Partition> =>
-    paginateOnce(() => {
-      const base = buildParams(query);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          PARTITION_DESCRIPTOR.name,
-          readUrlOf(deps.accessPoint, "partition", base, count, start),
-          decode,
-        );
-    });
-  return { search, searchAll };
-};
+): PartitionResource =>
+  createReadMethods<PartitionSearchQuery, Partition>({
+    requester: deps.requester,
+    accessPoint: deps.accessPoint,
+    name: PARTITION_DESCRIPTOR.name,
+    path: PARTITION_DESCRIPTOR.path,
+    decode: decoderFor(FIELDS),
+    params: buildParams,
+  });

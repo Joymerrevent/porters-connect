@@ -9,17 +9,14 @@
 
 import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
+  createFieldParam,
   decoderFor,
-  paginateOnce,
-  qualifyReadFields,
-  readUrlOf,
-  runRead,
   type FieldCatalog,
   type ReadFieldAlias,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import type { DataType } from "../porters/data-type";
+import { createReadMethods } from "./core/read-methods";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある
@@ -99,9 +96,6 @@ export type UserResource = {
   current(): Promise<User | undefined>;
 };
 
-// The catalog as a runtime lookup, for prefixing the caller's bare `field` aliases (ADR-0059).
-const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
-
 // Sent when the caller omits `field` (ADR-0020, applied to this master by ADR-0060 D2). PORTERS
 // answers a fieldless User Read with 4 of the 17 fields, so leaving `field` off would hand back a
 // record whose type promises 17 and whose other 13 are silently `null` — the shape of RV-1.
@@ -111,9 +105,9 @@ const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
 // once**, and the two `User`-typed ones go out parenthesised because that is what the shared
 // assembly sends — docs/live-verification.md (LV-18). If a particular field is rejected, drop it
 // from this default rather than from the catalog: `field` can still name it explicitly.
-const DEFAULT_FIELDS = Object.keys(FIELDS) as ReadFieldAlias<typeof FIELDS>[];
+const setField = createFieldParam(USER_DESCRIPTOR.prefix, FIELDS);
 
-// Paging is left out on purpose — see `field.ts` / RV-32.
+// The parameters User Read takes; paging and sending are the shared `createReadMethods`.
 const buildParams = (
   partition: number,
   q: Omit<UserSearchQuery, "count" | "start">,
@@ -122,43 +116,19 @@ const buildParams = (
   p.set("partition", String(partition));
   p.set("request_type", String(q.requestType ?? 1));
   p.set("user_type", String(q.userType ?? -1));
-  const field = q.field ?? DEFAULT_FIELDS;
-  if (field.length > 0) {
-    p.set(
-      "field",
-      qualifyReadFields(USER_DESCRIPTOR.prefix, FIELD_MAP, field).join(","),
-    );
-  }
+  setField(p, q.field);
   return p;
 };
 
 export const createUserResource = (deps: ResourceDeps): UserResource => {
-  const decode = decoderFor(FIELDS);
-  // `async` for the exception contract (ADR-0046).
-  const readUrl = (q: UserSearchQuery): string =>
-    readUrlOf(
-      deps.accessPoint,
-      "user",
-      buildParams(deps.partition, q),
-      q.count,
-      q.start,
-    );
-  const search = async (query: UserSearchQuery = {}): Promise<UserPage> =>
-    runRead(deps.requester, USER_DESCRIPTOR.name, readUrl(query), decode);
-  // The query is read once, at the first page (RV-32).
-  const searchAll = (
-    query: Omit<UserSearchQuery, "count" | "start"> = {},
-  ): AsyncIterable<User> =>
-    paginateOnce(() => {
-      const base = buildParams(deps.partition, query);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          USER_DESCRIPTOR.name,
-          readUrlOf(deps.accessPoint, "user", base, count, start),
-          decode,
-        );
-    });
+  const { search, searchAll } = createReadMethods<UserSearchQuery, User>({
+    requester: deps.requester,
+    accessPoint: deps.accessPoint,
+    name: USER_DESCRIPTOR.name,
+    path: USER_DESCRIPTOR.path,
+    decode: decoderFor(FIELDS),
+    params: (q) => buildParams(deps.partition, q),
+  });
   // VERIFY(live): code_direct + request_type=0 returning the App's own user is doc-only.
   // See docs/live-verification.md (LV-7).
   const current = async (): Promise<User | undefined> =>

@@ -8,7 +8,7 @@
 
 > **ResourceType** = [`ResourceName`](ResourceName.md)
 
-Defined in: [src/resources/field.ts:32](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L32)
+Defined in: [src/resources/field.ts:30](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L30)
 
 A resource whose field catalog can be read (Field Read `resource` selector).
 

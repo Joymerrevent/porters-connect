@@ -8,6 +8,6 @@
 
 > **Department** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/department.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L49)
+Defined in: [src/resources/department.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L46)
 
 A decoded Department (a PORTERS user department). `P_Hidden`: 0 = shown, 1 = hidden.

@@ -11,14 +11,12 @@
 import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
-  paginateOnce,
-  readUrlOf,
-  runRead,
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
+import { createReadMethods } from "./core/read-methods";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
 /**
@@ -99,8 +97,7 @@ export type FieldAccessor = {
   of(resource: ResourceType): FieldResource;
 };
 
-// Paging is left out on purpose: `count` / `start` are the only per-page difference, so
-// `searchAll` serialises the caller's query once and `readUrlOf` adds the rest (RV-32).
+// The parameters Field Read takes; paging and sending are the shared `createReadMethods`.
 const buildParams = (
   partition: number,
   resource: ResourceType,
@@ -114,34 +111,13 @@ const buildParams = (
 };
 
 export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
-  of: (resource) => {
-    const decode = decoderFor(FIELDS);
-    // `async` for the exception contract (ADR-0046).
-    const readUrl = (q: FieldSearchQuery): string =>
-      readUrlOf(
-        deps.accessPoint,
-        "field",
-        buildParams(deps.partition, resource, q),
-        q.count,
-        q.start,
-      );
-    const search = async (query: FieldSearchQuery = {}): Promise<FieldPage> =>
-      runRead(deps.requester, FIELD_DESCRIPTOR.name, readUrl(query), decode);
-    // The query is read once, at the first page — mutating it mid-iteration cannot change a later
-    // page (RV-32). Same shape as the data resources' `searchAll`.
-    const searchAll = (
-      query: Omit<FieldSearchQuery, "count" | "start"> = {},
-    ): AsyncIterable<Field> =>
-      paginateOnce(() => {
-        const base = buildParams(deps.partition, resource, query);
-        return (count, start) =>
-          runRead(
-            deps.requester,
-            FIELD_DESCRIPTOR.name,
-            readUrlOf(deps.accessPoint, "field", base, count, start),
-            decode,
-          );
-      });
-    return { search, searchAll };
-  },
+  of: (resource) =>
+    createReadMethods<FieldSearchQuery, Field>({
+      requester: deps.requester,
+      accessPoint: deps.accessPoint,
+      name: FIELD_DESCRIPTOR.name,
+      path: FIELD_DESCRIPTOR.path,
+      decode: decoderFor(FIELDS),
+      params: (q) => buildParams(deps.partition, resource, q),
+    }),
 });
