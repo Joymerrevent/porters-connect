@@ -8,7 +8,7 @@
 
 > **ActivityResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/activity.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L90)
+Defined in: [src/resources/activity.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L91)
 
 The Activity accessor; `C` is the declared custom-field catalog merged on.
 

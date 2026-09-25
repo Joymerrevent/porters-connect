@@ -1,5 +1,16 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { ACTIVITY_DESCRIPTOR } from "../resources/activity";
+import { CANDIDATE_DESCRIPTOR } from "../resources/candidate";
+import { CLIENT_DESCRIPTOR } from "../resources/client";
+import { CONTACT_DESCRIPTOR } from "../resources/contact";
+import { CONTRACT_DESCRIPTOR } from "../resources/contract";
+import { JOB_DESCRIPTOR } from "../resources/job";
+import { OPPORTUNITY_DESCRIPTOR } from "../resources/opportunity";
+import { PROCESS_DESCRIPTOR } from "../resources/process";
+import { RECRUITER_DESCRIPTOR } from "../resources/recruiter";
+import { RESUME_DESCRIPTOR } from "../resources/resume";
+import { SALES_DESCRIPTOR } from "../resources/sales";
 import {
   RESOURCE_VALUES,
   resourceNameOf,
@@ -40,6 +51,24 @@ describe("RESOURCE_VALUES", () => {
       "resume",
       "sales",
     ]);
+  });
+
+  it("has a data resource for every name, and a name for every data resource that PORTERS numbers", () => {
+    // The descriptors type their `path` as ResourceName (resource -> table). This is the other
+    // direction: a name here with no resource behind it (or a resource that lost its name) fails.
+    type Paths =
+      | typeof ACTIVITY_DESCRIPTOR.path
+      | typeof CANDIDATE_DESCRIPTOR.path
+      | typeof CLIENT_DESCRIPTOR.path
+      | typeof CONTACT_DESCRIPTOR.path
+      | typeof CONTRACT_DESCRIPTOR.path
+      | typeof JOB_DESCRIPTOR.path
+      | typeof OPPORTUNITY_DESCRIPTOR.path
+      | typeof PROCESS_DESCRIPTOR.path
+      | typeof RECRUITER_DESCRIPTOR.path
+      | typeof RESUME_DESCRIPTOR.path
+      | typeof SALES_DESCRIPTOR.path;
+    expectTypeOf<ResourceName>().toEqualTypeOf<Paths>();
   });
 
   it("names the resources with their accessor spelling", () => {

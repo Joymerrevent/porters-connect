@@ -16,7 +16,7 @@ import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
 import { appendPaging, paginateOnce } from "./core/read";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import {
   buildWriteUrl,
   firstWriteResultId,

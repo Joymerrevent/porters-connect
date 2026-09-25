@@ -8,6 +8,6 @@
 
 > **JobUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/job.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L106)
+Defined in: [src/resources/job.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L107)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

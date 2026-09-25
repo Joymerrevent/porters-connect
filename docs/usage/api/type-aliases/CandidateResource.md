@@ -8,7 +8,7 @@
 
 > **CandidateResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/candidate.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L81)
+Defined in: [src/resources/candidate.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L82)
 
 The Candidate accessor; `C` is the declared custom-field catalog merged on.
 

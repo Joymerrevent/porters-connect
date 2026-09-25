@@ -17,7 +17,7 @@
 import { DEPARTMENT_DESCRIPTOR } from "../../src/resources/department";
 import { FIELD_DESCRIPTOR } from "../../src/resources/field";
 import { fieldTypeValueOf } from "../../src/porters/field-type";
-import { RESOURCE_VALUES } from "../../src/resources/resource-list";
+import { RESOURCE_VALUES } from "../../src/porters/resource-list";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
 import type { ResourceDescriptor } from "../../src/resources/core/resource";

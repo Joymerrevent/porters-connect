@@ -41,6 +41,7 @@ import { CONTRACT_DESCRIPTOR } from "./contract";
 import { JOB_DESCRIPTOR } from "./job";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -100,7 +101,7 @@ const REFERENCES = {
  */
 export const SALES_DESCRIPTOR = {
   name: "Sales",
-  path: "sales",
+  path: "sales" satisfies ResourceName,
   prefix: "Sales",
   fields: FIELDS,
   references: REFERENCES,

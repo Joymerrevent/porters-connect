@@ -33,7 +33,7 @@ Defined in: [src/resources/attachment.ts:127](https://github.com/Joymerrevent/po
 
 ##### resource
 
-`"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+`"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
 #### Returns
 

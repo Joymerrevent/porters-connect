@@ -34,7 +34,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./core/resource";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   Id: "System[Id]",

@@ -7,7 +7,7 @@ import {
   type FieldSearchQuery,
   type ResourceType,
 } from "./field";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
 // Fixture from the canonical Field Read sample (115012160308): two Job fields — one with an
 // empty P_ReferTo, one whose P_ReferTo nests the referenced option group alias.

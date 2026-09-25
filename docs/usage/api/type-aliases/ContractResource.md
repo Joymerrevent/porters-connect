@@ -8,7 +8,7 @@
 
 > **ContractResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/contract.ts:112](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L112)
+Defined in: [src/resources/contract.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L113)
 
 The Contract accessor; `C` is the declared custom-field catalog merged on.
 

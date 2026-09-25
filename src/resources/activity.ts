@@ -24,6 +24,7 @@ import {
   type SearchQuery,
   type UpdateInput,
 } from "./core/resource";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -69,7 +70,7 @@ const REQUIRED_ON_CREATE = [
  */
 export const ACTIVITY_DESCRIPTOR = {
   name: "Activity",
-  path: "activity",
+  path: "activity" satisfies ResourceName,
   prefix: "Activity",
   fields: FIELDS,
 } as const satisfies ResourceDescriptor;

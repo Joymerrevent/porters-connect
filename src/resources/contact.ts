@@ -23,6 +23,7 @@ import {
   type UpdateInput,
 } from "./core/resource";
 import { CLIENT_DESCRIPTOR } from "./client";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -76,7 +77,7 @@ const REFERENCES = {
  */
 export const CONTACT_DESCRIPTOR = {
   name: "Contact",
-  path: "contact",
+  path: "contact" satisfies ResourceName,
   prefix: "Contact",
   fields: FIELDS,
   references: REFERENCES,

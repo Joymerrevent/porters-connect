@@ -8,4 +8,4 @@
 
 > **ContractPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/contract.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L101)
+Defined in: [src/resources/contract.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L102)

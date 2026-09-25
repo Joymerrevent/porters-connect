@@ -8,4 +8,4 @@
 
 > **ProcessSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/process.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L96)
+Defined in: [src/resources/process.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L97)

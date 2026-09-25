@@ -2,3 +2,4 @@
 
 export type * from "./data-type";
 export * from "./field-type";
+export * from "./resource-list";

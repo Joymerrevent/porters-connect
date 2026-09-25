@@ -24,6 +24,7 @@ import {
   type UpdateInput,
 } from "./core/resource";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -81,7 +82,7 @@ const REFERENCES = {
  */
 export const RESUME_DESCRIPTOR = {
   name: "Resume",
-  path: "resume",
+  path: "resume" satisfies ResourceName,
   prefix: "Resume",
   fields: FIELDS,
   references: REFERENCES,
