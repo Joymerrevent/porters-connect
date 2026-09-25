@@ -8,6 +8,9 @@
 > 発端：docs 1 行の変更でも全 CI（`ci` フル・`test` マトリクス 20/22/24・CodeQL・
 > mutation/`stryker`・commitlint）が走る。docs-only に mutation/test/CodeQL は無駄。
 > 必須チェックを単純に skip するとマージ不能になる**落とし穴**があり、方式に選択肢がある。
+>
+> **Amended by [ADR-0094][adr94]（2026-09-25）**: 2026-09-23 の訂正の「リリースの流れの PR（リリース PR・back-merge PR）は
+> develop と同じなら skip」は改められた。`main` への PR は必ずフル run、back-merge PR はほかの PR と同じ変更ファイルの規則で判定する。
 
 ## Context and Problem Statement
 
@@ -129,3 +132,4 @@ head=`main` のもの**に限り、**検査対象（PR のマージ結果）を 
 
 [p14]: 0014-test-coverage-policy.md
 [p15]: 0015-mutation-testing.md
+[adr94]: 0094-mutation-changed-files-on-pr.md
