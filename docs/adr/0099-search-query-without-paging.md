@@ -1,4 +1,4 @@
-# 99. 検索クエリの型からページ送り（`count` / `start`）を外し、`Paging` を別の型にする
+# 99. 検索クエリの型からページ送り（`count` / `start`）を外し、`Paging` / `Limit` を別の型にする
 
 - Status: proposed
 - Date: 2026-09-25
@@ -9,6 +9,10 @@
 > 問いがあり、「`SearchQuery` に破壊的変更を入れてもよい」と方針が示された。
 >
 > [ADR-0038][adr38] で決めた公開の検索クエリ `SearchQuery`（`count` / `start` を含む）の形を改める。**公開 API の破壊的変更**。
+>
+> 議論の経緯: 起票時は Option を対象外にしていた（「Option の `count` は件数の上限で、ページ送りとは意味が違う」）。
+> stakeholder の問いで原典を読み直すと、Option の `count` もほかの Read と同じ「最大件数」で、違いは `start` が無いことと
+> 省略時の既定値（全件）だけだった。Option も対象にし、`count` だけを持つ公開の型 `Limit` を足す形に改めた（stakeholder の意向）。
 
 ## Context and Problem Statement
 
@@ -17,12 +21,12 @@
 公開している検索クエリの型は、どれも**ページ送り（`count` / `start`）を含んでいる**。ページ送りを自分で決める
 `searchAll` は、そこから `count` / `start` を**抜いた型**を受ける。
 
-| 対象                                                 | `search` が受ける型                                           | `searchAll` が受ける型                                           |
-| ---------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
-| データ系 12 種（Attachment を除く）                  | `SearchQuery<F, R>`（`CandidateSearchQuery` など）            | `Omit<SearchQuery<F, R>, "count" \| "start">`                    |
-| マスタ 4 種（Partition / User / Field / Department） | `PartitionSearchQuery` など                                   | `Omit<PartitionSearchQuery, "count" \| "start">` など            |
-| Attachment                                           | `AttachmentSearchQuery`                                       | `AttachmentWalkQuery`（`Omit<AttachmentSearchQuery, …>` の別名） |
-| Option                                               | `OptionSearchQuery`（`count` だけ。ページではなく件数の上限） | （`searchAll` は無い。PORTERS 側に `start` が無い）              |
+| 対象                                                 | `search` が受ける型                                   | `searchAll` が受ける型                                           |
+| ---------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- |
+| データ系 12 種（Attachment を除く）                  | `SearchQuery<F, R>`（`CandidateSearchQuery` など）    | `Omit<SearchQuery<F, R>, "count" \| "start">`                    |
+| マスタ 4 種（Partition / User / Field / Department） | `PartitionSearchQuery` など                           | `Omit<PartitionSearchQuery, "count" \| "start">` など            |
+| Attachment                                           | `AttachmentSearchQuery`                               | `AttachmentWalkQuery`（`Omit<AttachmentSearchQuery, …>` の別名） |
+| Option                                               | `OptionSearchQuery`（`count` を含む。`start` は無い） | （`searchAll` は無い。PORTERS 側に `start` が無い）              |
 
 一方、ライブラリの内部では、マスタの読み取りの組み立てを「そのマスタ独自のクエリ `Q` ＋ ページ送り `Paging`」と
 いう向きで書いた（`search` は `Q & Paging`、`searchAll` は `Q`）。**同じ「クエリとページ送り」を、公開の型は
@@ -34,6 +38,12 @@
   そのまま出る。Attachment だけは `AttachmentWalkQuery` という名前を付けていて、ほかと扱いが違う。
 - **`count` / `start` の意味が型の中で 2 つに割れている**。`search` ではページの指定、`searchAll` では「指定できない
   もの」。ページ送りは「何を探すか」とは別の関心事なのに、「何を探すか」の型に入っている。
+
+### Option の `count`
+
+Option Read の記事は `count` を「取得するアイテムの最大数」とし、省略すると全アイテムを返すと書く。ほかの Read の
+`count`（取得するデータの件数・既定 10）と同じく「最大件数」で、違うのは **`start` が無い**（ページ送りができない）ことと、
+省略時の既定値だけ。ライブラリも Option の `count` をほかの Read と同じ関数で送り、同じ 1〜200 の範囲を検査している。
 
 ### 問い
 
@@ -56,8 +66,9 @@
 
 ### 軸2: 揃える範囲
 
-- **案2a: データ系・マスタ 4 種・Attachment のすべて。Option は対象にしない**（推奨）
-- 案2b: データ系の `SearchQuery` だけ
+- **案2a: データ系・マスタ 4 種・Attachment・Option のすべて**（推奨・stakeholder の意向）
+- 案2b: データ系・マスタ 4 種・Attachment（Option は対象にしない）
+- 案2c: データ系の `SearchQuery` だけ
 
 ## Decision Outcome
 
@@ -65,16 +76,18 @@
 
 ### 決めること（推奨案）
 
-- 公開の型 `Paging` を足す: `{ count?: number; start?: number }`（`count` は 1〜200、`start` は 0 始まり。範囲の検査は
-  いまと同じく送る前に行う）。
+- 公開の型を 2 つ足す。範囲の検査は、いまと同じく送る前に行う。
+  - `Limit` = `{ count?: number }`（読む件数の上限。1〜200）
+  - `Paging` = `Limit & { start?: number }`（`start` は 0 始まり）
 - 次の型から `count` / `start` を外す。中身は「何を探すか」だけになる。
   - `SearchQuery<F, R>` と、それを特定したリソースごとの別名（`CandidateSearchQuery` など 12 種）
   - `PartitionSearchQuery` / `UserSearchQuery` / `FieldSearchQuery` / `DepartmentSearchQuery`
   - `AttachmentSearchQuery`
+  - `OptionSearchQuery`
 - `search` は `query?: …SearchQuery & Paging`、`searchAll` は `query?: …SearchQuery` を受ける。
+  **Option の `search` は `query?: OptionSearchQuery & Limit`**（`start` は受けない）。戻り値はいまのまま配列（応答に
+  `Total` などが無いため）。
 - `AttachmentWalkQuery` は無くす（`AttachmentSearchQuery` と同じ中身になるため）。
-- **Option は対象にしない**。Option の `count` はページ送りではなく件数の上限で（`start` も `searchAll` も無い）、
-  `Paging` とは意味が違う。`OptionSearchQuery` はいまのまま `count` を持つ。
 - 利用者向けの移行の案内を CHANGELOG（changeset）に書く。
 
 ### 利用者への影響
@@ -83,6 +96,7 @@
 - 壊れるのは、クエリを変数に取って `…SearchQuery` の型を付け、そこに `count` / `start` を書いているコード。
   例: `const q: CandidateSearchQuery = { count: 50 }`。移行は型を `CandidateSearchQuery & Paging` にするだけ。
 - `AttachmentWalkQuery` を使っているコードは、`AttachmentSearchQuery` に書き換える。
+- `OptionSearchQuery` に `count` を書いているコードは、型を `OptionSearchQuery & Limit` にする。
 - `…SearchQuery["count"]` のように型から取り出しているコードは、`Paging["count"]` に書き換える。
 
 ### 推奨案を採る理由
@@ -92,9 +106,12 @@
 - **案1b** は壊さないが、同じ中身の型が 2 つの名前で並ぶ（`SearchQuery` と `ReadQuery`）。どちらを使うかを利用者が
   迷い、`…SearchQuery` の名前が「ページ送り込み」を意味し続けるので、関心事の割れは残る。
 - **案1c** は、`searchAll` の型に名前が無いまま・Attachment だけ名前がある状態を残す。
-- **案2a**: 同じ考え方でマスタと Attachment も揃えないと、「〜SearchQuery」がデータ系ではページ送りを含まず、
-  マスタでは含む、と名前の意味が食い違う。
-- **案2b** は影響が小さいが、上の食い違いを作る。
+- **案2a**: 同じ考え方でマスタ・Attachment・Option も揃えないと、「〜SearchQuery」がある型ではページ送りを含まず、
+  別の型では含む、と名前の意味が食い違う。Option の違い（`start` が無い）は、`Paging` ではなく `Limit` を受けることで
+  型にそのまま表れる。
+- `Limit` を名前付きの型にするのは、`Pick<Paging, "count">` と書くより利用者が読みやすいため（stakeholder の意向）。
+  `Paging` を `Limit & { start?: number }` と定義し、2 つの関係も型で読めるようにする。
+- **案2b** は、Option だけ「〜SearchQuery」に `count` が残る食い違いを作る。**案2c** は、データ系とマスタの間に同じ食い違いを作る。
 
 ### Consequences
 
@@ -102,19 +119,21 @@
 - Good: `searchAll` の引数に名前が付き、`AttachmentWalkQuery` だけが特別な状態がなくなる。
 - Good: 公開の型とライブラリ内部の組み立て（独自のクエリ ＋ ページ送り）が同じ向きになる。
 - Bad: **破壊的変更**。クエリを変数に取って型を付けているコードと、`AttachmentWalkQuery` を使うコードは直す必要がある。
-- Neutral: 送るパラメータ・範囲の検査・戻り値は変わらない。Option は変わらない。
+- Bad: 公開の型が 2 つ増える（`Paging` / `Limit`）。`AttachmentWalkQuery` が 1 つ減る。
+- Neutral: 送るパラメータ・範囲の検査・戻り値は変わらない。
 
 ## Pros and Cons of the Options
 
 - 案1a — Good: 関心事で型が分かれる。名前が揃う。Bad: 破壊的変更。
 - 案1b — Good: 壊さない。Bad: 同じ中身の型が 2 つの名前で並ぶ。関心事の割れが残る。
 - 案1c — Good: 何も変えない。Bad: `searchAll` の型に名前が無いまま。
-- 案2a — Good: 「〜SearchQuery」の意味がどこでも同じになる。Bad: 変える型が多い（公開の型 18 個と `AttachmentWalkQuery`）。
-- 案2b — Good: 影響が小さい。Bad: データ系とマスタで名前の意味が食い違う。
+- 案2a — Good: 「〜SearchQuery」の意味がどこでも同じになる。Bad: 変える型が多い（公開の型 19 個と `AttachmentWalkQuery`）。
+- 案2b — Good: Option を変えずに済む。Bad: Option だけ「〜SearchQuery」に `count` が残る。
+- 案2c — Good: 影響が小さい。Bad: データ系とマスタで名前の意味が食い違う。
 
 ## More Information
 
-- 実装（accepted 後・別 PR）: 公開の型の定義、`search` / `searchAll` の型、`src/index.ts`（`Paging` を足し、
+- 実装（accepted 後・別 PR）: 公開の型の定義、`search` / `searchAll` の型、`src/index.ts`（`Paging` / `Limit` を足し、
   `AttachmentWalkQuery` を外す）、型のテスト、API リファレンスの生成し直し、使い方ドキュメント（「検索」の章と
   リソース別のページの型の表）、changeset（minor・破壊的変更と移行の案内）。
 - 実装は、公開 API を変えないリファクタリング（データ系とマスタの読み取りの組み立てを揃える PR）の後に行う。

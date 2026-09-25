@@ -56,8 +56,8 @@ findings の open も 0。[ADR-0084][adr84] の反映も済んだ（PRD §7・CI
 **2026-09-23 に判断待ちが 1 件に戻った**: カスタム項目を `create` の必須として宣言できるようにするか —
 [RV-62][rv62]（[ADR-0023][adr23] D7「カスタムは常に任意」を部分的に改める案）。同日 [ADR-0089][adr89] を proposed で起票し、**2026-09-24 に推奨案で accepted・同日実装**（RV-62 は fixed）。
 
-**2026-09-25 に判断待ちが 1 件に戻った**: 検索クエリの型からページ送り（`count` / `start`）を外し、`Paging` を別の型にするか —
-[ADR-0099][adr99]（stakeholder の問い。データ系・マスタ・Attachment の `search` を「クエリ ＋ ページ送り」、`searchAll` を
+**2026-09-25 に判断待ちが 1 件に戻った**: 検索クエリの型からページ送り（`count` / `start`）を外し、`Paging` / `Limit` を別の型にするか —
+[ADR-0099][adr99]（stakeholder の問い。データ系・マスタ・Attachment・Option の `search` を「クエリ ＋ ページ送り」、`searchAll` を
 「クエリ」に揃える案。**公開 API の破壊的変更**）。
 
 **2026-09-25 に判断待ちが 1 件に戻り、同日 accepted になった**: PORTERS が決めた値と定義表を `src/porters/` にまとめる — [ADR-0098][adr98]
@@ -304,8 +304,8 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 ### 判断待ち（決めれば着手できる）
 
 - [ ] **検索クエリの型からページ送りを外すか** — [ADR-0099][adr99]（2026-09-25 起票・**proposed**・stakeholder の問い）。
-      推奨: `…SearchQuery`（データ系 12 種・マスタ 4 種・Attachment）から `count` / `start` を外し、公開の型 `Paging` を足す。
-      `search` は `…SearchQuery & Paging`、`searchAll` は `…SearchQuery`。`AttachmentWalkQuery` は無くす。Option は対象外。破壊的変更。
+      推奨: `…SearchQuery`（データ系 12 種・マスタ 4 種・Attachment・Option）から `count` / `start` を外し、公開の型 `Paging` / `Limit` を足す。
+      `search` は `…SearchQuery & Paging`（Option は `& Limit`）、`searchAll` は `…SearchQuery`。`AttachmentWalkQuery` は無くす。破壊的変更。
 - [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
       **案1a〜5a＝5 章・リソース別 18 本 1:1・実践例 2 本・名詞の題名＋目次の索引・検査⑥新設**）。実装は**着手可能**（上記）。
       [ADR-0070][adr70] の 4 層（入門／目的別／考え方／リファレンス）は形で切っていて、目的別の本文が主題別に
