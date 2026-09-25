@@ -56,9 +56,8 @@ findings の open も 0。[ADR-0084][adr84] の反映も済んだ（PRD §7・CI
 **2026-09-23 に判断待ちが 1 件に戻った**: カスタム項目を `create` の必須として宣言できるようにするか —
 [RV-62][rv62]（[ADR-0023][adr23] D7「カスタムは常に任意」を部分的に改める案）。同日 [ADR-0089][adr89] を proposed で起票し、**2026-09-24 に推奨案で accepted・同日実装**（RV-62 は fixed）。
 
-**2026-09-25 に判断待ちが 1 件に戻った**: `src/resources/` の共通の仕組み（resource / read-core / query / expand / image /
-bulk-write / get-many）を `core/` に分けるか — [ADR-0097][adr97]（stakeholder の問い。移動と import のパスの書き換えだけで、
-依存の向きを eslint で止める案）。実装は [ADR-0096][adr96] の実装より先に行う。
+**2026-09-25 に判断待ちが 1 件に戻った**: `src/` のモジュールを層に並べ、依存の向きを lint で守るか — [ADR-0097][adr97]
+（stakeholder の問い。はじめは `src/resources/` の中だけの案で、議論で `src/` 全体に広げた）。実装は [ADR-0096][adr96] の実装より先に行う。
 
 **2026-09-25 に判断待ちがもう 1 件増え、同日 accepted になった**: 読み取りの戻り値の型を `field` で絞る — [ADR-0096][adr96]
 （[ADR-0095][adr95] の議論から分けた。読んでいない項目のキーを型から外し、読んだ項目は省略可能のまま。[ADR-0005][adr5] SD-3 を改める）。
@@ -288,10 +287,10 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 
 ### 判断待ち（決めれば着手できる）
 
-- [ ] **`src/resources/` の共通の仕組みを `core/` に分けるか** — [ADR-0097][adr97]（2026-09-25 起票・**proposed**・stakeholder の問い）。
-      推奨: 共通の仕組み 7 ファイル（と隣のテスト）を `src/resources/core/` に移し、リソース本体と定義表（resource-list /
-      field-type）は直下に残す。`core/` から直下を import したら eslint で止める。移動と import のパスの書き換えだけの PR にし、
-      [ADR-0096][adr96] の実装より先に行う。
+- [ ] **`src/` のモジュールを層に並べ、依存の向きを lint で守るか** — [ADR-0097][adr97]（2026-09-25 起票・**proposed**・stakeholder の問い）。
+      推奨: errors → util → xml → http → auth → resources → fields → 直下の順に層を決め、下の層から上を import したら eslint で止める。
+      あわせて `AccessTokenSource` を `http` に移して `http` → `auth` の逆向きを無くし、`resources/` の共通の仕組み 7 ファイルを
+      `core/` に分け、`types/` の 3 つの型を持ち主のモジュールに移す。公開 API は変えない。[ADR-0096][adr96] の実装より先に行う。
 - [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
       **案1a〜5a＝5 章・リソース別 18 本 1:1・実践例 2 本・名詞の題名＋目次の索引・検査⑥新設**）。実装は**着手可能**（上記）。
       [ADR-0070][adr70] の 4 層（入門／目的別／考え方／リファレンス）は形で切っていて、目的別の本文が主題別に
@@ -852,7 +851,7 @@ LV-9〜12 はフェイクサーバー実装中に増えた項目（制約違反�
 [adr94]: adr/0094-mutation-changed-files-on-pr.md
 [adr95]: adr/0095-get-many-by-ids.md
 [adr96]: adr/0096-narrow-record-type-by-field.md
-[adr97]: adr/0097-resources-core-folder.md
+[adr97]: adr/0097-src-module-layout.md
 [adr5]: adr/0005-public-api-shape.md
 [pr378]: https://github.com/Joymerrevent/porters-connect/pull/378
 [adr15]: adr/0015-mutation-testing.md
