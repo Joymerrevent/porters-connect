@@ -9,8 +9,8 @@ name: Mutation
 # ので、差分再評価はやめた（ADR-0015 の訂正・2026-09-22）。
 # break 閾値（stryker.config.json）を下回ると job が落ちる＝テスト品質の回帰を止める。
 # docs-only の PR/push は stryker を skip（必須チェックなので job は走り報告する・ADR-0028）。
-# リリースの流れの PR（release/* → main・main → develop）は develop と比べ、版番号と文書だけの
-# 違いなら skip する（コードは develop で検査済み・ADR-0028 の訂正 2026-09-23）。
+# リリースの流れの PR（release/* → main・main → develop）と main への push は develop と比べ、版番号と
+# 文書だけの違いなら skip する（コードは develop への push で検査済み・ADR-0028 の訂正 2026-09-23 / 注記 2026-09-25）。
 on:
   pull_request:
   push:
@@ -45,24 +45,27 @@ jobs:
               - "!**/*.md"
               - "!docs/**"
 
-      # リリースの流れの PR では、PR のマージ結果を develop と比べる（ADR-0028 の訂正）。
-      # base（main）との差分だと develop で検査済みのコードがすべて「変更」に見え、back-merge は
-      # main への push と同じコミットを検査することになる。違いが版番号と文書だけなら skip する。
+      # リリースの流れの PR と main への push では、検査対象を develop と比べる（ADR-0028 の訂正・注記）。
+      # base（main）や main の前のコミットとの差分だと、develop で検査済みのコードがすべて「変更」に見える。
+      # main への push はリリース PR のマージで、中身は develop ＋ 版番号と CHANGELOG。違いが版番号と
+      # 文書だけなら skip する。リリースの後に develop が先へ進んでいれば差が出るのでフル run になる。
       # 判定に失敗したらスクリプトが bookkeeping=false を返す＝フル run（skip しない側に倒す）。
       # Node はランナー同梱のものを使う（スクリプトは node: の標準モジュールだけ）。
       - name: Release flow (compare with develop)
         id: release
         if: >-
-          github.event_name == 'pull_request' && steps.changes.outputs.code == 'true' &&
+          steps.changes.outputs.code == 'true' &&
+          ((github.event_name == 'pull_request' &&
           ((github.base_ref == 'main' && startsWith(github.head_ref, 'release/')) ||
-          (github.base_ref == 'develop' && github.head_ref == 'main'))
+          (github.base_ref == 'develop' && github.head_ref == 'main'))) ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         run: |
           git fetch --no-tags --depth=1 origin develop || echo "::warning::develop を取得できませんでした（判定はフル run に倒れます）"
           node scripts/detect-release-bookkeeping.mjs origin/develop HEAD >> "${GITHUB_OUTPUT}"
 
       # 以降の重い処理を走らせるか。条件を 1 箇所にまとめる（各ステップに同じ式を並べない）。
       #   nightly / 手動 → 常に走る
-      #   PR / push     → コードの変更があり、かつリリースの流れで develop と同じでないとき
+      #   PR / push     → コードの変更があり、かつリリースの流れ（main への push を含む）で develop と同じでないとき
       - name: Decide
         id: gate
         env:
