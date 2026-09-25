@@ -1,6 +1,6 @@
 # 95. 複数の ID でまとめて読む `getMany(ids)` を足す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -10,6 +10,10 @@
 > [ADR-0005][adr5] の公開 API の形（`get(id)` は 1 件）に、複数の ID を受けるメソッドを足す案。あわせて、`get` と
 > `getMany` の両方で取得する項目（`field`）を指定できるようにする（stakeholder の意向・2026-09-25）。`get` への追加は
 > 省略できるオプションなので、既存のコードは壊れない。
+>
+> **decider が案1a ＋ 案2a ＋ 案3a ＋ 案4a を選択し `accepted`（2026-09-25）。** オプションの形 `{ field?, expand?, image? }` も
+> 確認した（`image` は `search` / `searchAll` / `get` がすでに受けていて、`field` と `expand` では画像の中身を選べないので残す）。
+> 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -106,9 +110,9 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 
 ## Decision Outcome
 
-**未決（proposed）**。以下は推奨案（1a ＋ 2a ＋ 3a ＋ 4a）で書いた場合の形。
+採用: **案1a ＋ 案2a ＋ 案3a ＋ 案4a**（decider が 2026-09-25 に選択）。
 
-### 決めること（推奨案）
+### 決めること
 
 - 名前は `getMany(ids, { field?, expand?, image? })`。`get` と同じオプションを受け、同じ型のレコードを返す。
 - **送り方（案1a）**:
