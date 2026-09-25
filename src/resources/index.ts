@@ -8,7 +8,7 @@ export type {
   Order,
   ReadFieldAlias,
   SearchQuery,
-} from "./core/resource";
+} from "./core/data-resource";
 // Reference expansion (ADR-0058): the `expand` option's types and the record it produces.
 export type {
   Expand,
@@ -16,15 +16,18 @@ export type {
   ReferenceMap,
   ReferenceTarget,
   ResourcePageOf,
-} from "./core/resource";
+} from "./core/data-resource";
 // Image sub-field selection (ADR-0064): the `image` option's types and the record it produces.
 export type {
   ImageOption,
   ImageReadRecord,
   ImageSelectedValue,
-} from "./core/resource";
+} from "./core/data-resource";
 // Bulk write result (ADR-0041 / F-4): shared across every data resource's createMany / updateMany.
-export type { BulkWriteResult, BulkWriteResultItem } from "./core/resource";
+export type {
+  BulkWriteResult,
+  BulkWriteResultItem,
+} from "./core/data-resource";
 // Escape hatch for a field the catalog does not know (ADR-0074 D2).
 export { rawValue } from "./core/read";
 export * from "./candidate";

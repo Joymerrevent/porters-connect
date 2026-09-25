@@ -6,7 +6,7 @@
 
 # Type Alias: ClientResource\<C, CR\>
 
-> **ClientResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
+> **ClientResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
 Defined in: [src/resources/client.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L76)
 

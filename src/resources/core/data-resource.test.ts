@@ -6,11 +6,11 @@ import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import type { TransportRequest } from "../../http/types";
 import type { FieldValue } from "../../xml/decode";
 import {
-  createResource,
+  createDataResource,
   type Expand,
   type FieldCatalog,
   type SearchQuery,
-} from "./resource";
+} from "./data-resource";
 import type { ResourceDescriptor } from "./descriptor";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
@@ -57,7 +57,7 @@ const stub = (bodies: string[], calls: Call[]): Requester => ({
 });
 
 const res = (calls: Call[], ...bodies: string[]) =>
-  createResource(CONFIG, {
+  createDataResource(CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [OK], calls),
     accessPoint: { hostname: "h.test" },
     partition: 12,
@@ -69,7 +69,7 @@ const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
   return out;
 };
 
-describe("createResource — Read", () => {
+describe("createDataResource — Read", () => {
   it("builds the read URL with partition / field / condition / count / start", async () => {
     const calls: Call[] = [];
     await res(calls).search({
@@ -156,7 +156,7 @@ describe("createResource — Read", () => {
   });
 });
 
-describe("createResource — default field (ADR-0020)", () => {
+describe("createDataResource — default field (ADR-0020)", () => {
   // The default field set the factory derives from CONFIG's catalog: every alias prefixed,
   // the User field expanded to its 4 readable sub-fields, the rest plain — including the
   // Data-Type-less `P_Deleted`, which is a Read-`field` field like any other (ADR-0056).
@@ -190,7 +190,7 @@ describe("createResource — default field (ADR-0020)", () => {
   });
 });
 
-describe("createResource — bare field aliases (ADR-0059)", () => {
+describe("createDataResource — bare field aliases (ADR-0059)", () => {
   const fieldParam = async (
     field: SearchQuery<typeof FIELDS>["field"],
   ): Promise<string> => {
@@ -273,7 +273,7 @@ const GADGET_CONFIG = {
 const EXPANDED = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Id>1</G.P_Id><G.P_Part><Part><Pt.P_Id>77</Pt.P_Id><Pt.P_Name>bolt</Pt.P_Name><Pt.P_Made>2026/01/02</Pt.P_Made></Part></G.P_Part></Item></Gadget>`;
 
 const gadget = (calls: Call[], ...bodies: string[]) =>
-  createResource(GADGET_CONFIG, {
+  createDataResource(GADGET_CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [EXPANDED], calls),
     accessPoint: { hostname: "h.test" },
     partition: 12,
@@ -306,13 +306,13 @@ const ALBUM_PAGE =
   `</Item></Album>`;
 
 const album = (calls: Call[], ...bodies: string[]) =>
-  createResource(ALBUM_CONFIG, {
+  createDataResource(ALBUM_CONFIG, {
     requester: stub(bodies.length > 0 ? bodies : [ALBUM_PAGE], calls),
     accessPoint: { hostname: "h.test" },
     partition: 12,
   });
 
-describe("createResource — image (ADR-0064 論点2)", () => {
+describe("createDataResource — image (ADR-0064 論点2)", () => {
   it("既定では素の alias だけ送る＝PORTERS の既定（FileName のみ）に委ねる", async () => {
     const calls: Call[] = [];
     await album(calls).search();
@@ -353,7 +353,7 @@ describe("createResource — image (ADR-0064 論点2)", () => {
   });
 });
 
-describe("createResource — image の write（ADR-0064 論点3）", () => {
+describe("createDataResource — image の write（ADR-0064 論点3）", () => {
   const photo = {
     FileName: "photo.png",
     ContentType: "image/png",
@@ -420,7 +420,7 @@ describe("createResource — image の write（ADR-0064 論点3）", () => {
   });
 });
 
-describe("createResource — expand (ADR-0058)", () => {
+describe("createDataResource — expand (ADR-0058)", () => {
   it("sends the expansion as one field entry, prefixed with the *referenced* resource", async () => {
     const calls: Call[] = [];
     await gadget(calls).search({
@@ -506,7 +506,7 @@ describe("createResource — expand (ADR-0058)", () => {
   });
 });
 
-describe("createResource — raw field expansions are rejected (ADR-0058)", () => {
+describe("createDataResource — raw field expansions are rejected (ADR-0058)", () => {
   // `field` only accepts bare aliases (ADR-0059), so this needs a cast — the guard is the layer
   // underneath that type. Without it the request would go out and the nested answer be discarded.
   const raw = <T>(entry: string): T => [entry] as unknown as T;
@@ -549,10 +549,10 @@ describe("createResource — raw field expansions are rejected (ADR-0058)", () =
   });
 });
 
-describe("createResource — searchAll", () => {
+describe("createDataResource — searchAll", () => {
   it("pages through all results (200/page) until total is reached", async () => {
     const calls: Call[] = [];
-    const r = createResource(CONFIG, {
+    const r = createDataResource(CONFIG, {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
@@ -569,7 +569,7 @@ describe("createResource — searchAll", () => {
 
   it("makes a single request when the first page reaches total", async () => {
     const calls: Call[] = [];
-    const r = createResource(CONFIG, {
+    const r = createDataResource(CONFIG, {
       requester: stub([page(2, [1, 2]), page(2, [])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
@@ -581,7 +581,7 @@ describe("createResource — searchAll", () => {
 
   it("stops on an empty page even if total claims more (no infinite loop)", async () => {
     const calls: Call[] = [];
-    const r = createResource(CONFIG, {
+    const r = createDataResource(CONFIG, {
       requester: stub([page(5, []), page(5, [])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
@@ -593,7 +593,7 @@ describe("createResource — searchAll", () => {
 
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
-    const r = createResource(CONFIG, {
+    const r = createDataResource(CONFIG, {
       requester: stub([page(3, [1, 2]), page(3, [3])], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
@@ -624,7 +624,7 @@ describe("createResource — searchAll", () => {
   });
 });
 
-describe("createResource — Write", () => {
+describe("createDataResource — Write", () => {
   it("create POSTs to {path}, forces P_Id=-1, is non-idempotent, returns the id", async () => {
     const calls: Call[] = [];
     const id = await res(calls, WRITE_OK()).create({ P_Name: "hi" });
@@ -683,14 +683,14 @@ describe("createResource — Write", () => {
 
 // RV-47: `writeDefaults` はアクセサが埋める項目で、呼び出し側は上書きできない。
 // Phase は 1 項目（`Resource`）だけだが、機構は複数を扱えるのでここで押さえる。
-describe("createResource — 束ねた書き込み項目（RV-47）", () => {
+describe("createDataResource — 束ねた書き込み項目（RV-47）", () => {
   const BOUND_CONFIG = {
     ...CONFIG,
     writeDefaults: { P_Name: "bound", P_Owner: 5 },
   } as const;
 
   const bound = (calls: Call[], ...bodies: string[]) =>
-    createResource(BOUND_CONFIG, {
+    createDataResource(BOUND_CONFIG, {
       requester: stub(bodies.length > 0 ? bodies : [WRITE_OK()], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
@@ -737,7 +737,7 @@ describe("createResource — 束ねた書き込み項目（RV-47）", () => {
   });
 });
 
-describe("createResource — get の field と getMany（ADR-0095）", () => {
+describe("createDataResource — get の field と getMany（ADR-0095）", () => {
   const conditionOf = (call: Call): string =>
     decodeURIComponent(call.req.url).match(/condition=([^&]*)/)?.[1] ?? "";
   const countOf = (call: Call): string =>
@@ -838,7 +838,7 @@ describe("createResource — get の field と getMany（ADR-0095）", () => {
         return Promise.resolve(parse(page(sent.length, sent)));
       },
     };
-    const sized = createResource(
+    const sized = createDataResource(
       {
         name: "Widget",
         path: "widget",
@@ -877,7 +877,7 @@ describe("createResource — get の field と getMany（ADR-0095）", () => {
 
   it("getMany uses the resource's own id alias (Phase names it `Id`, with no prefix)", async () => {
     const calls: Call[] = [];
-    const phase = createResource(
+    const phase = createDataResource(
       {
         name: "Phase",
         path: "phase",

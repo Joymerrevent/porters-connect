@@ -7,7 +7,7 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps } from "./core/resource";
+import type { ResourceDeps } from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   createFieldParam,
@@ -17,7 +17,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import { createReadMethods } from "./core/read-methods";
+import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある
@@ -108,7 +108,7 @@ export type UserResource = {
 // from this default rather than from the catalog: `field` can still name it explicitly.
 const setField = createFieldParam(USER_DESCRIPTOR.prefix, FIELDS);
 
-// The parameters User Read takes; paging and sending are the shared `createReadMethods`.
+// The parameters User Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
   q: Omit<UserSearchQuery, "count" | "start">,
@@ -122,7 +122,7 @@ const buildParams = (
 };
 
 export const createUserResource = (deps: ResourceDeps): UserResource => {
-  const { search, searchAll } = createReadMethods<UserSearchQuery, User>({
+  const { search, searchAll } = createMasterResource<UserSearchQuery, User>({
     requester: deps.requester,
     accessPoint: deps.accessPoint,
     name: USER_DESCRIPTOR.name,

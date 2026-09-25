@@ -8,7 +8,7 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { ResourceDeps } from "./core/resource";
+import type { ResourceDeps } from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   decoderFor,
@@ -17,7 +17,7 @@ import {
   type ResourcePage,
 } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
-import { createReadMethods } from "./core/read-methods";
+import { createMasterResource } from "./core/master-resource";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
 /**
@@ -98,7 +98,7 @@ export type FieldAccessor = {
   of(resource: ResourceType): FieldResource;
 };
 
-// The parameters Field Read takes; paging and sending are the shared `createReadMethods`.
+// The parameters Field Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
   resource: ResourceType,
@@ -113,7 +113,7 @@ const buildParams = (
 
 export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
   of: (resource) =>
-    createReadMethods<FieldSearchQuery, Field>({
+    createMasterResource<FieldSearchQuery, Field>({
       requester: deps.requester,
       accessPoint: deps.accessPoint,
       name: FIELD_DESCRIPTOR.name,

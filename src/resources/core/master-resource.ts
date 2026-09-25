@@ -1,6 +1,8 @@
-// How a resource's Read is sent: the library's own contract, kept in one place so it changes in one
-// place. Every master resource used to spell it out itself, and each change to the contract below
-// had to be repeated in all of them (ADR-0046 / RV-15, ADR-0051 / RV-20, RV-28, RV-32, ADR-0047).
+// The master resources' accessor: how a read-only master's Read is sent — the library's own
+// contract, kept in one place so it changes in one place (the data resources' counterpart is
+// `data-resource.ts`). Every master resource used to spell it out itself, and each change to the
+// contract below had to be repeated in all of them (ADR-0046 / RV-15, ADR-0051 / RV-20, RV-28,
+// RV-32, ADR-0047).
 //
 //   - a Promise-returning method never throws synchronously — `search` is `async` (ADR-0046)
 //   - `searchAll` serialises the caller's query once, at the first page (RV-32)
@@ -21,12 +23,12 @@ type Paging = { count?: number; start?: number };
 
 // Function-typed properties rather than methods: they close over `spec`, never `this`, so a caller
 // may take them apart (`const { search } = …`).
-export type ReadMethods<Q extends Paging, T> = {
+export type MasterResource<Q extends Paging, T> = {
   search: (query?: Q) => Promise<ResourcePageOf<T>>;
   searchAll: (query?: Omit<Q, "count" | "start">) => AsyncIterable<T>;
 };
 
-export type ReadMethodsSpec<Q extends Paging, T> = {
+export type MasterResourceSpec<Q extends Paging, T> = {
   requester: Requester;
   accessPoint: AccessPoint;
   /** Root element of the response (and the error context), e.g. `"User"`. */
@@ -39,9 +41,9 @@ export type ReadMethodsSpec<Q extends Paging, T> = {
 };
 
 /** `search` and `searchAll` for a resource whose Read takes `params` plus paging. */
-export const createReadMethods = <Q extends Paging, T>(
-  spec: ReadMethodsSpec<Q, T>,
-): ReadMethods<Q, T> => {
+export const createMasterResource = <Q extends Paging, T>(
+  spec: MasterResourceSpec<Q, T>,
+): MasterResource<Q, T> => {
   const read = (base: URLSearchParams, count?: number, start?: number) =>
     runRead(
       spec.requester,

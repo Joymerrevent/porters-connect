@@ -12,18 +12,18 @@
 //     Data Type is needed and the values decode as plain numbers.
 
 import {
-  createResource,
+  createDataResource,
   type CreateInput,
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
   type ReferenceMap,
-  type Resource,
+  type DataResource,
   type ResourceDeps,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./core/resource";
+} from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CLIENT_DESCRIPTOR } from "./client";
 import type { ResourceName } from "../porters/resource-list";
@@ -113,7 +113,7 @@ export type ContractUpdateInput = UpdateInput<typeof FIELDS>;
 export type ContractResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = Resource<
+> = DataResource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
@@ -126,7 +126,7 @@ export const createContractResource = <C extends FieldCatalog = EmptyCatalog>(
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  return createResource(
+  return createDataResource(
     { ...CONTRACT_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );

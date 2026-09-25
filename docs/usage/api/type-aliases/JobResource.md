@@ -6,7 +6,7 @@
 
 # Type Alias: JobResource\<C, CR\>
 
-> **JobResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
+> **JobResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/job.ts:109](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L109)
 

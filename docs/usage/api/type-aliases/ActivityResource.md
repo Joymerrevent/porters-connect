@@ -6,7 +6,7 @@
 
 # Type Alias: ActivityResource\<C, CR\>
 
-> **ActivityResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
+> **ActivityResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
 Defined in: [src/resources/activity.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L91)
 

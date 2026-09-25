@@ -6,7 +6,7 @@
 
 # Type Alias: ContractResource\<C, CR\>
 
-> **ContractResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
+> **ContractResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/contract.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L113)
 

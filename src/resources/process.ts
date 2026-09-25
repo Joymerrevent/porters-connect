@@ -11,18 +11,18 @@
 // selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
 import {
-  createResource,
+  createDataResource,
   type CreateInput,
   type EmptyCatalog,
   type FieldCatalog,
   type ReadRecord,
   type ReferenceMap,
-  type Resource,
+  type DataResource,
   type ResourceDeps,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./core/resource";
+} from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 import { CLIENT_DESCRIPTOR } from "./client";
@@ -107,7 +107,7 @@ export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
 export type ProcessResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = Resource<
+> = DataResource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
@@ -120,7 +120,7 @@ export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  return createResource(
+  return createDataResource(
     { ...PROCESS_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );

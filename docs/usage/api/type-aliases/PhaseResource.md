@@ -6,7 +6,7 @@
 
 # Type Alias: PhaseResource
 
-> **PhaseResource** = `Resource`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], `EmptyReferences`, `PhaseUnsupportedQuery`, `"Resource"`\>
+> **PhaseResource** = `DataResource`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], `EmptyReferences`, `PhaseUnsupportedQuery`, `"Resource"`\>
 
 Defined in: [src/resources/phase.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L122)
 

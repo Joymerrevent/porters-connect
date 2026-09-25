@@ -4,7 +4,7 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps } from "./core/resource";
+import type { ResourceDeps } from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   createFieldParam,
@@ -14,7 +14,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import { createReadMethods } from "./core/read-methods";
+import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。
 // 先頭 2 つはユーザー部署型（Link）／`User.P_Department` の参照経由でも読める項目で、残る 4 つは
@@ -78,7 +78,7 @@ export type DepartmentResource = {
 // rejected, drop it from this default rather than from the catalog: `field` can still name it.
 const setField = createFieldParam(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
 
-// The parameters Department Read takes; paging and sending are the shared `createReadMethods`.
+// The parameters Department Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
   q: Omit<DepartmentSearchQuery, "count" | "start">,
@@ -92,7 +92,7 @@ const buildParams = (
 export const createDepartmentResource = (
   deps: ResourceDeps,
 ): DepartmentResource =>
-  createReadMethods<DepartmentSearchQuery, Department>({
+  createMasterResource<DepartmentSearchQuery, Department>({
     requester: deps.requester,
     accessPoint: deps.accessPoint,
     name: DEPARTMENT_DESCRIPTOR.name,

@@ -9,7 +9,7 @@ import {
 import type { Requester } from "../../http/requester";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import { encodeWriteItem } from "../../xml/encode";
-import { createResource, type FieldCatalog } from "./resource";
+import { createDataResource, type FieldCatalog } from "./data-resource";
 import { buildWriteUrl } from "./write";
 
 const FIELDS = {
@@ -71,7 +71,7 @@ const fakeRequester = (
 };
 
 const resource = (requester: Requester) =>
-  createResource(
+  createDataResource(
     {
       name: "Candidate",
       path: "candidate",
@@ -89,7 +89,7 @@ const SMALL = {
   P_A: "Number",
 } as const satisfies FieldCatalog;
 const smallResource = (requester: Requester) =>
-  createResource(
+  createDataResource(
     {
       name: "X",
       path: "x",

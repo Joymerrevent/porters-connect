@@ -6,7 +6,7 @@
 
 # Type Alias: RecruiterResource\<C, CR\>
 
-> **RecruiterResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
+> **RecruiterResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
 Defined in: [src/resources/recruiter.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L99)
 

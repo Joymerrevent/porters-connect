@@ -22,17 +22,17 @@
 // parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
 import {
-  createResource,
+  createDataResource,
   type CreateInput,
   type EmptyReferences,
   type FieldCatalog,
   type ReadRecord,
-  type Resource,
+  type DataResource,
   type ResourceDeps,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./core/resource";
+} from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
@@ -119,7 +119,7 @@ export type PhaseUpdateInput = UpdateInput<typeof FIELDS>;
  * `search` / `searchAll` do not take `keywords` / `itemstate` and the write inputs do
  * not take `Resource`: `of()` binds it, and supplying it again could only contradict the binding.
  */
-export type PhaseResource = Resource<
+export type PhaseResource = DataResource<
   typeof FIELDS,
   (typeof REQUIRED_ON_CREATE)[number],
   EmptyReferences,
@@ -148,7 +148,7 @@ export const createPhaseAccessor = (deps: ResourceDeps): PhaseAccessor => ({
     // One binding, two places PORTERS wants it: `resource=` on Read and the `Resource` field on
     // Write. Both are filled from here, so neither can be forgotten or contradicted.
     const value = RESOURCE_VALUES[resource];
-    return createResource(
+    return createDataResource(
       {
         ...PHASE_DESCRIPTOR,
         requiredOnCreate: REQUIRED_ON_CREATE,

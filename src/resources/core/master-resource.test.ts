@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
-import { createReadMethods } from "./read-methods";
+import { createMasterResource } from "./master-resource";
 import { decoderFor, type FieldCatalog } from "./read";
 
 // The master resources' own tests pin what each one sends; this pins the shared sending itself.
@@ -30,7 +30,7 @@ const setup = (
       return Promise.resolve(parse(bodies.shift() ?? ""));
     },
   };
-  const methods = createReadMethods<Query, unknown>({
+  const methods = createMasterResource<Query, unknown>({
     requester,
     accessPoint: { hostname: "h.test" },
     name: "Thing",
@@ -49,7 +49,7 @@ const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
   return out;
 };
 
-describe("createReadMethods — search", () => {
+describe("createMasterResource — search", () => {
   it("sends the resource's params plus count / start to its path at the access point", async () => {
     const { methods, urls } = setup([page(1, [7])]);
     const result = await methods.search({ tag: "a", count: 5, start: 10 });
@@ -88,7 +88,7 @@ describe("createReadMethods — search", () => {
   });
 });
 
-describe("createReadMethods — searchAll", () => {
+describe("createMasterResource — searchAll", () => {
   it("walks every page (200 at a time) until total", async () => {
     const first = Array.from({ length: 200 }, (_, i) => i + 1);
     const { methods, urls } = setup([page(201, first), page(201, [201])]);

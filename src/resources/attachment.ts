@@ -17,7 +17,7 @@ import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
 import { appendPaging, paginateOnce } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
-import { type ResourceDeps } from "./core/resource";
+import { type ResourceDeps } from "./core/data-resource";
 import { buildWriteUrl, firstWriteResultId } from "./core/write";
 import {
   ATTACHMENT_REQUEST_TYPE,

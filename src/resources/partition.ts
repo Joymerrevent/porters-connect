@@ -5,7 +5,7 @@
 // Partition has no `current()`; ADR-0022 D3b). `requestType: 0` stays on the query for a caller
 // whose token came from the browser grant. No `get(id)`: the API has no id/condition filter.
 
-import type { ResourceDeps } from "./core/resource";
+import type { ResourceDeps } from "./core/data-resource";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   decoderFor,
@@ -13,7 +13,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import { createReadMethods } from "./core/read-methods";
+import { createMasterResource } from "./core/master-resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -56,7 +56,7 @@ export type PartitionResource = {
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
-// The parameters Partition Read takes; paging and sending are the shared `createReadMethods`.
+// The parameters Partition Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   q: Omit<PartitionSearchQuery, "count" | "start">,
 ): URLSearchParams => {
@@ -68,7 +68,7 @@ const buildParams = (
 export const createPartitionResource = (
   deps: Omit<ResourceDeps, "partition">,
 ): PartitionResource =>
-  createReadMethods<PartitionSearchQuery, Partition>({
+  createMasterResource<PartitionSearchQuery, Partition>({
     requester: deps.requester,
     accessPoint: deps.accessPoint,
     name: PARTITION_DESCRIPTOR.name,

@@ -1,8 +1,9 @@
-// Generic resource accessor (ADR-0004/0005/0011): the Read (search / searchAll /
-// get) + Write (create / update) shape shared by every PORTERS resource. A resource
+// The data resources' accessor (ADR-0004/0005/0011): the Read (search / searchAll / get / getMany)
+// + Write (create / update / bulk) shape shared by every PORTERS data resource. A resource
 // module supplies its names + Data-Type catalog; this owns the wiring and keeps XML
 // out of resources/ (parse/encode live in xml/). Standard `P_` fields use the catalog;
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
+// The read-only master resources have their own, smaller counterpart: `master-resource.ts`.
 
 import { PortersConfigError } from "../../errors";
 import type { AccessPoint } from "../../http/access-point";
@@ -49,7 +50,7 @@ import {
 } from "./image";
 
 // Shared Read types/internals live in core/read (reused by master resources). Re-export the
-// types so the data-resource modules keep importing them from "./resource".
+// types so the data-resource modules keep importing them from "./data-resource".
 export type {
   EmptyCatalog,
   FieldCatalog,
@@ -60,10 +61,10 @@ export type {
   ResourcePageOf,
 } from "./read";
 // Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
-// and the public barrel keep importing the query types from "./resource".
+// and the public barrel keep importing the query types from "./data-resource".
 export type { Condition, ItemState, Order, SearchQuery } from "./query";
 // Bulk write result (ADR-0041 / F-4). Defined in bulk-write.ts; re-exported so resource modules and
-// the public barrel keep importing the bulk types from "./resource".
+// the public barrel keep importing the bulk types from "./data-resource".
 export type { BulkWriteResult, BulkWriteResultItem } from "./bulk-write";
 // Reference expansion (ADR-0058). Defined in expand.ts; re-exported for the same reason.
 export type {
@@ -154,7 +155,7 @@ type Without<T, K extends keyof T> = Omit<T, K> & {
 // (`const` type parameters, so the alias lists stay literal) and the record type widens accordingly
 // (ADR-0058 / ADR-0064). Omitting them leaves both at the empty default, which collapses back to
 // `ReadRecord<F>`.
-export type Resource<
+export type DataResource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
@@ -342,14 +343,14 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
     q.start,
   );
 
-export const createResource = <
+export const createDataResource = <
   const F extends FieldCatalog,
   const Req extends readonly (keyof F)[],
   const R extends ReferenceMap = EmptyReferences,
 >(
   config: ResourceConfig<F, Req, R>,
   deps: ResourceDeps,
-): Resource<F, Req[number], R> => {
+): DataResource<F, Req[number], R> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
   const fieldMap = new Map<string, DataType | null>(
     Object.entries(config.fields),
