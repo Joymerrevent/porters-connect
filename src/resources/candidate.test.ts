@@ -5,7 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/decode";
 import { createCandidateResource } from "./candidate";
 
-// The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in core/data-read.test.ts and
+// core/data-write.test.ts; here we pin the
 // Candidate-specific catalog (each field decodes by its Data Type) and config
 // (root name `Candidate`, path `candidate`, alias prefix `Person`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];

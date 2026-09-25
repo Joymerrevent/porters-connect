@@ -6,7 +6,8 @@ import type { FieldValue, UserRef } from "../xml/decode";
 import { CONTACT_DESCRIPTOR, createContactResource } from "./contact";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 
-// The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in core/data-read.test.ts and
+// core/data-write.test.ts; here we pin the
 // Contact-specific catalog (each field decodes by its Data Type) and config
 // (root name `Contact`, path `contact`, alias prefix `Contact`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];

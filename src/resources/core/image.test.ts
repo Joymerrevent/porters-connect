@@ -6,7 +6,7 @@ import type { ImageSubField } from "../../xml/decode";
 import type { ImageWriteValue } from "../../xml/encode";
 import { applyImage, guardImageWrite, guardNoImageInBulk } from "./image";
 
-// Unit-level counterpart to the wiring tests in resource.test.ts: those drive the option through
+// Unit-level counterpart to the wiring tests in data-read.test.ts: those drive the option through
 // the resource factory (does a search send the right `field`), this pins the one piece this module
 // owns. The prefix cases matter because Phase has none (ADR-0061) — `qualify` handles that, and a
 // selection must not turn `U_photo` into `.U_photo`.
