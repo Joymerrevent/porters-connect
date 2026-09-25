@@ -14,6 +14,9 @@
 >
 > **訂正（2026-09-23・stakeholder）**: リリースの流れの PR（リリース PR・back-merge PR）で、コードが develop と
 > 同じときは skip する。判定と理由は [ADR-0028][0028] の訂正。
+>
+> **Amended by [ADR-0094][adr94]（2026-09-25）**: 実行戦略の「PR もフル run」は改められた。`main` 以外への PR は
+> 変更したファイルだけを毎回ゼロから検査し（incremental は使わない）、`main` への PR は必ずフル run にする。
 
 ## Context and Problem Statement
 
@@ -113,3 +116,4 @@
 [pr12]: https://github.com/Joymerrevent/porters-connect/pull/12
 [pr13]: https://github.com/Joymerrevent/porters-connect/pull/13
 [0028]: 0028-ci-path-filtering.md
+[adr94]: 0094-mutation-changed-files-on-pr.md

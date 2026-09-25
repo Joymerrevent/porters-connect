@@ -1,6 +1,6 @@
 # 94. PR のミューテーションテストは変更したファイルだけにし、main への PR は必ずフル run にする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -15,6 +15,8 @@
 > 議論の経緯: 起票時は「リリース PR（head が `release/`）を必ずフル run」とし、back-merge PR の skip は据え置いていた。
 > stakeholder の指摘で、**リリースの流れかどうかは「`main` への PR かどうか」で見分ける**形に改めた。back-merge PR は
 > 下の規則（`package.json` の `version` だけの変更は対象にしない）で自然に skip になる。
+>
+> **decider が案1a ＋ 案2a を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -74,7 +76,7 @@ static の穴をテストで塞いだ PR が必ず落ちる。ゲートとして
 
 ## Decision Outcome
 
-推奨: **案1a ＋ 案2a**（proposed）。
+採用: **案1a ＋ 案2a**（decider が 2026-09-25 に選択）。
 
 ### 決めること
 
