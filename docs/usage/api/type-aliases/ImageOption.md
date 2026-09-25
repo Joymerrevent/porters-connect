@@ -8,7 +8,7 @@
 
 > **ImageOption**\<`F`\> = `{ [K in ImageKeys<F>]?: readonly ImageSubField[] }`
 
-Defined in: [src/resources/core/image.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/image.ts#L39)
+Defined in: [src/resources/core/image.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/image.ts#L44)
 
 What `image` accepts: for each Image field, which of the three sub-tags to read. Naming a field
 that is not Image-typed is a compile error, and so is an unknown sub-tag.

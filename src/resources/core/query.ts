@@ -16,6 +16,10 @@ import type { DataType } from "../../porters/data-type";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
 import type { FieldCatalog, ReadFieldAlias } from "./read";
+import {
+  DELETED_CONDITION_FIELDS,
+  KEYWORDS_MAX_CHARS,
+} from "../../porters/read-rules";
 
 // --- condition: per-Data-Type operator objects (reference: Read - Condition) ---
 
@@ -220,13 +224,7 @@ export type SearchQuery<
 
 // --- encoder (typed query -> wire params) ---
 
-const KEYWORDS_MAX_CHARS = 100;
-// itemstate=deleted/all restricts condition to these standard fields (reference / 削除済みデータ取得).
-const DELETED_CONDITION_FIELDS = new Set([
-  "P_Id",
-  "P_UpdateDate",
-  "P_UpdatedBy",
-]);
+// The keyword cap and the fields a deleted read may condition on are PORTERS values (porters/read-rules.ts).
 
 /** Output context for prefixing aliases and resolving each field's Data Type. */
 type QueryContext = {

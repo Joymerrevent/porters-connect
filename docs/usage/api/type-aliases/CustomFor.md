@@ -8,7 +8,7 @@
 
 > **CustomFor**\<`C`, `K`\> = `K` *extends* keyof `C` ? `C`\[`K`\] *extends* `CustomCatalog` ? `C`\[`K`\] : `EmptyCatalog` : `EmptyCatalog`
 
-Defined in: [src/fields/define-fields.ts:185](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L185)
+Defined in: [src/fields/define-fields.ts:186](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L186)
 
 The custom catalog declared for resource `K` (or `{}` if none) — types each accessor.
 

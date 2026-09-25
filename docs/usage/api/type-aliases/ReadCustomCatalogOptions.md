@@ -8,7 +8,7 @@
 
 > **ReadCustomCatalogOptions** = `object`
 
-Defined in: [src/fields/tenant-catalog.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L87)
+Defined in: [src/fields/tenant-catalog.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L88)
 
 Options for [readCustomCatalog](../functions/readCustomCatalog.md).
 
@@ -18,7 +18,7 @@ Options for [readCustomCatalog](../functions/readCustomCatalog.md).
 
 > `readonly` `optional` **active?**: `-1` \| `0` \| `1`
 
-Defined in: [src/fields/tenant-catalog.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L97)
+Defined in: [src/fields/tenant-catalog.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L98)
 
 Field Read's `active` filter: `-1` all (default), `0` unused only, `1` in-use only.
 

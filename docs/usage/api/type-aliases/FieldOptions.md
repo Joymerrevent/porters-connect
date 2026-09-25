@@ -8,7 +8,7 @@
 
 > **FieldOptions**\<`R`\> = `object`
 
-Defined in: [src/fields/define-fields.ts:31](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L31)
+Defined in: [src/fields/define-fields.ts:32](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L32)
 
 Options every builder method takes. `required: true` makes the field required in the
 `create` / `createMany` input type; leave it out (or `false`) and the field stays optional,
@@ -32,4 +32,4 @@ defineFields({ candidate: (f) => ({ U_score: f.number({ required: true }) }) });
 
 > `readonly` `optional` **required?**: `R`
 
-Defined in: [src/fields/define-fields.ts:32](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L32)
+Defined in: [src/fields/define-fields.ts:33](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L33)

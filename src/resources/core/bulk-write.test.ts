@@ -6,7 +6,8 @@ import {
   PortersNetworkError,
   PortersResourceError,
 } from "../../errors";
-import { MAX_REQUEST_LENGTH, type Requester } from "../../http/requester";
+import type { Requester } from "../../http/requester";
+import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import { encodeWriteItem } from "../../xml/encode";
 import { buildWriteUrl, createResource, type FieldCatalog } from "./resource";
 

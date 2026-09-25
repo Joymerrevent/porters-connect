@@ -8,7 +8,7 @@
 
 > **ImageWriteValue** = `object`
 
-Defined in: [src/xml/encode.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L67)
+Defined in: [src/xml/encode.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L53)
 
 An Image field's write value: the three sub-elements PORTERS' Write format
 names, with `Content` Base64-encoded. All three are **required** — PORTERS' sample writes the
@@ -33,7 +33,7 @@ prevented — it is simply unverified.
 
 > **Content**: `string`
 
-Defined in: [src/xml/encode.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L70)
+Defined in: [src/xml/encode.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L56)
 
 ***
 
@@ -41,7 +41,7 @@ Defined in: [src/xml/encode.ts:70](https://github.com/Joymerrevent/porters-conne
 
 > **ContentType**: [`ImageContentType`](ImageContentType.md)
 
-Defined in: [src/xml/encode.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L69)
+Defined in: [src/xml/encode.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L55)
 
 ***
 
@@ -49,4 +49,4 @@ Defined in: [src/xml/encode.ts:69](https://github.com/Joymerrevent/porters-conne
 
 > **FileName**: `string`
 
-Defined in: [src/xml/encode.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L68)
+Defined in: [src/xml/encode.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L54)

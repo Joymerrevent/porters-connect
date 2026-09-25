@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersClient } from "../../src/client";
-import { MAX_REQUEST_LENGTH } from "../../src/http/requester";
+import { MAX_REQUEST_LENGTH } from "../../src/porters/request";
 import type { Transport, TransportRequest } from "../../src/http/types";
 import { createFakeTransport } from "../fake/index";
 import type { FakeTransportOptions } from "../fake/types";

@@ -170,6 +170,7 @@ export type {
 // 文字列 union にするのは ADR-0061 案5b。
 /** The resource names `t.phase.of(...)` accepts. */
 export type { ResourceName } from "./porters";
+export type { ImageContentType } from "./porters";
 // Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
 // declares, so these are what you write and read it with.
 export { resourceNameOf, resourceValueOf } from "./porters";
@@ -283,7 +284,6 @@ export type { Option, OptionResource, OptionSearchQuery } from "./resources";
 export type {
   DepartmentRef,
   FieldValue,
-  ImageContentType,
   ImageSubField,
   ImageValue,
   ImageWriteValue,

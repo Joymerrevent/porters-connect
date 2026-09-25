@@ -8,6 +8,6 @@
 
 > **ImageContentType** = *typeof* `IMAGE_CONTENT_TYPES`\[`number`\]
 
-Defined in: [src/xml/encode.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/encode.ts#L44)
+Defined in: src/porters/image.ts:22
 
 One of the four MIME types an Image field accepts.

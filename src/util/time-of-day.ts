@@ -13,6 +13,12 @@
 // silent kind of wrong.
 
 import { PortersConfigError } from "../errors";
+import {
+  TIME_OF_DAY_ANCHOR_DAYS,
+  TIME_OF_DAY_ANCHOR_MONTH,
+  TIME_OF_DAY_ANCHOR_YEAR,
+  TIME_OF_DAY_MAX_HOURS,
+} from "../porters/time-of-day";
 
 // The ISO shape the library's own DateTime decode produces (`portersDateTimeToIso`): zero-padded,
 // second precision, `Z`. Nothing else is a value that came out of a PORTERS read.
@@ -20,12 +26,9 @@ const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/;
 // The caller's clock time: `HH:mm` or `HH:mm:ss`, zero-padded (what PORTERS' UI shows).
 const CLOCK_RE = /^(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
-// PORTERS' anchor: day 1 for 00:00–23:59, day 2 for 24:00–47:59 (the source's "基準日").
-const ANCHOR_YEAR = "1970";
-const ANCHOR_MONTH = "01";
-const ANCHOR_DAYS: Readonly<Record<string, number>> = { "01": 0, "02": 24 };
+// PORTERS' anchor: day 1 for 00:00–23:59, day 2 for 24:00–47:59 (the source's "基準日";
+// the values are in porters/time-of-day.ts).
 const HOURS_PER_ANCHOR_DAY = 24;
-const MAX_HOURS = 47;
 // Each anchor day carries a clock time: the wire hour is 00–23 (day 2 supplies the +24).
 const MAX_WIRE_HOURS = 23;
 const MAX_MINUTES = 59;
@@ -54,11 +57,11 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
  */
 export const decodeTimeOfDay = (iso: string): string => {
   const m = ISO_DATETIME_RE.exec(iso);
-  const extra = m === null ? undefined : ANCHOR_DAYS[m[3]];
+  const extra = m === null ? undefined : TIME_OF_DAY_ANCHOR_DAYS[m[3]];
   if (
     m === null ||
-    m[1] !== ANCHOR_YEAR ||
-    m[2] !== ANCHOR_MONTH ||
+    m[1] !== TIME_OF_DAY_ANCHOR_YEAR ||
+    m[2] !== TIME_OF_DAY_ANCHOR_MONTH ||
     extra === undefined
   ) {
     throw new PortersConfigError(
@@ -126,7 +129,7 @@ export const encodeTimeOfDay = (time: string): string => {
   const seconds = m === null || m[3] === undefined ? 0 : Number(m[3]);
   if (
     m === null ||
-    hours > MAX_HOURS ||
+    hours > TIME_OF_DAY_MAX_HOURS ||
     minutes > MAX_MINUTES ||
     seconds > MAX_MINUTES
   ) {
@@ -140,5 +143,5 @@ export const encodeTimeOfDay = (time: string): string => {
   }
   const day = hours >= HOURS_PER_ANCHOR_DAY ? "02" : "01";
   const wireHours = hours % HOURS_PER_ANCHOR_DAY;
-  return `${ANCHOR_YEAR}-${ANCHOR_MONTH}-${day}T${pad2(wireHours)}:${pad2(minutes)}:${pad2(seconds)}Z`;
+  return `${TIME_OF_DAY_ANCHOR_YEAR}-${TIME_OF_DAY_ANCHOR_MONTH}-${day}T${pad2(wireHours)}:${pad2(minutes)}:${pad2(seconds)}Z`;
 };

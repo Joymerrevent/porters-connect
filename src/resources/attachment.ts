@@ -22,22 +22,19 @@ import {
   firstWriteResultId,
   type ResourceDeps,
 } from "./core/resource";
-
-// A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
-// (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/usage/reference.
-const MAX_CONTENT_CHARS = 14_000_000;
+import {
+  ATTACHMENT_REQUEST_TYPE,
+  MAX_ATTACHMENT_CONTENT_CHARS,
+} from "../porters/attachment";
 
 // Attachment has no ResourceDescriptor (bespoke accessor — ADR-0018), so its wire name lives
 // here: the Read response's root element and the Write error's resource context (ADR-0051).
 const ATTACHMENT_RESOURCE = "Attachment";
 
-/**
- * `requestType` — Attachment Read's own switch for whether the file body comes back
- * (source: `0` 添付ファイル本体を含む / `1` 含まない). The method decides it, never the caller:
- * `get` sends `0`, `search` / `searchAll` send `1` (ADR-0075).
- */
-const WITH_CONTENT = "0";
-const WITHOUT_CONTENT = "1";
+// `requestType`: the method decides it, never the caller — `get` sends the with-content value,
+// `search` / `searchAll` the without-content one (ADR-0075). The values are PORTERS' (porters/attachment.ts).
+const WITH_CONTENT = ATTACHMENT_REQUEST_TYPE.withContent;
+const WITHOUT_CONTENT = ATTACHMENT_REQUEST_TYPE.withoutContent;
 
 /**
  * Every Attachment field name, in wire order. Exported for in-repo dev tooling — the fake server
@@ -201,7 +198,7 @@ const tag = (name: string, value: string | number): string =>
 
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 const guardContent = (content: string | undefined): void => {
-  if (content !== undefined && content.length > MAX_CONTENT_CHARS) {
+  if (content !== undefined && content.length > MAX_ATTACHMENT_CONTENT_CHARS) {
     throw new PortersConfigError(
       `attachment content is ${content.length} characters, over the ~10MB file limit`,
       { category: "config", hint: "Attachment files must be 10MB or less." },

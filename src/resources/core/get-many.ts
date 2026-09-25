@@ -4,13 +4,11 @@
 // `search`; nothing here builds a URL or parses XML.
 
 import { PortersResourceError } from "../../errors";
-import { MAX_REQUEST_LENGTH } from "../../http/requester";
-
-/** PORTERS returns at most 200 records per Read (`count` is 1–200), so a chunk holds ≤200 ids. */
-export const MAX_IDS_PER_READ = 200;
+import { MAX_READ_COUNT } from "../../porters/read-rules";
+import { MAX_REQUEST_LENGTH } from "../../porters/request";
 
 /**
- * Split distinct ids into chunks of at most {@link MAX_IDS_PER_READ} whose Read URL stays within
+ * Split distinct ids into chunks of at most {@link MAX_READ_COUNT} (a Read returns at most that many) whose Read URL stays within
  * `budget` characters. `urlLength` builds the real URL for a chunk and measures it.
  *
  * The URL grows linearly in the ids — each one adds its own characters plus one encoded `:`
@@ -38,7 +36,7 @@ export const packIds = (
   for (const id of ids) {
     if (
       chunk.length > 0 &&
-      (chunk.length === MAX_IDS_PER_READ ||
+      (chunk.length === MAX_READ_COUNT ||
         length + separator + width(id) > budget)
     ) {
       chunks.push(chunk);

@@ -17,6 +17,11 @@ import {
 } from "../../xml/decode";
 import { parseResourcePage, type RawItem } from "../../xml/parser";
 import { asRecord } from "../../xml/raw";
+import {
+  MAX_READ_COUNT,
+  MIN_READ_COUNT,
+  USER_SUBFIELDS,
+} from "../../porters/read-rules";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
@@ -119,9 +124,6 @@ export const bareAlias = (key: string): string =>
 // Stryker restore StringLiteral
 
 // --- Read `field` assembly (ADR-0020) -------------------------------------------------------
-
-// The 4 readable sub-fields of a User-type field (docs/usage/reference: only these are returned).
-const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
 
 // One `field=` entry for a bare alias. PORTERS wants `{prefix}.{alias}`; a User-typed field is
 // expanded to its 4 readable sub-fields so the wire shape matches `decodeUser` — asking for it
@@ -231,9 +233,7 @@ export const runRead = <T>(
     };
   });
 
-// Read page size bounds (docs/usage/reference: `count` is 1–200, default 10). `searchAll` pages by MAX.
-const MIN_READ_COUNT = 1;
-const MAX_READ_COUNT = 200;
+// `searchAll` pages by the largest `count` PORTERS allows (porters/read-rules.ts).
 const PAGE_SIZE = MAX_READ_COUNT;
 
 /**

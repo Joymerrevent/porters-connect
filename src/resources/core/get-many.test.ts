@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersResourceError } from "../../errors";
-import { MAX_REQUEST_LENGTH } from "../../http/requester";
-import { MAX_IDS_PER_READ, packIds, recordsById } from "./get-many";
+import { MAX_READ_COUNT } from "../../porters/read-rules";
+import { MAX_REQUEST_LENGTH } from "../../porters/request";
+import { packIds, recordsById } from "./get-many";
 
 // A stand-in for the real URL: a fixed base of 10 characters plus the ids joined by a 3-character
 // separator — the same shape as `…%3Aor%3D1%3A2…`, with round numbers.
@@ -54,7 +55,7 @@ describe("packIds", () => {
     expect(packIds([12345, 6], measure, 12)).toEqual([[12345], [6]]);
   });
 
-  it(`holds at most ${MAX_IDS_PER_READ} ids per chunk`, () => {
+  it(`holds at most ${MAX_READ_COUNT} ids per chunk`, () => {
     const chunks = packIds(range(1, 401), measure, Number.MAX_SAFE_INTEGER);
     expect(chunks.map((c) => c.length)).toEqual([200, 200, 1]);
     expect(chunks.flat()).toEqual(range(1, 401));
