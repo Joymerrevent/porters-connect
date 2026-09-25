@@ -8,6 +8,9 @@
 > [[0007-oauth-public-surface]]（基本設計・SD-3/SD-6）が約束した公開 API `porters.auth.*` を実装に落とす**詳細設計**。
 > [[0033-post-mvp-direction]] 案F-1（v1 公開 API の積み残し）。**公開シェイプは ADR-0007 で確定済み**で再決定しない。
 > 本 ADR は**内部実装と、reference に接地した挙動の確定**に限る。案A ＋ SD 全採用で `accepted`（2026-06-23）。
+>
+> **Amended by [ADR-0093][adr93]（2026-09-24）**: SD-6 の「`getToken(): Promise<string>`・デバッグ用」は改められた。
+> `getToken()` は `IssuedToken`（`{ token, expiresAt? }`）を返し、クライアントが持つトークンを取り出す用途に広げた。Refresh Token を返さない点は不変。
 
 ## Context and Problem Statement
 
@@ -140,3 +143,4 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
 [prd]: ../design/requirements.md
 [rev]: ../reviews/2026-06-22-03.md
 [lv]: ../live-verification.md
+[adr93]: 0093-get-token-with-expiry.md

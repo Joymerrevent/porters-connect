@@ -4,7 +4,7 @@
 単一テナントでも同じ書き方です。
 
 - **作り方**: `porters.tenant(id, { fields })`（`fields` は任意）
-- **持っているもの**: データ系 13 種とマスタ 4 種のアクセサ
+- **持っているもの**: マスタ 4 種とデータ系 13 種のアクセサ
 
 ## 呼べるアクセサ
 
@@ -30,12 +30,13 @@ const phases = t.phase.of("candidate"); // Phase・Attachment・Field は対象�
 
 ## 固有の注意
 
-このスコープだけに当てはまる注意です。共通の規則（Partition の指定のしかた・id の探し方）は主題別のページにあります。
+このスコープだけに当てはまる注意です。共通の規則（Partition の指定のしかた・id の探し方）はガイドのページにあります。
 
 - **`tenant(id)` は同期で、PORTERS を呼びません。** Partition 付きのアクセサを作り直すだけなので軽く、リクエストごとに作って構いません。トークンはクライアントが持ちます。
 - **id の存在は確かめません。** 無い Partition や権限の無い Partition は、最初のリクエストで PORTERS のエラーになります。id は `porters.partition.search()` で探します（[Partition][r-partition]）。
 - **`auth`・`partition`・`tenant` はスコープにありません。** どれも Partition を取らないので、`porters` から直接呼びます（[PortersClient][cl-client]）。スコープを入れ子にすることもできません。
 - **カスタム項目の宣言は Partition ごとです。** `{ fields }` を渡し忘れたスコープで `U_` の項目を使うとコンパイルエラーになります。別のテナントの宣言が気づかないうちに適用されることはありません。
+- **`tenant()` に渡せるオプションは `fields` だけです。** ほかのキー（打ち間違いを含む）を渡すと、その場で `PortersConfigError` になります。
 - **呼び出しごとに Partition を渡す引数はありません。** Partition を決める場所は `tenant(id)` の 1 箇所だけです。
 - **スコープを関数の引数に取るときの型**は[複数テナント][multi-tenant]の「宣言したスコープを関数に渡す」にあります。
 
@@ -69,7 +70,7 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]（Partition の考え方と探し方）／[カスタム項目][custom-fields]（宣言を渡す場所）
+- ガイド: [Partition とテナントスコープ][tenant]（Partition の考え方と探し方）／[カスタム項目][custom-fields]（宣言を渡す場所）
 - クライアント: [PortersClient][cl-client]／[auth][cl-auth]
 - ほかの目的から探す: [目次][index]
 

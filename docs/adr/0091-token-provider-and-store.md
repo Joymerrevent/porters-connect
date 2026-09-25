@@ -18,6 +18,9 @@
 >
 > [ADR-0007][adr07] 案4 の「自前＝独自ストラテジ（`getAccessToken` を丸ごと差し替える）」を**改める**。
 > [ADR-0012][adr12]（既定のキャッシュと更新）の中身は、既定の取得にかぎらずすべての取得に広がる。
+>
+> **Amended by [ADR-0092][adr92]（2026-09-24）**: 論点2 の帰結の「型では `auth?: never` で弾き」は改められた。
+> 型からは外し、構築時に**定義していないキーをすべて** `PortersConfigError` で止める形に広げた（`auth` を特別に案内しない）。
 
 ## Context and Problem Statement
 
@@ -255,3 +258,4 @@ type TokenProvider = {
 [adr34]: 0034-oauth-public-surface-impl.md
 [adr55]: 0055-partition-binding-guard.md
 [adr87]: 0087-tenant-scoped-field-declarations.md
+[adr92]: 0092-reject-unknown-options.md

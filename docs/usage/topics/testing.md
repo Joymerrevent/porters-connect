@@ -194,7 +194,7 @@ PORTERS_HOST=xxxxx.example.com node app.js                                # 本�
 ## 関連
 
 - 導入: [始める前に][prereq]（契約済みなら、繋ぐのが先）
-- 主題: [エラーと再試行][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
+- ガイド: [エラーと再試行][handle-failures]（エラーの型と category）／[カスタム項目][custom-fields]（宣言した項目のテスト）
 - 開発者向け: [フェイクサーバー手順書][fake]
 - ほかの目的から探す: [目次][index]
 

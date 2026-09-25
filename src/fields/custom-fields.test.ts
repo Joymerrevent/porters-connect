@@ -262,33 +262,34 @@ describe("custom fields — tenant(id, { fields }) typing", () => {
     expectTypeOf<Rec>().not.toHaveProperty("U_score");
   });
 
-  it("rejects the declaration on the client, at compile time and at runtime (ADR-0087)", () => {
+  it("rejects the declaration on the client, at compile time and at runtime (ADR-0087 / ADR-0092)", () => {
     // A declaration describes one partition, so the App-level client has no place for it. A
-    // pre-0.21 `fields` that is silently ignored would drop every custom field without a trace,
-    // so the constructor fails closed instead (same stance as a malformed `hostname`, ADR-0048).
+    // `fields` that is silently ignored would drop every custom field without a trace, so the
+    // constructor fails closed on it like on any other key it does not define (ADR-0092).
     expect(
-      // @ts-expect-error -- `fields` left PortersClientOptions (ADR-0087): pass it to tenant()
+      // @ts-expect-error -- `fields` is not a PortersClientOptions key: pass it to tenant()
       () => new PortersClient({ hostname: "h.test", fields }),
     ).toThrow(PortersConfigError);
-    // The non-fresh case is what the type alone would let through (no excess property check);
-    // `fields?: never` closes it statically, and the cast below is what a JS caller looks like.
+    // A config object built elsewhere escapes the excess property check; the runtime check is
+    // what stops it (and what a JS caller hits).
     const stale = { hostname: "h.test", fields };
-    // @ts-expect-error -- a stale config object still carrying `fields` does not compile either
-    void (() => new PortersClient(stale));
     let caught: unknown;
     try {
-      new PortersClient(stale as unknown as PortersClientOptions);
+      new PortersClient(stale);
     } catch (e) {
       caught = e;
     }
     expect(caught).toBeInstanceOf(PortersConfigError);
     const err = caught as PortersConfigError;
     expect(err.category).toBe("config");
-    expect(err.message).toContain("not a client option"); // no ADR number: users need the fix, not the record
-    expect(err.hint).toContain("tenant(id, { fields })");
+    expect(err.message).toBe('PortersClient: unknown option "fields"');
     // `fields: undefined` is not a leftover declaration — an optional spread must not trip it.
     expect(
-      () => new PortersClient({ hostname: "h.test", fields: undefined }),
+      () =>
+        new PortersClient({
+          hostname: "h.test",
+          fields: undefined,
+        } as PortersClientOptions),
     ).not.toThrow();
     // @ts-expect-error -- PortersClient is not generic: the catalog lives on TenantScope
     type _Never = PortersClient<typeof fields>;

@@ -154,7 +154,11 @@ describe("createAuthApi — exchangeAuthorizationCode (ADR-0034 SD-3)", () => {
     await expect(
       auth.exchangeAuthorizationCode("CODE_FROM_REDIRECT"),
     ).resolves.toBeUndefined();
-    expect(await auth.getToken()).toBe("BROWSER_A");
+    // The built-in flow reports PORTERS' AccessTokenExpiresIn as an absolute expiry (clock = 1000).
+    expect(await auth.getToken()).toEqual({
+      token: "BROWSER_A",
+      expiresAt: 1000 + ACCESS_EXPIRES_IN,
+    });
 
     const tok = tokenCalls(calls);
     expect(tok).toHaveLength(1);
@@ -220,9 +224,20 @@ describe("createAuthApi — with a caller's tokenProvider (ADR-0091)", () => {
     acquire: () => Promise.resolve({ accessToken: { token } }),
   });
 
+  it("getToken returns the expiry the provider reported (and none when it reported none)", async () => {
+    const auth = withProvider({
+      acquire: () =>
+        Promise.resolve({ accessToken: { token: "E", expiresAt: 999_999 } }),
+    });
+    expect(await auth.getToken()).toEqual({ token: "E", expiresAt: 999_999 });
+    expect(await withProvider(issuing("N")).getToken()).toStrictEqual({
+      token: "N",
+    });
+  });
+
   it("getToken / ensureAuthenticated go through acquire", async () => {
     const auth = withProvider(issuing("CUSTOM"));
-    expect(await auth.getToken()).toBe("CUSTOM");
+    expect((await auth.getToken()).token).toBe("CUSTOM");
     await expect(auth.ensureAuthenticated()).resolves.toBeUndefined();
   });
 
@@ -241,7 +256,7 @@ describe("createAuthApi — with a caller's tokenProvider (ADR-0091)", () => {
     });
     await expect(auth.exchangeAuthorizationCode("C1")).resolves.toBeUndefined();
     expect(seen).toEqual(["C1"]);
-    expect(await auth.getToken()).toBe("EXCHANGED");
+    expect((await auth.getToken()).token).toBe("EXCHANGED");
     expect(acquired).toBe(0); // the exchanged tokens are used, not re-obtained
   });
 
@@ -279,9 +294,9 @@ describe("createAuthApi — with a caller's tokenProvider (ADR-0091)", () => {
         return Promise.resolve({ accessToken: { token: `T${acquired}` } });
       },
     });
-    expect(await auth.getToken()).toBe("T1");
+    expect((await auth.getToken()).token).toBe("T1");
     await auth.clearTokens();
-    expect(await auth.getToken()).toBe("T2");
+    expect((await auth.getToken()).token).toBe("T2");
   });
 
   it("authorizationUrl / revokeUrl work whatever the provider, given appId", () => {
@@ -316,7 +331,7 @@ describe("createAuthApi — clock", () => {
       manager: createTokenManager({ provider }),
     });
     await auth.exchangeAuthorizationCode("c");
-    expect(await auth.getToken()).toBe("BROWSER_A");
+    expect((await auth.getToken()).token).toBe("BROWSER_A");
     // A default clock that returned nothing would stamp the tokens with `NaN` expiry — read as
     // "unknown" now, but the stamp itself must be a real time for the proactive renewal to work.
     expect(oauthCalls(calls)).toHaveLength(0);

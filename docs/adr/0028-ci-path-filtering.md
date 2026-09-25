@@ -8,6 +8,9 @@
 > 発端：docs 1 行の変更でも全 CI（`ci` フル・`test` マトリクス 20/22/24・CodeQL・
 > mutation/`stryker`・commitlint）が走る。docs-only に mutation/test/CodeQL は無駄。
 > 必須チェックを単純に skip するとマージ不能になる**落とし穴**があり、方式に選択肢がある。
+>
+> **Amended by [ADR-0094][adr94]（2026-09-25）**: 2026-09-23 の訂正の「リリースの流れの PR（リリース PR・back-merge PR）は
+> develop と同じなら skip」は改められた。`main` への PR は必ずフル run、back-merge PR はほかの PR と同じ変更ファイルの規則で判定する。
 
 ## Context and Problem Statement
 
@@ -67,6 +70,18 @@ head=`main` のもの**に限り、**検査対象（PR のマージ結果）を 
   複雑にする利点は小さい。
 - 判定は `scripts/` の小さなスクリプトに置いてテストする（ワークフローの `if` に式を並べると、条件の穴が見えない）。
 
+**注記（2026-09-25・stakeholder）**: **`main` への push も、同じ判定で develop と比べる**。上の訂正で残した
+「`main` への push のフル run」は、0.24.0 のリリースでも約 11 分走り、`gh release create` の前に待つことになった。
+`main` への push はリリース PR のマージで、中身は develop ＋ 版番号・CHANGELOG・changeset の消費なので、
+コードは develop への push（マージ後の中身を検査する唯一の run。`develop` の保護は「最新にしてからマージ」を
+求めない）で検査済みになっている。
+
+- `push` のうち `refs/heads/main` に限り、リリースの流れの PR と同じく `origin/develop` と比べ、
+  版番号と文書だけの違いなら `stryker` を skip する（0.24.0 の `86bd557` と当時の develop `3314ade` を判定して
+  `bookkeeping=true` になることを確かめた）。
+- リリースの後に develop が先へ進んでいれば差が出るのでフル run、判定に失敗してもフル run（上と同じ）。
+- `develop` への push と nightly のフル run はそのまま残す。
+
 ### 推奨（私案）
 
 - **方式＝案B（ハイブリッド）**：
@@ -117,3 +132,4 @@ head=`main` のもの**に限り、**検査対象（PR のマージ結果）を 
 
 [p14]: 0014-test-coverage-policy.md
 [p15]: 0015-mutation-testing.md
+[adr94]: 0094-mutation-changed-files-on-pr.md

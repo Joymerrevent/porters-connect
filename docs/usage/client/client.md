@@ -37,10 +37,10 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 
 ## 固有の注意
 
-このクライアントだけに当てはまる注意です。共通の規則（認証・上限・テスト）は主題別のページにあります。
+このクライアントだけに当てはまる注意です。共通の規則（認証・上限・テスト）はガイドのページにあります。
 
 - **既定の Partition はありません。** データの読み書きは、必ず `tenant(id)` で Partition を指定してから行います（[Partition とテナントスコープ][tenant]）。
-- **`hostname` の書き方の誤りは構築した瞬間にエラーになります。** 値そのものの誤り（App ID の間違いなど）は、最初のリクエストでエラーになります。
+- **`hostname` の書き方の誤りと、下の表に無いオプション（打ち間違いを含む）は、構築した瞬間にエラーになります。** 値そのものの誤り（App ID の間違いなど）は、最初のリクエストでエラーになります。
 - **`appId` / `appSecret` を省略できるのは、`tokenProvider` を渡すときだけです。** 既定の取り方で省略すると、最初にトークンを取りに行くときに、PORTERS へ何も送らずに `PortersConfigError` になります。
 - **カスタム項目の宣言はここには渡せません。** 宣言は Partition ごとのものなので、`tenant(id, { fields })` に渡します（[カスタム項目][custom-fields]）。渡すと構築時にエラーになります。
 - **同じ接続先を向くクライアントは、上限の枠を 1 つ共有します。** クライアントを分けても 1 分あたりの上限は増えません（[上限とレート][limits]）。
@@ -80,7 +80,7 @@ const scope = client.tenant(partitions.items[0]?.P_Id ?? 0); // 以降の読み�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]（既定の Partition を持たない理由）／[認証とトークン][auth]（`tokenProvider` と `tokenStore` の役割）／[上限とレート][limits]（`throttle` と枠の共有）／[契約なしでテストする][testing]（`transport` のモック）
+- ガイド: [Partition とテナントスコープ][tenant]（既定の Partition を持たない理由）／[認証とトークン][auth]（`tokenProvider` と `tokenStore` の役割）／[上限とレート][limits]（`throttle` と枠の共有）／[契約なしでテストする][testing]（`transport` のモック）
 - クライアント: [tenant(id)][cl-tenant]／[auth][cl-auth]
 - ほかの目的から探す: [目次][index]
 

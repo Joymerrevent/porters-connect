@@ -23,7 +23,7 @@ for await (const d of t.department.searchAll())
 
 ## 固有の注意
 
-このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）はガイドのページにあります。
 
 - **絞り込みはありません**。PORTERS の Department Read が条件を受けないため、Partition の部署を全件読んで手元で選びます。`get(id)` もありません。
 - **スコープは `user_r` です。** PORTERS は `department_r` を定義していません。
@@ -50,7 +50,7 @@ for await (const d of t.department.searchAll())
 
 ## 関連
 
-- 主題: [項目と値のかたち][fields]（部署型の読みと書きのかたち）
+- ガイド: [項目と値のかたち][fields]（部署型の読みと書きのかたち）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

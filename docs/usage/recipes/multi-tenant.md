@@ -235,15 +235,18 @@ const score = async () => {
 ### 5. 認証を分けるか
 
 既定では `tenant(id)` は client のトークンを**共有**します（トークンは 1 つで、Partition だけを切り替える）。
-**Partition ごとに別トークン**で運用したい場合は、テナント別に `PortersClient` を構築します。
-client を分ける理由は**これだけ**です。カスタム項目が違うだけなら `tenant(id, { fields })` で足ります。
+テナント別に `PortersClient` を構築するのは、**Partition ごとに別のトークンを使いたいときだけ**です。
+カスタム項目がテナントごとに違う、というだけなら client を分ける必要はありません。同じ client から
+`tenant(id, { fields })` をテナントごとに作ります（上の 3.）。
 
 ```ts
-// Partition ごとに別のトークン置き場を与える＝トークンが混ざらない
-const clientFor = (tokenStore: TokenStore) =>
-  new PortersClient({ hostname, appId, appSecret, tokenStore });
+// Partition ごとに別のトークン置き場を与え、その Partition のスコープだけを返す＝トークンが混ざらない
+const scopeFor = (partition: number, tokenStore: TokenStore) => {
+  const client = new PortersClient({ hostname, appId, appSecret, tokenStore });
+  return client.tenant(partition);
+};
 
-const t = clientFor(tokenStore).tenant(partition);
+const t = scopeFor(partition, tokenStore);
 ```
 
 > [!NOTE]
@@ -252,7 +255,7 @@ const t = clientFor(tokenStore).tenant(partition);
 
 ### 6. レートは全テナントで 1 つ
 
-1 分あたりの上限（Read 2000 / Write 500）を守るバケットは **ホストごと**です<!-- 根拠: ADR-0073 -->。
+1 分あたりの上限（Read 2000 / Write 500）を守るバケットは **接続先（ホストとポートの組）ごと**です<!-- 根拠: ADR-0073 -->。
 client を分けても、同じ PORTERS を向く client は何個作っても合計が上限に収まります。
 テナントが増えても上限は増えません。1 テナントの一括処理が他のテナントの応答を遅らせるなら、
 `createThrottle` で別の上限を与え、共有の枠から切り離します。
@@ -284,10 +287,10 @@ const batch = new PortersClient({
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
+- ガイド: [Partition とテナントスコープ][tenant]／[認証とトークン][auth]（Company DB ごとの権限付与・`tokenStore`）／
   [カスタム項目][custom-fields]（宣言の書き方・自動生成・突き合わせ）／[上限とレート][limits]
-- リソース別: [Partition][r-partition]／[User][r-user]
-- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）
+- リソース: [Partition][r-partition]／[User][r-user]
+- 実践例: [毎日の差分同期][sync-batch]（バッチだけ枠を分ける）／[トークンを DB に保存する][token-store-db]（テナントごとに保存先を分ける）
 - ほかの目的から探す: [目次][index]
 
 <!-- 根拠:
@@ -303,3 +306,4 @@ const batch = new PortersClient({
 [r-user]: ../resources/user.md
 [index]: ../index.md
 [sync-batch]: sync-batch.md
+[token-store-db]: token-store-db.md

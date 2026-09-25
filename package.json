@@ -1,6 +1,6 @@
 {
   "name": "@joymerrevent/porters-connect",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "description": "Unofficial type-safe TypeScript wrapper for the PORTERS Connect API (formerly HRBC).",
   "keywords": [
     "porters",
@@ -103,7 +103,9 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^26.0.0",
+    "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "^4.1.9",
+    "drizzle-orm": "^0.45.2",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.9.0",

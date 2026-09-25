@@ -25,7 +25,7 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 
 ## 固有の注意
 
-このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）はガイドのページにあります。
 
 - **`tenant()` を通さない唯一の読み取り**です。Partition を探すための呼び出しなので、Partition を要求しません。
 - **ログイン中の Partition は取れません**。ログイン中の Partition を返す指定（`requestType: 0`）はブラウザ経由の認証（`code`）でしか使えず、ライブラリの既定であるサーバ間認証（`code_direct`）では Result Code `403` になります。アクセスできる一覧（既定の `requestType: 1`）から選んでください。
@@ -51,7 +51,7 @@ const t = porters.tenant(page.items[0]?.P_Id ?? 0); // 以降はこのスコー�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]（`tenant(id)` に渡す id）／[認証とトークン][auth]（アクセスできる Partition は権限付与で決まる）
+- ガイド: [Partition とテナントスコープ][tenant]（`tenant(id)` に渡す id）／[認証とトークン][auth]（アクセスできる Partition は権限付与で決まる）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

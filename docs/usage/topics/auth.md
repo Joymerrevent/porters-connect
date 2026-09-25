@@ -88,9 +88,14 @@ await porters.auth.exchangeAuthorizationCode(codeFromRedirect);
 // 起動時に前もってトークンを用意（取得できなければ、この時点でエラーになる）
 await porters.auth.ensureAuthenticated();
 
-// 現在有効な Access Token を取得（デバッグ用）。Refresh Token は返しません
-const token = await porters.auth.getToken();
+// いま使っている Access Token と期限を取得。Refresh Token は返しません
+const { token, expiresAt } = await porters.auth.getToken();
 ```
+
+`getToken()` は、リソースの呼び出しに使うのと同じトークンを返します（期限の 60 秒前を過ぎていれば、取り直してから返します）。
+`expiresAt` は 1970-01-01 からのミリ秒で、取り方が期限を返さなかったときは `undefined` です。
+別のプロセスへトークンを渡すとき（中央のサービスが、各アプリの `tokenProvider` の `acquire` に答えるときなど）は、
+この値をそのまま `accessToken` として返せます。
 
 どちらも省略可能です（通常はリソース呼び出し時に自動取得されます）。`ensureAuthenticated()` は
 「起動直後に認証の不備を検知したい」ときに有効です。
@@ -174,6 +179,11 @@ await porters.auth.clearTokens();
 `PortersClient` の `tokenProvider` に、トークンの取り方を渡せます。たとえば、App Secret を持つ別のサービスが
 トークンを一括で発行し、アプリはそこから受け取る構成です。渡すのは**取り方だけ**で、キャッシュ・期限の判断・
 失効したときの取り直し・同時呼び出しの 1 本化・`tokenStore` への保存は、ライブラリが受け持ちます。
+
+**取るのに要るものは、渡す関数の側で持ってください。** ライブラリが渡すのは、`refresh` への今のトークンと、
+`exchange` への `code` だけです。構築オプションの `appId` / `appSecret` は渡しません。発行するサービスの URL や
+そのサービスへの認証情報は、関数の外の変数（環境変数など）から参照します。App Secret を持つのが発行する
+サービスだけなら、アプリに App Secret を置く必要はありません。
 
 ```ts
 // acquire は必須。refresh と exchange は、使うときだけ
@@ -271,11 +281,12 @@ try {
 ## 関連
 
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
-- 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
+- ガイド: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
 - クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `tokenProvider` / `scopes` オプション）
-- リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
-- 実践例: [複数テナント][multi-tenant]（認証を分けるか）
+- リソース: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
+- 実践例: [複数テナント][multi-tenant]（認証を分けるか）／[トークンを DB に保存する][token-store-db]（`tokenStore` を ORM で組む）／
+  [中央のサービスからトークンを受け取る][central-token-service]（`tokenProvider` と `getToken()`）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]
 - ほかの目的から探す: [目次][index]
 
@@ -292,5 +303,7 @@ try {
 [r-partition]: ../resources/partition.md
 [r-user]: ../resources/user.md
 [multi-tenant]: ../recipes/multi-tenant.md
+[token-store-db]: ../recipes/token-store-db.md
+[central-token-service]: ../recipes/central-token-service.md
 [cl-auth]: ../client/auth.md
 [cl-client]: ../client/client.md

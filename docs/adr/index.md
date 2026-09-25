@@ -105,6 +105,9 @@
 | [0089][0089] | カスタム項目を宣言で明示したときだけ `create` の必須にする         | 基本設計 | accepted           | 0.23.0 |
 | [0090][0090] | 利用者の TypeScript の下限を 5.4 とし、CI で下限の版を走らせる     | 基本設計 | accepted           | 0.23.0 |
 | [0091][0091] | トークンの取得と保存を別々に受け取り、管理はクライアントが持つ     | 基本設計 | accepted           | 0.24.0 |
+| [0092][0092] | 定義していないオプションのキーを実行時にすべて弾く                 | 基本設計 | accepted           | 0.25.0 |
+| [0093][0093] | `porters.auth.getToken()` は Access Token の期限も返す             | 詳細設計 | accepted           | 0.25.0 |
+| [0094][0094] | PR のミューテーションは変更したファイルだけ・main への PR はフル   | プロセス | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -200,3 +203,6 @@
 [0089]: 0089-custom-field-required-on-create.md
 [0090]: 0090-typescript-floor.md
 [0091]: 0091-token-provider-and-store.md
+[0092]: 0092-reject-unknown-options.md
+[0093]: 0093-get-token-with-expiry.md
+[0094]: 0094-mutation-changed-files-on-pr.md

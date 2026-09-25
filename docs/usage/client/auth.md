@@ -13,14 +13,14 @@
 このアクセサで呼べるメソッドと、使い方の例です。`tokenProvider` を渡していても、6 つとも動きます
 （`exchangeAuthorizationCode` には `tokenProvider` の `exchange` が、URL を作る 2 つには `appId` が要ります）。
 
-| メソッド                          | 戻り値            | 何をするか                                                                                   |
-| --------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
-| `authorizationUrl(options)`       | `string`          | 初回の権限付与のためにブラウザで開く URL を作る（`appId` が要る）                            |
-| `exchangeAuthorizationCode(code)` | `Promise<void>`   | リダイレクトで戻ってきた `code` をトークンに交換し、ライブラリの中と `tokenStore` に保存する |
-| `ensureAuthenticated()`           | `Promise<void>`   | いまトークンを取りに行く。起動時に設定の不備を見つけるために使う                             |
-| `getToken()`                      | `Promise<string>` | 有効な Access Token を返す（デバッグ用）。Refresh Token は返さない                           |
-| `revokeUrl(options)`              | `string`          | 権限を削除するためにブラウザで開く URL を作る（`appId` が要る）                              |
-| `clearTokens()`                   | `Promise<void>`   | ライブラリが持つトークン（キャッシュと `tokenStore`）を消す。PORTERS 側の権限は残る          |
+| メソッド                          | 戻り値                 | 何をするか                                                                                                                      |
+| --------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `authorizationUrl(options)`       | `string`               | 初回の権限付与のためにブラウザで開く URL を作る（`appId` が要る）                                                               |
+| `exchangeAuthorizationCode(code)` | `Promise<void>`        | リダイレクトで戻ってきた `code` をトークンに交換し、ライブラリの中と `tokenStore` に保存する                                    |
+| `ensureAuthenticated()`           | `Promise<void>`        | いまトークンを取りに行く。起動時に設定の不備を見つけるために使う                                                                |
+| `getToken()`                      | `Promise<IssuedToken>` | いま使っている Access Token と期限（`{ token, expiresAt? }`）を返す。期限が近ければ取り直してから返す。Refresh Token は返さない |
+| `revokeUrl(options)`              | `string`               | 権限を削除するためにブラウザで開く URL を作る（`appId` が要る）                                                                 |
+| `clearTokens()`                   | `Promise<void>`        | ライブラリが持つトークン（キャッシュと `tokenStore`）を消す。PORTERS 側の権限は残る                                             |
 
 ```ts
 // 初回の権限付与: URL を人がブラウザで開いて承諾し、戻ってきた ?code= を 30 秒以内に交換する
@@ -36,7 +36,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 固有の注意
 
-このアクセサだけに当てはまる注意です。共通の規則（認証の流れ・トークンの置き場所）は主題別のページにあります。
+このアクセサだけに当てはまる注意です。共通の規則（認証の流れ・トークンの置き場所）はガイドのページにあります。
 
 - **`code` の有効期限は発行から 30 秒です。** リダイレクトを受けたハンドラの中でそのまま `exchangeAuthorizationCode` に渡してください。
 - **`authorizationUrl` / `revokeUrl` は `string` を返すので、失敗は同期 throw です。** `appId` が無い・スコープが空、のときに `PortersConfigError` になります。`Promise` を返す 4 つは、失敗も reject で届きます（[エラーと再試行][errors]）。
@@ -63,7 +63,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 関連
 
-- 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・取り方を差し替えるとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
+- ガイド: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・取り方を差し替えるとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
 - クライアント: [PortersClient][cl-client]（`appId` / `appSecret` / `scopes` / `tokenStore` / `tokenProvider` のオプション）／[tenant(id)][cl-tenant]
 - ほかの目的から探す: [目次][index]
 

@@ -15,6 +15,9 @@
 >
 > **decider が案B ＋ 案2a ＋ 案3a を選択し `accepted`（2026-09-21）。** 実装は accept 後・別 PR
 > （下記「実施時の合意事項」のとおり）。
+>
+> **Amended by [ADR-0092][adr92]（2026-09-24）**: 追記 7 の「`PortersClientOptions.fields` を `never` で型付け」は改められた。
+> 型からは外し、構築時に**定義していないキーをすべて** `PortersConfigError` で止める形に広げた（`tenant()` のオプションも同じ）。
 
 ## Context and Problem Statement
 
@@ -347,3 +350,4 @@ const tenantB = defineFields({ candidate: appCandidate });
 [sweep]: ../../CLAUDE.md
 [lv]: ../live-verification.md
 [runbook]: ../release-runbook.md
+[adr92]: 0092-reject-unknown-options.md

@@ -23,6 +23,7 @@
 | **読み取りで宣言型と実データが食い違う**                                                 | —（応答のかたちが違う）                      | `validation`    | 宣言した Data Type が実際の項目と違う。`verifyFields` で突き合わせて宣言を直す                                                                                                                                                |
 | **書き込み・condition の日時が変換不能**                                                 | —（渡した値の書式）                          | `validation`    | 日時は **ISO 8601** で渡す（`Date` は `2026-09-10`、`DateTime` は `2026-09-10T12:00:00Z` のように時刻とタイムゾーンを付ける）                                                                                                 |
 | `new PortersClient(...)` がその場でエラーになる                                          | `hostname` / `port` / `scheme` の書式        | `config`        | `hostname` は**サーバー名だけ**・ポートは `port`（下記）                                                                                                                                                                      |
+| `unknown option "…"` でエラーになる（`new PortersClient(...)` / `tenant()`）             | 定義していないオプション                     | `config`        | キーの打ち間違いか、アプリの設定オブジェクトを丸ごと渡している。`hint` に使えるキーが並ぶので、使うものだけを渡す                                                                                                             |
 | `appId and appSecret are required to obtain a token`                                     | 最初のリクエスト（PORTERS へは何も送らない） | `config`        | 既定の取り方には `appId` / `appSecret` が要る。渡すか、`tokenProvider` を渡す                                                                                                                                                 |
 | `tokenProvider.acquire returned no usable access token`（`refresh` / `exchange` も同じ） | 渡した `tokenProvider` の返り値              | `config`        | `{ accessToken: { token, expiresAt? } }` の形で、空でない文字列の `token` を返す                                                                                                                                              |
 | `exchangeAuthorizationCode needs a tokenProvider with exchange(code)`                    | 渡した `tokenProvider`                       | `config`        | `code` を交換するなら、`tokenProvider` に `exchange(code)` を持たせる                                                                                                                                                         |
@@ -38,17 +39,17 @@
 
 ## 繋いだ直後に起きやすいもの
 
-| 症状                                                                  | たいてい原因                                                                   |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 構築した瞬間にエラーになる                                            | `hostname` に `https://` ・パス・ポートが入っている（[インストール][install]） |
-| `PortersResourceError`（`code` が `403`、`category` が `permission`） | その Company DB の権限付与（初回のブラウザ手順）が済んでいない                 |
-| `code` を交換すると失敗する                                           | 30 秒を超えた／同じ `code` を 2 回使った                                       |
-| Partition の一覧が空で返る                                            | 権限付与した Company DB が無い／`partition_r` を付与していない                 |
-| スコープ不足で読めない                                                | `authorizationUrl` に渡したスコープに、使うリソースが入っていない              |
+| 症状                                                                  | たいてい原因                                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 構築した瞬間にエラーになる                                            | `hostname` に `https://` ・パス・ポートが入っている（[インストール][install]）／オプションのキーを打ち間違えている |
+| `PortersResourceError`（`code` が `403`、`category` が `permission`） | その Company DB の権限付与（初回のブラウザ手順）が済んでいない                                                     |
+| `code` を交換すると失敗する                                           | 30 秒を超えた／同じ `code` を 2 回使った                                                                           |
+| Partition の一覧が空で返る                                            | 権限付与した Company DB が無い／`partition_r` を付与していない                                                     |
+| スコープ不足で読めない                                                | `authorizationUrl` に渡したスコープに、使うリソースが入っていない                                                  |
 
 ## 関連
 
-- 主題: [エラーと再試行][errors]／[認証とトークン][auth]／[上限とレート][limits]
+- ガイド: [エラーと再試行][errors]／[認証とトークン][auth]／[上限とレート][limits]
 - 導入: [認証を通して、疎通を確認する][s-auth]
 - ほかの目的から探す: [目次][index]
 

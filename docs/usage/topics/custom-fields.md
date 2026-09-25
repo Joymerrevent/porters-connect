@@ -464,9 +464,9 @@ client を分けるのは**トークンを分けたいとき**だけです（[�
 
 ## 関連
 
-- 主題: [項目と値のかたち][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を渡す場所）／
+- ガイド: [項目と値のかたち][fields]（alias と Data Type）／[Partition とテナントスコープ][tenant]（宣言を渡す場所）／
   [書き込み][write]／[エラーと再試行][error-handling]（宣言と実データの食い違い）
-- リソース別: [Field][r-field]（項目定義の Read）／[Option][r-option]（選択肢の alias）
+- リソース: [Field][r-field]（項目定義の Read）／[Option][r-option]（選択肢の alias）
 - 実践例: [複数テナント][multi-tenancy]（宣言をテナントごとに持つ・スコープを関数に渡す）
 - リファレンス: [Field Type / Data Type][fdt]
 - ほかの目的から探す: [目次][index]
