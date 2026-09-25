@@ -17,7 +17,7 @@ import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある
-// （`Job.P_Owner(User.…)` の展開 — core/read の `USER_SUBFIELDS`）。以降の 13 項目は
+// （`Job.P_Owner(User.…)` の展開 — porters/read-rules の `USER_SUBFIELDS`）。以降の 13 項目は
 // reference が「Resource API での Read 時に、参照取得することはできません」と明記する項目で、
 // **この User Read でだけ読める**。両者はカタログ上は同列で、違いは要求のしかたに現れる。
 const FIELDS = {

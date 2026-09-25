@@ -146,7 +146,7 @@ export type Order<F extends FieldCatalog> = Array<
  */
 export type ItemState = "existing" | "deleted" | "all";
 
-// --- the public query shape (moved here from resource.ts; data resources parametrise over their catalog) ---
+// --- the public query shape (data resources parametrise over their catalog) ---
 
 export type SearchQuery<
   F extends FieldCatalog = FieldCatalog,

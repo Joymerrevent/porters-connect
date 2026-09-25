@@ -103,7 +103,7 @@ const isDeclarable = (dataType: DataType): dataType is CustomDataType =>
   DECLARABLE.has(dataType);
 
 // Field Read's `P_Alias` may arrive qualified (`Person.U_score`) or bare (`U_score`) — which one
-// is unconfirmed (ADR-0069 論点7 / 案7a). `bareAlias` (resources/core/read) already handles both, and it also
+// is unconfirmed (ADR-0069 論点7 / 案7a). `bareAlias` (util/alias) already handles both, and it also
 // absorbs Candidate's prefix being `Person` rather than the resource name, so it is reused rather
 // than reimplemented.
 //
