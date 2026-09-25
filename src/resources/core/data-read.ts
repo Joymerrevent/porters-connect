@@ -1,7 +1,7 @@
 // The data resources' Read (search / searchAll / get / getMany): the query they take, the record
 // type they resolve to, and the factory that sends them. `data-resource.ts` puts this together with
 // the Write half (`data-write.ts`) into one accessor. Master resources have their own, smaller Read
-// (`master-resource.ts`); both share the paging / decoding / sending in `read.ts`.
+// (`master-read.ts`); both share the paging / decoding / sending in `read.ts`.
 
 import type { DataType } from "../../porters/data-type";
 import type { RawItem } from "../../xml/parser";

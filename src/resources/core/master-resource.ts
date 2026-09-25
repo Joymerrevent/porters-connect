@@ -1,29 +1,16 @@
-// The master resources' accessor: how a read-only master's Read is sent — the library's own
-// contract, kept in one place so it changes in one place (the data resources' counterpart is
-// `data-resource.ts`). Every master resource used to spell it out itself, and each change to the
-// contract below had to be repeated in all of them (ADR-0046 / RV-15, ADR-0051 / RV-20, RV-28,
-// RV-32, ADR-0047).
-//
-//   - a Promise-returning method never throws synchronously — `search` is `async` (ADR-0046)
-//   - `searchAll` serialises the caller's query once, at the first page (RV-32)
-//   - `count` is checked against PORTERS' range before sending (`readUrlOf` — RV-28)
-//   - the response must be PORTERS' own answer for this resource (`runRead` — ADR-0051)
-//   - the URL is built at the configured access point (`readUrlOf` — ADR-0047)
-//
-// What a resource's Read *accepts* — its parameters and their defaults — is PORTERS' rule for that
-// resource and stays with the resource, passed in as `params` (ADR-0022).
+// The master resources' accessor: the read-only masters' counterpart of `data-resource.ts`. A
+// master has no Write, so the accessor is its Read (`master-read.ts`) alone; this file names the
+// shape it takes. What each master's Read accepts stays with that master, passed in as `params`
+// (ADR-0022).
 
-import type { ResourceDescriptor } from "./descriptor";
-import {
-  createPageReader,
-  decoderFor,
-  paginateOnce,
-  type FieldCatalog,
-  type Paging,
-  type ReadRecord,
-  type ResourceDeps,
-  type ResourcePageOf,
+import type {
+  FieldCatalog,
+  Paging,
+  ReadRecord,
+  ResourceDeps,
+  ResourcePageOf,
 } from "./read";
+import { createMasterReader, type MasterReadConfig } from "./master-read";
 
 // Function-typed properties rather than methods: they close over the config, never `this`, so a
 // caller may take them apart (`const { search } = …`).
@@ -33,43 +20,16 @@ export type MasterResource<Q, T> = {
   searchAll: (query?: Q) => AsyncIterable<T>;
 };
 
-/**
- * A master resource: its descriptor (names + `P_` catalog, like a data resource's) and the
- * parameters its Read takes. `params` is PORTERS' rule for this master (ADR-0022) and never sends
- * `count` / `start` — paging is added per page.
- */
-export type MasterResourceConfig<
-  F extends FieldCatalog,
-  Q,
-> = ResourceDescriptor<F> & {
-  params: (query: Q) => URLSearchParams;
-};
+/** Static description of a master resource: what its Read needs (a master has no Write). */
+export type MasterResourceConfig<F extends FieldCatalog, Q> = MasterReadConfig<
+  F,
+  Q
+>;
 
-/**
- * `search` and `searchAll` for a read-only master resource. The counterpart of
- * `createDataResource`: both take the resource's config and the connection, and derive the
- * decoder and the record type from the catalog. Only the connection is needed — not the
- * partition, which a master's own `params` sends or not (Partition Read takes none).
- */
+/** The accessor for a read-only master resource: its `search` and `searchAll`. */
 export const createMasterResource = <const F extends FieldCatalog, Q>(
   config: MasterResourceConfig<F, Q>,
   deps: Pick<ResourceDeps, "requester" | "accessPoint">,
-): MasterResource<Q, ReadRecord<F>> => {
-  const decode = decoderFor(config.fields);
-  const read = createPageReader({
-    requester: deps.requester,
-    accessPoint: deps.accessPoint,
-    name: config.name,
-    path: config.path,
-  });
-  const search = async (
-    query: Q & Paging = {} as Q & Paging,
-  ): Promise<ResourcePageOf<ReadRecord<F>>> =>
-    read(config.params(query), decode, query.count, query.start);
-  const searchAll = (query: Q = {} as Q): AsyncIterable<ReadRecord<F>> =>
-    paginateOnce(() => {
-      const base = config.params(query);
-      return (count, start) => read(base, decode, count, start);
-    });
-  return { search, searchAll };
-};
+): MasterResource<Q, ReadRecord<F>> => ({
+  ...createMasterReader(config, deps),
+});

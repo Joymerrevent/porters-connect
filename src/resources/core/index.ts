@@ -12,3 +12,4 @@ export * from "./image";
 export * from "./bulk-write";
 export * from "./get-many";
 export * from "./master-resource";
+export * from "./master-read";

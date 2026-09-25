@@ -1,31 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createMasterResource } from "./master-resource";
 import type { FieldCatalog } from "./read";
 
-// The master resources' own tests pin what each one sends; this pins the shared sending itself.
+// 読み込み（master-read.ts）の中身は master-read.test.ts で確かめる。ここでは、アクセサが読み込みを
+// そのまま出していること（同じ設定と接続で送ること）を確かめる。
 const FIELDS = {
   P_Id: "System[Id]",
   P_Name: "SinglelineText",
 } as const satisfies FieldCatalog;
 
-// The master's own query (paging aside).
-type Query = { tag?: string };
+const PAGE = `<Thing Total="1" Count="1" Start="0"><Code>0</Code><Item><T.P_Id>7</T.P_Id></Item></Thing>`;
 
-const page = (total: number, ids: number[], root = "Thing"): string =>
-  `<${root} Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
-  ids.map((id) => `<Item><T.P_Id>${id}</T.P_Id></Item>`).join("") +
-  `</${root}>`;
-
-const setup = (bodies: string[], params?: (q: Query) => URLSearchParams) => {
+const setup = () => {
   const urls: string[] = [];
   const requester: Requester = {
     request: (req: TransportRequest, parse) => {
       urls.push(req.url);
-      return Promise.resolve(parse(bodies.shift() ?? ""));
+      return Promise.resolve(parse(PAGE));
     },
   };
   const methods = createMasterResource(
@@ -34,86 +28,28 @@ const setup = (bodies: string[], params?: (q: Query) => URLSearchParams) => {
       path: "thing",
       prefix: "T",
       fields: FIELDS,
-      params:
-        params ??
-        ((q: Query) =>
-          new URLSearchParams({ partition: "12", tag: q.tag ?? "-" })),
+      params: (q: { tag?: string }) =>
+        new URLSearchParams({ tag: q.tag ?? "-" }),
     },
     { requester, accessPoint: { hostname: "h.test" } },
   );
   return { methods, urls };
 };
 
-const collect = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
-  const out: T[] = [];
-  for await (const x of it) out.push(x);
-  return out;
-};
-
-describe("createMasterResource — search", () => {
-  it("sends the resource's params plus count / start to its path at the access point", async () => {
-    const { methods, urls } = setup([page(1, [7])]);
-    const result = await methods.search({ tag: "a", count: 5, start: 10 });
-    expect(urls).toEqual([
-      "https://h.test/v1/thing?partition=12&tag=a&count=5&start=10",
-    ]);
-    expect(result.items).toEqual([{ P_Id: 7 }]);
-    expect(result.total).toBe(1);
-  });
-
-  it("sends only the params when the query is omitted", async () => {
-    const { methods, urls } = setup([page(0, [])]);
-    await methods.search();
-    expect(urls).toEqual(["https://h.test/v1/thing?partition=12&tag=-"]);
-  });
-
-  it("rejects an out-of-range count before sending (the shared count guard)", async () => {
-    const { methods, urls } = setup([]);
-    await expect(methods.search({ count: 201 })).rejects.toBeInstanceOf(
-      PortersConfigError,
-    );
-    expect(urls).toEqual([]);
-  });
-
-  it("turns a failure while building params into a rejection, not a synchronous throw", async () => {
-    const { methods } = setup([], () => {
-      throw new PortersConfigError("bad", { category: "config" });
-    });
-    const call = methods.search({});
-    await expect(call).rejects.toBeInstanceOf(PortersConfigError);
-  });
-
-  it("refuses a response that is not this resource's (root element check)", async () => {
-    const { methods } = setup([page(1, [7], "Other")]);
-    await expect(methods.search()).rejects.toBeInstanceOf(PortersResourceError);
-  });
-});
-
-describe("createMasterResource — searchAll", () => {
-  it("walks every page (200 at a time) until total", async () => {
-    const first = Array.from({ length: 200 }, (_, i) => i + 1);
-    const { methods, urls } = setup([page(201, first), page(201, [201])]);
-    const all = await collect(methods.searchAll({ tag: "b" }));
-    expect(all).toHaveLength(201);
-    expect(urls).toEqual([
-      "https://h.test/v1/thing?partition=12&tag=b&count=200&start=0",
-      "https://h.test/v1/thing?partition=12&tag=b&count=200&start=200",
+describe("createMasterResource — 読み込みをアクセサにする", () => {
+  it("search と searchAll だけを持つ（マスタには書き込みが無い）", () => {
+    expect(Object.keys(setup().methods).sort()).toEqual([
+      "search",
+      "searchAll",
     ]);
   });
 
-  it("reads the query once: changing it mid-walk does not change a later page (RV-32)", async () => {
-    const first = Array.from({ length: 200 }, (_, i) => i + 1);
-    const { methods, urls } = setup([page(201, first), page(201, [201])]);
-    const query = { tag: "before" };
-    for await (const _ of methods.searchAll(query)) query.tag = "after";
-    expect(urls.every((u) => u.includes("tag=before"))).toBe(true);
-  });
-
-  it("walks with only the params when the query is omitted", async () => {
-    const { methods, urls } = setup([page(0, [])]);
-    expect(await collect(methods.searchAll())).toEqual([]);
-    expect(urls).toEqual([
-      "https://h.test/v1/thing?partition=12&tag=-&count=200&start=0",
-    ]);
+  it("同じ設定と接続で、search も searchAll も同じリソースに送る", async () => {
+    const { methods, urls } = setup();
+    const page = await methods.search({ tag: "a" });
+    for await (const _ of methods.searchAll({ tag: "b" }));
+    expect(page.items[0]?.P_Id).toBe(7);
+    expect(urls[0]).toContain("https://h.test/v1/thing?tag=a");
+    expect(urls[1]).toContain("https://h.test/v1/thing?tag=b");
   });
 });
