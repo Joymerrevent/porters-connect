@@ -188,7 +188,7 @@ grep -rn "VERIFY(live)" src test
 - **不確実な理由**: App 登録が App 単位である点は確定だが、**発行されたトークンのアクセス範囲が partition を跨ぐか**は未確認。
   [ADR-0008][a8] は両対応（跨げないなら案3＝テナントごとに専用 client を構築）なので**設計はブロックされない**が、
   `tenant(id)` の使い勝手は結論に左右される
-- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/core/resource.ts`（`partition` をクエリに載せる）
+- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/core/data-resource.ts`（`partition` をクエリに載せる）
 - **確認方法**: アクセス権を付与した 2 つの partition に対し、**同一の Access Token** で Read を投げて両方 200 ＋ `<Code>0`
   が返るか。片方が 403/404 なら案3（テナントごとに client）を推奨経路に格上げする
 - **状態**: 未確認
