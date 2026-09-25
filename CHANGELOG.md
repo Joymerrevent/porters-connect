@@ -5,6 +5,58 @@
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-09-25
+
+**設定の誤りを黙って通さないようにし、トークンを期限つきで取り出せるようにした版**です。**破壊的変更を 2 つ**含みます
+（定義していないオプションの拒否と、`porters.auth.getToken()` の戻り値）。あわせて、トークンの保存と中央のサービスからの
+受け取りの実践例を足し、README と目次を読みやすく直しました。
+
+### Changed
+
+- **（破壊的）`new PortersClient(options)` と `porters.tenant(id, options)` は、定義していないオプションのキーを渡すと
+  `PortersConfigError`（`category: "config"`）になります**（[ADR-0092][adr92]）。これまでは打ち間違い（`hostName` など）や
+  存在しないオプションを黙って無視し、誤った設定のまま動いていました。
+
+  ```ts
+  new PortersClient({ hostname, appId, appSecret, hostName: "x" });
+  // PortersConfigError: PortersClient: unknown option "hostName"
+  //   hint: Valid options: hostname, port, scheme, appId, appSecret, scopes, tokenProvider, tokenStore, transport, throttle.
+  ```
+
+  - 値が `undefined` のキーは未指定と同じ扱いです（設定をスプレッドで組み立てると混ざりやすいため）。
+  - **アプリの設定オブジェクトを丸ごと渡している場合は、使うキーだけを取り出して渡してください。**
+  - `tenant(id, options)` に渡せるのは `fields` だけです。
+  - `PortersClientOptions` の型から、使えない項目だった `auth` と `fields` を外しました。
+
+- **（破壊的）`porters.auth.getToken()` は、Access Token の文字列ではなく `{ token, expiresAt? }`（`IssuedToken`）を
+  返すようになりました**（[ADR-0093][adr93]）。
+
+  ```ts
+  // 変更前
+  const token = await porters.auth.getToken();
+  // 変更後
+  const { token, expiresAt } = await porters.auth.getToken();
+  ```
+
+  - 返すのはリソースの呼び出しに使うのと同じトークンで、期限が近ければ取り直してから返します。`expiresAt` は
+    1970-01-01 からのミリ秒で、取り方が期限を返さなかったときは省かれます。
+  - 中央のサービスが各アプリの `tokenProvider` にトークンを渡すとき、期限もそのまま渡せます。アプリのクライアントは
+    期限切れで失敗する前に取り直せます。
+  - Refresh Token はこれまでどおり返しません。
+
+- **使い方ドキュメントに実践例を 2 本足しました**:
+  [トークンを DB に保存する][recipe-token-store-db]（`tokenStore` を Drizzle ORM と PostgreSQL で組む）と、
+  [中央のサービスからトークンを受け取る][recipe-central-token-service]（App Secret を中央だけに置き、各アプリは
+  `tokenProvider` で受け取る）。
+
+- **README と目次を見直しました**。README の「リソースと操作」の節を外して入口に絞り、見出し「最短で動かす」を
+  「クイックスタート」に、各章の説明を概要の要約にしました。使い方ドキュメントの章の名前を「主題別」から
+  「ガイド」に、「リソース別」から「リソース」に改めました（ページの場所は変わりません）。
+  `tokenProvider` に渡す関数が、取るのに要るもの（App Secret など）を自分で持つことも書き足しました。
+
+- 内部の検査を変えました（利用者への影響はありません）。PR のミューテーションテストは変更したファイルだけに掛け、
+  `main` への PR は必ず全体を検査します。
+
 ## [0.24.0] - 2026-09-24
 
 **トークンの取り方と置き場所を別々に渡せるようにした版**です。**破壊的変更を 2 つ**含みます
@@ -1456,7 +1508,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.21.0...v0.22.0
@@ -1502,4 +1555,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr89]: docs/adr/0089-custom-field-required-on-create.md
 [adr90]: docs/adr/0090-typescript-floor.md
 [adr91]: docs/adr/0091-token-provider-and-store.md
+[adr92]: docs/adr/0092-reject-unknown-options.md
+[adr93]: docs/adr/0093-get-token-with-expiry.md
+[recipe-token-store-db]: docs/usage/recipes/token-store-db.md
+[recipe-central-token-service]: docs/usage/recipes/central-token-service.md
 [troubleshooting]: docs/usage/reference/troubleshooting.md

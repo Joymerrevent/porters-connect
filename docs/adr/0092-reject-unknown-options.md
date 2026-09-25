@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-24
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.25.0
 
 > 起票元は stakeholder の指摘（2026-09-24）。API リファレンスの `PortersClientOptions` に、使えないことを示すための
 > `auth?: never` と `fields?: never` が普通のオプションと並んで出ている。実行時の検査もこの 2 つの名前だけで、
