@@ -4,7 +4,7 @@
 // provider). Factory style per ADR-0013.
 
 import { PortersConfigError } from "../errors/index";
-import { createMemoryTokenStore } from "./memory-store";
+import { createMemoryTokenStore } from "./memory-token-store";
 import type { AccessTokenSource } from "../http/index";
 import type {
   IssuedToken,

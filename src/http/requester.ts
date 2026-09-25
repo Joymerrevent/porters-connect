@@ -12,7 +12,7 @@ import {
   PortersResourceError,
 } from "../errors/index";
 import { readResponse } from "./read-response";
-import type { Backoff } from "./retry";
+import type { Backoff } from "./backoff";
 import type { Throttle } from "./throttle";
 import type { AccessTokenSource, Transport, TransportRequest } from "./types";
 

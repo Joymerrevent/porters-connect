@@ -6,11 +6,11 @@ import type {
   TransportRequest,
   TransportResponse,
 } from "../http/index";
-import { createMemoryTokenStore } from "./memory-store";
+import { createMemoryTokenStore } from "./memory-token-store";
 import {
   createDefaultTokenProvider,
   type DefaultTokenProviderOptions,
-} from "./token-provider";
+} from "./default-token-provider";
 import { createTokenManager } from "./token-manager";
 import type { StoredTokens, TokenStore } from "./types";
 

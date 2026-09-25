@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createMemoryTokenStore } from "./memory-store";
+import { createMemoryTokenStore } from "./memory-token-store";
 import type { StoredTokens } from "./index";
 
 const tokens: StoredTokens = {

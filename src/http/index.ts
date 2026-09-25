@@ -6,6 +6,6 @@ export * from "./insecure-http-warning";
 export * from "./fetch-transport";
 export * from "./mock-transport";
 export * from "./throttle";
-export * from "./retry";
+export * from "./backoff";
 export * from "./read-response";
 export * from "./requester";

@@ -4,7 +4,7 @@ import { PortersAuthError, PortersConfigError } from "../errors/index";
 import type { Transport, TransportRequest } from "../http/index";
 import { createAuthApi } from "./auth-api";
 import { createTokenManager } from "./token-manager";
-import { createDefaultTokenProvider } from "./token-provider";
+import { createDefaultTokenProvider } from "./default-token-provider";
 import type { Scope, TokenProvider } from "./types";
 
 const ACCESS_EXPIRES_IN = 1_800_000;
