@@ -112,7 +112,12 @@ export const CONTRACT_DESCRIPTOR = {
 /** A decoded Contract (an agreement with a client): known `P_` fields, each `value | null`. */
 export type Contract = ReadRecord<typeof FIELDS>;
 export type ContractPage = ResourcePage<typeof FIELDS>;
-export type ContractSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Contract Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ContractSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: only `P_Client` required (Contract has no owner field). */
 export type ContractCreateInput = CreateInput<
@@ -150,9 +155,7 @@ export type ContractResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ContractSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -166,7 +169,7 @@ export type ContractResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: ContractSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Contract record by id; `undefined` when there is none. `field` picks the fields to

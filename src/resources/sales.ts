@@ -122,7 +122,12 @@ export const SALES_DESCRIPTOR = {
 /** A decoded Sales (a placement / revenue record): known `P_` fields, each `value | null`. */
 export type Sales = ReadRecord<typeof FIELDS>;
 export type SalesPage = ResourcePage<typeof FIELDS>;
-export type SalesSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Sales Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type SalesSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 // 条件付き必須を型で表さない決定は ADR-0083。
 /**
@@ -165,9 +170,7 @@ export type SalesResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: SalesSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -181,7 +184,7 @@ export type SalesResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: SalesSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Sales record by id; `undefined` when there is none. `field` picks the fields to

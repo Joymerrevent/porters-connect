@@ -106,7 +106,12 @@ export const PROCESS_DESCRIPTOR = {
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
 export type ProcessPage = ResourcePage<typeof FIELDS>;
-export type ProcessSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Process Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ProcessSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ProcessCreateInput = CreateInput<
@@ -144,9 +149,7 @@ export type ProcessResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ProcessSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -160,7 +163,7 @@ export type ProcessResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: ProcessSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Process record by id; `undefined` when there is none. `field` picks the fields to

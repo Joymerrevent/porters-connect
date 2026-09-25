@@ -83,10 +83,12 @@ export const OPPORTUNITY_DESCRIPTOR = {
 /** A decoded Opportunity (a sales opportunity): known `P_` fields, each `value | null`. */
 export type Opportunity = ReadRecord<typeof FIELDS>;
 export type OpportunityPage = ResourcePage<typeof FIELDS>;
-export type OpportunitySearchQuery = SearchQuery<
-  typeof FIELDS,
-  typeof REFERENCES
->;
+/**
+ * The Opportunity Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type OpportunitySearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: owner and both references required; `P_Id` / timestamps are not settable. */
 export type OpportunityCreateInput = CreateInput<
@@ -124,9 +126,7 @@ export type OpportunityResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: OpportunitySearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -140,7 +140,7 @@ export type OpportunityResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: OpportunitySearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Opportunity record by id; `undefined` when there is none. `field` picks the fields to

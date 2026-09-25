@@ -91,7 +91,12 @@ export const ACTIVITY_DESCRIPTOR = {
 /** A decoded Activity (an action logged against another record): known `P_` fields, each `value | null`. */
 export type Activity = ReadRecord<typeof FIELDS>;
 export type ActivityPage = ResourcePage<typeof FIELDS>;
-export type ActivitySearchQuery = SearchQuery<typeof FIELDS>;
+/**
+ * The Activity Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ActivitySearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C>;
 
 /** Fields for `create`: `P_Owner` / `P_Title` required; `P_Id` / timestamps are not settable. */
 export type ActivityCreateInput = CreateInput<
@@ -129,9 +134,7 @@ export type ActivityResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ActivitySearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>
   >;
@@ -145,7 +148,7 @@ export type ActivityResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> & ReadSelection<FL, E, I>,
+    query?: ActivitySearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>;
   /**
    * Read one Activity record by id; `undefined` when there is none. `field` picks the fields to

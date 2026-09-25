@@ -8,6 +8,6 @@
 
 > **ContractUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/contract.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L123)
+Defined in: [src/resources/contract.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L128)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

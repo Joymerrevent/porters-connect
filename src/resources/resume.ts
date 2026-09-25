@@ -104,7 +104,12 @@ export const RESUME_DESCRIPTOR = {
  *  `value | null`. */
 export type Resume = ReadRecord<typeof FIELDS>;
 export type ResumePage = ResourcePage<typeof FIELDS>;
-export type ResumeSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Resume Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ResumeSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ResumeCreateInput = CreateInput<
@@ -142,9 +147,7 @@ export type ResumeResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ResumeSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -158,7 +161,7 @@ export type ResumeResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: ResumeSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Resume record by id; `undefined` when there is none. `field` picks the fields to

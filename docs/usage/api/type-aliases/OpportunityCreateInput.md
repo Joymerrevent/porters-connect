@@ -8,6 +8,6 @@
 
 > **OpportunityCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/opportunity.ts:92](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L92)
+Defined in: [src/resources/opportunity.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L94)
 
 Fields for `create`: owner and both references required; `P_Id` / timestamps are not settable.

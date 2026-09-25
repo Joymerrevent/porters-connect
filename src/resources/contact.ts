@@ -98,7 +98,12 @@ export const CONTACT_DESCRIPTOR = {
 /** A decoded Contact (a contact person at a client company): known `P_` fields, each `value | null`. */
 export type Contact = ReadRecord<typeof FIELDS>;
 export type ContactPage = ResourcePage<typeof FIELDS>;
-export type ContactSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Contact Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ContactSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` / `P_Client` required; `P_Id` / system timestamps are not settable. */
 export type ContactCreateInput = CreateInput<
@@ -136,9 +141,7 @@ export type ContactResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ContactSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -152,7 +155,7 @@ export type ContactResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: ContactSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Contact record by id; `undefined` when there is none. `field` picks the fields to

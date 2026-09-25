@@ -4,8 +4,17 @@
 
 [@joymerrevent/porters-connect](../index.md) / ResumeSearchQuery
 
-# Type Alias: ResumeSearchQuery
+# Type Alias: ResumeSearchQuery\<C\>
 
-> **ResumeSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
+> **ResumeSearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/resume.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L107)
+Defined in: [src/resources/resume.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L111)
+
+The Resume Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+order can name a custom field too.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`

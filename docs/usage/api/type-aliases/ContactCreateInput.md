@@ -8,6 +8,6 @@
 
 > **ContactCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/contact.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L104)
+Defined in: [src/resources/contact.ts:109](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L109)
 
 Fields for `create`: `P_Owner` / `P_Client` required; `P_Id` / system timestamps are not settable.

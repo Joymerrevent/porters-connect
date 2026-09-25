@@ -4,8 +4,17 @@
 
 [@joymerrevent/porters-connect](../index.md) / OpportunitySearchQuery
 
-# Type Alias: OpportunitySearchQuery
+# Type Alias: OpportunitySearchQuery\<C\>
 
-> **OpportunitySearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
+> **OpportunitySearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/opportunity.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L86)
+Defined in: [src/resources/opportunity.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L90)
+
+The Opportunity Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+order can name a custom field too.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`

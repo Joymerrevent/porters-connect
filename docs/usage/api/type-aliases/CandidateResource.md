@@ -8,7 +8,7 @@
 
 > **CandidateResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/candidate.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L106)
+Defined in: [src/resources/candidate.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L111)
 
 The Candidate accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/candidate.ts:180](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L180)
+Defined in: [src/resources/candidate.ts:183](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L183)
 
 Create one Candidate record; resolves to the newly assigned id.
 
@@ -49,7 +49,7 @@ Create one Candidate record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/candidate.ts:193](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L193)
+Defined in: [src/resources/candidate.ts:196](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L196)
 
 Create many Candidate records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/candidate.ts:148](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L148)
+Defined in: [src/resources/candidate.ts:151](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L151)
 
 Read one Candidate record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/candidate.ts:170](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L170)
+Defined in: [src/resources/candidate.ts:173](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L173)
 
 Read many Candidate records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/candidate.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L117)
+Defined in: [src/resources/candidate.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L122)
 
 Search Candidate records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -186,7 +186,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 ##### query?
 
-[`SearchQuery`](SearchQuery.md)\<`Fields`\<`C`\>, `EmptyReferences`\> & [`Limit`](Limit.md) & `object` & `ReadSelection`\<`FL`, `E`, `I`\>
+[`CandidateSearchQuery`](CandidateSearchQuery.md)\<`C`\> & [`Limit`](Limit.md) & `object` & `ReadSelection`\<`FL`, `E`, `I`\>
 
 #### Returns
 
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/candidate.ts:133](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L133)
+Defined in: [src/resources/candidate.ts:136](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L136)
 
 Search every Candidate record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -221,7 +221,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 ##### query?
 
-[`SearchQuery`](SearchQuery.md)\<`Fields`\<`C`\>, `EmptyReferences`\> & `ReadSelection`\<`FL`, `E`, `I`\>
+[`CandidateSearchQuery`](CandidateSearchQuery.md)\<`C`\> & `ReadSelection`\<`FL`, `E`, `I`\>
 
 #### Returns
 
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/candidate.ts:184](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L184)
+Defined in: [src/resources/candidate.ts:187](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L187)
 
 Update one Candidate record by id; resolves to that id.
 
@@ -257,7 +257,7 @@ Update one Candidate record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/candidate.ts:200](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L200)
+Defined in: [src/resources/candidate.ts:203](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L203)
 
 Update many Candidate records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

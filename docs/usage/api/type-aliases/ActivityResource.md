@@ -8,7 +8,7 @@
 
 > **ActivityResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/activity.ts:115](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L115)
+Defined in: [src/resources/activity.ts:120](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L120)
 
 The Activity accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/activity.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L189)
+Defined in: [src/resources/activity.ts:192](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L192)
 
 Create one Activity record; resolves to the newly assigned id.
 
@@ -49,7 +49,7 @@ Create one Activity record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/activity.ts:202](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L202)
+Defined in: [src/resources/activity.ts:205](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L205)
 
 Create many Activity records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/activity.ts:157](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L157)
+Defined in: [src/resources/activity.ts:160](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L160)
 
 Read one Activity record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/activity.ts:179](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L179)
+Defined in: [src/resources/activity.ts:182](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L182)
 
 Read many Activity records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/activity.ts:126](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L126)
+Defined in: [src/resources/activity.ts:131](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L131)
 
 Search Activity records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -186,7 +186,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 ##### query?
 
-[`SearchQuery`](SearchQuery.md)\<`Fields`\<`C`\>, `EmptyReferences`\> & [`Limit`](Limit.md) & `object` & `ReadSelection`\<`FL`, `E`, `I`\>
+[`ActivitySearchQuery`](ActivitySearchQuery.md)\<`C`\> & [`Limit`](Limit.md) & `object` & `ReadSelection`\<`FL`, `E`, `I`\>
 
 #### Returns
 
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/activity.ts:142](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L142)
+Defined in: [src/resources/activity.ts:145](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L145)
 
 Search every Activity record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -221,7 +221,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 ##### query?
 
-[`SearchQuery`](SearchQuery.md)\<`Fields`\<`C`\>, `EmptyReferences`\> & `ReadSelection`\<`FL`, `E`, `I`\>
+[`ActivitySearchQuery`](ActivitySearchQuery.md)\<`C`\> & `ReadSelection`\<`FL`, `E`, `I`\>
 
 #### Returns
 
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/activity.ts:193](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L193)
+Defined in: [src/resources/activity.ts:196](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L196)
 
 Update one Activity record by id; resolves to that id.
 
@@ -257,7 +257,7 @@ Update one Activity record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/activity.ts:209](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L209)
+Defined in: [src/resources/activity.ts:212](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L212)
 
 Update many Activity records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

@@ -108,7 +108,14 @@ export const JOB_DESCRIPTOR = {
 /** A decoded Job: known `P_` fields, each requested field `value | null`. */
 export type Job = ReadRecord<typeof FIELDS>;
 export type JobPage = ResourcePage<typeof FIELDS>;
-export type JobSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Job Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type JobSearchQuery<C extends FieldCatalog = EmptyCatalog> = SearchQuery<
+  typeof FIELDS & C,
+  typeof REFERENCES
+>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type JobCreateInput = CreateInput<
@@ -146,9 +153,7 @@ export type JobResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: JobSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -162,7 +167,7 @@ export type JobResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: JobSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Job record by id; `undefined` when there is none. `field` picks the fields to

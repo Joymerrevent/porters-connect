@@ -82,7 +82,12 @@ export const CANDIDATE_DESCRIPTOR = {
 /** A decoded Candidate: known `P_` fields, each requested field `value | null`. */
 export type Candidate = ReadRecord<typeof FIELDS>;
 export type CandidatePage = ResourcePage<typeof FIELDS>;
-export type CandidateSearchQuery = SearchQuery<typeof FIELDS>;
+/**
+ * The Candidate Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type CandidateSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C>;
 
 /** Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable. */
 export type CandidateCreateInput = CreateInput<
@@ -120,9 +125,7 @@ export type CandidateResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: CandidateSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>
   >;
@@ -136,7 +139,7 @@ export type CandidateResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> & ReadSelection<FL, E, I>,
+    query?: CandidateSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>;
   /**
    * Read one Candidate record by id; `undefined` when there is none. `field` picks the fields to

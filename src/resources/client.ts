@@ -76,7 +76,12 @@ export const CLIENT_DESCRIPTOR = {
 /** A decoded Client (company): known `P_` fields, each requested field `value | null`. */
 export type Client = ReadRecord<typeof FIELDS>;
 export type ClientPage = ResourcePage<typeof FIELDS>;
-export type ClientSearchQuery = SearchQuery<typeof FIELDS>;
+/**
+ * The Client Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ClientSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C>;
 
 /** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
 export type ClientCreateInput = CreateInput<
@@ -114,9 +119,7 @@ export type ClientResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: ClientSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>
   >;
@@ -130,7 +133,7 @@ export type ClientResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, EmptyReferences> & ReadSelection<FL, E, I>,
+    query?: ClientSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, EmptyReferences, E, I, FL>>;
   /**
    * Read one Client record by id; `undefined` when there is none. `field` picks the fields to

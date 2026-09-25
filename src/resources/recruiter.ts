@@ -95,10 +95,12 @@ export const RECRUITER_DESCRIPTOR = {
 /** A decoded Recruiter (a person at a client company): known `P_` fields, each `value | null`. */
 export type Recruiter = ReadRecord<typeof FIELDS>;
 export type RecruiterPage = ResourcePage<typeof FIELDS>;
-export type RecruiterSearchQuery = SearchQuery<
-  typeof FIELDS,
-  typeof REFERENCES
->;
+/**
+ * The Recruiter Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type RecruiterSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
 /** Fields for `create`: `P_Owner` / `P_Client` required; `P_Id` / system timestamps are not settable. */
 export type RecruiterCreateInput = CreateInput<
@@ -136,9 +138,7 @@ export type RecruiterResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> &
-      Paging &
-      ReadSelection<FL, E, I>,
+    query?: RecruiterSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
   ): Promise<
     ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
   >;
@@ -152,7 +152,7 @@ export type RecruiterResource<
     const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
       undefined,
   >(
-    query?: SearchQuery<Fields<C>, typeof REFERENCES> & ReadSelection<FL, E, I>,
+    query?: RecruiterSearchQuery<C> & ReadSelection<FL, E, I>,
   ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
   /**
    * Read one Recruiter record by id; `undefined` when there is none. `field` picks the fields to

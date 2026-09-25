@@ -4,8 +4,17 @@
 
 [@joymerrevent/porters-connect](../index.md) / CandidateSearchQuery
 
-# Type Alias: CandidateSearchQuery
+# Type Alias: CandidateSearchQuery\<C\>
 
-> **CandidateSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`\>
+> **CandidateSearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`\>
 
-Defined in: [src/resources/candidate.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L85)
+Defined in: [src/resources/candidate.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L89)
+
+The Candidate Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+order can name a custom field too.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`
