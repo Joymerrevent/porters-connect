@@ -42,7 +42,7 @@ src/
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
   auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
   resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
-    core/             # アクセサを組み立てる共通の仕組み（データ系の data-resource（読み込みの data-read と書き込みの data-write をまとめる。読み込みの戻り値の型は requested-record）・マスタの master-resource（読み込みの master-read をアクセサにする）・共有の descriptor / catalog（項目の一覧の型）/ deps / read（送信）/ paging / decoder / field-param（field の組み立て）/ query（型）/ query-encode（組み立て）/ expand / image / write / bulk-write / get-many）
+    core/             # アクセサを組み立てる共通の仕組み。ファイル名は読み込みを read-、書き込みを write- で始める（データ系の data-resource が read-data と write-data を、マスタの master-resource が read-master をまとめる。戻り値の型は read-record、入力の型は write-record、複数件は read-many / write-many。共有の read（送信）/ write / descriptor / catalog / deps / paging / decoder / field-param / query / query-encode / expand / image）
   fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
 
