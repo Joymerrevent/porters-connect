@@ -10,7 +10,7 @@ import {
   type FieldValue,
 } from "../../xml/decode";
 import type { RawItem } from "../../xml/parser";
-import type { FieldCatalog, ReadRecord } from "./catalog";
+import { fieldTypesOf, type FieldCatalog, type ReadRecord } from "./catalog";
 
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
@@ -26,7 +26,7 @@ export const decoderFor = <F extends FieldCatalog>(
   fields: F,
   expansions?: ReadonlyMap<string, ReadonlyMap<string, DataType | null>>,
 ): ((item: RawItem) => ReadRecord<F>) => {
-  const fieldMap = new Map<string, DataType | null>(Object.entries(fields));
+  const fieldMap = fieldTypesOf(fields);
   return (item) => {
     const out: Record<string, FieldValue> = {};
     for (const [key, raw] of Object.entries(item)) {

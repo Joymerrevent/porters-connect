@@ -3,12 +3,15 @@
 // the Write half (`data-write.ts`) into one accessor. Master resources have their own, smaller Read
 // (`master-read.ts`); both share the paging / decoding / sending in `read.ts`.
 
-import type { DataType } from "../../porters/data-type";
 import type { RawItem } from "../../xml/parser";
 import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
 import { decoderFor } from "./decoder";
 import { paginateOnce, type Paging } from "./paging";
-import type { FieldCatalog, ReadFieldAlias } from "./catalog";
+import {
+  fieldTypesOf,
+  type FieldCatalog,
+  type ReadFieldAlias,
+} from "./catalog";
 import type { ResourceDeps } from "./deps";
 import { buildReadParams, type Condition, type SearchQuery } from "./query";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
@@ -129,10 +132,7 @@ export const createDataReader = <
   config: DataReadConfig<F, R>,
   deps: ResourceDeps,
 ) => {
-  // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
-  const fieldMap = new Map<string, DataType | null>(
-    Object.entries(config.fields),
-  );
+  const fieldMap = fieldTypesOf(config.fields);
   const references: ReferenceMap = config.references ?? {};
   // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
   const idAlias = config.idAlias ?? "P_Id";

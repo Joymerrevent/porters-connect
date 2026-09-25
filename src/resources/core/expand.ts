@@ -13,7 +13,7 @@ import { PortersConfigError } from "../../errors";
 import type { DataType } from "../../porters/data-type";
 import type { DecodedValue } from "../../xml/decode";
 import { bareAlias } from "../../util/alias";
-import type { FieldCatalog, ReadRecord } from "./catalog";
+import { fieldTypesOf, type FieldCatalog, type ReadRecord } from "./catalog";
 
 /**
  * The resource a `System[Reference]` field points at, as far as expansion needs it: its alias
@@ -174,10 +174,7 @@ export const expansionCatalogs = (
   return selected.length === 0
     ? undefined
     : new Map(
-        selected.map(([alias, target]) => [
-          alias,
-          new Map(Object.entries(target.fields)),
-        ]),
+        selected.map(([alias, target]) => [alias, fieldTypesOf(target.fields)]),
       );
 };
 

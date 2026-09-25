@@ -5,7 +5,7 @@
 import { bareAlias, qualify } from "../../util/alias";
 import type { DataType } from "../../porters/data-type";
 import { USER_SUBFIELDS } from "../../porters/read-rules";
-import type { FieldCatalog } from "./catalog";
+import { fieldTypesOf, type FieldCatalog } from "./catalog";
 
 // --- Read `field` assembly (ADR-0020) -------------------------------------------------------
 
@@ -49,7 +49,7 @@ export const createFieldParam = (
   prefix: string,
   fields: FieldCatalog,
 ): ((p: URLSearchParams, field: readonly string[] | undefined) => void) => {
-  const lookup = new Map<string, DataType | null>(Object.entries(fields));
+  const lookup = fieldTypesOf(fields);
   const defaults = Object.keys(fields);
   return (p, field) => {
     const aliases = field ?? defaults;

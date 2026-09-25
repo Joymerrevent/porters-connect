@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { rawValue } from "./catalog";
+import { fieldTypesOf, rawValue } from "./catalog";
 import { decoderFor } from "./decoder";
 
 describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
@@ -40,5 +40,16 @@ describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
     expect(rawValue(null, "U_memo")).toBeUndefined();
     expect(rawValue("scalar", "U_memo")).toBeUndefined();
     expect(rawValue([1, 2], "U_memo")).toBeUndefined();
+  });
+});
+
+describe("core/catalog — fieldTypesOf", () => {
+  it("looks each alias up by name, keeping a catalogued null apart from an unknown alias", () => {
+    const types = fieldTypesOf({ P_Id: "System[Id]", P_Deleted: null });
+    expect(types.get("P_Id")).toBe("System[Id]");
+    expect(types.get("P_Deleted")).toBeNull();
+    expect(types.has("P_Deleted")).toBe(true);
+    expect(types.get("U_unknown")).toBeUndefined();
+    expect([...types.keys()]).toEqual(["P_Id", "P_Deleted"]);
   });
 });

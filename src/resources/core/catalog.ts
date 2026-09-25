@@ -84,3 +84,12 @@ export const rawValue = (
  * a response field the catalog does not know still decodes — read it with {@link rawValue}.
  */
 export type ReadFieldAlias<F extends FieldCatalog> = keyof F & string;
+
+/**
+ * The catalog as a runtime lookup: alias -> Data Type (`null` = PORTERS assigns none). The catalog
+ * is an `as const` object for the types; encoding, decoding and the `field` parameter look aliases
+ * up by name, and every one of them builds the lookup the same way.
+ */
+export const fieldTypesOf = (
+  fields: FieldCatalog,
+): ReadonlyMap<string, DataType | null> => new Map(Object.entries(fields));

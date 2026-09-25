@@ -4,7 +4,6 @@
 // Attachment accessor in `write.ts`; batching is `bulk-write.ts`.
 
 import { PortersConfigError } from "../../errors";
-import type { DataType } from "../../porters/data-type";
 import {
   buildWriteXml,
   type WritableDataType,
@@ -12,7 +11,7 @@ import {
   type WriteValue,
   type WriteValueOf,
 } from "../../xml/encode";
-import type { FieldCatalog } from "./catalog";
+import { fieldTypesOf, type FieldCatalog } from "./catalog";
 import type { ResourceDeps } from "./deps";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { guardImageWrite, guardNoImageInBulk } from "./image";
@@ -80,10 +79,7 @@ export const createDataWriter = <
   config: DataWriteConfig<F, Req>,
   deps: ResourceDeps,
 ) => {
-  // The catalog is `as const` for the types; encode needs a runtime lookup.
-  const fieldMap = new Map<string, DataType | null>(
-    Object.entries(config.fields),
-  );
+  const fieldMap = fieldTypesOf(config.fields);
   // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
   const idAlias = config.idAlias ?? "P_Id";
 
