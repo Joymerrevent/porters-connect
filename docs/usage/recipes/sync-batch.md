@@ -145,9 +145,9 @@ if (!r.hasFailures) await kv.set("porters:lastSync", startedAt); // 全部成功
 
 ## 関連
 
-- 主題: [検索][search-records]（条件の書き方）／[書き込み][bulk-write]（分割と部分成功）／[エラーと再試行][handle-failures]（再送してよいか）／
+- ガイド: [検索][search-records]（条件の書き方）／[書き込み][bulk-write]（分割と部分成功）／[エラーと再試行][handle-failures]（再送してよいか）／
   [上限とレート][limits]／[日時と時分型][datetime]（`P_UpdateDate` は ISO 8601）／[削除と削除済みデータ][no-delete]
-- リソース別: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
+- リソース: [リソースと操作][resources]（呼べるメソッドはリソースごとに違う）
 - 実践例: [複数テナント][multi-tenant]（レートの共有）
 - ほかの目的から探す: [目次][index]
 

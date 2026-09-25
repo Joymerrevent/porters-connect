@@ -374,7 +374,7 @@ Resource API が返す Result Code と、ライブラリでの `category`・再�
 
 ## 関連
 
-- 主題: [書き込み][write]（部分成功と、再送してよいか）／[上限とレート][limits]（レート超過は `network` で届く）／
+- ガイド: [書き込み][write]（部分成功と、再送してよいか）／[上限とレート][limits]（レート超過は `network` で届く）／
   [認証とトークン][auth]（`PortersAuthError` のあと）／[カスタム項目][custom-fields]（宣言と実データの突き合わせ）
 - 実践例: [毎日の差分同期][sync-batch]（どこから再開するか）
 - リファレンス: [トラブルシューティング][troubleshooting]（症状から引く）／[リソース Result Code][result-codes]／[認証エラーコード][auth-errors]／[認証 API のフロー][auth-flow]
