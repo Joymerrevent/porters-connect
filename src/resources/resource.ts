@@ -32,6 +32,7 @@ import {
 } from "./read-core";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
+import { MAX_IDS_PER_READ, packIds, recordsById } from "./get-many";
 import {
   applyExpand,
   expansionCatalogs,
@@ -234,7 +235,9 @@ export type Resource<
     },
   ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>;
   /**
-   * Read one record by id. `expand` reads referenced records too; `image` picks an
+   * Read one record by id; `undefined` when there is none. `field` picks the fields to read, the
+   * same way it does for `search` (omit it to read every known field); the record's id is always
+   * read, even when `field` leaves it out. `expand` reads referenced records too; `image` picks an
    * Image field's sub-tags — `get` is where asking for a `Content` belongs, since it
    * fetches one record rather than a page.
    */
@@ -243,8 +246,28 @@ export type Resource<
     const I extends ImageOption<F> = EmptyImages,
   >(
     id: number,
-    options?: { expand?: E; image?: I },
+    options?: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I },
   ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined>;
+  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+  /**
+   * Read many records by id. Resolves to an array in the order of `ids`, holding `undefined`
+   * where no record has that id — the same answer {@link get} gives for one id. A repeated id
+   * gets the same record at each of its positions; an empty `ids` sends no request.
+   *
+   * The ids are sent together (up to 200 per request, and as many as fit under the request size
+   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
+   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
+   *
+   * Every record that comes back is checked against the ids that were asked for. If PORTERS
+   * returns one that was not requested, the call rejects instead of returning it.
+   */
+  getMany<
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    ids: readonly number[],
+    options?: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I },
+  ): Promise<(ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined)[]>;
   /** Create one record; resolves to the newly assigned id. */
   create(
     input: Without<
@@ -500,24 +523,85 @@ export const createResource = <
         );
     });
 
+  // `get` / `getMany` always read the id, even when the caller's `field` leaves it out: `getMany`
+  // matches every record back to a requested id, and `get` follows the same rule so the two agree
+  // (ADR-0095). Omitted `field` stays omitted — the catalog default already holds the id.
+  const withIdField = (
+    field: ReadFieldAlias<F>[] | undefined,
+  ): ReadFieldAlias<F>[] | undefined =>
+    field === undefined || field.includes(idAlias)
+      ? field
+      : [idAlias, ...field];
+
+  // Every catalog carries a primary key (System[Id]); the generic `F` can't prove it
+  // statically, so build the condition at runtime and let the encoder qualify it
+  // (`{prefix}.{idAlias}:eq=id`, or just `{idAlias}` when there is no prefix).
+  const idCondition = (
+    op: "eq" | "or",
+    value: number | number[],
+  ): Condition<F> =>
+    ({ [idAlias]: { [op]: value } }) as unknown as Condition<F>;
+
   const get = async <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
     id: number,
-    options: { expand?: E; image?: I } = {},
+    options: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I } = {},
   ): Promise<ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined> => {
-    // Every catalog carries a primary key (System[Id]); the generic `F` can't prove it
-    // statically, so build the condition at runtime and let the encoder qualify it
-    // (`{prefix}.{idAlias}:eq=id`, or just `{idAlias}` when there is no prefix).
-    const condition = { [idAlias]: { eq: id } } as unknown as Condition<F>;
     const page = await search<E, I>({
-      condition,
+      condition: idCondition("eq", id),
       count: 1,
+      field: withIdField(options.field),
       expand: options.expand,
       image: options.image,
     });
     return page.items[0];
+  };
+
+  // ids are de-duplicated, split into requests that fit (≤200 and under the size limit), read in
+  // turn, and every page is checked against its own chunk before anything is kept (ADR-0095).
+  // A failure in any chunk rejects the whole call: a Read is safe to repeat, and a partial answer
+  // would look like "those ids do not exist".
+  const getMany = async <
+    const E extends Expand<R> = EmptyReferences,
+    const I extends ImageOption<F> = EmptyImages,
+  >(
+    ids: readonly number[],
+    options: { field?: ReadFieldAlias<F>[]; expand?: E; image?: I } = {},
+  ): Promise<
+    (ImageReadRecord<ExpandedReadRecord<F, R, E>, I> | undefined)[]
+  > => {
+    type Rec = ImageReadRecord<ExpandedReadRecord<F, R, E>, I>;
+    const field = withIdField(options.field);
+    const query = (chunk: readonly number[], count: number) => ({
+      condition: idCondition("or", [...chunk]),
+      count,
+      field,
+      expand: options.expand,
+      image: options.image,
+    });
+    // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
+    const chunks = packIds(
+      [...new Set(ids)],
+      (chunk) =>
+        readUrl({
+          ...query(chunk, MAX_IDS_PER_READ),
+          field: field ?? defaultFields,
+        }).length,
+    );
+    const found = new Map<number, Rec>();
+    for (const chunk of chunks) {
+      const page = await search<E, I>(query(chunk, chunk.length));
+      const matched = recordsById(
+        page,
+        chunk,
+        (record) => (record as Record<string, unknown>)[idAlias],
+        config.name,
+      );
+      for (const [id, record] of matched) found.set(id, record);
+    }
+    return ids.map((id) => found.get(id));
   };
 
   // create forces P_Id=-1 (non-idempotent: a retry would duplicate); update forces
@@ -624,5 +708,14 @@ export const createResource = <
     );
   };
 
-  return { search, searchAll, get, create, update, createMany, updateMany };
+  return {
+    search,
+    searchAll,
+    get,
+    getMany,
+    create,
+    update,
+    createMany,
+    updateMany,
+  };
 };

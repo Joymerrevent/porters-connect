@@ -18,21 +18,21 @@
 
 ## データ系（読み書き）
 
-| アクセサ        | リソース                         | 読み                           | 書き                                              | 固有の注意                                                                                       |
-| --------------- | -------------------------------- | ------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `t.candidate`   | [Candidate（個人連絡先）][c]     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | 項目の接頭辞が `Person.`（ライブラリが付けるので書かない）                                       |
-| `t.job`         | [Job（JOB）][j]                  | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.client`      | [Client（企業）][cl]             | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.recruiter`   | [Recruiter（企業担当者）][r]     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.contact`     | [Contact（コンタクト）][ct]      | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.opportunity` | [Opportunity（商談管理）][o]     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.activity`    | [Activity（アクティビティ）][a]  | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | `P_Resource` は対象リソースを表す数値                                                            |
-| `t.contract`    | [Contract（契約）][co]           | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | 所有者の項目（`P_Owner`）が無い                                                                  |
-| `t.sales`       | [Sales（成約・売上）][s]         | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | 参照先を指す 6 項目（企業・企業担当者・JOB・契約・個人連絡先・レジュメ）の組み合わせに規則がある |
-| `t.process`     | [Process（選考プロセス）][p]     | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | JOB × レジュメの組み合わせで一意（重複は弾かれる）                                               |
-| `t.resume`      | [Resume（レジュメ）][re]         | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
-| `t.phase`       | [Phase（フェーズ履歴）][ph]      | `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` | **先に `of("candidate")` で指定する**                                                            |
-| `t.attachment`  | [Attachment（添付ファイル）][at] | `search` / `searchAll` / `get` | `create` / `update`（**一括なし**）               | **先に `of("resume")` で指定する**。本体は `get` でだけ取れる                                    |
+| アクセサ        | リソース                         | 読み                                       | 書き                                              | 固有の注意                                                                                       |
+| --------------- | -------------------------------- | ------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `t.candidate`   | [Candidate（個人連絡先）][c]     | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | 項目の接頭辞が `Person.`（ライブラリが付けるので書かない）                                       |
+| `t.job`         | [Job（JOB）][j]                  | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.client`      | [Client（企業）][cl]             | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.recruiter`   | [Recruiter（企業担当者）][r]     | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.contact`     | [Contact（コンタクト）][ct]      | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.opportunity` | [Opportunity（商談管理）][o]     | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.activity`    | [Activity（アクティビティ）][a]  | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | `P_Resource` は対象リソースを表す数値                                                            |
+| `t.contract`    | [Contract（契約）][co]           | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | 所有者の項目（`P_Owner`）が無い                                                                  |
+| `t.sales`       | [Sales（成約・売上）][s]         | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | 参照先を指す 6 項目（企業・企業担当者・JOB・契約・個人連絡先・レジュメ）の組み合わせに規則がある |
+| `t.process`     | [Process（選考プロセス）][p]     | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | JOB × レジュメの組み合わせで一意（重複は弾かれる）                                               |
+| `t.resume`      | [Resume（レジュメ）][re]         | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |                                                                                                  |
+| `t.phase`       | [Phase（フェーズ履歴）][ph]      | `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` | **先に `of("candidate")` で指定する**                                                            |
+| `t.attachment`  | [Attachment（添付ファイル）][at] | `search` / `searchAll` / `get`             | `create` / `update`（**一括なし**）               | **先に `of("resume")` で指定する**。本体は `get` でだけ取れる                                    |
 
 **`delete` はどの行にもありません**（[削除と削除済みデータ][deleted]）。`createMany` / `updateMany` は 200 件を超えても
 自動で分割します（[書き込み][write]）。

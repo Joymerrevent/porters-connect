@@ -41,13 +41,18 @@ Read は `GET`、Write は `POST`。Read のクエリは URL エンコードが�
 
 `condition=[Alias]:[suffix]=[value]`。型ごとに suffix が異なる（省略時の既定あり）。
 
-| 対象型                                           | suffix                                               | 既定   |
-| ------------------------------------------------ | ---------------------------------------------------- | ------ |
-| Number / Currency / DateTime / Date / Age / Id   | `gt` `ge` `eq` `le` `lt`（Phase の Id は `or` も可） | `eq`   |
-| Text 系（SinglelineText/Multiline/Tel/Mail/URL） | `full`（完全一致）/ `part`（部分一致）               | `part` |
-| Option                                           | `or` / `and`（値はコロン区切り）                     | `or`   |
-| Link（ユーザー型/部署型/担当者型）               | `or` / `and`（値は ID のみ）                         | `or`   |
+| 対象型                                           | suffix                                        | 既定   |
+| ------------------------------------------------ | --------------------------------------------- | ------ |
+| Number / Currency / DateTime / Date / Age / Id   | `gt` `ge` `eq` `le` `lt`（Id の `or` は下記） | `eq`   |
+| Text 系（SinglelineText/Multiline/Tel/Mail/URL） | `full`（完全一致）/ `part`（部分一致）        | `part` |
+| Option                                           | `or` / `and`（値はコロン区切り）              | `or`   |
+| Link（ユーザー型/部署型/担当者型）               | `or` / `and`（値は ID のみ）                  | `or`   |
 
+- **Id の `or`**（`[Alias]:or=<id>:<id>`・値はコロン区切り）は、出典の記述が割れている。Read - Condition の記事は
+  本文で「Phase API の Id および Resource Id にしか使用できません」と書き、同じ行の例は `Job.P_Id:or=10003:43405`。
+  Job Read と Opportunity Read の記事の例も `P_Id:or=1234:1235` で、Job Read の応答例は 2 件とも返している。
+  Phase の `Id` については Phase Read の記事が明記している。データ系の `P_Id` に効くかは契約環境で確認していない。
+  <!-- 根拠: ADR-0095 / LV-33 -->
 - **時分型**（Field Type 12 のうち時刻だけを持つ項目・2026/08 追加）を condition に書くときは、値に基準日を付ける:
   `1970/01/01 HH:mm:ss`（00:00〜23:59）／ `1970/01/02 HH:mm:ss`（24:00〜47:59）。基準日以外の年月日は
   **Result Code 100 で検索されない**（[field-data-types][field-data-types] の「時分型」節）。

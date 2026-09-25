@@ -632,13 +632,13 @@ describe("V1 マトリクス: 根拠として挙げた番号が実在する", ()
 
 describe("V1 マトリクス: 表 D ↔ 実装（Read の操作）", () => {
   it.each(PROBES)(
-    "$endpoint の search / searchAll / get が表どおり",
+    "$endpoint の search / searchAll / get / getMany が表どおり",
     (probe) => {
       const { ctx } = createProbeClient();
       const row = tableOf("表 D").find((r) => endpointOf(r) === probe.endpoint);
       expect(row).toBeDefined();
       const accessor = probe.accessor(ctx);
-      for (const method of ["search", "searchAll", "get"]) {
+      for (const method of ["search", "searchAll", "get", "getMany"]) {
         expect(hasMethod(accessor, method), `${probe.endpoint} ${method}`).toBe(
           (row?.[method] ?? "").startsWith(HAS),
         );

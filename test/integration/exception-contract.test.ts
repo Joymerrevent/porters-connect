@@ -47,6 +47,7 @@ const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
       }),
   ],
   ["candidate.get", () => porters.tenant(1).candidate.get(1)],
+  ["candidate.getMany", () => porters.tenant(1).candidate.getMany([1, 2])],
   [
     "candidate.create",
     () => porters.tenant(1).candidate.create({ P_Owner: 5 }),
