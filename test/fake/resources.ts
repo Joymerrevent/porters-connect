@@ -28,7 +28,7 @@ import {
   RECRUITER_DESCRIPTOR,
   RESUME_DESCRIPTOR,
 } from "../../src/resources/index";
-import type { ResourceDescriptor } from "../../src/resources/resource";
+import type { ResourceDescriptor } from "../../src/resources/core/resource";
 import type { DataType } from "../../src/xml/decode";
 import {
   parseAttachmentReadQuery,

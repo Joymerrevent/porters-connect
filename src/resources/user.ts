@@ -7,7 +7,7 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
+import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
   paginateOnce,
@@ -18,12 +18,12 @@ import {
   type ReadFieldAlias,
   type ReadRecord,
   type ResourcePage,
-} from "./read-core";
+} from "./core/read";
 import type { DataType } from "../xml/decode";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある
-// （`Job.P_Owner(User.…)` の展開 — read-core の `USER_SUBFIELDS`）。以降の 13 項目は
+// （`Job.P_Owner(User.…)` の展開 — core/read の `USER_SUBFIELDS`）。以降の 13 項目は
 // reference が「Resource API での Read 時に、参照取得することはできません」と明記する項目で、
 // **この User Read でだけ読める**。両者はカタログ上は同列で、違いは要求のしかたに現れる。
 const FIELDS = {

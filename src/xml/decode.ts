@@ -126,7 +126,7 @@ export type DecodedValue<D extends DataType | null> = D extends DataType
   : string;
 
 // A tag's bare alias: `Client.P_Name` -> `P_Name`. Nested reference tags carry the *referenced*
-// resource's prefix, which nothing here knows. Mirrors `bareAlias` in resources/read-core.ts.
+// resource's prefix, which nothing here knows. Mirrors `bareAlias` in resources/core/read.ts.
 // Stryker disable StringLiteral: for a dotless tag both branches yield the tag itself
 const bareTag = (key: string): string =>
   key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;

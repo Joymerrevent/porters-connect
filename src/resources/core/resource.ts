@@ -8,17 +8,17 @@ import {
   PortersConfigError,
   PortersResourceError,
   resourceError,
-} from "../errors";
-import { apiUrl, type AccessPoint } from "../http/access-point";
-import type { DataType } from "../xml/decode";
+} from "../../errors";
+import { apiUrl, type AccessPoint } from "../../http/access-point";
+import type { DataType } from "../../xml/decode";
 import {
   buildWriteXml,
   type WritableDataType,
   type WriteItem,
   type WriteValue,
   type WriteValueOf,
-} from "../xml/encode";
-import { parseWriteResult, type RawItem } from "../xml/parser";
+} from "../../xml/encode";
+import { parseWriteResult, type RawItem } from "../../xml/parser";
 import {
   decoderFor,
   paginateOnce,
@@ -29,7 +29,7 @@ import {
   type ReadFieldAlias,
   type ResourceDeps,
   type ResourcePageOf,
-} from "./read-core";
+} from "./read";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { MAX_IDS_PER_READ, packIds, recordsById } from "./get-many";
@@ -51,7 +51,7 @@ import {
   type ImageReadRecord,
 } from "./image";
 
-// Shared Read types/internals live in read-core (reused by master resources). Re-export the
+// Shared Read types/internals live in core/read (reused by master resources). Re-export the
 // types so the data-resource modules keep importing them from "./resource".
 export type {
   EmptyCatalog,
@@ -61,7 +61,7 @@ export type {
   ResourceDeps,
   ResourcePage,
   ResourcePageOf,
-} from "./read-core";
+} from "./read";
 // Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
 // and the public barrel keep importing the query types from "./resource".
 export type { Condition, ItemState, Order, SearchQuery } from "./query";

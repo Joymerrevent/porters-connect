@@ -5,7 +5,6 @@
 // The response is read through both error channels — HTTP status and PORTERS
 // envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
-import type { AccessTokenSource } from "../auth/types";
 import {
   PortersConfigError,
   PortersError,
@@ -13,9 +12,9 @@ import {
   PortersResourceError,
 } from "../errors/index";
 import { readResponse } from "./read-response";
-import type { Backoff } from "./retry";
+import type { Backoff } from "./backoff";
 import type { Throttle } from "./throttle";
-import type { Transport, TransportRequest } from "./types";
+import type { AccessTokenSource, Transport, TransportRequest } from "./types";
 
 // Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
 const API_VERSION = "2";

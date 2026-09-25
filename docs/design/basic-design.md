@@ -20,6 +20,7 @@
    │   ├─ errors/       PortersError 階層（Auth/Resource/Network/Config）＋ category     │
    │   ├─ fields/       defineFields DSL（標準 P_ 静的型 ＋ カスタム U_/A_ 宣言＋検証）  │
    │   ├─ resources/    リソース別アクセサ（candidate.search/get/create/update …）      │
+   │   │   └─ core/     アクセサを組み立てる共通の仕組み（Read・クエリ・展開・一括）     │
    │   └─ util/         datetime（PORTERS 形式 ⇄ ISO8601）ほか                           │
    └───────────────────────────────────────────────────────────────────────────────────┘
         │ HTTPS（XML）
@@ -34,15 +35,19 @@
 src/
   index.ts            # public export（ここからのみ公開）
   client.ts           # PortersClient・porters.tenant(id) スコープ
-  auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
-  http/               # transport（注入 IF・既定 fetch）・headers・throttle・retry
-  xml/                # parse / serialize（データ型別エンコード）
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
-  fields/             # defineFields（ビルダー）・標準 P_ 型・実行時検証
-  resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
-  types/              # 共有型
-  util/datetime.ts    # PORTERS 形式 ⇄ ISO8601（UTC）
+  util/               # 他のモジュールに依存しない関数（datetime：PORTERS 形式 ⇄ ISO8601（UTC）ほか）
+  xml/                # parse / serialize（データ型別エンコード）
+  http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
+  auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
+  resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）・定義表
+    core/             # アクセサを組み立てる共通の仕組み（resource / read / query / expand / image / bulk-write / get-many）
+  fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
+
+- **モジュールの層**（[ADR-0097][a97]）：上の一覧の順（`errors` → `util` → `xml` → `http` → `auth` → `resources` →
+  `fields` → 直下）に下から並ぶ。各モジュールは自分より下の層だけを import する。`resources/core/` は `resources/` 直下
+  （リソース本体と定義表）を import しない。eslint の `no-restricted-imports` で止める（テストは対象外）。
 
 - **UT は co-located**：`src/xml/parser.ts` ↔ `src/xml/parser.test.ts`（vitest 既定の `**/*.test.ts`）。
   ビルド（tsup）は `src/index.ts` の依存グラフからバンドルするため `*.test.ts` は **dist/型に含まれない**。`package.json` は `dist` のみ publish。
@@ -179,3 +184,4 @@ accessor 呼び出し
 [a12]: ../adr/0012-token-cache-refresh.md
 [a47]: ../adr/0047-access-point-scheme.md
 [a91]: ../adr/0091-token-provider-and-store.md
+[a97]: ../adr/0097-src-module-layout.md

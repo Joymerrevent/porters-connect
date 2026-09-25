@@ -8,7 +8,7 @@
 
 > **Scheme** = `"https"` \| `"http"`
 
-Defined in: [src/types/common.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/types/common.ts#L13)
+Defined in: [src/http/access-point.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/access-point.ts#L16)
 
 URL scheme of the API access point. `https` is the default; `http` is opt-in,
 meant for a local fake server or a trusted tunnel, and always warns (see

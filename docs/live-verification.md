@@ -188,7 +188,7 @@ grep -rn "VERIFY(live)" src test
 - **不確実な理由**: App 登録が App 単位である点は確定だが、**発行されたトークンのアクセス範囲が partition を跨ぐか**は未確認。
   [ADR-0008][a8] は両対応（跨げないなら案3＝テナントごとに専用 client を構築）なので**設計はブロックされない**が、
   `tenant(id)` の使い勝手は結論に左右される
-- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/resource.ts`（`partition` をクエリに載せる）
+- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/core/resource.ts`（`partition` をクエリに載せる）
 - **確認方法**: アクセス権を付与した 2 つの partition に対し、**同一の Access Token** で Read を投げて両方 200 ＋ `<Code>0`
   が返るか。片方が 403/404 なら案3（テナントごとに client）を推奨経路に格上げする
 - **状態**: 未確認
@@ -226,7 +226,7 @@ grep -rn "VERIFY(live)" src test
   「既定を説明しているだけで、送るのは `deleted` / `all` のみ」という読み方も文面上は否定できない。
   外れたときの形が重く、**`existing` を明示指定した Read が全部 Result Code 133
   （itemstate 値が無効）で落ちる**
-- **コード箇所**: `src/resources/query.ts`（`appendReadQuery` の itemstate 分岐）
+- **コード箇所**: `src/resources/core/query.ts`（`appendReadQuery` の itemstate 分岐）
 - **確認方法**: `itemstate=existing` を付けた Read を実機に投げ、**HTTP 200 ＋ ルート `<Code>0`** が返り、
   かつ**結果が `itemstate` 無しの Read と一致する**ことを確認する。133 が返るなら案A を撤回して
   [ADR-0038][a38] SD-4 の省略へ戻す（新しい ADR で [ADR-0057][a57] を supersede する）
@@ -246,7 +246,7 @@ grep -rn "VERIFY(live)" src test
   リソース名と食い違う唯一の例。Field Type 記事が Write について
   「`Person.P_Id` の値のみを指定することができます」と書くので **Read の `()` も `Person.` と推定**しているが、
   Read 側の明示例は無い
-- **コード箇所**: `src/resources/expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
+- **コード箇所**: `src/resources/core/expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
   `src/resources/candidate.ts`（`prefix: "Person"`）・参照先の登録は各リソースの `REFERENCES`
 - **確認方法**: Process Read に `field=Process.P_Candidate(Person.P_Id,Person.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
@@ -265,7 +265,7 @@ grep -rn "VERIFY(live)" src test
 UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を並べており、
   この resource について `()` 付きの例が無い。応答の形（`<Owner><User><User.P_Id>…`）は
   どちらの要求でも同じなので、**要求が受け付けられるかだけが未確認**
-- **コード箇所**: `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）・
+- **コード箇所**: `src/resources/core/read.ts`（`readFieldEntry` — `User` 型に `()` を付ける）・
   `src/resources/phase.ts`（`VERIFY(live)` 済み）
 - **確認方法**: Phase Read に `resource=5&field=Owner(User.P_Id,User.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
@@ -286,7 +286,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   （あちらは Phase・こちらは User Read）。なお 13 項目は「Resource API での Read 時に**参照取得**できない」
   とされるもので、これは `Job.P_Owner(User.P_Telephone)` のような**参照経由**の話＝ User Read 自体の制約ではない
 - **コード箇所**: `src/resources/user.ts`（`DEFAULT_FIELDS` ＝ カタログ全項目）・
-  `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）
+  `src/resources/core/read.ts`（`readFieldEntry` — `User` 型に `()` を付ける）
 - **確認方法**: `GET /v1/user?partition=…&request_type=1&field=<17 項目>` を投げ、**HTTP 200 ＋ ルート
   `<Code>0`** と各項目の値が返ることを確認する。特定の項目で落ちるなら、その項目だけカタログから外すのではなく
   **`DEFAULT_FIELDS` から外して `field` 明示時のみ送る**か、reference の記述を疑って出典を当たり直す
@@ -319,7 +319,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は「既定は FileName のみ」「`ContentType` / `Content` は明示」と**散文で**書き、
   Write 形式の側にサブ要素名（`FileName` / `ContentType` / `Content`）があるだけで、
   **Read の `field` にどう書くかのサンプルが無い**。`User` 型の `()` 記法から類推している
-- **コード箇所**: `src/resources/image.ts`（`applyImage` — `VERIFY(live)` 済み）
+- **コード箇所**: `src/resources/core/image.ts`（`applyImage` — `VERIFY(live)` 済み）
 - **確認方法**: Image 項目を持つテナントで `field=<alias>(FileName,ContentType,Content)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と 3 つのサブタグが返ることを確認する。外れていたら
   `applyImage` の組み立てだけを直す（decode は**返ってきたサブタグを読む**実装なので影響しない）
@@ -336,7 +336,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は **Image については condition 不可と明記**するが、**Link には記載が無い**。
   一方 Read 概要の演算子表には「Link（ユーザー型/部署型）: `or` / `and`（値は ID のみ）」という行があり、
   **使える可能性がある**。「不可」ではなく「不明」なので、**狭い側に倒してある**
-- **コード箇所**: `src/resources/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
+- **コード箇所**: `src/resources/core/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
   order 側の `OrderableKeys` は列挙なので Link を載せていないだけ）
 - **確認方法**: Link 項目に `condition` を付けた Read を投げ、受け付けられるか確認する。
   使えると分かったら `ConditionOf` の `Link` を実際の演算子オブジェクトに差し替える＝**緩めるだけなので後方互換**
@@ -546,7 +546,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   「Phase API の Id および Resource Id にしか使用できません」と書き、同じ行の例は `Job.P_Id:or=10003:43405`。
   Job Read と Opportunity Read の記事の例も `P_Id:or=1234:1235` で、Job Read の応答例は 2 件とも返している。
   Phase の `Id` は Phase Read の記事が明記している
-- **コード箇所**: `src/resources/get-many.ts`（`recordsById` の突き合わせ）
+- **コード箇所**: `src/resources/core/get-many.ts`（`recordsById` の突き合わせ）
 - **確認方法**: データ系（Candidate など）で `condition=Person.P_Id:or=<存在する ID>:<存在する ID>` を送り、2 件だけが
   返るか（`Total` も 2 か）を確かめる。条件がエラーで返るか、条件を無視して先頭から返るかも見分ける
 - **状態**: 未確認

@@ -5,7 +5,7 @@
 // Partition has no `current()`; ADR-0022 D3b). `requestType: 0` stays on the query for a caller
 // whose token came from the browser grant. No `get(id)`: the API has no id/condition filter.
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
+import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
   paginateOnce,
@@ -14,7 +14,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
-} from "./read-core";
+} from "./core/read";
 
 const FIELDS = {
   P_Id: "System[Id]",

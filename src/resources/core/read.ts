@@ -4,19 +4,19 @@
 // resources add bespoke query/URL building (ADR-0021/0022). XML stays in xml/ — this only
 // wires parse + decode together.
 
-import { PortersConfigError } from "../errors";
-import { qualify } from "../util/alias";
-import { apiUrl, type AccessPoint } from "../http/access-point";
-import type { Requester } from "../http/requester";
+import { PortersConfigError } from "../../errors";
+import { qualify } from "../../util/alias";
+import { apiUrl, type AccessPoint } from "../../http/access-point";
+import type { Requester } from "../../http/requester";
 import {
   decodeField,
   decodeReferenceRecord,
   type DataType,
   type DecodedValue,
   type FieldValue,
-} from "../xml/decode";
-import { parseResourcePage, type RawItem } from "../xml/parser";
-import { asRecord } from "../xml/raw";
+} from "../../xml/decode";
+import { parseResourcePage, type RawItem } from "../../xml/parser";
+import { asRecord } from "../../xml/raw";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).

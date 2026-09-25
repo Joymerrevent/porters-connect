@@ -5,9 +5,9 @@ import {
   PortersConfigError,
   PortersNetworkError,
   PortersResourceError,
-} from "../errors";
-import { MAX_REQUEST_LENGTH, type Requester } from "../http/requester";
-import { encodeWriteItem } from "../xml/encode";
+} from "../../errors";
+import { MAX_REQUEST_LENGTH, type Requester } from "../../http/requester";
+import { encodeWriteItem } from "../../xml/encode";
 import { buildWriteUrl, createResource, type FieldCatalog } from "./resource";
 
 const FIELDS = {

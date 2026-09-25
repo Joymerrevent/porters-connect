@@ -103,6 +103,8 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 ## ディレクトリ構成
 
 モジュール構成（ディレクトリ＝責務境界）とテスト配置は `docs/design/basic-design.md` §2 が正。
+**モジュールの層**（errors → util → xml → http → auth → resources → fields → 直下）は ADR-0097 で決め、
+下の層から上の層を import すると eslint が止める。
 ファイル単位の分割は詳細設計／実装で確定する。下記は要点のみ（雛形・非確定）：
 
 ```text
@@ -113,8 +115,8 @@ src/
   http/{request,headers}.ts
   xml/parser.ts
   resources/{candidate,job,client,process,...}.ts
+  resources/core/           # アクセサを組み立てる共通の仕組み（ADR-0097）
   fields/define-fields.ts   # カスタム項目宣言 DSL（ADR-0023）
-  types/
   util/datetime.ts
 ```
 

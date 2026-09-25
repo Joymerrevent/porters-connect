@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { expoBackoff } from "./retry";
+import { expoBackoff } from "./backoff";
 
 describe("expoBackoff (ADR-0010)", () => {
   it("stays within [0, ceil) with an exponentially growing ceiling (full jitter)", () => {

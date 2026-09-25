@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors/index";
 import { apiUrl, validateAccessPoint } from "./access-point";
-import type { Scheme } from "../types/index";
+import type { Scheme } from "./access-point";
 
 describe("apiUrl (ADR-0047)", () => {
   it("defaults to https when no scheme is configured", () => {

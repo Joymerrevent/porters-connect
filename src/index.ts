@@ -49,7 +49,9 @@ export type { MockHandler, MockReply, MockTransportOptions } from "./http";
 export { createFetchTransport } from "./http";
 export type { FetchTransportOptions } from "./http";
 // `Scheme` is the access-point URL scheme accepted by `PortersClientOptions.scheme` (ADR-0047).
-export type { PartitionId, Scheme, Scope } from "./types";
+export type { PartitionId } from "./client";
+export type { Scheme } from "./http";
+export type { Scope } from "./auth";
 
 // Custom field declaration DSL (R-16 / ADR-0023): declare tenant U_/A_ fields so they
 // are typed and decode/encode by their declared Data Type.

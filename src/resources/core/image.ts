@@ -11,11 +11,11 @@
 // is no decode half: `decodeImage` reads whichever sub-tags came back, so nothing at runtime needs
 // to be told what was asked for.
 
-import { PortersConfigError } from "../errors";
-import { qualify } from "../util/alias";
-import type { DataType, ImageSubField, ImageValue } from "../xml/decode";
-import { IMAGE_CONTENT_TYPES, type WriteItem } from "../xml/encode";
-import type { FieldCatalog } from "./read-core";
+import { PortersConfigError } from "../../errors";
+import { qualify } from "../../util/alias";
+import type { DataType, ImageSubField, ImageValue } from "../../xml/decode";
+import { IMAGE_CONTENT_TYPES, type WriteItem } from "../../xml/encode";
+import type { FieldCatalog } from "./read";
 
 /** The aliases of `F` that are Image-typed — the only ones `image` may name. */
 type ImageKeys<F extends FieldCatalog> = {

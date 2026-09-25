@@ -8,7 +8,7 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
+import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
 import {
   decoderFor,
   paginateOnce,
@@ -17,7 +17,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
-} from "./read-core";
+} from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。

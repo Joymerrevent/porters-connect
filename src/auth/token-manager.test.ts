@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors/index";
-import { createMemoryTokenStore } from "./memory-store";
+import { createMemoryTokenStore } from "./memory-token-store";
 import { createTokenManager, readStoredTokens } from "./token-manager";
 import type { StoredTokens, TokenProvider, TokenStore } from "./types";
 

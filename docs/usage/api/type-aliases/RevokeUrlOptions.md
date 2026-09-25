@@ -8,6 +8,6 @@
 
 > **RevokeUrlOptions** = [`AuthorizationUrlOptions`](AuthorizationUrlOptions.md)
 
-Defined in: [src/auth/auth-api.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L25)
+Defined in: [src/auth/auth-api.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/auth/auth-api.ts#L24)
 
 Options for the `remove` (de-authorization) browser URL.

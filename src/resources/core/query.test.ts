@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersConfigError } from "../errors";
-import type { DataType } from "../xml/decode";
+import { PortersConfigError } from "../../errors";
+import type { DataType } from "../../xml/decode";
 import { appendReadQuery, type SearchQuery } from "./query";
 
 // A synthetic catalog with one field per condition group, exercising every Data-Type branch

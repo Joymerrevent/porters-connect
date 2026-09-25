@@ -9,9 +9,9 @@
 // decode the answer with, and the guard that turns a hand-written expansion into a clear error.
 // Resource wiring lives in resource.ts, XML in xml/.
 
-import { PortersConfigError } from "../errors";
-import type { DataType, DecodedValue } from "../xml/decode";
-import { bareAlias, type FieldCatalog, type ReadRecord } from "./read-core";
+import { PortersConfigError } from "../../errors";
+import type { DataType, DecodedValue } from "../../xml/decode";
+import { bareAlias, type FieldCatalog, type ReadRecord } from "./read";
 
 /**
  * The resource a `System[Reference]` field points at, as far as expansion needs it: its alias

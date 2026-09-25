@@ -33,7 +33,7 @@ import {
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./resource";
+} from "./core/resource";
 import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 
 const FIELDS = {

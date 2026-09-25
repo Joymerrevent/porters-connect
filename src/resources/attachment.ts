@@ -15,13 +15,13 @@ import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { appendPaging, paginateOnce } from "./read-core";
+import { appendPaging, paginateOnce } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
 import {
   buildWriteUrl,
   firstWriteResultId,
   type ResourceDeps,
-} from "./resource";
+} from "./core/resource";
 
 // A 10MB file is ~13.98M Base64 chars; cap the encoded Content length before send
 // (fail-safe — the ~15000-char request guard is bypassed for uploads). docs/usage/reference.

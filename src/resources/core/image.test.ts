@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersConfigError } from "../errors";
-import type { DataType, ImageSubField } from "../xml/decode";
-import type { ImageWriteValue } from "../xml/encode";
+import { PortersConfigError } from "../../errors";
+import type { DataType, ImageSubField } from "../../xml/decode";
+import type { ImageWriteValue } from "../../xml/encode";
 import { applyImage, guardImageWrite, guardNoImageInBulk } from "./image";
 
 // Unit-level counterpart to the wiring tests in resource.test.ts: those drive the option through

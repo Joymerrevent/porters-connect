@@ -20,7 +20,7 @@ import { fieldTypeValueOf } from "../../src/resources/field-type";
 import { RESOURCE_VALUES } from "../../src/resources/resource-list";
 import { OPTION_DESCRIPTOR } from "../../src/resources/option";
 import { PARTITION_DESCRIPTOR } from "../../src/resources/partition";
-import type { ResourceDescriptor } from "../../src/resources/resource";
+import type { ResourceDescriptor } from "../../src/resources/core/resource";
 import { USER_DESCRIPTOR } from "../../src/resources/user";
 import type { TransportResponse } from "../../src/http/types";
 import type { DataType } from "../../src/xml/decode";

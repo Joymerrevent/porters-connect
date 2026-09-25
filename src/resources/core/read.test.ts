@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersConfigError } from "../errors";
+import { PortersConfigError } from "../../errors";
 
-import type { FieldValue } from "../xml/decode";
+import type { FieldValue } from "../../xml/decode";
 import {
   appendPaging,
   decoderFor,
   paginateOnce,
   rawValue,
   type FieldCatalog,
-} from "./read-core";
+} from "./read";
 
 // runRead / paginate are exercised through resource.test.ts and the master tests; here we pin
 // the shared decoder directly, including bareAlias on both prefixed and prefix-less keys.
@@ -20,7 +20,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-describe("read-core — decoderFor", () => {
+describe("core/read — decoderFor", () => {
   it("decodes catalogued fields by both prefixed and prefix-less alias", () => {
     const rec = decoderFor(FIELDS)({ "X.P_Id": "7", P_Name: "hi" }) as Record<
       string,
@@ -48,7 +48,7 @@ describe("read-core — decoderFor", () => {
   });
 });
 
-describe("read-core — appendPaging（count のガード・RV-28）", () => {
+describe("core/read — appendPaging（count のガード・RV-28）", () => {
   const params = (count?: number, start?: number): string => {
     const p = new URLSearchParams();
     appendPaging(p, count, start);
@@ -90,7 +90,7 @@ describe("read-core — appendPaging（count のガード・RV-28）", () => {
   });
 });
 
-describe("read-core — paginateOnce", () => {
+describe("core/read — paginateOnce", () => {
   const drain = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
     const out: T[] = [];
     for await (const x of it) out.push(x);

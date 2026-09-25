@@ -8,7 +8,7 @@
 
 > **ExpandedReadRecord**\<`F`, `R`, `E`\> = `Omit`\<`ReadRecord`\<`F`\>, keyof `E`\> & \{ \[K in keyof E & keyof R\]?: ExpandedValue\<R\[K\], E\[K\]\> \| null \}
 
-Defined in: [src/resources/expand.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/expand.ts#L82)
+Defined in: [src/resources/core/expand.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/expand.ts#L82)
 
 The read record for a query that expanded some references: the plain ReadRecord, with
 each expanded field's value replaced by the referenced record's own shape. Fields left out of

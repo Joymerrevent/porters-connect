@@ -20,7 +20,7 @@ import {
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
-} from "./resource";
+} from "./core/resource";
 import { CLIENT_DESCRIPTOR } from "./client";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 
