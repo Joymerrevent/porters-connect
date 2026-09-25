@@ -3,6 +3,62 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 
+// ADR-0097: 各モジュールが import してはいけない先（自分より上の層）。直下の client / index は全員にとって上。
+const LAYERS = [
+  ["errors", ["util", "xml", "http", "auth", "resources", "fields"]],
+  ["util", ["xml", "http", "auth", "resources", "fields"]],
+  ["xml", ["http", "auth", "resources", "fields"]],
+  ["http", ["auth", "resources", "fields"]],
+  ["auth", ["resources", "fields"]],
+  // resources は auth を使っていないので、import してよい先に含めない（ADR-0097 の表）。
+  ["resources", ["auth", "fields"]],
+  ["fields", ["auth"]],
+];
+
+const layerRules = () => [
+  ...LAYERS.map(([module, above]) => ({
+    files: [`src/${module}/**/*.ts`],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: `^(\\.\\./)+(${[...above, "client", "index"].join("|")})(/|$)`,
+              message: `src/${module}/ は下の層だけを import できます（ADR-0097 の層の表）。`,
+            },
+          ],
+        },
+      ],
+    },
+  })),
+  // resources/core/ は共通の仕組み。resources/ 直下（リソース本体と定義表）を import しない。
+  {
+    files: ["src/resources/core/**/*.ts"],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^(\\.\\./)+(auth|fields|client|index)(/|$)",
+              message:
+                "src/resources/ は auth・fields・直下を import できません（ADR-0097 の層の表）。",
+            },
+            {
+              regex: "^\\.\\./(?!\\.\\./)",
+              message:
+                "resources/core/ は resources/ 直下（リソース本体と定義表）を import できません（ADR-0097）。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+
 // ESLint flat config（format+lint レシピの lint 部分）。
 // 役割分担: 整形は Prettier、ここでは「型だけでは拾えないバグ・品質」を検出する。
 // 型情報を使うルール（no-floating-promises 等）を有効化するため type-checked を採用。
@@ -35,6 +91,12 @@ export default tseslint.config(
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
     },
   },
+
+  // ADR-0097: src/ のモジュールの層。下の層から上の層を import したら止める（人の記憶でなく仕組みで守る）。
+  // errors → util → xml → http → auth → resources → fields → 直下（client.ts / index.ts）の順。
+  // 相対 import の深さによらず、`../` を 1 つ以上たどって上の層のフォルダ（直下の client / index を含む）に
+  // 入る指定を弾く。テスト（test/ と隣の *.test.ts）は対象外（テストはどの層も直接 import してよい）。
+  ...layerRules(),
 
   // 設定系ファイル（このファイル含む）は型情報なしで lint する
   // ※ tsconfig に含まれない *.mjs/*.js/*.cjs を type-checked 対象から外す

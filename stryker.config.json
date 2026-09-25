@@ -7,8 +7,7 @@
     "src/**/*.ts",
     "!src/**/*.test.ts",
     "!src/**/index.ts",
-    "!src/**/types.ts",
-    "!src/types/**"
+    "!src/**/types.ts"
   ],
   "thresholds": { "high": 100, "low": 100, "break": 100 },
   "ignorePatterns": ["dist", "coverage", ".stryker-tmp", "reports"]

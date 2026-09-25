@@ -10,12 +10,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "text-summary", "html", "lcov"],
       include: ["src/**/*.ts"],
-      exclude: [
-        "src/**/index.ts",
-        "src/**/types.ts",
-        "src/types/**",
-        "**/*.test.ts",
-      ],
+      exclude: ["src/**/index.ts", "src/**/types.ts", "**/*.test.ts"],
       // ADR-0014: all logic exercised. perFile=true で「各ファイル」に閾値を適用
       // （aggregate で弱いファイルが隠れるのを防ぐ）。statements/functions/lines=100%。
       // branches は防御的な `?? 既定` / `=== undefined` を意味あるテストで埋めつつ、
