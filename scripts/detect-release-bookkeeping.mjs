@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// リリースの流れの PR（リリース PR・back-merge PR）が、develop と比べて「版番号と文書だけ」の
-// 違いしか持たないかを判定する。そうなら `stryker`（約 11 分）を省いてよい。
+// リリースの流れの PR（リリース PR・back-merge PR）と main への push が、develop と比べて「版番号と
+// 文書だけ」の違いしか持たないかを判定する。そうなら `stryker`（約 11 分）を省いてよい。
 //
 // なぜ要るか: リリース PR は base（main）との差分で見るので、前のリリース以降に develop へ入った
 // コードがすべて「変更」に見え、docs-only の判定（ADR-0028）に掛からない。back-merge PR は
