@@ -18,7 +18,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
 /**

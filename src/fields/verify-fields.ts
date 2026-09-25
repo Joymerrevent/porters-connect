@@ -7,7 +7,7 @@
 // surfaced at runtime (RV-36 covers that half); this is the half that finds it *before* it runs.
 
 import { PortersConfigError } from "../errors";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 import {
   declaredRequired,
   type CustomDataType,

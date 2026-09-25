@@ -8,7 +8,7 @@
 
 > **ReferenceRecord** = `object`
 
-Defined in: [src/xml/decode.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L82)
+Defined in: [src/xml/decode.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L55)
 
 An **expanded** `System[Reference]` value: the referenced record's requested fields, decoded by
 the referenced resource's own catalog. Only a read that asked for the expansion

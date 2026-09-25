@@ -13,8 +13,14 @@
 
 import { PortersConfigError } from "../../errors";
 import { qualify } from "../../util/alias";
-import type { DataType, ImageSubField, ImageValue } from "../../xml/decode";
-import { IMAGE_CONTENT_TYPES, type WriteItem } from "../../xml/encode";
+import type { DataType } from "../../porters/data-type";
+import type { ImageSubField, ImageValue } from "../../xml/decode";
+import type { WriteItem } from "../../xml/encode";
+import {
+  IMAGE_CONTENT_TYPES,
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_FILE_NAME_BYTES,
+} from "../../porters/image";
 import type { FieldCatalog } from "./read";
 
 /** The aliases of `F` that are Image-typed — the only ones `image` may name. */
@@ -120,11 +126,7 @@ export const applyImage = (
 // are checked here, before anything is sent. This is the same trade Attachment makes (ADR-0018),
 // with the checks written out because an Image has three parts rather than one.
 
-/** PORTERS' limit on an Image's decoded content: 2MB (reference: Write API - XML Format). */
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-
-/** PORTERS' limit on an Image's file name, extension included: 255 **bytes** (not characters). */
-const MAX_FILE_NAME_BYTES = 255;
+// The three limits themselves are PORTERS values (porters/image.ts).
 
 const utf8Bytes = (s: string): number => new TextEncoder().encode(s).length;
 
@@ -182,11 +184,11 @@ export const guardImageWrite = (
     }
     if (
       typeof FileName === "string" &&
-      utf8Bytes(FileName) > MAX_FILE_NAME_BYTES
+      utf8Bytes(FileName) > MAX_IMAGE_FILE_NAME_BYTES
     ) {
       throw configError(
-        `image "${alias}" has a ${utf8Bytes(FileName)}-byte file name, over the ${MAX_FILE_NAME_BYTES}-byte limit`,
-        `The file name, extension included, must be ${MAX_FILE_NAME_BYTES} bytes or fewer — multi-byte characters count for more than one.`,
+        `image "${alias}" has a ${utf8Bytes(FileName)}-byte file name, over the ${MAX_IMAGE_FILE_NAME_BYTES}-byte limit`,
+        `The file name, extension included, must be ${MAX_IMAGE_FILE_NAME_BYTES} bytes or fewer — multi-byte characters count for more than one.`,
       );
     }
     if (

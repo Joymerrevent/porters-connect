@@ -37,7 +37,7 @@ import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
 import { SALES_DESCRIPTOR } from "../../src/resources/sales";
 import type { ResourceDescriptor } from "../../src/resources/core/resource";
-import type { DataType } from "../../src/xml/decode";
+import type { DataType } from "../../src/porters/data-type";
 
 // Field Type（reference の表記）→ Data Type（ライブラリ内部の粒度）。ADR-0016 の対応表。
 // Option の 3 サブタイプは Option に、Currency は Number に畳む（PORTERS 自身の Data Type と同じ）。

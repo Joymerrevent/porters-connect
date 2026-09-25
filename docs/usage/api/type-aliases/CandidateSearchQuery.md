@@ -8,4 +8,4 @@
 
 > **CandidateSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/candidate.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L71)
+Defined in: [src/resources/candidate.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L72)

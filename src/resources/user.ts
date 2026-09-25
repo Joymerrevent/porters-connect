@@ -19,7 +19,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある

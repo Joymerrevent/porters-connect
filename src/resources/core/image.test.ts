@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../../errors";
-import type { DataType, ImageSubField } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
+import type { ImageSubField } from "../../xml/decode";
 import type { ImageWriteValue } from "../../xml/encode";
 import { applyImage, guardImageWrite, guardNoImageInBulk } from "./image";
 

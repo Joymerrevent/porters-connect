@@ -8,6 +8,7 @@
 // (RV-43). The registry below is the process-wide seam that keeps the sum honest.
 
 import { PortersConfigError } from "../errors/index";
+import { READS_PER_MINUTE, WRITES_PER_MINUTE } from "../porters/request";
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -114,11 +115,11 @@ export const createThrottle = (opts: ThrottleOptions = {}): Throttle => {
   }
   const now = opts.now ?? (() => Date.now());
   const read = makeBucket(
-    capacityOf(opts.readPerMin ?? 2000, safety, "readPerMin"),
+    capacityOf(opts.readPerMin ?? READS_PER_MINUTE, safety, "readPerMin"),
     now,
   );
   const write = makeBucket(
-    capacityOf(opts.writePerMin ?? 500, safety, "writePerMin"),
+    capacityOf(opts.writePerMin ?? WRITES_PER_MINUTE, safety, "writePerMin"),
     now,
   );
   return { take: (isWrite) => (isWrite ? write() : read()) };

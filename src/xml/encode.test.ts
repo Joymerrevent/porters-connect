@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PortersConfigError, PortersError } from "../errors/index";
 
-import type { DataType } from "./decode";
+import type { DataType } from "../porters/data-type";
 import { buildWriteXml, encodeField } from "./encode";
 
 const FIELDS = new Map<string, DataType>([

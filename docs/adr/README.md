@@ -44,6 +44,9 @@
   `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`、`src/auth/memory-store.ts` →
   `src/auth/memory-token-store.ts`、`src/types/`（`Scheme` / `Scope` / `PartitionId`）→ `src/http/access-point.ts` /
   `src/auth/types.ts` / `src/client.ts`、`AccessTokenSource` は `src/auth/types.ts` → `src/http/types.ts`。
+  さらに [ADR-0098][0098] で、`src/resources/resource-list.ts` / `src/resources/field-type.ts` → `src/porters/…`、
+  `DataType`（`src/xml/decode.ts`）→ `src/porters/data-type.ts`、出典に書いてある上限・値（`MAX_REQUEST_LENGTH` など）→
+  `src/porters/{request,read-rules,write-rules,image,attachment,custom-field,time-of-day}.ts` に移した。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
@@ -183,3 +186,4 @@
 [0071]: 0071-usage-docs-single-root.md
 [0088]: 0088-usage-docs-five-chapters.md
 [0097]: 0097-src-module-layout.md
+[0098]: 0098-porters-rules-folder.md

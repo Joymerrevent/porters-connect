@@ -15,17 +15,9 @@ import { readResponse } from "./read-response";
 import type { Backoff } from "./backoff";
 import type { Throttle } from "./throttle";
 import type { AccessTokenSource, Transport, TransportRequest } from "./types";
+import { CONNECT_API_VERSION, MAX_REQUEST_LENGTH } from "../porters/request";
 
-// Compatibility contract = Connect API Version 2 (values 1/2; v2 required for Link etc.). ADR-0042.
-const API_VERSION = "2";
-
-// docs/usage/reference: keep a *whole* request under ~15000 chars (a larger payload 400s).
-// "Whole" is load-bearing: a write's body dominates, but a read's length lives in the
-// URL (field / condition) — and ADR-0020 makes a fieldless Read send the catalog default
-// field set, so that URL grew. A future 16KB cap is planned but undetermined — follow the
-// canonical value. Exported so the bulk-write chunker sizes each batch under the same cap
-// (ADR-0041) instead of relying on this guard to reject an oversized batch mid-run.
-export const MAX_REQUEST_LENGTH = 15000;
+// The Connect API Version sent and the request-size cap are PORTERS values (porters/request.ts).
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -39,7 +31,7 @@ const withAuth = (
   headers: {
     ...req.headers,
     "X-porters-hrbc-oauth-token": token,
-    "X-P-ConnectAPI-Version": API_VERSION,
+    "X-P-ConnectAPI-Version": CONNECT_API_VERSION,
     ...(write ? { "Content-Type": "application/xml; charset=UTF-8" } : {}),
   },
 });

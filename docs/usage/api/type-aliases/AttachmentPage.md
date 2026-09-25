@@ -8,7 +8,7 @@
 
 > **AttachmentPage** = `object`
 
-Defined in: [src/resources/attachment.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L69)
+Defined in: [src/resources/attachment.ts:66](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L66)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/attachment.ts:69](https://github.com/Joymerrevent/por
 
 > **count**: `number`
 
-Defined in: [src/resources/attachment.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L72)
+Defined in: [src/resources/attachment.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L69)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [src/resources/attachment.ts:72](https://github.com/Joymerrevent/por
 
 > **items**: [`Attachment`](Attachment.md)[]
 
-Defined in: [src/resources/attachment.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L70)
+Defined in: [src/resources/attachment.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L67)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [src/resources/attachment.ts:70](https://github.com/Joymerrevent/por
 
 > **start**: `number`
 
-Defined in: [src/resources/attachment.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L73)
+Defined in: [src/resources/attachment.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L70)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [src/resources/attachment.ts:73](https://github.com/Joymerrevent/por
 
 > **total**: `number`
 
-Defined in: [src/resources/attachment.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L71)
+Defined in: [src/resources/attachment.ts:68](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L68)

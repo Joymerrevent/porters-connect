@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { DataType } from "../xml/decode";
+import type { DataType } from "./data-type";
 import {
   dataTypeOfFieldType,
   fieldTypeLabel,

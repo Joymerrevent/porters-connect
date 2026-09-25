@@ -8,6 +8,6 @@
 
 > **DeclaredCatalogs** = `{ [R in CustomFieldResource]?: CustomCatalog }`
 
-Defined in: [src/fields/define-fields.ts:136](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L136)
+Defined in: [src/fields/define-fields.ts:137](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L137)
 
 Map of (data) resource -> its custom catalog; the client merges these into the static catalogs.

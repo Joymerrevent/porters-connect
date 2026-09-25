@@ -6,15 +6,16 @@
 //
 // Direction note: `fields/` may import `resources/`, never the other way round (RV-8).
 
-import { dataTypeOfFieldType, fieldTypeLabel } from "../resources/field-type";
+import { dataTypeOfFieldType, fieldTypeLabel } from "../porters/field-type";
 import type { Field, FieldSearchQuery } from "../resources/field";
 import { bareAlias } from "../resources/core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 import {
   CUSTOM_DATA_TYPES,
   type CustomDataType,
   type CustomFieldResource,
 } from "./define-fields";
+import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 
 /**
  * The slice of a `tenant(id)` scope this tooling needs. Structural on purpose: pass
@@ -103,9 +104,6 @@ const DECLARABLE: ReadonlySet<DataType> = new Set<DataType>(CUSTOM_DATA_TYPES);
 const isDeclarable = (dataType: DataType): dataType is CustomDataType =>
   DECLARABLE.has(dataType);
 
-// Custom aliases are `U_[Name]` / `A_[Name]` (ADR-0004); everything else is a standard field.
-const CUSTOM_ALIAS = /^[UA]_/;
-
 // Field Read's `P_Alias` may arrive qualified (`Person.U_score`) or bare (`U_score`) — which one
 // is unconfirmed (ADR-0069 論点7 / 案7a). `bareAlias` (resources/core/read) already handles both, and it also
 // absorbs Candidate's prefix being `Person` rather than the resource name, so it is reused rather
@@ -186,7 +184,7 @@ export const readCustomCatalog = async (
     // simply not a custom field.
     if (row.P_Alias === null || row.P_Alias === undefined) continue;
     const alias = bareAlias(row.P_Alias);
-    if (!CUSTOM_ALIAS.test(alias)) continue;
+    if (!CUSTOM_ALIAS_PATTERN.test(alias)) continue;
     if (row.P_Name !== null && row.P_Name !== undefined)
       names[alias] = row.P_Name;
     const result = classify(alias, row.P_Type ?? null);

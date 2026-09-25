@@ -8,7 +8,7 @@
 
 > **FieldDef**\<`D`, `R`\> = `object`
 
-Defined in: [src/fields/define-fields.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L16)
+Defined in: [src/fields/define-fields.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L17)
 
 One custom field's declaration — the builder's return value: its Data Type and whether
 `create` requires it.
@@ -29,7 +29,7 @@ One custom field's declaration — the builder's return value: its Data Type and
 
 > `readonly` **dataType**: `D`
 
-Defined in: [src/fields/define-fields.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L17)
+Defined in: [src/fields/define-fields.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L18)
 
 ***
 
@@ -37,6 +37,6 @@ Defined in: [src/fields/define-fields.ts:17](https://github.com/Joymerrevent/por
 
 > `readonly` **required**: `R`
 
-Defined in: [src/fields/define-fields.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L19)
+Defined in: [src/fields/define-fields.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L20)
 
 `true` makes the field required in `create` / `createMany` input. Type-only: no runtime check.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../../errors";
-import type { DataType } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
 import {
   applyExpand,
   expansionCatalogs,

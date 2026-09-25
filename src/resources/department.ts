@@ -16,7 +16,7 @@ import {
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。
 // 先頭 2 つはユーザー部署型（Link）／`User.P_Department` の参照経由でも読める項目で、残る 4 つは

@@ -29,6 +29,7 @@ import { CLIENT_DESCRIPTOR } from "./client";
 import { JOB_DESCRIPTOR } from "./job";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -83,7 +84,7 @@ const REFERENCES = {
  */
 export const PROCESS_DESCRIPTOR = {
   name: "Process",
-  path: "process",
+  path: "process" satisfies ResourceName,
   prefix: "Process",
   fields: FIELDS,
   references: REFERENCES,

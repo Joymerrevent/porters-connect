@@ -11,7 +11,9 @@ import {
   isoToPortersDateTime,
 } from "../util/datetime";
 import { isXmlName } from "../util/xml-name";
-import type { DataType, ImageSubField } from "./decode";
+import type { DataType } from "../porters/data-type";
+import type { ImageSubField } from "./decode";
+import type { ImageContentType } from "../porters/image";
 
 // Option を string[] で読み書き対称にするのは ADR-0017。項目ごとの静的 Write 型は
 // 基本設計 SD-3 の残課題。
@@ -26,21 +28,6 @@ import type { DataType, ImageSubField } from "./decode";
  */
 export type WriteValue =
   string | number | string[] | ImageWriteValue | null | undefined;
-
-// 送信前ガードと静的型で一覧を共有するのは ADR-0064 論点3。
-/**
- * The MIME types PORTERS accepts for an Image field's `ContentType` (reference: Write API - XML
- * Format). Exported so the send-time guard and the static Write input agree on one list.
- */
-export const IMAGE_CONTENT_TYPES = [
-  "image/jpeg",
-  "image/gif",
-  "image/png",
-  "image/bmp",
-] as const;
-
-/** One of the four MIME types an Image field accepts. */
-export type ImageContentType = (typeof IMAGE_CONTENT_TYPES)[number];
 
 // 3 要素を必須にする判断は ADR-0064 論点3。
 // VERIFY(live): 画像を「消す」手段は未確認。空の sub-element が消去なのか拒否なのかは

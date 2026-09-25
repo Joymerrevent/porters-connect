@@ -8,7 +8,7 @@
 
 > **ReferenceMap** = `Readonly`\<`Record`\<`string`, `ReferenceTarget`\>\>
 
-Defined in: [src/resources/core/expand.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/expand.ts#L36)
+Defined in: [src/resources/core/expand.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/expand.ts#L37)
 
 A resource's expandable reference fields: bare alias -> the referenced resource's descriptor.
 Only catalogued `System[Reference]` fields whose target the library implements appear here;

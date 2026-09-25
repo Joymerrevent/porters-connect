@@ -8,7 +8,7 @@
 
 > **JobResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/job.ts:108](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L108)
+Defined in: [src/resources/job.ts:109](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L109)
 
 The Job accessor; `C` is the declared custom-field catalog merged on.
 

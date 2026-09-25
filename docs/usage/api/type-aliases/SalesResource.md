@@ -8,7 +8,7 @@
 
 > **SalesResource**\<`C`, `CR`\> = `Resource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/sales.ts:127](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L127)
+Defined in: [src/resources/sales.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L128)
 
 The Sales accessor; `C` is the declared custom-field catalog merged on.
 

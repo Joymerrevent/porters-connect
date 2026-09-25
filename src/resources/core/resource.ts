@@ -10,7 +10,7 @@ import {
   resourceError,
 } from "../../errors";
 import { apiUrl, type AccessPoint } from "../../http/access-point";
-import type { DataType } from "../../xml/decode";
+import type { DataType } from "../../porters/data-type";
 import {
   buildWriteXml,
   type WritableDataType,
@@ -32,7 +32,8 @@ import {
 } from "./read";
 import { appendReadQuery, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
-import { MAX_IDS_PER_READ, packIds, recordsById } from "./get-many";
+import { MAX_READ_COUNT } from "../../porters/read-rules";
+import { packIds, recordsById } from "./get-many";
 import {
   applyExpand,
   expansionCatalogs,
@@ -586,7 +587,7 @@ export const createResource = <
       [...new Set(ids)],
       (chunk) =>
         readUrl({
-          ...query(chunk, MAX_IDS_PER_READ),
+          ...query(chunk, MAX_READ_COUNT),
           field: field ?? defaultFields,
         }).length,
     );

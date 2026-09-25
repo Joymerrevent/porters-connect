@@ -32,7 +32,7 @@ Defined in: [src/resources/phase.ts:143](https://github.com/Joymerrevent/porters
 
 ##### resource
 
-`"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+`"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
 #### Returns
 

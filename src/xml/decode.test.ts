@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 
 import { PortersResourceError } from "../errors/index";
 
+import type { DataType } from "../porters/data-type";
 import {
   decodeField,
   decodeReferenceRecord,
-  type DataType,
   type DepartmentRef,
   type ImageValue,
   type UserRef,

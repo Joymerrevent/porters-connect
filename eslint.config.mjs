@@ -3,7 +3,8 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 
-// ADR-0097: 各モジュールが import してはいけない先（自分より上の層）。直下の client / index は全員にとって上。
+// ADR-0097 / ADR-0098: 各モジュールが import してはいけない先（自分より上の層）。直下の client / index は全員にとって上。
+// 一番下の porters/（PORTERS が決めた値と定義表）は、ほかのどのモジュールも import しない（下の layerRules で別に止める）。
 const LAYERS = [
   ["errors", ["util", "xml", "http", "auth", "resources", "fields"]],
   ["util", ["xml", "http", "auth", "resources", "fields"]],
@@ -33,6 +34,25 @@ const layerRules = () => [
       ],
     },
   })),
+  // porters/ は一番下の層。フォルダの外（`../` で始まる指定）を一切 import しない（ADR-0098）。
+  {
+    files: ["src/porters/**/*.ts"],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^\\.\\./",
+              message:
+                "src/porters/ は一番下の層で、ほかのモジュールを import できません（ADR-0098）。",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // resources/core/ は共通の仕組み。resources/ 直下（リソース本体と定義表）を import しない。
   {
     files: ["src/resources/core/**/*.ts"],
@@ -93,7 +113,7 @@ export default tseslint.config(
   },
 
   // ADR-0097: src/ のモジュールの層。下の層から上の層を import したら止める（人の記憶でなく仕組みで守る）。
-  // errors → util → xml → http → auth → resources → fields → 直下（client.ts / index.ts）の順。
+  // porters → errors → util → xml → http → auth → resources → fields → 直下（client.ts / index.ts）の順。
   // 相対 import の深さによらず、`../` を 1 つ以上たどって上の層のフォルダ（直下の client / index を含む）に
   // 入る指定を弾く。テスト（test/ と隣の *.test.ts）は対象外（テストはどの層も直接 import してよい）。
   ...layerRules(),

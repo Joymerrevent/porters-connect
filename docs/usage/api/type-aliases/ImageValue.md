@@ -8,7 +8,7 @@
 
 > **ImageValue** = \{ \[K in ImageSubField\]?: string \| null \}
 
-Defined in: [src/xml/decode.ts:65](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L65)
+Defined in: [src/xml/decode.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L38)
 
 A decoded Image value: the sub-tags PORTERS actually returned, each empty ->
 null. Every key is **optional for the same reason a read record's fields are** — a sub-tag that

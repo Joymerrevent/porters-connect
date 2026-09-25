@@ -174,7 +174,7 @@ grep -rn "VERIFY(live)" src test
   いま `P_Alias` の表記は **利用者に見せる生成物（`generateFieldDecls`）と突合結果（`verifyFields`）の
   正しさ**に効く。**外れても壊れない設計にはしてある**（接頭辞つき・bare の両対応）が、
   確認の価値は上がった。System 系の Value は**宣言できない型**なので、外れても生成・突合は変わらない
-- **コード箇所**: `src/resources/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
+- **コード箇所**: `src/porters/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
   `src/fields/tenant-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
   `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`

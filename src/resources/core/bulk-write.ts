@@ -10,13 +10,12 @@ import {
   PortersError,
   PortersResourceError,
 } from "../../errors";
-import { MAX_REQUEST_LENGTH, type Requester } from "../../http/requester";
-import type { DataType } from "../../xml/decode";
+import type { Requester } from "../../http/requester";
+import { MAX_REQUEST_LENGTH } from "../../porters/request";
+import { MAX_WRITE_ITEMS } from "../../porters/write-rules";
+import type { DataType } from "../../porters/data-type";
 import { encodeWriteItem, type WriteItem } from "../../xml/encode";
 import { parseWriteResult, type WriteResultItem } from "../../xml/parser";
-
-/** PORTERS caps a Write request at 200 records; larger inputs are split into batches of 200. */
-const MAX_ITEMS_PER_REQUEST = 200;
 
 // 結果の形（入力順・ok 判定）は ADR-0041 SD-2。
 /** One record's outcome from a bulk write, in the position it was sent. */
@@ -48,7 +47,7 @@ type Encoded = { index: number; xml: string };
 
 /**
  * Greedily pack encoded records into batches that each stay within `budget` characters (the request
- * cap minus URL + envelope overhead) and `MAX_ITEMS_PER_REQUEST` records. A single record larger than
+ * cap minus URL + envelope overhead) and `MAX_WRITE_ITEMS` records. A single record larger than
  * `budget` cannot be sent in any batch → fail fast with a clear config error (send-time, fail-safe).
  */
 const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
@@ -68,10 +67,7 @@ const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
     // Start a new batch when the next record would breach either bound. Never reached with an empty
     // batch: on the first record `length` and `batch.length` are 0 and an over-budget record already
     // threw above, so `batch` is always non-empty here (no empty batch is ever pushed).
-    if (
-      batch.length >= MAX_ITEMS_PER_REQUEST ||
-      length + e.xml.length > budget
-    ) {
+    if (batch.length >= MAX_WRITE_ITEMS || length + e.xml.length > budget) {
       batches.push(batch);
       batch = [];
       length = 0;

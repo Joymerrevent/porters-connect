@@ -8,7 +8,7 @@
 
 > **AttachmentResource** = `object`
 
-Defined in: [src/resources/attachment.ts:130](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L130)
+Defined in: [src/resources/attachment.ts:127](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L127)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/attachment.ts:130](https://github.com/Joymerrevent/po
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/attachment.ts:145](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L145)
+Defined in: [src/resources/attachment.ts:142](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L142)
 
 Create an Attachment; resolves to the newly assigned id.
 
@@ -36,7 +36,7 @@ Create an Attachment; resolves to the newly assigned id.
 
 > **get**(`id`): `Promise`\<[`Attachment`](Attachment.md) \| `undefined`\>
 
-Defined in: [src/resources/attachment.ts:143](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L143)
+Defined in: [src/resources/attachment.ts:140](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L140)
 
 Read one attachment **with its body** (`content`). This is the only method that carries it:
 one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable.
@@ -57,7 +57,7 @@ one record at a time is a size PORTERS' own 10MB-per-file limit keeps readable.
 
 > **search**(`query?`): `Promise`\<[`AttachmentPage`](AttachmentPage.md)\>
 
-Defined in: [src/resources/attachment.ts:131](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L131)
+Defined in: [src/resources/attachment.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L128)
 
 #### Parameters
 
@@ -75,7 +75,7 @@ Defined in: [src/resources/attachment.ts:131](https://github.com/Joymerrevent/po
 
 > **searchAll**(`query?`): `AsyncIterable`\<[`Attachment`](Attachment.md)\>
 
-Defined in: [src/resources/attachment.ts:138](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L138)
+Defined in: [src/resources/attachment.ts:135](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L135)
 
 Auto-paginating search: yields every matching attachment (200 per page). Metadata only —
 the body stays behind [AttachmentResource.get](#get), so walking every attachment
@@ -97,7 +97,7 @@ in a partition never drags the files along with it.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/attachment.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L147)
+Defined in: [src/resources/attachment.ts:144](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L144)
 
 Update an Attachment by id; resolves to that id.
 

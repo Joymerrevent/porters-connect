@@ -6,7 +6,8 @@
 
 import { PortersConfigError } from "../errors";
 import type { EmptyCatalog } from "../resources/core/read";
-import type { DataType } from "../xml/decode";
+import type { DataType } from "../porters/data-type";
+import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 
 // ADR-0023 D2。必須（required）は ADR-0089。
 /**
@@ -253,9 +254,6 @@ export const declaredRequired = (
   return new Set(marker?.[resource] ?? []);
 };
 
-// Custom field aliases are `U_[Name]` (user-created) or `A_[Name]` (app-created) — ADR-0004.
-const ALIAS_PATTERN = /^[UA]_/;
-
 const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
   "candidate",
   "job",
@@ -299,7 +297,7 @@ export const defineFields = <D extends FieldDecls>(
     }
     const catalog: CustomCatalog = {};
     for (const [alias, fieldDef] of Object.entries(declare(builder))) {
-      if (!ALIAS_PATTERN.test(alias)) {
+      if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
         throw new PortersConfigError(
           `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
           { category: "config" },

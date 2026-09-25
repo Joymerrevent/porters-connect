@@ -8,7 +8,7 @@
 
 > **ResourcePageOf**\<`T`\> = `object`
 
-Defined in: [src/resources/core/read.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L98)
+Defined in: [src/resources/core/read.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L103)
 
 A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
 the item decoder produced. Parametrised by the *record* rather than the catalog because a read
@@ -26,7 +26,7 @@ that expands references returns a wider record than the catalog alone describes.
 
 > **count**: `number`
 
-Defined in: [src/resources/core/read.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L101)
+Defined in: [src/resources/core/read.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L106)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/core/read.ts:101](https://github.com/Joymerrevent/por
 
 > **items**: `T`[]
 
-Defined in: [src/resources/core/read.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L99)
+Defined in: [src/resources/core/read.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L104)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [src/resources/core/read.ts:99](https://github.com/Joymerrevent/port
 
 > **start**: `number`
 
-Defined in: [src/resources/core/read.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L102)
+Defined in: [src/resources/core/read.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L107)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [src/resources/core/read.ts:102](https://github.com/Joymerrevent/por
 
 > **total**: `number`
 
-Defined in: [src/resources/core/read.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L100)
+Defined in: [src/resources/core/read.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L105)

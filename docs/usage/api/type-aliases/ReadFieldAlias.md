@@ -8,7 +8,7 @@
 
 > **ReadFieldAlias**\<`F`\> = keyof `F` & `string`
 
-Defined in: [src/resources/core/read.ts:156](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L156)
+Defined in: [src/resources/core/read.ts:158](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L158)
 
 What a Read `field` entry may name: a **catalogued** alias — every
 standard `P_` field plus the custom fields declared with `defineFields`. An

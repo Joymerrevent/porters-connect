@@ -8,6 +8,6 @@
 
 > **ContactUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/contact.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L96)
+Defined in: [src/resources/contact.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L97)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

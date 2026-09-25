@@ -7,35 +7,25 @@
 // mix-up (Recruiter 9 vs Sales 11) is catchable by a `number` type. A name is the same vocabulary
 // as the accessor it belongs to (`t.client` -> `"client"`).
 //
-// Each key is written as the owning descriptor's `path`, so the two cannot drift: rename a path
-// and this file stops compiling. PORTERS gives Phase and Attachment no value, so they are absent
-// — which is why `of("phase")` is a compile error.
-
-import { ACTIVITY_DESCRIPTOR } from "./activity";
-import { CANDIDATE_DESCRIPTOR } from "./candidate";
-import { CLIENT_DESCRIPTOR } from "./client";
-import { CONTACT_DESCRIPTOR } from "./contact";
-import { CONTRACT_DESCRIPTOR } from "./contract";
-import { JOB_DESCRIPTOR } from "./job";
-import { OPPORTUNITY_DESCRIPTOR } from "./opportunity";
-import { PROCESS_DESCRIPTOR } from "./process";
-import { RECRUITER_DESCRIPTOR } from "./recruiter";
-import { RESUME_DESCRIPTOR } from "./resume";
-import { SALES_DESCRIPTOR } from "./sales";
+// The table owns the names and each data resource's descriptor types its `path` as a
+// `ResourceName` (ADR-0098: `porters/` imports nothing, so the link points from the resource to the
+// table). Renaming either side stops the compile, and `resource-list.test.ts` checks that every name
+// here has a resource. PORTERS gives Phase and Attachment no value, so they are absent — which is
+// why `of("phase")` is a compile error.
 
 /** Resource name -> the numeric id PORTERS uses for it (docs/usage/reference/resource-api/resources-list.md). */
 export const RESOURCE_VALUES = {
-  [CANDIDATE_DESCRIPTOR.path]: 1,
-  [JOB_DESCRIPTOR.path]: 3,
-  [CLIENT_DESCRIPTOR.path]: 5,
-  [PROCESS_DESCRIPTOR.path]: 7,
-  [RECRUITER_DESCRIPTOR.path]: 9,
-  [SALES_DESCRIPTOR.path]: 11,
-  [CONTRACT_DESCRIPTOR.path]: 13,
-  [RESUME_DESCRIPTOR.path]: 17,
-  [ACTIVITY_DESCRIPTOR.path]: 19,
-  [OPPORTUNITY_DESCRIPTOR.path]: 25,
-  [CONTACT_DESCRIPTOR.path]: 27,
+  candidate: 1,
+  job: 3,
+  client: 5,
+  process: 7,
+  recruiter: 9,
+  sales: 11,
+  contract: 13,
+  resume: 17,
+  activity: 19,
+  opportunity: 25,
+  contact: 27,
 } as const satisfies Record<string, number>;
 
 /**
