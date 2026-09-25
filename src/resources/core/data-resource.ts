@@ -113,6 +113,15 @@ export declare const catalogMark: unique symbol;
 // PORTERS の主キーの alias。データ系は `P_Id`、Phase だけ `Id`（ADR-0061）。レコードの型に在る方だけが残る。
 type IdKey = "P_Id" | "Id";
 
+// `field` のリストに書いた alias（リテラルのリストから取り出す）。
+type ListedKeys<FL> = FL extends readonly (infer A)[] ? A : never;
+
+// `field` のリストで要求したキー。`expand` / `image` で選んだ alias も送られるので含める。
+// `field: []` は主キーしか送らないので、何も要求していない（`expand` / `image` も送られない）。
+type SelectedKeys<FL, E, I> = FL extends readonly []
+  ? never
+  : ListedKeys<FL> | keyof E | keyof I;
+
 // 戻り値の型を要求した項目に絞るのは ADR-0096。キーは省略可能のまま（要求した項目が必ず返るとは約束しない）。
 /**
  * The record a Read returns, keyed by what was asked for. `FL` is the `field` list as written:
@@ -130,16 +139,7 @@ export type RequestedRecord<
   Always extends PropertyKey = never,
 > = [FL] extends [undefined]
   ? Rec
-  : Pick<
-      Rec,
-      Extract<
-        keyof Rec,
-        | (FL extends readonly []
-            ? never
-            : (FL extends readonly (infer A)[] ? A : never) | keyof E | keyof I)
-        | Always
-      >
-    >;
+  : Pick<Rec, Extract<keyof Rec, SelectedKeys<FL, E, I> | Always>>;
 
 // `?: never` で塞ぐ経緯は RV-47（spread で束縛が矛盾する形）。使い道は Phase の受けないクエリのキー
 // （ADR-0076）と束ねる項目（ADR-0061 / ADR-0080）。
