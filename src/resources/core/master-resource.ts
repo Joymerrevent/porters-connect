@@ -13,46 +13,65 @@
 // What a resource's Read *accepts* — its parameters and their defaults — is PORTERS' rule for that
 // resource and stays with the resource, passed in as `params` (ADR-0022).
 
-import type { AccessPoint } from "../../http/access-point";
-import type { Requester } from "../../http/requester";
-import type { RawItem } from "../../xml/parser";
-import { createPageReader, paginateOnce, type ResourcePageOf } from "./read";
+import type { ResourceDescriptor } from "./descriptor";
+import {
+  createPageReader,
+  decoderFor,
+  paginateOnce,
+  type FieldCatalog,
+  type ReadRecord,
+  type ResourceDeps,
+  type ResourcePageOf,
+} from "./read";
 
-/** The paging half of a Read query; everything else is the resource's own. */
+/** The paging half of a Read query; the rest is the resource's own (`Q`). */
 type Paging = { count?: number; start?: number };
 
-// Function-typed properties rather than methods: they close over `spec`, never `this`, so a caller
-// may take them apart (`const { search } = …`).
-export type MasterResource<Q extends Paging, T> = {
-  search: (query?: Q) => Promise<ResourcePageOf<T>>;
-  searchAll: (query?: Omit<Q, "count" | "start">) => AsyncIterable<T>;
+// Function-typed properties rather than methods: they close over the config, never `this`, so a
+// caller may take them apart (`const { search } = …`).
+/** A master resource's Read: `Q` is its own query (paging aside), `T` the record it returns. */
+export type MasterResource<Q, T> = {
+  search: (query?: Q & Paging) => Promise<ResourcePageOf<T>>;
+  searchAll: (query?: Q) => AsyncIterable<T>;
 };
 
-export type MasterResourceSpec<Q extends Paging, T> = {
-  requester: Requester;
-  accessPoint: AccessPoint;
-  /** Root element of the response (and the error context), e.g. `"User"`. */
-  name: string;
-  /** URL path segment, e.g. `"user"`. */
-  path: string;
-  decode: (item: RawItem) => T;
-  /** The resource's own parameters for a query — never `count` / `start`. */
-  params: (query: Omit<Q, "count" | "start">) => URLSearchParams;
+/**
+ * A master resource: its descriptor (names + `P_` catalog, like a data resource's) and the
+ * parameters its Read takes. `params` is PORTERS' rule for this master (ADR-0022) and never sends
+ * `count` / `start` — paging is added per page.
+ */
+export type MasterResourceConfig<
+  F extends FieldCatalog,
+  Q,
+> = ResourceDescriptor<F> & {
+  params: (query: Q) => URLSearchParams;
 };
 
-/** `search` and `searchAll` for a resource whose Read takes `params` plus paging. */
-export const createMasterResource = <Q extends Paging, T>(
-  spec: MasterResourceSpec<Q, T>,
-): MasterResource<Q, T> => {
-  const read = createPageReader(spec);
-  const search = async (query: Q = {} as Q): Promise<ResourcePageOf<T>> =>
-    read(spec.params(query), spec.decode, query.count, query.start);
-  const searchAll = (
-    query: Omit<Q, "count" | "start"> = {} as Omit<Q, "count" | "start">,
-  ): AsyncIterable<T> =>
+/**
+ * `search` and `searchAll` for a read-only master resource. The counterpart of
+ * `createDataResource`: both take the resource's config and the connection, and derive the
+ * decoder and the record type from the catalog. Only the connection is needed — not the
+ * partition, which a master's own `params` sends or not (Partition Read takes none).
+ */
+export const createMasterResource = <const F extends FieldCatalog, Q>(
+  config: MasterResourceConfig<F, Q>,
+  deps: Pick<ResourceDeps, "requester" | "accessPoint">,
+): MasterResource<Q, ReadRecord<F>> => {
+  const decode = decoderFor(config.fields);
+  const read = createPageReader({
+    requester: deps.requester,
+    accessPoint: deps.accessPoint,
+    name: config.name,
+    path: config.path,
+  });
+  const search = async (
+    query: Q & Paging = {} as Q & Paging,
+  ): Promise<ResourcePageOf<ReadRecord<F>>> =>
+    read(config.params(query), decode, query.count, query.start);
+  const searchAll = (query: Q = {} as Q): AsyncIterable<ReadRecord<F>> =>
     paginateOnce(() => {
-      const base = spec.params(query);
-      return (count, start) => read(base, spec.decode, count, start);
+      const base = config.params(query);
+      return (count, start) => read(base, decode, count, start);
     });
   return { search, searchAll };
 };

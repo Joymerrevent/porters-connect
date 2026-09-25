@@ -4,7 +4,7 @@ import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createMasterResource } from "./master-resource";
-import { decoderFor, type FieldCatalog } from "./read";
+import type { FieldCatalog } from "./read";
 
 // The master resources' own tests pin what each one sends; this pins the shared sending itself.
 const FIELDS = {
@@ -12,17 +12,15 @@ const FIELDS = {
   P_Name: "SinglelineText",
 } as const satisfies FieldCatalog;
 
-type Query = { tag?: string; count?: number; start?: number };
+// The master's own query (paging aside).
+type Query = { tag?: string };
 
 const page = (total: number, ids: number[], root = "Thing"): string =>
   `<${root} Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
   ids.map((id) => `<Item><T.P_Id>${id}</T.P_Id></Item>`).join("") +
   `</${root}>`;
 
-const setup = (
-  bodies: string[],
-  params?: (q: Omit<Query, "count" | "start">) => URLSearchParams,
-) => {
+const setup = (bodies: string[], params?: (q: Query) => URLSearchParams) => {
   const urls: string[] = [];
   const requester: Requester = {
     request: (req: TransportRequest, parse) => {
@@ -30,16 +28,19 @@ const setup = (
       return Promise.resolve(parse(bodies.shift() ?? ""));
     },
   };
-  const methods = createMasterResource<Query, unknown>({
-    requester,
-    accessPoint: { hostname: "h.test" },
-    name: "Thing",
-    path: "thing",
-    decode: decoderFor(FIELDS),
-    params:
-      params ??
-      ((q) => new URLSearchParams({ partition: "12", tag: q.tag ?? "-" })),
-  });
+  const methods = createMasterResource(
+    {
+      name: "Thing",
+      path: "thing",
+      prefix: "T",
+      fields: FIELDS,
+      params:
+        params ??
+        ((q: Query) =>
+          new URLSearchParams({ partition: "12", tag: q.tag ?? "-" })),
+    },
+    { requester, accessPoint: { hostname: "h.test" } },
+  );
   return { methods, urls };
 };
 

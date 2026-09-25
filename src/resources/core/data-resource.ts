@@ -80,7 +80,7 @@ export type ResourceBindings = {
 };
 
 /** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */
-export type ResourceConfig<
+export type DataResourceConfig<
   F extends FieldCatalog,
   Req extends readonly (keyof F)[],
   R extends ReferenceMap = EmptyReferences,
@@ -244,7 +244,7 @@ export const createDataResource = <
   const Req extends readonly (keyof F)[],
   const R extends ReferenceMap = EmptyReferences,
 >(
-  config: ResourceConfig<F, Req, R>,
+  config: DataResourceConfig<F, Req, R>,
   deps: ResourceDeps,
 ): DataResource<F, Req[number], R> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.

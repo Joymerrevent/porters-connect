@@ -11,7 +11,6 @@
 import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
-  decoderFor,
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
@@ -113,12 +112,12 @@ const buildParams = (
 
 export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
   of: (resource) =>
-    createMasterResource<FieldSearchQuery, Field>({
-      requester: deps.requester,
-      accessPoint: deps.accessPoint,
-      name: FIELD_DESCRIPTOR.name,
-      path: FIELD_DESCRIPTOR.path,
-      decode: decoderFor(FIELDS),
-      params: (q) => buildParams(deps.partition, resource, q),
-    }),
+    createMasterResource(
+      {
+        ...FIELD_DESCRIPTOR,
+        params: (q: Omit<FieldSearchQuery, "count" | "start">) =>
+          buildParams(deps.partition, resource, q),
+      },
+      deps,
+    ),
 });

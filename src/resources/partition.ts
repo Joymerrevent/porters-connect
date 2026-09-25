@@ -8,7 +8,6 @@
 import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
-  decoderFor,
   type FieldCatalog,
   type ReadRecord,
   type ResourcePage,
@@ -68,11 +67,4 @@ const buildParams = (
 export const createPartitionResource = (
   deps: Omit<ResourceDeps, "partition">,
 ): PartitionResource =>
-  createMasterResource<PartitionSearchQuery, Partition>({
-    requester: deps.requester,
-    accessPoint: deps.accessPoint,
-    name: PARTITION_DESCRIPTOR.name,
-    path: PARTITION_DESCRIPTOR.path,
-    decode: decoderFor(FIELDS),
-    params: buildParams,
-  });
+  createMasterResource({ ...PARTITION_DESCRIPTOR, params: buildParams }, deps);

@@ -8,7 +8,6 @@ import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   createFieldParam,
-  decoderFor,
   type FieldCatalog,
   type ReadFieldAlias,
   type ReadRecord,
@@ -92,11 +91,11 @@ const buildParams = (
 export const createDepartmentResource = (
   deps: ResourceDeps,
 ): DepartmentResource =>
-  createMasterResource<DepartmentSearchQuery, Department>({
-    requester: deps.requester,
-    accessPoint: deps.accessPoint,
-    name: DEPARTMENT_DESCRIPTOR.name,
-    path: DEPARTMENT_DESCRIPTOR.path,
-    decode: decoderFor(FIELDS),
-    params: (q) => buildParams(deps.partition, q),
-  });
+  createMasterResource(
+    {
+      ...DEPARTMENT_DESCRIPTOR,
+      params: (q: Omit<DepartmentSearchQuery, "count" | "start">) =>
+        buildParams(deps.partition, q),
+    },
+    deps,
+  );

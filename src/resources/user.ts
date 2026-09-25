@@ -11,7 +11,6 @@ import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 import {
   createFieldParam,
-  decoderFor,
   type FieldCatalog,
   type ReadFieldAlias,
   type ReadRecord,
@@ -122,14 +121,14 @@ const buildParams = (
 };
 
 export const createUserResource = (deps: ResourceDeps): UserResource => {
-  const { search, searchAll } = createMasterResource<UserSearchQuery, User>({
-    requester: deps.requester,
-    accessPoint: deps.accessPoint,
-    name: USER_DESCRIPTOR.name,
-    path: USER_DESCRIPTOR.path,
-    decode: decoderFor(FIELDS),
-    params: (q) => buildParams(deps.partition, q),
-  });
+  const { search, searchAll } = createMasterResource(
+    {
+      ...USER_DESCRIPTOR,
+      params: (q: Omit<UserSearchQuery, "count" | "start">) =>
+        buildParams(deps.partition, q),
+    },
+    deps,
+  );
   // VERIFY(live): code_direct + request_type=0 returning the App's own user is doc-only.
   // See docs/live-verification.md (LV-7).
   const current = async (): Promise<User | undefined> =>

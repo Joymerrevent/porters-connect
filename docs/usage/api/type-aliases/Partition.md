@@ -8,6 +8,6 @@
 
 > **Partition** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/partition.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L38)
+Defined in: [src/resources/partition.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L37)
 
 A decoded Partition (a PORTERS contract company / Company DB).
