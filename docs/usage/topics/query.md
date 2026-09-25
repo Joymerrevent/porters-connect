@@ -311,6 +311,25 @@ page.start; // 今回の開始インデックス
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
 `total` に達するか空ページで停止します）。
 
+<!-- 根拠: ADR-0099 -->
+
+`count` / `start` は、何を探すかを表す型（`CandidateSearchQuery` など）とは別の型
+[`Paging`][t-Paging] です。`search` はクエリと一緒に `Paging` を受け取り、`searchAll` はページを自分で辿るので
+受け取りません。そのため、同じクエリを `search` と `searchAll` の両方に渡せます。
+
+```ts
+import type { CandidateSearchQuery } from "@joymerrevent/porters-connect";
+
+const query: CandidateSearchQuery = { condition: { P_Name: { part: "山田" } } };
+
+const first = await t.candidate.search({ ...query, count: 50 }); // 最初の 50 件
+for await (const c of t.candidate.searchAll(query)) {
+  console.log(c.P_Id); // 条件に合うすべて
+}
+```
+
+クエリの変数に `count` / `start` も入れておきたいときは、型を `CandidateSearchQuery & Paging` にします。
+
 ## `get` / `getMany` — ID で読む
 
 ID が分かっているレコードは、`get`（1 件）か `getMany`（複数）で読みます。どちらも `field` / `expand` / `image` を
@@ -372,7 +391,8 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 
 - `t.option.search()` に `searchAll` はありません（PORTERS の Option Read に `start` が無いため）。階層は
-  `P_ParentId` / `P_Order` で復元します。
+  `P_ParentId` / `P_Order` で復元します。受け取るページ送りは件数の上限 `count` だけで、型は
+  [`Limit`][t-Limit] です（省略すると全件）。
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
   認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
 
@@ -411,3 +431,5 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [write]: write.md
 [resources]: ../resources/README.md
 [sync-batch]: ../recipes/sync-batch.md
+[t-Paging]: ../api/type-aliases/Paging.md
+[t-Limit]: ../api/type-aliases/Limit.md
