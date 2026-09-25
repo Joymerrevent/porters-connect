@@ -1,6 +1,6 @@
 # 97. `src/` のモジュールを層に並べ、依存の向きを lint で守る
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,6 +8,8 @@
 > だったが、議論で「`src/resources/` の中だけでなく `src/` 全体を整理する ADR にしたい」に広げた。
 >
 > [基本設計][basic-design] §2 のモジュール構成を改める案。公開 API は変えない。
+>
+> **decider が案1a ＋ 案2a ＋ 案3a ＋ 案4a を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（[ADR-0096][adr96] の実装より先）。
 
 ## Context and Problem Statement
 
@@ -111,9 +113,9 @@ index.ts → すべて
 
 ## Decision Outcome
 
-**未決（proposed）**。以下は推奨案（1a ＋ 2a ＋ 3a ＋ 4a）で書いた場合の形。
+採用: **案1a ＋ 案2a ＋ 案3a ＋ 案4a**（decider が 2026-09-25 に選択）。
 
-### 決めること（推奨案）
+### 決めること
 
 #### 層と、import してよい先（案1a）
 
