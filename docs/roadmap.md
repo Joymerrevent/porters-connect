@@ -388,7 +388,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 - ✅ **[ADR-0064][adr64] 実施済み**（2026-09-07）。R-4 の `Link` / `Image` を実装して **D3 が 17/17**。
   Image は既定 `FileName` のみ ＋ `image` オプションで `Content` を選択、Write は 2MB / 255 バイト /
   mime 4 種を送信前に検査（一括書き込みは弾く）。Link は形で判別する union。
-- **[LV-16][lv] に `VERIFY(live)` を設置済み**（`src/resources/expand.ts` の `expandEntry`）。
+- **[LV-16][lv] に `VERIFY(live)` を設置済み**（`src/resources/core/expand.ts` の `expandEntry`）。
   外れても直すのは要求文字列だけ。
 - ✅ **`pnpm changeset:version` は復旧済み**（2026-08-23・**`@changesets/cli` を 2.31.1 → 3.0.0 へ上げた**）。
   落ちていたのは `pnpm.overrides` の `js-yaml: ">=4.2.0"` が changesets の推移依存 `read-yaml-file@1.1.0`
