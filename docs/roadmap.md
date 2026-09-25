@@ -151,7 +151,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 - [ ] **`src/` のモジュールを層に並べ、依存の向きを lint で守る**（[ADR-0097][adr97]・2026-09-25 accepted・stakeholder の問い）。
       決定: errors → util → xml → http → auth → resources → fields → 直下の順に層を決め、下の層から上を import したら eslint で止める。
       `AccessTokenSource` を `http` に移し、`resources/` の共通の仕組み 7 ファイルを `core/` に分け、`types/` の 3 つの型を持ち主の
-      モジュールに移す。移動・型の置き場所・import のパスの書き換えだけの PR にする。**[ADR-0096][adr96] の実装より先に着手**。
+      モジュールに移す。ファイル名も主な export に合わせて見直す（4 つ）。移動・ファイル名・型の置き場所・import のパスの書き換えだけの PR にする。**[ADR-0096][adr96] の実装より先に着手**。
 - [x] ✅ **複数の ID でまとめて読む `getMany(ids)` を足す**（[ADR-0095][adr95]・2026-09-25 accepted・同日実装・stakeholder の問い）。
       決定: 汎用のアクセサ 12 種に `getMany(ids, { field?, expand?, image? })` を足し（`get` にも `field` を足す）、`{idAlias}:or` で
       200 件ずつ・URL の上限に収まる組に分けて読む。返ってきた ID と `Total` を突き合わせ、頼んでいないレコードが混じったら

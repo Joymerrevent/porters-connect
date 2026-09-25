@@ -65,7 +65,8 @@ index.ts → すべて
   収まっている（463 行）。
 - **`fields/`**: `defineFields` とテナントの項目を読む道具が同じモジュールにあり、道具だけが `resources/`（Field マスタ）
   に依存している。依存は下向きなので、向きの規則には反しない。
-- **ファイル名**: 移動するファイルも名前は変えない（`core/read-core.ts` のような重複した語も残す）。
+- ~~**ファイル名**: 移動するファイルも名前は変えない（`core/read-core.ts` のような重複した語も残す）。~~
+  **改めた（accepted 後・マージ前 2026-09-25）**: ファイル名も見直す。下の「追記」を参照。
 
 ### 移動で影響を受けないもの・受けるもの
 
@@ -84,7 +85,8 @@ index.ts → すべて
 
 - **依存の向きを仕組みで守る**: 決めた向きを eslint で止める。人の記憶に頼らない。
 - **見て分かる**: フォルダを開いたときに、そこに何があるかが分かる。
-- **いまの依存の形に合わせる**: 構成のために処理を組み替えない。変えるのはファイルの置き場所と、型の持ち主だけ。
+- **いまの依存の形に合わせる**: 構成のために処理を組み替えない。変えるのはファイルの置き場所と、型の持ち主だけ
+  （accepted 後・マージ前に、ファイル名も加えた。下の「追記」を参照）。
 - **公開 API を変えない**: 利用者のコードに影響を出さない。
 
 ## Considered Options
@@ -182,6 +184,39 @@ index.ts → すべて
   （前の 2 つは実装 PR で直し、後の 2 つは README の読み替えで補う）。
 - Neutral: 公開 API・import のパス以外のファイルの中身・mutation テストの対象は変わらない。
 
+### 追記（accepted 後・マージ前 2026-09-25）: ファイル名も見直す
+
+accept の後、この ADR の PR がマージされる前に、decider が「ファイル名は変えない」を改め、`src/` 全体でファイル名を
+見直すことにした（stakeholder の意向）。決定のほか（案1a〜4a）は変えない。
+
+#### 名前の決まり
+
+- **ファイル名は、そのファイルの主な export の名前を kebab-case にしたもの**にする。factory の `create` は付けない。
+  いまの多くのファイルがすでにこの形になっている（`token-manager.ts` ↔ `createTokenManager`、`fetch-transport.ts` ↔
+  `createFetchTransport`、`define-fields.ts` ↔ `defineFields` など）。
+- 主な export が 1 つに決まらないファイル（型や関数を複数持つもの）は、役割を表す名前にする。
+- **フォルダ名と重なる語は付けない**（`resources/core/` の中に `-core` を付けない）。
+- kebab-case・1 ファイル 1 責務は [ADR-0013][adr13] のとおり。
+
+#### 変える名前（2026-09-25 に `src/` のバレルとテストを除く 59 ファイルを見直した結果）
+
+| いまの名前               | 新しい名前                       | 理由                                                                                              |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `resources/read-core.ts` | `resources/core/read.ts`         | `core/` に移すと「core」が重なる。中身は Read の共通処理（ページング・デコード・送信）            |
+| `http/retry.ts`          | `http/backoff.ts`                | 中身は待ち時間の計算（`Backoff` / `expoBackoff`）だけで、再試行の繰り返しは requester にある      |
+| `auth/token-provider.ts` | `auth/default-token-provider.ts` | 中身は既定の取り方（`createDefaultTokenProvider`）。`TokenProvider` の型は `auth/types.ts` にある |
+| `auth/memory-store.ts`   | `auth/memory-token-store.ts`     | 主な export は `createMemoryTokenStore`                                                           |
+
+- 隣のテストも同じ名前に変える（`read-core.test.ts` → `read.test.ts` など）。
+- 4 つとも公開していないファイルなので、公開 API は変わらない。
+- 上の表に無いファイルは名前を変えない。名前の決まりに合っているか、役割を表す名前になっている。
+
+#### 実装での扱い
+
+- 名前の変更は、中身の変更と別のコミットにする（git が名前の変更として追えるようにし、`git log --follow` で履歴を
+  たどれるようにする）。
+- ADR README の「移設前のパス表記」の読み替えに、名前を変えたファイルも載せる。
+
 ## Pros and Cons of the Options
 
 - 案1a — Good: 向きが崩れたら止まる。いまの形をそのまま規則にできる。Bad: eslint の設定が増える。
@@ -197,7 +232,7 @@ index.ts → すべて
 
 ## More Information
 
-- 実装（accepted 後・別 PR）: **移動・型の置き場所・import のパスの書き換えだけ**にして、それ以外の中身は変えない。
+- 実装（accepted 後・別 PR）: **移動・ファイル名・型の置き場所・import のパスの書き換えだけ**にして、それ以外の中身は変えない。
   変更の種類ごとにコミットを分ける（型の移動 → `resources/core/` への移動 → eslint の規則 → 文書）。
   eslint の規則は最後に入れ、その時点で違反が 0 件であることを確かめる。
 - 順番: この ADR の実装を、[ADR-0096][adr96]（`field` で戻り値の型を絞る）の実装より先に行う。ADR-0096 は
