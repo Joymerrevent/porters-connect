@@ -8,7 +8,7 @@
 // scroll past. The latch is state, so it lives in a factory (ADR-0013) and the process-wide
 // instance is built from it below.
 
-import type { Scheme } from "../types/index";
+import type { Scheme } from "./access-point";
 
 /** Env var that silences the plain-http warning. Set it only where cleartext is intended. */
 export const SUPPRESS_INSECURE_HTTP_WARNING_ENV =

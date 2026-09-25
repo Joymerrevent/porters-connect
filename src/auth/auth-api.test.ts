@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { PortersAuthError, PortersConfigError } from "../errors/index";
 import type { Transport, TransportRequest } from "../http/index";
-import type { Scope } from "../types/index";
 import { createAuthApi } from "./auth-api";
 import { createTokenManager } from "./token-manager";
 import { createDefaultTokenProvider } from "./token-provider";
-import type { TokenProvider } from "./types";
+import type { Scope, TokenProvider } from "./types";
 
 const ACCESS_EXPIRES_IN = 1_800_000;
 const REFRESH_EXPIRES_IN = 7_200_000;

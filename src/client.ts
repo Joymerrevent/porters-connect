@@ -62,7 +62,11 @@ import type {
   RequiredFor,
 } from "./fields";
 import type { EmptyCatalog } from "./resources/read-core";
-import type { PartitionId, Scheme, Scope } from "./types";
+import type { Scheme } from "./http";
+import type { Scope } from "./auth";
+
+/** A PORTERS partition (Company DB) id. */
+export type PartitionId = number;
 
 // App-level と partition-level の線引きは ADR-0087（カスタム項目の宣言は tenant へ）。
 /**

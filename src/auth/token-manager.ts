@@ -5,8 +5,8 @@
 
 import { PortersConfigError } from "../errors/index";
 import { createMemoryTokenStore } from "./memory-store";
+import type { AccessTokenSource } from "../http/index";
 import type {
-  AccessTokenSource,
   IssuedToken,
   StoredTokens,
   TokenProvider,

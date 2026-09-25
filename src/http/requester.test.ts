@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { AccessTokenSource } from "../auth/types";
+import type { AccessTokenSource } from "./types";
 import {
   PortersAuthError,
   PortersConfigError,

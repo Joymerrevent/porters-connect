@@ -6,7 +6,14 @@
 // (ADR-0048) — `apiUrl` stays pure concatenation and the check runs once, at construction.
 
 import { PortersConfigError } from "../errors/index";
-import type { Scheme } from "../types/index";
+
+// http を明示 opt-in にし、警告の抑止を別にする決定は ADR-0047。
+/**
+ * URL scheme of the API access point. `https` is the default; `http` is opt-in,
+ * meant for a local fake server or a trusted tunnel, and always warns (see
+ * `PortersClientOptions.scheme`).
+ */
+export type Scheme = "https" | "http";
 
 /**
  * Where the API lives: scheme + hostname + port (ADR-0078).
