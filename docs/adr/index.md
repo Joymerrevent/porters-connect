@@ -108,6 +108,8 @@
 | [0092][0092] | 定義していないオプションのキーを実行時にすべて弾く                 | 基本設計 | accepted           | 0.25.0 |
 | [0093][0093] | `porters.auth.getToken()` は Access Token の期限も返す             | 詳細設計 | accepted           | 0.25.0 |
 | [0094][0094] | PR のミューテーションは変更したファイルだけ・main への PR はフル   | プロセス | accepted           | —      |
+| [0095][0095] | 複数の ID でまとめて読む `getMany(ids)` を足す                     | 詳細設計 | accepted           | —      |
+| [0096][0096] | `field` で読み取りの戻り値の型を絞る                               | 詳細設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -206,3 +208,5 @@
 [0092]: 0092-reject-unknown-options.md
 [0093]: 0093-get-token-with-expiry.md
 [0094]: 0094-mutation-changed-files-on-pr.md
+[0095]: 0095-get-many-by-ids.md
+[0096]: 0096-narrow-record-type-by-field.md
