@@ -7,7 +7,9 @@
 > 起票元は stakeholder の問い（2026-09-25）:「`get` は ID を 1 つしか受けない。ID を複数渡して取得できるメソッドは
 > あったほうがいいのではないか」。
 >
-> [ADR-0005][adr5] の公開 API の形（`get(id)` は 1 件）に、複数の ID を受けるメソッドを足す案。`get` 自体は変えない。
+> [ADR-0005][adr5] の公開 API の形（`get(id)` は 1 件）に、複数の ID を受けるメソッドを足す案。あわせて、`get` と
+> `getMany` の両方で取得する項目（`field`）を指定できるようにする（stakeholder の意向・2026-09-25）。`get` への追加は
+> 省略できるオプションなので、既存のコードは壊れない。
 
 ## Context and Problem Statement
 
@@ -31,7 +33,8 @@ Option / Department）は PORTERS の Read が ID の条件を受けないので
 - Read - Condition の記事（`Read API - Parameter`）の `or` の行は「**Phase API の Id および Resource Id にしか
   使用できません**」と書き、その同じ行の例が `Job.P_Id:or=10003:43405` になっている。
 - Job Read と Opportunity Read の記事は、例に `condition=Job.P_Id:or=1234:1235` /
-  `condition=Opportunity.P_Id:or=1234:1235` を載せている。
+  `condition=Opportunity.P_Id:or=1234:1235` を載せている。Job Read の例は応答も載せていて、`P_Id` が 1234 と 1235 の
+  2 件が返っている（`Total="2"`）。
 - Phase Read の記事は「複数の Id を指定して or 検索する場合は、condition パラメータに Phase の Id を指定」と、
   Phase については明記している。
 - ライブラリの reference（`docs/usage/reference/resource-api/README.md`）は「Phase の Id は `or` も可」と狭く要約し、
@@ -54,9 +57,18 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 （`MAX_REQUEST_LENGTH`）が、分けて送り直しはしない。Write の一括処理（`src/resources/bulk-write.ts`）は、
 同じ上限に収まるように分けて送る仕組みをすでに持っている。1 回の Read で返る件数の上限は `count` の 200。
 
+### 取得する項目（`field`）
+
+`get` は `field` を受けず、いつもライブラリが知っている項目をすべて読む（[ADR-0020][adr20]）。項目を絞って 1 件読むには、
+いまは `search({ condition: { P_Id: { eq } }, field, count: 1 })` と書くことになる。`search` / `searchAll` は `field` を
+受けるが、`field` で絞っても戻り値の型は全項目のまま（すべてのキーが省略可能な `ReadRecord`）。
+
+`getMany` では `field` がより効く。URL に載る既定の `field` が短くなれば、1 回に送れる ID が増える。
+
 ### 問い
 
 複数の ID でまとめて読むメソッドを足すか。足すなら、どう送り、何を返し、どのリソースに付けるか。
+取得する項目（`field`）の指定をどのメソッドで受けるか。
 
 ## Decision Drivers
 
@@ -86,13 +98,19 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 - 案3b: Phase だけに付ける（出典が明記しているものだけ）。データ系は実機で確かめてから
 - 案3c: Attachment にも付ける
 
+### 軸4: 取得する項目（`field`）
+
+- **案4a: `get` と `getMany` の両方で `field` を受ける**（推奨・stakeholder の意向）
+- 案4b: `getMany` だけで受ける（`get` は変えない）
+- 案4c: どちらも受けない（絞りたいときは `search` を使う）
+
 ## Decision Outcome
 
-**未決（proposed）**。以下は推奨案（1a ＋ 2a ＋ 3a）で書いた場合の形。
+**未決（proposed）**。以下は推奨案（1a ＋ 2a ＋ 3a ＋ 4a）で書いた場合の形。
 
 ### 決めること（推奨案）
 
-- 名前は `getMany(ids, { expand?, image? })`。`get` と同じオプションを受け、同じ型のレコードを返す。
+- 名前は `getMany(ids, { field?, expand?, image? })`。`get` と同じオプションを受け、同じ型のレコードを返す。
 - **送り方（案1a）**:
   - 重複した ID は 1 回だけ送る。空の配列ならリクエストを送らずに `[]` を返す。
   - ID を「1 本あたり 200 件まで」かつ「URL が上限に収まるまで」の組に分け、組ごとに `{idAlias}:or=<id>:<id>:…` と
@@ -105,6 +123,12 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
   同じ ID を 2 回渡したら、両方の位置に同じレコードが入る。
 - **付けるリソース（案3a）**: 汎用のアクセサ（`src/resources/resource.ts` の factory）で作る 12 種。Phase は `Id:or`、
   それ以外は `P_Id:or`（`idAlias` を使うので分岐は要らない）。
+- **取得する項目（案4a）**: `get(id, { field?, expand?, image? })` と `getMany` の両方で `field` を受ける。
+  - 受ける値と意味は `search` と同じ（標準の `P_` と宣言したカスタム項目の alias。省略すると知っている項目をすべて読む）。
+  - **ID の項目（`idAlias`）は、`field` に無くてもライブラリが足して読む**。`getMany` の突き合わせに ID が要るため。
+    `get` も同じ規則にして 2 つのメソッドの挙動を揃える。`field: []` は ID だけを読む（レコードがあるかの確認に使える）。
+  - **戻り値の型は `field` で絞らない**（`search` と同じ）。`get` と `getMany` だけ絞ると、同じ `field` で 3 つの
+    メソッドの型が食い違う。絞るかどうかは `search` / `searchAll` を含めて、別の ADR（`field` で戻り値の型を絞るか）で決める。
 - **付けないもの**:
   - Attachment。Read の ID 指定は `condition` ではなく専用の `id` パラメータで、1 つしか受けない。また本体
     （1 ファイル 10MB まで）を運ぶのは `get` だけにしている（[ADR-0075][adr75]・[ADR-0081][adr81]）。
@@ -128,12 +152,19 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
   安全側に倒せる。
 - **案3c** は本体つきのファイルを何件もまとめて読むことになり、[ADR-0075][adr75] で本体を `get` だけに閉じた理由
   （1 件ずつなら大きさが読める）に反する。
+- **案4a**: `getMany` を「`get` を複数の ID で呼ぶもの」と説明できる形が一番迷わない。`get` への追加は省略できる
+  オプションなので既存のコードは壊れず、`get` でも応答が小さくなる。
+- **案4b** は `get` を変えずに済むが、2 つのメソッドで受けるオプションが揃わず、「なぜ `get` では絞れないのか」と迷わせる。
+- **案4c** は何も増えないが、`getMany` で 1 回に送れる ID を増やす手段が無くなる。
 
 ### Consequences
 
 - Good: 複数の ID で読むのが 1 行になり、Read の回数が減る。見つからなかった ID が位置で分かる。
 - Good: `P_Id` の `or` が効くかどうかが live-verification に載り、契約後に確かめる項目になる。
-- Bad: 公開メソッドが 1 つ増える（汎用のアクセサ 12 種すべて）。
+- Good: `get` で取得する項目を絞れる。`getMany` は `field` を絞ると 1 回に送れる ID が増える。
+- Bad: 公開メソッドが 1 つ増える（汎用のアクセサ 12 種すべて）。`get` のオプションが 1 つ増える。
+- Bad: `field` で絞っても戻り値の型は全項目のままなので、読んでいない項目に触ってもコンパイル時には止まらない
+  （`search` と同じ。型を絞るかは別の ADR）。
 - Bad: `P_Id` の `or` が実機で効かなかった場合、`getMany` はデータ系でエラーになり、送り方を案1b に替える
   変更が要る（公開 API の形は変わらない）。
 - Neutral: `search` の `condition` で `P_Id: { or }` を書けることは変えない（同じ前提の上にあるので、
@@ -158,13 +189,18 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 - 案3a — Good: 1 か所の変更で 12 種に付く。Bad: データ系は仮定の上に乗る。
 - 案3b — Good: 出典が明記したものだけ。Bad: 需要の大きいデータ系が待たされる。
 - 案3c — Good: すべてのデータ系で揃う。Bad: 本体を何件も運ぶことになり、[ADR-0075][adr75] に反する。
+- 案4a — Good: `get` と `getMany` のオプションが揃う。既存のコードは壊れない。Bad: `get` のオプションが増える。
+- 案4b — Good: `get` を変えない。Bad: 2 つのメソッドで受けるオプションが揃わない。
+- 案4c — Good: 何も増えない。Bad: `getMany` で 1 回に送れる ID を増やせない。項目を絞るには `search` を書くことになる。
 
 ## More Information
 
-- 実装（accepted 後・別 PR）: `src/resources/resource.ts`（`getMany` と組分け・突き合わせ）、組分けを
+- 実装（accepted 後・別 PR）: `src/resources/resource.ts`（`get` の `field`・`getMany` と組分け・突き合わせ）、組分けを
   `bulk-write.ts` の詰め方と共有するかは実装で決める、テスト（組の境目・重複・空・突き合わせの失敗・`Total` 超過）、
   フェイクサーバーでの結線（`test/fake/query.ts` はすでに `or` を扱う）、API リファレンスの生成し直し、
   使い方ドキュメント（リソース別のページと「検索」の章）、changeset（minor・破壊的変更なし）。
+- `field` で戻り値の型を絞るかは、この ADR の後で別の ADR として起票する（`search` / `searchAll` / `get` / `getMany` を
+  まとめて扱う）。
 - 同じ実装 PR で live-verification に「`P_Id:or` がデータ系で効くか」を足し、コードに対応する `VERIFY(live)` を置く。
 - reference（`docs/usage/reference/resource-api/README.md`）の「Phase の Id は `or` も可」は、出典の記述が割れていることが
   分かるように書き直す（実装 PR と同じか、その前の docs の PR）。

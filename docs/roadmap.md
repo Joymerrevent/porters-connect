@@ -274,7 +274,7 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
 ### 判断待ち（決めれば着手できる）
 
 - [ ] **複数の ID でまとめて読む `getMany(ids)` を足すか** — [ADR-0095][adr95]（2026-09-25 起票・**proposed**・
-      stakeholder の問い）。推奨: 汎用のアクセサ 12 種に `getMany(ids, { expand?, image? })` を足し、`{idAlias}:or` で
+      stakeholder の問い）。推奨: 汎用のアクセサ 12 種に `getMany(ids, { field?, expand?, image? })` を足し（`get` にも `field` を足す）、`{idAlias}:or` で
       200 件ずつ・URL の上限に収まる組に分けて読む。返ってきた ID を突き合わせ、頼んでいないレコードが混じったら
       エラーで止める。戻り値は渡した順の `(T | undefined)[]`。Attachment とマスタには付けない。
 - [x] ✅ **使い方ドキュメントの章立てを 5 章に組み直すか** — [ADR-0088][adr88] で決着（2026-09-22 起票・同日 accepted・
