@@ -16,7 +16,7 @@
 import type { AccessPoint } from "../../http/access-point";
 import type { Requester } from "../../http/requester";
 import type { RawItem } from "../../xml/parser";
-import { paginateOnce, readUrlOf, runRead, type ResourcePageOf } from "./read";
+import { createPageReader, paginateOnce, type ResourcePageOf } from "./read";
 
 /** The paging half of a Read query; everything else is the resource's own. */
 type Paging = { count?: number; start?: number };
@@ -44,21 +44,15 @@ export type MasterResourceSpec<Q extends Paging, T> = {
 export const createMasterResource = <Q extends Paging, T>(
   spec: MasterResourceSpec<Q, T>,
 ): MasterResource<Q, T> => {
-  const read = (base: URLSearchParams, count?: number, start?: number) =>
-    runRead(
-      spec.requester,
-      spec.name,
-      readUrlOf(spec.accessPoint, spec.path, base, count, start),
-      spec.decode,
-    );
+  const read = createPageReader(spec);
   const search = async (query: Q = {} as Q): Promise<ResourcePageOf<T>> =>
-    read(spec.params(query), query.count, query.start);
+    read(spec.params(query), spec.decode, query.count, query.start);
   const searchAll = (
     query: Omit<Q, "count" | "start"> = {} as Omit<Q, "count" | "start">,
   ): AsyncIterable<T> =>
     paginateOnce(() => {
       const base = spec.params(query);
-      return (count, start) => read(base, count, start);
+      return (count, start) => read(base, spec.decode, count, start);
     });
   return { search, searchAll };
 };

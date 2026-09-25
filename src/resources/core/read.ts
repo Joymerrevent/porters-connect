@@ -306,6 +306,37 @@ export const readUrlOf = (
   return apiUrl(accessPoint, path, p);
 };
 
+/** Where a resource's Read goes: the pieces every page of every query shares. */
+export type PageReaderTarget = {
+  requester: Requester;
+  accessPoint: AccessPoint;
+  /** Root element of the response (and the error context), e.g. `"Candidate"`. */
+  name: string;
+  /** URL path segment, e.g. `"candidate"`. */
+  path: string;
+};
+
+/**
+ * Read one page: the query's serialised parameters + paging, sent to the resource's path and decoded
+ * with the given decoder. Shared by the data and the master resources, so "how one page is read"
+ * is written once; what differs between them — the parameters and whether the decoder depends on
+ * the query — stays with each.
+ */
+export const createPageReader =
+  (target: PageReaderTarget) =>
+  <T>(
+    base: URLSearchParams,
+    decode: (item: RawItem) => T,
+    count?: number,
+    start?: number,
+  ): Promise<ResourcePageOf<T>> =>
+    runRead(
+      target.requester,
+      target.name,
+      readUrlOf(target.accessPoint, target.path, base, count, start),
+      decode,
+    );
+
 /**
  * Offset pagination shared by every `searchAll`. Advances by the items actually returned and
  * stops at `total` — or on an empty page (defensive against a stuck offset / infinite loop).

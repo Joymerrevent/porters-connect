@@ -16,10 +16,10 @@ import {
 } from "../../xml/encode";
 import type { RawItem } from "../../xml/parser";
 import {
+  createPageReader,
   decoderFor,
   paginateOnce,
   readUrlOf,
-  runRead,
   type FieldCatalog,
   type ReadFieldAlias,
   type ResourceDeps,
@@ -262,13 +262,20 @@ export const createDataResource = <
   // The API-native "primary key only" stays reachable via `field: []` (透明化).
   const defaultFields = Object.keys(config.fields) as ReadFieldAlias<F>[];
 
+  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
+  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059). The default is applied
+  // here, once, so every Read (search / searchAll / get / getMany) gets it the same way.
   const readParams = (q: SearchQuery<F, R>): URLSearchParams =>
-    buildReadParams(deps.partition, q, {
-      prefix: config.prefix,
-      fields: fieldMap,
-      references,
-      params: config.readParams,
-    });
+    buildReadParams(
+      deps.partition,
+      { ...q, field: q.field ?? defaultFields },
+      {
+        prefix: config.prefix,
+        fields: fieldMap,
+        references,
+        params: config.readParams,
+      },
+    );
 
   const readUrl = (q: SearchQuery<F, R>): string =>
     readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
@@ -292,8 +299,13 @@ export const createDataResource = <
     ) as (item: RawItem) => T;
   };
 
-  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
-  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059).
+  const read = createPageReader({
+    requester: deps.requester,
+    accessPoint: deps.accessPoint,
+    name: config.name,
+    path: config.path,
+  });
+
   // `async` for the exception contract, not for the body: URL building runs the typed-query
   // guards (keyword length, itemstate, raw expansions), and a Promise-returning method must never
   // throw synchronously — every failure reaches the caller as a rejection (ADR-0046).
@@ -303,13 +315,13 @@ export const createDataResource = <
   >(
     query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
   ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>> =>
-    runRead(
-      deps.requester,
-      config.name,
-      readUrl({ ...query, field: query.field ?? defaultFields }),
+    read(
+      readParams(query),
       decoderWith<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>(
         query.expand,
       ),
+      query.count,
+      query.start,
     );
 
   // The caller's query object is read **once**, when the first page is asked for: what the walk
@@ -328,20 +340,11 @@ export const createDataResource = <
     } = {},
   ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>> =>
     paginateOnce(() => {
-      const base = readParams({
-        ...query,
-        field: query.field ?? defaultFields,
-      });
+      const base = readParams(query);
       const decode = decoderWith<
         ImageReadRecord<ExpandedReadRecord<F, R, E>, I>
       >(query.expand);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          config.name,
-          readUrlOf(deps.accessPoint, config.path, base, count, start),
-          decode,
-        );
+      return (count, start) => read(base, decode, count, start);
     });
 
   // `get` / `getMany` always read the id, even when the caller's `field` leaves it out: `getMany`
@@ -405,11 +408,7 @@ export const createDataResource = <
     // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
     const chunks = packIds(
       [...new Set(ids)],
-      (chunk) =>
-        readUrl({
-          ...query(chunk, MAX_READ_COUNT),
-          field: field ?? defaultFields,
-        }).length,
+      (chunk) => readUrl(query(chunk, MAX_READ_COUNT)).length,
     );
     const found = new Map<number, Rec>();
     for (const chunk of chunks) {
