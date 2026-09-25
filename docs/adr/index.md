@@ -107,6 +107,7 @@
 | [0091][0091] | トークンの取得と保存を別々に受け取り、管理はクライアントが持つ     | 基本設計 | accepted           | 0.24.0 |
 | [0092][0092] | 定義していないオプションのキーを実行時にすべて弾く                 | 基本設計 | accepted           | —      |
 | [0093][0093] | `porters.auth.getToken()` は Access Token の期限も返す             | 詳細設計 | accepted           | —      |
+| [0094][0094] | PR のミューテーションは変更したファイルだけ・リリース PR はフル    | プロセス | proposed           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -204,3 +205,4 @@
 [0091]: 0091-token-provider-and-store.md
 [0092]: 0092-reject-unknown-options.md
 [0093]: 0093-get-token-with-expiry.md
+[0094]: 0094-mutation-changed-files-on-pr.md
