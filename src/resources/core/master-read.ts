@@ -21,7 +21,7 @@ import {
   type FieldCatalog,
   type Paging,
   type ReadRecord,
-  type ResourceDeps,
+  type Connection,
   type ResourcePageOf,
 } from "./read";
 
@@ -47,7 +47,7 @@ export type MasterReadConfig<
  */
 export const createMasterReader = <const F extends FieldCatalog, Q>(
   config: MasterReadConfig<F, Q>,
-  deps: Pick<ResourceDeps, "requester" | "accessPoint">,
+  deps: Connection,
 ) => {
   const decode = decoderFor(config.fields);
   const read = createPageReader({

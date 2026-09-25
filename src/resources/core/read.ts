@@ -35,13 +35,18 @@ import {
 export type FieldCatalog = Record<string, DataType | null>;
 
 /**
- * What every resource accessor is handed: how to send (requester), where to send (access point —
- * ADR-0047), and the partition it is bound to. Partition Read takes `Omit<…, "partition">`: it
- * discovers partitions, so it has none to bind.
+ * How to reach PORTERS: how to send (requester) and where to send (access point — ADR-0047).
+ * Enough on its own for a Read that does not send `partition`: Partition Read discovers
+ * partitions, so it has none to bind, and a master's shared sending never reads one (each master
+ * sends its own `partition` through `params`).
  */
-export type ResourceDeps = {
+export type Connection = {
   requester: Requester;
   accessPoint: AccessPoint;
+};
+
+/** What a partition-bound resource accessor is handed: the {@link Connection} and its partition. */
+export type ResourceDeps = Connection & {
   partition: number;
 };
 
