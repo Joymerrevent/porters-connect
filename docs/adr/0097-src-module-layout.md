@@ -10,6 +10,9 @@
 > [基本設計][basic-design] §2 のモジュール構成を改める案。公開 API は変えない。
 >
 > **decider が案1a ＋ 案2a ＋ 案3a ＋ 案4a を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（[ADR-0096][adr96] の実装より先）。
+>
+> **Amended by [ADR-0098][adr98]（2026-09-25）**: 層の表の一番下に `porters/`（PORTERS が決めた値と定義表）を足し、
+> 案3a の「定義表（resource-list / field-type）は `resources/` 直下に残す」を改めた（定義表は `src/porters/` へ移す）。
 
 ## Context and Problem Statement
 
@@ -241,4 +244,5 @@ accept の後、この ADR の PR がマージされる前に、decider が「�
 [adr13]: 0013-coding-conventions-class-vs-function.md
 [adr71]: 0071-usage-docs-single-root.md
 [adr96]: 0096-narrow-record-type-by-field.md
+[adr98]: 0098-porters-rules-folder.md
 [basic-design]: ../design/basic-design.md

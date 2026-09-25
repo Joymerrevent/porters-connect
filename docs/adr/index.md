@@ -111,7 +111,7 @@
 | [0095][0095] | 複数の ID でまとめて読む `getMany(ids)` を足す                     | 詳細設計 | accepted           | —      |
 | [0096][0096] | `field` で読み取りの戻り値の型を絞る                               | 詳細設計 | accepted           | —      |
 | [0097][0097] | `src/` のモジュールを層に並べ、依存の向きを lint で守る            | 基本設計 | accepted           | —      |
-| [0098][0098] | PORTERS が決めた値と定義表を `src/porters/` にまとめる             | 基本設計 | proposed           | —      |
+| [0098][0098] | PORTERS が決めた値と定義表を `src/porters/` にまとめる             | 基本設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md

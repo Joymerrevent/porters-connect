@@ -1,6 +1,6 @@
 # 98. PORTERS が決めた値と定義表を `src/porters/` にまとめる
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -10,6 +10,8 @@
 >
 > [ADR-0097][adr97] の層の表に一番下の層を 1 つ足し、案3a の「定義表（resource-list / field-type）は `resources/` 直下に
 > 残す」を改める。公開 API は変えない。
+>
+> **decider が案B を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（[ADR-0096][adr96] の実装より先）。
 
 ## Context and Problem Statement
 
@@ -70,9 +72,9 @@ PORTERS が決めた値と定義表を 1 か所にまとめるか。まとめる
 
 ## Decision Outcome
 
-**未決（proposed）**。stakeholder は案B を選んで起票を指示した（2026-09-25）。以下は案B で書いた場合の形。
+採用: **案B**（decider が 2026-09-25 に選択）。
 
-### 決めること（案B）
+### 決めること
 
 #### 入れるもの・入れないもの
 
@@ -140,8 +142,8 @@ PORTERS が決めた値と定義表を 1 か所にまとめるか。まとめる
 
 - 実装（accepted 後・別 PR）: 値と型の移動、`resource-list.ts` の向きの反転、import の書き換え、eslint の層の規則、文書。
   処理の中身は変えない。変更の種類ごとにコミットを分ける。
-- 実装は [ADR-0096][adr96]（`field` で戻り値の型を絞る）より先に行うか、後に行うかを accepted のときに決める
-  （ADR-0096 は `resources/core/` のファイルを触るが、値の定数にはほとんど触れない）。
+- 実装は [ADR-0096][adr96]（`field` で戻り値の型を絞る）より先に行う（accepted のときに決めた）。ADR-0096 は
+  `resources/core/` のファイルを触るので、値の置き場所を先に決めておくと 2 つの変更がぶつかりにくい。
 
 [adr96]: 0096-narrow-record-type-by-field.md
 [adr97]: 0097-src-module-layout.md
