@@ -12,6 +12,7 @@
 - **1 ページは最大 200 件**です。全件が要るときは `searchAll` が 200 件刻みで辿ります。
 - **削除済みのレコードは既定では返りません**。含めるかどうかは `itemstate` で選びます
   （[削除と削除済みデータ][deleted]）。
+- **ID が分かっているなら `get` / `getMany` で読みます**（ページの後半）。
 - **マスタ 5 種は指定できるものが違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
 
 ## 全体像
@@ -106,7 +107,7 @@ plain.items[0]?.P_Client; // number | null
 - **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく接頭辞なしの alias で指定し、
   ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
   Candidate を参照するときの `Person.` もライブラリが付けます。
-- `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
+- `search` / `searchAll` / `get` / `getMany` で使えます（`get` は `get(id, { expand })`、`getMany` は `getMany(ids, { expand })`）。
 - 1 回の呼び出しで済みます。参照先を別途 `client.get(id)` で引く必要はありません。
 
 ```ts
@@ -309,6 +310,35 @@ page.start; // 今回の開始インデックス
 
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
 `total` に達するか空ページで停止します）。
+
+## `get` / `getMany` — ID で読む
+
+ID が分かっているレコードは、`get`（1 件）か `getMany`（複数）で読みます。どちらも `field` / `expand` / `image` を
+`search` と同じ書き方で指定できます。
+
+```ts
+const one = await t.candidate.get(1234); // 見つからなければ undefined
+const named = await t.candidate.get(1234, { field: ["P_Name"] }); // P_Id と P_Name だけ
+
+const many = await t.candidate.getMany([1234, 5678, 9999], {
+  field: ["P_Name"],
+});
+// → [レコード, レコード, undefined]（渡した順。見つからない ID の位置は undefined）
+```
+
+<!-- 根拠: ADR-0095 -->
+
+- **ID の項目は必ず読みます**。`field` に `P_Id` を入れなくても、返るレコードには `P_Id` が入ります。
+- **`getMany` の戻り値は、渡した ID と同じ長さ・同じ順の配列です**。同じ ID を 2 回渡すと、両方の位置に同じレコードが
+  入ります。空の配列を渡すと、リクエストを送らずに `[]` を返します。
+- **`getMany` は ID をまとめて送ります**。1 回のリクエストは最大 200 件で、リクエストの長さの上限に収まるように
+  ライブラリが分けて順に送ります。`field` で項目を絞ると、1 回に送れる ID が増えます。
+- **返ってきたレコードは、渡した ID と突き合わせます**。渡していない ID のレコードが返ってきたときは、何も返さずに
+  `PortersResourceError`（`category` は `"unknown"`）になります。PORTERS が ID の条件どおりに絞らなかったことを
+  表すので、そのときは `get` で 1 件ずつ読んでください。途中のリクエストが失敗したときも、それまでの結果は返さずに
+  エラーになります。
+- **`getMany` は Attachment にはありません**。ファイルの本体は `get` で 1 件ずつ取ります。マスタ 5 種には `get` も
+  `getMany` もありません。
 
 ## マスタは指定できるものが違う
 
