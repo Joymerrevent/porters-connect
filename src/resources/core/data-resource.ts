@@ -6,7 +6,6 @@
 // The read-only master resources have their own, smaller counterpart: `master-resource.ts`.
 
 import { PortersConfigError } from "../../errors";
-import type { AccessPoint } from "../../http/access-point";
 import type { DataType } from "../../porters/data-type";
 import {
   buildWriteXml,
@@ -19,7 +18,6 @@ import type { RawItem } from "../../xml/parser";
 import {
   decoderFor,
   paginateOnce,
-  qualifyReadFields,
   readUrlOf,
   runRead,
   type FieldCatalog,
@@ -27,14 +25,12 @@ import {
   type ResourceDeps,
   type ResourcePageOf,
 } from "./read";
-import { appendReadQuery, type Condition, type SearchQuery } from "./query";
+import { buildReadParams, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
 import { packIds, recordsById } from "./get-many";
 import {
-  applyExpand,
   expansionCatalogs,
-  guardRawExpansion,
   type EmptyReferences,
   type Expand,
   type ExpandedReadRecord,
@@ -42,7 +38,6 @@ import {
   type ReferenceMap,
 } from "./expand";
 import {
-  applyImage,
   guardImageWrite,
   guardNoImageInBulk,
   type ImageOption,
@@ -243,77 +238,6 @@ export type DataResource<
     }[],
   ): Promise<BulkWriteResult>;
 };
-
-/**
- * Serialise the Read query — `partition` / `field` / `condition` / `order` / `keywords` /
- * `itemstate` — into the parameters every page of that query shares. **Paging is deliberately not
- * here**: `count` / `start` are the only parts that differ page to page, so `readUrlOf` adds them
- * to a copy and `searchAll` can serialise the caller's query exactly once (RV-32).
- * `ctx` (alias prefix + Data-Type map + reference targets) drives the typed query encoding
- * (ADR-0038): condition/order prefixing, date ISO -> PORTERS, and the keyword/itemstate guards.
- * It also assembles `field` from the bare aliases (ADR-0059) and folds `expand` into that list
- * (ADR-0058). Attachment is bespoke (no prefix / no catalog) and builds its own loose URL — see
- * attachment.ts.
- */
-export const buildReadParams = <F extends FieldCatalog, R extends ReferenceMap>(
-  partition: number,
-  q: SearchQuery<F, R>,
-  ctx: {
-    prefix: string;
-    fields: ReadonlyMap<string, DataType | null>;
-    references?: ReferenceMap;
-    /**
-     * Fixed query parameters this resource always sends. **Phase requires `resource=`** — the
-     * upper resource whose history is being read — and it is a parameter of its own, not a
-     * `condition` (ADR-0061 / Phase Read). Set once by the accessor, never by the caller.
-     */
-    params?: Readonly<Record<string, string>>;
-  },
-): URLSearchParams => {
-  const p = new URLSearchParams();
-  p.set("partition", String(partition));
-  for (const [key, value] of Object.entries(ctx.params ?? {}))
-    p.set(key, value);
-  if (q.field && q.field.length > 0) {
-    // The typed `Expand<R>` is what constrains callers; the assembly below is purely structural,
-    // like `encodeCondition` over the loose catalog.
-    guardRawExpansion(q.field, ctx.fields);
-    const entries = applyImage(
-      applyExpand(
-        qualifyReadFields(ctx.prefix, ctx.fields, q.field),
-        q.expand,
-        {
-          prefix: ctx.prefix,
-          references: ctx.references ?? {},
-        },
-      ),
-      q.image,
-      ctx.prefix,
-    );
-    p.set("field", entries.join(","));
-  }
-  appendReadQuery(p, q, ctx);
-  return p;
-};
-
-/**
- * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
- * at the configured access point (ADR-0047) — the single-page form of {@link buildReadParams}.
- */
-export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
-  accessPoint: AccessPoint,
-  partition: number,
-  path: string,
-  q: SearchQuery<F, R>,
-  ctx: Parameters<typeof buildReadParams<F, R>>[2],
-): string =>
-  readUrlOf(
-    accessPoint,
-    path,
-    buildReadParams(partition, q, ctx),
-    q.count,
-    q.start,
-  );
 
 export const createDataResource = <
   const F extends FieldCatalog,
