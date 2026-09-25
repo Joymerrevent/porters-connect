@@ -39,3 +39,8 @@ export type ResourceDescriptor<
    */
   references?: R;
 };
+
+/** The primary-key alias a resource addresses its records by: `P_Id` unless it says otherwise. */
+export const idAliasOf = (
+  descriptor: Pick<ResourceDescriptor, "idAlias">,
+): string => descriptor.idAlias ?? "P_Id";

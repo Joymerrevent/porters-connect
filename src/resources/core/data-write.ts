@@ -15,7 +15,7 @@ import { fieldTypesOf, type FieldCatalog } from "./catalog";
 import type { ResourceDeps } from "./deps";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { guardImageWrite, guardNoImageInBulk } from "./image";
-import type { ResourceDescriptor } from "./descriptor";
+import { idAliasOf, type ResourceDescriptor } from "./descriptor";
 import { buildWriteUrl, firstWriteResultId } from "./write";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
@@ -68,8 +68,8 @@ export const createDataWriter = <
   deps: ResourceDeps,
 ) => {
   const fieldMap = fieldTypesOf(config.fields);
-  // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
-  const idAlias = config.idAlias ?? "P_Id";
+  // Phase uses `Id` (ADR-0061).
+  const idAlias = idAliasOf(config);
 
   const writeUrl = (): string =>
     buildWriteUrl(deps.accessPoint, deps.partition, config.path);

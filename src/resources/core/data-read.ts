@@ -23,7 +23,7 @@ import {
   type ReferenceMap,
 } from "./expand";
 import type { ImageOption, ImageReadRecord } from "./image";
-import type { ResourceDescriptor } from "./descriptor";
+import { idAliasOf, type ResourceDescriptor } from "./descriptor";
 import type { EmptyImages } from "./requested-record";
 
 /**
@@ -50,8 +50,8 @@ export const createDataReader = <
   deps: ResourceDeps,
 ) => {
   const references: ReferenceMap = config.references ?? {};
-  // `P_Id` unless the resource says otherwise (Phase uses `Id` — ADR-0061).
-  const idAlias = config.idAlias ?? "P_Id";
+  // Phase uses `Id` (ADR-0061).
+  const idAlias = idAliasOf(config);
   const decode = decoderFor(config.fields);
   // `field` omitted -> every catalogued alias (ADR-0020): PORTERS returns only `{Resource}.P_Id` for
   // a fieldless request, so a typed-record read would otherwise drop every known field despite the
