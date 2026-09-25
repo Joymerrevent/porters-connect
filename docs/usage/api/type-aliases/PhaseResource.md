@@ -6,9 +6,9 @@
 
 # Type Alias: PhaseResource
 
-> **PhaseResource** = `Resource`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], `EmptyReferences`, `PhaseUnsupportedQuery`, `"Resource"`\>
+> **PhaseResource** = `DataResource`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\], `EmptyReferences`, `PhaseUnsupportedQuery`, `"Resource"`\>
 
-Defined in: [src/resources/phase.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L122)
+Defined in: [src/resources/phase.ts:124](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L124)
 
 The Phase accessor for one bound resource — the same shape as every other resource, except that
 `search` / `searchAll` do not take `keywords` / `itemstate` and the write inputs do

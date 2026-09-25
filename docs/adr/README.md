@@ -47,6 +47,9 @@
   さらに [ADR-0098][0098] で、`src/resources/resource-list.ts` / `src/resources/field-type.ts` → `src/porters/…`、
   `DataType`（`src/xml/decode.ts`）→ `src/porters/data-type.ts`、出典に書いてある上限・値（`MAX_REQUEST_LENGTH` など）→
   `src/porters/{request,read-rules,write-rules,image,attachment,custom-field,time-of-day}.ts` に移した。
+  その後の整理で `src/resources/core/resource.ts` を分け、データ系の factory は `src/resources/core/data-resource.ts`
+  （`createResource` → `createDataResource`）、`ResourceDescriptor` は `core/descriptor.ts`、`firstWriteResultId` /
+  `buildWriteUrl` は `core/write.ts` に移した。マスタの読み取りは `core/master-resource.ts`（`createMasterResource`）。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。

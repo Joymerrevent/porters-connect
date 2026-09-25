@@ -8,4 +8,4 @@
 
 > **RecruiterSearchQuery** = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/recruiter.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L86)
+Defined in: [src/resources/recruiter.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L88)

@@ -30,7 +30,7 @@ const OVER_100_CHARS = "あ".repeat(101);
 // Each entry is a call that is *expected to fail*. What is under test is not that it fails, but
 // **how the failure is delivered**.
 const calls = (porters: PortersClient): [string, () => Promise<unknown>][] => [
-  // Data resources — one factory (createResource) serves candidate / job / client / process /
+  // Data resources — one factory (createDataResource) serves candidate / job / client / process /
   // resume, so exercising Candidate covers the shape for all five.
   ["candidate.search", () => porters.tenant(1).candidate.search()],
   // …and the two typed-query guards, which run while the URL is built (the RV-15 originals).

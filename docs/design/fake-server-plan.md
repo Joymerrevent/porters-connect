@@ -36,7 +36,7 @@
   （`store.test.ts` / `fake-transport.test.ts` / `wiring.test.ts`）。責務は phase 1 以降の追加先と一致
   （XML＝`wire.ts`・Read クエリ＝`query.ts`・OAuth＝`oauth.ts` を後から足す）。
 - **ルーティングの単一ソース**: `src/resources/candidate.ts` が `CANDIDATE_DESCRIPTOR`（name/path/prefix/fields）を
-  **export**し、フェイクはそれを import して経路表を作る（`ResourceConfig` は `ResourceDescriptor` ＋ `requiredOnCreate` に分解）。
+  **export**し、フェイクはそれを import して経路表を作る（`DataResourceConfig` は `ResourceDescriptor` ＋ `requiredOnCreate` に分解）。
   カタログの写しを持たない＝ドリフト不可能（ADR-0043 D-fixture 共有）。**`src/index.ts` には出さない**ので公開 API は不変。
 - **未実装の可視化（フェイルセーフ）**: 未ルートの path・未実装の endpoint・**未配線のオプション**（`rateLimit` 等）・
   **未適用の注入 kind**（`resultCode` 等）はすべて `PortersConfigError` で落ちる。「渡したのに何も起きない」＝

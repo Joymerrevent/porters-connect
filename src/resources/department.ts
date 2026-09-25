@@ -4,19 +4,16 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
+import type { ResourceDeps } from "./core/read";
+import type { ResourceDescriptor } from "./core/descriptor";
 import {
-  decoderFor,
-  paginateOnce,
-  qualifyReadFields,
-  readUrlOf,
-  runRead,
+  createFieldParam,
   type FieldCatalog,
   type ReadFieldAlias,
   type ReadRecord,
   type ResourcePage,
 } from "./core/read";
-import type { DataType } from "../porters/data-type";
+import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。
 // 先頭 2 つはユーザー部署型（Link）／`User.P_Department` の参照経由でも読める項目で、残る 4 つは
@@ -70,9 +67,6 @@ export type DepartmentResource = {
   ): AsyncIterable<Department>;
 };
 
-// The catalog as a runtime lookup, for prefixing the caller's bare `field` aliases (ADR-0059).
-const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
-
 // Sent when the caller omits `field` (ADR-0020). A fieldless Department Read answers with `P_Id`
 // alone, so leaving `field` off would hand back a record whose type promises 6 fields and whose
 // other 5 are silently `null` — the shape of RV-1.
@@ -81,63 +75,27 @@ const FIELD_MAP = new Map<string, DataType | null>(Object.entries(FIELDS));
 // `P_Id,P_Name`; whether the 4 "参照取得できない" fields come back from a direct Department Read
 // with all 6 listed at once is unconfirmed — docs/live-verification.md (LV-30). If one is
 // rejected, drop it from this default rather than from the catalog: `field` can still name it.
-const DEFAULT_FIELDS = Object.keys(FIELDS) as ReadFieldAlias<typeof FIELDS>[];
+const setField = createFieldParam(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
 
-// Paging is left out on purpose — see `field.ts` / RV-32.
+// The parameters Department Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
   q: Omit<DepartmentSearchQuery, "count" | "start">,
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
-  const field = q.field ?? DEFAULT_FIELDS;
-  if (field.length > 0) {
-    p.set(
-      "field",
-      qualifyReadFields(DEPARTMENT_DESCRIPTOR.prefix, FIELD_MAP, field).join(
-        ",",
-      ),
-    );
-  }
+  setField(p, q.field);
   return p;
 };
 
 export const createDepartmentResource = (
   deps: ResourceDeps,
-): DepartmentResource => {
-  const decode = decoderFor(FIELDS);
-  // `async` for the exception contract (ADR-0046).
-  const readUrl = (q: DepartmentSearchQuery): string =>
-    readUrlOf(
-      deps.accessPoint,
-      DEPARTMENT_DESCRIPTOR.path,
-      buildParams(deps.partition, q),
-      q.count,
-      q.start,
-    );
-  const search = async (
-    query: DepartmentSearchQuery = {},
-  ): Promise<DepartmentPage> =>
-    runRead(deps.requester, DEPARTMENT_DESCRIPTOR.name, readUrl(query), decode);
-  // The query is read once, at the first page (RV-32).
-  const searchAll = (
-    query: Omit<DepartmentSearchQuery, "count" | "start"> = {},
-  ): AsyncIterable<Department> =>
-    paginateOnce(() => {
-      const base = buildParams(deps.partition, query);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          DEPARTMENT_DESCRIPTOR.name,
-          readUrlOf(
-            deps.accessPoint,
-            DEPARTMENT_DESCRIPTOR.path,
-            base,
-            count,
-            start,
-          ),
-          decode,
-        );
-    });
-  return { search, searchAll };
-};
+): DepartmentResource =>
+  createMasterResource(
+    {
+      ...DEPARTMENT_DESCRIPTOR,
+      params: (q: Omit<DepartmentSearchQuery, "count" | "start">) =>
+        buildParams(deps.partition, q),
+    },
+    deps,
+  );

@@ -14,7 +14,8 @@ import {
   type FieldCatalog,
   type ReadRecord,
 } from "./core/read";
-import type { ResourceDeps, ResourceDescriptor } from "./core/resource";
+import type { ResourceDeps } from "./core/read";
+import type { ResourceDescriptor } from "./core/descriptor";
 
 const FIELDS = {
   P_Id: "System[Id]",

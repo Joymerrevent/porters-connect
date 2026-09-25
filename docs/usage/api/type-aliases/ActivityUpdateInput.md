@@ -8,6 +8,6 @@
 
 > **ActivityUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/activity.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L89)
+Defined in: [src/resources/activity.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/activity.ts#L91)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

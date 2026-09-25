@@ -5,19 +5,21 @@
 // (Write = ID) and is expandable (ADR-0058).
 
 import {
-  createResource,
+  createDataResource,
   type CreateInput,
-  type EmptyCatalog,
-  type FieldCatalog,
-  type ReadRecord,
-  type ReferenceMap,
-  type Resource,
-  type ResourceDeps,
-  type ResourceDescriptor,
-  type ResourcePage,
-  type SearchQuery,
+  type DataResource,
   type UpdateInput,
-} from "./core/resource";
+} from "./core/data-resource";
+import type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadRecord,
+  ResourceDeps,
+  ResourcePage,
+} from "./core/read";
+import type { ReferenceMap } from "./core/expand";
+import type { SearchQuery } from "./core/query";
+import type { ResourceDescriptor } from "./core/descriptor";
 import { CLIENT_DESCRIPTOR } from "./client";
 import type { ResourceName } from "../porters/resource-list";
 
@@ -99,7 +101,7 @@ export type RecruiterUpdateInput = UpdateInput<typeof FIELDS>;
 export type RecruiterResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = Resource<
+> = DataResource<
   typeof FIELDS & C,
   (typeof REQUIRED_ON_CREATE)[number] | CR,
   typeof REFERENCES
@@ -112,7 +114,7 @@ export const createRecruiterResource = <C extends FieldCatalog = EmptyCatalog>(
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
   // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  return createResource(
+  return createDataResource(
     { ...RECRUITER_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
   );

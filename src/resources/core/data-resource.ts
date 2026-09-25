@@ -1,15 +1,11 @@
-// Generic resource accessor (ADR-0004/0005/0011): the Read (search / searchAll /
-// get) + Write (create / update) shape shared by every PORTERS resource. A resource
+// The data resources' accessor (ADR-0004/0005/0011): the Read (search / searchAll / get / getMany)
+// + Write (create / update / bulk) shape shared by every PORTERS data resource. A resource
 // module supplies its names + Data-Type catalog; this owns the wiring and keeps XML
 // out of resources/ (parse/encode live in xml/). Standard `P_` fields use the catalog;
 // custom `U_`/`A_` pass through (decode: raw string / encode: Text).
+// The read-only master resources have their own, smaller counterpart: `master-resource.ts`.
 
-import {
-  PortersConfigError,
-  PortersResourceError,
-  resourceError,
-} from "../../errors";
-import { apiUrl, type AccessPoint } from "../../http/access-point";
+import { PortersConfigError } from "../../errors";
 import type { DataType } from "../../porters/data-type";
 import {
   buildWriteXml,
@@ -18,26 +14,23 @@ import {
   type WriteValue,
   type WriteValueOf,
 } from "../../xml/encode";
-import { parseWriteResult, type RawItem } from "../../xml/parser";
+import type { RawItem } from "../../xml/parser";
 import {
+  createPageReader,
   decoderFor,
   paginateOnce,
-  qualifyReadFields,
   readUrlOf,
-  runRead,
   type FieldCatalog,
   type ReadFieldAlias,
   type ResourceDeps,
   type ResourcePageOf,
 } from "./read";
-import { appendReadQuery, type Condition, type SearchQuery } from "./query";
+import { buildReadParams, type Condition, type SearchQuery } from "./query";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
 import { packIds, recordsById } from "./get-many";
 import {
-  applyExpand,
   expansionCatalogs,
-  guardRawExpansion,
   type EmptyReferences,
   type Expand,
   type ExpandedReadRecord,
@@ -45,40 +38,13 @@ import {
   type ReferenceMap,
 } from "./expand";
 import {
-  applyImage,
   guardImageWrite,
   guardNoImageInBulk,
   type ImageOption,
   type ImageReadRecord,
 } from "./image";
-
-// Shared Read types/internals live in core/read (reused by master resources). Re-export the
-// types so the data-resource modules keep importing them from "./resource".
-export type {
-  EmptyCatalog,
-  FieldCatalog,
-  ReadFieldAlias,
-  ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./read";
-// Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
-// and the public barrel keep importing the query types from "./resource".
-export type { Condition, ItemState, Order, SearchQuery } from "./query";
-// Bulk write result (ADR-0041 / F-4). Defined in bulk-write.ts; re-exported so resource modules and
-// the public barrel keep importing the bulk types from "./resource".
-export type { BulkWriteResult, BulkWriteResultItem } from "./bulk-write";
-// Reference expansion (ADR-0058). Defined in expand.ts; re-exported for the same reason.
-export type {
-  EmptyReferences,
-  Expand,
-  ExpandedReadRecord,
-  ReferenceMap,
-  ReferenceTarget,
-} from "./expand";
-// Image sub-field selection (ADR-0064). Defined in image.ts; re-exported for the same reason.
-export type { ImageOption, ImageReadRecord, ImageSelectedValue } from "./image";
+import type { ResourceDescriptor } from "./descriptor";
+import { buildWriteUrl, firstWriteResultId } from "./write";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).
@@ -103,40 +69,6 @@ export type UpdateInput<F extends FieldCatalog> = {
 };
 
 /**
- * The tenant-independent half of a resource definition: names + the standard `P_` catalog.
- * Each resource module exports its own (e.g. `CANDIDATE_DESCRIPTOR`) so in-repo dev tooling —
- * the fake server (ADR-0043) — derives wire shapes from the *same* catalog instead of a copy
- * that could drift. Not part of the published API: `src/index.ts` is curated.
- */
-export type ResourceDescriptor<
-  F extends FieldCatalog = FieldCatalog,
-  R extends ReferenceMap = ReferenceMap,
-> = {
-  /** Root element + Write resource name, e.g. `"Candidate"`. */
-  name: string;
-  /** URL path segment, e.g. `"candidate"`. */
-  path: string;
-  /** Field alias prefix, e.g. `"Person"`. Empty for a resource whose aliases are bare (Phase). */
-  prefix: string;
-  /**
-   * Primary-key alias. `P_Id` for every resource whose aliases carry the `P_` convention;
-   * **Phase names it `Id`** (ADR-0061). Read (`get`) and Write (`create` / `update`) both address
-   * the record through it, so it is a fact about the resource, not a constant of the factory.
-   * The fake server has always modelled this as `idAlias` — the library catches up here.
-   */
-  idAlias?: string;
-  /** Data-Type catalog (`as const`): bare alias -> Data Type. */
-  fields: F;
-  /**
-   * Expandable `System[Reference]` fields (ADR-0058): bare alias -> the referenced resource's
-   * descriptor. The catalog only records that a field *is* a reference, never what it points at,
-   * so the link lives here — that is also where Candidate's `Person` alias prefix is absorbed.
-   * Omitted, or an alias left out, means the field reads as the referenced id and nothing else.
-   */
-  references?: R;
-};
-
-/**
  * Values a resource always contributes to its own requests, independent of the caller: a fixed
  * Read query parameter and/or a field written on every record. Phase is the only user today —
  * `of(resource)` binds which upper resource's history it addresses, and PORTERS wants that as
@@ -148,7 +80,7 @@ export type ResourceBindings = {
 };
 
 /** Static description of a resource: {@link ResourceDescriptor} + required-on-create aliases. */
-export type ResourceConfig<
+export type DataResourceConfig<
   F extends FieldCatalog,
   Req extends readonly (keyof F)[],
   R extends ReferenceMap = EmptyReferences,
@@ -190,7 +122,7 @@ type Without<T, K extends keyof T> = Omit<T, K> & {
 // (`const` type parameters, so the alias lists stay literal) and the record type widens accordingly
 // (ADR-0058 / ADR-0064). Omitting them leaves both at the empty default, which collapses back to
 // `ReadRecord<F>`.
-export type Resource<
+export type DataResource<
   F extends FieldCatalog,
   Req extends keyof F,
   R extends ReferenceMap = EmptyReferences,
@@ -307,126 +239,14 @@ export type Resource<
   ): Promise<BulkWriteResult>;
 };
 
-/**
- * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a
- * resource error (mapped, not swallowed); a missing result Item is unparseable. Shared by
- * the generic factory and the bespoke Attachment accessor. `path` names the error code
- * message, `name` the error context resource.
- */
-export const firstWriteResultId = (
-  body: string,
-  path: string,
-  name: string,
-): number => {
-  const first = parseWriteResult(body)[0];
-  if (first === undefined) {
-    throw new PortersResourceError("write returned no result item", {
-      category: "unknown",
-    });
-  }
-  if (first.code !== 0) {
-    throw resourceError(
-      first.code,
-      `${path} write returned code ${first.code}`,
-      {
-        resource: name,
-      },
-    );
-  }
-  return first.id;
-};
-
-/**
- * Serialise the Read query — `partition` / `field` / `condition` / `order` / `keywords` /
- * `itemstate` — into the parameters every page of that query shares. **Paging is deliberately not
- * here**: `count` / `start` are the only parts that differ page to page, so `readUrlOf` adds them
- * to a copy and `searchAll` can serialise the caller's query exactly once (RV-32).
- * `ctx` (alias prefix + Data-Type map + reference targets) drives the typed query encoding
- * (ADR-0038): condition/order prefixing, date ISO -> PORTERS, and the keyword/itemstate guards.
- * It also assembles `field` from the bare aliases (ADR-0059) and folds `expand` into that list
- * (ADR-0058). Attachment is bespoke (no prefix / no catalog) and builds its own loose URL — see
- * attachment.ts.
- */
-export const buildReadParams = <F extends FieldCatalog, R extends ReferenceMap>(
-  partition: number,
-  q: SearchQuery<F, R>,
-  ctx: {
-    prefix: string;
-    fields: ReadonlyMap<string, DataType | null>;
-    references?: ReferenceMap;
-    /**
-     * Fixed query parameters this resource always sends. **Phase requires `resource=`** — the
-     * upper resource whose history is being read — and it is a parameter of its own, not a
-     * `condition` (ADR-0061 / Phase Read). Set once by the accessor, never by the caller.
-     */
-    params?: Readonly<Record<string, string>>;
-  },
-): URLSearchParams => {
-  const p = new URLSearchParams();
-  p.set("partition", String(partition));
-  for (const [key, value] of Object.entries(ctx.params ?? {}))
-    p.set(key, value);
-  if (q.field && q.field.length > 0) {
-    // The typed `Expand<R>` is what constrains callers; the assembly below is purely structural,
-    // like `encodeCondition` over the loose catalog.
-    guardRawExpansion(q.field, ctx.fields);
-    const entries = applyImage(
-      applyExpand(
-        qualifyReadFields(ctx.prefix, ctx.fields, q.field),
-        q.expand,
-        {
-          prefix: ctx.prefix,
-          references: ctx.references ?? {},
-        },
-      ),
-      q.image,
-      ctx.prefix,
-    );
-    p.set("field", entries.join(","));
-  }
-  appendReadQuery(p, q, ctx);
-  return p;
-};
-
-/**
- * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
- * at the configured access point (ADR-0047) — the single-page form of {@link buildReadParams}.
- */
-export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
-  accessPoint: AccessPoint,
-  partition: number,
-  path: string,
-  q: SearchQuery<F, R>,
-  ctx: Parameters<typeof buildReadParams<F, R>>[2],
-): string =>
-  readUrlOf(
-    accessPoint,
-    path,
-    buildReadParams(partition, q, ctx),
-    q.count,
-    q.start,
-  );
-
-/** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */
-export const buildWriteUrl = (
-  accessPoint: AccessPoint,
-  partition: number,
-  path: string,
-): string =>
-  apiUrl(
-    accessPoint,
-    path,
-    new URLSearchParams({ partition: String(partition) }),
-  );
-
-export const createResource = <
+export const createDataResource = <
   const F extends FieldCatalog,
   const Req extends readonly (keyof F)[],
   const R extends ReferenceMap = EmptyReferences,
 >(
-  config: ResourceConfig<F, Req, R>,
+  config: DataResourceConfig<F, Req, R>,
   deps: ResourceDeps,
-): Resource<F, Req[number], R> => {
+): DataResource<F, Req[number], R> => {
   // The catalog is `as const` for the types; encode needs a runtime lookup, decode gets its own.
   const fieldMap = new Map<string, DataType | null>(
     Object.entries(config.fields),
@@ -442,13 +262,20 @@ export const createResource = <
   // The API-native "primary key only" stays reachable via `field: []` (透明化).
   const defaultFields = Object.keys(config.fields) as ReadFieldAlias<F>[];
 
+  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
+  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059). The default is applied
+  // here, once, so every Read (search / searchAll / get / getMany) gets it the same way.
   const readParams = (q: SearchQuery<F, R>): URLSearchParams =>
-    buildReadParams(deps.partition, q, {
-      prefix: config.prefix,
-      fields: fieldMap,
-      references,
-      params: config.readParams,
-    });
+    buildReadParams(
+      deps.partition,
+      { ...q, field: q.field ?? defaultFields },
+      {
+        prefix: config.prefix,
+        fields: fieldMap,
+        references,
+        params: config.readParams,
+      },
+    );
 
   const readUrl = (q: SearchQuery<F, R>): string =>
     readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
@@ -472,8 +299,13 @@ export const createResource = <
     ) as (item: RawItem) => T;
   };
 
-  // `field` omitted -> send the catalog default; `[]` stays empty (API-native primary key
-  // only); a provided list is prefixed and sent (ADR-0020 / ADR-0059).
+  const read = createPageReader({
+    requester: deps.requester,
+    accessPoint: deps.accessPoint,
+    name: config.name,
+    path: config.path,
+  });
+
   // `async` for the exception contract, not for the body: URL building runs the typed-query
   // guards (keyword length, itemstate, raw expansions), and a Promise-returning method must never
   // throw synchronously — every failure reaches the caller as a rejection (ADR-0046).
@@ -483,13 +315,13 @@ export const createResource = <
   >(
     query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
   ): Promise<ResourcePageOf<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>> =>
-    runRead(
-      deps.requester,
-      config.name,
-      readUrl({ ...query, field: query.field ?? defaultFields }),
+    read(
+      readParams(query),
       decoderWith<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>>(
         query.expand,
       ),
+      query.count,
+      query.start,
     );
 
   // The caller's query object is read **once**, when the first page is asked for: what the walk
@@ -508,20 +340,11 @@ export const createResource = <
     } = {},
   ): AsyncIterable<ImageReadRecord<ExpandedReadRecord<F, R, E>, I>> =>
     paginateOnce(() => {
-      const base = readParams({
-        ...query,
-        field: query.field ?? defaultFields,
-      });
+      const base = readParams(query);
       const decode = decoderWith<
         ImageReadRecord<ExpandedReadRecord<F, R, E>, I>
       >(query.expand);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          config.name,
-          readUrlOf(deps.accessPoint, config.path, base, count, start),
-          decode,
-        );
+      return (count, start) => read(base, decode, count, start);
     });
 
   // `get` / `getMany` always read the id, even when the caller's `field` leaves it out: `getMany`
@@ -585,11 +408,7 @@ export const createResource = <
     // Measured at the largest `count` so a real (smaller) chunk is never longer than measured.
     const chunks = packIds(
       [...new Set(ids)],
-      (chunk) =>
-        readUrl({
-          ...query(chunk, MAX_READ_COUNT),
-          field: field ?? defaultFields,
-        }).length,
+      (chunk) => readUrl(query(chunk, MAX_READ_COUNT)).length,
     );
     const found = new Map<number, Rec>();
     for (const chunk of chunks) {

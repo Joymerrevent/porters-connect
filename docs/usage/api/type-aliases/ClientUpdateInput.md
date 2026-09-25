@@ -8,6 +8,6 @@
 
 > **ClientUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/client.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L74)
+Defined in: [src/resources/client.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L76)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

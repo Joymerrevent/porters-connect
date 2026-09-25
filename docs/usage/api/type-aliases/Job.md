@@ -8,6 +8,6 @@
 
 > **Job** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/job.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L97)
+Defined in: [src/resources/job.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L99)
 
 A decoded Job: known `P_` fields, each requested field `value | null`.

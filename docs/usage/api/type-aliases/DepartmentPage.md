@@ -8,4 +8,4 @@
 
 > **DepartmentPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/department.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L50)
+Defined in: [src/resources/department.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L47)

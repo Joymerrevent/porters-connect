@@ -8,6 +8,6 @@
 
 > **Opportunity** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/opportunity.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L72)
+Defined in: [src/resources/opportunity.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L74)
 
 A decoded Opportunity (a sales opportunity): known `P_` fields, each `value | null`.

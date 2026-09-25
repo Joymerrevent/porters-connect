@@ -8,6 +8,6 @@
 
 > **ProcessCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/process.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L100)
+Defined in: [src/resources/process.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L102)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable.

@@ -173,6 +173,27 @@ export const qualifyReadFields = (
     return readFieldEntry(prefix, alias, fields.get(alias));
   });
 
+// 省略時に全項目を送るのは ADR-0020、裸の alias に接頭辞を付けるのは ADR-0059。
+/**
+ * The `field` parameter of a resource that takes one: the caller's bare aliases, or every catalogued
+ * alias when `field` is omitted, prefixed through the same assembly as {@link qualifyReadFields}.
+ * `[]` sends no `field` at all (PORTERS' own answer). Built once per catalog; the returned setter
+ * runs per query.
+ */
+export const createFieldParam = (
+  prefix: string,
+  fields: FieldCatalog,
+): ((p: URLSearchParams, field: readonly string[] | undefined) => void) => {
+  const lookup = new Map<string, DataType | null>(Object.entries(fields));
+  const defaults = Object.keys(fields);
+  return (p, field) => {
+    const aliases = field ?? defaults;
+    if (aliases.length > 0) {
+      p.set("field", qualifyReadFields(prefix, lookup, aliases).join(","));
+    }
+  };
+};
+
 /**
  * Build a catalog-driven item decoder: catalogued `P_` fields decode by their Data Type (`null` =
  * no Data Type -> raw string), unknown `U_`/`A_` aliases pass through (raw string, or null when
@@ -284,6 +305,37 @@ export const readUrlOf = (
   appendPaging(p, count, start);
   return apiUrl(accessPoint, path, p);
 };
+
+/** Where a resource's Read goes: the pieces every page of every query shares. */
+export type PageReaderTarget = {
+  requester: Requester;
+  accessPoint: AccessPoint;
+  /** Root element of the response (and the error context), e.g. `"Candidate"`. */
+  name: string;
+  /** URL path segment, e.g. `"candidate"`. */
+  path: string;
+};
+
+/**
+ * Read one page: the query's serialised parameters + paging, sent to the resource's path and decoded
+ * with the given decoder. Shared by the data and the master resources, so "how one page is read"
+ * is written once; what differs between them — the parameters and whether the decoder depends on
+ * the query — stays with each.
+ */
+export const createPageReader =
+  (target: PageReaderTarget) =>
+  <T>(
+    base: URLSearchParams,
+    decode: (item: RawItem) => T,
+    count?: number,
+    start?: number,
+  ): Promise<ResourcePageOf<T>> =>
+    runRead(
+      target.requester,
+      target.name,
+      readUrlOf(target.accessPoint, target.path, base, count, start),
+      decode,
+    );
 
 /**
  * Offset pagination shared by every `searchAll`. Advances by the items actually returned and

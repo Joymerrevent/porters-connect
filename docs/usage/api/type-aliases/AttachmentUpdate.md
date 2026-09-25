@@ -8,7 +8,7 @@
 
 > **AttachmentUpdate** = `object`
 
-Defined in: [src/resources/attachment.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L104)
+Defined in: [src/resources/attachment.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L101)
 
 Fields for updating an Attachment. `Resource` / `ResourceId` are not updatable.
 
@@ -18,7 +18,7 @@ Fields for updating an Attachment. `Resource` / `ResourceId` are not updatable.
 
 > `optional` **content?**: `string`
 
-Defined in: [src/resources/attachment.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L107)
+Defined in: [src/resources/attachment.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L104)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/resources/attachment.ts:107](https://github.com/Joymerrevent/po
 
 > `optional` **contentType?**: `string`
 
-Defined in: [src/resources/attachment.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L105)
+Defined in: [src/resources/attachment.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L102)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [src/resources/attachment.ts:105](https://github.com/Joymerrevent/po
 
 > `optional` **fileName?**: `string`
 
-Defined in: [src/resources/attachment.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L106)
+Defined in: [src/resources/attachment.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L103)
