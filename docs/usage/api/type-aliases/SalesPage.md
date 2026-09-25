@@ -8,4 +8,4 @@
 
 > **SalesPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/sales.ts:124](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L124)
+Defined in: [src/resources/sales.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L122)

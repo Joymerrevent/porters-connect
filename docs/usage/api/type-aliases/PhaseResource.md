@@ -8,7 +8,7 @@
 
 > **PhaseResource** = `object`
 
-Defined in: [src/resources/phase.ts:140](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L140)
+Defined in: [src/resources/phase.ts:137](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L137)
 
 The Phase accessor for one bound resource — the same shape as every other resource, except that
 `search` / `searchAll` do not take `keywords` / `itemstate` and the write inputs do
@@ -20,7 +20,7 @@ not take `Resource`: `of()` binds it, and supplying it again could only contradi
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/phase.ts:212](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L212)
+Defined in: [src/resources/phase.ts:209](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L209)
 
 Create one Phase entry for the bound resource; resolves to the newly assigned id. `Resource`
 is filled from the binding and cannot be supplied.
@@ -41,7 +41,7 @@ is filled from the binding and cannot be supplied.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/phase.ts:226](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L226)
+Defined in: [src/resources/phase.ts:223](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L223)
 
 Create many Phase entries in one call. Auto-batched to ≤200 entries and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-entry failures are returned
@@ -65,7 +65,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<\{ `Date`: `"DateTime"`; `Id`: `"System[Id]"`; `JobOwner`: `"User"`; `JobOwnerDepartment`: `"System[Department]"`; `Memo`: `"MultilineText"`; `Owner`: `"User"`; `OwnerDepartment`: `"System[Department]"`; `Phase`: `"Option"`; `Recent`: `"Number"`; `RegisteredBy`: `"User"`; `RegistrationDate`: `"System[DateTime]"`; `Resource`: `"Number"`; `ResourceId`: `"Number"`; `ResumeOwner`: `"User"`; `ResumeOwnerDepartment`: `"System[Department]"`; `UpdateDate`: `"System[DateTime]"`; `UpdatedBy`: `"User"`; \}, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/phase.ts:175](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L175)
+Defined in: [src/resources/phase.ts:172](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L172)
 
 Read one Phase entry by id; `undefined` when there is none. `field` picks the fields to read,
 the same way it does for `search` (omit it to read every known field); the entry's `Id` is
@@ -105,7 +105,7 @@ always read, even when `field` leaves it out.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<\{ `Date`: `"DateTime"`; `Id`: `"System[Id]"`; `JobOwner`: `"User"`; `JobOwnerDepartment`: `"System[Department]"`; `Memo`: `"MultilineText"`; `Owner`: `"User"`; `OwnerDepartment`: `"System[Department]"`; `Phase`: `"Option"`; `Recent`: `"Number"`; `RegisteredBy`: `"User"`; `RegistrationDate`: `"System[DateTime]"`; `Resource`: `"Number"`; `ResourceId`: `"Number"`; `ResumeOwner`: `"User"`; `ResumeOwnerDepartment`: `"System[Department]"`; `UpdateDate`: `"System[DateTime]"`; `UpdatedBy`: `"User"`; \}, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/phase.ts:197](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L197)
+Defined in: [src/resources/phase.ts:194](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L194)
 
 Read many Phase entries by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no entry has that id — the same answer `get` gives for one id. A repeated
@@ -152,7 +152,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<\{ `Date`: `"DateTime"`; `Id`: `"System[Id]"`; `JobOwner`: `"User"`; `JobOwnerDepartment`: `"System[Department]"`; `Memo`: `"MultilineText"`; `Owner`: `"User"`; `OwnerDepartment`: `"System[Department]"`; `Phase`: `"Option"`; `Recent`: `"Number"`; `RegisteredBy`: `"User"`; `RegistrationDate`: `"System[DateTime]"`; `Resource`: `"Number"`; `ResourceId`: `"Number"`; `ResumeOwner`: `"User"`; `ResumeOwnerDepartment`: `"System[Department]"`; `UpdateDate`: `"System[DateTime]"`; `UpdatedBy`: `"User"`; \}, `EmptyReferences`, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/phase.ts:148](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L148)
+Defined in: [src/resources/phase.ts:145](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L145)
 
 Search the Phase history of the bound resource: resolves to one page of the entries matching
 `query`. `field` picks the fields to read (omit it to read every known field), and
@@ -188,7 +188,7 @@ Search the Phase history of the bound resource: resolves to one page of the entr
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<\{ `Date`: `"DateTime"`; `Id`: `"System[Id]"`; `JobOwner`: `"User"`; `JobOwnerDepartment`: `"System[Department]"`; `Memo`: `"MultilineText"`; `Owner`: `"User"`; `OwnerDepartment`: `"System[Department]"`; `Phase`: `"Option"`; `Recent`: `"Number"`; `RegisteredBy`: `"User"`; `RegistrationDate`: `"System[DateTime]"`; `Resource`: `"Number"`; `ResourceId`: `"Number"`; `ResumeOwner`: `"User"`; `ResumeOwnerDepartment`: `"System[Department]"`; `UpdateDate`: `"System[DateTime]"`; `UpdatedBy`: `"User"`; \}, `EmptyReferences`, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/phase.ts:162](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L162)
+Defined in: [src/resources/phase.ts:159](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L159)
 
 Search every Phase entry of the bound resource matching `query`, page after page (200 entries
 per request). Takes the same `field` as `search`.
@@ -223,7 +223,7 @@ per request). Takes the same `field` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/phase.ts:214](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L214)
+Defined in: [src/resources/phase.ts:211](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L211)
 
 Update one Phase entry by id; resolves to that id. `Resource` cannot be supplied.
 
@@ -247,7 +247,7 @@ Update one Phase entry by id; resolves to that id. `Resource` cannot be supplied
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/phase.ts:233](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L233)
+Defined in: [src/resources/phase.ts:230](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L230)
 
 Update many Phase entries by id in one call. Auto-batched like `createMany`; per-entry
 failures are returned in the `BulkWriteResult`, not thrown.

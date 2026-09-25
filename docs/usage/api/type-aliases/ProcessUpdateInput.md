@@ -8,6 +8,6 @@
 
 > **ProcessUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/process.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L122)
+Defined in: [src/resources/process.ts:120](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L120)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

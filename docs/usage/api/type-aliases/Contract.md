@@ -8,6 +8,6 @@
 
 > **Contract** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/contract.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L113)
+Defined in: [src/resources/contract.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L111)
 
 A decoded Contract (an agreement with a client): known `P_` fields, each `value | null`.

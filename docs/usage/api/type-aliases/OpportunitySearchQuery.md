@@ -8,7 +8,7 @@
 
 > **OpportunitySearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/opportunity.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L90)
+Defined in: [src/resources/opportunity.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L88)
 
 The Opportunity Read query. `C` is the declared custom-field catalog merged on, so a condition or an
 order can name a custom field too.

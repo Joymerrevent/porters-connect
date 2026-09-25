@@ -8,4 +8,4 @@
 
 > **RecruiterPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/recruiter.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L97)
+Defined in: [src/resources/recruiter.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L95)

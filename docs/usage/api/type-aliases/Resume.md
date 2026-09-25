@@ -8,7 +8,7 @@
 
 > **Resume** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/resume.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L105)
+Defined in: [src/resources/resume.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L103)
 
 A decoded Resume (a Candidate's CV / profile): known `P_` fields, each requested field
  `value | null`.

@@ -8,17 +8,15 @@
 // not invent it: the absence is the fact, and reference-catalog.test.ts checks both
 // directions so neither a missing nor a phantom `P_Deleted` can slip in.
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/data-read";
+import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,
   FieldCatalog,

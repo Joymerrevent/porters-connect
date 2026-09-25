@@ -8,17 +8,15 @@
 // shared factory: the catalogs are independent facts about the API and are checked against
 // docs/usage/reference one by one, so a future divergence shows up as a diff, not as a surprise.
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/data-read";
+import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,
   FieldCatalog,

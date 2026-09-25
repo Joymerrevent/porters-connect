@@ -8,7 +8,7 @@
 
 > **ClientResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/client.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L105)
+Defined in: [src/resources/client.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L103)
 
 The Client accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/client.ts:177](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L177)
+Defined in: [src/resources/client.ts:175](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L175)
 
 Create one Client record; resolves to the newly assigned id.
 
@@ -49,7 +49,7 @@ Create one Client record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/client.ts:190](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L190)
+Defined in: [src/resources/client.ts:188](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L188)
 
 Create many Client records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/client.ts:145](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L145)
+Defined in: [src/resources/client.ts:143](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L143)
 
 Read one Client record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/client.ts:167](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L167)
+Defined in: [src/resources/client.ts:165](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L165)
 
 Read many Client records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/client.ts:116](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L116)
+Defined in: [src/resources/client.ts:114](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L114)
 
 Search Client records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, `EmptyReferences`, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/client.ts:130](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L130)
+Defined in: [src/resources/client.ts:128](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L128)
 
 Search every Client record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/client.ts:181](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L181)
+Defined in: [src/resources/client.ts:179](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L179)
 
 Update one Client record by id; resolves to that id.
 
@@ -257,7 +257,7 @@ Update one Client record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/client.ts:197](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L197)
+Defined in: [src/resources/client.ts:195](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L195)
 
 Update many Client records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

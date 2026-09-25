@@ -10,17 +10,15 @@
 // nested ones (e.g. P_JobOwner -> a User) read as null. Multi-select Option read returns every
 // selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/data-read";
+import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,
   FieldCatalog,

@@ -8,6 +8,6 @@
 
 > **ContractCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/contract.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L123)
+Defined in: [src/resources/contract.ts:121](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L121)
 
 Fields for `create`: only `P_Client` required (Contract has no owner field).

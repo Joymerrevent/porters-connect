@@ -21,18 +21,15 @@
 // parenthesised form for this resource. The response shape is the same either way, so if the
 // parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-  type Without,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/data-read";
+import type { CreateInput, UpdateInput, Without } from "./core/data-write";
 import type { EmptyReferences, Expand } from "./core/expand";
 import type { ImageOption } from "./core/image";
 import type { BulkWriteResult } from "./core/bulk-write";

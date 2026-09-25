@@ -8,6 +8,6 @@
 
 > **CandidateCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
 
-Defined in: [src/resources/candidate.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L93)
+Defined in: [src/resources/candidate.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L91)
 
 Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable.

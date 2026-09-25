@@ -11,17 +11,15 @@
 //     Field Type and Data Type are different axes; the catalog records the latter, so no new
 //     Data Type is needed and the values decode as plain numbers.
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/data-read";
+import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,
   FieldCatalog,

@@ -8,7 +8,7 @@
 
 > **Process** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/process.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L107)
+Defined in: [src/resources/process.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L105)
 
 A decoded Process (a Candidate's progress through a Job): known `P_` fields, each
  requested field `value | null`.
