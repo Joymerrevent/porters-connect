@@ -1,16 +1,16 @@
 name: Mutation
 
-# ミューテーションテスト（ADR-0015）の CI 強制。
-# PR / push / nightly のすべてで**フル run**（約 11 分）。以前は PR を incremental で回していたが、
-# Stryker の incremental は **static mutant（モジュール読み込み時に評価される定数）の "Survived" を、
-# その行を変えるか --force を掛けるまで再利用し続ける**（static には per-test の coverage が無く、
-# 「cover するテストが増えた」と判定されることが無い — core の incremental-differ）。
-# break 100 と組み合わせると、static の穴をテストで塞いだ PR が必ず落ちる＝ゲートとして成立しない
-# ので、差分再評価はやめた（ADR-0015 の訂正・2026-09-22）。
-# break 閾値（stryker.config.json）を下回ると job が落ちる＝テスト品質の回帰を止める。
-# docs-only の PR/push は stryker を skip（必須チェックなので job は走り報告する・ADR-0028）。
-# リリースの流れの PR（release/* → main・main → develop）と main への push は develop と比べ、版番号と
-# 文書だけの違いなら skip する（コードは develop への push で検査済み・ADR-0028 の訂正 2026-09-23 / 注記 2026-09-25）。
+# ミューテーションテスト（ADR-0015）の CI 強制。break 閾値（stryker.config.json）を下回ると job が落ちる。
+# どこで何を検査するか（ADR-0094）:
+#   main への PR（リリース・hotfix）       → 必ずフル run（約 11 分）
+#   それ以外の PR（back-merge を含む）     → 変更したファイルだけ（scripts/select-mutation-targets.mjs が決める）。
+#                                            絞れない変更（test/・依存・設定…）があればフル run、対象 0 件なら skip
+#   develop への push・nightly・手動        → フル run
+#   main への push                          → develop との違いが版番号と文書だけなら skip（ADR-0028 の注記）
+# incremental（前回の結果の使い回し）は使わない。static mutant（モジュール読み込み時に評価される定数）の
+# "Survived" を、その行を変えるまで使い回し、テストで穴を塞いだ PR が落ちるため（ADR-0015 の訂正）。
+# 変更したファイルに絞っても、毎回ゼロから検査するのでこの問題は起きない。
+# docs-only の PR/push は skip（必須チェックなので job は走り報告する・ADR-0028）。
 on:
   pull_request:
   push:
@@ -32,7 +32,11 @@ jobs:
     name: stryker
     runs-on: ubuntu-latest
     steps:
+      # PR はマージ結果（refs/pull/N/merge）を検査する。1 つ目の親がマージ時点の base なので、
+      # 親まで取り、その差分で変更したファイルを決める（base のその後の変化が混ざらない）。
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
 
       # 変更が docs だけか判定（PR/push のみ）。docs-only は以降の重い処理を skip する（ADR-0028）。
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -45,68 +49,94 @@ jobs:
               - "!**/*.md"
               - "!docs/**"
 
-      # リリースの流れの PR と main への push では、検査対象を develop と比べる（ADR-0028 の訂正・注記）。
-      # base（main）や main の前のコミットとの差分だと、develop で検査済みのコードがすべて「変更」に見える。
-      # main への push はリリース PR のマージで、中身は develop ＋ 版番号と CHANGELOG。違いが版番号と
-      # 文書だけなら skip する。リリースの後に develop が先へ進んでいれば差が出るのでフル run になる。
-      # 判定に失敗したらスクリプトが bookkeeping=false を返す＝フル run（skip しない側に倒す）。
+      # main 以外への PR は、変更したファイルだけを対象にする（ADR-0094）。判定に失敗したら mode=full。
       # Node はランナー同梱のものを使う（スクリプトは node: の標準モジュールだけ）。
-      - name: Release flow (compare with develop)
+      - name: Select files (PR)
+        id: select
+        if: >-
+          github.event_name == 'pull_request' && github.base_ref != 'main' &&
+          steps.changes.outputs.code == 'true'
+        run: node scripts/select-mutation-targets.mjs HEAD^1 HEAD >> "${GITHUB_OUTPUT}"
+
+      # main への push はリリース PR のマージで、中身は develop ＋ 版番号と CHANGELOG。develop と比べ、
+      # 違いが版番号と文書だけなら skip する（ADR-0028 の注記）。develop が先へ進んでいれば差が出てフル run。
+      # 判定に失敗したらスクリプトが bookkeeping=false を返す＝フル run（skip しない側に倒す）。
+      - name: Compare with develop (push to main)
         id: release
         if: >-
-          steps.changes.outputs.code == 'true' &&
-          ((github.event_name == 'pull_request' &&
-          ((github.base_ref == 'main' && startsWith(github.head_ref, 'release/')) ||
-          (github.base_ref == 'develop' && github.head_ref == 'main'))) ||
-          (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+          github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+          steps.changes.outputs.code == 'true'
         run: |
           git fetch --no-tags --depth=1 origin develop || echo "::warning::develop を取得できませんでした（判定はフル run に倒れます）"
           node scripts/detect-release-bookkeeping.mjs origin/develop HEAD >> "${GITHUB_OUTPUT}"
 
-      # 以降の重い処理を走らせるか。条件を 1 箇所にまとめる（各ステップに同じ式を並べない）。
-      #   nightly / 手動 → 常に走る
-      #   PR / push     → コードの変更があり、かつリリースの流れ（main への push を含む）で develop と同じでないとき
+      # 以降の重い処理をどう走らせるか（mode=full|subset|skip）。条件を 1 箇所にまとめる。
       - name: Decide
         id: gate
         env:
           EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
           CODE: ${{ steps.changes.outputs.code }}
+          SELECTED: ${{ steps.select.outputs.mode }}
+          TARGETS: ${{ steps.select.outputs.targets }}
           BOOKKEEPING: ${{ steps.release.outputs.bookkeeping }}
         run: |
+          targets=""
           if [ "${EVENT}" = "schedule" ] || [ "${EVENT}" = "workflow_dispatch" ]; then
-            run=true
+            mode=full
           elif [ "${CODE}" != "true" ]; then
-            run=false
+            mode=skip
             echo "コードの変更が無いので stryker を skip します（docs-only）"
+          elif [ "${EVENT}" = "pull_request" ] && [ "${BASE_REF}" = "main" ]; then
+            mode=full
+            echo "main への PR なのでフル run します（ADR-0094）"
+          elif [ "${EVENT}" = "pull_request" ]; then
+            case "${SELECTED}" in
+              skip) mode=skip ;;
+              subset) mode=subset; targets="${TARGETS}" ;;
+              *) mode=full ;;
+            esac
+            # subset なのに対象が空なら、判定の出力が崩れている。フル run に倒す。
+            if [ "${mode}" = "subset" ] && [ -z "${targets}" ]; then
+              echo "::warning::対象のファイルが空です（判定の出力が崩れています）。フル run にします"
+              mode=full
+            fi
           elif [ "${BOOKKEEPING}" = "true" ]; then
-            run=false
+            mode=skip
             echo "develop との違いが版番号と文書だけなので stryker を skip します（コードは develop で検査済み）"
           else
-            run=true
+            mode=full
           fi
-          echo "run=${run}" >> "${GITHUB_OUTPUT}"
+          echo "mode=${mode}" >> "${GITHUB_OUTPUT}"
+          echo "targets=${targets}" >> "${GITHUB_OUTPUT}"
 
       # pnpm を先に入れる（setup-node の cache: pnpm が pnpm を要求するため）。
-      # **skip するとき（docs-only・リリースの流れで develop と同じ）は Node ごと skip する**: install しないと
+      # **skip するとき（docs-only・対象 0 件・develop と同じ）は Node ごと skip する**: install しないと
       # pnpm store が作られず、setup-node の post 段階が「保存対象のパスが無い」で job を失敗させるため
       # （下記 Install と同条件）。
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode != 'skip'
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode != 'skip'
         with:
           node-version-file: .node-version
           cache: pnpm
 
       # stryker を実行するときだけ install
       - name: Install
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode != 'skip'
         run: pnpm install --frozen-lockfile
 
-      # フル run。PR / push はコード変更時のみ（docs-only とリリースの流れの版番号だけは上の判定で skip）、
-      # nightly / 手動は常に。
+      # フル run。main への PR・develop への push・nightly・手動と、PR で絞れなかったとき。
       # incremental のキャッシュ（reports/stryker-incremental.json）は使わない（冒頭のコメント）。
       - name: Mutation (full)
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.mode == 'full'
         run: pnpm exec stryker run
+
+      # 変更したファイルだけ（ADR-0094）。テストは全部走り、閾値（break）もそのまま当たる。
+      - name: Mutation (changed files)
+        if: steps.gate.outputs.mode == 'subset'
+        env:
+          TARGETS: ${{ steps.gate.outputs.targets }}
+        run: pnpm exec stryker run --mutate "${TARGETS}"

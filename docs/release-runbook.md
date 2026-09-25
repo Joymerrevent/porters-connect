@@ -38,6 +38,8 @@
 ## 2. main へマージ（タグは自動）
 
 - [ ] PR `release/X.Y.Z` → `main`（**merge commit**・squash しない＝履歴保持）
+  - `main` への PR なので、必須の `stryker` は**必ずフル run**（約 11 分・[ADR-0094][adr94]）。マージ後の `main` への push と
+    back-merge PR では、develop との違いが版番号と文書だけなら skip される
 - [ ] マージ後、**`tag.yml` が自動で `vX.Y.Z` を作成・push**（タグ忘れ防止・ADR-0029 案B）。Actions の **Tag** ワークフロー green を確認
 - [ ] **back-merge**（手動・**PR 経由**／[ADR-0062][adr62]）: `main` → `develop`（version/CHANGELOG を develop に戻す）
   - `gh pr create --base develop --head main --title "chore: X.Y.Z を develop へ back-merge する"`
@@ -377,3 +379,4 @@ override が先、changesets の導入が翌日という順序だったため、
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
 [adr91]: adr/0091-token-provider-and-store.md
+[adr94]: adr/0094-mutation-changed-files-on-pr.md
