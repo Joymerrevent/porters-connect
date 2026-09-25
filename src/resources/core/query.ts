@@ -22,13 +22,10 @@ import {
   type ReferenceMap,
 } from "./expand";
 import { applyImage, type ImageOption } from "./image";
-import {
-  qualifyReadFields,
-  readUrlOf,
-  type FieldCatalog,
-  type Paging,
-  type ReadFieldAlias,
-} from "./read";
+import { qualifyReadFields } from "./field-param";
+import { readUrlOf } from "./read";
+import type { FieldCatalog, ReadFieldAlias } from "./catalog";
+import type { Paging } from "./paging";
 import {
   DELETED_CONDITION_FIELDS,
   KEYWORDS_MAX_CHARS,

@@ -7,16 +7,12 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps } from "./core/read";
+import type { ResourceDeps } from "./core/deps";
 import type { ResourceDescriptor } from "./core/descriptor";
-import {
-  createFieldParam,
-  type FieldCatalog,
-  type ReadFieldAlias,
-  type Paging,
-  type ReadRecord,
-  type ResourcePage,
-} from "./core/read";
+import { createFieldParam } from "./core/field-param";
+import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourcePage } from "./core/read";
 import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。

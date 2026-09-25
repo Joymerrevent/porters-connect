@@ -8,6 +8,6 @@
 
 > **Phase** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/phase.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L94)
+Defined in: [src/resources/phase.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L89)
 
 A decoded Phase entry: known aliases, each requested field `value | null`.

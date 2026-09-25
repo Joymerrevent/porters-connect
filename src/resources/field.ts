@@ -8,14 +8,11 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { ResourceDeps } from "./core/read";
+import type { ResourceDeps } from "./core/deps";
 import type { ResourceDescriptor } from "./core/descriptor";
-import {
-  type FieldCatalog,
-  type Paging,
-  type ReadRecord,
-  type ResourcePage,
-} from "./core/read";
+import type { FieldCatalog, ReadRecord } from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourcePage } from "./core/read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import { createMasterResource } from "./core/master-resource";
 

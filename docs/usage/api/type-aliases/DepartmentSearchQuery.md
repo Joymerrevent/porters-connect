@@ -8,7 +8,7 @@
 
 > **DepartmentSearchQuery** = `object`
 
-Defined in: [src/resources/department.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L51)
+Defined in: [src/resources/department.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L47)
 
 Department Read query. The API takes no filter: every department of the partition is listed.
 
@@ -18,7 +18,7 @@ Department Read query. The API takes no filter: every department of the partitio
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<*typeof* `FIELDS`\>[]
 
-Defined in: [src/resources/department.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L58)
+Defined in: [src/resources/department.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L54)
 
 Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix.
 **Omit** to fetch every catalogued field. Pass `[]` for PORTERS' own

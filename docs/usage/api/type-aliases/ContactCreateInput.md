@@ -8,7 +8,7 @@
 
 > **ContactCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/contact.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L111)
+Defined in: [src/resources/contact.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L110)
 
 Fields for `create`: `P_Owner` / `P_Client` required; `P_Id` / system timestamps are not
 settable. `C` is the declared custom-field catalog merged on; `CR` names the custom fields

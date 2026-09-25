@@ -5,7 +5,7 @@
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
 import { PortersConfigError } from "../errors";
-import type { EmptyCatalog } from "../resources/core/read";
+import type { EmptyCatalog } from "../resources/core/catalog";
 import type { DataType } from "../porters/data-type";
 import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 

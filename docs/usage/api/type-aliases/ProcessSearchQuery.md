@@ -8,7 +8,7 @@
 
 > **ProcessSearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/process.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L111)
+Defined in: [src/resources/process.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L110)
 
 The Process Read query. `C` is the declared custom-field catalog merged on, so a condition or an
 order can name a custom field too.

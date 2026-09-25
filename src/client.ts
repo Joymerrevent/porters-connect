@@ -61,7 +61,7 @@ import type {
   DefinedFields,
   RequiredFor,
 } from "./fields";
-import type { EmptyCatalog } from "./resources/core/read";
+import type { EmptyCatalog } from "./resources/core/catalog";
 import type { Scheme } from "./http";
 import type { Scope } from "./auth";
 

@@ -8,7 +8,7 @@
 
 import { dataTypeOfFieldType, fieldTypeLabel } from "../porters/field-type";
 import type { Field, FieldSearchQuery } from "../resources/field";
-import { bareAlias } from "../resources/core/read";
+import { bareAlias } from "../util/alias";
 import type { DataType } from "../porters/data-type";
 import {
   CUSTOM_DATA_TYPES,

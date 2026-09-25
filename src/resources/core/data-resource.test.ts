@@ -3,8 +3,8 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Requester, RequestSpec } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createDataResource, type DataResource } from "./data-resource";
-import type { Paging } from "./read";
-import type { FieldCatalog } from "./read";
+import type { Paging } from "./paging";
+import type { FieldCatalog } from "./catalog";
 import type { SearchQuery } from "./query";
 import type { ResourceDescriptor } from "./descriptor";
 

@@ -8,13 +8,11 @@
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
-import {
-  appendPaging,
-  decoderFor,
-  type FieldCatalog,
-  type ReadRecord,
-} from "./core/read";
-import type { Limit, ResourceDeps } from "./core/read";
+import { appendPaging } from "./core/paging";
+import { decoderFor } from "./core/decoder";
+import type { FieldCatalog, ReadRecord } from "./core/catalog";
+import type { Limit } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
 import type { ResourceDescriptor } from "./core/descriptor";
 
 const FIELDS = {

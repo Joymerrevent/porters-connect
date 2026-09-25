@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Requester } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createMasterResource } from "./master-resource";
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 
 // 読み込み（master-read.ts）の中身は master-read.test.ts で確かめる。ここでは、アクセサが読み込みを
 // そのまま出していること（同じ設定と接続で送ること）を確かめる。

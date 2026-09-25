@@ -15,9 +15,10 @@ import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { appendPaging, paginateOnce } from "./core/read";
+import { appendPaging, paginateOnce } from "./core/paging";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
-import type { Paging, ResourceDeps } from "./core/read";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
 import { buildWriteUrl, firstWriteResultId } from "./core/write";
 import {
   ATTACHMENT_REQUEST_TYPE,

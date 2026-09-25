@@ -33,13 +33,12 @@ import type { CreateInput, UpdateInput } from "./core/data-write";
 import type {
   EmptyCatalog,
   FieldCatalog,
-  Paging,
   ReadFieldAlias,
   ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./core/read";
+} from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
+import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { EmptyReferences, Expand, ReferenceMap } from "./core/expand";
 import type { ImageOption } from "./core/image";
 import type { BulkWriteResult } from "./core/bulk-write";

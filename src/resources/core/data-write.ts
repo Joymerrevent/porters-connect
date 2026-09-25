@@ -12,7 +12,8 @@ import {
   type WriteValue,
   type WriteValueOf,
 } from "../../xml/encode";
-import type { FieldCatalog, ResourceDeps } from "./read";
+import type { FieldCatalog } from "./catalog";
+import type { ResourceDeps } from "./deps";
 import { runBulkWrite, type BulkWriteResult } from "./bulk-write";
 import { guardImageWrite, guardNoImageInBulk } from "./image";
 import type { ResourceDescriptor } from "./descriptor";

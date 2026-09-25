@@ -8,4 +8,4 @@
 
 > **ClientPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/client.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L76)
+Defined in: [src/resources/client.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L75)

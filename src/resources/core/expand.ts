@@ -12,7 +12,8 @@
 import { PortersConfigError } from "../../errors";
 import type { DataType } from "../../porters/data-type";
 import type { DecodedValue } from "../../xml/decode";
-import { bareAlias, type FieldCatalog, type ReadRecord } from "./read";
+import { bareAlias } from "../../util/alias";
+import type { FieldCatalog, ReadRecord } from "./catalog";
 
 /**
  * The resource a `System[Reference]` field points at, as far as expansion needs it: its alias

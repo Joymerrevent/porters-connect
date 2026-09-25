@@ -8,7 +8,7 @@
 
 > **SearchQuery**\<`F`, `R`\> = `object`
 
-Defined in: [src/resources/core/query.ts:177](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L177)
+Defined in: [src/resources/core/query.ts:174](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L174)
 
 ## Type Parameters
 
@@ -26,7 +26,7 @@ Defined in: [src/resources/core/query.ts:177](https://github.com/Joymerrevent/po
 
 > `optional` **condition?**: [`Condition`](Condition.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:224](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L224)
+Defined in: [src/resources/core/query.ts:221](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L221)
 
 Typed AND-conditions; each field's operators derive from its Data Type.
 
@@ -36,7 +36,7 @@ Typed AND-conditions; each field's operators derive from its Data Type.
 
 > `optional` **expand?**: [`Expand`](Expand.md)\<`R`\>
 
-Defined in: [src/resources/core/query.ts:206](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L206)
+Defined in: [src/resources/core/query.ts:203](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L203)
 
 Read the *fields* of a referenced record, not just its id: map an expandable
 `System[Reference]` field to the bare aliases you want from the resource it points at. The
@@ -58,7 +58,7 @@ requested twice.
 
 > `optional` **field?**: readonly [`ReadFieldAlias`](ReadFieldAlias.md)\<`F`\>[]
 
-Defined in: [src/resources/core/query.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L189)
+Defined in: [src/resources/core/query.ts:186](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L186)
 
 Output fields as **bare aliases** (e.g. `P_Name`) — the same vocabulary as `condition` and
 `order`; the library adds the resource's prefix. **Omit** to fetch every catalogued
@@ -72,7 +72,7 @@ API-native "primary key only" response (e.g. counting).
 
 > `optional` **image?**: [`ImageOption`](ImageOption.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:222](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L222)
+Defined in: [src/resources/core/query.ts:219](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L219)
 
 Read an Image field's `ContentType` / `Content`, not just its `FileName`: map an
 Image-typed field to the sub-tags you want. Only what you select comes back, and the record
@@ -93,7 +93,7 @@ drags every image body along with it. Like `expand`, a selected alias replaces i
 
 > `optional` **itemstate?**: [`ItemState`](ItemState.md)
 
-Defined in: [src/resources/core/query.ts:233](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L233)
+Defined in: [src/resources/core/query.ts:230](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L230)
 
 Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` — see [ItemState](ItemState.md).
 
@@ -103,7 +103,7 @@ Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` �
 
 > `optional` **keywords?**: `string`[]
 
-Defined in: [src/resources/core/query.ts:231](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L231)
+Defined in: [src/resources/core/query.ts:228](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L228)
 
 Keyword AND-search over text fields (MultilineText/SinglelineText/Mail/URL; Telephone digits
 only). OR is not supported. Max 100 characters including commas — guarded before send.
@@ -114,6 +114,6 @@ only). OR is not supported. Max 100 characters including commas — guarded befo
 
 > `optional` **order?**: [`Order`](Order.md)\<`F`\>
 
-Defined in: [src/resources/core/query.ts:226](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L226)
+Defined in: [src/resources/core/query.ts:223](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L223)
 
 Sort order; orderable Data Types only (Number/Date/DateTime/Age/System).

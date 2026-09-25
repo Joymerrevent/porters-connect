@@ -8,7 +8,7 @@
 
 > **SalesCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/sales.ts:137](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L137)
+Defined in: [src/resources/sales.ts:136](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/sales.ts#L136)
 
 Fields for `create`: only `P_Owner` is unconditionally required. The six references are
 required *conditionally* (a dependency chain PORTERS validates server-side), so they stay

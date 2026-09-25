@@ -3,13 +3,10 @@
 // shape it takes. What each master's Read accepts stays with that master, passed in as `params`
 // (ADR-0022).
 
-import type {
-  ConnectionDeps,
-  FieldCatalog,
-  Paging,
-  ReadRecord,
-  ResourcePageOf,
-} from "./read";
+import type { ConnectionDeps } from "./deps";
+import type { FieldCatalog, ReadRecord } from "./catalog";
+import type { Paging } from "./paging";
+import type { ResourcePageOf } from "./read";
 import { createMasterReader, type MasterReadConfig } from "./master-read";
 
 // Function-typed properties rather than methods: they close over the config, never `this`, so a

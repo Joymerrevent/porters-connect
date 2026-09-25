@@ -8,6 +8,6 @@
 
 > **Candidate** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/candidate.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L81)
+Defined in: [src/resources/candidate.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L80)
 
 A decoded Candidate: known `P_` fields, each requested field `value | null`.

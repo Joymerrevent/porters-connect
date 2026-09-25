@@ -7,7 +7,7 @@ import type { TransportRequest } from "../../http/types";
 import type { FieldValue } from "../../xml/decode";
 import { createDataReader } from "./data-read";
 import type { Expand } from "./expand";
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 import type { SearchQuery } from "./query";
 import type { ResourceDescriptor } from "./descriptor";
 

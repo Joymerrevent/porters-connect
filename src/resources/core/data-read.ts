@@ -5,17 +5,11 @@
 
 import type { DataType } from "../../porters/data-type";
 import type { RawItem } from "../../xml/parser";
-import {
-  createPageReader,
-  decoderFor,
-  paginateOnce,
-  readUrlOf,
-  type FieldCatalog,
-  type Paging,
-  type ReadFieldAlias,
-  type ResourceDeps,
-  type ResourcePageOf,
-} from "./read";
+import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
+import { decoderFor } from "./decoder";
+import { paginateOnce, type Paging } from "./paging";
+import type { FieldCatalog, ReadFieldAlias } from "./catalog";
+import type { ResourceDeps } from "./deps";
 import { buildReadParams, type Condition, type SearchQuery } from "./query";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
 import { packIds, recordsById } from "./get-many";

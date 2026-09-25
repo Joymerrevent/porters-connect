@@ -4,7 +4,7 @@ import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createMasterReader } from "./master-read";
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 
 // The master resources' own tests pin what each one sends; this pins the shared sending itself.
 const FIELDS = {

@@ -8,4 +8,4 @@
 
 > **PhasePage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/phase.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L95)
+Defined in: [src/resources/phase.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L90)

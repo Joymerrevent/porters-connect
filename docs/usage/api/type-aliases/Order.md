@@ -8,7 +8,7 @@
 
 > **Order**\<`F`\> = `Partial`\<`Record`\<`OrderableKeys`\<`F`\>, `"asc"` \| `"desc"`\>\>[]
 
-Defined in: [src/resources/core/query.ts:155](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L155)
+Defined in: [src/resources/core/query.ts:152](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/query.ts#L152)
 
 Sort spec: an ordered list of `{ field: "asc" | "desc" }`, encoded in array (then key) order. Only
 orderable Data Types (Number/Date/DateTime/Age/System) are accepted (reference).

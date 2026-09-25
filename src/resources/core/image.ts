@@ -21,7 +21,7 @@ import {
   MAX_IMAGE_BYTES,
   MAX_IMAGE_FILE_NAME_BYTES,
 } from "../../porters/image";
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 
 /** The aliases of `F` that are Image-typed — the only ones `image` may name. */
 type ImageKeys<F extends FieldCatalog> = {

@@ -8,4 +8,4 @@
 
 > **OpportunityPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/opportunity.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L83)
+Defined in: [src/resources/opportunity.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L82)

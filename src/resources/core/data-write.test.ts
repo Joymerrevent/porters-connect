@@ -4,7 +4,7 @@ import { PortersConfigError, PortersResourceError } from "../../errors";
 import type { Requester, RequestSpec } from "../../http/requester";
 import type { TransportRequest } from "../../http/types";
 import { createDataWriter } from "./data-write";
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
 // live in candidate/job tests). One field per Data Type is enough — per-type

@@ -33,15 +33,10 @@ import type { CreateInput, UpdateInput, Without } from "./core/data-write";
 import type { EmptyReferences, Expand } from "./core/expand";
 import type { ImageOption } from "./core/image";
 import type { BulkWriteResult } from "./core/bulk-write";
-import type {
-  FieldCatalog,
-  Paging,
-  ReadFieldAlias,
-  ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./core/read";
+import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
+import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";

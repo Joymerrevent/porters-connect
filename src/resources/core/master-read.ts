@@ -14,16 +14,11 @@
 // resource and stays with the resource, passed in as `params` (ADR-0022).
 
 import type { ResourceDescriptor } from "./descriptor";
-import {
-  createPageReader,
-  decoderFor,
-  paginateOnce,
-  type FieldCatalog,
-  type Paging,
-  type ReadRecord,
-  type ConnectionDeps,
-  type ResourcePageOf,
-} from "./read";
+import { createPageReader, type ResourcePageOf } from "./read";
+import { decoderFor } from "./decoder";
+import { paginateOnce, type Paging } from "./paging";
+import type { FieldCatalog, ReadRecord } from "./catalog";
+import type { ConnectionDeps } from "./deps";
 
 /**
  * What a master's Read needs: its descriptor (names + `P_` catalog, like a data resource's) and

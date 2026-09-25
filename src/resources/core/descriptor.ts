@@ -3,7 +3,7 @@
 // in-repo fake server all read the same descriptor (ADR-0097: split out of the data-resource factory,
 // which the masters used to import it from).
 
-import type { FieldCatalog } from "./read";
+import type { FieldCatalog } from "./catalog";
 import type { ReferenceMap } from "./expand";
 
 /**
