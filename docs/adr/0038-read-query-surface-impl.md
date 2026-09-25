@@ -16,6 +16,10 @@
 > 明示＝生存のみを要求する、を別の意思表示として扱う）。SD-4 以外は不変。
 >
 > 公開型 `condition` の loose→typed は破壊的変更で、pre-1.0 ゆえ semver minor（`0.3.0` → `0.4.0`）として実装 PR で出す。
+>
+> **Amended by [ADR-0099][0099]（2026-09-25）**: 公開の検索クエリ `SearchQuery` から `count` / `start` を外し、ページ送りを
+> 公開の型 `Paging`（`Limit & { start?: number }`）に分けた。`search` は `SearchQuery & Paging`、`searchAll` は `SearchQuery` を受ける。
+> `condition` / `order` / `keywords` / `itemstate` の型付けという本 ADR の核は不変。
 
 ## Context and Problem Statement
 
@@ -166,3 +170,4 @@ reference が定める事実（要点）:
 [lv]: ../live-verification.md
 [adr]: README.md
 [0057]: 0057-itemstate-existing-explicit.md
+[0099]: 0099-search-query-without-paging.md

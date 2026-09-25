@@ -1,6 +1,6 @@
 # 99. 検索クエリの型からページ送り（`count` / `start`）を外し、`Paging` / `Limit` を別の型にする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -13,6 +13,8 @@
 > 議論の経緯: 起票時は Option を対象外にしていた（「Option の `count` は件数の上限で、ページ送りとは意味が違う」）。
 > stakeholder の問いで原典を読み直すと、Option の `count` もほかの Read と同じ「最大件数」で、違いは `start` が無いことと
 > 省略時の既定値（全件）だけだった。Option も対象にし、`count` だけを持つ公開の型 `Limit` を足す形に改めた（stakeholder の意向）。
+>
+> **decider が案1a ＋ 案2a を選択し `accepted`（2026-09-25）。** 実装は accept 後・別 PR（公開 API を変えないリファクタリングの PR の後）。
 
 ## Context and Problem Statement
 
@@ -72,9 +74,9 @@ Option Read の記事は `count` を「取得するアイテムの最大数」�
 
 ## Decision Outcome
 
-**未決（proposed）**。以下は推奨案（1a ＋ 2a）で書いた場合の形。
+採用: **案1a ＋ 案2a**（decider が 2026-09-25 に選択）。
 
-### 決めること（推奨案）
+### 決めること
 
 - 公開の型を 2 つ足す。範囲の検査は、いまと同じく送る前に行う。
   - `Limit` = `{ count?: number }`（読む件数の上限。1〜200）
