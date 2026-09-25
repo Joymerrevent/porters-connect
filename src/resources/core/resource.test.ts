@@ -9,9 +9,9 @@ import {
   createResource,
   type Expand,
   type FieldCatalog,
-  type ResourceDescriptor,
   type SearchQuery,
 } from "./resource";
+import type { ResourceDescriptor } from "./descriptor";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs
 // live in candidate/job tests). One field per Data Type is enough — per-type

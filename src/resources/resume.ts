@@ -18,11 +18,11 @@ import {
   type ReferenceMap,
   type Resource,
   type ResourceDeps,
-  type ResourceDescriptor,
   type ResourcePage,
   type SearchQuery,
   type UpdateInput,
 } from "./core/resource";
+import type { ResourceDescriptor } from "./core/descriptor";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 import type { ResourceName } from "../porters/resource-list";
 

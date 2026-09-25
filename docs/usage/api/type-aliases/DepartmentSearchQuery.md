@@ -8,7 +8,7 @@
 
 > **DepartmentSearchQuery** = `object`
 
-Defined in: [src/resources/department.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L50)
+Defined in: [src/resources/department.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L51)
 
 Department Read query. The API takes no filter: every department of the partition is listed.
 
@@ -18,7 +18,7 @@ Department Read query. The API takes no filter: every department of the partitio
 
 > `optional` **count?**: `number`
 
-Defined in: [src/resources/department.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L58)
+Defined in: [src/resources/department.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L59)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/resources/department.ts:58](https://github.com/Joymerrevent/por
 
 > `optional` **field?**: [`ReadFieldAlias`](ReadFieldAlias.md)\<*typeof* `FIELDS`\>[]
 
-Defined in: [src/resources/department.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L57)
+Defined in: [src/resources/department.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L58)
 
 Output fields as **bare aliases** (`P_Name`); the library adds the `Department.` prefix.
 **Omit** to fetch every catalogued field. Pass `[]` for PORTERS' own
@@ -38,4 +38,4 @@ default — `P_Id` alone, which is what a fieldless read returns.
 
 > `optional` **start?**: `number`
 
-Defined in: [src/resources/department.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L59)
+Defined in: [src/resources/department.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/department.ts#L60)

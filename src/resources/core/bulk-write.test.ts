@@ -9,7 +9,8 @@ import {
 import type { Requester } from "../../http/requester";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import { encodeWriteItem } from "../../xml/encode";
-import { buildWriteUrl, createResource, type FieldCatalog } from "./resource";
+import { createResource, type FieldCatalog } from "./resource";
+import { buildWriteUrl } from "./write";
 
 const FIELDS = {
   P_Id: "System[Id]",

@@ -36,7 +36,7 @@ import { OPPORTUNITY_DESCRIPTOR } from "../../src/resources/opportunity";
 import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
 import { SALES_DESCRIPTOR } from "../../src/resources/sales";
-import type { ResourceDescriptor } from "../../src/resources/core/resource";
+import type { ResourceDescriptor } from "../../src/resources/core/descriptor";
 import type { DataType } from "../../src/porters/data-type";
 
 // Field Type（reference の表記）→ Data Type（ライブラリ内部の粒度）。ADR-0016 の対応表。
