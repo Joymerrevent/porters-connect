@@ -45,6 +45,7 @@ grep -rn "VERIFY(live)" src test
 | LV-30 | Department Read で 6 項目すべてを `field` に並べられるか | 未確認 |
 | LV-31 | 時分型の Read が秒 `00` 以外を返すことがあるか           | 未確認 |
 | LV-32 | Write API は `P_Required=1` の項目の欠落を弾くか         | 未確認 |
+| LV-33 | データ系の `P_Id` に `or` の条件が効くか                 | 未確認 |
 
 ---
 
@@ -536,6 +537,23 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **関連**: どちらに転んでも型の振る舞いは変えない（弾くなら「PORTERS より手前で止める」、弾かないなら
   「PORTERS が止めない欠落を止める」）。変わるのはガイド「カスタム項目」の説明だけ
 
+## LV-33 データ系の `P_Id` に `or` の条件が効くか
+
+- **現在の対応 / 仮定**: **効くと仮定し、効かなければエラーで止める**。`getMany` は ID を `{idAlias}:or=<id>:<id>:…` で
+  束ねて読み、返ってきたレコードの ID と応答の `Total` を頼んだ ID と突き合わせる。頼んでいないレコードが混じったら、
+  何も返さずに `PortersResourceError` で止める（[ADR-0095][a95]）。`search` の `condition` でも `P_Id: { or }` を書ける
+- **不確実な理由**: 出典の記述が割れている。Read - Condition の記事（[Read パラメータ][ref-read]）の `or` の行は
+  「Phase API の Id および Resource Id にしか使用できません」と書き、同じ行の例は `Job.P_Id:or=10003:43405`。
+  Job Read と Opportunity Read の記事の例も `P_Id:or=1234:1235` で、Job Read の応答例は 2 件とも返している。
+  Phase の `Id` は Phase Read の記事が明記している
+- **コード箇所**: `src/resources/get-many.ts`（`recordsById` の突き合わせ）
+- **確認方法**: データ系（Candidate など）で `condition=Person.P_Id:or=<存在する ID>:<存在する ID>` を送り、2 件だけが
+  返るか（`Total` も 2 か）を確かめる。条件がエラーで返るか、条件を無視して先頭から返るかも見分ける
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 効かないと分かったら、`getMany` の送り方を「ID ごとに `get` と同じリクエストを送る」に替える
+  （ADR-0095 案1b。公開 API の形は変わらない）。それまでは突き合わせで、誤ったレコードを返さずにエラーになる
+
 ## 状態の意味
 
 **3 値。`未確認` だけが「まだやることが残っている」状態**で、残る 2 つはどちらも終端です。
@@ -607,3 +625,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [src-tod]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
 [a89]: adr/0089-custom-field-required-on-create.md
 [ref-field]: usage/reference/resource-api/resources/field.md
+[a95]: adr/0095-get-many-by-ids.md
+[ref-read]: usage/reference/resource-api/README.md

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError, PortersResourceError } from "../errors";
-import type { Requester, RequestSpec } from "../http/requester";
+import {
+  MAX_REQUEST_LENGTH,
+  type Requester,
+  type RequestSpec,
+} from "../http/requester";
 import type { TransportRequest } from "../http/types";
 import type { FieldValue } from "../xml/decode";
 import {
@@ -733,5 +737,172 @@ describe("createResource — 束ねた書き込み項目（RV-47）", () => {
       promise = bound([]).update(7, { P_Owner: 9 });
     }).not.toThrow();
     await expect(promise).rejects.toBeInstanceOf(PortersConfigError);
+  });
+});
+
+describe("createResource — get の field と getMany（ADR-0095）", () => {
+  const conditionOf = (call: Call): string =>
+    decodeURIComponent(call.req.url).match(/condition=([^&]*)/)?.[1] ?? "";
+  const countOf = (call: Call): string =>
+    call.req.url.match(/count=(\d+)/)?.[1] ?? "";
+
+  it("get(id, { field }) reads the id too, in front of the caller's fields", async () => {
+    const calls: Call[] = [];
+    await res(calls).get(7, { field: ["P_Name"] });
+    expect(fieldOf(calls)).toBe("W.P_Id,W.P_Name");
+  });
+
+  it("get(id, { field }) does not repeat an id the caller already listed", async () => {
+    const calls: Call[] = [];
+    await res(calls).get(7, { field: ["P_Name", "P_Id"] });
+    expect(fieldOf(calls)).toBe("W.P_Name,W.P_Id");
+  });
+
+  it("get(id, { field: [] }) reads the id alone", async () => {
+    const calls: Call[] = [];
+    await res(calls).get(7, { field: [] });
+    expect(fieldOf(calls)).toBe("W.P_Id");
+  });
+
+  it("getMany([]) resolves to [] without sending a request", async () => {
+    const calls: Call[] = [];
+    expect(await res(calls).getMany([])).toEqual([]);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("getMany returns records in the order of ids, undefined where none, repeated ids repeated", async () => {
+    const calls: Call[] = [];
+    const out = await res(calls, page(2, [1, 3])).getMany([3, 1, 3, 2]);
+    expect(out.map((r) => r?.P_Id)).toEqual([3, 1, 3, undefined]);
+    expect(out[0]).toBe(out[2]);
+    // One request: the ids de-duplicated, joined with `or`, and `count` = how many were sent.
+    expect(calls).toHaveLength(1);
+    expect(conditionOf(calls[0])).toBe("W.P_Id:or=3:1:2");
+    expect(countOf(calls[0])).toBe("3");
+  });
+
+  it("getMany reads every known field when field is omitted, and the id too when it is given", async () => {
+    const calls: Call[] = [];
+    await res(calls, page(1, [1]), page(1, [1])).getMany([1]);
+    await res(calls, page(1, [1])).getMany([1], { field: ["P_Name"] });
+    expect(decodeURIComponent(calls[0].req.url)).toContain(
+      "W.P_Owner(User.P_Id",
+    );
+    expect(decodeURIComponent(calls[1].req.url)).toContain(
+      "field=W.P_Id,W.P_Name&",
+    );
+  });
+
+  it("getMany passes expand and image on", async () => {
+    const calls: Call[] = [];
+    const expanded = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Id>1</G.P_Id><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
+    const [one] = await gadget(calls, expanded).getMany([1], {
+      expand: { P_Part: ["P_Name"] },
+    });
+    expect(fieldOf(calls)).toContain("G.P_Part(Pt.P_Name)");
+    expect(one?.P_Part).toEqual({ P_Name: "bolt" });
+
+    const albumCalls: Call[] = [];
+    const [photo] = await album(albumCalls).getMany([1], {
+      image: { U_photo: ["FileName", "Content"] },
+    });
+    expect(fieldOf(albumCalls)).toContain("Al.U_photo(FileName,Content)");
+    expect(photo?.U_photo).toEqual({ FileName: "a.png", Content: "QUJD" });
+  });
+
+  it("getMany splits more than 200 ids into requests of at most 200", async () => {
+    const ids = Array.from({ length: 201 }, (_, i) => i + 1);
+    const calls: Call[] = [];
+    const out = await res(
+      calls,
+      page(200, ids.slice(0, 200)),
+      page(1, [201]),
+    ).getMany(ids);
+    expect(calls.map(countOf)).toEqual(["200", "1"]);
+    expect(conditionOf(calls[1])).toBe("W.P_Id:or=201");
+    expect(out.map((r) => r?.P_Id)).toEqual(ids);
+  });
+
+  it("getMany keeps every request under the size limit, counting the default field list", async () => {
+    // Long aliases make the default field list about 12,000 characters, so 200 thirteen-digit ids
+    // cannot share one request with it.
+    const fields: Record<string, "System[Id]" | "SinglelineText"> = {
+      P_Id: "System[Id]",
+    };
+    for (let i = 0; i < 40; i += 1)
+      fields[`P_${"x".repeat(300)}${i}`] = "SinglelineText";
+    const ids = Array.from({ length: 200 }, (_, i) => 1_000_000_000_000 + i);
+    // Answer each request with exactly the ids it asked for, however the chunks were cut.
+    const calls: Call[] = [];
+    const answering: Requester = {
+      request: (req, parse, spec) => {
+        calls.push({ req, spec });
+        const sent = conditionOf({ req }).split("=")[1].split(":").map(Number);
+        return Promise.resolve(parse(page(sent.length, sent)));
+      },
+    };
+    const sized = createResource(
+      {
+        name: "Widget",
+        path: "widget",
+        prefix: "W",
+        fields,
+        requiredOnCreate: [],
+      },
+      {
+        requester: answering,
+        accessPoint: { hostname: "h.test" },
+        partition: 12,
+      },
+    );
+    const out = await sized.getMany(ids);
+    expect(calls.length).toBeGreaterThan(1);
+    for (const call of calls)
+      expect(call.req.url.length).toBeLessThanOrEqual(MAX_REQUEST_LENGTH);
+    expect(out.map((r) => r?.P_Id)).toEqual(ids);
+  });
+
+  it("getMany rejects — returning nothing — when PORTERS answers with a record it was not asked for", async () => {
+    const calls: Call[] = [];
+    await expect(res(calls, page(1, [99])).getMany([1])).rejects.toThrow(
+      "Widget: getMany received a record that was not requested (id 99)",
+    );
+  });
+
+  it("getMany rejects the whole call when a later request goes wrong", async () => {
+    const ids = Array.from({ length: 201 }, (_, i) => i + 1);
+    const calls: Call[] = [];
+    await expect(
+      res(calls, page(200, ids.slice(0, 200)), page(5, [201])).getMany(ids),
+    ).rejects.toBeInstanceOf(PortersResourceError);
+    expect(calls).toHaveLength(2);
+  });
+
+  it("getMany uses the resource's own id alias (Phase names it `Id`, with no prefix)", async () => {
+    const calls: Call[] = [];
+    const phase = createResource(
+      {
+        name: "Phase",
+        path: "phase",
+        prefix: "",
+        idAlias: "Id",
+        fields: { Id: "System[Id]", Memo: "SinglelineText" },
+        requiredOnCreate: [],
+      },
+      {
+        requester: stub(
+          [
+            `<Phase Total="2" Count="2" Start="0"><Code>0</Code><Item><Id>2</Id></Item><Item><Id>1</Id></Item></Phase>`,
+          ],
+          calls,
+        ),
+        accessPoint: { hostname: "h.test" },
+        partition: 12,
+      },
+    );
+    const out = await phase.getMany([1, 2], { field: ["Memo"] });
+    expect(conditionOf(calls[0])).toBe("Id:or=1:2");
+    expect(fieldOf(calls)).toBe("Id,Memo");
+    expect(out.map((r) => r?.Id)).toEqual([1, 2]);
   });
 });
