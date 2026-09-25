@@ -281,10 +281,10 @@ try {
 ## 関連
 
 - 導入: [認証を通して、疎通を確認する][s-auth]（手元で 1 回済ませる手順・うまくいかないとき）
-- 主題: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
+- ガイド: [エラーと再試行][error-handling]（`PortersAuthError` と `category`）／[上限とレート][limits]（アクセス数の数え方）／
   [Partition とテナントスコープ][tenant]（権限付与は Company DB ごと）
 - クライアント: [auth][cl-auth]（6 メソッドの一覧）／[PortersClient][cl-client]（`tokenStore` / `tokenProvider` / `scopes` オプション）
-- リソース別: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
+- リソース: [Partition][r-partition]（アクセスできる Company DB の一覧）／[User][r-user]（`current()` は誰か）
 - 実践例: [複数テナント][multi-tenant]（認証を分けるか）／[トークンを DB に保存する][token-store-db]（`tokenStore` を ORM で組む）／
   [中央のサービスからトークンを受け取る][central-token-service]（`tokenProvider` と `getToken()`）
 - リファレンス: [認証 API（OAuth/Token/フロー）][auth-ref]

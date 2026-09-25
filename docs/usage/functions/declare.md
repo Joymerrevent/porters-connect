@@ -40,7 +40,7 @@ assertFieldsMatch(await verifyFields(scope, fields));
 
 ## 固有の注意
 
-これらの関数だけに当てはまる注意です。共通の規則（宣言の書き方・宣言しないとどうなるか）は主題別のページにあります。
+これらの関数だけに当てはまる注意です。共通の規則（宣言の書き方・宣言しないとどうなるか）はガイドのページにあります。
 
 - **`generateFieldDecls` は開発時に使うものです。** テナントの項目定義（[Field][r-field]）を読み、返るのはソースコードの文字列で、ファイルに書き出してアプリが `import` します。実行時に呼んでも型には反映されません（[カスタム項目][custom-fields]の「宣言を自動生成する」）。
 - **`verifyFields` は例外を投げません。** 止めるかどうかは利用側が決めます。起動時に止めたいときだけ `assertFieldsMatch` を続けて呼びます。`assertFieldsMatch` は「読めなかった」も止めます。確かめられなかったことは「問題なし」ではないからです。
@@ -68,7 +68,7 @@ assertFieldsMatch(await verifyFields(scope, fields));
 
 ## 関連
 
-- 主題: [カスタム項目][custom-fields]（宣言・生成・突合の流れ）／[エラーと再試行][errors]（`validation` で届く食い違い）
+- ガイド: [カスタム項目][custom-fields]（宣言・生成・突合の流れ）／[エラーと再試行][errors]（`validation` で届く食い違い）
 - 関数: [上限と接続][fn-transport]／[値の変換][fn-convert]
 - ほかの目的から探す: [目次][index]
 

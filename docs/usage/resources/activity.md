@@ -29,7 +29,7 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 
 ## 固有の注意
 
-このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）はガイドのページにあります。
 
 - **`P_Resource` は数値です**（Candidate `1` / Job `3` / Client `5` …）。書くときも絞るときも `resourceValueOf("candidate")` で名前から引き、読んだ値は `resourceNameOf` で名前に戻せます（[検索][query]の「リソース種別で絞る」）。
 - **`P_ResourceId` は参照先の id だけが返り、`expand` では展開できません。** どのリソースを指すかが `P_Resource` の値で変わるためです。参照先の項目が要るときは、`P_Resource` を `resourceNameOf` で名前に戻し、そのリソースのアクセサの `get` で読みます。
@@ -68,7 +68,7 @@ const id = await t.activity.create({ P_Owner: 5, P_Title: "電話で状況確認
 
 ## 関連
 
-- 主題: [検索][query]（条件の書き方）／[書き込み][write]（必須と一括）／[上限とレート][limits]（200 件・リクエスト長）
+- ガイド: [検索][query]（条件の書き方）／[書き込み][write]（必須と一括）／[上限とレート][limits]（200 件・リクエスト長）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

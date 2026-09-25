@@ -37,7 +37,7 @@ console.log(latest?.Phase, latest?.Date);
 
 ## 固有の注意
 
-このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）は主題別のページにあります。
+このリソースだけに当てはまる注意です。共通の規則（検索・書き込み・上限）はガイドのページにあります。
 
 - **`search` / `searchAll` に `keywords` と `itemstate` はありません**。PORTERS の Phase Read がその 2 つを受けないためです。
 - **書き込みの入力に `Resource` と `Id` はありません。** `of()` で指定した値と、新規作成を表す値を、ライブラリが埋めます。
@@ -82,7 +82,7 @@ console.log(latest?.Phase, latest?.Date);
 
 ## 関連
 
-- 主題: [検索][query]（条件の書き方）／[書き込み][write]（必須と一括）／[削除と削除済みデータ][deleted]（`itemstate` は無い）
+- ガイド: [検索][query]（条件の書き方）／[書き込み][write]（必須と一括）／[削除と削除済みデータ][deleted]（`itemstate` は無い）
 - リソースの一覧: [リソースと操作][resources]
 - ほかの目的から探す: [目次][index]
 

@@ -36,7 +36,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 固有の注意
 
-このアクセサだけに当てはまる注意です。共通の規則（認証の流れ・トークンの置き場所）は主題別のページにあります。
+このアクセサだけに当てはまる注意です。共通の規則（認証の流れ・トークンの置き場所）はガイドのページにあります。
 
 - **`code` の有効期限は発行から 30 秒です。** リダイレクトを受けたハンドラの中でそのまま `exchangeAuthorizationCode` に渡してください。
 - **`authorizationUrl` / `revokeUrl` は `string` を返すので、失敗は同期 throw です。** `appId` が無い・スコープが空、のときに `PortersConfigError` になります。`Promise` を返す 4 つは、失敗も reject で届きます（[エラーと再試行][errors]）。
@@ -63,7 +63,7 @@ await porters.auth.ensureAuthenticated();
 
 ## 関連
 
-- 主題: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・取り方を差し替えるとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
+- ガイド: [認証とトークン][auth]（2 つのフェーズ・トークンの置き場所・取り方を差し替えるとき）／[エラーと再試行][errors]（`PortersAuthError` と `category`）
 - クライアント: [PortersClient][cl-client]（`appId` / `appSecret` / `scopes` / `tokenStore` / `tokenProvider` のオプション）／[tenant(id)][cl-tenant]
 - ほかの目的から探す: [目次][index]
 

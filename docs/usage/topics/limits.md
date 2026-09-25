@@ -199,9 +199,9 @@ const porters = new PortersClient({
 
 ## 関連
 
-- 主題: [書き込み][write]（200 件分割・必須の規則）／[エラーと再試行][errors]（レート超過・タイムアウトの受け取り方）／
+- ガイド: [書き込み][write]（200 件分割・必須の規則）／[エラーと再試行][errors]（レート超過・タイムアウトの受け取り方）／
   [認証とトークン][auth]（トークンの永続化でアクセス数を減らす）／[カスタム項目][custom-fields]（画像）
-- リソース別: [Attachment][attachments]（10MB・本体は `get` だけ）／[リソースと操作][resources]
+- リソース: [Attachment][attachments]（10MB・本体は `get` だけ）／[リソースと操作][resources]
 - 実践例: [毎日の差分同期][sync-batch]（レート上限の守り方と差分取得）／[複数テナント][multi-tenant]（スロットルの共有）
 - リファレンス: [Write API（XML 形式 / 新規・更新 / Phase）][write-format]／[リソース一覧][resources-list]／[運用上の落とし穴][gotchas]
 - ほかの目的から探す: [目次][index]

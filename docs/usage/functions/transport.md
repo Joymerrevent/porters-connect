@@ -37,7 +37,7 @@ const batchClient = new PortersClient({
 
 ## 固有の注意
 
-これらの関数だけに当てはまる注意です。共通の規則（上限の値と挙動・モックの書き方）は主題別のページにあります。
+これらの関数だけに当てはまる注意です。共通の規則（上限の値と挙動・モックの書き方）はガイドのページにあります。
 
 - **`createThrottle` で作ったスロットルは、共有の枠に入りません。** 渡したクライアントだけの上限になります（バッチだけ枠を分ける例は[毎日の差分同期][sync-batch]）。プロセスを跨いで合計を守りたいときは、`Throttle` を自分で実装して渡します。
 - **`createThrottle` と `createFetchTransport` は `Promise` を返さないので、失敗は同期 throw です。** 範囲外の値は `PortersConfigError` になります。
@@ -57,7 +57,7 @@ const batchClient = new PortersClient({
 
 ## 関連
 
-- 主題: [上限とレート][limits]（スロットルとタイムアウト）／[契約なしでテストする][testing]（モック）
+- ガイド: [上限とレート][limits]（スロットルとタイムアウト）／[契約なしでテストする][testing]（モック）
 - 関数: [宣言と突合][fn-declare]／[値の変換][fn-convert]
 - ほかの目的から探す: [目次][index]
 

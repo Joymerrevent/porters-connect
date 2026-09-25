@@ -172,9 +172,9 @@ await t.job.search({
 
 ## 関連
 
-- 主題: [検索][search-records]（`condition` の書き方）／[書き込み][write]（送る前の検査）／[エラーと再試行][handle-failures]／
+- ガイド: [検索][search-records]（`condition` の書き方）／[書き込み][write]（送る前の検査）／[エラーと再試行][handle-failures]／
   [項目と値のかたち][fields]
-- リソース別: [Field][r-field]（時分型は Field Read で見分けが付かない）
+- リソース: [Field][r-field]（時分型は Field Read で見分けが付かない）
 - 実践例: [毎日の差分同期][sync-batch]（`P_UpdateDate` は ISO 8601）
 - リファレンス: [Field Type / Data Type][fdt]（通信の書式の一次情報）
 - ほかの目的から探す: [目次][index]

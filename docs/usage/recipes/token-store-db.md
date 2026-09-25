@@ -153,7 +153,7 @@ App Secret のような秘密の値ではありません。
 
 ## 関連
 
-- 主題: [認証とトークン][auth]（`tokenStore` の型と、トークンの取り方）
+- ガイド: [認証とトークン][auth]（`tokenStore` の型と、トークンの取り方）
 - クライアント: [PortersClient][cl-client]（構築オプションの `tokenStore`）
 - 実践例: [中央のサービスからトークンを受け取る][central-token-service]／[複数テナント][multi-tenant]
 - ほかの目的から探す: [目次][index]

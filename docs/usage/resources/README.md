@@ -42,7 +42,7 @@
 
 ## 関連
 
-- 主題: [検索][query]／[書き込み][write]／[Partition とテナントスコープ][tenant]
+- ガイド: [検索][query]／[書き込み][write]／[Partition とテナントスコープ][tenant]
 - ほかの目的から探す: [目次][index]
 
 [c]: candidate.md

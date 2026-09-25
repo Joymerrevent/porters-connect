@@ -137,7 +137,7 @@ export const porters = new PortersClient({
 
 ## 関連
 
-- 主題: [認証とトークン][auth]（`tokenProvider` の型と `getToken()`）／[上限とレート][limits]
+- ガイド: [認証とトークン][auth]（`tokenProvider` の型と `getToken()`）／[上限とレート][limits]
 - クライアント: [auth][cl-auth]（`getToken()` ほか 6 メソッド）
 - 実践例: [トークンを DB に保存する][token-store-db]（中央でトークンを保存するとき）／[複数テナント][multi-tenant]
 - ほかの目的から探す: [目次][index]

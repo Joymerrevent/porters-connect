@@ -30,7 +30,7 @@ const phases = t.phase.of("candidate"); // Phase・Attachment・Field は対象�
 
 ## 固有の注意
 
-このスコープだけに当てはまる注意です。共通の規則（Partition の指定のしかた・id の探し方）は主題別のページにあります。
+このスコープだけに当てはまる注意です。共通の規則（Partition の指定のしかた・id の探し方）はガイドのページにあります。
 
 - **`tenant(id)` は同期で、PORTERS を呼びません。** Partition 付きのアクセサを作り直すだけなので軽く、リクエストごとに作って構いません。トークンはクライアントが持ちます。
 - **id の存在は確かめません。** 無い Partition や権限の無い Partition は、最初のリクエストで PORTERS のエラーになります。id は `porters.partition.search()` で探します（[Partition][r-partition]）。
@@ -70,7 +70,7 @@ const scope = porters.tenant(123, { fields: myFields }); // カスタム項目�
 
 ## 関連
 
-- 主題: [Partition とテナントスコープ][tenant]（Partition の考え方と探し方）／[カスタム項目][custom-fields]（宣言を渡す場所）
+- ガイド: [Partition とテナントスコープ][tenant]（Partition の考え方と探し方）／[カスタム項目][custom-fields]（宣言を渡す場所）
 - クライアント: [PortersClient][cl-client]／[auth][cl-auth]
 - ほかの目的から探す: [目次][index]
 

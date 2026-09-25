@@ -82,9 +82,9 @@ for await (const c of t.candidate.searchAll({
 
 導入はここまでです。あとは**目的から引いてください**。
 
-- [主題別][index] — 認証・検索・書き込み・上限……を 1 主題 1 ページで。冒頭の「まず知ること」に PORTERS 側の前提をまとめてあります
+- [ガイド][index] — 認証・検索・書き込み・上限……を 1 主題 1 ページで。冒頭の「まず知ること」に PORTERS 側の前提をまとめてあります
 - [クライアント][client] — `PortersClient` の構築オプション・`auth` のメソッド・`tenant(id)` の下にあるもの
-- [リソース別][resources] — 使うリソースの呼べるメソッドと固有の注意
+- [リソース][resources] — 使うリソースの呼べるメソッドと固有の注意
 - [関数][functions] — `defineFields` や `createThrottle` などの関数を用途別に
 - [実践例][index] — 毎日の差分同期・複数テナントの組み立て
 - [公開 API リファレンス][api] — 型とメソッドの正確な定義
