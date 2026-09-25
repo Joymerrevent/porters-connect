@@ -14,7 +14,7 @@ import {
   type FieldCatalog,
   type ReadRecord,
 } from "./core/read";
-import type { ResourceDeps } from "./core/data-resource";
+import type { ResourceDeps } from "./core/read";
 import type { ResourceDescriptor } from "./core/descriptor";
 
 const FIELDS = {

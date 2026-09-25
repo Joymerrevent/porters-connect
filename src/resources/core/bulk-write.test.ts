@@ -9,7 +9,8 @@ import {
 import type { Requester } from "../../http/requester";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import { encodeWriteItem } from "../../xml/encode";
-import { createDataResource, type FieldCatalog } from "./data-resource";
+import { createDataResource } from "./data-resource";
+import type { FieldCatalog } from "./read";
 import { buildWriteUrl } from "./write";
 
 const FIELDS = {

@@ -13,16 +13,18 @@
 import {
   createDataResource,
   type CreateInput,
-  type EmptyCatalog,
-  type FieldCatalog,
-  type ReadRecord,
-  type ReferenceMap,
   type DataResource,
-  type ResourceDeps,
-  type ResourcePage,
-  type SearchQuery,
   type UpdateInput,
 } from "./core/data-resource";
+import type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadRecord,
+  ResourceDeps,
+  ResourcePage,
+} from "./core/read";
+import type { ReferenceMap } from "./core/expand";
+import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 import { CLIENT_DESCRIPTOR } from "./client";

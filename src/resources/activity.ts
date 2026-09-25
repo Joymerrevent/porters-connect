@@ -14,15 +14,17 @@
 import {
   createDataResource,
   type CreateInput,
-  type EmptyCatalog,
-  type FieldCatalog,
-  type ReadRecord,
   type DataResource,
-  type ResourceDeps,
-  type ResourcePage,
-  type SearchQuery,
   type UpdateInput,
 } from "./core/data-resource";
+import type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadRecord,
+  ResourceDeps,
+  ResourcePage,
+} from "./core/read";
+import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import type { ResourceName } from "../porters/resource-list";
 

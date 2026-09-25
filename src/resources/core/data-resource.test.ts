@@ -5,12 +5,10 @@ import type { Requester, RequestSpec } from "../../http/requester";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
 import type { TransportRequest } from "../../http/types";
 import type { FieldValue } from "../../xml/decode";
-import {
-  createDataResource,
-  type Expand,
-  type FieldCatalog,
-  type SearchQuery,
-} from "./data-resource";
+import { createDataResource } from "./data-resource";
+import type { Expand } from "./expand";
+import type { FieldCatalog } from "./read";
+import type { SearchQuery } from "./query";
 import type { ResourceDescriptor } from "./descriptor";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs

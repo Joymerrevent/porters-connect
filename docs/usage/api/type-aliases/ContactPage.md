@@ -8,4 +8,4 @@
 
 > **ContactPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/contact.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L88)
+Defined in: [src/resources/contact.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contact.ts#L90)

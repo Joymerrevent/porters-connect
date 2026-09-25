@@ -8,7 +8,7 @@
 
 > **RecruiterResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/recruiter.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L99)
+Defined in: [src/resources/recruiter.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L101)
 
 The Recruiter accessor; `C` is the declared custom-field catalog merged on.
 

@@ -24,15 +24,17 @@
 import {
   createDataResource,
   type CreateInput,
-  type EmptyReferences,
-  type FieldCatalog,
-  type ReadRecord,
   type DataResource,
-  type ResourceDeps,
-  type ResourcePage,
-  type SearchQuery,
   type UpdateInput,
 } from "./core/data-resource";
+import type { EmptyReferences } from "./core/expand";
+import type {
+  FieldCatalog,
+  ReadRecord,
+  ResourceDeps,
+  ResourcePage,
+} from "./core/read";
+import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 

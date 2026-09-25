@@ -48,36 +48,8 @@ import {
   type ImageOption,
   type ImageReadRecord,
 } from "./image";
-
-// Shared Read types/internals live in core/read (reused by master resources). Re-export the
-// types so the data-resource modules keep importing them from "./data-resource".
-export type {
-  EmptyCatalog,
-  FieldCatalog,
-  ReadFieldAlias,
-  ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./read";
-// Typed Read query surface (ADR-0038 / F-2). Defined in query.ts; re-exported so resource modules
-// and the public barrel keep importing the query types from "./data-resource".
-export type { Condition, ItemState, Order, SearchQuery } from "./query";
-// Bulk write result (ADR-0041 / F-4). Defined in bulk-write.ts; re-exported so resource modules and
-// the public barrel keep importing the bulk types from "./data-resource".
-export type { BulkWriteResult, BulkWriteResultItem } from "./bulk-write";
-// Reference expansion (ADR-0058). Defined in expand.ts; re-exported for the same reason.
-export type {
-  EmptyReferences,
-  Expand,
-  ExpandedReadRecord,
-  ReferenceMap,
-  ReferenceTarget,
-} from "./expand";
 import type { ResourceDescriptor } from "./descriptor";
 import { buildWriteUrl, firstWriteResultId } from "./write";
-// Image sub-field selection (ADR-0064). Defined in image.ts; re-exported for the same reason.
-export type { ImageOption, ImageReadRecord, ImageSelectedValue } from "./image";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /
 // System[DateTime] — ADR-0016/0019).

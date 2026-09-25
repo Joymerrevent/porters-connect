@@ -8,6 +8,6 @@
 
 > **RecruiterUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/recruiter.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L97)
+Defined in: [src/resources/recruiter.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L99)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field).

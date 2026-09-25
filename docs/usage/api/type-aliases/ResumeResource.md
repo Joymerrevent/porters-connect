@@ -8,7 +8,7 @@
 
 > **ResumeResource**\<`C`, `CR`\> = `DataResource`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`, *typeof* `REFERENCES`\>
 
-Defined in: [src/resources/resume.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L105)
+Defined in: [src/resources/resume.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L107)
 
 The Resume accessor; `C` is the declared custom-field catalog merged on.
 
