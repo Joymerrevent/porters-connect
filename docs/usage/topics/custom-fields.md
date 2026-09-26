@@ -373,16 +373,17 @@ const report = await verifyFields(porters.tenant(1), myFields);
 if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていません");
 ```
 
-レポートは 6 つに分かれます。
+レポートは 7 つに分かれます。
 
-| 区分               | 意味                                                         | 深刻度                                                        |
-| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------- |
-| `typeMismatch`     | 実在するが Data Type が違う                                  | **最悪**（読み取りがエラーになるか、型が違う値が入る）        |
-| `missing`          | 宣言したがテナントに無い                                     | 高                                                            |
-| `unverifiable`     | そのリソースの項目定義を PORTERS から**読めなかった**        | 中（項目が無いのか、読めなかっただけなのかは分からない）      |
-| `undeclared`       | テナントにあるが宣言していない                               | 低（宣言しなくても動作は変わらない）                          |
-| `undeclarable`     | 存在するが宣言では表せない                                   | 情報                                                          |
-| `requiredMismatch` | 宣言の `required` とテナントの入力必須（`P_Required`）が違う | 情報（読み書きは壊れない。`create` で止まるかどうかが変わる） |
+| 区分                   | 意味                                                         | 深刻度                                                        |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| `typeMismatch`         | 実在するが Data Type が違う                                  | **最悪**（読み取りがエラーになるか、型が違う値が入る）        |
+| `missing`              | 宣言したがテナントに無い                                     | 高                                                            |
+| `unverifiable`         | そのリソースの項目定義を PORTERS から**読めなかった**        | 中（項目が無いのか、読めなかっただけなのかは分からない）      |
+| `undeclared`           | テナントにあるが宣言していない                               | 低（宣言しなくても動作は変わらない）                          |
+| `declaredUndeclarable` | 宣言したが、テナントの項目は宣言では表せない型               | 高（値を持たない型・システムの項目なら、読むと常に `null`）   |
+| `undeclarable`         | 存在するが宣言では表せない                                   | 情報                                                          |
+| `requiredMismatch`     | 宣言の `required` とテナントの入力必須（`P_Required`）が違う | 情報（読み書きは壊れない。`create` で止まるかどうかが変わる） |
 
 **`verifyFields` は例外を投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、止めるかどうかは利用側が決めます。起動時に止めたいなら 1 行足します。
@@ -395,6 +396,11 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 
 `assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` / `requiredMismatch` では例外を投げません。
+
+`declaredUndeclarable` は、宣言した項目がテナントでは宣言では表せない型だったものです。理由（`reason`）が
+`no-data-type`（Reference など、値を持たない型）か `not-declarable`（システムの項目）なら、どう宣言しても正しく
+読めないので **`ok` が `false` になり、`assertFieldsMatch` も例外を投げます**。宣言から外してください。
+`unknown-field-type`（このライブラリがまだ知らない型）は、宣言が正しい可能性があるので、知らせるだけで `ok` は倒しません。
 
 > **`defineFields` は PORTERS を呼びません。** Field Read を呼ぶのは `generateFieldDecls` と `verifyFields` だけで、
 > 呼んだときだけです（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
