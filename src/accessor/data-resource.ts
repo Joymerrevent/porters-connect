@@ -92,6 +92,13 @@ export type DataResource<
   ): Promise<BulkWriteResult>;
 };
 
+// 各リソースの factory は、これを次の形で呼ぶ。2 つの cast は、どのリソースでも同じ理由による。
+//   - `{ ...FIELDS, ...custom } as typeof FIELDS & C`: 利用者が宣言する U_ / A_ の alias は P_ と
+//     重ならない（defineFields が確かめている — ADR-0023 D7）ので、合わせた一覧はちょうど交差型になる。
+//     cast はその交差型に名前を付けるだけ。
+//   - 戻り値を各リソースの公開の型にする cast: `C` が型引数のままだと、この型（DataResource）と
+//     リソースのファイルで書き出した型が同じだとコンパイラが示しきれないので、名前を付け替える
+//     （ADR-0100）。同じであることは data-resource-shapes.test.ts が具体的な `C` で確かめる。
 export const createDataResource = <
   const F extends FieldCatalog,
   const Req extends readonly (keyof F)[],

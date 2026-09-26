@@ -1,7 +1,6 @@
 // What a resource *is*, independent of the tenant: its names, alias prefix, id alias and standard
 // `P_` catalog. Shared by every family — the data resources' factory, the master resources and the
-// in-repo fake server all read the same descriptor (ADR-0097: split out of the data-resource factory,
-// which the masters used to import it from).
+// in-repo fake server all read the same descriptor, so it sits apart from any one of them (ADR-0097).
 
 import type { FieldCatalog } from "./catalog";
 import type { ReferenceMap } from "./expand";

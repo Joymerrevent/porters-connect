@@ -1,6 +1,6 @@
-// Job accessor (ADR-0004/0005/0011/0019): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Only the Data-Type catalog and
-// names are Job-specific. P_Client / P_Recruiter are System[Reference] (Write = ID).
+// Job accessor (ADR-0004/0005/0011/0019): built on the data resources' factory
+// (`createDataResource`), which gives every data resource the same methods. Only the Data-Type
+// catalog and names are Job-specific. P_Client / P_Recruiter are System[Reference] (Write = ID).
 //
 // Display-only Reference fields (P_Mail, P_*Reference — they mirror a Recruiter value and
 // are not writable) are intentionally left out of the catalog: they read through as raw
@@ -240,12 +240,8 @@ export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(
   deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): JobResource<C> => {
-  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
-  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  // `C` が型引数のままだと、共通の実装の型（DataResource）とこのファイルで書き出した型が同じだと
-  // コンパイラが示しきれないので、ここで名前を付け替える（ADR-0100）。同じであることは
-  // data-resource-shapes.test.ts が具体的な `C` で確かめる。
   return createDataResource(
     { ...JOB_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,

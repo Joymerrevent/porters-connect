@@ -1,8 +1,7 @@
-// Process accessor (ADR-0004/0005/0011/0019): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Process is the relational
-// resource linking a Candidate to a Job; P_Client / P_Recruiter / P_Job / P_Candidate /
-// P_Resume are System[Reference] (Write = the related record's id; P_Candidate is the
-// Person id).
+// Process accessor (ADR-0004/0005/0011/0019): built on the data resources' factory
+// (`createDataResource`), which gives every data resource the same methods. Process is the
+// relational resource linking a Candidate to a Job; P_Client / P_Recruiter / P_Job / P_Candidate /
+// P_Resume are System[Reference] (Write = the related record's id; P_Candidate is the Person id).
 //
 // Display-only Reference fields (P_JobOwner, P_Job*Reference, P_ResumeOwner,
 // P_Resume*Reference — they mirror a Job/Recruiter/Person value and are not writable) are
@@ -235,12 +234,8 @@ export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
   deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): ProcessResource<C> => {
-  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
-  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  // `C` が型引数のままだと、共通の実装の型（DataResource）とこのファイルで書き出した型が同じだと
-  // コンパイラが示しきれないので、ここで名前を付け替える（ADR-0100）。同じであることは
-  // data-resource-shapes.test.ts が具体的な `C` で確かめる。
   return createDataResource(
     { ...PROCESS_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
