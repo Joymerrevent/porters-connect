@@ -9,7 +9,10 @@ import type { PortersError } from "../errors/index";
 import { asString } from "./as-string";
 
 const parser = new XMLParser({
-  ignoreAttributes: false,
+  // 属性はルート要素のもの（Read の Total / Count / Start）だけを読む。ほかの要素の属性を読むと、Option の
+  // 選択肢や Item に「@_x」が値として混ざり、属性付きの Image の子要素が値を失う（RV-87）。jPath はルート
+  // 要素だけがピリオドを含まない（下の要素のパスは「Candidate.Item…」になる）。
+  ignoreAttributes: (_name, jPath) => String(jPath).includes("."),
   attributeNamePrefix: "@_",
   ignoreDeclaration: true,
   parseTagValue: false,

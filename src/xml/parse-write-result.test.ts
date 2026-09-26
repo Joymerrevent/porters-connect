@@ -59,10 +59,6 @@ describe("parseWriteResult (ADR-0011)", () => {
       `<Candidate><Item><Id>x12</Id><Code>0</Code></Item></Candidate>`,
     ],
     [
-      "an Item Code with an attribute",
-      `<Candidate><Item><Id>5</Id><Code type="e">103</Code></Item></Candidate>`,
-    ],
-    [
       "an Item Code that is not a number",
       `<Candidate><Item><Id>5</Id><Code>abc</Code></Item></Candidate>`,
     ],
@@ -81,6 +77,16 @@ describe("parseWriteResult (ADR-0011)", () => {
       resource: "Candidate",
     });
     expect((err as PortersResourceError).hint).toContain("middlebox");
+  });
+
+  // RV-87。要素の属性は読まないので、属性付きの Code もその値として読む（失敗の Code が成功に化けない）。
+  it("reads an Item Code that carries an attribute by its value", () => {
+    expect(
+      parseWriteResult(
+        `<Candidate><Item><Id>5</Id><Code type="e">103</Code></Item></Candidate>`,
+        "Candidate",
+      ),
+    ).toEqual([{ id: 5, code: 103 }]);
   });
 
   it("reads an Id with surrounding whitespace", () => {

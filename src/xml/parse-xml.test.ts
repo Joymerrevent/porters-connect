@@ -157,3 +157,31 @@ describe("toCode", () => {
     expect(() => toCode(v, unparseable)).toThrow("unparseable");
   });
 });
+
+// RV-87。属性はルート要素のものだけを読む。ほかの要素の属性は値に混ぜない。
+describe("attributes", () => {
+  const unparseable = (): PortersResourceError =>
+    new PortersResourceError("unparseable", { category: "unknown" });
+
+  it("keeps the root's attributes and ignores every other element's", () => {
+    expect(
+      parseXml(
+        `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item x="1"><Person.P_Phase><OptionRoot><Option.P_A count="3"/></OptionRoot></Person.P_Phase><Person.U_img><FileName x="1">a.png</FileName></Person.U_img></Item></Candidate>`,
+        unparseable,
+      ),
+    ).toEqual({
+      Candidate: {
+        "@_Total": "1",
+        "@_Count": "1",
+        "@_Start": "0",
+        Code: "0",
+        Item: [
+          {
+            "Person.P_Phase": { OptionRoot: { "Option.P_A": "" } },
+            "Person.U_img": { FileName: "a.png" },
+          },
+        ],
+      },
+    });
+  });
+});
