@@ -53,7 +53,7 @@ const res = (calls: Call[], ...bodies: string[]) =>
     partition: 12,
   });
 
-// 読み込み（read-data.ts）と書き込み（write-data.ts）の中身はそれぞれのテストで確かめる。ここでは 2 つを
+// 読み込み（data-reader.ts）と書き込み（data-writer.ts）の中身はそれぞれのテストで確かめる。ここでは 2 つを
 // 1 つのアクセサにまとめること（同じ設定で両方が動くこと）と、公開の形（DataResource）の型を確かめる。
 describe("createDataResource — 読み込みと書き込みをまとめる", () => {
   it("8 つのメソッドを持つ", () => {
@@ -104,7 +104,7 @@ describe("createDataResource — クエリとページ送りは別の型（ADR-0
   });
 });
 
-// 型のテストだけで使う、参照先を持つリソース（中身は read-data.test.ts の fixture と同じ）。`_` は
+// 型のテストだけで使う、参照先を持つリソース（中身は data-reader.test.ts の fixture と同じ）。`_` は
 // 型の元にするだけで、値としては読まないことを示す。
 const PART_FIELDS = {
   P_Id: "System[Id]",

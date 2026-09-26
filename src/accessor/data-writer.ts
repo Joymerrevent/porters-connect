@@ -1,6 +1,6 @@
 // The data resources' Write (create / update / createMany / updateMany): the factory that sends
 // them. The inputs they take are `write-record.ts`. `data-resource.ts` puts this together with the
-// Read half (`read-data.ts`) into one accessor. The Write URL and reading the id back are shared
+// Read half (`data-reader.ts`) into one accessor. The Write URL and reading the id back are shared
 // with the Attachment accessor in `write.ts`; batching is `write-many.ts`.
 
 import { PortersConfigError } from "../errors";

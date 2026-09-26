@@ -1,7 +1,7 @@
 // The data resources' Read (search / searchAll / get / getMany): the factory that sends them. The
 // record type they resolve to is `read-record.ts`. `data-resource.ts` puts this together with
-// the Write half (`write-data.ts`) into one accessor. Master resources have their own, smaller Read
-// (`read-master.ts`); both share the paging / decoding / sending in `read.ts`.
+// the Write half (`data-writer.ts`) into one accessor. Master resources have their own, smaller Read
+// (`master-reader.ts`); both share the paging / decoding / sending (`page-reader.ts` and its neighbours).
 
 import type { RawItem } from "../xml/parse-resource-page";
 import { createPageReader } from "./page-reader";

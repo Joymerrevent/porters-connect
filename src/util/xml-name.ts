@@ -1,7 +1,7 @@
 // XML の Name として妥当かを判定する（ADR-0085）。
 //
 // なぜ util に置くか: **呼び出し側の値が要素名になる境界が 2 つある**（Option の選択肢 alias と
-// Write の項目 alias）。どちらも `xml/encode.ts` から呼ぶが、判定そのものは XML の仕様であって
+// Write の項目 alias）。どちらも `xml/assert-tag-name.ts` から呼ぶが、判定そのものは XML の仕様であって
 // PORTERS の業務ルールではないので、エラーの組み立てと切り離してここに置く。
 // `util/` は依存ゼロの葉（alias / base64 / datetime と同じ）＝ここも import しない。
 //

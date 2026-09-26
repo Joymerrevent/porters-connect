@@ -1,5 +1,5 @@
 // The master resources' accessor: the read-only masters' counterpart of `data-resource.ts`. A
-// master has no Write, so the accessor is its Read (`read-master.ts`) alone; this file names the
+// master has no Write, so the accessor is its Read (`master-reader.ts`) alone; this file names the
 // shape it takes. What each master's Read accepts stays with that master, passed in as `params`
 // (ADR-0022).
 

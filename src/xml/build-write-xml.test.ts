@@ -128,7 +128,7 @@ describe("buildWriteXml (ADR-0011, Write)", () => {
 // 確かめているが、それだと「どんな文字列でも書いて読んだら元に戻る」という肝心の
 // 不変条件は代表値の外で崩れても見えない。値を機械に選ばせて往復性を直接検査する。
 describe("Write XML: 書いて読むと戻る（property-based）", () => {
-  // parser.ts と同じ設定。ここが食い違うと「往復した」ことにならない。
+  // parse-xml.ts と同じ設定。ここが食い違うと「往復した」ことにならない。
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: "@_",

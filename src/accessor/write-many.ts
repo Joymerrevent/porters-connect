@@ -3,7 +3,7 @@
 // splits the input into size- and count-bounded batches, sends them sequentially (the write
 // throttle paces them), and concatenates the per-item results in input order. A batch is NOT
 // atomic — each `<Item>` carries its own `<Code>` — so per-item failures are returned (not
-// thrown); only a whole-request failure throws. write-data.ts wires this; XML stays in xml/.
+// thrown); only a whole-request failure throws. data-writer.ts wires this; XML stays in xml/.
 
 import {
   PortersConfigError,

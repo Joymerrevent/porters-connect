@@ -1,7 +1,7 @@
 // Typed Read query surface (ADR-0038 / F-2): condition / order / keywords / itemstate, grounded in
 // the PORTERS Read parameter reference. The public types are Data-Type-aware — a field's allowed
 // operators and value shape derive from its catalog Data Type (ADR-0005 R-5 / ADR-0038 案1a).
-// Turning a typed query into the wire params is `query-encode.ts`.
+// Turning a typed query into the wire params is `append-read-query.ts` / `build-read-params.ts`.
 
 import type { DataType } from "../porters/data-type";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";

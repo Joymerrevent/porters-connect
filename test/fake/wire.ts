@@ -4,7 +4,7 @@
 // The shapes are the ones the library actually contracts on, so they are derived from its own
 // modules rather than re-typed here: the Read envelope is what `parseResourcePage` eats, the Write
 // result what `parseWriteResult` eats, the Authentication envelope what `parseAuthentication` eats,
-// and the per-Data-Type nesting is the inverse of `decodeField` (`src/xml/decode.ts`). Read and
+// and the per-Data-Type nesting is the inverse of `decodeField` (`src/xml/decode-field.ts`). Read and
 // Write are asymmetric (write-format.md): User/Reference write an ID but read back nested, Option
 // writes bare aliases but reads back under `<OptionRoot>`.
 
@@ -34,7 +34,7 @@ const DECLARATION = `<?xml version="1.0" encoding="UTF-8"?>`;
 // caller does not narrow `Person.P_Owner(...)` itself.
 const USER_SUBFIELDS = ["P_Id", "P_Type", "P_Name", "P_Mail"] as const;
 
-// Element-content escaping, mirroring `src/xml/encode.ts`: only `& < >` matter in PCDATA and the
+// Element-content escaping, mirroring `src/xml/encode-field.ts`: only `& < >` matter in PCDATA and the
 // fake emits no attribute values.
 const escapeXml = (s: string): string =>
   s.replace(/[&<>]/g, (c) =>

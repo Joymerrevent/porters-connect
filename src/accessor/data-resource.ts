@@ -1,7 +1,7 @@
 // The data resources' accessor (ADR-0004/0005/0011): the Read (search / searchAll / get / getMany)
 // + Write (create / update / bulk) shape shared by every PORTERS data resource. A resource
-// module supplies its names + Data-Type catalog; this puts the Read half (`read-data.ts`) and the
-// Write half (`write-data.ts`) together and keeps XML out of resources/ (parse/encode live in
+// module supplies its names + Data-Type catalog; this puts the Read half (`data-reader.ts`) and the
+// Write half (`data-writer.ts`) together and keeps XML out of resources/ (parse/encode live in
 // xml/). Standard `P_` fields use the catalog; custom `U_`/`A_` pass through (decode: raw string /
 // encode: Text). The read-only master resources have their own, smaller counterpart:
 // `master-resource.ts`.

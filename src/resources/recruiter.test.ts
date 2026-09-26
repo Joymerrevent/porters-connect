@@ -5,8 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/field-value";
 import { createRecruiterResource } from "./recruiter";
 
-// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
-// accessor/write-data.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in accessor/data-reader.test.ts and
+// accessor/data-writer.test.ts; here we pin the
 // Recruiter-specific catalog (each field decodes by its Data Type) and config
 // (root name `Recruiter`, path `recruiter`, alias prefix `Recruiter`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];

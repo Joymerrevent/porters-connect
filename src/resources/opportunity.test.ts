@@ -8,8 +8,8 @@ import {
   createOpportunityResource,
 } from "./opportunity";
 
-// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
-// accessor/write-data.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in accessor/data-reader.test.ts and
+// accessor/data-writer.test.ts; here we pin the
 // Opportunity-specific catalog (each field decodes by its Data Type) and config
 // (root name `Opportunity`, path `opportunity`, alias prefix `Opportunity`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];
