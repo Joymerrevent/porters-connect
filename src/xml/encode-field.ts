@@ -74,6 +74,39 @@ const invalidValue = (
     },
   );
 
+// id を持つ Data Type。書くのは参照先（または自分）のレコードの id なので、整数でなければならない
+// （新規作成の P_Id は -1）。
+// 型の無い項目（null / undefined）でも引けるよう、集合の要素の型を広げている（has は false を返す）。
+const ID_TYPES: ReadonlySet<DataType | null | undefined> = new Set<DataType>([
+  "System[Id]",
+  "User",
+  "System[Reference]",
+  "System[Department]",
+  "Link",
+]);
+
+// 数の値は、PORTERS が読める 10 進の表記になるものだけを書く。NaN / Infinity は "NaN" / "Infinity"、
+// 大きな数や小さな数は "1e+21" / "1e-7" になり、そのまま送られていた（RV-85）。id の項目は整数に限る。
+const assertWritableNumber = (
+  alias: string,
+  type: DataType | null | undefined,
+  n: number,
+): void => {
+  const isId = ID_TYPES.has(type);
+  const ok = isId ? Number.isSafeInteger(n) : /^-?\d+(\.\d+)?$/.test(String(n));
+  if (ok) return;
+  throw new PortersConfigError(
+    `${alias}: cannot write ${String(n)}${type ? ` as ${type}` : ""}`,
+    {
+      category: "validation",
+      hint: isId
+        ? `${type} values are written as a record id, a whole number.`
+        : "Numbers are written as plain decimals: NaN, Infinity and exponent notation (1e21, 1e-7) cannot be written.",
+      context: { operation: "encode" },
+    },
+  );
+};
+
 // Runs a conversion and re-labels its failure as the library's own error type. `isoToPorters*`
 // throw `RangeError`, which is outside the PortersError family and so escapes the documented
 // error contract (RV-36).
@@ -101,6 +134,7 @@ export const encodeField = (
   /** The field's bare alias, so an unconvertible value names it (ADR-0006). */
   alias: string,
 ): string => {
+  if (typeof value === "number") assertWritableNumber(alias, type, value);
   if (type === undefined || type === null) return scalar(value);
   switch (type) {
     // Option: the selected aliases as empty child elements. Canonical input is an
