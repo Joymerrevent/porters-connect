@@ -8,7 +8,7 @@
 
 > **createThrottle**(`opts?`): [`Throttle`](../type-aliases/Throttle.md)
 
-Defined in: [src/http/throttle.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L110)
+Defined in: [src/http/throttle.ts:120](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L120)
 
 ## Parameters
 

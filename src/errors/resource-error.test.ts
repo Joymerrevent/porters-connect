@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { PortersResourceError } from "./porters-error";
 import { resourceCategory, resourceError } from "./resource-error";
 
@@ -57,4 +60,33 @@ describe("resource error classification (ADR-0006)", () => {
     expect(resourceError(404, "x").hint).toContain("Partition");
     expect(resourceError(9, "x").hint).toBeUndefined(); // resourceHint default
   });
+});
+
+// reference の表を読み、載っているコードのうち分類していないものを確かめる（RV-114）。
+// 表に行が足されたのに実装の表を直し忘れると、ここで落ちる。「126 / 127」「104〜116」の形も読む。
+// 5（ユーザー ID 無効）は ADR-0006 の表に無く、unknown（再試行しない）に倒している。分類するかは
+// RV-114 / RV-123 の ADR で決める。決まったら、この一覧から外す。
+it("leaves only the known codes unclassified in the reference table", () => {
+  const table = readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../docs/usage/reference/resource-api/result-codes.md",
+        import.meta.url,
+      ),
+    ),
+    "utf8",
+  );
+  const codes = [
+    ...table.matchAll(/^\| *(\d+)(?: *(?:\/|〜) *(\d+))? *\|/gm),
+  ].flatMap(([, from, to]) => {
+    const a = Number(from);
+    const b = to === undefined ? a : Number(to);
+    return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  });
+  expect(codes).toContain(127);
+  expect(codes).toContain(110);
+  const unclassified = codes.filter(
+    (c) => c !== 0 && resourceCategory(c) === "unknown",
+  );
+  expect(unclassified).toEqual([5]);
 });

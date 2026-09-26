@@ -8,7 +8,7 @@
 
 > **FieldResource** = `object`
 
-Defined in: [src/resources/field.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L71)
+Defined in: [src/resources/field.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L72)
 
 The Field accessor for one bound resource.
 
@@ -18,7 +18,7 @@ The Field accessor for one bound resource.
 
 > **search**(`query?`): `Promise`\<[`FieldPage`](FieldPage.md)\>
 
-Defined in: [src/resources/field.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L72)
+Defined in: [src/resources/field.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L73)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [src/resources/field.ts:72](https://github.com/Joymerrevent/porters-
 
 > **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_DecimalFraction`: `"Number"`; `P_Id`: `"System[Id]"`; `P_Max`: `"Number"`; `P_Min`: `"Number"`; `P_Name`: `"SinglelineText"`; `P_ReferTo`: `"Option"`; `P_Required`: `"Number"`; `P_ResourceType`: `"Number"`; `P_Type`: `"Number"`; \}\>\>
 
-Defined in: [src/resources/field.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L74)
+Defined in: [src/resources/field.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L75)
 
 Auto-paginating search: yields every field of the resource.
 

@@ -7,6 +7,7 @@ import { PortersConfigError } from "./errors";
 import type { AuthApi, TokenProvider, TokenStore } from "./auth";
 import {
   authorityOf,
+  throttleKeyOf,
   createFetchTransport,
   createRequester,
   sharedThrottle,
@@ -305,6 +306,74 @@ const validateTokenProvider = (provider: unknown): void => {
   }
 };
 
+// 型で止まるのは TypeScript の呼び出し側だけで、JS から形の違う値を渡すと、最初のリクエストで
+// PortersError ではない TypeError（`transport.send is not a function` など）になっていた。
+// tokenProvider と同じく、構築時に確かめる（RV-93）。
+const shapeError = (message: string, hint: string): PortersConfigError =>
+  new PortersConfigError(`PortersClient: ${message}`, {
+    category: "config",
+    hint,
+  });
+
+const assertMethods = (
+  name: string,
+  value: unknown,
+  methods: readonly string[],
+): void => {
+  if (value === undefined) return;
+  const v = value as Record<string, unknown> | null;
+  const missing = methods.filter(
+    (m) => v === null || typeof v[m] !== "function",
+  );
+  if (missing.length > 0) {
+    throw shapeError(
+      `${name} must have ${methods.map((m) => `${m}()`).join(", ")}`,
+      `Remove ${name} to use the default, or pass an object with ${missing.map((m) => `${m}()`).join(", ")}.`,
+    );
+  }
+};
+
+const assertOptionalString = (name: string, value: unknown): void => {
+  if (value !== undefined && typeof value !== "string") {
+    throw shapeError(
+      `${name} must be a string, got ${typeof value}`,
+      `Pass ${name} as a string (read it from the environment as it is).`,
+    );
+  }
+};
+
+const validateOptionShapes = (options: PortersClientOptions): void => {
+  assertOptionalString("appId", options.appId);
+  assertOptionalString("appSecret", options.appSecret);
+  const { scopes } = options as { scopes?: unknown };
+  if (
+    scopes !== undefined &&
+    (!Array.isArray(scopes) || scopes.some((s) => typeof s !== "string"))
+  ) {
+    throw shapeError(
+      "scopes must be an array of strings",
+      'Pass scopes as a list, e.g. ["candidate_r", "candidate_w"].',
+    );
+  }
+  assertMethods("transport", options.transport, ["send"]);
+  assertMethods("throttle", options.throttle, ["take"]);
+  assertMethods("tokenStore", options.tokenStore, ["get", "set", "clear"]);
+};
+
+// NaN・"12 "・-1・1.5 がそのまま `partition=` になっていた（RV-113）。
+// JS から文字列などが来ても、Number.isSafeInteger が false を返すので拒否される。
+const assertPartitionId = (id: number): void => {
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new PortersConfigError(
+      `tenant: partition id must be a positive integer, got ${typeof id === "number" ? String(id) : (JSON.stringify(id) ?? String(id))}`,
+      {
+        category: "config",
+        hint: "Pass the partition's id. porters.partition.search() lists the ones this App can reach.",
+      },
+    );
+  }
+};
+
 // Build the partition-bound accessor bundle for a given partition (ADR-0040 / F-3) by running
 // the same factories with that `partition` — resources are already `deps.partition`-driven, so
 // the factories need no change. The custom field catalog is bound here too (ADR-0087): it is
@@ -321,6 +390,7 @@ const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
   partition: number,
   scope: TenantOptions<C> = {},
 ): TenantScope<C> => {
+  assertPartitionId(partition);
   rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
   // 検証済みの印は型だけなので、素のオブジェクトや JS から渡された宣言も確かめる（RV-79）。
   if (scope.fields !== undefined)
@@ -410,6 +480,7 @@ export class PortersClient {
   constructor(options: PortersClientOptions) {
     rejectUnknownKeys("PortersClient", options, CLIENT_OPTION_KEYS);
     validateTokenProvider(options.tokenProvider);
+    validateOptionShapes(options);
     // Where every URL is sent (ADR-0047). Resolved once here; `apiUrl` is the only place that
     // renders it. Checked once here too (ADR-0048): a malformed `hostname` is a configuration
     // problem, so it fails where the configuration was handed over — before any credential can
@@ -452,7 +523,7 @@ export class PortersClient {
       // Per destination, not per client (ADR-0073): building a client per tenant is something the guides
       // recommend, and a bucket each would let the process issue N times the limit — silently
       // (RV-43). An injected throttle takes over entirely, sharing included.
-      throttle: options.throttle ?? sharedThrottle(authorityOf(accessPoint)),
+      throttle: options.throttle ?? sharedThrottle(throttleKeyOf(accessPoint)),
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;

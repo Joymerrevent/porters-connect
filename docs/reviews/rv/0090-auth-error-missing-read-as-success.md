@@ -1,7 +1,7 @@
 # RV-90 🟢 Authentication の応答に `<Error>` が無いと成功と読む
 
 - 重要度: 🟢 ／ 観点: 認証 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`42d0e6b`）。** `<Error>` が無い・空の応答を成功と読まず、読めない応答（`unknown`）として止める。reference の応答例は 2 種類とも `<Error>` を含む。2xx で 200 以外の status は変えていない（`<Error>` を必須にしたので、認証の応答として成り立たない本文は止まる）。
+
+## 検証
+
+`src/xml/parse-authentication.test.ts` の「refuses a response without an `<Error>` code」。

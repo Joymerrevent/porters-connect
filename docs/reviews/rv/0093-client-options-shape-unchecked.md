@@ -1,7 +1,7 @@
 # RV-93 🟢 `transport` / `throttle` / `tokenStore` の形を、構築時に確かめていない
 
 - 重要度: 🟢 ／ 観点: 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`2754d33`）。** 構築時に、`transport` / `throttle` / `tokenStore` のメソッドと、`appId` / `appSecret` / `scopes` の型を確かめ、`PortersConfigError` で止める。
+
+## 検証
+
+`src/porters-client.test.ts` の「option shapes are checked at construction」。

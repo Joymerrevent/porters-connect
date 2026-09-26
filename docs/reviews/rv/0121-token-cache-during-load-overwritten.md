@@ -1,7 +1,7 @@
 # RV-121 🟢 保存先の読み込み中に `cache()` を呼ぶと、新しいトークンが読み込んだ古い値で上書きされる
 
 - 重要度: 🟢 ／ 観点: 認証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`55251e4`）。** 読み込んだ値を受け取った後で手元が空かを見て、読み込みの間に `cache()` / `clear()` で入れ替わっていたら、読み込んだ値で上書きしない。
+
+## 検証
+
+`src/auth/token-manager.test.ts` の「keeps a token cached while the store was being read」「keeps a token cached while a renewal was running」。

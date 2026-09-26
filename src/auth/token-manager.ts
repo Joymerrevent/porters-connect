@@ -91,12 +91,18 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   let cached: StoredTokens | undefined;
   let loading: Promise<void> | undefined;
   let inflight: Promise<StoredTokens> | undefined;
+  // 手元のトークンを入れ替えた（cache / clear）回数。読み込みや取り直しを待つ間に入れ替わったら、
+  // 待っていた側の結果で上書きしない（RV-91・RV-121）。
+  let generation = 0;
 
   // An unknown expiry counts as usable: the reactive 401/402 retry is the backstop.
   const usable = (t: IssuedToken): boolean =>
     t.expiresAt === undefined || now() < t.expiresAt - margin;
 
+  // 世代は「変わったか」だけを比べるので、増やすか減らすかは結果に効かない。
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
+    // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
+    generation += 1;
     cached = tokens;
     await store.set(tokens);
     return tokens;
@@ -107,7 +113,12 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   // the store already has (RV-75). A failed read is not remembered: the next call reads again.
   const load = (): Promise<void> =>
     (loading ??= (async () => {
-      if (cached === undefined) cached = readStoredTokens(await store.get());
+      // 手元にあれば読まない（保存先が止まっていても、cache() で入れたトークンを使える）。
+      if (cached !== undefined) return;
+      const before = generation;
+      const stored = readStoredTokens(await store.get());
+      // 読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。
+      if (generation === before) cached = stored;
     })().catch((e: unknown) => {
       loading = undefined;
       throw e;
@@ -115,16 +126,19 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
 
   // refresh when it can work: the issuer hands out no refresh token (its own way of renewing), or
   // the refresh token is still usable. Otherwise start over with acquire.
+  // 取り直しの間に clear() が呼ばれたら、取れたトークンは手元にも保存先にも戻さない（消したはずの
+  // トークンが戻らないように）。走っている取り直しを待つリクエストには、clear() の後に来たものも含めて
+  // そのトークンを返す。cache() が呼ばれたときも、そちらを残す。
   const renew = async (): Promise<StoredTokens> => {
+    const before = generation;
     const current = cached;
-    if (
+    const tokens =
       provider.refresh !== undefined &&
       current !== undefined &&
       (current.refreshToken === undefined || usable(current.refreshToken))
-    ) {
-      return save(requireTokens(await provider.refresh(current), "refresh"));
-    }
-    return save(requireTokens(await provider.acquire(), "acquire"));
+        ? requireTokens(await provider.refresh(current), "refresh")
+        : requireTokens(await provider.acquire(), "acquire");
+    return generation === before ? save(tokens) : tokens;
   };
 
   // `failedToken` is the token a 401 / 402 refused. If the cache already holds another one, a
@@ -158,6 +172,8 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
       await save(requireTokens(tokens, "exchange"));
     },
     clear: async () => {
+      // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
+      generation += 1;
       cached = undefined;
       await store.clear();
     },

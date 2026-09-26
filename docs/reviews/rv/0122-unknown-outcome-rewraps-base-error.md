@@ -1,7 +1,7 @@
 # RV-122 🟢 `asUnknownOutcome` が、Resource 以外のエラーをすべて `PortersNetworkError` に作り直す
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`c72a84a`）。** 作り直すときに、元のエラーが属するライブラリの系統（Resource / Network / Auth / Config）を保ち、どれでもなければ基底の `PortersError` で作り直す。
+
+## 検証
+
+`src/http/requester.test.ts` の「keeps a … in its own class」。

@@ -166,6 +166,7 @@ status からの分類は次のとおりです。
 | 408         | `network`    | `PortersNetworkError` | ✅        |
 | 401 / 403   | `permission` | `PortersAuthError`    | ❌        |
 | その他 4xx  | `config`     | `PortersConfigError`  | ❌        |
+| 3xx         | `unknown`    | `PortersError`        | ❌        |
 | 上記以外    | `unknown`    | `PortersError`        | ❌        |
 
 ```ts
@@ -179,6 +180,8 @@ try {
   }
 }
 ```
+
+3xx はリダイレクトです。ライブラリはリダイレクトを追いかけないので、エラーとして届きます。`hint` のとおり、`scheme` が https か、`hostname` / `port` が API そのもののアドレスかを確かめてください。
 
 この判定は**すべての経路で同じ**です — Resource API だけでなく、**OAuth / Token のやり取り**にも同じように適用されます<!-- 根拠: ADR-0050 -->。
 トークン取得は全リクエストの前段なので、そこで起きたゲートウェイの 5xx も

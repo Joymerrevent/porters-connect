@@ -14,6 +14,7 @@ import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
 import type { ResourcePage } from "../accessor/resource-page";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
+import { resourceValueFor } from "../accessor/resource-value-for";
 import { createMasterResource } from "../accessor/master-resource";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
@@ -107,13 +108,15 @@ const buildParams = (
 export const createFieldAccessor = (
   deps: PartitionBoundConnectionDeps,
 ): FieldAccessor => ({
-  of: (resource) =>
-    createMasterResource(
+  of: (resource) => {
+    resourceValueFor("field", resource);
+    return createMasterResource(
       {
         ...FIELD_DESCRIPTOR,
         params: (q: FieldSearchQuery) =>
           buildParams(deps.partition, resource, q),
       },
       deps,
-    ),
+    );
+  },
 });

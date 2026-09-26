@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors/index";
-import { validateAccessPoint } from "./access-point";
+import { throttleKeyOf, validateAccessPoint } from "./access-point";
 import type { Scheme } from "./access-point";
 
 describe("validateAccessPoint (ADR-0048 / ADR-0078)", () => {
@@ -112,5 +112,62 @@ describe("validateAccessPoint (ADR-0048 / ADR-0078)", () => {
     expect(err).toBeInstanceOf(PortersConfigError);
     expect((err as PortersConfigError).message).toContain("ftp");
     expect((err as PortersConfigError).hint).toContain("https");
+  });
+
+  // `%` は https の URL では復号されて別の名前になるか、組み立てられずに通信エラーとして届く（RV-92）。
+  it.each(["a%41.test", "a%40evil.com"])("rejects %s", (hostname) => {
+    expect(() => validateAccessPoint({ hostname })).toThrow(PortersConfigError);
+  });
+
+  // 送るときの scheme（https）で組み立てられない名前は、起動時に止める（RV-92）。punycode として成り立たない
+  // 名前を組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）ので、
+  // 名前を決め打ちせず、その Node で https の URL が組み立てられないときだけ拒否することを確かめる。
+  it.each([
+    "xn--",
+    "xn--a.test",
+    "XN--ABC.test",
+    "a.test",
+    "xn--eckwd4c7c.test",
+  ])(
+    "rejects %s exactly when https cannot address it on this Node",
+    (hostname) => {
+      let unaddressable = false;
+      try {
+        new URL(`https://${hostname}`);
+      } catch {
+        unaddressable = true;
+      }
+      let err: unknown;
+      try {
+        validateAccessPoint({ hostname });
+      } catch (e) {
+        err = e;
+      }
+      expect(err instanceof PortersConfigError).toBe(unaddressable);
+    },
+  );
+
+  it("accepts an upper-case punycode name", () => {
+    expect(() =>
+      validateAccessPoint({ hostname: "XN--ECKWD4C7C.TEST" }),
+    ).not.toThrow();
+  });
+});
+
+// 同じサーバーに届く書き方は、同じスロットルの鍵になる（RV-92）。
+describe("throttleKeyOf", () => {
+  it.each([
+    [{ hostname: "a.test" }, "a.test"],
+    [{ hostname: "A.Test" }, "a.test"],
+    [{ hostname: "a.test." }, "a.test"],
+    [{ hostname: "a.test", port: 443 }, "a.test"],
+    [{ hostname: "a.test", port: 443, scheme: "https" as const }, "a.test"],
+    [{ hostname: "a.test", port: 80, scheme: "http" as const }, "a.test"],
+    [{ hostname: "a.test", port: 80 }, "a.test:80"],
+    [{ hostname: "a.test", port: 443, scheme: "http" as const }, "a.test:443"],
+    [{ hostname: "a.test.", port: 4010 }, "a.test:4010"],
+    [{ hostname: "[::1]", port: 4010 }, "[::1]:4010"],
+  ])("keys %j as %s", (accessPoint, key) => {
+    expect(throttleKeyOf(accessPoint)).toBe(key);
   });
 });

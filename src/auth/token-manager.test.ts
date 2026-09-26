@@ -426,6 +426,136 @@ describe("createTokenManager — tokenStore", () => {
     expect(gets).toBe(2);
   });
 
+  // 保存先を読んでいる間に手元が入れ替わったら、読んだ古い値で上書きしない（RV-121・RV-91）。
+  const slowStore = (): TokenStore & {
+    finish: (v: StoredTokens) => void;
+    sets: unknown[];
+    cleared: number;
+  } => {
+    const s = {
+      finish: (_v: StoredTokens): void => undefined,
+      sets: [] as unknown[],
+      cleared: 0,
+      get: (): Promise<StoredTokens | undefined> =>
+        new Promise((r) => {
+          s.finish = r;
+        }),
+      set: (v: StoredTokens): Promise<void> => {
+        s.sets.push(v);
+        return Promise.resolve();
+      },
+      clear: (): Promise<void> => {
+        s.cleared += 1;
+        return Promise.resolve();
+      },
+    };
+    return s;
+  };
+
+  it("uses a token cached before the first request, even when the store cannot be read", async () => {
+    let gets = 0;
+    const m = createTokenManager({
+      provider: provider("ACQ"),
+      tokenStore: {
+        get: () => {
+          gets += 1;
+          return Promise.reject(new Error("store down"));
+        },
+        set: () => Promise.resolve(),
+        clear: () => Promise.resolve(),
+      },
+    });
+    await m.cache({ accessToken: { token: "EXCHANGED" } });
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+    expect(gets).toBe(0);
+  });
+
+  it("keeps a token cached while the store was being read", async () => {
+    const store = slowStore();
+    const m = createTokenManager({
+      provider: provider("ACQ"),
+      tokenStore: store,
+    });
+    const first = m.getAccessToken();
+    await m.cache({ accessToken: { token: "NEW" } });
+    store.finish({ accessToken: { token: "OLD" } });
+    expect(await first).toBe("NEW");
+    expect(await m.getAccessToken()).toBe("NEW");
+  });
+
+  it("does not bring back a token read from the store after clear()", async () => {
+    const store = slowStore();
+    const m = createTokenManager({
+      provider: provider("ACQ"),
+      tokenStore: store,
+    });
+    const first = m.getAccessToken();
+    await m.clear();
+    store.finish({ accessToken: { token: "OLD" } });
+    expect(await first).toBe("ACQ");
+  });
+
+  // 取り直しの途中で clear() が呼ばれたら、取れたトークンはそのリクエストにだけ使い、戻さない（RV-91）。
+  it("does not save a token renewed while clear() was called", async () => {
+    const saved: unknown[] = [];
+    let release: (v: StoredTokens) => void = () => undefined;
+    let n = 0;
+    const m = createTokenManager({
+      provider: {
+        acquire: () => {
+          n += 1;
+          return n === 1
+            ? new Promise((r) => {
+                release = r;
+              })
+            : Promise.resolve({ accessToken: { token: `T${n}` } });
+        },
+      },
+      tokenStore: {
+        get: () => Promise.resolve(undefined),
+        set: (v) => {
+          saved.push(v);
+          return Promise.resolve();
+        },
+        clear: () => Promise.resolve(),
+      },
+    });
+    const first = m.getAccessToken();
+    await vi.waitFor(() => {
+      expect(n).toBe(1);
+    });
+    await m.clear();
+    release({ accessToken: { token: "T1" } });
+    expect(await first).toBe("T1");
+    expect(saved).toEqual([]);
+    expect(await m.getAccessToken()).toBe("T2");
+    expect(saved).toEqual([{ accessToken: { token: "T2" } }]);
+  });
+
+  it("keeps a token cached while a renewal was running", async () => {
+    let release: (v: StoredTokens) => void = () => undefined;
+    let n = 0;
+    const m = createTokenManager({
+      provider: {
+        acquire: () => {
+          n += 1;
+          return new Promise((r) => {
+            release = r;
+          });
+        },
+      },
+    });
+    const first = m.getAccessToken();
+    await vi.waitFor(() => {
+      expect(n).toBe(1);
+    });
+    await m.cache({ accessToken: { token: "EXCHANGED" } });
+    release({ accessToken: { token: "RENEWED" } });
+    expect(await first).toBe("RENEWED");
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+  });
+
   it("keeps exchanged tokens even when the store would return something else", async () => {
     const stale: TokenStore = {
       get: () => Promise.resolve({ accessToken: { token: "STALE" } }),

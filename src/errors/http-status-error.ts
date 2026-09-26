@@ -35,7 +35,16 @@ const RETRYABLE_HTTP_CATEGORIES = new Set<ErrorCategory>([
   "network",
 ]);
 
-const httpStatusHint = (category: ErrorCategory): string | undefined => {
+// リダイレクトは追いかけない（RV-76）ので、3xx はエラーとして届く。よくある原因は http から https への
+// 転送や、API ではないアドレスを指していること（RV-120）。
+const REDIRECT_HINT =
+  "Redirected (HTTP 3xx) — the library does not follow redirects. Check that `scheme` is https and that `hostname` / `port` is the API's own address, not one that forwards to it.";
+
+const httpStatusHint = (
+  status: number,
+  category: ErrorCategory,
+): string | undefined => {
+  if (status >= 300 && status < 400) return REDIRECT_HINT;
   if (category === "server")
     return "The API — or an intermediary in front of it (load balancer / proxy / maintenance page) — failed. Transient: idempotent calls are retried with backoff.";
   if (category === "rateLimit")
@@ -64,7 +73,7 @@ export const httpStatusError = (
     category,
     code: null,
     retryable: RETRYABLE_HTTP_CATEGORIES.has(category),
-    hint: httpStatusHint(category),
+    hint: httpStatusHint(status, category),
     httpStatus: status,
     cause,
   };

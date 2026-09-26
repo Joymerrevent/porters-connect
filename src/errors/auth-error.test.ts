@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { PortersAuthError } from "./porters-error";
 import { authCategory, authError } from "./auth-error";
 
@@ -40,4 +43,28 @@ describe("auth error classification (ADR-0006)", () => {
     expect(a.retryable).toBe(false); // auth errors are never retryable
     expect(authError(100, "x").hint).toBeUndefined(); // non-auth -> no hint
   });
+});
+
+// reference の表を読み、載っているコードのうち分類していないものを確かめる（RV-114）。
+// 表に行が足されたのに実装の表を直し忘れると、ここで落ちる。
+// -1（キャンセル）と 113（登録アプリのサイトが無い）は ADR-0006 の表に無く、unknown（再試行しない）に
+// 倒している。分類するかは RV-114 / RV-123 の ADR で決める。決まったら、この一覧から外す。
+it("leaves only the known codes unclassified in the reference table", () => {
+  const table = readFileSync(
+    fileURLToPath(
+      new URL(
+        "../../docs/usage/reference/authentication-api/errors.md",
+        import.meta.url,
+      ),
+    ),
+    "utf8",
+  );
+  const codes = [...table.matchAll(/^\| *(-?\d+) *\|/gm)].map(([, c]) =>
+    Number(c),
+  );
+  expect(codes.length).toBeGreaterThan(20);
+  const unclassified = codes.filter(
+    (c) => c !== 0 && authCategory(c) === "unknown",
+  );
+  expect(unclassified).toEqual([-1, 113]);
 });

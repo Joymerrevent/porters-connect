@@ -6,6 +6,7 @@
 // envelope — by the shared `readResponse` (ADR-0044 / ADR-0050).
 
 import {
+  PortersAuthError,
   PortersConfigError,
   PortersError,
   PortersNetworkError,
@@ -133,9 +134,17 @@ export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
 const UNKNOWN_OUTCOME_HINT =
   "The write may have been applied before this failure. It is not safe to resend as is: check whether the record was created, then retry only if it was not.";
 
+// 作り直すときに保つ系統。自作の Transport は基底の PortersError を投げうるので、どの系統でもない
+// ものは基底のまま作り直す（系統を PortersNetworkError に変えない。RV-122）。
+const FAMILIES = [
+  PortersResourceError,
+  PortersNetworkError,
+  PortersAuthError,
+  PortersConfigError,
+] as const;
+
 // 送信済みの非冪等な書き込みが失敗したときのエラー。`retryable` は「利用者がそのまま再送してよいか」を
-// 表すので false にし、元のエラーは `cause` に残す（ADR-0010 / ADR-0103）。ここに来るのは通信の失敗
-// （PortersNetworkError）か、PORTERS が返した一時的な失敗（PortersResourceError）だけ。
+// 表すので false にし、元のエラーは `cause` に残す（ADR-0010 / ADR-0103）。系統（クラス）は元のまま。
 export const asUnknownOutcome = (e: PortersError): PortersError => {
   const options = {
     category: e.category,
@@ -146,9 +155,8 @@ export const asUnknownOutcome = (e: PortersError): PortersError => {
     context: e.context,
     cause: e,
   };
-  return e instanceof PortersResourceError
-    ? new PortersResourceError(e.message, options)
-    : new PortersNetworkError(e.message, options);
+  const Family = FAMILIES.find((C) => e instanceof C) ?? PortersError;
+  return new Family(e.message, options);
 };
 
 export const createRequester = (o: RequesterOptions): Requester => {

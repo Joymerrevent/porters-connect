@@ -919,3 +919,120 @@ describe("PortersClient.tenant — a declaration that did not come from defineFi
     expect(() => porters.tenant(1, { fields })).not.toThrow();
   });
 });
+
+// JS から形の違うオプションを渡しても、最初のリクエストで TypeError にせず、構築時に止める（RV-93）。
+describe("option shapes are checked at construction", () => {
+  const base = {
+    hostname: "h.test",
+    tokenProvider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+    },
+  };
+  const build = (extra: Record<string, unknown>) => () =>
+    new PortersClient({ ...base, ...extra });
+
+  it.each([
+    [
+      { transport: {} },
+      "PortersClient: transport must have send()",
+      "Remove transport to use the default, or pass an object with send().",
+    ],
+    [
+      { transport: null },
+      "PortersClient: transport must have send()",
+      "Remove transport to use the default, or pass an object with send().",
+    ],
+    [
+      { throttle: { take: 1 } },
+      "PortersClient: throttle must have take()",
+      "Remove throttle to use the default, or pass an object with take().",
+    ],
+    [
+      { tokenStore: { get: () => undefined } },
+      "PortersClient: tokenStore must have get(), set(), clear()",
+      "Remove tokenStore to use the default, or pass an object with set(), clear().",
+    ],
+    [
+      { appId: 123 },
+      "PortersClient: appId must be a string, got number",
+      "Pass appId as a string (read it from the environment as it is).",
+    ],
+    [
+      { appSecret: null },
+      "PortersClient: appSecret must be a string, got object",
+      "Pass appSecret as a string (read it from the environment as it is).",
+    ],
+    [
+      { scopes: "candidate_r" },
+      "PortersClient: scopes must be an array of strings",
+      'Pass scopes as a list, e.g. ["candidate_r", "candidate_w"].',
+    ],
+    [
+      { scopes: ["candidate_r", 1] },
+      "PortersClient: scopes must be an array of strings",
+      'Pass scopes as a list, e.g. ["candidate_r", "candidate_w"].',
+    ],
+  ])("rejects %j", (extra, message, hint) => {
+    expect(build(extra)).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message,
+        hint,
+      }),
+    );
+  });
+
+  it("accepts well-formed options, and leaves unset ones to the defaults", () => {
+    expect(
+      build({
+        appId: "id",
+        appSecret: "secret",
+        scopes: ["candidate_r"],
+        transport: { send: () => Promise.resolve({ status: 200, body: "" }) },
+        throttle: { take: () => Promise.resolve() },
+        tokenStore: {
+          get: () => Promise.resolve(undefined),
+          set: () => Promise.resolve(),
+          clear: () => Promise.resolve(),
+        },
+      }),
+    ).not.toThrow();
+    expect(build({ scopes: [] })).not.toThrow();
+    expect(build({})).not.toThrow();
+  });
+});
+
+// partition の id は正の整数だけ（RV-113）。NaN などをそのまま partition= に載せない。
+describe("tenant(id) checks the partition id", () => {
+  const porters = new PortersClient({
+    hostname: "h.test",
+    tokenProvider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+    },
+  });
+
+  it.each([
+    [0, "0"],
+    [-1, "-1"],
+    [1.5, "1.5"],
+    [Number.NaN, "NaN"],
+    [2 ** 53, String(2 ** 53)],
+    ["12", '"12"'],
+    [undefined, "undefined"],
+  ])("rejects %j", (id, shown) => {
+    expect(() => porters.tenant(id as number)).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: `tenant: partition id must be a positive integer, got ${shown}`,
+        hint: "Pass the partition's id. porters.partition.search() lists the ones this App can reach.",
+      }),
+    );
+  });
+
+  it("accepts a positive integer", () => {
+    expect(() => porters.tenant(1)).not.toThrow();
+    expect(() => porters.tenant(Number.MAX_SAFE_INTEGER)).not.toThrow();
+  });
+});

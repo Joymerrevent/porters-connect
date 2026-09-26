@@ -91,18 +91,28 @@ const makeWindow = (
   capacity: number,
   now: () => number,
 ): (() => Promise<void>) => {
+  // 送った時刻を、容量の長さの輪として持つ（head がいちばん古い時刻、count が窓の中の件数）。
+  // 配列の先頭を shift で取り除くと、容量に比例して遅くなる（RV-124）。
+  // 初めの中身は結果に効かない（count の外の場所は、読む前に必ず書く）。
+  // Stryker disable next-line ArrayDeclaration: equivalent — slots outside count are written before read
   const sent: number[] = [];
+  let head = 0;
+  let count = 0;
   return async () => {
     for (;;) {
       const t = now();
-      // 空なら sent[0] は undefined で、比較は偽になって止まる。
-      while (sent[0] <= t - WINDOW_MS) sent.shift();
-      if (sent.length < capacity) {
-        sent.push(t);
+      // 窓から出た時刻を古い順に捨てる。輪の場所は使い回すので、空かどうかは count で見る。
+      while (count > 0 && sent[head] <= t - WINDOW_MS) {
+        head = (head + 1) % capacity;
+        count -= 1;
+      }
+      if (count < capacity) {
+        sent[(head + count) % capacity] = t;
+        count += 1;
         return;
       }
-      // 容量に達しているので sent[0] はある。いちばん古い時刻が窓から出るまで待つ。
-      await sleep(sent[0] + WINDOW_MS - t);
+      // 容量に達しているので sent[head] はある。いちばん古い時刻が窓から出るまで待つ。
+      await sleep(sent[head] + WINDOW_MS - t);
     }
   };
 };

@@ -48,7 +48,8 @@ import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
 import type { SearchQuery } from "../accessor/query";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
+import type { ResourceName } from "../porters/resource-list";
+import { resourceValueFor } from "../accessor/resource-value-for";
 
 const FIELDS = {
   Id: "System[Id]",
@@ -258,7 +259,7 @@ export const createPhaseAccessor = (
   of: (resource) => {
     // One binding, two places PORTERS wants it: `resource=` on Read and the `Resource` field on
     // Write. Both are filled from here, so neither can be forgotten or contradicted.
-    const value = RESOURCE_VALUES[resource];
+    const value = resourceValueFor("phase", resource);
     return createDataResource(
       {
         ...PHASE_DESCRIPTOR,

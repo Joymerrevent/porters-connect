@@ -76,14 +76,20 @@ const assertHostname = (hostname: string): void => {
       `hostname ${JSON.stringify(hostname)} is not a bare server name`,
       HOSTNAME_HINT,
     );
-  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
-  // `porters-check://` parses and `url.hostname` is `""` — which "matches" an empty input. An unset
-  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
-  // so it is spelled out rather than inferred.
-  if (hostname === "") throw rejected();
+  // `%` は往復の比較を通るが、https の URL では復号されて別の名前になる（`a%41.test` → `aa.test`）か、
+  // 組み立てられずに通信エラー（再試行できる扱い）として届く。サーバー名に `%` は現れない（RV-92）。
+  if (hostname.includes("%")) throw rejected();
   let url: URL;
   try {
     url = new URL(`${PROBE_SCHEME}://${hostname}`);
+    // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、https で組み立てられない
+    // 名前は、ここで確かめないと最初のリクエストまで分からない（RV-92）。punycode として成り立たない `xn--` などを
+    // 組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）。どちらでも、
+    // 送るときに組み立てられない名前はここで止まる。
+    // 空の名前もここで止まる。未知の scheme は空の authority を許し、`porters-check://` の hostname が
+    // `""` になって空の入力と「一致」してしまう。`!` で押し通した未設定の `PORTERS_HOST` は、この検査が
+    // 止めるべき誤りそのもの（RV-17）。
+    new URL(`https://${hostname}`);
   } catch {
     throw rejected();
   }
@@ -135,11 +141,25 @@ export const validateAccessPoint = (accessPoint: AccessPoint): void => {
 
 /**
  * The authority this access point addresses: `hostname` plus `:port` when one is configured.
- * Assembled in one place because three things read it — the URL, the throttle bucket key
- * (ADR-0073) and the insecure-http warning (ADR-0047) — and they must agree on what "the same
+ * Assembled in one place because the URL and the insecure-http warning (ADR-0047) read it, and the
+ * throttle bucket key (ADR-0073) is derived from it — they must agree on what "the same
  * destination" means. Two access points that differ only by port are different destinations.
  */
 export const authorityOf = (accessPoint: AccessPoint): string =>
   accessPoint.port === undefined
     ? accessPoint.hostname
     : `${accessPoint.hostname}:${accessPoint.port}`;
+
+/**
+ * The key that decides which access points share a throttle bucket (ADR-0073): the authority as
+ * the request goes out — lower-cased, without the scheme's default port and without a trailing
+ * `.`. `a.test`, `A.test:443` and `a.test.` reach the same server, so they must count against the
+ * same limit (RV-92). Expects an access point that passed {@link validateAccessPoint}.
+ */
+export const throttleKeyOf = (accessPoint: AccessPoint): string => {
+  const url = new URL(
+    `${accessPoint.scheme ?? "https"}://${authorityOf(accessPoint)}`,
+  );
+  const hostname = url.hostname.replace(/\.$/, "");
+  return url.port === "" ? hostname : `${hostname}:${url.port}`;
+};

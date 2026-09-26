@@ -1,7 +1,7 @@
 # RV-92 🟢 ホスト名の検査が `%` を含む名前を通し、スロットルの鍵が同じ宛先を別のものとして数える
 
 - 重要度: 🟢 ／ 観点: 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`dbd129e・2754d33`）。** `%` を含むホスト名を拒否し、送るときの scheme（https）で組み立てられない名前も起動時に止める（punycode として成り立たない `xn--` などを組み立てられるかは Node の版で違うので、その Node で組み立てられない名前だけを止める。CI の Node 24 / 26 で分かった）。スロットルの鍵を `throttleKeyOf`（大小・既定のポート・末尾の `.` をそろえた形）にした。
+
+## 検証
+
+`src/http/access-point.test.ts` の「rejects …, which https cannot address as written」と `throttleKeyOf` の表。
