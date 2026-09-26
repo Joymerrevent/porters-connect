@@ -138,6 +138,14 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
 - 後続/対象外: per-call `partition` ＆ tenant キー付け（F-3・[[0008-multitenancy-partition]]）、ライブ検証（[live-verification][lv]・
   契約環境後）。実装は別 PR（ADR 先行→実装の順）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`（2026-09-25・ADR-0097 で名前を変えた）
+
 [oauth]: ../usage/reference/authentication-api/oauth.md
 [token]: ../usage/reference/authentication-api/token.md
 [prd]: ../design/requirements.md

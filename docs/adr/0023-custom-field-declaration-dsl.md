@@ -137,6 +137,14 @@
   - **未宣言のカスタム項目** → [ADR-0074][0074] で `field` も宣言必須に揃え、逃げ道に `rawValue` を用意。
   - **Attachment のカスタム項目** は未着手。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+
 [prd]: ../design/requirements.md
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md

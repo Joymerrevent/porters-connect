@@ -103,6 +103,14 @@ MVP 最後のリソース Attachment（添付ファイル）は、他の 5 リ�
 - 出典: Attachment Read/Write・Mime Type List（`docs/reference/resource-api/resources/attachment.md`）。10MB/ファイル・FileName 255 バイト以内。
 - 反映（accepted 後）: `resources/attachment.ts`（専用）・`util/base64.ts`（opt-in）・`http/requester.ts`（ガードのフラグ）・公開 API に Attachment 型。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference/resource-api/resources/attachment.md` → `docs/usage/reference/resource-api/resources/attachment.md`（2026-09-12・ADR-0071）
+
 [0075]: 0075-attachment-search-all.md
 [0079]: 0079-resource-by-name.md
 [0080]: 0080-resource-parameter-binding.md

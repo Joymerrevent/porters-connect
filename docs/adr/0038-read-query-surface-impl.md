@@ -163,6 +163,14 @@ reference が定める事実（要点）:
 - 不確実性 → [live-verification][lv]: `P_Deleted` の Data Type、`itemstate=deleted/all` の 90 日自動フィルタ実挙動、Telephone keyword の数字正規化。
 - 後続/対象外: 実装は別 PR（ADR 先行 → 実装の順・[[0033-post-mvp-direction]] 案F の進め方）。マルチテナント（F-3・[[0008-multitenancy-partition]]）・一括書き込み（F-4）は本 ADR 対象外。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
+
 [param]: ../../tmp/porters-docs/txt/115008016927-Read-API-Parameter.md
 [del]: ../../tmp/porters-docs/txt/360000589007-2018-04-10-Read系APIでの削除済みデータの取得.md
 [prd]: ../design/requirements.md

@@ -107,6 +107,15 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
   `test/integration/constraints.test.ts`（RV-13 を固定しているテストの更新）。
 - 関連: [ADR-0006][adr6]（エラーモデル）／[ADR-0009][adr9]（Transport が status を運ぶ）／[ADR-0010][adr10]（リトライ方針）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+- `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
 [guide]: ../usage/topics/errors.md

@@ -178,6 +178,16 @@ CHANGELOG に明記する。
 - follow-up（本 ADR スコープ外）: カスタム項目をテナント単位で持つか（実行時カタログでの復号は
   **勧めない**と整理済み — テナント側の変更で黙って挙動が変わるため）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/usage/howto/multi-tenant.md` → `docs/usage/recipes/multi-tenant.md`（2026-09-23・ADR-0088）
+- `docs/usage/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（2026-09-23・ADR-0088）
+- `docs/usage/concepts/limits.md` → `docs/usage/topics/limits.md`（2026-09-23・ADR-0088）
+
 [0010]: 0010-retry-throttle.md
 [0044]: 0044-http-status-handling.md
 [prd]: ../design/requirements.md

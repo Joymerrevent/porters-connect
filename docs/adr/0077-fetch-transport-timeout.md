@@ -134,6 +134,15 @@ PORTERS は 1 ファイル 10MB まで許すので、細い回線では 30 秒�
   （「変えられません」の書き換え）、`docs/usage/howto/attachments.md`（大きなファイルの注記）、
   [RV-46][rv46] の処置、CHANGELOG（minor・追加）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/usage/concepts/limits.md` → `docs/usage/topics/limits.md`（2026-09-23・ADR-0088）
+- `docs/usage/howto/attachments.md` → `docs/usage/resources/attachment.md`（2026-09-23・ADR-0088）
+
 [rv46]: ../reviews/rv/0046-fetch-timeout-not-configurable.md
 [rv28]: ../reviews/rv/0028-count-range-unvalidated.md
 [rv10]: ../reviews/rv/0010-per-call-partition-jsdoc.md

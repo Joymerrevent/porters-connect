@@ -147,6 +147,14 @@ Resource API 固有の話ではない。**同じ問いに 2 つの答えを持�
 - 関連: [ADR-0044][adr44]（本 ADR が適用範囲を広げる決定）／[ADR-0006][adr6]（エラーモデル＝サブクラスは発生系統）／
   [ADR-0010][adr10]（リトライ方針・冪等性ガード）／[ADR-0034][adr34]（`porters.auth.*` の公開サーフェス）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`（2026-09-25・ADR-0097 で名前を変えた）
+
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md
 [adr2]: 0002-ground-design-in-live-api-docs.md
