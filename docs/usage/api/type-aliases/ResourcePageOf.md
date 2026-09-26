@@ -8,7 +8,7 @@
 
 > **ResourcePageOf**\<`T`\> = `object`
 
-Defined in: [src/resources/core/read.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L17)
+Defined in: [src/accessor/read.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/read.ts#L17)
 
 A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
 the item decoder produced. Parametrised by the *record* rather than the catalog because a read
@@ -26,7 +26,7 @@ that expands references returns a wider record than the catalog alone describes.
 
 > **count**: `number`
 
-Defined in: [src/resources/core/read.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L20)
+Defined in: [src/accessor/read.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/read.ts#L20)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/core/read.ts:20](https://github.com/Joymerrevent/port
 
 > **items**: `T`[]
 
-Defined in: [src/resources/core/read.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L18)
+Defined in: [src/accessor/read.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/read.ts#L18)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [src/resources/core/read.ts:18](https://github.com/Joymerrevent/port
 
 > **start**: `number`
 
-Defined in: [src/resources/core/read.ts:21](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L21)
+Defined in: [src/accessor/read.ts:21](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/read.ts#L21)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [src/resources/core/read.ts:21](https://github.com/Joymerrevent/port
 
 > **total**: `number`
 
-Defined in: [src/resources/core/read.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/read.ts#L19)
+Defined in: [src/accessor/read.ts:19](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/read.ts#L19)

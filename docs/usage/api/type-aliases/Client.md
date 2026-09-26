@@ -8,6 +8,6 @@
 
 > **Client** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/client.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L74)
+Defined in: [src/resources/client.ts:77](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L77)
 
 A decoded Client (company): known `P_` fields, each requested field `value | null`.

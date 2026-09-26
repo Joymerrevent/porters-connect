@@ -12,8 +12,8 @@ import type {
 import type { JobResource, JobSearchQuery } from "./job";
 import type { PhaseResource } from "./phase";
 import type { ProcessCreateInput } from "./process";
-import type { ItemState, SearchQuery } from "./core/query";
-import type { CreateInput, UpdateInput } from "./core/write-record";
+import type { ItemState, SearchQuery } from "../accessor/query";
+import type { CreateInput, UpdateInput } from "../accessor/write-record";
 
 // The Read shapes a Job accessor resolves to, at three levels of expansion. `declare` keeps these
 // purely type-level: nothing is constructed or called at runtime. The `_` prefix says so — they

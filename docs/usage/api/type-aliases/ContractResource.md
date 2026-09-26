@@ -8,7 +8,7 @@
 
 > **ContractResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/contract.ts:144](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L144)
+Defined in: [src/resources/contract.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L147)
 
 The Contract accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/contract.ts:216](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L216)
+Defined in: [src/resources/contract.ts:219](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L219)
 
 Create one Contract record; resolves to the newly assigned id.
 
@@ -49,7 +49,7 @@ Create one Contract record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/contract.ts:227](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L227)
+Defined in: [src/resources/contract.ts:230](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L230)
 
 Create many Contract records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/contract.ts:184](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L184)
+Defined in: [src/resources/contract.ts:187](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L187)
 
 Read one Contract record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/contract.ts:206](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L206)
+Defined in: [src/resources/contract.ts:209](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L209)
 
 Read many Contract records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/contract.ts:155](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L155)
+Defined in: [src/resources/contract.ts:158](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L158)
 
 Search Contract records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/contract.ts:169](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L169)
+Defined in: [src/resources/contract.ts:172](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L172)
 
 Search every Contract record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/contract.ts:218](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L218)
+Defined in: [src/resources/contract.ts:221](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L221)
 
 Update one Contract record by id; resolves to that id.
 
@@ -257,7 +257,7 @@ Update one Contract record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/contract.ts:232](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L232)
+Defined in: [src/resources/contract.ts:235](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L235)
 
 Update many Contract records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

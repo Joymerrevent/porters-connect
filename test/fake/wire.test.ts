@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { decoderFor } from "../../src/resources/core/decoder";
+import { decoderFor } from "../../src/accessor/decoder";
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { buildWriteXml } from "../../src/xml/encode";
 import {

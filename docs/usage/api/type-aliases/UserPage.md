@@ -8,4 +8,4 @@
 
 > **UserPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/user.ts:62](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L62)
+Defined in: [src/resources/user.ts:66](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L66)

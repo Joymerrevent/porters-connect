@@ -10,7 +10,7 @@
 
 import { XMLParser } from "fast-xml-parser";
 
-import type { ReferenceTarget } from "../../src/resources/core/expand";
+import type { ReferenceTarget } from "../../src/accessor/expand";
 import type { DataType } from "../../src/porters/data-type";
 import { asArray, asRecord, asString } from "../../src/xml/raw";
 import type { FakeMasters } from "./masters";

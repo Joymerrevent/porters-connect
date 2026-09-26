@@ -8,7 +8,7 @@
 
 > **ImageReadRecord**\<`Rec`, `I`\> = `Omit`\<`Rec`, keyof `I`\> & \{ \[K in keyof I & keyof Rec\]?: ImageSelectedValue\<I\[K\]\> \| null \}
 
-Defined in: [src/resources/core/image.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/image.ts#L81)
+Defined in: [src/accessor/image.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/image.ts#L81)
 
 A read record whose selected Image fields carry exactly the sub-tags they asked for. Applied on
 top of the (possibly expanded) record, so `image` and `expand` compose without either knowing
