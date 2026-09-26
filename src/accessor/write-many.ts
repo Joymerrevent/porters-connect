@@ -10,7 +10,7 @@ import {
   PortersError,
   PortersResourceError,
 } from "../errors";
-import type { Requester } from "../http/requester";
+import { isUnknownOutcome, type Requester } from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { MAX_WRITE_ITEMS } from "../porters/write-rules";
 import type { DataType } from "../porters/data-type";
@@ -83,23 +83,70 @@ const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
   return batches;
 };
 
-// A batch failed at the request level after earlier batches were already applied. Creates are
-// non-idempotent, so a blind full retry would duplicate them — surface the progress instead (SD-4).
+// 途中の失敗の hint に並べる index の数の上限（それより多ければ、残りは件数で書く）。
+const MAX_LISTED = 20;
+
+const listIndexes = (indexes: readonly number[]): string =>
+  indexes.length > MAX_LISTED
+    ? `${indexes.slice(0, MAX_LISTED).join(", ")} and ${indexes.length - MAX_LISTED} more`
+    : indexes.join(", ");
+
+/** Where a bulk write stopped, for the error that reports it. */
+type Progress = {
+  /** First and last input index of the batch that failed. */
+  first: number;
+  last: number;
+  /** How many records the whole call was given. */
+  total: number;
+  /** How many records earlier batches sent, and which of them PORTERS refused. */
+  sent: number;
+  earlierFailed: readonly number[];
+  /** The failed batch may have been applied (a sent create whose outcome is unknown). */
+  unknownOutcome: boolean;
+  idempotent: boolean;
+};
+
+// 一括書き込みが途中で止まった。create は非冪等なので、全体を送り直すと重複する（SD-4）。どこまで
+// 書けたか・どこが分からないかを書いて返す。バッチごとの結果（results）は返せないので、それまでに
+// 失敗した index は hint に並べる（RV-69）。
 const batchFailure = (
   cause: unknown,
-  written: number,
+  at: Progress,
   resource: string,
   partition: number,
 ): PortersError => {
   const base = cause instanceof PortersError ? cause : undefined;
+  const range = `records ${at.first}–${at.last}`;
+  const failedBatch = at.unknownOutcome
+    ? `The ${range} may have been written before the failure: check whether they exist before resending them.`
+    : at.idempotent
+      ? `The ${range} failed; updates can be resent as they are.`
+      : `The ${range} were not written.`;
+  const notSent =
+    at.last + 1 < at.total
+      ? `Records from index ${at.last + 1} onward were not sent.`
+      : undefined;
+  const earlier =
+    at.earlierFailed.length > 0
+      ? `Of the ${at.sent} record(s) sent in earlier batches, index ${listIndexes(at.earlierFailed)} failed and were not written; the rest were written.`
+      : at.sent > 0
+        ? `The ${at.sent} record(s) sent in earlier batches were written.`
+        : undefined;
   return new PortersResourceError(
-    `bulk write failed after ${written} record(s) had already been written`,
+    `bulk write failed at ${range} of ${at.total}: ${cause instanceof Error ? cause.message : String(cause)}`,
     {
       category: base?.category ?? "unknown",
       code: base?.code ?? null,
       retryable: false,
       httpStatus: base?.httpStatus,
-      hint: `${written} record(s) from earlier batches were already written; retry only the records from index ${written} onward (create is non-idempotent — a full retry would duplicate them).`,
+      hint: [
+        failedBatch,
+        notSent,
+        earlier,
+        "Resend only the records that were not written.",
+      ]
+        .filter((part) => part !== undefined)
+        .join(" "),
       context: { resource, operation: "bulkWrite", partition },
       cause,
     },
@@ -109,8 +156,9 @@ const batchFailure = (
 /**
  * Execute a bulk write: split `items` into batches, POST each, and merge the per-item results.
  * `target.url` is the (short) Write URL; `idempotent` is false for create (non-idempotent), true for
- * update. Per-item `code !== 0` is returned in the result; a whole-request failure throws — with the
- * already-written count once at least one earlier batch succeeded (SD-4).
+ * update. Per-item `code !== 0` is returned in the result; a whole-request failure throws — naming
+ * the batch that failed, what was sent before it and which of those failed, once anything may have
+ * been written (SD-4 / RV-69).
  */
 export const writeMany = async (
   requester: Requester,
@@ -133,9 +181,18 @@ export const writeMany = async (
   const batches = packBatches(encoded, budget);
 
   const results: BulkWriteResultItem[] = [];
-  let written = 0;
+  let sent = 0;
   for (const batch of batches) {
     const body = `<${target.name}>${batch.map((e) => e.xml).join("")}</${target.name}>`;
+    const progress = (unknownOutcome: boolean): Progress => ({
+      first: batch[0].index,
+      last: batch[batch.length - 1].index,
+      total: items.length,
+      sent,
+      earlierFailed: results.filter((r) => !r.ok).map((r) => r.index),
+      unknownOutcome,
+      idempotent,
+    });
     let parsed: WriteResultItem[];
     try {
       parsed = await requester.request(
@@ -144,21 +201,33 @@ export const writeMany = async (
         { write: true, idempotent },
       );
     } catch (cause) {
-      // First batch failed = nothing applied yet → surface the original error unchanged.
-      if (written === 0) throw cause;
-      throw batchFailure(cause, written, target.name, target.partition);
+      const unknownOutcome = isUnknownOutcome(cause);
+      // 最初のバッチが「書き込まれていないと分かる」失敗なら、何も書かれていない → 元のエラーのまま。
+      if (sent === 0 && !unknownOutcome) throw cause;
+      throw batchFailure(
+        cause,
+        progress(unknownOutcome),
+        target.name,
+        target.partition,
+      );
     }
     if (parsed.length !== batch.length) {
-      throw new PortersResourceError(
-        `bulk write response returned ${parsed.length} result(s) for ${batch.length} record(s)`,
-        { category: "unknown", context: { resource: target.name } },
+      // 応答は届いたが、どのレコードが書けたかが読めない＝このバッチは結果が分からない。
+      const mismatch = new Error(
+        `the response returned ${parsed.length} result(s) for ${batch.length} record(s)`,
+      );
+      throw batchFailure(
+        mismatch,
+        progress(true),
+        target.name,
+        target.partition,
       );
     }
     batch.forEach((e, i) => {
       const { id, code } = parsed[i];
       results.push({ index: e.index, id, code, ok: code === 0 });
     });
-    written += batch.length;
+    sent += batch.length;
   }
 
   const failed = results.filter((r) => !r.ok);

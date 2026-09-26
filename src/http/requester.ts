@@ -136,6 +136,14 @@ const UNKNOWN_OUTCOME_HINT =
 // 送信済みの非冪等な書き込みが失敗したときのエラー。`retryable` は「利用者がそのまま再送してよいか」を
 // 表すので false にし、元のエラーは `cause` に残す（ADR-0010 / ADR-0103）。ここに来るのは通信の失敗
 // （PortersNetworkError）か、PORTERS が返した一時的な失敗（PortersResourceError）だけ。
+// asUnknownOutcome が作ったエラーの印。一括書き込み（write-many.ts）が、失敗したバッチが
+// 「登録された可能性がある」かを知るために使う。
+const unknownOutcomes = new WeakSet<PortersError>();
+
+/** Whether `e` is a failed non-idempotent write that may still have been applied. */
+export const isUnknownOutcome = (e: unknown): boolean =>
+  e instanceof PortersError && unknownOutcomes.has(e);
+
 export const asUnknownOutcome = (e: PortersError): PortersError => {
   const options = {
     category: e.category,
@@ -146,9 +154,12 @@ export const asUnknownOutcome = (e: PortersError): PortersError => {
     context: e.context,
     cause: e,
   };
-  return e instanceof PortersResourceError
-    ? new PortersResourceError(e.message, options)
-    : new PortersNetworkError(e.message, options);
+  const wrapped =
+    e instanceof PortersResourceError
+      ? new PortersResourceError(e.message, options)
+      : new PortersNetworkError(e.message, options);
+  unknownOutcomes.add(wrapped);
+  return wrapped;
 };
 
 export const createRequester = (o: RequesterOptions): Requester => {

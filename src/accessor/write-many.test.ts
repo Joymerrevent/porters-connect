@@ -6,7 +6,7 @@ import {
   PortersNetworkError,
   PortersResourceError,
 } from "../errors";
-import type { Requester } from "../http/requester";
+import { asUnknownOutcome, type Requester } from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { encodeWriteItem } from "../xml/encode-write-item";
 import { createDataResource } from "./data-resource";
@@ -248,7 +248,7 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     ).rejects.toBeInstanceOf(PortersNetworkError);
   });
 
-  it("throws with the already-written count when a later batch fails", async () => {
+  it("names the failed batch and what earlier batches wrote when a later batch fails", async () => {
     const { requester } = fakeRequester({
       failOnCall: 2,
       error: new PortersNetworkError("boom", {
@@ -263,8 +263,10 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     expect(err).toBeInstanceOf(PortersResourceError);
     const e = err as PortersNetworkError;
     expect(e.retryable).toBe(false);
-    expect(e.message).toContain("200 record(s)");
-    expect(e.hint).toContain("index 200");
+    expect(e.message).toBe("bulk write failed at records 200–200 of 201: boom");
+    expect(e.hint).toBe(
+      "The records 200–200 were not written. The 200 record(s) sent in earlier batches were written. Resend only the records that were not written.",
+    );
     expect(e.category).toBe("network"); // base category preserved
     expect(e.code).toBe(503); // base code preserved
     expect(e.context).toMatchObject({
@@ -273,6 +275,101 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       partition: 7,
     });
     expect(e.cause).toBeInstanceOf(PortersNetworkError); // original error preserved
+  });
+
+  // RV-69。先のバッチの 1 件ごとの失敗は、途中で止まると results ごと失われていた。hint に並べる。
+  it("lists the earlier records PORTERS refused, and the records not yet sent", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 2,
+      codeFor: (i) => (i === 0 || i === 5 ? 107 : 0),
+    });
+    const inputs = Array.from({ length: 450 }, () => ({ P_A: 1 }));
+    const e = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    expect(e.hint).toBe(
+      "The records 200–399 were not written. Records from index 400 onward were not sent. Of the 200 record(s) sent in earlier batches, index 0, 5 failed and were not written; the rest were written. Resend only the records that were not written.",
+    );
+  });
+
+  it("lists exactly 20 refused indexes without a count", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 2,
+      codeFor: (i) => (i < 20 ? 107 : 0),
+    });
+    const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+    const e = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    const listed = Array.from({ length: 20 }, (_, i) => i).join(", ");
+    expect(e.hint).toContain(`index ${listed} failed`);
+  });
+
+  it("lists at most 20 refused indexes and counts the rest", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 2,
+      codeFor: (i) => (i < 25 ? 107 : 0),
+    });
+    const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+    const e = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    const listed = Array.from({ length: 20 }, (_, i) => i).join(", ");
+    expect(e.hint).toContain(`index ${listed} and 5 more failed`);
+  });
+
+  // 送った後で結果が分からない create のバッチは、登録された可能性がある（ADR-0103 / RV-69）。
+  it("says a sent batch whose outcome is unknown may have been written", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 2,
+      error: asUnknownOutcome(
+        new PortersNetworkError("timeout", {
+          category: "network",
+          retryable: true,
+        }),
+      ),
+    });
+    const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+    const e = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    expect(e.hint).toContain(
+      "The records 200–200 may have been written before the failure: check whether they exist before resending them.",
+    );
+  });
+
+  it("reports the range even when the first batch's outcome is unknown", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 1,
+      error: asUnknownOutcome(
+        new PortersNetworkError("timeout", {
+          category: "network",
+          retryable: true,
+        }),
+      ),
+    });
+    const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+    const e = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    expect(e).toBeInstanceOf(PortersResourceError);
+    expect(e.hint).toBe(
+      "The records 0–199 may have been written before the failure: check whether they exist before resending them. Records from index 200 onward were not sent. Resend only the records that were not written.",
+    );
+  });
+
+  it("tells an update that failed midway it can be resent", async () => {
+    const { requester } = fakeRequester({ failOnCall: 2 });
+    const items = Array.from({ length: 201 }, (_, i) => ({
+      id: i + 1,
+      fields: { P_A: 1 },
+    }));
+    const e = (await smallResource(requester)
+      .updateMany(items)
+      .catch((x: unknown) => x)) as PortersResourceError;
+    expect(e.hint).toContain(
+      "The records 200–200 failed; updates can be resent as they are.",
+    );
   });
 
   it("wraps a non-PortersError batch failure with unknown category / null code", async () => {
@@ -288,6 +385,23 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     expect(err.category).toBe("unknown");
     expect(err.code).toBeNull();
     expect(err.cause).toBeInstanceOf(Error);
+    expect(err.message).toBe(
+      "bulk write failed at records 200–200 of 201: raw transport blowup",
+    );
+  });
+
+  it("writes a thrown non-Error value into the message as it is", async () => {
+    const { requester } = fakeRequester({
+      failOnCall: 2,
+      error: "socket closed" as unknown as Error,
+    });
+    const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+    const err = (await smallResource(requester)
+      .createMany(inputs)
+      .catch((e: unknown) => e)) as PortersResourceError;
+    expect(err.message).toBe(
+      "bulk write failed at records 200–200 of 201: socket closed",
+    );
   });
 
   it("throws when the response item count does not match the batch", async () => {
@@ -300,7 +414,11 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       .catch((e: unknown) => e)) as PortersResourceError;
     expect(err).toBeInstanceOf(PortersResourceError);
     expect(err.category).toBe("unknown");
-    expect(err.message).toContain("result(s) for");
+    expect(err.message).toBe(
+      "bulk write failed at records 0–1 of 2: the response returned 1 result(s) for 2 record(s)",
+    );
+    // 応答は届いたが、どれが書けたかが読めない＝登録された可能性がある（RV-69）。
+    expect(err.hint).toContain("may have been written");
     expect(err.context).toMatchObject({ resource: "Candidate" });
   });
 });
