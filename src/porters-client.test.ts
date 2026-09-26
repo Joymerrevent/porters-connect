@@ -11,7 +11,10 @@ import type {
 } from "./porters-client";
 import { defineFields, type DeclaredCatalogs } from "./fields";
 import { resetInsecureSchemeWarning } from "./http/insecure-scheme-warner";
-import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
+import {
+  resetSharedThrottles,
+  sharedThrottleFor,
+} from "./http/shared-throttle";
 import type { Throttle } from "./http/throttle";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/field-value";

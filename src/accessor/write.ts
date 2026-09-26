@@ -2,7 +2,8 @@
 // the Write URL and reading the id out of a single-Item Write response.
 
 import { PortersResourceError, resourceError } from "../errors";
-import { apiUrl, type AccessPoint } from "../http/access-point";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
 import { parseWriteResult } from "../xml/parse-write-result";
 
 /** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */

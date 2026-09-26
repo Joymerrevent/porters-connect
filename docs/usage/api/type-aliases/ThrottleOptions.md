@@ -8,7 +8,7 @@
 
 > **ThrottleOptions** = `object`
 
-Defined in: [src/http/throttle.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L20)
+Defined in: [src/http/throttle.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L18)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/http/throttle.ts:20](https://github.com/Joymerrevent/porters-co
 
 > `optional` **now?**: () => `number`
 
-Defined in: [src/http/throttle.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L39)
+Defined in: [src/http/throttle.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L37)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [src/http/throttle.ts:39](https://github.com/Joymerrevent/porters-co
 
 > `optional` **readPerMin?**: `number`
 
-Defined in: [src/http/throttle.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L26)
+Defined in: [src/http/throttle.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L24)
 
 Reads allowed per minute before headroom. Default 2000 (PORTERS' own cap). A positive
 integer, and **`readPerMin * safety` must still leave at least one token** — see
@@ -40,7 +40,7 @@ integer, and **`readPerMin * safety` must still leave at least one token** — s
 
 > `optional` **safety?**: `number`
 
-Defined in: [src/http/throttle.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L38)
+Defined in: [src/http/throttle.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L36)
 
 Fraction of the limit to actually use (headroom). Default 0.9. Greater than 0, at most 1.
 
@@ -55,6 +55,6 @@ combination is rejected at construction rather than hanging.
 
 > `optional` **writePerMin?**: `number`
 
-Defined in: [src/http/throttle.ts:28](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L28)
+Defined in: [src/http/throttle.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L26)
 
 Writes allowed per minute before headroom. Default 500. Same rules as `readPerMin`.

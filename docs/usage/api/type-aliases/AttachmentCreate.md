@@ -8,7 +8,7 @@
 
 > **AttachmentCreate** = `object`
 
-Defined in: [src/resources/attachment.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L85)
+Defined in: [src/resources/attachment.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L86)
 
 Fields for creating an Attachment. `content` is the Base64 file body; the resource it attaches
 to comes from `of(name)` and cannot be given here.
@@ -19,7 +19,7 @@ to comes from `of(name)` and cannot be given here.
 
 > **content**: `string`
 
-Defined in: [src/resources/attachment.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L90)
+Defined in: [src/resources/attachment.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L91)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [src/resources/attachment.ts:90](https://github.com/Joymerrevent/por
 
 > **contentType**: `string`
 
-Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L88)
+Defined in: [src/resources/attachment.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L89)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/por
 
 > **fileName**: `string`
 
-Defined in: [src/resources/attachment.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L89)
+Defined in: [src/resources/attachment.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L90)
 
 ***
 
@@ -43,6 +43,6 @@ Defined in: [src/resources/attachment.ts:89](https://github.com/Joymerrevent/por
 
 > **resourceId**: `number`
 
-Defined in: [src/resources/attachment.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L87)
+Defined in: [src/resources/attachment.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L88)
 
 The record's id within the bound resource.

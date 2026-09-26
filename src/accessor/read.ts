@@ -2,7 +2,8 @@
 // to, the URL at the configured access point, and GET + parse + decode for one page. What each
 // resource sends (its parameters) and how it decodes stay with the resource (ADR-0021/0022).
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
 import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
 import type { FieldCatalog, ReadRecord } from "./catalog";

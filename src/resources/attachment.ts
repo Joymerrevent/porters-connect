@@ -11,7 +11,8 @@
 // `content` with `util/base64`.
 
 import { PortersConfigError } from "../errors";
-import { apiUrl, type AccessPoint } from "../http/access-point";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode-field";
 import { parseResourcePage } from "../xml/parse-resource-page";
 import { asString } from "../xml/as-string";

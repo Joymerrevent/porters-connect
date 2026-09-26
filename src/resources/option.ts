@@ -5,7 +5,8 @@
 // `alias`/`level`/`enabled`/`count` — no `start` (no offset paging → no searchAll), no
 // `field`/`condition`/`get(id)`.
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
 import { asArray } from "../xml/as-array";
 import { asRecord } from "../xml/as-record";
