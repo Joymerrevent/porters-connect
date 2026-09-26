@@ -53,11 +53,13 @@ export const createMasterReader = <const F extends FieldCatalog, Q>(
     name: config.name,
     path: config.path,
   });
+  // What a Read resolves to: the record decoded from the catalog.
+  type Decoded = ReadRecord<F>;
   const search = async (
     query: Q & Paging = {} as Q & Paging,
-  ): Promise<ResourcePageOf<ReadRecord<F>>> =>
+  ): Promise<ResourcePageOf<Decoded>> =>
     read(config.params(query), decode, query.count, query.start);
-  const searchAll = (query: Q = {} as Q): AsyncIterable<ReadRecord<F>> =>
+  const searchAll = (query: Q = {} as Q): AsyncIterable<Decoded> =>
     paginateOnce(() => {
       const base = config.params(query);
       return (count, start) => read(base, decode, count, start);
