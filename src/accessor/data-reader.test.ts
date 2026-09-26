@@ -716,3 +716,25 @@ describe("createDataReader — get の field と getMany（ADR-0095）", () => {
     expect(out.map((r) => r?.Id)).toEqual([1, 2]);
   });
 });
+
+// RV-74。get(NaN) は `eq=NaN` を送って「見つからない」に見えていた。id は送る前に確かめる。
+describe("createDataReader — the id get / getMany receive (RV-74)", () => {
+  it.each([0, -1, 1.5, Number.NaN])(
+    "get(%s) rejects before sending anything",
+    async (id) => {
+      const calls: Call[] = [];
+      await expect(res(calls).get(id)).rejects.toThrow(
+        `Widget.get: id must be a positive integer, got ${String(id)}`,
+      );
+      expect(calls).toHaveLength(0);
+    },
+  );
+
+  it("getMany rejects the whole call when any id is not a positive integer", async () => {
+    const calls: Call[] = [];
+    await expect(res(calls).getMany([1, Number.NaN])).rejects.toThrow(
+      "Widget.getMany: id must be a positive integer, got NaN",
+    );
+    expect(calls).toHaveLength(0);
+  });
+});

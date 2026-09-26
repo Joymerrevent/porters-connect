@@ -260,3 +260,30 @@ describe("createDataWriter — 束ねた書き込み項目（RV-47）", () => {
     await expect(promise).rejects.toBeInstanceOf(PortersConfigError);
   });
 });
+
+// RV-67。PORTERS では id -1 が新規作成を意味するので、update(-1) は更新のつもりでレコードを作っていた。
+describe("createDataWriter — the id update / updateMany receive (RV-67)", () => {
+  it.each([-1, 0, 1.5, Number.NaN])(
+    "update(%s) rejects before sending anything",
+    async (id) => {
+      const calls: Call[] = [];
+      await expect(res(calls).update(id, { P_Name: "x" })).rejects.toThrow(
+        `Widget.update: id must be a positive integer, got ${String(id)}`,
+      );
+      expect(calls).toHaveLength(0);
+    },
+  );
+
+  it("updateMany rejects the whole call when any id is not a positive integer", async () => {
+    const calls: Call[] = [];
+    await expect(
+      res(calls).updateMany([
+        { id: 1, fields: { P_Name: "a" } },
+        { id: -1, fields: { P_Name: "b" } },
+      ]),
+    ).rejects.toThrow(
+      "Widget.updateMany: id must be a positive integer, got -1",
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
