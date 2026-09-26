@@ -10,7 +10,7 @@ import {
   PortersError,
   PortersResourceError,
 } from "../errors";
-import { isUnknownOutcome, type Requester } from "../http/requester";
+import type { Requester } from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { MAX_WRITE_ITEMS } from "../porters/write-rules";
 import type { DataType } from "../porters/data-type";
@@ -232,8 +232,8 @@ export const writeMany = async (
         { write: true, idempotent },
       );
     } catch (cause) {
-      const unknownOutcome =
-        isUnknownOutcome(cause) || (!idempotent && !knownNotWritten(cause));
+      // 送った create の失敗のうち、書き込まれていないと分かるもの以外は、書き込まれた可能性がある。
+      const unknownOutcome = !idempotent && !knownNotWritten(cause);
       // 最初のバッチが「書き込まれていないと分かる」失敗なら、何も書かれていない → 元のエラーのまま。
       if (sent === 0 && !unknownOutcome) throw cause;
       throw batchFailure(
