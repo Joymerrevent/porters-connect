@@ -364,3 +364,13 @@ describe("createAttachmentAccessor — the id get / update receive", () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+// RV-73。添付ファイルの get も、返ってきた添付が頼んだ id のものかを確かめる（id の指定が効くかは LV-24）。
+describe("createAttachmentAccessor — get checks the attachment it got back", () => {
+  it("rejects an attachment with another id, rather than handing over its body", async () => {
+    const calls: Call[] = [];
+    await expect(files(calls, READ_OK).get(900)).rejects.toThrow(
+      "Attachment: get received a record that was not requested",
+    );
+  });
+});

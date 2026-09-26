@@ -17,7 +17,7 @@ import type { Condition, SearchQuery } from "./query";
 import { buildReadParams, type ReadParamsContext } from "./build-read-params";
 import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../porters/read-rules";
-import { readMany } from "./read-many";
+import { readMany, recordsById } from "./read-many";
 import { expansionCatalogs } from "./expansion-catalogs";
 import type {
   EmptyReferences,
@@ -177,7 +177,14 @@ export const createDataReader = <
       expand: options.expand,
       image: options.image,
     });
-    return page.items[0];
+    // getMany と同じく、返ってきたレコードが頼んだ id のものかを確かめる（RV-73）。
+    return recordsById(
+      page,
+      [id],
+      (record) => (record as Record<string, unknown>)[idAlias],
+      config.name,
+      "get",
+    ).get(id);
   };
 
   // The chunking, the check against the requested ids and the ordering are `readMany`'s

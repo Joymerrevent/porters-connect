@@ -8,7 +8,7 @@
 
 > **AttachmentSearchQuery** = `object`
 
-Defined in: [src/resources/attachment.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L75)
+Defined in: [src/resources/attachment.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L76)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/attachment.ts:75](https://github.com/Joymerrevent/por
 
 > `optional` **resourceId?**: `number`
 
-Defined in: [src/resources/attachment.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L81)
+Defined in: [src/resources/attachment.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L82)
 
 Narrow to one record's attachments — the id **within the bound resource**
 (`t.attachment.of("resume")` -> a `Resume.P_Id`). Omit to read the whole resource's

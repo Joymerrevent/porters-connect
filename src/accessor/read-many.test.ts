@@ -93,12 +93,12 @@ describe("recordsById", () => {
 
   it("accepts a total equal to the number of ids asked for", () => {
     const out = recordsById(
-      { items: [{ P_Id: 1 }], total: 2 },
+      { items: [{ P_Id: 1 }, { P_Id: 2 }], total: 2 },
       [1, 2],
       idOf,
       "W",
     );
-    expect(out.size).toBe(1);
+    expect(out.size).toBe(2);
   });
 
   it("rejects a total larger than the ids asked for (the condition did not narrow the read)", () => {
@@ -198,5 +198,75 @@ describe("readMany", () => {
         read: () => Promise.resolve({ items: [{ P_Id: 9 }], total: 1 }),
       }),
     ).rejects.toBeInstanceOf(PortersResourceError);
+  });
+});
+
+// RV-72。切れた応答や、同じレコードが 2 件ある応答では、足りない id が「存在しない」に見えていた。
+describe("recordsById — a page that does not add up (RV-72)", () => {
+  const idOf2 = (r: { P_Id?: number }): unknown => r.P_Id;
+
+  it("rejects a page with fewer records than its own total", () => {
+    expect(() =>
+      recordsById({ items: [{ P_Id: 1 }], total: 2 }, [1, 2], idOf2, "Widget"),
+    ).toThrow(
+      "Widget: getMany received 1 record(s) for a total of 2, so the id condition may not have been applied",
+    );
+  });
+
+  it("rejects a page with more records than its own total", () => {
+    expect(() =>
+      recordsById(
+        { items: [{ P_Id: 1 }, { P_Id: 2 }], total: 1 },
+        [1, 2],
+        idOf2,
+        "Widget",
+      ),
+    ).toThrow("Widget: getMany received 2 record(s) for a total of 1");
+  });
+
+  it("rejects the same record twice", () => {
+    expect(() =>
+      recordsById(
+        { items: [{ P_Id: 1 }, { P_Id: 1 }], total: 2 },
+        [1, 2],
+        idOf2,
+        "Widget",
+      ),
+    ).toThrow("Widget: getMany received the same record twice (id 1)");
+  });
+
+  // RV-73。get も同じ突き合わせを通す。メッセージと hint は get のものになる。
+  it("names get, and hints at the id rather than at get()", () => {
+    let err: unknown;
+    try {
+      recordsById(
+        { items: [{ P_Id: 9 }], total: 1 },
+        [1],
+        idOf2,
+        "Widget",
+        "get",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    const e = err as PortersResourceError;
+    expect(e.message).toBe(
+      "Widget: get received a record that was not requested (id 9), so the id condition may not have been applied",
+    );
+    expect(e.hint).toContain("Check the id");
+    expect(e.context).toEqual({ resource: "Widget", operation: "get" });
+  });
+
+  it("keeps getMany's hint and context by default", () => {
+    let err: unknown;
+    try {
+      recordsById({ items: [{ P_Id: 9 }], total: 1 }, [1], idOf2, "Widget");
+    } catch (e) {
+      err = e;
+    }
+    const e = err as PortersResourceError;
+    expect(e.hint).toContain("get() instead");
+    expect(e.context).toEqual({ resource: "Widget", operation: "getMany" });
   });
 });

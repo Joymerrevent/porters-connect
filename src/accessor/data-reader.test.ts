@@ -416,7 +416,8 @@ describe("createDataReader — expand (ADR-0058)", () => {
   it("get(id) expands too", async () => {
     const calls: Call[] = [];
     // PORTERS returns only what was selected, so the body carries just the narrowed field.
-    const narrowed = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
+    // get は id も必ず要求するので、応答にも id が入る。
+    const narrowed = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Id>1</G.P_Id><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
     const one = await gadget(calls, narrowed).get(1, {
       expand: { P_Part: ["P_Name"] },
     });
@@ -736,5 +737,20 @@ describe("createDataReader — the id get / getMany receive (RV-74)", () => {
       "Widget.getMany: id must be a positive integer, got NaN",
     );
     expect(calls).toHaveLength(0);
+  });
+});
+
+// RV-73。get は応答の 1 件目をそのまま返していた。条件が効かず別のレコードが返っても気づかなかった。
+describe("createDataReader — get checks the record it got back (RV-73)", () => {
+  it("rejects a record with another id", async () => {
+    const calls: Call[] = [];
+    await expect(res(calls, page(1, [999])).get(1)).rejects.toThrow(
+      "Widget: get received a record that was not requested (id 999)",
+    );
+  });
+
+  it("returns undefined when no record has the id", async () => {
+    const calls: Call[] = [];
+    expect(await res(calls, page(0, [])).get(1)).toBeUndefined();
   });
 });

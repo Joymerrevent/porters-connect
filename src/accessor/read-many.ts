@@ -55,33 +55,53 @@ export const packIds = (
 // VERIFY(live): 出典は `P_Id` の `or` について記述が割れている（Read - Condition の本文は「Phase の Id と
 // Resource Id のみ」、同じ記事と Job / Opportunity Read の例は `P_Id:or`）。PORTERS が条件を無視して先頭から
 // 返すと、頼んでいないレコードを頼んだものとして渡してしまうので、ここで止める — docs/live-verification.md (LV-33)。
-const unrequested = (resource: string, detail: string): PortersResourceError =>
+const unrequested = (
+  resource: string,
+  operation: IdReadOperation,
+  detail: string,
+): PortersResourceError =>
   new PortersResourceError(
-    `${resource}: getMany received ${detail}, so the id condition may not have been applied`,
+    `${resource}: ${operation} received ${detail}, so the id condition may not have been applied`,
     {
       category: "unknown",
-      hint: "No records were returned. Read the records one at a time with get() instead.",
-      context: { resource, operation: "getMany" },
+      hint:
+        operation === "getMany"
+          ? "No records were returned. Read the records one at a time with get() instead."
+          : "No record was returned. Check the id; if it is right, the response did not come from the condition that was sent.",
+      context: { resource, operation },
     },
   );
+
+/** The id reads whose answers are checked against the ids they asked for. */
+export type IdReadOperation = "get" | "getMany";
 
 /**
  * Check one Read page against the chunk of ids it was asked for, and key its records by id.
  * Throws — rather than returning anything — when the page holds a record that was not requested
  * (or one without an id), or when `total` claims more matches than ids were sent: both mean the
  * id condition did not narrow the read, and passing those records on would hand the caller
- * records it never asked for.
+ * records it never asked for. Also throws when the page holds fewer (or more) records than its own
+ * `total`, or the same record twice: a missing id would otherwise read as "no such record" (RV-72).
  */
 export const recordsById = <T>(
   page: { items: readonly T[]; total: number },
   chunk: readonly number[],
   idOf: (record: T) => unknown,
   resource: string,
+  operation: IdReadOperation = "getMany",
 ): Map<number, T> => {
   if (page.total > chunk.length) {
     throw unrequested(
       resource,
+      operation,
       `a total of ${page.total} for ${chunk.length} requested ids`,
+    );
+  }
+  if (page.items.length !== page.total) {
+    throw unrequested(
+      resource,
+      operation,
+      `${page.items.length} record(s) for a total of ${page.total}`,
     );
   }
   // `unknown` so a record without a numeric id (a missing tag, a string) is simply not a member.
@@ -92,7 +112,15 @@ export const recordsById = <T>(
     if (!requested.has(id)) {
       throw unrequested(
         resource,
+        operation,
         `a record that was not requested (id ${String(id)})`,
+      );
+    }
+    if (out.has(id as number)) {
+      throw unrequested(
+        resource,
+        operation,
+        `the same record twice (id ${String(id)})`,
       );
     }
     out.set(id as number, record);
