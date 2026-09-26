@@ -227,11 +227,18 @@ const assertText = (field: string, value: unknown): void => {
     throw invalidInput(field, "a non-empty string", value);
 };
 
-// Base64 の文字だけ（改行などの空白は許す）。0 バイトのファイルは空文字になるので受ける。
+// Base64 として成り立つ形か（4 文字単位で、= は末尾の埋めだけ）。文字の種類だけ見ると、生のテキスト
+// "hello" や "a" が通って壊れた添付ができる。除く空白は改行・タブ・半角スペースだけ（全角空白などは
+// 送る値に残るので、読み飛ばしてから判定しない）。0 バイトのファイルは空文字になるので受ける。
+// 形は「長さが 4 の倍数」と「= が末尾の 2 文字まで」に分けて見る。4 文字の繰り返しを 1 つの正規表現で
+// 書くと、上限の 1,400 万文字でバックトラックがスタックを使い切る。
 const assertBase64 = (value: unknown): void => {
+  const text =
+    typeof value === "string" ? value.replace(/[\r\n\t ]/g, "") : undefined;
   if (
-    typeof value !== "string" ||
-    !/^[A-Za-z0-9+/]*={0,2}$/.test(value.replace(/\s/g, ""))
+    text === undefined ||
+    text.length % 4 !== 0 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(text)
   )
     throw invalidInput("content", "Base64 text", value);
 };
@@ -310,8 +317,9 @@ export const createAttachmentAccessor = (
       assertResourceId(input.resourceId);
       assertText("contentType", input.contentType);
       assertText("fileName", input.fileName);
-      assertBase64(input.content);
+      // 大きさを先に見る（上限を超える文字列に正規表現をかけない）。
       guardContent(input.content);
+      assertBase64(input.content);
       const inner =
         tag("Id", -1) +
         tag("Resource", resource) +
@@ -332,8 +340,8 @@ export const createAttachmentAccessor = (
       if (input.contentType !== undefined)
         assertText("contentType", input.contentType);
       if (input.fileName !== undefined) assertText("fileName", input.fileName);
-      if (input.content !== undefined) assertBase64(input.content);
       guardContent(input.content);
+      if (input.content !== undefined) assertBase64(input.content);
       let inner = tag("Id", id);
       if (input.contentType !== undefined) {
         inner += tag("ContentType", input.contentType);

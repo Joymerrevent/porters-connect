@@ -443,6 +443,37 @@ describe("createAttachmentAccessor — the values create / update send", () => {
     expect(calls).toHaveLength(2);
   });
 
+  it.each(["QUJD", "QQ==", "QUI=", "ab+/", "Zm9v\tYmFy", "Zm9v YmFy"])(
+    "create accepts the Base64 %j",
+    async (content) => {
+      const calls: Call[] = [];
+      await files(calls, WRITE_OK).create({ ...good, content });
+      expect(calls).toHaveLength(1);
+    },
+  );
+
+  // 文字の種類は Base64 でも、形が成り立たない値（生のテキストの渡し間違いなど）は送らない。
+  it.each([
+    "a",
+    "=",
+    "==",
+    "ab=",
+    "abcde",
+    "hello",
+    "QQ=A",
+    "Q===",
+    "!QQ==",
+    "QQ==!",
+    "aGk=\u3000",
+    "aGk=\u00a0",
+  ])("create refuses the malformed Base64 %j", async (content) => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).create({ ...good, content }),
+    ).rejects.toThrow("attachment content must be Base64 text");
+    expect(calls).toHaveLength(0);
+  });
+
   it("shows only the start of a long value", async () => {
     const calls: Call[] = [];
     await expect(
