@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { FieldValue } from "../xml/decode";
+import type { FieldValue } from "../xml/field-value";
 import { decoderFor } from "./decoder";
 import type { FieldCatalog } from "./catalog";
 

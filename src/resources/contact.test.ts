@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { FieldValue, UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/field-value";
 import { CONTACT_DESCRIPTOR, createContactResource } from "./contact";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 

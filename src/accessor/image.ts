@@ -14,8 +14,8 @@
 import { PortersConfigError } from "../errors";
 import { qualify } from "../util/alias";
 import type { DataType } from "../porters/data-type";
-import type { ImageSubField, ImageValue } from "../xml/decode";
-import type { WriteItem } from "../xml/encode";
+import type { ImageSubField, ImageValue } from "../xml/field-value";
+import type { WriteItem } from "../xml/write-value";
 import {
   IMAGE_CONTENT_TYPES,
   MAX_IMAGE_BYTES,

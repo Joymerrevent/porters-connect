@@ -4,7 +4,7 @@
 
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import type { Requester } from "../http/requester";
-import { parseResourcePage, type RawItem } from "../xml/parser";
+import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
 import type { FieldCatalog, ReadRecord } from "./catalog";
 import { appendPaging } from "./paging";
 

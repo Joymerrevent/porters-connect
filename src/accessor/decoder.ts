@@ -4,12 +4,10 @@
 
 import { bareAlias } from "../util/alias";
 import type { DataType } from "../porters/data-type";
-import {
-  decodeField,
-  decodeReferenceRecord,
-  type FieldValue,
-} from "../xml/decode";
-import type { RawItem } from "../xml/parser";
+import { decodeField } from "../xml/decode-field";
+import { decodeReferenceRecord } from "../xml/decode-reference-record";
+import type { FieldValue } from "../xml/field-value";
+import type { RawItem } from "../xml/parse-resource-page";
 import { fieldTypesOf, type FieldCatalog, type ReadRecord } from "./catalog";
 
 /**

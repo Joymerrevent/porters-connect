@@ -2,7 +2,7 @@
 // `create` requires and which a caller may write at all. Types only — the Write that sends them is
 // `write-data.ts`. The counterpart of `read-record.ts` (what a Read resolves to).
 
-import type { WritableDataType, WriteValueOf } from "../xml/encode";
+import type { WritableDataType, WriteValueOf } from "../xml/write-value";
 import type { FieldCatalog } from "./catalog";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /

@@ -11,8 +11,9 @@ import { describe, expect, it } from "vitest";
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { ATTACHMENT_FIELD_NAMES } from "../../src/resources/attachment";
 import { decoderFor } from "../../src/accessor/decoder";
-import { buildWriteXml } from "../../src/xml/encode";
-import { parseResourcePage, parseWriteResult } from "../../src/xml/parser";
+import { buildWriteXml } from "../../src/xml/build-write-xml";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import { ATTACHMENT_DESCRIPTOR, FAKE_RESOURCES } from "./resources";
 
 const fixture = (path: string): string =>

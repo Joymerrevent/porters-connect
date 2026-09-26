@@ -12,7 +12,7 @@
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
-import type { DecodedValue } from "../xml/decode";
+import type { DecodedValue } from "../xml/field-value";
 import { bareAlias } from "../util/alias";
 import { fieldTypesOf, type FieldCatalog, type ReadRecord } from "./catalog";
 

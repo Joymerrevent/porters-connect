@@ -11,7 +11,7 @@ import {
   type AccessPoint,
   type Transport,
 } from "../http/index";
-import { parseAuthentication } from "../xml/parser";
+import { parseAuthentication } from "../xml/parse-authentication";
 import type { StoredTokens } from "./types";
 
 /** Credentials + seams shared by every token exchange. */

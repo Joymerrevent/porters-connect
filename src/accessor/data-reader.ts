@@ -3,7 +3,7 @@
 // the Write half (`write-data.ts`) into one accessor. Master resources have their own, smaller Read
 // (`read-master.ts`); both share the paging / decoding / sending in `read.ts`.
 
-import type { RawItem } from "../xml/parser";
+import type { RawItem } from "../xml/parse-resource-page";
 import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
 import { decoderFor } from "./decoder";
 import { paginateOnce, type Paging } from "./paging";

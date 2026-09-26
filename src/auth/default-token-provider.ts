@@ -10,7 +10,7 @@ import {
   type AccessPoint,
   type Transport,
 } from "../http/index";
-import { parseAuthentication } from "../xml/parser";
+import { parseAuthentication } from "../xml/parse-authentication";
 import { exchangeToken, type TokenGrantType } from "./exchange-token";
 import type { StoredTokens, TokenProvider } from "./types";
 

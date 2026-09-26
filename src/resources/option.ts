@@ -6,8 +6,9 @@
 // `field`/`condition`/`get(id)`.
 
 import { apiUrl, type AccessPoint } from "../http/access-point";
-import { parseResourcePage, type RawItem } from "../xml/parser";
-import { asArray, asRecord } from "../xml/raw";
+import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
+import { asArray } from "../xml/as-array";
+import { asRecord } from "../xml/as-record";
 import { appendPaging } from "../accessor/paging";
 import { decoderFor } from "../accessor/decoder";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";

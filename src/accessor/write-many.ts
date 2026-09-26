@@ -14,8 +14,12 @@ import type { Requester } from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { MAX_WRITE_ITEMS } from "../porters/write-rules";
 import type { DataType } from "../porters/data-type";
-import { encodeWriteItem, type WriteItem } from "../xml/encode";
-import { parseWriteResult, type WriteResultItem } from "../xml/parser";
+import { encodeWriteItem } from "../xml/encode-write-item";
+import type { WriteItem } from "../xml/write-value";
+import {
+  parseWriteResult,
+  type WriteResultItem,
+} from "../xml/parse-write-result";
 
 // 結果の形（入力順・ok 判定）は ADR-0041 SD-2。
 /** One record's outcome from a bulk write, in the position it was sent. */

@@ -14,7 +14,7 @@ import { resetInsecureSchemeWarning } from "./http/insecure-scheme-warner";
 import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
 import type { Throttle } from "./http/throttle";
 import type { Transport, TransportRequest } from "./http/types";
-import type { UserRef } from "./xml/decode";
+import type { UserRef } from "./xml/field-value";
 
 const candidateXml = readFileSync(
   fileURLToPath(

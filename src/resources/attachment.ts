@@ -12,9 +12,9 @@
 
 import { PortersConfigError } from "../errors";
 import { apiUrl, type AccessPoint } from "../http/access-point";
-import { encodeField } from "../xml/encode";
-import { parseResourcePage } from "../xml/parser";
-import { asString } from "../xml/raw";
+import { encodeField } from "../xml/encode-field";
+import { parseResourcePage } from "../xml/parse-resource-page";
+import { asString } from "../xml/as-string";
 import { appendPaging, paginateOnce } from "../accessor/paging";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import type { Paging } from "../accessor/paging";

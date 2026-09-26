@@ -3,8 +3,8 @@
 // accessor/ — query types, the decoder, the `field` parameter, the Write inputs — derives from these.
 
 import type { DataType } from "../porters/data-type";
-import type { DecodedValue } from "../xml/decode";
-import { asRecord } from "../xml/raw";
+import type { DecodedValue } from "../xml/field-value";
+import { asRecord } from "../xml/as-record";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).

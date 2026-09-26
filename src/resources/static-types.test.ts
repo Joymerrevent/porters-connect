@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import type { DepartmentRef, UserRef } from "../xml/decode";
+import type { DepartmentRef, UserRef } from "../xml/field-value";
 import type {
   Candidate,
   CANDIDATE_DESCRIPTOR,

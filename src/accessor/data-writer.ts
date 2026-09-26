@@ -4,7 +4,8 @@
 // with the Attachment accessor in `write.ts`; batching is `write-many.ts`.
 
 import { PortersConfigError } from "../errors";
-import { buildWriteXml, type WriteItem, type WriteValue } from "../xml/encode";
+import { buildWriteXml } from "../xml/build-write-xml";
+import type { WriteItem, WriteValue } from "../xml/write-value";
 import { fieldTypesOf, type FieldCatalog } from "./catalog";
 import type { ResourceDeps } from "./deps";
 import { writeMany, type BulkWriteResult } from "./write-many";

@@ -8,4 +8,4 @@
 
 > **FieldValue** = `string` \| `number` \| `string`[] \| [`UserRef`](UserRef.md) \| [`DepartmentRef`](DepartmentRef.md) \| [`ImageValue`](ImageValue.md) \| [`ReferenceRecord`](ReferenceRecord.md) \| `null`
 
-Defined in: [src/xml/decode.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L58)
+Defined in: [src/xml/field-value.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/field-value.ts#L55)

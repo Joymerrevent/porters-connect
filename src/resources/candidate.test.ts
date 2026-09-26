@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { FieldValue, UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/field-value";
 import { createCandidateResource } from "./candidate";
 
 // The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and

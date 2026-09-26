@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
-import type { ImageSubField } from "../xml/decode";
-import type { ImageWriteValue } from "../xml/encode";
+import type { ImageSubField } from "../xml/field-value";
+import type { ImageWriteValue } from "../xml/write-value";
 import { applyImage, guardImageWrite, guardNoImageInBulk } from "./image";
 
 // Unit-level counterpart to the wiring tests in read-data.test.ts: those drive the option through

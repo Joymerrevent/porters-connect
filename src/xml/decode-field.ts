@@ -1,109 +1,19 @@
-// Data-Type-driven value decoding (ADR-0011). Input is the raw node (string or
-// nested object) from the parser; output is the typed value. Empty -> null.
+// Data-Type-driven value decoding (ADR-0011). Input is the raw node (string or nested object) from
+// the parser; output is the typed value. Empty -> null.
 
 import { PortersResourceError } from "../errors/index";
+import { bareAlias } from "../util/alias";
 import { portersDateToIso, portersDateTimeToIso } from "../util/datetime";
-import { asRecord, asString } from "./raw";
+import { asRecord } from "./as-record";
+import { asString } from "./as-string";
 import type { DataType } from "../porters/data-type";
-
-// System[Department] を User と同じ入れ子として扱う判断は ADR-0061 案3a。
-/**
- * A referenced Department (`System[Department]`). Read is nested exactly like
- * `User`: `<OwnerDepartment><Department><Department.P_Id>…`. Only the two fields PORTERS shows in
- * its sample are modelled — inventing more would be guessing.
- */
-export type DepartmentRef = {
-  P_Id: number | null;
-  P_Name: string | null;
-};
-
-/** A referenced User (Read is nested; Write is `User.P_Id` only). */
-export type UserRef = {
-  P_Id: number | null;
-  P_Type: string | null;
-  P_Name: string | null;
-  P_Mail: string | null;
-};
-
-/** The sub-tags an Image field is made of (`<Alias><FileName/><ContentType/><Content/></Alias>`). */
-export type ImageSubField = "FileName" | "ContentType" | "Content";
-
-// 返ってきた sub-tag だけを optional で持つ形は ADR-0064 論点1。
-/**
- * A decoded Image value: the sub-tags PORTERS actually returned, each empty ->
- * null. Every key is **optional for the same reason a read record's fields are** — a sub-tag that
- * was not requested is simply absent. A plain read asks for the bare alias, which PORTERS answers
- * with `FileName` alone; `image` selects more and narrows this to exactly what it selected.
- */
-export type ImageValue = { [K in ImageSubField]?: string | null };
-
-// union にして形で読む判断は ADR-0064 論点4。
-/**
- * A decoded Link value. PORTERS resolves a Link to **a Contact id, a User, or a
- * Department**, decided by the tenant's own field setting, and the response carries no
- * discriminator — the shapes just differ. So the value is a union and the decode reads the shape,
- * which cannot disagree with what arrived. Narrow with `typeof v === "number"` / `"P_Mail" in v`.
- */
-export type LinkValue = number | UserRef | DepartmentRef;
-
-// expand の設計は ADR-0058。
-/**
- * An **expanded** `System[Reference]` value: the referenced record's requested fields, decoded by
- * the referenced resource's own catalog. Only a read that asked for the expansion
- * (`expand`) produces one — without it a reference decodes to the referenced id (`number`).
- */
-export type ReferenceRecord = { [alias: string]: FieldValue };
-
-// `string[]` is the Option read value (a set of selected aliases — ADR-0017).
-export type FieldValue =
-  | string
-  | number
-  | string[]
-  | UserRef
-  | DepartmentRef
-  | ImageValue
-  | ReferenceRecord
-  | null;
-
-// Per-Data-Type decoded value (the non-null shape), as a **table rather than a conditional chain**.
-// Every Data Type is listed exactly once, so the mapping reads at a glance and adding a type to
-// `DataType` fails to compile here until it is given a value type — a chain would have silently
-// dropped it into the trailing `string`. Mirrors `decodeField`'s branches and drives the static
-// resource Read type (ADR-0019).
-type DecodedValueOf = {
-  "System[Id]": number;
-  Number: number;
-  "System[Reference]": number;
-  User: UserRef;
-  "System[Department]": DepartmentRef;
-  Option: string[];
-  Image: ImageValue;
-  Link: LinkValue;
-  // The string Data Types share one decoded shape but keep distinct labels (ADR-0016).
-  DateTime: string;
-  "System[DateTime]": string;
-  Date: string;
-  Age: string;
-  SinglelineText: string;
-  MultilineText: string;
-  Mail: string;
-  Telephone: string;
-  URL: string;
-};
-
-// A read value is `DecodedValue<D> | null` (empty -> null). `null` = PORTERS assigns the field no
-// Data Type (`P_Deleted` — ADR-0056); with no Data Type there is no basis for a conversion, so the
-// raw string stands (e.g. `"0"` / `"1"`).
-export type DecodedValue<D extends DataType | null> = D extends DataType
-  ? DecodedValueOf[D]
-  : string;
-
-// A tag's bare alias: `Client.P_Name` -> `P_Name`. Nested reference tags carry the *referenced*
-// resource's prefix, which nothing here knows. Mirrors `bareAlias` in util/alias.ts.
-// Stryker disable StringLiteral: for a dotless tag both branches yield the tag itself
-const bareTag = (key: string): string =>
-  key.includes(".") ? key.slice(key.indexOf(".") + 1) : key;
-// Stryker restore StringLiteral
+import type {
+  DepartmentRef,
+  FieldValue,
+  ImageValue,
+  LinkValue,
+  UserRef,
+} from "./field-value";
 
 // alias タグは接頭辞付き想定（例 `User.P_Id`）だが、接頭辞無しにも両対応（ADR-0011）。
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパーを decodeField より前に定義する。
@@ -170,7 +80,7 @@ const decodeReference = (outer: Record<string, unknown>): number | null => {
     const inner = asRecord(value);
     if (!inner) continue;
     for (const [key, child] of Object.entries(inner)) {
-      if (bareTag(key) !== "P_Id") continue;
+      if (bareAlias(key) !== "P_Id") continue;
       const id = asString(child);
       return id === undefined ? null : Number(id);
     }
@@ -183,11 +93,11 @@ const decodeReference = (outer: Record<string, unknown>): number | null => {
 // asked for are present (the bare alias returns `FileName` alone — ADR-0064 案1a), so we keep the
 // keys that arrived rather than filling in the other two: absent means "not requested", while
 // `null` means "requested and empty" — the same distinction the read record itself draws.
-// The sub-tags are bare in PORTERS' sample; `bareTag` also tolerates a prefixed form.
+// The sub-tags are bare in PORTERS' sample; `bareAlias` also tolerates a prefixed form.
 const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
   const out: ImageValue = {};
   for (const [key, child] of Object.entries(outer)) {
-    const sub = bareTag(key);
+    const sub = bareAlias(key);
     if (sub !== "FileName" && sub !== "ContentType" && sub !== "Content")
       continue;
     const value = asString(child);
@@ -381,34 +291,4 @@ export const decodeField = (
     case "Age":
       return converted(alias, scalarType, value, () => portersDateToIso(value));
   }
-};
-
-/**
- * Decode an **expanded** `System[Reference]` node (`field=Job.P_Client(Client.P_Id,Client.P_Name)`)
- * into the referenced record, using the referenced resource's catalog (ADR-0058).
- *
- * `types` is handed in rather than looked up: `xml/` must not depend on `resources/` (RV-8), and
- * this is also what keeps the decode **tag-independent** — the wrapper element is the referenced
- * resource (`<Client>`), which we neither know nor need here. That matters because the literal tag
- * is unconfirmed against the live API (LV-10); reading the first record-valued child means an
- * unexpected tag costs nothing. An alias outside the catalog decodes as a raw string, exactly as
- * an unknown alias does on the top-level record.
- */
-export const decodeReferenceRecord = (
-  raw: unknown,
-  types: ReadonlyMap<string, DataType | null>,
-): ReferenceRecord | null => {
-  const outer = asRecord(raw);
-  if (!outer) return null;
-  for (const value of Object.values(outer)) {
-    const inner = asRecord(value);
-    if (!inner) continue;
-    const out: ReferenceRecord = {};
-    for (const [key, child] of Object.entries(inner)) {
-      const alias = bareTag(key);
-      out[alias] = decodeField(types.get(alias) ?? null, child, alias);
-    }
-    return out;
-  }
-  return null;
 };

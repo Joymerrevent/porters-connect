@@ -12,7 +12,9 @@ import { XMLParser } from "fast-xml-parser";
 
 import type { ReferenceTarget } from "../../src/accessor/expand";
 import type { DataType } from "../../src/porters/data-type";
-import { asArray, asRecord, asString } from "../../src/xml/raw";
+import { asArray } from "../../src/xml/as-array";
+import { asRecord } from "../../src/xml/as-record";
+import { asString } from "../../src/xml/as-string";
 import type { FakeMasters } from "./masters";
 import type { FakeImage, FakeRecord, FakeValue } from "./types";
 
