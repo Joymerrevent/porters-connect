@@ -33,7 +33,8 @@
     `**訂正（実装時 2026-08-12）**` を注記し、決定は据え置いた）。
   - 判断に迷ったら **「その注記を読んで、決定が変わったと思う人がいるか」** で切り分ける。
     いるなら方針変更＝新 ADR、いないなら訂正注記でよい。
-- **移設前のパス表記**: 2026-09-12 より前の ADR 本文にある `docs/reference/…` / `docs/howto/…` /
+- **移設前のパス表記**: ファイルを移したり名前を変えたりしたら、ここに読み替えを足す（ADR の本文は書き換えないので、
+  古いパスのまま残る）。2026-09-12 より前の ADR 本文にある `docs/reference/…` / `docs/howto/…` /
   `docs/start/…` / `docs/api/` は、いずれも現在の `docs/usage/…` を指す（[ADR-0071][0071]）。
   リンクは移設時に直してあるが、**決定の文面は書き換えない**運用なので散文の表記は当時のまま残る。
   同じく 2026-09-22 より前の `docs/usage/howto/…` / `docs/usage/concepts/…` は `docs/usage/topics/…`
@@ -50,6 +51,14 @@
   その後の整理で `src/resources/core/resource.ts` を分け、データ系の factory は `src/resources/core/data-resource.ts`
   （`createResource` → `createDataResource`）、`ResourceDescriptor` は `core/descriptor.ts`、`firstWriteResultId` /
   `buildWriteUrl` は `core/write.ts` に移した。マスタの読み取りは `core/master-resource.ts`（`createMasterResource`）。
+  2026-09-26 の `core/` の整理で、さらに次のとおり分けた・名前を変えた（いずれも `src/resources/core/` の中）:
+  `data-resource.ts` の読み込み・書き込み → `read-data.ts`（`createDataReader`）/ `write-data.ts`（`createDataWriter`）、
+  `master-resource.ts` の読み込み → `read-master.ts`（`createMasterReader`）、`read.ts` の項目の一覧の型と `rawValue` →
+  `catalog.ts`、`ResourceDeps` → `deps.ts`、`decoderFor` → `decoder.ts`、`Paging` / `paginate` などのページ送り →
+  `paging.ts`、`field` の組み立て → `field-param.ts`、`bareAlias` → `src/util/alias.ts`、`query.ts` の組み立て →
+  `query-encode.ts`、`get-many.ts` → `read-many.ts`（`readByIds` → `readMany`）、`bulk-write.ts` → `write-many.ts`
+  （`runBulkWrite` → `writeMany`）、読み込みの戻り値の型（`RequestedRecord` など）→ `read-record.ts`、
+  `CreateInput` / `UpdateInput` → `write-record.ts`、`Without` → `src/util/types.ts`。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
