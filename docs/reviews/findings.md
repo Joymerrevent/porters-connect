@@ -158,6 +158,9 @@
 | [RV-141][rv141] | 🟢     | エラーモデル                    | open    | hostname 未設定・BigInt で TypeError                                                                 |
 | [RV-142][rv142] | 🟢     | 認証                            | open    | 保存中の clear() でトークンが戻る                                                                    |
 | [RV-143][rv143] | 🟢     | フェイルセーフ                  | open    | 使い回したエラーに印が漏れる                                                                         |
+| [RV-144][rv144] | 🟢     | フェイルセーフ                  | open    | Code 5 を書き込まれていないとみる前提                                                                |
+| [RV-145][rv145] | 🟢     | 一貫性                          | open    | 3xx の案内が単発と一括で逆                                                                           |
+| [RV-146][rv146] | 🟢     | ドキュメント                    | open    | 結果の分からない create の文書の範囲                                                                 |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -309,3 +312,6 @@
 [rv141]: rv/0141-client-options-type-error-paths.md
 [rv142]: rv/0142-token-save-cleared-during-store-set.md
 [rv143]: rv/0143-never-sent-mark-on-reused-error.md
+[rv144]: rv/0144-code-5-bulk-not-written-assumption.md
+[rv145]: rv/0145-bulk-vs-single-3xx-outcome-hint.md
+[rv146]: rv/0146-unknown-outcome-doc-narrower-than-code.md
