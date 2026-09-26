@@ -61,6 +61,74 @@ export type Requester = {
   ): Promise<T>;
 };
 
+// Eager size guard: block an oversized request before throttle / auth / transport.
+// A clear config error beats an opaque server 400, and we don't burn a throttle token
+// or a token refresh on a request that cannot succeed (fail-safe). PORTERS limits the
+// whole request, so measure URL + body: a write's body or a read's field/condition
+// query string can blow the cap (RV-5). File uploads opt out via `unboundedBody` (the
+// body has its own limit — ADR-0018; their write URL is short, so skipping is safe).
+const assertRequestLength = (
+  req: TransportRequest,
+  spec: RequestSpec,
+): void => {
+  const requestLength = req.url.length + (req.body?.length ?? 0);
+  if (!spec.unboundedBody && requestLength > MAX_REQUEST_LENGTH) {
+    throw new PortersConfigError(
+      `request is ${requestLength} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
+      {
+        category: "config",
+        hint: "Shorten the request: narrow a read's field/condition, or split a write into batches of 200 or fewer records (PORTERS caps a request at ~15000 characters).",
+      },
+    );
+  }
+};
+
+// 1 回の試行が失敗したときに、次にどうするかを決めるための材料。
+export type AttemptState = {
+  // Whether *this* attempt reached the wire (see `request`).
+  sent: boolean;
+  authRetried: boolean;
+  write: boolean;
+  idempotent: boolean;
+  attempt: number;
+  maxRetries: number;
+};
+
+// 失敗したときの次の手: トークンを取り直して送り直す／待ってから送り直す／そのまま投げる。
+export type Recovery = "refresh" | "backoff" | "throw";
+
+// 判断だけを純粋な関数にして、送信のループから分けている（requester.test.ts が直接確かめる）。
+export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
+  // reactive: token expired -> refresh once and retry (safe even for create). Only the
+  // Resource API's 401 / 402 mean "Access Token expired": the Authentication API numbers its
+  // codes separately (its 401 is "Refresh Token expired", raised while fetching the token), and
+  // forcing another refresh on that only repeats the request that just failed.
+  if (
+    e instanceof PortersResourceError &&
+    (e.code === 401 || e.code === 402) &&
+    !s.authRetried
+  )
+    return "refresh";
+  // idempotency guard (ADR-0010 / ADR-0063): stop a non-idempotent write only when it was
+  // sent *and* the outcome is unknown. Two failures are known not to have applied:
+  //   - `sent === false` — the request never left (token fetch / pre-send failure).
+  //   - `rateLimit` — HTTP 429 means it was refused before being processed.
+  // VERIFY(live): that a 429 is always a pre-processing refusal is unconfirmed — PORTERS is
+  // expected to drop the connection instead, so 429 comes from an intermediary. See
+  // docs/live-verification.md (LV-9).
+  const mayHaveApplied = s.sent && e.category !== "rateLimit";
+  if (
+    mayHaveApplied &&
+    e instanceof PortersNetworkError &&
+    s.write &&
+    !s.idempotent
+  )
+    return "throw";
+  // transient (9/302) / network -> bounded backoff.
+  if (e.retryable && s.attempt < s.maxRetries) return "backoff";
+  return "throw";
+};
+
 export const createRequester = (o: RequesterOptions): Requester => {
   const maxRetries = o.maxRetries ?? 3;
 
@@ -69,22 +137,7 @@ export const createRequester = (o: RequesterOptions): Requester => {
     parse: (body: string) => T,
     spec: RequestSpec = {},
   ): Promise<T> => {
-    // Eager size guard: block an oversized request before throttle / auth / transport.
-    // A clear config error beats an opaque server 400, and we don't burn a throttle token
-    // or a token refresh on a request that cannot succeed (fail-safe). PORTERS limits the
-    // whole request, so measure URL + body: a write's body or a read's field/condition
-    // query string can blow the cap (RV-5). File uploads opt out via `unboundedBody` (the
-    // body has its own limit — ADR-0018; their write URL is short, so skipping is safe).
-    const requestLength = req.url.length + (req.body?.length ?? 0);
-    if (!spec.unboundedBody && requestLength > MAX_REQUEST_LENGTH) {
-      throw new PortersConfigError(
-        `request is ${requestLength} characters, over the ~${MAX_REQUEST_LENGTH}-character limit`,
-        {
-          category: "config",
-          hint: "Shorten the request: narrow a read's field/condition, or split a write into batches of 200 or fewer records (PORTERS caps a request at ~15000 characters).",
-        },
-      );
-    }
+    assertRequestLength(req, spec);
     const write = spec.write ?? false;
     const idempotent = spec.idempotent ?? !write;
     let authRetried = false;
@@ -107,36 +160,20 @@ export const createRequester = (o: RequesterOptions): Requester => {
         return readResponse(res, parse);
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
-        // reactive: token expired -> refresh once and retry (safe even for create). Only the
-        // Resource API's 401 / 402 mean "Access Token expired": the Authentication API numbers its
-        // codes separately (its 401 is "Refresh Token expired", raised while fetching the token), and
-        // forcing another refresh on that only repeats the request that just failed.
-        if (
-          e instanceof PortersResourceError &&
-          (e.code === 401 || e.code === 402) &&
-          !authRetried
-        ) {
+        const next = recoveryFor(e, {
+          sent,
+          authRetried,
+          write,
+          idempotent,
+          attempt,
+          maxRetries,
+        });
+        if (next === "refresh") {
           authRetried = true;
           forceRefresh = true;
           continue;
         }
-        // idempotency guard (ADR-0010 / ADR-0063): stop a non-idempotent write only when it was
-        // sent *and* the outcome is unknown. Two failures are known not to have applied:
-        //   - `sent === false` — the request never left (token fetch / pre-send failure).
-        //   - `rateLimit` — HTTP 429 means it was refused before being processed.
-        // VERIFY(live): that a 429 is always a pre-processing refusal is unconfirmed — PORTERS is
-        // expected to drop the connection instead, so 429 comes from an intermediary. See
-        // docs/live-verification.md (LV-9).
-        const mayHaveApplied = sent && e.category !== "rateLimit";
-        if (
-          mayHaveApplied &&
-          e instanceof PortersNetworkError &&
-          write &&
-          !idempotent
-        )
-          throw e;
-        // transient (9/302) / network -> bounded backoff.
-        if (e.retryable && attempt < maxRetries) {
+        if (next === "backoff") {
           attempt += 1;
           await sleep(o.backoff(attempt - 1));
           continue;
