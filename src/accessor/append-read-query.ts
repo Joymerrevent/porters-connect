@@ -123,6 +123,8 @@ const serializeConditionValue = (
   const out = serializeScalar(type, value, alias);
   // テキストと日時の値の中のコロンは拒否しない（日時の値 HH:MM:SS に含まれ、PORTERS は最初の `:` で
   // alias と suffix を区切るとみられる — ADR-0105）。
+  // VERIFY(live): 値の中のコロンを PORTERS がどう読むか（日時・テキストの値のコロンがそのまま値として
+  // 扱われるか）は未確認 — docs/live-verification.md (LV-35)。
   if (out.includes(","))
     throw delimiterError(`condition ${alias}`, out, "a comma");
   return out;
