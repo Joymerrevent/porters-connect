@@ -94,7 +94,7 @@ const REFUSED_CATEGORIES: ReadonlySet<string> = new Set([
 ]);
 
 // 送った create が、書き込まれていないと分かっている失敗か。断られたことがはっきりしている分類、
-// 未処理が確定する Code 9（再送し尽くした場合）、4xx（408 以外。レート超過の 429 もここ）。
+// 未処理が確定する Code 9（再送し尽くした場合）、封筒の無い 4xx（408 以外。レート超過の 429 もここ）。
 // Code 1000（処理失敗）や表に無いコードは、途中まで処理されたかが分からないので含めない（RV-69 の再レビュー）。
 // それ以外（200 で読めない応答、送った後の生の Error など）は、書き込まれた可能性がある（RV-69 の再レビュー）。
 const knownNotWritten = (cause: unknown): boolean => {
@@ -102,6 +102,10 @@ const knownNotWritten = (cause: unknown): boolean => {
   // Stryker disable next-line ConditionalExpression: equivalent — a non-PortersError fails every check below
   if (!(cause instanceof PortersError)) return false;
   if (REFUSED_CATEGORIES.has(cause.category) || cause.code === 9) return true;
+  // HTTP のステータスで決めるのは、PORTERS の封筒（Result Code）が無いときだけ。封筒の Code は
+  // ステータスより優先する（read-response と同じ方針）。4xx に載った Code 1000 を「書き込まれていない」と
+  // しないため（RV-69 の 3 回目の再レビュー）。
+  if (cause.code !== null) return false;
   const status = cause.httpStatus;
   // `status !== undefined` は型のため。undefined との比較は偽なので、外しても同じ動きになる（等価なミュータント）。
   return (

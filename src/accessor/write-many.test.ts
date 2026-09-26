@@ -411,6 +411,15 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       "may have been written",
     ],
     [
+      "a Code 1000 carried on an HTTP 400",
+      new PortersResourceError("failed", {
+        category: "server",
+        code: 1000,
+        httpStatus: 400,
+      }),
+      "may have been written",
+    ],
+    [
       "a Result Code not in the table",
       new PortersResourceError("odd", { category: "unknown", code: 999 }),
       "may have been written",
