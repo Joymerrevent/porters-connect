@@ -3,7 +3,8 @@
 
 import { XMLParser } from "fast-xml-parser";
 
-import { authError, resourceError } from "../errors/classify";
+import { authError } from "../errors/auth-error";
+import { resourceError } from "../errors/resource-error";
 import {
   PortersAuthError,
   PortersError,
