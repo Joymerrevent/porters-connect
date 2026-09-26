@@ -1,35 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors";
-import { createFieldParam, fieldParam, fieldParamContext } from "./field-param";
-import type { FieldCatalog } from "./catalog";
-
-describe("accessor/field-param — createFieldParam（省略時は全項目・裸の alias に接頭辞）", () => {
-  const CATALOG = {
-    P_Id: "System[Id]",
-    P_Owner: "User",
-    P_Name: "SinglelineText",
-  } as const satisfies FieldCatalog;
-  const fieldOf = (field: readonly string[] | undefined): string | null => {
-    const p = new URLSearchParams();
-    createFieldParam("W", CATALOG)(p, field);
-    return p.get("field");
-  };
-
-  it("sends every catalogued alias when field is omitted (User expanded to its 4 sub-fields)", () => {
-    expect(fieldOf(undefined)).toBe(
-      "W.P_Id,W.P_Owner(User.P_Id,User.P_Type,User.P_Name,User.P_Mail),W.P_Name",
-    );
-  });
-
-  it("prefixes the caller's own aliases and adds nothing else", () => {
-    expect(fieldOf(["P_Name"])).toBe("W.P_Name");
-  });
-
-  it("sends no field at all for []", () => {
-    expect(fieldOf([])).toBeNull();
-  });
-});
+import { fieldParam, fieldParamContext } from "./field-param";
 
 // データ系が通る組み立て（既定 → 検査 → 接頭辞 → 展開 → 画像）。展開と画像の書式そのものは
 // expand.test.ts / image.test.ts が確かめる。ここでは順番と、足し合わせたときの形を確かめる。

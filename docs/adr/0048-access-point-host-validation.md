@@ -186,6 +186,7 @@ decider が 2026-08-11 に選択。
 
 - `docs/reference/authentication-api/oauth.md` → `docs/usage/reference/authentication-api/oauth.md`（2026-09-12・ADR-0071）
 - `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [findings]: ../reviews/findings.md
 [run]: ../reviews/2026-08-10-01.md

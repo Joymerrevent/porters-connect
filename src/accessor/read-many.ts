@@ -1,7 +1,7 @@
 // getMany (ADR-0095): read many records by id through the `{idAlias}:or=` condition. This file owns
 // what is not plain `search`: how the ids are split into requests, how each response is checked
 // against what was asked for, and putting the answers back in the order of the ids. The data
-// resources' Read (read-data.ts) hands it a way to read one chunk; nothing here builds a URL or
+// resources' Read (data-reader.ts) hands it a way to read one chunk; nothing here builds a URL or
 // parses XML.
 
 import { PortersResourceError } from "../errors";

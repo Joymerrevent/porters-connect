@@ -19,6 +19,6 @@ export type ConnectionDeps = {
  * What a partition-bound resource accessor is handed: the {@link ConnectionDeps} and the partition
  * it is bound to.
  */
-export type ResourceDeps = ConnectionDeps & {
+export type PartitionBoundConnectionDeps = ConnectionDeps & {
   partition: number;
 };

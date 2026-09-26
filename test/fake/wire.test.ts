@@ -4,14 +4,12 @@
 
 import { describe, expect, it } from "vitest";
 
-import { decoderFor } from "../../src/accessor/decoder";
+import { createDecoder } from "../../src/accessor/decoder";
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
-import { buildWriteXml } from "../../src/xml/encode";
-import {
-  parseAuthentication,
-  parseResourcePage,
-  parseWriteResult,
-} from "../../src/xml/parser";
+import { buildWriteXml } from "../../src/xml/build-write-xml";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import { createFakeMasters } from "./masters";
 import type { FakeRecord } from "./types";
 import {
@@ -26,7 +24,7 @@ import {
 const FIELDS = CANDIDATE_DESCRIPTOR.fields;
 const PREFIX = CANDIDATE_DESCRIPTOR.prefix;
 const fieldMap = new Map(Object.entries(FIELDS));
-const decode = decoderFor(FIELDS);
+const decode = createDecoder(FIELDS);
 
 const select = (...aliases: string[]): FieldSelection[] =>
   aliases.map((alias) => ({ alias, sub: [] }));

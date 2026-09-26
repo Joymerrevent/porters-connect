@@ -1,11 +1,8 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersConfigError } from "../errors";
-import {
-  declaredRequired,
-  defineFields,
-  type FieldDecls,
-} from "./define-fields";
+import { declaredRequired, defineFields } from "./define-fields";
+import type { FieldDecls } from "./declared-catalogs";
 
 // defineFields is the single validation boundary (ADR-0023 D4): it builds a per-resource
 // catalog (alias -> Data Type) from the typed builder and throws synchronously on bad input.

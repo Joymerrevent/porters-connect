@@ -145,6 +145,7 @@ ADR-0007 の例示の食い違いを解消する: [oauth][oauth] では **`remov
 本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
 
 - `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`（2026-09-25・ADR-0097 で名前を変えた）
+- `src/auth/token-exchange.ts` → `src/auth/exchange-token.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [oauth]: ../usage/reference/authentication-api/oauth.md
 [token]: ../usage/reference/authentication-api/token.md

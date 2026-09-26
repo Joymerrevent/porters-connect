@@ -96,7 +96,7 @@
 
 [CLAUDE.md]: ../../CLAUDE.md
 [err]: ../../src/errors/index.ts
-[cli]: ../../src/client.ts
+[cli]: ../../src/porters-client.ts
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0007]: 0007-oauth-public-surface.md

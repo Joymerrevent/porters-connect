@@ -8,6 +8,6 @@
 
 > **CustomFieldResource** = `"candidate"` \| `"job"` \| `"client"` \| `"recruiter"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"sales"` \| `"process"` \| `"resume"`
 
-Defined in: [src/fields/define-fields.ts:112](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L112)
+Defined in: [src/fields/declared-catalogs.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L85)
 
 Data resources that accept custom fields. Master / Attachment are excluded.

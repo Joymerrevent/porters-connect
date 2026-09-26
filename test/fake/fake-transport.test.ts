@@ -2,11 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PortersError, PortersNetworkError } from "../../src/errors/index";
 import type { TransportRequest } from "../../src/http/types";
-import {
-  parseAuthentication,
-  parseResourcePage,
-  parseWriteResult,
-} from "../../src/xml/parser";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import { createFakeTransport } from "./fake-transport";
 import type { FakeTransport } from "./types";
 

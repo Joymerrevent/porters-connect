@@ -1,13 +1,13 @@
 // Public surface. Only what is exported here is part of the supported API.
 
-export { PortersClient } from "./client";
+export { PortersClient } from "./porters-client";
 // `TenantScope` is the partition-bound accessor bundle from `porters.tenant(id, options)` (ADR-0040 /
 // F-3); `TenantOptions` carries that partition's custom field declaration (ADR-0087).
 export type {
   PortersClientOptions,
   TenantOptions,
   TenantScope,
-} from "./client";
+} from "./porters-client";
 
 export {
   PortersError,
@@ -49,7 +49,7 @@ export type { MockHandler, MockReply, MockTransportOptions } from "./http";
 export { createFetchTransport } from "./http";
 export type { FetchTransportOptions } from "./http";
 // `Scheme` is the access-point URL scheme accepted by `PortersClientOptions.scheme` (ADR-0047).
-export type { PartitionId } from "./client";
+export type { PartitionId } from "./porters-client";
 export type { Scheme } from "./http";
 export type { Scope } from "./auth";
 

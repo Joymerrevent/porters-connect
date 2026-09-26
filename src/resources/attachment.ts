@@ -11,15 +11,18 @@
 // `content` with `util/base64`.
 
 import { PortersConfigError } from "../errors";
-import { apiUrl, type AccessPoint } from "../http/access-point";
-import { encodeField } from "../xml/encode";
-import { parseResourcePage } from "../xml/parser";
-import { asString } from "../xml/raw";
-import { appendPaging, paginateOnce } from "../accessor/paging";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
+import { encodeField } from "../xml/encode-field";
+import { parseResourcePage } from "../xml/parse-resource-page";
+import { asString } from "../xml/as-string";
+import { appendPaging } from "../accessor/append-paging";
+import { paginateOnce } from "../accessor/paginate";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import type { Paging } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
-import { buildWriteUrl, firstWriteResultId } from "../accessor/write";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
+import { buildWriteUrl } from "../accessor/build-write-url";
+import { firstWriteResultId } from "../accessor/first-write-result-id";
 import {
   ATTACHMENT_REQUEST_TYPE,
   MAX_ATTACHMENT_CONTENT_CHARS,
@@ -197,7 +200,7 @@ const guardContent = (content: string | undefined): void => {
 };
 
 export const createAttachmentAccessor = (
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): AttachmentAccessor => ({
   of: (resourceName) => {
     // One binding, two places PORTERS wants it: `resource=` on every Read and the `<Resource>`

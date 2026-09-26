@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { DepartmentRef, FieldValue, UserRef } from "../xml/decode";
+import type { DepartmentRef, FieldValue, UserRef } from "../xml/field-value";
 import { PHASE_DESCRIPTOR, createPhaseAccessor } from "./phase";
 
-// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
-// accessor/write-data.test.ts; here we pin what makes Phase
+// The generic Read/Write flow is unit-tested in accessor/data-reader.test.ts and
+// accessor/data-writer.test.ts; here we pin what makes Phase
 // different (ADR-0061): bare aliases, `Id` as the primary key, the bound `resource`, and
 // System[Department].
 const USER_FIELDS = [

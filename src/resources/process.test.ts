@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { FieldValue, UserRef } from "../xml/decode";
+import type { FieldValue, UserRef } from "../xml/field-value";
 import { createProcessResource } from "./process";
 
-// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
-// accessor/write-data.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in accessor/data-reader.test.ts and
+// accessor/data-writer.test.ts; here we pin the
 // Process-specific catalog (each field decodes by its Data Type) and config
 // (root name `Process`, path `process`, alias prefix `Process`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];

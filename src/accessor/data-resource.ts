@@ -1,20 +1,20 @@
 // The data resources' accessor (ADR-0004/0005/0011): the Read (search / searchAll / get / getMany)
 // + Write (create / update / bulk) shape shared by every PORTERS data resource. A resource
-// module supplies its names + Data-Type catalog; this puts the Read half (`read-data.ts`) and the
-// Write half (`write-data.ts`) together and keeps XML out of resources/ (parse/encode live in
+// module supplies its names + Data-Type catalog; this puts the Read half (`data-reader.ts`) and the
+// Write half (`data-writer.ts`) together and keeps XML out of resources/ (parse/encode live in
 // xml/). Standard `P_` fields use the catalog; custom `U_`/`A_` pass through (decode: raw string /
 // encode: Text). The read-only master resources have their own, smaller counterpart:
 // `master-resource.ts`.
 
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { Paging } from "./paging";
-import type { ResourceDeps } from "./deps";
-import type { ResourcePageOf } from "./read";
+import type { PartitionBoundConnectionDeps } from "./deps";
+import type { ResourcePageOf } from "./resource-page";
 import type { SearchQuery } from "./query";
 import type { BulkWriteResult } from "./write-many";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
-import { createDataReader, type DataReadConfig } from "./read-data";
+import { createDataReader, type DataReadConfig } from "./data-reader";
 import type {
   EmptyImages,
   GetOptions,
@@ -22,7 +22,7 @@ import type {
   ReadSelection,
   SearchRecord,
 } from "./read-record";
-import { createDataWriter, type DataWriteConfig } from "./write-data";
+import { createDataWriter, type DataWriteConfig } from "./data-writer";
 import type { CreateInput, UpdateInput } from "./write-record";
 
 /** Static description of a data resource: what its Read half and its Write half need. */
@@ -98,7 +98,7 @@ export const createDataResource = <
   const R extends ReferenceMap = EmptyReferences,
 >(
   config: DataResourceConfig<F, Req, R>,
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): DataResource<F, Req[number], R> => ({
   ...createDataReader(config, deps),
   ...createDataWriter(config, deps),

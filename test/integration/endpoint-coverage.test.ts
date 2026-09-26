@@ -22,7 +22,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { PortersClient, type TenantScope } from "../../src/client";
+import { PortersClient, type TenantScope } from "../../src/porters-client";
 import type { StoredTokens, TokenStore } from "../../src/auth/types";
 import type { Transport, TransportRequest } from "../../src/http/types";
 import { createFakeTransport } from "../fake/index";

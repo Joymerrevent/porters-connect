@@ -8,7 +8,7 @@
 
 > **AttachmentAccessor** = `object`
 
-Defined in: [src/resources/attachment.ts:113](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L113)
+Defined in: [src/resources/attachment.ts:116](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L116)
 
 Attachments are reached through the resource they belong to:
 
@@ -27,7 +27,7 @@ PORTERS requires `resource=` on every Attachment Read, and the same value goes i
 
 > **of**(`resource`): [`AttachmentResource`](AttachmentResource.md)
 
-Defined in: [src/resources/attachment.ts:114](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L114)
+Defined in: [src/resources/attachment.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L117)
 
 #### Parameters
 

@@ -23,8 +23,8 @@ import type {
   ReadRecord,
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
-import type { ResourcePage, ResourcePageOf } from "../accessor/read";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
+import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
 import type { EmptyReferences, Expand, ReferenceMap } from "../accessor/expand";
 import type { ImageOption } from "../accessor/image";
 import type { BulkWriteResult } from "../accessor/write-many";
@@ -221,7 +221,7 @@ export type RecruiterResource<
 };
 
 export const createRecruiterResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): RecruiterResource<C> => {
   // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;

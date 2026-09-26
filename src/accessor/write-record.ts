@@ -1,8 +1,8 @@
 // The inputs a data resource's Write takes, derived from the catalog (ADR-0019 W2): which fields
 // `create` requires and which a caller may write at all. Types only — the Write that sends them is
-// `write-data.ts`. The counterpart of `read-record.ts` (what a Read resolves to).
+// `data-writer.ts`. The counterpart of `read-record.ts` (what a Read resolves to).
 
-import type { WritableDataType, WriteValueOf } from "../xml/encode";
+import type { WritableDataType, WriteValueOf } from "../xml/write-value";
 import type { FieldCatalog } from "./catalog";
 
 // Writable aliases: every field whose Data Type a user may write (excludes System[Id] /

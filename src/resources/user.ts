@@ -7,16 +7,16 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { createFieldParam } from "../accessor/field-param";
+import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
   FieldCatalog,
   ReadFieldAlias,
   ReadRecord,
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourcePage } from "../accessor/read";
+import type { ResourcePage } from "../accessor/resource-page";
 import { createMasterResource } from "../accessor/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
@@ -102,7 +102,7 @@ export type UserResource = {
 // once**, and the two `User`-typed ones go out parenthesised because that is what the shared
 // assembly sends — docs/live-verification.md (LV-18). If a particular field is rejected, drop it
 // from this default rather than from the catalog: `field` can still name it explicitly.
-const setField = createFieldParam(USER_DESCRIPTOR.prefix, FIELDS);
+const setField = createFieldParamSetter(USER_DESCRIPTOR.prefix, FIELDS);
 
 // The parameters User Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
@@ -117,7 +117,9 @@ const buildParams = (
   return p;
 };
 
-export const createUserResource = (deps: ResourceDeps): UserResource => {
+export const createUserResource = (
+  deps: PartitionBoundConnectionDeps,
+): UserResource => {
   const { search, searchAll } = createMasterResource(
     {
       ...USER_DESCRIPTOR,

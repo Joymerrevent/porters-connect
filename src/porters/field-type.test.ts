@@ -11,7 +11,7 @@ import {
 } from "./field-type";
 import type { FieldTypeRow } from "./field-type";
 
-// Every Data Type the library models (`src/xml/decode.ts`). Restated here on purpose: the point of
+// Every Data Type the library models (`src/xml/decode-field.ts`). Restated here on purpose: the point of
 // these tests is to catch the table falling behind the union, so reading the union would defeat it.
 const ALL_DATA_TYPES: readonly DataType[] = [
   "System[Id]",

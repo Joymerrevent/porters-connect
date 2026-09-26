@@ -8,7 +8,7 @@
 
 > **FieldBuilder** = `object`
 
-Defined in: [src/fields/define-fields.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L60)
+Defined in: [src/fields/declared-catalogs.ts:33](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L33)
 
 Builder passed to each resource declaration: one method per declarable Data Type.
 
@@ -18,7 +18,7 @@ Builder passed to each resource declaration: one method per declarable Data Type
 
 > **age**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Age"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L85)
+Defined in: [src/fields/declared-catalogs.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L58)
 
 #### Type Parameters
 
@@ -42,7 +42,7 @@ Defined in: [src/fields/define-fields.ts:85](https://github.com/Joymerrevent/por
 
 > **date**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Date"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L79)
+Defined in: [src/fields/declared-catalogs.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L52)
 
 #### Type Parameters
 
@@ -66,7 +66,7 @@ Defined in: [src/fields/define-fields.ts:79](https://github.com/Joymerrevent/por
 
 > **dateTime**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"DateTime"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L82)
+Defined in: [src/fields/declared-catalogs.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L55)
 
 #### Type Parameters
 
@@ -90,7 +90,7 @@ Defined in: [src/fields/define-fields.ts:82](https://github.com/Joymerrevent/por
 
 > **image**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Image"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L98)
+Defined in: [src/fields/declared-catalogs.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L71)
 
 An Image field (FT-18). Reads back `FileName` alone unless the query's `image` option asks
 for `ContentType` / `Content`; writes the three sub-elements, checked before send.
@@ -117,7 +117,7 @@ for `ContentType` / `Content`; writes the three sub-elements, checked before sen
 
 > **link**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Link"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:105](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L105)
+Defined in: [src/fields/declared-catalogs.ts:78](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L78)
 
 A Link field (FT-20). Reads back a Contact id, a `UserRef`, or a `DepartmentRef` — whichever
 the tenant configured, told apart by shape; writes the referenced id.
@@ -144,7 +144,7 @@ the tenant configured, told apart by shape; writes the referenced id.
 
 > **mail**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Mail"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L70)
+Defined in: [src/fields/declared-catalogs.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L43)
 
 #### Type Parameters
 
@@ -168,7 +168,7 @@ Defined in: [src/fields/define-fields.ts:70](https://github.com/Joymerrevent/por
 
 > **multilineText**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"MultilineText"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:67](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L67)
+Defined in: [src/fields/declared-catalogs.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L40)
 
 #### Type Parameters
 
@@ -192,7 +192,7 @@ Defined in: [src/fields/define-fields.ts:67](https://github.com/Joymerrevent/por
 
 > **number**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Number"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L61)
+Defined in: [src/fields/declared-catalogs.ts:34](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L34)
 
 #### Type Parameters
 
@@ -216,7 +216,7 @@ Defined in: [src/fields/define-fields.ts:61](https://github.com/Joymerrevent/por
 
 > **option**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Option"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L88)
+Defined in: [src/fields/declared-catalogs.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L61)
 
 #### Type Parameters
 
@@ -240,7 +240,7 @@ Defined in: [src/fields/define-fields.ts:88](https://github.com/Joymerrevent/por
 
 > **singlelineText**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"SinglelineText"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L64)
+Defined in: [src/fields/declared-catalogs.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L37)
 
 #### Type Parameters
 
@@ -264,7 +264,7 @@ Defined in: [src/fields/define-fields.ts:64](https://github.com/Joymerrevent/por
 
 > **telephone**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"Telephone"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L73)
+Defined in: [src/fields/declared-catalogs.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L46)
 
 #### Type Parameters
 
@@ -288,7 +288,7 @@ Defined in: [src/fields/define-fields.ts:73](https://github.com/Joymerrevent/por
 
 > **url**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"URL"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L76)
+Defined in: [src/fields/declared-catalogs.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L49)
 
 #### Type Parameters
 
@@ -312,7 +312,7 @@ Defined in: [src/fields/define-fields.ts:76](https://github.com/Joymerrevent/por
 
 > **user**\<`R`\>(`options?`): [`FieldDef`](FieldDef.md)\<`"User"`, `NoInfer`\<`R`\>\>
 
-Defined in: [src/fields/define-fields.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L91)
+Defined in: [src/fields/declared-catalogs.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L64)
 
 #### Type Parameters
 

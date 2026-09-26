@@ -53,7 +53,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: `Option.` 付き（例 `Option.P_PersonPhase_Applied`）を verbatim 返却
 - **不確実な理由**: ライブ Read 例は `Option.P_Tokyo`、旧 fixture は接頭辞なしだった
-- **コード箇所**: `src/xml/decode.ts`（`decodeOption`）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeOption`）
 - **確認方法**: 実 Read レスポンスの `OptionRoot` 子タグ名
 - **状態**: 未確認
 - **確認結果**: —
@@ -62,7 +62,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: あっても無くても動くよう**両対応**
 - **不確実な理由**: ライブのテンプレは Root あり・サンプルは Root なし（ADR-0011 で保留）
-- **コード箇所**: `src/xml/decode.ts`（`decodeOption`）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeOption`）
 - **確認方法**: 実 Read に `OptionRoot` が出るか
 - **状態**: 未確認
 - **確認結果**: —
@@ -117,7 +117,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: Partition Read は `partition` パラメータを送らない（`request_type` のみ）。doc の Method/Sample に `partition` が無いため（[ADR-0022][a22]）
 - **不確実な理由**: 実機で `partition` 無しのまま 200 で通るか未確認（他リソースは必須のため）
-- **コード箇所**: `src/resources/partition.ts`（`buildUrl`）
+- **コード箇所**: `src/resources/partition.ts`（`buildParams`）
 - **確認方法**: 実 `partition?request_type=1`（partition 未指定）
 - **状態**: 未確認
 - **確認結果**: —
@@ -132,7 +132,7 @@ grep -rn "VERIFY(live)" src test
   月次クォータは API ドキュメントではなく**契約条件**として示されているため、超過時の挙動・集計単位も不明
 - **コード箇所**: `test/fake/fake-transport.ts`（サイズガードの 400）／`test/fake/rate-limit.ts`（分・月の窓）／
   ライブラリ側は `src/http/requester.ts`（送信前ガードで到達させない・応答 status の分岐）・
-  `src/errors/classify.ts`（`httpStatusCategory` ＝ status→category の写像）・`src/http/throttle.ts`（上限の 90% で自制）
+  `src/errors/http-status-error.ts`（`httpStatusCategory` ＝ status→category の写像）・`src/http/throttle.ts`（上限の 90% で自制）
 - **確認方法**: 15000 文字超のリクエストを実機に投げてステータス・ボディを記録／1 分あたり上限超のバーストで切断挙動を観測／
   月次クォータ超過時の応答と、カウントのリセット時期を確認
 - **状態**: 未確認
@@ -145,7 +145,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: 参照先レコードは `<Field><Reference><P_Id>id</P_Id></Reference></Field>` 相当の**中立なタグ**で表現（`decodeReference` は最初の record 型の子から `P_Id` を読むため通る）
 - **不確実な理由**: 実際のタグは**参照先リソース名**（例 `<Candidate>`）のはずだが、Data Type カタログは参照先リソースを持たないため、フェイク側で正しい名前を決められない
-- **コード箇所**: `test/fake/wire.ts`（`referenceInner`）／`src/xml/decode.ts`（`decodeReference`）
+- **コード箇所**: `test/fake/wire.ts`（`referenceInner`）／`src/xml/decode-field.ts`（`decodeReference`）
 - **確認方法**: `Resume.P_Candidate` 等の実 Read レスポンスで入れ子タグ名と内側の alias（`Candidate.P_Id` か `P_Id` か）を確認
 - **状態**: 未確認
 - **確認結果**: —
@@ -155,7 +155,7 @@ grep -rn "VERIFY(live)" src test
 - **現在の対応 / 仮定**: 更新対象 ID が存在しない → **per-item `<Code>7`**（Resource が存在しない）。1 リクエスト 200 件超 → **ルート `<Code>102`**（パラメータが多すぎ）
 - **不確実な理由**: reference は「200 件ずつ分割」とだけ書き、**超過時のコード**も、Write エラーが per-item か**ルート `<Code>`** かも明示していない（成功時の Write 応答にルート `<Code>` は無い）
 - **コード箇所**: `test/fake/fake-transport.ts`（`writeItem` / `handleWrite`）／
-  ライブラリ側は `src/xml/parser.ts`（`parseWriteResult` がルート `<Code>` を先読み）
+  ライブラリ側は `src/xml/parse-write-result.ts`（`parseWriteResult` がルート `<Code>` を先読み）
 - **確認方法**: 存在しない ID への update・201 件の一括 Write を実機に投げ、応答 XML の形（ルート `<Code>` の有無）とコードを記録
 - **状態**: 未確認
 - **確認結果**: —
@@ -175,7 +175,7 @@ grep -rn "VERIFY(live)" src test
   正しさ**に効く。**外れても壊れない設計にはしてある**（接頭辞つき・bare の両対応）が、
   確認の価値は上がった。System 系の Value は**宣言できない型**なので、外れても生成・突合は変わらない
 - **コード箇所**: `src/porters/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
-  `src/fields/tenant-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
+  `src/fields/read-custom-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
   `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
 - **状態**: 未確認
@@ -188,7 +188,7 @@ grep -rn "VERIFY(live)" src test
 - **不確実な理由**: App 登録が App 単位である点は確定だが、**発行されたトークンのアクセス範囲が partition を跨ぐか**は未確認。
   [ADR-0008][a8] は両対応（跨げないなら案3＝テナントごとに専用 client を構築）なので**設計はブロックされない**が、
   `tenant(id)` の使い勝手は結論に左右される
-- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/accessor/query-encode.ts`（`buildReadParams` が `partition` をクエリに載せる）
+- **コード箇所**: `src/porters-client.ts`（`tenant` / `buildScope`）／`src/accessor/build-read-params.ts`（`buildReadParams` が `partition` をクエリに載せる）
 - **確認方法**: アクセス権を付与した 2 つの partition に対し、**同一の Access Token** で Read を投げて両方 200 ＋ `<Code>0`
   が返るか。片方が 403/404 なら案3（テナントごとに client）を推奨経路に格上げする
 - **状態**: 未確認
@@ -205,7 +205,7 @@ grep -rn "VERIFY(live)" src test
   「Read の field でのみ指定可・Write 不可」だけを書き、**応答 XML の実例を載せていない**。
   Field Type / Data Type 欄がともに「ー」＝ネストの有無を決める型情報が無いので、
   平文である保証は取れていない
-- **コード箇所**: `src/xml/decode.ts`（`decodeField` の `type === null` 分岐）／
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeField` の `type === null` 分岐）／
   各カタログの `P_Deleted: null`（`src/resources/{candidate,job,client,process,resume}.ts`）
 - **確認方法**: 実機で 3 点。
   1. `field` に `{Prefix}.P_Deleted` を含めた Read の応答 XML — 平文スカラーか、何かにネストするか
@@ -226,7 +226,7 @@ grep -rn "VERIFY(live)" src test
   「既定を説明しているだけで、送るのは `deleted` / `all` のみ」という読み方も文面上は否定できない。
   外れたときの形が重く、**`existing` を明示指定した Read が全部 Result Code 133
   （itemstate 値が無効）で落ちる**
-- **コード箇所**: `src/accessor/query-encode.ts`（`appendReadQuery` の itemstate 分岐）
+- **コード箇所**: `src/accessor/append-read-query.ts`（`appendReadQuery` の itemstate 分岐）
 - **確認方法**: `itemstate=existing` を付けた Read を実機に投げ、**HTTP 200 ＋ ルート `<Code>0`** が返り、
   かつ**結果が `itemstate` 無しの Read と一致する**ことを確認する。133 が返るなら案A を撤回して
   [ADR-0038][a38] SD-4 の省略へ戻す（新しい ADR で [ADR-0057][a57] を supersede する）
@@ -246,7 +246,7 @@ grep -rn "VERIFY(live)" src test
   リソース名と食い違う唯一の例。Field Type 記事が Write について
   「`Person.P_Id` の値のみを指定することができます」と書くので **Read の `()` も `Person.` と推定**しているが、
   Read 側の明示例は無い
-- **コード箇所**: `src/accessor/expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
+- **コード箇所**: `src/accessor/apply-expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
   `src/resources/candidate.ts`（`prefix: "Person"`）・参照先の登録は各リソースの `REFERENCES`
 - **確認方法**: Process Read に `field=Process.P_Candidate(Person.P_Id,Person.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
@@ -303,7 +303,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は Link の値を「Contact の ID、またはユーザー型 / 部署型」とだけ書き、
   **User / Department 形の応答 XML を示していない**。`User` 型・`System[Department]` 型の入れ子形は
   それぞれ確定しているので同じ形だと見ているが、Link 経由でも同じかは未確認
-- **コード箇所**: `src/xml/decode.ts`（`decodeLink` — `VERIFY(live)` 済み）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeLink` — `VERIFY(live)` 済み）
 - **確認方法**: ユーザー型 / 部署型に設定した Link 項目を持つテナントで Read し、応答 XML を確認する。
   外れていたら `decodeLink` の判別（`"User" in outer` / `"Department" in outer`）を実形に合わせる。
   **判別できない形が来たら `null`** になるので、黙って別の型の値が入ることはない
@@ -319,7 +319,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は「既定は FileName のみ」「`ContentType` / `Content` は明示」と**散文で**書き、
   Write 形式の側にサブ要素名（`FileName` / `ContentType` / `Content`）があるだけで、
   **Read の `field` にどう書くかのサンプルが無い**。`User` 型の `()` 記法から類推している
-- **コード箇所**: `src/accessor/image.ts`（`applyImage` — `VERIFY(live)` 済み）
+- **コード箇所**: `src/accessor/apply-image.ts`（`applyImage` — `VERIFY(live)` 済み）
 - **確認方法**: Image 項目を持つテナントで `field=<alias>(FileName,ContentType,Content)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と 3 つのサブタグが返ることを確認する。外れていたら
   `applyImage` の組み立てだけを直す（decode は**返ってきたサブタグを読む**実装なので影響しない）
@@ -351,7 +351,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference の Write 形式は `<FieldAlias><FileName/><ContentType/><Content/></FieldAlias>` を
   示すだけで、**空要素を送ると消えるのか・エラーになるのか**を書いていない。推測で「消す」形を用意すると、
   外れたときに**消えたと思って消えていない**（またはその逆）になるので、用意しないほうが安全側
-- **コード箇所**: `src/xml/encode.ts`（`ImageWriteValue` — 3 つとも必須）
+- **コード箇所**: `src/xml/write-value.ts`（`ImageWriteValue` — 3 つとも必須）
 - **確認方法**: 空の `<FileName/><ContentType/><Content/>` を書き込み、値が消えるか確認する。
   消えると分かったら「消す」表現（例: `null` とは別の明示的な値）を足す
 - **状態**: 未確認
@@ -365,7 +365,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は「1 分あたり Read 2000 / Write 500・超過すると強制切断され得る」と
   書くだけで、**それが App ごとなのか・契約ごとなのか・ホストごとなのか**を書いていない。
   ホストは契約ごとに払い出されるので「ホスト ≒ 契約」と仮定している
-- **コード箇所**: `src/http/throttle.ts`（`createThrottleRegistry` / `sharedThrottleFor`）
+- **コード箇所**: `src/http/shared-throttle.ts`（`createThrottleRegistry` / `sharedThrottle`）
 - **確認方法**: 同じホストに対して 2 つの App ID で並行に叩き、切断が**合算で**起きるか、
   App ごとに独立して起きるかを見る
 - **状態**: 未確認
@@ -422,7 +422,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   **スカラのテキスト**として読まれるので、同じ保証が効かない。
   出典は alias の書式をどこにも定義していない（[LV-1][lv1] は接頭辞すら未確定）ため、
   **テナントが作った選択肢の alias が `Name` から外れうるか**が分からない
-- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/encode.ts`（`assertTagName`）／
+- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/assert-tag-name.ts`（`assertTagName`）／
   `src/resources/option.ts`（`P_Alias` を `SinglelineText` として読む側）
 - **確認方法**: 実テナントの Option マスタを `t.option.search()` で全件読み、
   `P_Alias` が 1 件残らず `isXmlName` を通るかを確かめる。**記号や空白を含む alias を
@@ -438,12 +438,12 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 
 - **現在の対応 / 仮定**: **先頭 1 人だけ読む**。`Activity.P_EventParticipants`（参加者）は `User` 型だが、
   UI では複数人を入れられる。decoder は他の `User` 型項目と同じく入れ子の `<User>` を 1 つ読む
-  （`src/xml/decode.ts` の `decodeUser`）
+  （`src/xml/decode-field.ts` の `decodeUser`）
 - **不確実な理由**: 出典は `User` 型の応答形を「`User.P_Id` / `P_Type` / `P_Name` / `P_Mail` の 4 つ」と
   書くだけで、**複数人のときに `<User>` が繰り返されるのか、別の包みが付くのかを書いていない**。
   繰り返すなら現在の実装は**2 人目以降を黙って捨てる**ことになり、
   「値が欠けている」ことが呼び出し側から見えない
-- **コード箇所**: `src/resources/activity.ts`（`P_EventParticipants`）／`src/xml/decode.ts`（`decodeUser`）
+- **コード箇所**: `src/resources/activity.ts`（`P_EventParticipants`）／`src/xml/decode-field.ts`（`decodeUser`）
 - **確認方法**: 参加者を **2 人以上**入れた Activity を作り、`field=Activity.P_EventParticipants(User.P_Id,…)`
   で読んで応答 XML の生の形を見る。繰り返すなら読み取り値を配列に変えるのが筋
   （`Option` が `string[]` なのと同じ形＝[ADR-0017][a17] の前例がある）
@@ -478,7 +478,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   **書けるのか・書けるとしてどの形（`Department.P_Id`？ `User` と同じ ID のみ？）かを公表していない**。
   推測した形を送るより書けないことにしておくほうが安全側だが、**書けるのに塞いでいる**なら
   機能の欠落になる
-- **コード箇所**: `src/xml/encode.ts`（`WritableDataType` の `Exclude`）
+- **コード箇所**: `src/xml/write-value.ts`（`WritableDataType` の `Exclude`）
 - **確認方法**: `System[Department]` 型の項目（Phase の `OwnerDepartment` 等）に対して、
   `<OwnerDepartment>123</OwnerDepartment>` と `<OwnerDepartment><Department.P_Id>123</Department.P_Id></OwnerDepartment>`
   の両方を cast 経由で送り、Result Code を比べる
@@ -529,7 +529,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: 出典（[Field の項目][ref-field]）は `P_Required` を「項目の必須設定状態」とだけ書き、
   **Write API がその設定を強制するか**（欠けていたら Result Code で弾くのか、空のまま登録するのか）は
   書かれていない。画面の入力必須と API の検査が同じとは限らない
-- **コード箇所**: `src/fields/tenant-catalog.ts`（`required` を読むところ）
+- **コード箇所**: `src/fields/read-custom-catalog.ts`（`required` を読むところ）
 - **確認方法**: カスタム項目を入力必須にした環境で、その項目を渡さずに `create` を送り、Result Code で
   弾かれるか・空のまま登録されるかを確かめる。標準項目の「新規必須」列の `●` と同じ扱いかも見る
 - **状態**: 未確認

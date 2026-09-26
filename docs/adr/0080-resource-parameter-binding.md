@@ -158,6 +158,7 @@ PORTERS に無い絞り込みをライブラリが発明することにもなる
 本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
 
 - `docs/usage/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（2026-09-23・ADR-0088）
+- `src/fields/tenant-catalog.ts` → `src/fields/read-custom-catalog.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [adr79]: 0079-resource-by-name.md
 [adr22]: 0022-master-read-query-surface.md

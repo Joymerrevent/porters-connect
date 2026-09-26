@@ -441,14 +441,14 @@ export const checkExits = (
  * リソース別（`docs/usage/resources/`）とアクセサの**両方向**突合（[ADR-0088] の検査⑥）。
  *
  * 「1 リソース 1 ページ」は、ページが無いリソースがあると引く軸として壊れる。逆にアクセサの無い
- * ページは 404 と同じ。どちらも黙って起きるので、公開 API の実体（`src/client.ts` の
+ * ページは 404 と同じ。どちらも黙って起きるので、公開 API の実体（`src/porters-client.ts` の
  * `readonly x: XResource | XAccessor`＝ `TenantScope` の 17 個と client 直下の `partition`）と
  * `resources/*.md` を突き合わせる。D4（reference ↔ カタログ）と同じ形。
  *
  * 検出するもの: アクセサにページが無い／ページにアクセサが無い／アクセサが 1 つも拾えない・
  * 階層が消えた（番人）。
  */
-const CLIENT_SOURCE = "src/client.ts";
+const CLIENT_SOURCE = "src/porters-client.ts";
 const RESOURCES_DIR = "docs/usage/resources";
 const RESOURCES_INDEX = "README.md";
 

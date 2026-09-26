@@ -267,6 +267,9 @@
 - `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
 - `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
 - `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
+- `src/xml/parser.test.ts` → 分けた先の隣のテスト（`src/xml/parse-*.test.ts`）（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `src/xml/parser.ts` → `src/xml/parse-resource-page.ts` / `parse-write-result.ts` / `parse-authentication.ts`（共通の読み取りは `parse-xml.ts`）（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
 
 [findings]: ../reviews/findings.md
 [guide]: ../usage/topics/errors.md

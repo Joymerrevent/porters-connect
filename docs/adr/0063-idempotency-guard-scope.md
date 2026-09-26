@@ -120,6 +120,14 @@ if (e instanceof PortersNetworkError && write && !idempotent) throw e;
   「不確定」の判定方法で、[ADR-0044][adr44] の status→category 写像も変えない。
 - 未確認の仮定は [live-verification][lv] **LV-9**（制約違反時の HTTP 応答）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/errors/classify.ts` → `src/errors/resource-error.ts` / `auth-error.ts` / `network-error.ts` / `http-status-error.ts`（作るエラーごとに分けた）（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [adr10]: 0010-retry-throttle.md
 [adr44]: 0044-http-status-handling.md
 [adr50]: 0050-auth-http-status-handling.md

@@ -8,17 +8,17 @@
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
-import {
-  declaredRequired,
-  type CustomDataType,
-  type CustomFieldResource,
-  type DeclaredCatalogs,
-} from "./define-fields";
+import { declaredRequired } from "./define-fields";
+import type { CustomDataType } from "./custom-data-types";
+import type {
+  CustomFieldResource,
+  DeclaredCatalogs,
+} from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,
   type UndeclarableField,
-} from "./tenant-catalog";
+} from "./read-custom-catalog";
 
 /** Declared, but the tenant has no such field. The read/write request would still ask for it. */
 export type MissingField = {

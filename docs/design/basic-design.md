@@ -79,7 +79,7 @@ src/
 
 ### テスト
 
-- **UT は co-located**：実装の隣に 1 対 1 で置く（`src/xml/parser.ts` ↔ `src/xml/parser.test.ts`。vitest 既定の `**/*.test.ts`）。
+- **UT は co-located**：実装の隣に 1 対 1 で置く（`src/xml/parse-resource-page.ts` ↔ `src/xml/parse-resource-page.test.ts`。vitest 既定の `**/*.test.ts`）。
   型だけのファイル（実行されるコードを持たないもの）には置かない。
   ビルド（tsup）は `src/index.ts` の依存グラフからバンドルするため `*.test.ts` は **dist/型に含まれない**。`package.json` は `dist` のみ publish。
 - **モック XML フィクスチャ**：再利用する**全パターンの見本帳は集約** `test/fixtures/`（データ型別・リソース別 Read/Write・エラー系。[ADR-0002][a2]：契約が無い間は出典 XML を fixture 化し使い回す）。
@@ -171,7 +171,7 @@ accessor 呼び出し
   - ※ 数値は理解のための目安。**正典は [docs/usage/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
 - **機密情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
-  - **アクセスポイント**：URL 組立は 1 関数（`http/access-point.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
+  - **アクセスポイント**：URL 組立は 1 関数（`http/api-url.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
     抑止は専用 env のみ（許可と沈黙は別・[ADR-0047][a47]）。
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
 - **言語**：公開サーフェスは英語、内部コメントは日本語可（CLAUDE.md）。

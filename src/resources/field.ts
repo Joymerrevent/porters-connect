@@ -8,11 +8,11 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourcePage } from "../accessor/read";
+import type { ResourcePage } from "../accessor/resource-page";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import { createMasterResource } from "../accessor/master-resource";
 
@@ -104,7 +104,9 @@ const buildParams = (
   return p;
 };
 
-export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
+export const createFieldAccessor = (
+  deps: PartitionBoundConnectionDeps,
+): FieldAccessor => ({
   of: (resource) =>
     createMasterResource(
       {

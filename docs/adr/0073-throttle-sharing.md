@@ -187,6 +187,7 @@ CHANGELOG に明記する。
 - `docs/usage/howto/multi-tenant.md` → `docs/usage/recipes/multi-tenant.md`（2026-09-23・ADR-0088）
 - `docs/usage/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（2026-09-23・ADR-0088）
 - `docs/usage/concepts/limits.md` → `docs/usage/topics/limits.md`（2026-09-23・ADR-0088）
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [0010]: 0010-retry-throttle.md
 [0044]: 0044-http-status-handling.md

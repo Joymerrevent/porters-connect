@@ -5,14 +5,16 @@
 // `alias`/`level`/`enabled`/`count` — no `start` (no offset paging → no searchAll), no
 // `field`/`condition`/`get(id)`.
 
-import { apiUrl, type AccessPoint } from "../http/access-point";
-import { parseResourcePage, type RawItem } from "../xml/parser";
-import { asArray, asRecord } from "../xml/raw";
-import { appendPaging } from "../accessor/paging";
-import { decoderFor } from "../accessor/decoder";
+import { apiUrl } from "../http/api-url";
+import type { AccessPoint } from "../http/access-point";
+import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
+import { asArray } from "../xml/as-array";
+import { asRecord } from "../xml/as-record";
+import { appendPaging } from "../accessor/append-paging";
+import { createDecoder } from "../accessor/decoder";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Limit } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 
 const FIELDS = {
@@ -77,8 +79,10 @@ const buildUrl = (
 const withoutItems = (raw: RawItem): RawItem =>
   Object.fromEntries(Object.entries(raw).filter(([k]) => k !== "Items"));
 
-export const createOptionResource = (deps: ResourceDeps): OptionResource => {
-  const decode = decoderFor(FIELDS);
+export const createOptionResource = (
+  deps: PartitionBoundConnectionDeps,
+): OptionResource => {
+  const decode = createDecoder(FIELDS);
   // Depth-first flatten: push each node, then recurse into its <Items><Item>… children.
   const flatten = (items: RawItem[], out: Option[]): void => {
     for (const raw of items) {

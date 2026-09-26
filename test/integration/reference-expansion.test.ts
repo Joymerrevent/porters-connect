@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { PortersClient } from "../../src/client";
+import { PortersClient } from "../../src/porters-client";
 import { PortersConfigError } from "../../src/errors";
 import { createFakeTransport } from "../fake/index";
 

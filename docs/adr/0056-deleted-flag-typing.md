@@ -280,6 +280,8 @@ reference が「Write 時の指定はできません」と明記している項�
 
 - `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
 - `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
+- `src/xml/decode.ts` → 値の型は `src/xml/field-value.ts`、変換は `src/xml/decode-field.ts` / `decode-reference-record.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
 
 [adr5]: 0005-public-api-shape.md
 [adr16]: 0016-field-type-granularity.md

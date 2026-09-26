@@ -1,9 +1,6 @@
-// The one place a PORTERS URL is assembled (ADR-0047). Before this, `https://${host}/v1/...`
-// was spelled out at 10 call sites and grew by one with every resource added — so the scheme
-// could not be configured at all, and a local (http) fake or a VPN gateway was unreachable
-// without swapping the whole Transport. Everything that talks to the API builds its URL here.
-// Knowing what an access point *is* also lives here, so validation sits next to assembly
-// (ADR-0048) — `apiUrl` stays pure concatenation and the check runs once, at construction.
+// What an access point is (ADR-0047) and the check it passes once, at construction (ADR-0048):
+// the scheme / hostname / port every PORTERS URL is built from. The URL itself is assembled in
+// `api-url.ts`, which stays pure concatenation because the check already ran here.
 
 import { PortersConfigError } from "../errors/index";
 
@@ -145,15 +142,3 @@ export const authorityOf = (accessPoint: AccessPoint): string =>
   accessPoint.port === undefined
     ? accessPoint.hostname
     : `${accessPoint.hostname}:${accessPoint.port}`;
-
-/** Build an API URL: `{scheme}://{authority}/v1/{path}` plus `?{params}` when any are given. */
-export const apiUrl = (
-  accessPoint: AccessPoint,
-  path: string,
-  params?: URLSearchParams,
-): string => {
-  const query = params?.toString();
-  const scheme = accessPoint.scheme ?? "https";
-  const base = `${scheme}://${authorityOf(accessPoint)}/v1/${path}`;
-  return query ? `${base}?${query}` : base;
-};

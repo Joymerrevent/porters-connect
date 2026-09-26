@@ -11,11 +11,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { PortersError } from "../../src/errors/index";
-import {
-  parseAuthentication,
-  parseResourcePage,
-  parseWriteResult,
-} from "../../src/xml/parser";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import {
   buildAuthenticationXml,
   buildResourceErrorXml,

@@ -115,6 +115,7 @@ PORTERS の envelope があるならそれが最も具体的な情報なので�
 
 - `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
 - `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+- `src/errors/classify.ts` → `src/errors/resource-error.ts` / `auth-error.ts` / `network-error.ts` / `http-status-error.ts`（作るエラーごとに分けた）（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [findings]: ../reviews/findings.md
 [lv]: ../live-verification.md

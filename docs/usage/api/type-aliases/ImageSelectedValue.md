@@ -8,7 +8,7 @@
 
 > **ImageSelectedValue**\<`S`\> = \[`S`\] *extends* \[readonly infer A[]\] ? \{ \[K in A\]: string \| null \} : [`ImageValue`](ImageValue.md)
 
-Defined in: [src/accessor/image.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/image.ts#L64)
+Defined in: [src/accessor/image.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/image.ts#L55)
 
 The value a selected Image field reads back as: exactly the sub-tags that were selected, each
 `string | null`.

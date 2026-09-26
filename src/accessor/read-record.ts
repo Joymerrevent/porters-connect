@@ -1,7 +1,7 @@
 // The record type a data resource's Read resolves to, keyed by what was asked for: `field` narrows
 // it (ADR-0096), `expand` widens a reference into the referenced record (ADR-0058) and `image`
 // picks an Image field's sub-fields (ADR-0064). Also the options `get` / `getMany` take. Types only
-// — the Read that sends them is `read-data.ts`.
+// — the Read that sends them is `data-reader.ts`.
 
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { Expand, ExpandedReadRecord, ReferenceMap } from "./expand";

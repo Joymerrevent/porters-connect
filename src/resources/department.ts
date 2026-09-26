@@ -4,16 +4,16 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { createFieldParam } from "../accessor/field-param";
+import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
   FieldCatalog,
   ReadFieldAlias,
   ReadRecord,
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourcePage } from "../accessor/read";
+import type { ResourcePage } from "../accessor/resource-page";
 import { createMasterResource } from "../accessor/master-resource";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。
@@ -72,7 +72,7 @@ export type DepartmentResource = {
 // `P_Id,P_Name`; whether the 4 "参照取得できない" fields come back from a direct Department Read
 // with all 6 listed at once is unconfirmed — docs/live-verification.md (LV-30). If one is
 // rejected, drop it from this default rather than from the catalog: `field` can still name it.
-const setField = createFieldParam(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
+const setField = createFieldParamSetter(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
 
 // The parameters Department Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
@@ -86,7 +86,7 @@ const buildParams = (
 };
 
 export const createDepartmentResource = (
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): DepartmentResource =>
   createMasterResource(
     {
