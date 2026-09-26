@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { PortersConfigError } from "../errors";
+
 import type { Field } from "../resources/field";
 import { CUSTOM_DATA_TYPES } from "./custom-data-types";
 import { generateFieldDecls } from "./generate-field-decls";
@@ -308,5 +310,73 @@ describe("generateFieldDecls — required", () => {
     expect(src).toContain(
       "    U_seen: f.dateTime({ required: true }), // FT-12:",
     );
+  });
+});
+
+// RV-82。テナントから来た値を、生成するソースコードに入れても壊れないように逃がす。
+describe("generateFieldDecls — tenant values in the generated source", () => {
+  it("quotes an alias that is not an identifier", async () => {
+    const source = sourceOf({
+      job: [{ P_Alias: "Job.U_foo-bar", P_Type: 1 }],
+    });
+    const out = await generateFieldDecls(source, ["job"]);
+    expect(out).toContain('    "U_foo-bar": f.singlelineText(),');
+  });
+
+  it("keeps an identifier alias bare", async () => {
+    const source = sourceOf({ job: [{ P_Alias: "Job.U_ok$1", P_Type: 1 }] });
+    expect(await generateFieldDecls(source, ["job"])).toContain(
+      "    U_ok$1: f.singlelineText(),",
+    );
+  });
+
+  it("keeps a field name with a line break inside its comment", async () => {
+    const source = sourceOf({
+      job: [
+        {
+          P_Alias: "Job.U_x",
+          P_Type: 3,
+          P_Name: "score\nU_injected: f.number(), //\r\nx y z",
+        },
+      ],
+    });
+    const out = await generateFieldDecls(source, ["job"], {
+      includeNames: true,
+    });
+    expect(out).toContain(
+      "    U_x: f.number(), // score U_injected: f.number(), // x y z",
+    );
+    expect(out).not.toMatch(/\n\s*U_injected/);
+  });
+
+  it("keeps an undeclarable field's note on one line", async () => {
+    const source = sourceOf({
+      job: [{ P_Alias: "Job.U_a\nb", P_Type: 16 }],
+    });
+    const out = await generateFieldDecls(source, ["job"]);
+    expect(out).toContain("    // U_a b: Reference (Field Type 16)");
+  });
+
+  it("refuses a constName that is not an identifier", async () => {
+    let err: unknown;
+    try {
+      await generateFieldDecls(sourceOf({}), ["job"], {
+        constName: "my-fields",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).message).toBe(
+      'generateFieldDecls: constName "my-fields" is not a valid identifier',
+    );
+    expect((err as PortersConfigError).category).toBe("config");
+    expect((err as PortersConfigError).hint).toContain("myFields");
+  });
+
+  it("prints a resource passed twice once", async () => {
+    const source = sourceOf({ job: [{ P_Alias: "Job.U_x", P_Type: 3 }] });
+    const out = await generateFieldDecls(source, ["job", "job"]);
+    expect(out.match(/ {2}job: /g)).toHaveLength(1);
   });
 });
