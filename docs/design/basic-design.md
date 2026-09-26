@@ -19,8 +19,8 @@
    │   ├─ xml/          XML パース/シリアライズ（外に XML を漏らさない）                 │
    │   ├─ errors/       PortersError 階層（Auth/Resource/Network/Config）＋ category     │
    │   ├─ fields/       defineFields DSL（標準 P_ 静的型 ＋ カスタム U_/A_ 宣言＋検証）  │
+   │   ├─ accessor/     アクセサを組み立てる共通の仕組み（Read・クエリ・展開・一括）    │
    │   ├─ resources/    リソース別アクセサ（candidate.search/get/create/update …）      │
-   │   │   └─ core/     アクセサを組み立てる共通の仕組み（Read・クエリ・展開・一括）     │
    │   └─ util/         datetime（PORTERS 形式 ⇄ ISO8601）ほか                           │
    └───────────────────────────────────────────────────────────────────────────────────┘
         │ HTTPS（XML）
@@ -41,8 +41,8 @@ src/
   xml/                # parse / serialize（データ型別エンコード）
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
   auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
+  accessor/           # アクセサを組み立てる共通の仕組み（データ系の data-resource・マスタの master-resource と、共有の読み込み・書き込みの部品）
   resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
-    core/             # アクセサを組み立てる共通の仕組み（データ系の data-resource・マスタの master-resource と、共有の読み込み・書き込みの部品）
   fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
 
@@ -51,10 +51,10 @@ src/
 ### フォルダと依存の向き
 
 - **フォルダは責務の境界**。上の一覧のモジュールがそれぞれ 1 つの責務を持つ。
-- **層**（[ADR-0097][a97] / [ADR-0098][a98]）：上の一覧の順（`porters` → `errors` → `util` → `xml` → `http` →
-  `auth` → `resources` → `fields` → 直下）に下から並ぶ。各モジュールは自分より下の層だけを import する。
+- **層**（[ADR-0097][a97] / [ADR-0098][a98] / [ADR-0101][a101]）：上の一覧の順（`porters` → `errors` → `util` → `xml` →
+  `http` → `auth` → `accessor` → `resources` → `fields` → 直下）に下から並ぶ。各モジュールは自分より下の層だけを import する
+  （`accessor` と `resources` は `auth` を使わない）。
 - `porters/` は PORTERS が決めた値と定義表だけを持ち、判断や検査のコードは置かない。何も import しない。
-- `resources/core/` は `resources/` 直下（リソース本体）を import しない。
 - 層と向きは eslint の `no-restricted-imports` で止める（テストは対象外）。
 
 ### ファイル
@@ -63,7 +63,7 @@ src/
 - **ファイル名は、そのファイルの主な export の名前を kebab-case にしたもの**（[ADR-0097][a97]）。factory の `create` は
   付けても付けなくてもよい（`createTokenManager` → `token-manager.ts` でも `create-token-manager.ts` でもよい。[ADR-0101][a101]）。
   主な export が 1 つに決まらないファイルは、役割を表す名前にする。
-- **フォルダ名と重なる語は付けない**（`resources/core/` の中に `-core` を付けない。[ADR-0097][a97]）。
+- **フォルダ名と重なる語は付けない**（`accessor/` の中に `-accessor` を付けない。[ADR-0097][a97]）。
 - **`index.ts` はバレル**（`export *` / `export type *` の再 export だけ）。宣言は名前の付いたファイルに置き、
   モジュールの中で公開するかどうかは、そのファイルの `export` の有無で決める（[ADR-0013][a13]）。
 - **パッケージの公開 API は `src/index.ts` の明示 export だけ**。モジュールをまたいで見えても npm に出さない記号があるので、
