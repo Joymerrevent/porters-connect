@@ -165,7 +165,9 @@ const newIds = r.results.filter((x) => x.ok).map((x) => x.id);
 - **リクエスト全体の失敗**（HTTP エラー・通信断・パース不能・**リクエスト単位の拒否**）だけが throw されます。
 - リクエストごと拒否された場合（PORTERS が `<Item>` を返さず、ルートの `<Code>` だけで答える形）は、
   その **Result Code がそのまま `PortersResourceError` として** throw されます<!-- 根拠: ADR-0045 -->。
-- バッチ途中（2 つ目以降）で失敗した場合は `PortersResourceError` を throw し、`hint` に次を書きます。
+- 最初のバッチが「書き込まれていないと分かる」失敗（PORTERS が入力や権限の誤りで断ったときなど）なら、元のエラーをそのまま
+  throw します。それ以外（2 つ目以降のバッチの失敗や、送った後で結果が分からない `create`）は `PortersResourceError` を
+  throw し、`hint` に次を書きます。
   - 失敗したバッチの index の範囲。送った後で結果が分からない `create` のときは、そのバッチが**書き込まれた可能性がある**こと
   - まだ送っていない index
   - それまでのバッチで PORTERS が断ったレコードの index（多いときは先頭の 20 件と残りの件数）
