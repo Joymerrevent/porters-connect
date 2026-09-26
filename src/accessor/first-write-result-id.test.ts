@@ -37,8 +37,22 @@ describe("firstWriteResultId", () => {
     }
     expect(error).toBeInstanceOf(PortersResourceError);
     expect((error as PortersResourceError).message).toBe(
-      "write returned no result item",
+      "write returned 0 result items for one record",
     );
     expect((error as PortersResourceError).category).toBe("unknown");
+    expect((error as PortersResourceError).context).toEqual({
+      resource: "Candidate",
+    });
+  });
+
+  // RV-70。1 件だけ書いたのに結果が 2 件あれば、どれが自分の結果か分からない。
+  it("refuses a response with more than one result Item for one record", () => {
+    expect(() =>
+      firstWriteResultId(
+        `<Candidate><Item><Id>1</Id><Code>0</Code></Item><Item><Id>2</Id><Code>0</Code></Item></Candidate>`,
+        "candidate",
+        "Candidate",
+      ),
+    ).toThrow("write returned 2 result items for one record");
   });
 });

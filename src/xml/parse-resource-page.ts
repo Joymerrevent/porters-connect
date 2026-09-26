@@ -4,7 +4,7 @@ import { resourceError } from "../errors/resource-error";
 import { PortersError, PortersResourceError } from "../errors/index";
 import { asArray } from "./as-array";
 import { asRecord } from "./as-record";
-import { parseXml, toInt } from "./parse-xml";
+import { parseXml, toCode, toInt } from "./parse-xml";
 import { asString } from "./as-string";
 import { RESOURCES_WITHOUT_PAGE_ATTRIBUTES } from "../porters/read-rules";
 
@@ -19,7 +19,7 @@ export type ResourcePage = {
 };
 
 // 200 でも PORTERS が答えているとは限らない（ADR-0051）。中間装置を疑う先を示す。
-const MIDDLEBOX_HINT =
+export const MIDDLEBOX_HINT =
   "A middlebox (proxy, captive portal, SSO login page, WAF notice) may be answering instead of PORTERS. " +
   "Check PORTERS_HOST and the network path from this process to the API.";
 
@@ -72,7 +72,7 @@ export const parseResourcePage = (
     );
   }
 
-  const code = toInt(body.Code);
+  const code = toCode(body.Code, unparseable);
   if (code !== 0) {
     // `rootKey` は同定を通った時点で `resource` と等しい（引数の側を使う＝型も string で済む）。
     throw resourceError(code, `resource returned code ${code}`, { resource });

@@ -52,7 +52,7 @@ const authFailure = (body: string): PortersError => {
 // A Write rejected as a whole: the reason is at the root, not in an <Item> (ADR-0045).
 const writeFailure = (body: string): PortersError => {
   try {
-    parseWriteResult(body);
+    parseWriteResult(body, "Candidate");
     throw new Error("expected the envelope to fail");
   } catch (error) {
     if (error instanceof PortersError) return error;
@@ -90,12 +90,14 @@ describe("the fake's error envelopes match the reference fixtures", () => {
   it("produces the same per-item outcomes as the partial-write fixture", () => {
     const fromFixture = parseWriteResult(
       fixture("candidate/write-partial.xml"),
+      "Candidate",
     );
     const fromFake = parseWriteResult(
       buildWriteResultXml("Candidate", [
         { id: 10001, code: 0 },
         { id: 0, code: 133 },
       ]),
+      "Candidate",
     );
 
     expect(fromFake).toEqual(fromFixture);

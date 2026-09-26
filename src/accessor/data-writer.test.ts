@@ -32,8 +32,8 @@ const CONFIG = {
 // A prefixed key (`W.P_Id`) exercises bareAlias; an unknown alias passes through.
 const OK = `<?xml version="1.0"?><Widget Total="1" Count="1" Start="0"><Code>0</Code><Item><W.P_Id>7</W.P_Id><W.U_x>raw</W.U_x></Item></Widget>`;
 
-const WRITE_OK = (id = 100) =>
-  `<Widget><Item><Id>${id}</Id><Code>0</Code></Item></Widget>`;
+const WRITE_OK = (id = 100, root = "Widget") =>
+  `<${root}><Item><Id>${id}</Id><Code>0</Code></Item></${root}>`;
 
 type Call = { req: TransportRequest; spec?: RequestSpec };
 
@@ -90,7 +90,7 @@ describe("createDataWriter — image の write（ADR-0064 論点3）", () => {
 
   it("画像を含む write だけサイズガードを外す", async () => {
     const calls: Call[] = [];
-    await album(calls, WRITE_OK()).create({ U_photo: photo });
+    await album(calls, WRITE_OK(100, "Album")).create({ U_photo: photo });
     expect(calls[0].spec).toEqual({
       write: true,
       idempotent: false,
@@ -104,14 +104,14 @@ describe("createDataWriter — image の write（ADR-0064 論点3）", () => {
 
   it("画像を含まない write の spec は従来のまま（穴を広げない）", async () => {
     const calls: Call[] = [];
-    await album(calls, WRITE_OK()).create({ P_Name: "x" });
+    await album(calls, WRITE_OK(100, "Album")).create({ P_Name: "x" });
     expect(calls[0].spec).toEqual({ write: true, idempotent: false });
   });
 
   it("上限違反は送信前に落ちる＝リクエストは 1 本も出ない", async () => {
     const calls: Call[] = [];
     await expect(
-      album(calls, WRITE_OK()).create({
+      album(calls, WRITE_OK(100, "Album")).create({
         U_photo: { ...photo, ContentType: "image/webp" as never },
       }),
     ).rejects.toBeInstanceOf(PortersConfigError);
@@ -121,10 +121,10 @@ describe("createDataWriter — image の write（ADR-0064 論点3）", () => {
   it("画像を含む一括書き込みは弾く（単発へ誘導する）", async () => {
     const calls: Call[] = [];
     await expect(
-      album(calls, WRITE_OK()).createMany([{ U_photo: photo }]),
+      album(calls, WRITE_OK(100, "Album")).createMany([{ U_photo: photo }]),
     ).rejects.toThrow(/createMany cannot write an image/);
     await expect(
-      album(calls, WRITE_OK()).updateMany([
+      album(calls, WRITE_OK(100, "Album")).updateMany([
         { id: 1, fields: { U_photo: photo } },
       ]),
     ).rejects.toThrow(/updateMany cannot write an image/);
@@ -143,7 +143,7 @@ describe("createDataWriter — image の write（ADR-0064 論点3）", () => {
 
   it("Link は ID ひとつで書く", async () => {
     const calls: Call[] = [];
-    await album(calls, WRITE_OK()).create({ U_link: 10001 });
+    await album(calls, WRITE_OK(100, "Album")).create({ U_link: 10001 });
     expect(calls[0].req.body).toContain("<Al.U_link>10001</Al.U_link>");
   });
 });
@@ -200,7 +200,7 @@ describe("createDataWriter — Write", () => {
     expect(err).toBeInstanceOf(PortersResourceError);
     expect((err as PortersResourceError).category).toBe("unknown");
     expect((err as PortersResourceError).message).toBe(
-      "write returned no result item",
+      "write returned 0 result items for one record",
     );
   });
 });

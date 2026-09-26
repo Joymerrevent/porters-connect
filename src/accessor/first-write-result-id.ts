@@ -14,12 +14,15 @@ export const firstWriteResultId = (
   path: string,
   name: string,
 ): number => {
-  const first = parseWriteResult(body)[0];
-  if (first === undefined) {
-    throw new PortersResourceError("write returned no result item", {
-      category: "unknown",
-    });
+  const items = parseWriteResult(body, name);
+  // 1 件だけ書いたので、結果もちょうど 1 件のはず。0 件も 2 件以上も、どれが自分の結果か分からない（RV-70）。
+  if (items.length !== 1) {
+    throw new PortersResourceError(
+      `write returned ${items.length} result items for one record`,
+      { category: "unknown", context: { resource: name } },
+    );
   }
+  const first = items[0];
   if (first.code !== 0) {
     throw resourceError(
       first.code,

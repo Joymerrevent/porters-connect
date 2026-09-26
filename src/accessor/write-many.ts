@@ -228,7 +228,7 @@ export const writeMany = async (
     try {
       parsed = await requester.request(
         { method: "POST", url: target.url, headers: {}, body },
-        parseWriteResult,
+        (xml) => parseWriteResult(xml, target.name),
         { write: true, idempotent },
       );
     } catch (cause) {

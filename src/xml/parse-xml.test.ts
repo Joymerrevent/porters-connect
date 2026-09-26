@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseXml, toInt } from "./parse-xml";
+import { parseXml, toCode, toInt } from "./parse-xml";
 
 import {
   PortersAuthError,
@@ -47,6 +47,7 @@ describe("パーサが拒否するタグ名（RV-54）", () => {
     try {
       parseWriteResult(
         "<Candidate><Result><Item><prototype/><Code>0</Code><Id>1</Id></Item></Result></Candidate>",
+        "Candidate",
       );
       expect.unreachable("should have thrown");
     } catch (e) {
@@ -125,5 +126,34 @@ describe("parseXml / toInt", () => {
     expect(toInt("12")).toBe(12);
     expect(toInt(undefined)).toBe(0);
     expect(toInt({ nested: true })).toBe(0);
+  });
+});
+
+// RV-70。Result の Code / Error は、無い・空なら 0、数字ならその数。それ以外は PORTERS の応答ではない。
+describe("toCode", () => {
+  const unparseable = (): PortersResourceError =>
+    new PortersResourceError("unparseable", { category: "unknown" });
+
+  it.each([
+    [undefined, 0],
+    ["", 0],
+    ["0", 0],
+    ["103", 103],
+    [" 9 ", 9],
+  ])("reads %j as %i", (v, code) => {
+    expect(toCode(v, unparseable)).toBe(code);
+  });
+
+  it.each([
+    ["103x"],
+    ["x103"],
+    ["-1"],
+    ["1.5"],
+    ["abc"],
+    [{ "#text": "103", "@_type": "e" }],
+    [{ Value: "103" }],
+    [["0", "103"]],
+  ])("refuses %j", (v) => {
+    expect(() => toCode(v, unparseable)).toThrow("unparseable");
   });
 });

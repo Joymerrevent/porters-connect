@@ -96,7 +96,10 @@ describe("fake server wiring", () => {
     expect(first.P_UpdateDate).toBe("2026-01-02T03:04:05Z");
     expect(first.P_Phase).toEqual(["Option.P_PersonPhase_Applied"]);
 
-    const written = parseWriteResult(fixture("candidate/write-result.xml"));
+    const written = parseWriteResult(
+      fixture("candidate/write-result.xml"),
+      "Candidate",
+    );
     expect(written).toEqual([{ id: 10001, code: 0 }]);
   });
 

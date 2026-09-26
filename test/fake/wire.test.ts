@@ -185,7 +185,7 @@ describe("buildWriteResultXml / error envelopes", () => {
       { id: 0, code: 133 },
     ]);
 
-    expect(parseWriteResult(xml)).toEqual([
+    expect(parseWriteResult(xml, "Candidate")).toEqual([
       { id: 10001, code: 0 },
       { id: 0, code: 133 },
     ]);

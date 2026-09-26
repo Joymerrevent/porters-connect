@@ -55,3 +55,22 @@ export const toInt = (v: unknown): number => {
   const s = asString(v);
   return s === undefined ? 0 : Number(s);
 };
+
+/**
+ * Read a Result `<Code>` / `<Error>`. Absent or empty reads as 0 (success), as PORTERS omits the
+ * root `<Code>` on a successful Write. Anything else must be a plain number: a node carrying
+ * attributes, nested elements or a repeated tag, or text that is not a number, is not a PORTERS
+ * answer — reading it as 0 would turn an error into a success (RV-70).
+ */
+export const toCode = (
+  v: unknown,
+  unparseable: (cause?: unknown) => PortersError,
+): number => {
+  if (v === undefined) return 0;
+  const s = asString(v);
+  if (s === undefined) throw unparseable();
+  const t = s.trim();
+  if (t === "") return 0;
+  if (!/^\d+$/.test(t)) throw unparseable();
+  return Number(t);
+};

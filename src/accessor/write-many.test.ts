@@ -67,7 +67,9 @@ const fakeRequester = (
         items += `<Item><Id>${1000 + gi}</Id><Code>${opts.codeFor ? opts.codeFor(gi) : 0}</Code></Item>`;
       }
       seen += sent;
-      return Promise.resolve(parse(`<Candidate>${items}</Candidate>`));
+      // 送った本文と同じルート要素で答える（本物の PORTERS と同じ）。
+      const root = /^<(\w+)>/.exec(req.body ?? "")?.[1] ?? "Candidate";
+      return Promise.resolve(parse(`<${root}>${items}</${root}>`));
     },
   };
   return { requester, calls };

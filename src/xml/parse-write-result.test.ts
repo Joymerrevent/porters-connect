@@ -14,7 +14,10 @@ const fixture = (path: string): string =>
 
 describe("parseWriteResult (ADR-0011)", () => {
   it("reads per-Item Id and Code from a Write response", () => {
-    const results = parseWriteResult(fixture("candidate/write-result.xml"));
+    const results = parseWriteResult(
+      fixture("candidate/write-result.xml"),
+      "Candidate",
+    );
     expect(results).toEqual([{ id: 10001, code: 0 }]);
   });
 
@@ -22,6 +25,7 @@ describe("parseWriteResult (ADR-0011)", () => {
     const results = parseWriteResult(
       `<Candidate><Item><Id>10001</Id><Code>0</Code></Item>` +
         `<Item><Id>0</Id><Code>301</Code></Item></Candidate>`,
+      "Candidate",
     );
     // a non-zero Code is returned, not thrown — the accessor applies the policy
     expect(results).toEqual([
@@ -30,15 +34,116 @@ describe("parseWriteResult (ADR-0011)", () => {
     ]);
   });
 
-  it("defaults a missing Id / Code (and a non-record Item) to 0", () => {
-    const results = parseWriteResult(`<Candidate><Item/></Candidate>`);
-    expect(results).toEqual([{ id: 0, code: 0 }]);
+  // RV-70。Item の Code が無い応答や、成功した Item に Id が無い応答を、成功や id 0 として読まない。
+  it.each([
+    ["an Item with no Code", `<Candidate><Item><Id>5</Id></Item></Candidate>`],
+    [
+      "a successful Item with no Id",
+      `<Candidate><Item><Code>0</Code></Item></Candidate>`,
+    ],
+    [
+      "a successful Item whose Id is 0",
+      `<Candidate><Item><Id>0</Id><Code>0</Code></Item></Candidate>`,
+    ],
+    [
+      "a successful Item whose Id is not a number",
+      `<Candidate><Item><Id>abc</Id><Code>0</Code></Item></Candidate>`,
+    ],
+    ["a non-record Item", `<Candidate><Item/></Candidate>`],
+    [
+      "a successful Item whose Id has trailing text",
+      `<Candidate><Item><Id>12x</Id><Code>0</Code></Item></Candidate>`,
+    ],
+    [
+      "a successful Item whose Id has leading text",
+      `<Candidate><Item><Id>x12</Id><Code>0</Code></Item></Candidate>`,
+    ],
+    [
+      "an Item Code with an attribute",
+      `<Candidate><Item><Id>5</Id><Code type="e">103</Code></Item></Candidate>`,
+    ],
+    [
+      "an Item Code that is not a number",
+      `<Candidate><Item><Id>5</Id><Code>abc</Code></Item></Candidate>`,
+    ],
+  ])("refuses %s", (_label, xml) => {
+    let err: unknown;
+    try {
+      parseWriteResult(xml, "Candidate");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).message).toBe(
+      "unparseable write response",
+    );
+    expect((err as PortersResourceError).context).toEqual({
+      resource: "Candidate",
+    });
+    expect((err as PortersResourceError).hint).toContain("middlebox");
+  });
+
+  it("reads an Id with surrounding whitespace", () => {
+    expect(
+      parseWriteResult(
+        `<Candidate><Item><Id> 10001 </Id><Code>0</Code></Item><Item><Id> -1 </Id><Code>107</Code></Item></Candidate>`,
+        "Candidate",
+      ),
+    ).toEqual([
+      { id: 10001, code: 0 },
+      { id: -1, code: 107 },
+    ]);
+  });
+
+  it("reads a failed Item's Id as 0 when it is not a whole number", () => {
+    expect(
+      parseWriteResult(
+        `<Candidate><Item><Id>12x</Id><Code>107</Code></Item><Item><Id>x12</Id><Code>107</Code></Item></Candidate>`,
+        "Candidate",
+      ),
+    ).toEqual([
+      { id: 0, code: 107 },
+      { id: 0, code: 107 },
+    ]);
+  });
+
+  it("reads a failed Item's Id as it came, or 0 when it is not a number", () => {
+    expect(
+      parseWriteResult(
+        `<Candidate><Item><Id>-1</Id><Code>107</Code></Item><Item><Code>133</Code></Item></Candidate>`,
+        "Candidate",
+      ),
+    ).toEqual([
+      { id: -1, code: 107 },
+      { id: 0, code: 133 },
+    ]);
+  });
+
+  it("refuses a response whose root is another resource (ADR-0051 on the write side)", () => {
+    let err: unknown;
+    try {
+      parseWriteResult(
+        `<Job><Item><Id>5</Id><Code>0</Code></Item></Job>`,
+        "Candidate",
+      );
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersResourceError);
+    expect((err as PortersResourceError).message).toBe(
+      "write response root is <Job>, expected <Candidate>",
+    );
+    expect((err as PortersResourceError).category).toBe("unknown");
+    expect((err as PortersResourceError).hint).toContain("middlebox");
+    expect((err as PortersResourceError).context).toEqual({
+      resource: "Candidate",
+    });
   });
 
   it("surfaces unparseable XML as PortersResourceError(unknown)", () => {
     let err: unknown;
     try {
-      parseWriteResult("plain text");
+      parseWriteResult("plain text", "Candidate");
     } catch (e) {
       err = e;
     }
@@ -54,7 +159,7 @@ describe("parseWriteResult (ADR-0011)", () => {
     // response whose Result Code used to be lost as "no result item" (RV-14).
     let err: unknown;
     try {
-      parseWriteResult(fixture("errors/write-root-102.xml"));
+      parseWriteResult(fixture("errors/write-root-102.xml"), "Candidate");
     } catch (e) {
       err = e;
     }
@@ -75,6 +180,7 @@ describe("parseWriteResult (ADR-0011)", () => {
     expect(() =>
       parseWriteResult(
         `<Candidate><Code>403</Code><Item><Id>10001</Id><Code>0</Code></Item></Candidate>`,
+        "Candidate",
       ),
     ).toThrow(expect.objectContaining({ code: 403, category: "permission" }));
   });
@@ -83,12 +189,14 @@ describe("parseWriteResult (ADR-0011)", () => {
     expect(
       parseWriteResult(
         `<Candidate><Code>0</Code><Item><Id>10001</Id><Code>0</Code></Item></Candidate>`,
+        "Candidate",
       ),
     ).toEqual([{ id: 10001, code: 0 }]);
     // The documented success shape has no root <Code> at all.
     expect(
       parseWriteResult(
         `<Candidate><Item><Id>10001</Id><Code>0</Code></Item></Candidate>`,
+        "Candidate",
       ),
     ).toEqual([{ id: 10001, code: 0 }]);
   });
