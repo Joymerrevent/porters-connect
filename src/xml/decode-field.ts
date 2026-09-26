@@ -24,12 +24,48 @@ const pickPrefixed = (
 ): string | undefined =>
   asString(obj[`${prefix}.${key}`]) ?? asString(obj[key]);
 
-const decodeUser = (outer: Record<string, unknown>): UserRef | null => {
+// A scalar that must be a number: `Number` / `System[Id]`, and the Contact-id form of `Link`.
+// `Number(text)` never throws — it yields `NaN` — so unlike the date conversions this is checked
+// rather than caught. `NaN` is the one decoded value that passes `typeof === "number"` and
+// `!= null` while carrying nothing: it would flow into arithmetic and, written back, go out as
+// the literal `NaN` (RV-58). Reaching this means the same thing `converted` below means: the
+// declared Data Type is wrong (a text field declared `number()`), or PORTERS sent a format the
+// reference does not describe. Either way it is a mismatch to report, not a number to invent
+// (ADR-0006: no silent mis-conversion).
+const numeric = (alias: string, type: DataType, value: string): number => {
+  const n = Number(value);
+  if (Number.isFinite(n)) return n;
+  throw new PortersResourceError(
+    `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
+    {
+      category: "validation",
+      hint: `${type === "Link" ? "A scalar Link is a Contact id, which PORTERS sends as a plain number" : `PORTERS sends ${type} as a plain number`}. Check the Data Type declared for "${alias}" against Field Read (verifyFields).`,
+      context: { operation: "decode" },
+    },
+  );
+};
+
+// The id inside a nested record (User / Department / Reference). Absent or empty is "no id" (null);
+// anything else must be a number — `Number("")` is 0 and `Number("abc")` is NaN, which would pass
+// as an id that does not exist (RV-84). Checked the same way as a scalar number field.
+const nestedId = (
+  value: string | undefined,
+  alias: string,
+  type: DataType,
+): number | null =>
+  value === undefined || value.trim() === ""
+    ? null
+    : numeric(alias, type, value);
+
+const decodeUser = (
+  outer: Record<string, unknown>,
+  alias: string,
+  type: DataType,
+): UserRef | null => {
   const user = asRecord(outer.User);
   if (!user) return null;
-  const id = pickPrefixed(user, "User", "P_Id");
   return {
-    P_Id: id === undefined ? null : Number(id),
+    P_Id: nestedId(pickPrefixed(user, "User", "P_Id"), alias, type),
     P_Type: pickPrefixed(user, "User", "P_Type") ?? null,
     P_Name: pickPrefixed(user, "User", "P_Name") ?? null,
     P_Mail: pickPrefixed(user, "User", "P_Mail") ?? null,
@@ -40,12 +76,13 @@ const decodeUser = (outer: Record<string, unknown>): UserRef | null => {
 // (ADR-0061 — the shape comes from PORTERS' own 2019-12-10 sample, not a guess).
 const decodeDepartment = (
   outer: Record<string, unknown>,
+  alias: string,
+  type: DataType,
 ): DepartmentRef | null => {
   const dept = asRecord(outer.Department);
   if (!dept) return null;
-  const id = pickPrefixed(dept, "Department", "P_Id");
   return {
-    P_Id: id === undefined ? null : Number(id),
+    P_Id: nestedId(pickPrefixed(dept, "Department", "P_Id"), alias, type),
     P_Name: pickPrefixed(dept, "Department", "P_Name") ?? null,
   };
 };
@@ -69,7 +106,10 @@ const decodeOption = (outer: Record<string, unknown>): string[] | null => {
 // record's id — enough to round-trip. Richer reference reading is future work (SD-3).
 // NB: the label is literally `System[Reference]` (a nested record). It is NOT the
 // display-only Field-Type-16 "Reference" (a scalar mirror, Data Type `—`), left uncatalogued.
-const decodeReference = (outer: Record<string, unknown>): number | null => {
+const decodeReference = (
+  outer: Record<string, unknown>,
+  alias: string,
+): number | null => {
   // The nested resource is the first record-valued child (skip attributes / siblings,
   // which decodeUser avoids via a fixed key — here the tag varies). Read that record's own
   // `P_Id` by its **bare** alias: the wrapper tag is the referenced resource's name while its
@@ -81,8 +121,7 @@ const decodeReference = (outer: Record<string, unknown>): number | null => {
     if (!inner) continue;
     for (const [key, child] of Object.entries(inner)) {
       if (bareAlias(key) !== "P_Id") continue;
-      const id = asString(child);
-      return id === undefined ? null : Number(id);
+      return nestedId(asString(child), alias, "System[Reference]");
     }
     return null;
   }
@@ -107,27 +146,6 @@ const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
   return out;
 };
 
-// A scalar that must be a number: `Number` / `System[Id]`, and the Contact-id form of `Link`.
-// `Number(text)` never throws — it yields `NaN` — so unlike the date conversions this is checked
-// rather than caught. `NaN` is the one decoded value that passes `typeof === "number"` and
-// `!= null` while carrying nothing: it would flow into arithmetic and, written back, go out as
-// the literal `NaN` (RV-58). Reaching this means the same thing `converted` below means: the
-// declared Data Type is wrong (a text field declared `number()`), or PORTERS sent a format the
-// reference does not describe. Either way it is a mismatch to report, not a number to invent
-// (ADR-0006: no silent mis-conversion).
-const numeric = (alias: string, type: DataType, value: string): number => {
-  const n = Number(value);
-  if (Number.isFinite(n)) return n;
-  throw new PortersResourceError(
-    `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
-    {
-      category: "validation",
-      hint: `${type === "Link" ? "A scalar Link is a Contact id, which PORTERS sends as a plain number" : `PORTERS sends ${type} as a plain number`}. Check the Data Type declared for "${alias}" against Field Read (verifyFields).`,
-      context: { operation: "decode" },
-    },
-  );
-};
-
 // Link Read (ADR-0064 案4a): the value is a Contact id, a User, or a Department, and PORTERS
 // sends **no discriminator** — the shapes differ and nothing else does. Read the shape:
 // a scalar is the Contact id, `<User>` is a user, `<Department>` a department. Anything else
@@ -140,10 +158,10 @@ const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   if (scalar !== undefined) return numeric(alias, "Link", scalar);
   const outer = asRecord(raw);
   if (!outer) return null;
-  if ("User" in outer) return decodeUser(outer);
+  if ("User" in outer) return decodeUser(outer, alias, "Link");
   // Stryker disable next-line ConditionalExpression: equivalent — with no `Department` node,
   // decodeDepartment returns null, which is exactly the fall-through below.
-  if ("Department" in outer) return decodeDepartment(outer);
+  if ("Department" in outer) return decodeDepartment(outer, alias, "Link");
   return null;
 };
 
@@ -248,13 +266,13 @@ export const decodeField = (
     if (outer === undefined) throw mismatch(alias, type, "a nested record");
     switch (type) {
       case "User":
-        return decodeUser(outer);
+        return decodeUser(outer, alias, type);
       case "System[Department]":
-        return decodeDepartment(outer);
+        return decodeDepartment(outer, alias, type);
       case "Option":
         return decodeOption(outer);
       case "System[Reference]":
-        return decodeReference(outer);
+        return decodeReference(outer, alias);
       case "Image":
         return decodeImage(outer);
     }
