@@ -10,11 +10,8 @@ import { dataTypeOfFieldType, fieldTypeLabel } from "../porters/field-type";
 import type { Field, FieldSearchQuery } from "../resources/field";
 import { bareAlias } from "../util/alias";
 import type { DataType } from "../porters/data-type";
-import {
-  CUSTOM_DATA_TYPES,
-  type CustomDataType,
-  type CustomFieldResource,
-} from "./define-fields";
+import { CUSTOM_DATA_TYPES, type CustomDataType } from "./custom-data-types";
+import type { CustomFieldResource } from "./declared-catalogs";
 import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 
 /**

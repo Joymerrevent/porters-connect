@@ -19,7 +19,8 @@ import { PROCESS_DESCRIPTOR } from "../resources/process";
 import { RECRUITER_DESCRIPTOR } from "../resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../resources/resume";
 import { SALES_DESCRIPTOR } from "../resources/sales";
-import { defineFields, type DeclaredCatalogs } from "./define-fields";
+import { defineFields } from "./define-fields";
+import type { DeclaredCatalogs } from "./declared-catalogs";
 
 // R-16 end-to-end (ADR-0023): declared custom fields decode/encode by their declared Data
 // Type (not the raw-string passthrough) and appear typed on reads / writes via PortersClient.

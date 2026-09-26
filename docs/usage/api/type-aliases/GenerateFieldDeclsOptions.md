@@ -8,7 +8,7 @@
 
 > **GenerateFieldDeclsOptions** = `object`
 
-Defined in: [src/fields/generate-field-decls.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L45)
+Defined in: [src/fields/generate-field-decls.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L46)
 
 Options for [generateFieldDecls](../functions/generateFieldDecls.md).
 
@@ -18,7 +18,7 @@ Options for [generateFieldDecls](../functions/generateFieldDecls.md).
 
 > `readonly` `optional` **active?**: `-1` \| `0` \| `1`
 
-Defined in: [src/fields/generate-field-decls.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L52)
+Defined in: [src/fields/generate-field-decls.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L53)
 
 Field Read's `active` filter. Defaults to `1` — **in-use fields only**, which is what belongs
 in a template; there is no reason to declare a field the tenant is not using. This is the
@@ -30,7 +30,7 @@ opposite of `verifyFields`, where narrowing would cause false "missing" reports.
 
 > `readonly` `optional` **constName?**: `string`
 
-Defined in: [src/fields/generate-field-decls.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L60)
+Defined in: [src/fields/generate-field-decls.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L61)
 
 Name of the exported constant. Defaults to `myFields`.
 
@@ -40,7 +40,7 @@ Name of the exported constant. Defaults to `myFields`.
 
 > `readonly` `optional` **includeNames?**: `boolean`
 
-Defined in: [src/fields/generate-field-decls.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L58)
+Defined in: [src/fields/generate-field-decls.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/generate-field-decls.ts#L59)
 
 Add each field's PORTERS name (`Field.P_Name`) as a trailing comment. Off by default: the name
 is the tenant's own business vocabulary, and generated declarations usually get committed, so

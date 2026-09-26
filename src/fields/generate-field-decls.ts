@@ -8,8 +8,9 @@
 // output goes through `defineFields`, so the declaration it produces is statically typed like any
 // hand-written one — which a runtime catalog object could not be (ADR-0004).
 
-import type { FieldBuilder } from "./define-fields";
-import { type CustomDataType, type CustomFieldResource } from "./define-fields";
+import type { FieldBuilder } from "./declared-catalogs";
+import type { CustomDataType } from "./custom-data-types";
+import type { CustomFieldResource } from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,

@@ -8,7 +8,7 @@
 
 > **FieldDef**\<`D`, `R`\> = `object`
 
-Defined in: [src/fields/define-fields.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L17)
+Defined in: [src/fields/declared-catalogs.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L13)
 
 One custom field's declaration — the builder's return value: its Data Type and whether
 `create` requires it.
@@ -29,7 +29,7 @@ One custom field's declaration — the builder's return value: its Data Type and
 
 > `readonly` **dataType**: `D`
 
-Defined in: [src/fields/define-fields.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L18)
+Defined in: [src/fields/declared-catalogs.ts:14](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L14)
 
 ***
 
@@ -37,6 +37,6 @@ Defined in: [src/fields/define-fields.ts:18](https://github.com/Joymerrevent/por
 
 > `readonly` **required**: `R`
 
-Defined in: [src/fields/define-fields.ts:20](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L20)
+Defined in: [src/fields/declared-catalogs.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/declared-catalogs.ts#L16)
 
 `true` makes the field required in `create` / `createMany` input. Type-only: no runtime check.

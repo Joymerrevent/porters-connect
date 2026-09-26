@@ -8,4 +8,4 @@
 
 > **CustomDataType** = *typeof* `CUSTOM_DATA_TYPES`\[`number`\]
 
-Defined in: [src/fields/define-fields.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L57)
+Defined in: [src/fields/custom-data-types.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/custom-data-types.ts#L26)

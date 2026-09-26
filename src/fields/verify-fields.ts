@@ -8,12 +8,12 @@
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
-import {
-  declaredRequired,
-  type CustomDataType,
-  type CustomFieldResource,
-  type DeclaredCatalogs,
-} from "./define-fields";
+import { declaredRequired } from "./define-fields";
+import type { CustomDataType } from "./custom-data-types";
+import type {
+  CustomFieldResource,
+  DeclaredCatalogs,
+} from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,

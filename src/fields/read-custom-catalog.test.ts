@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Field, FieldSearchQuery } from "../resources/field";
-import type { CustomFieldResource } from "./define-fields";
+import type { CustomFieldResource } from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,

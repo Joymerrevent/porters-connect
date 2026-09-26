@@ -8,7 +8,7 @@
 
 > **UndeclarableField** = `object`
 
-Defined in: [src/fields/read-custom-catalog.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L43)
+Defined in: [src/fields/read-custom-catalog.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L40)
 
 A custom field PORTERS reports that no `defineFields` declaration can express.
 
@@ -18,7 +18,7 @@ A custom field PORTERS reports that no `defineFields` declaration can express.
 
 > `readonly` **alias**: `string`
 
-Defined in: [src/fields/read-custom-catalog.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L45)
+Defined in: [src/fields/read-custom-catalog.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L42)
 
 The bare alias (prefix stripped), e.g. `U_legacy`.
 
@@ -28,7 +28,7 @@ The bare alias (prefix stripped), e.g. `U_legacy`.
 
 > `readonly` **fieldType**: `number` \| `null`
 
-Defined in: [src/fields/read-custom-catalog.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L47)
+Defined in: [src/fields/read-custom-catalog.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L44)
 
 `Field.P_Type` exactly as PORTERS returned it; `null` when the field carried none.
 
@@ -38,7 +38,7 @@ Defined in: [src/fields/read-custom-catalog.ts:47](https://github.com/Joymerreve
 
 > `readonly` `optional` **label?**: `string`
 
-Defined in: [src/fields/read-custom-catalog.ts:49](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L49)
+Defined in: [src/fields/read-custom-catalog.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L46)
 
 PORTERS' own Field Type label, when the value is one it publishes.
 
@@ -48,4 +48,4 @@ PORTERS' own Field Type label, when the value is one it publishes.
 
 > `readonly` **reason**: [`UndeclarableReason`](UndeclarableReason.md)
 
-Defined in: [src/fields/read-custom-catalog.ts:50](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L50)
+Defined in: [src/fields/read-custom-catalog.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L47)
