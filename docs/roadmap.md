@@ -170,8 +170,8 @@ D1〜D5 と同じく**検査できる形**に落とすと 6 つになる。
       ファイル名の `create` は付けても付けなくてもよい（いまのファイル名は変えない）。**#434（`resources/core/` のリファクタリング）の
       マージ後に着手**（ほぼ全ファイルの import を書き換えるため）。
 - [ ] **いまあるファイルを「1 ファイルに主な export は 1 つ」に合わせる**（[ADR-0101][adr101] の追記・2026-09-26・stakeholder の議論）。
-      原則に合わないもの（名前だけずれているもの 8 本前後と、複数の関数や型を持つもの 9 本前後）を、1 本のリファクタリングの PR で直す。
-      例外（対になる関数・一緒に使う型の集まり・PORTERS が決めた値の表）は役割名のまま。**`src/accessor/` への移動の後に着手**。
+      原則に合わないもの（名前だけずれているもの 6 本と、関数を複数持つもの 20 本前後。`client.ts` → `porters-client.ts` を含む）を、1 本のリファクタリングの PR で直す。
+      例外（対になる関数・一緒に使う型の集まり・PORTERS が決めた値の表・クラスの階層）は役割名のまま。付随する小さな関数は同じファイルに置いてよい。**`src/accessor/` への移動の後に着手**。
 - [x] ✅ **検索クエリの型からページ送りを外し、`Paging` / `Limit` を足す**（[ADR-0099][adr99]・2026-09-25 accepted・同日実装・stakeholder の問い）。
       決定: `…SearchQuery`（データ系 12 種・マスタ 4 種・Attachment・Option）から `count` / `start` を外し、公開の型 `Limit`（`count`）と
       `Paging`（`Limit & { start }`）を足す。`search` は `…SearchQuery & Paging`（Option は `& Limit`）、`searchAll` は `…SearchQuery`。
