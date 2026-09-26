@@ -281,3 +281,35 @@ describe("condition の変換できない日時（RV-36）", () => {
     );
   });
 });
+
+// RV-74。空の一覧は `or=`（値なし）として送られていた。PORTERS がそれをどう読むかは分からない。
+describe("condition の空の一覧（RV-74）", () => {
+  it.each(["or", "and"] as const)(
+    "P_Phase の %s に空の一覧を渡すと、送信前に弾く",
+    (op) => {
+      let err: unknown;
+      try {
+        encode({ condition: { P_Phase: { [op]: [] } } });
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersConfigError);
+      expect((err as PortersConfigError).message).toBe(
+        "condition P_Phase: the list of values is empty",
+      );
+      expect((err as PortersConfigError).category).toBe("config");
+      expect((err as PortersConfigError).hint).toContain("at least one value");
+      expect((err as PortersConfigError).context).toEqual({
+        operation: "read",
+      });
+    },
+  );
+
+  it("1 つでも値があれば通る", () => {
+    expect(
+      encode({ condition: { P_Phase: { or: ["Option.P_A"] } } }).get(
+        "condition",
+      ),
+    ).toBe("W.P_Phase:or=Option.P_A");
+  });
+});

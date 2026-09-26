@@ -62,7 +62,20 @@ const serializeConditionValue = (
   value: unknown,
   alias: string,
 ): string => {
-  if (Array.isArray(value)) return value.map(String).join(":");
+  if (Array.isArray(value)) {
+    // 空の一覧は `or=`（値なし）として送られ、PORTERS がそれをどう読むかは分からない（RV-74）。
+    if (value.length === 0) {
+      throw new PortersConfigError(
+        `condition ${alias}: the list of values is empty`,
+        {
+          category: "config",
+          hint: "Pass at least one value, or leave the field out of the condition.",
+          context: { operation: "read" },
+        },
+      );
+    }
+    return value.map(String).join(":");
+  }
   if (type === "DateTime" || type === "System[DateTime]") {
     return convertedForQuery(alias, type, value, () =>
       isoToPortersDateTime(String(value)),

@@ -44,3 +44,34 @@ describe("accessor/paging — appendPaging（count のガード・RV-28）", () 
     }
   });
 });
+
+// RV-74。start は count と違い、これまで検査していなかった。
+describe("accessor/paging — appendPaging（start のガード・RV-74）", () => {
+  const params = (start: number): string => {
+    const p = new URLSearchParams();
+    appendPaging(p, undefined, start);
+    return p.toString();
+  };
+
+  it("0 は通る（先頭から）", () => {
+    expect(params(0)).toBe("start=0");
+  });
+
+  it.each([-1, 1.5, Number.NaN])("start=%s を送信前に弾く", (start) => {
+    expect(() => params(start)).toThrow(PortersConfigError);
+    expect(() => params(start)).toThrow(
+      `start must be an integer of 0 or more, got ${start}`,
+    );
+  });
+
+  it("弾くときは category と直し方を持つ", () => {
+    let err: unknown;
+    try {
+      params(-1);
+    } catch (e) {
+      err = e;
+    }
+    expect((err as PortersConfigError).category).toBe("config");
+    expect((err as PortersConfigError).hint).toContain("0-based");
+  });
+});
