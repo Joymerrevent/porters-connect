@@ -330,6 +330,15 @@ const tenantB = defineFields({ candidate: appCandidate });
 - 後続（本 ADR の対象外）: [ADR-0040][adr40] 案4b（partition 別トークンの seam）を開くときは
   `TenantOptions` が置き場になりうる。実機確認は [LV-13][lv]。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `src/fields/tenant-catalog.ts` → `src/fields/read-custom-catalog.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [adr4]: 0004-field-type-model.md
 [adr5]: 0005-public-api-shape.md
 [adr8]: 0008-multitenancy-partition.md

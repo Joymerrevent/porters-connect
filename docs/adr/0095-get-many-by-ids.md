@@ -219,6 +219,7 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 - `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
 - `src/resources/bulk-write.ts` → `src/resources/core/write-many.ts`（2026-09-25 に `core/bulk-write.ts` へ移し（ADR-0097）、2026-09-26 に名前を変えた）
 - `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
 
 [adr5]: 0005-public-api-shape.md
 [adr20]: 0020-read-field-default.md

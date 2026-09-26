@@ -252,6 +252,7 @@ accept の後、この ADR の PR がマージされる前に、decider が「�
 
 - `resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）
 - `resources/core/read.ts` → 送信は `src/accessor/read.ts`、項目の一覧の型は `src/accessor/catalog.ts`、応答の変換は `src/accessor/decoder.ts`、ページ送りは `src/accessor/paging.ts`、`field` の組み立ては `src/accessor/field-param.ts`（2026-09-26 に分けて `src/accessor/` へ移した・ADR-0101）
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
 
 [adr13]: 0013-coding-conventions-class-vs-function.md
 [adr71]: 0071-usage-docs-single-root.md

@@ -79,5 +79,13 @@ PORTERS の表現ではなくこちらが潰している artifact。Write（`enc
 - 関連実装: `src/xml/decode.ts` の `decodeOption` / `FieldValue`、`encode.ts` の Option エンコード（変更不要）。
 - 決定後の反映: `decodeOption` 実装・`FieldValue` 型・テスト（mutation 100% 維持）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/xml/decode.ts` → 値の型は `src/xml/field-value.ts`、変換は `src/xml/decode-field.ts` / `decode-reference-record.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md

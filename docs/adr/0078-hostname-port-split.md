@@ -162,6 +162,8 @@ scheme?: "https" | "http";
 本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
 
 - `docs/usage/howto/handle-failures.md` → `docs/usage/topics/errors.md`（2026-09-23・ADR-0088）
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `src/http/insecure-http-warning.ts` → `src/http/insecure-scheme-warner.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
 
 [coverage]: ../design/endpoint-coverage.md
 [rv10]: ../reviews/rv/0010-per-call-partition-jsdoc.md

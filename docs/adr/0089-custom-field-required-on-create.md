@@ -209,6 +209,14 @@
 - 実装は accepted 後・別 PR（`defineFields` のビルダー・`create` の入力型・`readCustomCatalog`・
   `generateFieldDecls`・`verifyFields`・ライブ検証の項目・ガイド「カスタム項目」の「必須」の説明）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/fields/tenant-catalog.ts` → `src/fields/read-custom-catalog.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [rv62]: ../reviews/rv/0062-custom-field-required-declaration.md
 [adr04]: 0004-field-type-model.md
 [adr19]: 0019-static-resource-types.md

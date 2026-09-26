@@ -391,6 +391,14 @@ develop に「目次は旧 4 層のまま `topics/` を指す」ような途中�
 - 経緯: V2 は [roadmap][rm] で達成済み。本 ADR は達成した原稿の並べ方を変える。
 - follow-up（スコープ外）: 説明サイトの構築（generator）／ 英語版。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [0001]: 0001-record-architecture-decisions.md
 [0068]: 0068-api-reference-tooling.md
 [0070]: 0070-usage-documentation-architecture.md

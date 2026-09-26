@@ -12,7 +12,7 @@
 - 接地: **`docs/usage/reference` が正**。黙っている挙動は**明示的な仮定**として実装コメント＋ [live-verification][lv] に LV 項目化。
 - 注入を第一級: 決定的に 400（サイズ）・429（レート）・特定 result code・遅延を出せる。
 - 配置: **in-repo・dev-only**（`test/fake/`＝`src/` の外）。既存設定で**公開 tarball 非同梱**（`files` は `dist` のみ）・**カバレッジ 100% 対象外**（include は `src/**`）。ただし**フェイク自身のテストは書く**（正しく振る舞う担保）。
-- 再利用（in-repo の利点）: ワイヤ形状は**ライブラリ内部を直接 import**して二重管理を断つ — `src/xml/encode`（`buildWriteXml`/`encodeField`/`encodeWriteItem`）・`src/xml/parser`（`parseResourcePage`/`parseWriteResult`/`parseAuthentication` の**形**に合わせる）・`src/xml/decode`（`decodeField`）・`test/fixtures/**`。受信 write XML の解釈は同梱の `fast-xml-parser` を使う。
+- 再利用（in-repo の利点）: ワイヤ形状は**ライブラリ内部を直接 import**して二重管理を断つ — `src/xml/`（`buildWriteXml`/`encodeField`/`encodeWriteItem`、`parseResourcePage`/`parseWriteResult`/`parseAuthentication` の**形**に合わせる、`decodeField`）・`test/fixtures/**`。受信 write XML の解釈は同梱の `fast-xml-parser` を使う。
 - 昇格可能に: 公開サーフェス／共有 fixtures 境界で作り、**N2/MCP e2e の需要が出たら** HTTP サーバー・アダプタ＋package 昇格（別 PR・要すれば別 ADR）。
 
 ## 対象エンドポイント（URL 組立より）
@@ -188,11 +188,11 @@
 
 ### フェーズ 6 で確定したこと（実装メモ）
 
-- **集約先**: `src/http/access-point.ts` の `apiUrl(accessPoint, path, params?)` 1 本。`AccessPoint`＝`{ host, scheme? }` を
+- **集約先**: `src/http/api-url.ts` の `apiUrl(accessPoint, path, params?)` 1 本。`AccessPoint`＝`{ host, scheme? }` を
   **deps に載せて配る**（`host: string` を廃止）。データ系リソースの deps は `ResourceDeps`（`read-core.ts`）に名前を付け、
   Partition だけ `Omit<ResourceDeps, "partition">`（partition を取らない API のため）。
   **`https://` の直書きは src から消えた**＝リソースを足しても増えない。
-- **警告の実装**（`src/http/insecure-http-warning.ts`）: `scheme: "http"` のとき `console.warn` を**プロセス内 1 回**。
+- **警告の実装**（`src/http/insecure-scheme-warner.ts`）: `scheme: "http"` のとき `console.warn` を**プロセス内 1 回**。
   **抑止は env のみ**（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`）で、`""`/`0`/`false` は**抑止しない**
   ＝曖昧な値で黙らない（フェイルセーフ）。**env で抑止しても「出した」フラグは立てない**ので、
   env を外した次のクライアントはちゃんと警告される。
