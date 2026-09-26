@@ -150,6 +150,11 @@
 | [RV-133][rv133] | 🟢     | API 忠実性                      | open    | 空白付きの日時・属性・トークン                                                                       |
 | [RV-134][rv134] | 🟢     | エラーモデル                    | open    | 0001〜0099 年の日付の弾き方                                                                          |
 | [RV-135][rv135] | 🟢     | フェイルセーフ                  | open    | 残っている数の検査の抜け                                                                             |
+| [RV-136][rv136] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの空の update                                                                            |
+| [RV-137][rv137] | 🟢     | フェイルセーフ                  | open    | constName の予約語                                                                                   |
+| [RV-138][rv138] | 🟢     | フェイルセーフ                  | open    | prototype 経由の宣言                                                                                 |
+| [RV-139][rv139] | 🟢     | ドキュメント                    | open    | 添付ファイルの検査の文書                                                                             |
+| [RV-140][rv140] | 🟢     | エラーモデル                    | open    | 入力の渡し忘れが TypeError                                                                           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -293,3 +298,8 @@
 [rv133]: rv/0133-padded-dates-and-attributes.md
 [rv134]: rv/0134-early-year-date-message.md
 [rv135]: rv/0135-remaining-lenient-number-paths.md
+[rv136]: rv/0136-attachment-empty-update.md
+[rv137]: rv/0137-generate-field-decls-reserved-const-name.md
+[rv138]: rv/0138-tenant-fields-prototype.md
+[rv139]: rv/0139-attachment-checks-undocumented.md
+[rv140]: rv/0140-attachment-undefined-input-type-error.md
