@@ -13,6 +13,9 @@
 >
 > **Amended by [ADR-0098][adr98]（2026-09-25）**: 層の表の一番下に `porters/`（PORTERS が決めた値と定義表）を足し、
 > 案3a の「定義表（resource-list / field-type）は `resources/` 直下に残す」を改めた（定義表は `src/porters/` へ移す）。
+>
+> **Amended by [ADR-0101][adr101]（2026-09-26）**: 案3a の共通の仕組みの置き場（`resources/core/`）を `src/accessor/`（層を 1 段足す）に、
+> ファイル名の決まりの「factory の `create` は付けない」を「付けても付けなくてもよい」に改めた。
 
 ## Context and Problem Statement
 
@@ -245,4 +248,5 @@ accept の後、この ADR の PR がマージされる前に、decider が「�
 [adr71]: 0071-usage-docs-single-root.md
 [adr96]: 0096-narrow-record-type-by-field.md
 [adr98]: 0098-porters-rules-folder.md
+[adr101]: 0101-accessor-layer-and-file-names.md
 [basic-design]: ../design/basic-design.md

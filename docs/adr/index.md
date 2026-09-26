@@ -114,7 +114,7 @@
 | [0098][0098] | PORTERS が決めた値と定義表を `src/porters/` にまとめる             | 基本設計 | accepted           | —      |
 | [0099][0099] | 検索クエリの型からページ送りを外し、`Paging` / `Limit` を足す      | 詳細設計 | accepted           | —      |
 | [0100][0100] | リソースの公開の型は、各リソースのファイルでメソッドを書き出す     | 基本設計 | accepted           | —      |
-| [0101][0101] | 共通の仕組みを `src/accessor/` に出し、`create` を任意にする       | 基本設計 | proposed           | —      |
+| [0101][0101] | 共通の仕組みを `src/accessor/` に出し、`create` を任意にする       | 基本設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md

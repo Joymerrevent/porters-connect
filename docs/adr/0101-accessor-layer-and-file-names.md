@@ -1,6 +1,6 @@
 # 101. リソースの共通の仕組みを `src/accessor/` に出し、ファイル名に `create` を付けてもよいことにする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,6 +8,8 @@
 > ファイルのルールを基本設計にまとめる議論の中で、stakeholder が「`resources/core/` を `core/` に分離するのはどうか」
 > 「ファイル名の `create` は付けてもよいことにしたい」と提案した。名前は `accessor/` を選んだ。どちらも
 > [ADR-0097][adr97] で決めたこと（案3a・名前の決まり）を変えるので、この ADR で置き換える。
+>
+> **decider が案1a ＋ 案2a を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR（#434 のマージ後）。
 
 ## Context and Problem Statement
 
@@ -60,7 +62,7 @@
 
 ## Decision Outcome
 
-**未決（proposed）**。stakeholder は案1a ＋ 案2a を選んだ（2026-09-26）。以下は案1a ＋ 案2a で書いた場合の形。
+採用: **案1a ＋ 案2a**（decider が 2026-09-26 に選択）。
 
 ### 決めること（案1a）
 
@@ -128,7 +130,7 @@
   「移設前のパス表記」。
 - 順番: #433（[ADR-0100][adr100] の実装）と #434（`resources/core/` のリファクタリング）がマージされた後に行う。ほぼ全ファイルの
   import を書き換えるので、先に行うと両方の取り込み直しで衝突する。
-- accepted になったら、[ADR-0097][adr97] に「案3a とファイル名の決まりの `create` は ADR-0101 で置き換えた」ことを 1 行で足す。
+- [ADR-0097][adr97] には、accepted と同時に「案3a とファイル名の決まりの `create` は ADR-0101 で改めた」ことを 1 行で足した（本文は書き換えない）。
 
 [adr97]: 0097-src-module-layout.md
 [adr98]: 0098-porters-rules-folder.md
