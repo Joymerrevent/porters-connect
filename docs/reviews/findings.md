@@ -128,7 +128,7 @@
 | [RV-111][rv111] | 🟢     | API 忠実性                      | open    | 添付ファイルの上限の値と出典                                                                         |
 | [RV-112][rv112] | 🟢     | 設定検証                        | open    | カスタム項目の alias の文字を確かめない                                                              |
 | [RV-113][rv113] | 🟢     | 設定検証                        | fixed   | tenant の id と of の名前を確かめない                                                                |
-| [RV-114][rv114] | 🟢     | エラーモデル                    | open    | コード 5 と 113 が表に無い                                                                           |
+| [RV-114][rv114] | 🟢     | エラーモデル                    | fixed   | コード 5 と 113 が表に無い                                                                           |
 | [RV-115][rv115] | 🟢     | API 忠実性                      | open    | readCustomCatalog が接頭辞を突き合わせない                                                           |
 | [RV-116][rv116] | 🟢     | ドキュメント / DX               | open    | Option の count の上限と hint                                                                        |
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
@@ -137,7 +137,7 @@
 | [RV-120][rv120] | 🟢     | エラーモデル / DX               | fixed   | 3xx のエラーの hint が一般的                                                                         |
 | [RV-121][rv121] | 🟢     | 認証                            | fixed   | 読み込み中の cache() が上書きされる                                                                  |
 | [RV-122][rv122] | 🟢     | エラーモデル                    | fixed   | asUnknownOutcome がクラスを変えうる                                                                  |
-| [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
+| [RV-123][rv123] | 🟢     | エラーモデル                    | fixed   | create の一部の失敗に hint が付かない                                                                |
 | [RV-124][rv124] | 🟢     | 性能                            | fixed   | スロットルの shift が容量に比例                                                                      |
 | [RV-125][rv125] | 🟢     | エラーモデル / DX               | fixed   | createMany の件ごとの 302 に案内が無い                                                               |
 | [RV-126][rv126] | 🟢     | エラーモデル                    | fixed   | BigInt の id で TypeError が漏れる                                                                   |
