@@ -1,7 +1,7 @@
 # RV-113 🟢 `tenant()` の partition の id と、`of()` の名前を実行時に確かめていない
 
 - 重要度: 🟢 ／ 観点: 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ NaN・`"12 "`・-1・1.5 がそのまま `partition=` になる。JS から渡�
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`2754d33`）。** `tenant(id)` の id を正の整数に限る。添付ファイル・Phase・Field の `of(name)` は、表に無い名前を `resourceValueFor` で止める（prototype のプロパティも名前として扱わない）。
+
+## 検証
+
+`src/porters-client.test.ts` の「tenant(id) checks the partition id」、`src/accessor/resource-value-for.test.ts`、各リソースの「of refuses a name missing from the Resource List」。

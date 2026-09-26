@@ -103,11 +103,11 @@
 | [RV-86][rv86]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | Date の書き込みが前方一致だけで通す                                                                  |
 | [RV-87][rv87]   | 🟡     | API 忠実性                      | fixed   | XML の属性が値に混ざる                                                                               |
 | [RV-88][rv88]   | 🟢     | フェイルセーフ                  | fixed   | 時計が戻るとスロットルが止まる                                                                       |
-| [RV-89][rv89]   | 🟢     | 認証                            | open    | ExpiresIn の欠けと非数の扱いが違う                                                                   |
-| [RV-90][rv90]   | 🟢     | 認証 / フェイルセーフ           | open    | 認証応答の Error 欠けを成功と読む                                                                    |
-| [RV-91][rv91]   | 🟢     | 認証                            | open    | token-manager の clear と読み込み失敗                                                                |
-| [RV-92][rv92]   | 🟢     | 設定検証                        | open    | ホスト名の % と、スロットルの鍵の揺れ                                                                |
-| [RV-93][rv93]   | 🟢     | 設定検証                        | open    | transport などの形を構築時に確かめない                                                               |
+| [RV-89][rv89]   | 🟢     | 認証                            | fixed   | ExpiresIn の欠けと非数の扱いが違う                                                                   |
+| [RV-90][rv90]   | 🟢     | 認証 / フェイルセーフ           | fixed   | 認証応答の Error 欠けを成功と読む                                                                    |
+| [RV-91][rv91]   | 🟢     | 認証                            | fixed   | token-manager の clear と読み込み失敗                                                                |
+| [RV-92][rv92]   | 🟢     | 設定検証                        | fixed   | ホスト名の % と、スロットルの鍵の揺れ                                                                |
+| [RV-93][rv93]   | 🟢     | 設定検証                        | fixed   | transport などの形を構築時に確かめない                                                               |
 | [RV-94][rv94]   | 🟢     | API 忠実性                      | open    | field の重複で expand が崩れる                                                                       |
 | [RV-95][rv95]   | 🟢     | ドキュメント / DX               | open    | field: [] で expand が落ちる                                                                         |
 | [RV-96][rv96]   | 🟢     | アーキテクチャ                  | open    | applyExpand が qualify を使わない                                                                    |
@@ -127,18 +127,18 @@
 | [RV-110][rv110] | 🟢     | エラーモデル                    | open    | base64ToBytes が DOMException を投げる                                                               |
 | [RV-111][rv111] | 🟢     | API 忠実性                      | open    | 添付ファイルの上限の値と出典                                                                         |
 | [RV-112][rv112] | 🟢     | 設定検証                        | open    | カスタム項目の alias の文字を確かめない                                                              |
-| [RV-113][rv113] | 🟢     | 設定検証                        | open    | tenant の id と of の名前を確かめない                                                                |
+| [RV-113][rv113] | 🟢     | 設定検証                        | fixed   | tenant の id と of の名前を確かめない                                                                |
 | [RV-114][rv114] | 🟢     | エラーモデル                    | open    | コード 5 と 113 が表に無い                                                                           |
 | [RV-115][rv115] | 🟢     | API 忠実性                      | open    | readCustomCatalog が接頭辞を突き合わせない                                                           |
 | [RV-116][rv116] | 🟢     | ドキュメント / DX               | open    | Option の count の上限と hint                                                                        |
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
 | [RV-118][rv118] | 🟢     | テスト厳密性                    | open    | 新規必須の突き合わせにテストが無い                                                                   |
 | [RV-119][rv119] | 🟢     | ドキュメント                    | open    | 実装と合わないコメント 4 か所                                                                        |
-| [RV-120][rv120] | 🟢     | エラーモデル / DX               | open    | 3xx のエラーの hint が一般的                                                                         |
-| [RV-121][rv121] | 🟢     | 認証                            | open    | 読み込み中の cache() が上書きされる                                                                  |
-| [RV-122][rv122] | 🟢     | エラーモデル                    | open    | asUnknownOutcome がクラスを変えうる                                                                  |
+| [RV-120][rv120] | 🟢     | エラーモデル / DX               | fixed   | 3xx のエラーの hint が一般的                                                                         |
+| [RV-121][rv121] | 🟢     | 認証                            | fixed   | 読み込み中の cache() が上書きされる                                                                  |
+| [RV-122][rv122] | 🟢     | エラーモデル                    | fixed   | asUnknownOutcome がクラスを変えうる                                                                  |
 | [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
-| [RV-124][rv124] | 🟢     | 性能                            | open    | スロットルの shift が容量に比例                                                                      |
+| [RV-124][rv124] | 🟢     | 性能                            | fixed   | スロットルの shift が容量に比例                                                                      |
 | [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
 | [RV-126][rv126] | 🟢     | エラーモデル                    | open    | BigInt の id で TypeError が漏れる                                                                   |
 | [RV-127][rv127] | 🟢     | ドキュメント                    | fixed   | 文字列の id の拒否が changeset に無い                                                                |

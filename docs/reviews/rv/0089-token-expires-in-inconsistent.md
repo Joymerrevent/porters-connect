@@ -1,7 +1,7 @@
 # RV-89 🟢 `*ExpiresIn` が欠けたときと、数でないときの扱いが揃っていない
 
 - 重要度: 🟢 ／ 観点: 認証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`42d0e6b`）。** 期限（`*ExpiresIn`）が 10 進の整数でなければ、欠けたのと同じく扱い、期限 0 で取り直す側に倒す。
+
+## 検証
+
+`src/xml/parse-authentication.test.ts` の「reads the ExpiresIn … as missing」。

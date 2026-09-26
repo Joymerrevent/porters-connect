@@ -1,7 +1,7 @@
 # RV-120 🟢 3xx の応答のエラーの hint が一般的で、リダイレクトだと分からない
 
 - 重要度: 🟢 ／ 観点: エラーモデル / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-low-review・`3551aeb・358130b`）。** 3xx 専用の hint（リダイレクトを追いかけないこと、`scheme` とアドレスを確かめること）を足し、利用者向け文書の status の表に 3xx を足した。転送先（Location）は見せていない（Transport の応答が header を持たないため）。
+
+## 検証
+
+`src/errors/http-status-error.test.ts` の「says a … is a redirect the library does not follow」。

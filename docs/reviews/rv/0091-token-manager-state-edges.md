@@ -1,7 +1,7 @@
 # RV-91 🟢 取り直し中の `clear()` が効かず、保存先の読み込みの失敗を二度と試さない
 
 - 重要度: 🟢 ／ 観点: 認証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,3 +27,9 @@
 ## 処置
 
 **一部を実施（2026-09-26・fix/http-auth-review・`8499ef4`）。** 保存先の読み込みに失敗したら、次の呼び出しでもう一度読むようにした（RV-75 の修正で読み込みを 1 本の Promise にまとめたとき）。取り直しの途中の `clear()` が効かない件は残っているので、状態は open のまま。
+
+**残りを実施（2026-09-26・fix/http-auth-low-review・`55251e4`）。** 手元を入れ替えた回数を持ち、取り直しの途中で `clear()` が呼ばれていたら、取れたトークンはそのリクエストにだけ使い、手元にも保存先にも戻さない。
+
+## 検証
+
+`src/auth/token-manager.test.ts` の「does not save a token renewed while clear() was called」「does not bring back a token read from the store after clear()」。
