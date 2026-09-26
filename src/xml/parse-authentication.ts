@@ -31,6 +31,8 @@ export const parseAuthentication = (xml: string): AuthResponse => {
     throw unparseable();
   }
 
+  // <Error> は必ず返る（reference の応答例）。欠けた・空の応答を 0（成功）と読まない（RV-90）。
+  if ((asString(body.Error)?.trim() ?? "") === "") throw unparseable();
   const error = toCode(body.Error, unparseable);
   if (error !== 0) {
     throw authError(
@@ -39,9 +41,11 @@ export const parseAuthentication = (xml: string): AuthResponse => {
     );
   }
 
+  // 10 進の整数でない値（"30min" など）は欠けたのと同じ扱い＝期限 0 で取り直す側に倒す（RV-89）。
+  // NaN のまま返すと期限の比較がいつも偽になり、期限切れと見なされずに使い続けられる。
   const num = (v: unknown): number | undefined => {
-    const s = asString(v);
-    return s === undefined ? undefined : Number(s);
+    const s = asString(v)?.trim();
+    return s !== undefined && /^\d+$/.test(s) ? Number(s) : undefined;
   };
   return {
     code: asString(body.Code),
