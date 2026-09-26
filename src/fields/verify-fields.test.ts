@@ -289,6 +289,7 @@ describe("assertFieldsMatch", () => {
         unverifiable: [],
         undeclarable: [],
         requiredMismatch: [],
+        declaredUndeclarable: [],
       }),
     ).not.toThrow();
   });
@@ -315,6 +316,7 @@ describe("assertFieldsMatch", () => {
       unverifiable: [],
       undeclarable: [],
       requiredMismatch: [],
+      declaredUndeclarable: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(PortersConfigError);
@@ -349,6 +351,7 @@ describe("assertFieldsMatch", () => {
       ],
       undeclarable: [],
       requiredMismatch: [],
+      declaredUndeclarable: [],
     };
 
     expect(() => assertFieldsMatch(report)).toThrow(
@@ -379,6 +382,7 @@ describe("assertFieldsMatch", () => {
           },
         ],
         requiredMismatch: [],
+        declaredUndeclarable: [],
       }),
     ).not.toThrow();
   });
@@ -464,5 +468,85 @@ describe("verifyFields — required", () => {
         tenant: true,
       },
     ]);
+  });
+});
+
+// ADR-0104 / RV-80。宣言できない項目を宣言していたら、理由が「Data Type を持たない」「宣言の対象外」なら
+// ok を倒し、「このライブラリが型を知らない」だけなら知らせるだけにする。
+describe("verifyFields — declaring a field the tenant cannot express", () => {
+  it("clears ok for a field with no Data Type, and names it", async () => {
+    const fields = defineFields({ job: (f) => ({ U_ref: f.number() }) });
+    const source = sourceOf({ job: [{ P_Alias: "Job.U_ref", P_Type: 16 }] });
+
+    const report = await verifyFields(source, fields);
+
+    expect(report.ok).toBe(false);
+    expect(report.declaredUndeclarable).toEqual([
+      {
+        resource: "job",
+        alias: "U_ref",
+        declared: "Number",
+        fieldType: 16,
+        label: "Reference",
+        reason: "no-data-type",
+      },
+    ]);
+    expect(() => {
+      assertFieldsMatch(report);
+    }).toThrow(
+      "job.U_ref: declared Number, but the tenant's field cannot be declared (no-data-type)",
+    );
+  });
+
+  it("clears ok for a system-managed field", async () => {
+    const fields = defineFields({ job: (f) => ({ U_sys: f.number() }) });
+    const source = sourceOf({ job: [{ P_Alias: "Job.U_sys", P_Type: 11 }] });
+
+    const report = await verifyFields(source, fields);
+
+    expect(report.ok).toBe(false);
+    expect(report.declaredUndeclarable[0]?.reason).toBe("not-declarable");
+  });
+
+  it("reports a type the library does not know, without clearing ok", async () => {
+    const fields = defineFields({ job: (f) => ({ U_new: f.number() }) });
+    const source = sourceOf({ job: [{ P_Alias: "Job.U_new", P_Type: 99 }] });
+
+    const report = await verifyFields(source, fields);
+
+    expect(report.ok).toBe(true);
+    expect(report.declaredUndeclarable).toEqual([
+      {
+        resource: "job",
+        alias: "U_new",
+        declared: "Number",
+        fieldType: 99,
+        reason: "unknown-field-type",
+      },
+    ]);
+    expect(() => {
+      assertFieldsMatch(report);
+    }).not.toThrow();
+  });
+
+  it("lists only the fields that clear ok in the thrown message", async () => {
+    const fields = defineFields({
+      job: (f) => ({ U_ref: f.number(), U_new: f.number() }),
+    });
+    const source = sourceOf({
+      job: [
+        { P_Alias: "Job.U_ref", P_Type: 16 },
+        { P_Alias: "Job.U_new", P_Type: 99 },
+      ],
+    });
+
+    let message = "";
+    try {
+      assertFieldsMatch(await verifyFields(source, fields));
+    } catch (e) {
+      message = (e as PortersConfigError).message;
+    }
+    expect(message).toContain("job.U_ref");
+    expect(message).not.toContain("job.U_new");
   });
 });

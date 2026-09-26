@@ -8,7 +8,7 @@
 
 > **UndeclarableTenantField** = [`UndeclarableField`](UndeclarableField.md) & `object`
 
-Defined in: [src/fields/verify-fields.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L80)
+Defined in: [src/fields/verify-fields.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L81)
 
 A tenant field that exists but no declaration can express (carried through from the catalog).
 
