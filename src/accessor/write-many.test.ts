@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PortersConfigError,
+  PortersError,
   PortersNetworkError,
   PortersResourceError,
 } from "../errors";
@@ -241,11 +242,15 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     expect(r).toEqual({ results: [], failed: [], hasFailures: false });
   });
 
-  it("re-throws the original error when the first batch fails (nothing written)", async () => {
-    const { requester } = fakeRequester({ failOnCall: 1 });
+  it("re-throws the original error when the first batch is refused (nothing written)", async () => {
+    const refused = new PortersResourceError("invalid value", {
+      category: "validation",
+      code: 103,
+    });
+    const { requester } = fakeRequester({ failOnCall: 1, error: refused });
     await expect(
       resource(requester).createMany([{ P_Owner: 1, P_Name: "a" }]),
-    ).rejects.toBeInstanceOf(PortersNetworkError);
+    ).rejects.toBe(refused);
   });
 
   it("names the failed batch and what earlier batches wrote when a later batch fails", async () => {
@@ -282,6 +287,10 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     const { requester } = fakeRequester({
       failOnCall: 2,
       codeFor: (i) => (i === 0 || i === 5 ? 107 : 0),
+      error: new PortersResourceError("invalid value", {
+        category: "validation",
+        code: 103,
+      }),
     });
     const inputs = Array.from({ length: 450 }, () => ({ P_A: 1 }));
     const e = (await smallResource(requester)
@@ -357,6 +366,96 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       "The records 0–199 may have been written before the failure: check whether they exist before resending them. Records from index 200 onward were not sent. Resend only the records that were not written.",
     );
   });
+
+  // RV-69 の再レビュー。送った create の失敗のうち、書き込まれていないと分かっているものだけを「書き込まれていない」と書く。
+  it.each([
+    [
+      "a 200 whose body could not be read",
+      new PortersResourceError("unparseable write response", {
+        category: "unknown",
+        httpStatus: 200,
+      }),
+      "may have been written",
+    ],
+    [
+      "an Error thrown after sending",
+      new Error("socket closed"),
+      "may have been written",
+    ],
+    [
+      "an HTTP 408",
+      new PortersNetworkError("timeout", {
+        category: "network",
+        httpStatus: 408,
+      }),
+      "may have been written",
+    ],
+    [
+      "a network error with no status",
+      new PortersNetworkError("reset", { category: "network" }),
+      "may have been written",
+    ],
+    [
+      "a Result Code at the root",
+      new PortersResourceError("invalid value", {
+        category: "validation",
+        code: 103,
+      }),
+      "were not written",
+    ],
+    [
+      "an HTTP 400",
+      new PortersError("bad request", {
+        category: "validation",
+        httpStatus: 400,
+      }),
+      "were not written",
+    ],
+    [
+      "an HTTP 499",
+      new PortersError("client closed", {
+        category: "unknown",
+        httpStatus: 499,
+      }),
+      "were not written",
+    ],
+    [
+      "an HTTP 500",
+      new PortersNetworkError("server", {
+        category: "server",
+        httpStatus: 500,
+      }),
+      "may have been written",
+    ],
+    [
+      "an HTTP 399 (not a client error)",
+      new PortersError("odd", { category: "unknown", httpStatus: 399 }),
+      "may have been written",
+    ],
+    [
+      "a rate limit",
+      new PortersNetworkError("429", {
+        category: "rateLimit",
+        httpStatus: 429,
+      }),
+      "were not written",
+    ],
+    [
+      "a configuration error",
+      new PortersConfigError("too long", { category: "config" }),
+      "were not written",
+    ],
+  ])(
+    "tells a later create batch that failed with %s: %s",
+    async (_label, error, says) => {
+      const { requester } = fakeRequester({ failOnCall: 2, error });
+      const inputs = Array.from({ length: 201 }, () => ({ P_A: 1 }));
+      const e = (await smallResource(requester)
+        .createMany(inputs)
+        .catch((x: unknown) => x)) as PortersResourceError;
+      expect(e.hint).toContain(`The records 200–200 ${says}`);
+    },
+  );
 
   it("tells an update that failed midway it can be resent", async () => {
     const { requester } = fakeRequester({ failOnCall: 2 });

@@ -83,6 +83,21 @@ const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
   return batches;
 };
 
+// 送った create が、書き込まれていないと分かっている失敗か。PORTERS がルートの Result Code で断った
+// （Code 9 を再送し尽くした場合を含む）、4xx で断られた（408 以外。レート超過の 429 もここ）、設定の誤り。
+// それ以外（200 で読めない応答、送った後の生の Error など）は、書き込まれた可能性がある（RV-69 の再レビュー）。
+const knownNotWritten = (cause: unknown): boolean => {
+  if (!(cause instanceof PortersError)) return false;
+  if (cause.category === "config") return true;
+  if (cause.code !== null) return true;
+  const status = cause.httpStatus;
+  // `status !== undefined` は型のため。undefined との比較は偽なので、外しても同じ動きになる（等価なミュータント）。
+  return (
+    // Stryker disable next-line ConditionalExpression: equivalent — undefined >= 400 is false
+    status !== undefined && status >= 400 && status < 500 && status !== 408
+  );
+};
+
 // 途中の失敗の hint に並べる index の数の上限（それより多ければ、残りは件数で書く）。
 const MAX_LISTED = 20;
 
@@ -201,7 +216,8 @@ export const writeMany = async (
         { write: true, idempotent },
       );
     } catch (cause) {
-      const unknownOutcome = isUnknownOutcome(cause);
+      const unknownOutcome =
+        isUnknownOutcome(cause) || (!idempotent && !knownNotWritten(cause));
       // 最初のバッチが「書き込まれていないと分かる」失敗なら、何も書かれていない → 元のエラーのまま。
       if (sent === 0 && !unknownOutcome) throw cause;
       throw batchFailure(
