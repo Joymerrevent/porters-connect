@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { PortersConfigError } from "../errors";
 import { declaredRequired, defineFields } from "./define-fields";
-import type { FieldDecls } from "./declared-catalogs";
+import type { FieldBuilder, FieldDecls } from "./declared-catalogs";
 
 // defineFields is the single validation boundary (ADR-0023 D4): it builds a per-resource
 // catalog (alias -> Data Type) from the typed builder and throws synchronously on bad input.
@@ -255,5 +255,37 @@ describe("defineFields — required on create", () => {
       U_b: "Number";
       U_c: "Number";
     }>();
+  });
+});
+
+// RV-79。型を迂回した宣言（JS から、または cast で）の Data Type も確かめる。
+describe("defineFields — the Data Type of a declaration that bypassed the builder", () => {
+  it("refuses an unknown Data Type", () => {
+    expect(() =>
+      defineFields({
+        candidate: () => ({ U_x: { dataType: "Bogus", required: false } }),
+      } as never),
+    ).toThrow(
+      'defineFields: "U_x" on "candidate" has Data Type "Bogus", which a custom field cannot have',
+    );
+  });
+
+  it("refuses a declaration that is not an object", () => {
+    expect(() =>
+      defineFields({ candidate: () => ({ U_x: null }) } as never),
+    ).toThrow('defineFields: "U_x" on "candidate" has Data Type undefined');
+  });
+});
+
+describe("defineFields — the messages name defineFields", () => {
+  it("for an unknown resource and a bad alias", () => {
+    expect(() => defineFields({ widget: () => ({}) } as never)).toThrow(
+      /^defineFields: unknown resource "widget"/,
+    );
+    expect(() =>
+      defineFields({
+        job: (f: FieldBuilder) => ({ P_x: f.number() }),
+      } as never),
+    ).toThrow(/^defineFields: custom field alias "P_x" on "job"/);
   });
 });

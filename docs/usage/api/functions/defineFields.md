@@ -8,7 +8,7 @@
 
 > **defineFields**\<`D`\>(`decls`): [`DefinedFields`](../type-aliases/DefinedFields.md)\<`DeclaredCatalogsOf`\<`D`\> & [`DeclaredRequiredOf`](../type-aliases/DeclaredRequiredOf.md)\<`D`\>\>
 
-Defined in: [src/fields/define-fields.ts:132](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L132)
+Defined in: [src/fields/define-fields.ts:103](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/define-fields.ts#L103)
 
 Declare tenant-specific custom fields per data resource. This is the validation
 boundary: it throws [PortersConfigError](../classes/PortersConfigError.md) synchronously for an unknown resource key or an

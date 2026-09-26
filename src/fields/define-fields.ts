@@ -4,8 +4,12 @@
 // and the result is branded so `tenant(id, { fields })` trusts it without re-validating. Standard
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
+import {
+  assertCustomAlias,
+  assertCustomDataType,
+  assertKnownResource,
+} from "./assert-declared-catalogs";
 import { PortersConfigError } from "../errors";
-import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 import type {
   CustomCatalog,
   CustomFieldResource,
@@ -67,39 +71,6 @@ export const declaredRequired = (
   return new Set(marker?.[resource] ?? []);
 };
 
-const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
-  "candidate",
-  "job",
-  "client",
-  "recruiter",
-  "contact",
-  "opportunity",
-  "activity",
-  "contract",
-  "sales",
-  "process",
-  "resume",
-];
-
-// 宣言 DSL は ADR-0023、渡し先が tenant(id, { fields }) なのは ADR-0087。
-const assertKnownResource = (resource: string): void => {
-  if (!KNOWN_RESOURCES.includes(resource as CustomFieldResource)) {
-    throw new PortersConfigError(
-      `defineFields: unknown resource "${resource}" (expected one of ${KNOWN_RESOURCES.join(", ")})`,
-      { category: "config" },
-    );
-  }
-};
-
-const assertCustomAlias = (alias: string, resource: string): void => {
-  if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
-    throw new PortersConfigError(
-      `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
-      { category: "config" },
-    );
-  }
-};
-
 // JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
 const isRequired = (
   fieldDef: { readonly required?: unknown },
@@ -136,10 +107,17 @@ export const defineFields = <D extends FieldDecls>(
   const required: Record<string, string[]> = {};
   for (const [resource, declare] of Object.entries(decls)) {
     if (declare === undefined) continue;
-    assertKnownResource(resource);
+    assertKnownResource("defineFields", resource);
     const catalog: CustomCatalog = {};
     for (const [alias, fieldDef] of Object.entries(declare(builder))) {
-      assertCustomAlias(alias, resource);
+      assertCustomAlias("defineFields", alias, resource);
+      // 型を迂回した宣言（JS から、または cast で）も、Data Type を確かめてから受ける（RV-79）。
+      assertCustomDataType(
+        "defineFields",
+        (fieldDef as { dataType?: unknown } | null)?.dataType,
+        alias,
+        resource,
+      );
       catalog[alias] = fieldDef.dataType;
       if (isRequired(fieldDef, alias, resource))
         (required[resource] ??= []).push(alias);

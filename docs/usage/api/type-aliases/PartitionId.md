@@ -8,6 +8,6 @@
 
 > **PartitionId** = `number`
 
-Defined in: [src/porters-client.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L70)
+Defined in: [src/porters-client.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L71)
 
 A PORTERS partition (Company DB) id.

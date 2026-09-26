@@ -6,7 +6,7 @@
 
 # Class: PortersClient
 
-Defined in: [src/porters-client.ts:366](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L366)
+Defined in: [src/porters-client.ts:369](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L369)
 
 Entry point of the library. Wires the default transport / auth / throttle / requester and exposes
 the **App-level** surface: `auth`, the `partition` master (discovery), and [PortersClient.tenant](#tenant).
@@ -31,7 +31,7 @@ const page = await t.candidate.search();
 
 > **new PortersClient**(`options`): `PortersClient`
 
-Defined in: [src/porters-client.ts:407](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L407)
+Defined in: [src/porters-client.ts:410](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L410)
 
 #### Parameters
 
@@ -49,7 +49,7 @@ Defined in: [src/porters-client.ts:407](https://github.com/Joymerrevent/porters-
 
 > `readonly` **auth**: [`AuthApi`](../type-aliases/AuthApi.md)
 
-Defined in: [src/porters-client.ts:369](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L369)
+Defined in: [src/porters-client.ts:372](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L372)
 
 OAuth surface: initial browser grant, token warm-up/inspection, local revoke.
 
@@ -59,7 +59,7 @@ OAuth surface: initial browser grant, token warm-up/inspection, local revoke.
 
 > `readonly` **partition**: [`PartitionResource`](../type-aliases/PartitionResource.md)
 
-Defined in: [src/porters-client.ts:375](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L375)
+Defined in: [src/porters-client.ts:378](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L378)
 
 Master Read: the partitions this App can reach. Takes no `partition` itself —
 it is how you *discover* the ids to pass to [PortersClient.tenant](#tenant).
@@ -70,7 +70,7 @@ it is how you *discover* the ids to pass to [PortersClient.tenant](#tenant).
 
 > `readonly` **tenant**: \<`C`\>(`id`, `options?`) => [`TenantScope`](../type-aliases/TenantScope.md)\<`C`\>
 
-Defined in: [src/porters-client.ts:401](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L401)
+Defined in: [src/porters-client.ts:404](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L404)
 
 Bind a partition (Company DB) and get the accessors that route through it.
 **Single-tenant apps use this too** — it is the only path to a partition-scoped resource.
@@ -122,7 +122,7 @@ per-partition token, construct a dedicated PortersClient per tenant.
 
 > **get** **hostname**(): `string`
 
-Defined in: [src/porters-client.ts:463](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L463)
+Defined in: [src/porters-client.ts:466](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L466)
 
 The configured API server name (no port — see [PortersClient.port](#port)).
 
@@ -138,7 +138,7 @@ The configured API server name (no port — see [PortersClient.port](#port)).
 
 > **get** **port**(): `number` \| `undefined`
 
-Defined in: [src/porters-client.ts:468](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L468)
+Defined in: [src/porters-client.ts:471](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L471)
 
 The configured port, or `undefined` when the scheme's own port is used.
 
