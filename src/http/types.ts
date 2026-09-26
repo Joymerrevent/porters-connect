@@ -23,8 +23,13 @@ export type Transport = {
 // トークンを受け取る口の形は使う側（requester）が持つ。auth はこれを実装する（ADR-0097 案2a）。
 /**
  * Internal: what the request pipeline asks for a token. `forceRefresh` is set after an
- * expired-token response (401/402). Not part of the published API.
+ * expired-token response (401/402), with the token that was refused as `failedToken`: when the
+ * cache already holds a different one, another request renewed it meanwhile and it is reused.
+ * Not part of the published API.
  */
 export type AccessTokenSource = {
-  getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
+  getAccessToken(opts?: {
+    forceRefresh?: boolean;
+    failedToken?: string;
+  }): Promise<string>;
 };

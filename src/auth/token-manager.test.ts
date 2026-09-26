@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PortersConfigError } from "../errors/index";
 import { createMemoryTokenStore } from "./memory-token-store";
@@ -136,11 +136,61 @@ describe("createTokenManager — obtaining and caching", () => {
       m.getAccessToken(),
       m.getAccessToken(),
     ]);
-    await Promise.resolve();
-    await Promise.resolve();
+    // acquire が呼ばれるまで待ってから返す（待つマイクロタスクの数に頼らない）。
+    await vi.waitFor(() => {
+      expect(calls).toBe(1);
+    });
     release({ accessToken: { token: "ONE" } });
     expect(await all).toEqual(["ONE", "ONE", "ONE"]);
     expect(calls).toBe(1);
+  });
+
+  // RV-75。同時に 401 で断られたリクエストは、同じ古いトークンを渡してくる。取り直しは 1 回にまとめる。
+  it("renews once for requests refused together with the same token", async () => {
+    const provider = counting(
+      (_kind, n) => ({ accessToken: { token: `T${n}` } }),
+      true,
+    );
+    const m = createTokenManager({ provider });
+    expect(await m.getAccessToken()).toBe("T1");
+    const again = await Promise.all(
+      [1, 2, 3].map(() =>
+        m.getAccessToken({ forceRefresh: true, failedToken: "T1" }),
+      ),
+    );
+    expect(again).toEqual(["T2", "T2", "T2"]);
+    expect(provider.calls).toEqual(["acquire", "refresh"]);
+  });
+
+  it("reuses a token another request already renewed, instead of renewing again", async () => {
+    const provider = counting(
+      (_kind, n) => ({ accessToken: { token: `T${n}` } }),
+      true,
+    );
+    const m = createTokenManager({ provider });
+    await m.getAccessToken(); // T1
+    await m.getAccessToken({ forceRefresh: true, failedToken: "T1" }); // T2
+    // T1 で断られたリクエストが遅れて届いた: すでに T2 があるので、取り直さない。
+    expect(
+      await m.getAccessToken({ forceRefresh: true, failedToken: "T1" }),
+    ).toBe("T2");
+    // T2 そのものが断られたら、取り直す。
+    expect(
+      await m.getAccessToken({ forceRefresh: true, failedToken: "T2" }),
+    ).toBe("T3");
+    expect(provider.calls).toEqual(["acquire", "refresh", "refresh"]);
+  });
+
+  it("obtains a token when a refused token comes back after the cache was cleared", async () => {
+    const provider = counting((_kind, n) => ({
+      accessToken: { token: `T${n}` },
+    }));
+    const m = createTokenManager({ provider });
+    await m.getAccessToken(); // T1
+    await m.clear();
+    expect(
+      await m.getAccessToken({ forceRefresh: true, failedToken: "T1" }),
+    ).toBe("T2");
   });
 
   it("passes a provider failure through without retrying", async () => {
@@ -317,6 +367,63 @@ describe("createTokenManager — tokenStore", () => {
     await expect(m.getAccessToken()).rejects.toThrow("down");
     await expect(m.getAccessToken()).rejects.toThrow("down");
     expect(gets).toBe(1);
+  });
+
+  // RV-75。保存先の読み込みが遅くても、その間に来た呼び出しは同じ読み込みを待つ（取得に進まない）。
+  it("makes calls that arrive during a slow store read wait for it, not acquire", async () => {
+    let finish: (v: StoredTokens) => void = () => undefined;
+    let gets = 0;
+    const store: TokenStore = {
+      get: () => {
+        gets += 1;
+        return new Promise((r) => {
+          finish = r;
+        });
+      },
+      set: () => Promise.resolve(),
+      clear: () => Promise.resolve(),
+    };
+    let acquires = 0;
+    const m = createTokenManager({
+      provider: {
+        acquire: () => {
+          acquires += 1;
+          return Promise.resolve({ accessToken: { token: "FRESH" } });
+        },
+      },
+      tokenStore: store,
+    });
+    const all = Promise.all([1, 2, 3].map(() => m.getAccessToken()));
+    await vi.waitFor(() => {
+      expect(gets).toBe(1);
+    });
+    finish({ accessToken: { token: "STORED" } });
+    expect(await all).toEqual(["STORED", "STORED", "STORED"]);
+    expect(acquires).toBe(0);
+    expect(gets).toBe(1);
+  });
+
+  it("reads the store again after a failed read, instead of skipping it for good", async () => {
+    let gets = 0;
+    const store: TokenStore = {
+      get: () => {
+        gets += 1;
+        return gets === 1
+          ? Promise.reject(new Error("store down"))
+          : Promise.resolve({ accessToken: { token: "STORED" } });
+      },
+      set: () => Promise.resolve(),
+      clear: () => Promise.resolve(),
+    };
+    const m = createTokenManager({
+      provider: {
+        acquire: () => Promise.resolve({ accessToken: { token: "FRESH" } }),
+      },
+      tokenStore: store,
+    });
+    await expect(m.getAccessToken()).rejects.toThrow("store down");
+    expect(await m.getAccessToken()).toBe("STORED");
+    expect(gets).toBe(2);
   });
 
   it("keeps exchanged tokens even when the store would return something else", async () => {

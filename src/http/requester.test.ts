@@ -341,6 +341,41 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(calls.map((c) => c.force)).toEqual([false, true, false]);
   });
 
+  // RV-75。取り直しを頼むときに、断られたトークンを渡す（ほかのリクエストが取り直していれば、それを使うため）。
+  it("passes the refused token along when it asks for a refresh", async () => {
+    const asked: (
+      { forceRefresh?: boolean; failedToken?: string } | undefined
+    )[] = [];
+    let n = 0;
+    const auth: AccessTokenSource = {
+      getAccessToken: (o) => {
+        asked.push(o);
+        n += 1;
+        return Promise.resolve(`T${n}`);
+      },
+    };
+    let sends = 0;
+    const transport: Transport = {
+      send: () => {
+        sends += 1;
+        return sends === 1
+          ? Promise.reject(authErr(401))
+          : Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth,
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+    await r.request(base, (b) => b);
+    expect(asked).toEqual([
+      undefined,
+      { forceRefresh: true, failedToken: "T1" },
+    ]);
+  });
+
   it("refreshes on 402 as well as 401", async () => {
     const calls: { force: boolean }[] = [];
     let n = 0;

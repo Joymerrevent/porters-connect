@@ -164,6 +164,9 @@ export const createRequester = (o: RequesterOptions): Requester => {
     const idempotent = spec.idempotent ?? !write;
     let authRetried = false;
     let forceRefresh = false;
+    // 401 / 402 で断られたトークン。取り直しを頼むときに渡し、ほかのリクエストがすでに取り直して
+    // いれば、それを使う（同時の 401 で取り直しが何度も走らないように。ADR-0012 / RV-75）。
+    let failedToken: string | undefined;
     let attempt = 0;
 
     for (;;) {
@@ -174,9 +177,10 @@ export const createRequester = (o: RequesterOptions): Requester => {
       let sent = false;
       try {
         const token = await o.auth.getAccessToken(
-          forceRefresh ? { forceRefresh: true } : undefined,
+          forceRefresh ? { forceRefresh: true, failedToken } : undefined,
         );
         forceRefresh = false;
+        failedToken = token;
         sent = true;
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);
