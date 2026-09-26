@@ -1,6 +1,6 @@
 # 106. 結果の分からない `create` の案内を広げ、表に無い Result Code を分類する
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
@@ -8,6 +8,8 @@
 > RV-123 は [ADR-0103][adr103] が決めた「登録された可能性あり」の案内の範囲を広げるか、RV-114 は [ADR-0006][adr6] の
 > コードの対応表に無いコードを分類するかを問う。どちらも accepted な決定の範囲を変えるので、この ADR で決める
 > （2 つを 1 本にまとめたのは decider の指示。どちらもエラーの分類と案内の見直し）。
+>
+> **decider が案1A と案2A を選択し `accepted`（2026-09-27）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -70,9 +72,9 @@ reference の 2 つの表（[result-codes.md][rc]・[errors.md][autherr]）に�
 
 ## Decision Outcome
 
-**未決（proposed）**。推奨は **案1A と 案2A**。
+採用: **案1A と 案2A**（decider が 2026-09-27 に選択）。
 
-### 推奨の理由
+### 採用の理由
 
 - **案1A**: 利用者が重複に気づく手がかりを、「分からない」失敗すべてにそろえる。PORTERS が理由を返して断った失敗
   （`validation` など）と、API の手前で止まった失敗（PORTERS の本文が無い 3xx / 4xx）には付けないので、
@@ -84,7 +86,7 @@ reference の 2 つの表（[result-codes.md][rc]・[errors.md][autherr]）に�
   `auth` にしても再試行の動きは変わらない（自動の取り直しは Resource の `401` / `402` だけが引き金。`src/http/requester.ts`）。
   `-1` は意味が状況で変わりうる（同意画面でのキャンセルか、それ以外か、reference に説明が無い）ので、`unknown` に残す。
 
-### Consequences（案1A・案2A を採った場合）
+### Consequences
 
 - Good: 送った後の `create` の「分からない」失敗すべてで、重複を確かめる案内が出る。表と実装のずれが、テストで見える。
 - Bad: hint が長くなる場合がある（元の hint ＋ 登録の可能性）。`5` / `113` の `category` が `unknown` から `auth` に変わるので、
@@ -134,7 +136,7 @@ reference の 2 つの表（[result-codes.md][rc]・[errors.md][autherr]）に�
 
 ## More Information
 
-- 関連: [ADR-0006][adr6]（エラーの分類。案2A を採ったら表に行を足す）、[ADR-0103][adr103]（`create` の `302`。案1A を採ったら
+- 関連: [ADR-0006][adr6]（エラーの分類。案2A で表に行を足す）、[ADR-0103][adr103]（`create` の `302`。案1A で
   案内の範囲を広げる）、[ADR-0010][adr10]（再試行とスロットル）、[RV-114][rv114]、[RV-123][rv123]。
 - 実装は accept 後・別 PR。
 

@@ -9,6 +9,9 @@
 > 実装を ADR-0010 に合わせるのか、決定を変えるのかを決める。
 >
 > **decider が案A を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR。
+>
+> **追記（[ADR-0106][adr106]・2026-09-27）**: 「登録された可能性あり」の案内の範囲を、再試行しない失敗のうち結果の分からないもの
+> （`server` / `unknown`）にも広げた。この ADR の決定（`302` を再送しない）は変わらない。
 
 ## Context and Problem Statement
 
@@ -104,3 +107,4 @@ PORTERS には削除 API が無いので、重複は取り消せない。
 [rv65]: ../reviews/rv/0065-sent-create-failure-retryable.md
 [rv70]: ../reviews/rv/0070-response-code-shape-not-checked.md
 [rv78]: ../reviews/rv/0078-create-retries-code-302.md
+[adr106]: 0106-unknown-outcome-scope-and-unmapped-codes.md

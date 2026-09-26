@@ -119,7 +119,7 @@
 | [0103][0103] | `create` の Code 302 は自動で再送しない                                 | 詳細設計 | accepted           | —      |
 | [0104][0104] | 宣言できない項目の宣言で `verifyFields` の `ok` を倒す                  | 詳細設計 | accepted           | —      |
 | [0105][0105] | 検索の値の区切り文字は送る前に拒否する                                  | 詳細設計 | accepted           | —      |
-| [0106][0106] | 結果の分からない `create` の案内を広げ、表に無い Result Code を分類する | 詳細設計 | proposed           | —      |
+| [0106][0106] | 結果の分からない `create` の案内を広げ、表に無い Result Code を分類する | 詳細設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
