@@ -14,7 +14,7 @@ import { appendPaging } from "../accessor/append-paging";
 import { createDecoder } from "../accessor/decoder";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Limit } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 
 const FIELDS = {
@@ -79,7 +79,9 @@ const buildUrl = (
 const withoutItems = (raw: RawItem): RawItem =>
   Object.fromEntries(Object.entries(raw).filter(([k]) => k !== "Items"));
 
-export const createOptionResource = (deps: ResourceDeps): OptionResource => {
+export const createOptionResource = (
+  deps: PartitionBoundConnectionDeps,
+): OptionResource => {
   const decode = createDecoder(FIELDS);
   // Depth-first flatten: push each node, then recurse into its <Items><Item>… children.
   const flatten = (items: RawItem[], out: Option[]): void => {

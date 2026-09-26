@@ -4,7 +4,7 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
@@ -86,7 +86,7 @@ const buildParams = (
 };
 
 export const createDepartmentResource = (
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): DepartmentResource =>
   createMasterResource(
     {

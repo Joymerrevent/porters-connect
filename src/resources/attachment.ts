@@ -20,7 +20,7 @@ import { appendPaging } from "../accessor/append-paging";
 import { paginateOnce } from "../accessor/paginate";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import type { Paging } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import { buildWriteUrl } from "../accessor/build-write-url";
 import { firstWriteResultId } from "../accessor/first-write-result-id";
 import {
@@ -200,7 +200,7 @@ const guardContent = (content: string | undefined): void => {
 };
 
 export const createAttachmentAccessor = (
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): AttachmentAccessor => ({
   of: (resourceName) => {
     // One binding, two places PORTERS wants it: `resource=` on every Read and the `<Resource>`

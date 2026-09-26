@@ -11,7 +11,7 @@ import { createDecoder } from "./decoder";
 import { paginateOnce } from "./paginate";
 import type { Paging } from "./paging";
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
-import type { ResourceDeps } from "./deps";
+import type { PartitionBoundConnectionDeps } from "./deps";
 import type { Condition, SearchQuery } from "./query";
 import { buildReadParams, type ReadParamsContext } from "./build-read-params";
 import { fieldParamContext } from "./field-param";
@@ -50,7 +50,7 @@ export const createDataReader = <
   const R extends ReferenceMap = EmptyReferences,
 >(
   config: DataReadConfig<F, R>,
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ) => {
   const references: ReferenceMap = config.references ?? {};
   // Phase uses `Id` (ADR-0061).

@@ -7,7 +7,7 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
@@ -117,7 +117,9 @@ const buildParams = (
   return p;
 };
 
-export const createUserResource = (deps: ResourceDeps): UserResource => {
+export const createUserResource = (
+  deps: PartitionBoundConnectionDeps,
+): UserResource => {
   const { search, searchAll } = createMasterResource(
     {
       ...USER_DESCRIPTOR,

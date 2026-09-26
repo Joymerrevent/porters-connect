@@ -44,7 +44,7 @@ import type {
   ReadRecord,
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourceDeps } from "../accessor/deps";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
 import type { SearchQuery } from "../accessor/query";
 import type { ResourceDescriptor } from "../accessor/descriptor";
@@ -252,7 +252,9 @@ export type PhaseAccessor = {
   of(resource: ResourceName): PhaseResource;
 };
 
-export const createPhaseAccessor = (deps: ResourceDeps): PhaseAccessor => ({
+export const createPhaseAccessor = (
+  deps: PartitionBoundConnectionDeps,
+): PhaseAccessor => ({
   of: (resource) => {
     // One binding, two places PORTERS wants it: `resource=` on Read and the `Resource` field on
     // Write. Both are filled from here, so neither can be forgotten or contradicted.

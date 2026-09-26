@@ -8,7 +8,7 @@
 
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { Paging } from "./paging";
-import type { ResourceDeps } from "./deps";
+import type { PartitionBoundConnectionDeps } from "./deps";
 import type { ResourcePageOf } from "./resource-page";
 import type { SearchQuery } from "./query";
 import type { BulkWriteResult } from "./write-many";
@@ -98,7 +98,7 @@ export const createDataResource = <
   const R extends ReferenceMap = EmptyReferences,
 >(
   config: DataResourceConfig<F, Req, R>,
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ): DataResource<F, Req[number], R> => ({
   ...createDataReader(config, deps),
   ...createDataWriter(config, deps),

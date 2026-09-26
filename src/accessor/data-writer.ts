@@ -7,7 +7,7 @@ import { PortersConfigError } from "../errors";
 import { buildWriteXml } from "../xml/build-write-xml";
 import type { WriteItem, WriteValue } from "../xml/write-value";
 import { fieldTypesOf, type FieldCatalog } from "./catalog";
-import type { ResourceDeps } from "./deps";
+import type { PartitionBoundConnectionDeps } from "./deps";
 import { writeMany, type BulkWriteResult } from "./write-many";
 import type { CreateInput, UpdateInput } from "./write-record";
 import { guardImageWrite, guardNoImageInBulk } from "./guard-image-write";
@@ -43,7 +43,7 @@ export const createDataWriter = <
   const Req extends readonly (keyof F)[],
 >(
   config: DataWriteConfig<F, Req>,
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
 ) => {
   const fieldMap = fieldTypesOf(config.fields);
   // Phase uses `Id` (ADR-0061).
