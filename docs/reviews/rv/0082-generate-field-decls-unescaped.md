@@ -1,7 +1,7 @@
 # RV-82 🟡 `generateFieldDecls` が、テナントの項目名をエスケープせずに生成するコードへ埋め込む
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/fields-attachment-review・`481649a`）。** `generateFieldDecls` で、識別子でない alias は文字列のキーにし、コメントに入れる値の改行を空白にし、`constName` が識別子でなければ拒否し、同じリソースを 2 回渡されても 1 回だけ出す。
+
+## 検証
+
+`src/fields/generate-field-decls.test.ts` の「tenant values in the generated source」。

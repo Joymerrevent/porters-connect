@@ -93,10 +93,10 @@
 | [RV-76][rv76]   | 🟡     | セキュリティ / フェイルセーフ   | fixed   | リダイレクト先へトークン・Secret を送る                                                              |
 | [RV-77][rv77]   | 🟡     | 設定検証                        | fixed   | timeoutMs が 2^31 以上で即中断                                                                       |
 | [RV-78][rv78]   | 🟡     | エラーモデル / フェイルセーフ   | fixed   | create の Code 302 を自動で再送する                                                                  |
-| [RV-79][rv79]   | 🟡     | フェイルセーフ / 設定検証       | open    | defineFields が存在しない Data Type を受け付ける                                                     |
-| [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | open    | 宣言できない項目の宣言で verifyFields が ok                                                          |
-| [RV-81][rv81]   | 🟡     | フェイルセーフ                  | open    | attachment.create が undefined を送る                                                                |
-| [RV-82][rv82]   | 🟡     | フェイルセーフ / DX             | open    | generateFieldDecls が項目名をエスケープしない                                                        |
+| [RV-79][rv79]   | 🟡     | フェイルセーフ / 設定検証       | fixed   | defineFields が存在しない Data Type を受け付ける                                                     |
+| [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | fixed   | 宣言できない項目の宣言で verifyFields が ok                                                          |
+| [RV-81][rv81]   | 🟡     | フェイルセーフ                  | fixed   | attachment.create が undefined を送る                                                                |
+| [RV-82][rv82]   | 🟡     | フェイルセーフ / DX             | fixed   | generateFieldDecls が項目名をエスケープしない                                                        |
 | [RV-83][rv83]   | 🟡     | API 忠実性                      | fixed   | 値の前後の空白が消え、数値文字参照が残る                                                             |
 | [RV-84][rv84]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | 入れ子の P_Id が空で 0、文字で NaN                                                                   |
 | [RV-85][rv85]   | 🟡     | フェイルセーフ                  | fixed   | 書き込みで NaN / Infinity を送る                                                                     |

@@ -1,7 +1,7 @@
 # RV-81 🟡 JS から `attachment.create` の項目を渡し忘れると、`undefined` の文字列を送る
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/fields-attachment-review・`338177d`）。** 添付ファイルの `create` で、`resourceId` は正の整数、`contentType` と `fileName` は空でない文字列、`content` は Base64 の文字だけ（改行などの空白は許す）であることを送る前に確かめる。`update` は渡された項目だけ確かめる。
+
+## 検証
+
+`src/resources/attachment.test.ts` の「the values create / update send」。

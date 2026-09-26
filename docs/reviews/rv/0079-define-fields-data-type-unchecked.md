@@ -1,7 +1,7 @@
 # RV-79 🟡 `defineFields` が、存在しない Data Type の宣言を受け付ける
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -28,6 +28,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/fields-attachment-review・`705b216`）。** 宣言の検査を `src/fields/assert-declared-catalogs.ts` にまとめ、`defineFields` は Data Type まで確かめる。検証済みの印は型だけなので、`tenant()` は渡された宣言をまるごと同じ検査に通す。
+
+## 検証
+
+`src/fields/assert-declared-catalogs.test.ts`、`define-fields.test.ts` の「the Data Type of a declaration that bypassed the builder」、`porters-client.test.ts` の「a declaration that did not come from defineFields」。
 
 [adr92]: ../../adr/0092-reject-unknown-options.md
