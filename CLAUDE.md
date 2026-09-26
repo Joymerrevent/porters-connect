@@ -77,7 +77,7 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
 - **スタイル規約（`docs/adr/0013-coding-conventions-class-vs-function.md`）**：クラスは `Error` 派生と `PortersClient` のみ／状態を持つ内部協調子は **factory 関数**で契約型を返す／**関数は全 arrow（const）**／**型定義は全 `type`（`interface` 不使用）**。eslint で強制（`func-style:expression`・`no-use-before-define`・`consistent-type-definitions:type`）。
 - **ファイル構成**：各モジュールの `index.ts` は**バレル（`export *` / `export type *` の再 export のみ）**＝モジュール内の公開可否は**実ファイルの `export` 有無**で制御。クラス/関数/型の宣言は named ファイルに置く。**ただしパッケージ公開 API `src/index.ts` は明示 export でキュレーション**（cross-module で見えるが npm 非公開にしたい記号があるため）。ファイル名は **kebab-case**（大文字小文字を区別しない FS での import 事故を避ける）。
-- **ファイルを移す・名前を変えるとき**：名前の変更は、中身の変更と**別のコミット**にする（git が名前の変更として追え、`git log --follow` で履歴をたどれるように。ADR-0097）。移した・名前を変えたファイルは、`docs/adr/README.md` の「移設前のパス表記」に読み替えを足す（ADR の本文は書き換えないので、古いパスのまま残る）。
+- **ファイルを移す・名前を変えるとき**：名前の変更は、中身の変更と**別のコミット**にする（git が名前の変更として追え、`git log --follow` で履歴をたどれるように。ADR-0097）。移した・名前を変えたファイルへのリンクは直す（`check:links` が検査する）。ADR の本文に書いたパスは書き換えず、そのパスを書いている ADR の末尾の「パスの注記」に今の場所を足す（決定の本文は書き換えないため）。
 - テストを伴わない新リソース追加はしない。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
   （保守者が読めること＝フェイルセーフ優先。海外コントリビュータは契約ゲートで実質入れない）。実行時 i18n はしない。
