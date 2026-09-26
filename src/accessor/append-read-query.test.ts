@@ -381,3 +381,69 @@ describe("区切り文字を含む値（ADR-0105・RV-68）", () => {
     );
   });
 });
+
+// RV-68 の再レビュー。演算子（キー）や項目名に区切り文字を入れると、値と同じく別の条件として読まれた。
+describe("condition のキー（演算子と項目名）", () => {
+  const errorOf = (q: unknown): PortersConfigError => {
+    try {
+      encode(q as SearchQuery<typeof FIELDS>);
+    } catch (e) {
+      return e as PortersConfigError;
+    }
+    throw new Error("expected encode to throw");
+  };
+
+  it("演算子の細工で、削除済みを読むときの項目の制限を越えられない", () => {
+    const e = errorOf({
+      itemstate: "deleted",
+      condition: { P_Id: { "eq=1,W.P_Name:part": "x" } },
+    });
+    expect(e.message).toBe(
+      'condition P_Id: unknown operator "eq=1,W.P_Name:part"',
+    );
+    expect(e.category).toBe("config");
+    expect(e.hint).toBe(
+      "Use one of eq, gt, ge, le, lt, part, full, or, and; which ones a field takes depends on its Data Type.",
+    );
+    expect(e.context).toEqual({ operation: "read" });
+  });
+
+  it("知らない演算子を弾く", () => {
+    expect(errorOf({ condition: { P_Name: { like: "x" } } }).message).toBe(
+      'condition P_Name: unknown operator "like"',
+    );
+  });
+
+  it.each(["P_Name,W.P_Id", "P_Name:part", "P_Name=x"])(
+    "区切り文字を含む項目名 %s を弾く",
+    (alias) => {
+      const e = errorOf({ condition: { [alias]: { part: "x" } } });
+      expect(e.message).toBe(
+        `condition: ${JSON.stringify(alias)} contains a comma, a colon or an equals sign, which PORTERS reads as a separator`,
+      );
+    },
+  );
+
+  it.each(["eq", "gt", "ge", "le", "lt"] as const)(
+    "数の演算子 %s は通る",
+    (op) => {
+      expect(
+        encode({ condition: { P_Num: { [op]: 1 } } }).get("condition"),
+      ).toBe(`W.P_Num:${op}=1`);
+    },
+  );
+
+  it.each(["part", "full"] as const)("テキストの演算子 %s は通る", (op) => {
+    expect(
+      encode({ condition: { P_Name: { [op]: "x" } } }).get("condition"),
+    ).toBe(`W.P_Name:${op}=x`);
+  });
+
+  it.each(["or", "and"] as const)("一覧の演算子 %s は通る", (op) => {
+    expect(
+      encode({ condition: { P_Phase: { [op]: ["Option.P_A"] } } }).get(
+        "condition",
+      ),
+    ).toBe(`W.P_Phase:${op}=Option.P_A`);
+  });
+});

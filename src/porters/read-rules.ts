@@ -25,3 +25,19 @@ export const DELETED_CONDITION_FIELDS: ReadonlySet<string> = new Set([
 export const RESOURCES_WITHOUT_PAGE_ATTRIBUTES: ReadonlySet<string> = new Set([
   "Option",
 ]);
+
+/**
+ * The operators (suffixes) a Read `condition` takes — `[Alias]:[suffix]=[value]` (reference: Number /
+ * date types `gt` `ge` `eq` `le` `lt`, text `full` `part`, Option / Link / Id `or` `and`).
+ */
+export const CONDITION_SUFFIXES: ReadonlySet<string> = new Set([
+  "eq",
+  "gt",
+  "ge",
+  "le",
+  "lt",
+  "part",
+  "full",
+  "or",
+  "and",
+]);

@@ -12,6 +12,7 @@ import type { DataType } from "../porters/data-type";
 import type { FieldCatalog } from "./catalog";
 import type { Condition, ItemState, Order, SearchQuery } from "./query";
 import {
+  CONDITION_SUFFIXES,
   DELETED_CONDITION_FIELDS,
   KEYWORDS_MAX_CHARS,
 } from "../porters/read-rules";
@@ -139,6 +140,15 @@ const encodeCondition = (
   const parts: string[] = [];
   for (const [alias, ops] of Object.entries(condition)) {
     if (ops === undefined) continue;
+    // 項目名と演算子（キー）も文字列として条件に入る。区切り文字を含むキーや知らない演算子は、値と同じく
+    // 別の条件として読まれうる（削除済みを読むときの項目の制限も越えられた。RV-68 の再レビュー）。
+    if (/[,:=]/.test(alias)) {
+      throw delimiterError(
+        "condition",
+        alias,
+        "a comma, a colon or an equals sign",
+      );
+    }
     if (restricted && !DELETED_CONDITION_FIELDS.has(alias)) {
       throw new PortersConfigError(
         `condition field "${alias}" is not allowed when itemstate is "${itemstate}"`,
@@ -151,6 +161,16 @@ const encodeCondition = (
     const type = ctx.fields.get(alias);
     for (const [suffix, value] of Object.entries(ops)) {
       if (value === undefined) continue;
+      if (!CONDITION_SUFFIXES.has(suffix)) {
+        throw new PortersConfigError(
+          `condition ${alias}: unknown operator ${JSON.stringify(suffix)}`,
+          {
+            category: "config",
+            hint: `Use one of ${[...CONDITION_SUFFIXES].join(", ")}; which ones a field takes depends on its Data Type.`,
+            context: { operation: "read" },
+          },
+        );
+      }
       parts.push(
         `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value, alias)}`,
       );
