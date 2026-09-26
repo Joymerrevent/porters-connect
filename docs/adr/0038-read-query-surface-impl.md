@@ -170,6 +170,7 @@ reference が定める事実（要点）:
 本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
 
 - `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
 
 [param]: ../../tmp/porters-docs/txt/115008016927-Read-API-Parameter.md
 [del]: ../../tmp/porters-docs/txt/360000589007-2018-04-10-Read系APIでの削除済みデータの取得.md

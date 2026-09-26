@@ -197,6 +197,7 @@ if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
 
 - `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
 - `src/resources/query.test.ts` → `src/resources/core/query-encode.test.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に組み立てのテストとして分けた）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
 
 [adr16]: 0016-field-type-granularity.md
 [adr38]: 0038-read-query-surface-impl.md
