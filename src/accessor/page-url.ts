@@ -9,7 +9,7 @@ import { appendPaging } from "./append-paging";
  * once and only `count` / `start` differ per page (RV-32). The set is cloned rather than mutated,
  * so one base can serve every page of the same `searchAll`.
  */
-export const readUrlOf = (
+export const pageUrl = (
   accessPoint: AccessPoint,
   path: string,
   base: URLSearchParams,

@@ -5,7 +5,7 @@ import type { Requester } from "../http/requester";
 import { type RawItem } from "../xml/parse-resource-page";
 import type { ResourcePageOf } from "./resource-page";
 import { runRead } from "./run-read";
-import { readUrlOf } from "./page-url";
+import { pageUrl } from "./page-url";
 
 /** Where a resource's Read goes: the pieces every page of every query shares. */
 export type PageReaderTarget = {
@@ -34,6 +34,6 @@ export const createPageReader =
     runRead(
       target.requester,
       target.name,
-      readUrlOf(target.accessPoint, target.path, base, count, start),
+      pageUrl(target.accessPoint, target.path, base, count, start),
       decode,
     );

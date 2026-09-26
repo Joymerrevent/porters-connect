@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createThrottleRegistry,
   resetSharedThrottles,
-  sharedThrottleFor,
+  sharedThrottle,
 } from "./shared-throttle";
 
 // ADR-0073: バケットは client ごとではなく**ホストごと**。テナント別に client を立てても
@@ -58,28 +58,28 @@ describe("createThrottleRegistry (per-host buckets, ADR-0073)", () => {
   });
 });
 
-describe("sharedThrottleFor (process-wide registry)", () => {
+describe("sharedThrottle (process-wide registry)", () => {
   it("プロセス全体で 1 ホスト 1 バケット", () => {
     resetSharedThrottles();
-    expect(sharedThrottleFor("xxxxx.example.com")).toBe(
-      sharedThrottleFor("xxxxx.example.com"),
+    expect(sharedThrottle("xxxxx.example.com")).toBe(
+      sharedThrottle("xxxxx.example.com"),
     );
-    expect(sharedThrottleFor("other.example.com")).not.toBe(
-      sharedThrottleFor("xxxxx.example.com"),
+    expect(sharedThrottle("other.example.com")).not.toBe(
+      sharedThrottle("xxxxx.example.com"),
     );
   });
 
   it("resetSharedThrottles は共有バケットを本当に捨てる（テストの隔離が依存する継ぎ目）", () => {
-    const before = sharedThrottleFor("xxxxx.example.com");
+    const before = sharedThrottle("xxxxx.example.com");
     resetSharedThrottles();
     // 何もしない実装でも他のテストは緑のまま通る（前のバケットを使い回すだけ）ので、ここで pin する。
-    expect(sharedThrottleFor("xxxxx.example.com")).not.toBe(before);
+    expect(sharedThrottle("xxxxx.example.com")).not.toBe(before);
   });
 
   it("既定のバケットは本物のスロットル（take できる）", async () => {
     resetSharedThrottles();
     await expect(
-      sharedThrottleFor("xxxxx.example.com").take(false),
+      sharedThrottle("xxxxx.example.com").take(false),
     ).resolves.toBeUndefined();
   });
 });

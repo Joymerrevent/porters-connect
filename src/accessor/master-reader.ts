@@ -6,9 +6,9 @@
 //
 //   - a Promise-returning method never throws synchronously — `search` is `async` (ADR-0046)
 //   - `searchAll` serialises the caller's query once, at the first page (RV-32)
-//   - `count` is checked against PORTERS' range before sending (`readUrlOf` — RV-28)
+//   - `count` is checked against PORTERS' range before sending (`pageUrl` — RV-28)
 //   - the response must be PORTERS' own answer for this resource (`runRead` — ADR-0051)
-//   - the URL is built at the configured access point (`readUrlOf` — ADR-0047)
+//   - the URL is built at the configured access point (`pageUrl` — ADR-0047)
 //
 // What a resource's Read *accepts* — its parameters and their defaults — is PORTERS' rule for that
 // resource and stays with the resource, passed in as `params` (ADR-0022).
@@ -16,7 +16,7 @@
 import type { ResourceDescriptor } from "./descriptor";
 import { createPageReader } from "./page-reader";
 import type { ResourcePageOf } from "./resource-page";
-import { decoderFor } from "./decoder";
+import { createDecoder } from "./decoder";
 import { paginateOnce } from "./paginate";
 import type { Paging } from "./paging";
 import type { FieldCatalog, ReadRecord } from "./catalog";
@@ -46,7 +46,7 @@ export const createMasterReader = <const F extends FieldCatalog, Q>(
   config: MasterReadConfig<F, Q>,
   deps: ConnectionDeps,
 ) => {
-  const decode = decoderFor(config.fields);
+  const decode = createDecoder(config.fields);
   const read = createPageReader({
     requester: deps.requester,
     accessPoint: deps.accessPoint,

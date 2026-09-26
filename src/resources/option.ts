@@ -11,7 +11,7 @@ import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
 import { asArray } from "../xml/as-array";
 import { asRecord } from "../xml/as-record";
 import { appendPaging } from "../accessor/append-paging";
-import { decoderFor } from "../accessor/decoder";
+import { createDecoder } from "../accessor/decoder";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Limit } from "../accessor/paging";
 import type { ResourceDeps } from "../accessor/deps";
@@ -80,7 +80,7 @@ const withoutItems = (raw: RawItem): RawItem =>
   Object.fromEntries(Object.entries(raw).filter(([k]) => k !== "Items"));
 
 export const createOptionResource = (deps: ResourceDeps): OptionResource => {
-  const decode = decoderFor(FIELDS);
+  const decode = createDecoder(FIELDS);
   // Depth-first flatten: push each node, then recurse into its <Items><Item>… children.
   const flatten = (items: RawItem[], out: Option[]): void => {
     for (const raw of items) {

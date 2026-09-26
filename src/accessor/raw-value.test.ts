@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { rawValue } from "./raw-value";
-import { decoderFor } from "./decoder";
+import { createDecoder } from "./decoder";
 
 describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
-  const record = decoderFor({ P_Name: "SinglelineText" } as const)({
+  const record = createDecoder({ P_Name: "SinglelineText" } as const)({
     P_Name: "山田 太郎",
     U_memo: "面談済み",
     U_empty: "",
@@ -29,7 +29,7 @@ describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
 
   it("カタログ済みの項目も読めるが、変換後の値が string でなければ null", () => {
     expect(rawValue(record, "P_Name")).toBe("山田 太郎");
-    const numeric = decoderFor({ P_Score: "Number" } as const)({
+    const numeric = createDecoder({ P_Score: "Number" } as const)({
       P_Score: "80",
     });
     expect(rawValue(numeric, "P_Score")).toBeNull(); // number は string ではない

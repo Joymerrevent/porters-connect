@@ -50,7 +50,7 @@ const processRegistry = createThrottleRegistry();
 // per** — App, contract, or host. Host is assumed because a host is issued per contract, so
 // "host ≒ contract" — docs/live-verification.md (LV-23). The assumption fails safe (sharing more
 // widely means calling less), so if it turns out to be per-App the key gains the App id.
-export const sharedThrottleFor = (authority: string): Throttle =>
+export const sharedThrottle = (authority: string): Throttle =>
   processRegistry.forAuthority(authority);
 
 /** Test seam: drop every shared bucket. Not part of the published API. */

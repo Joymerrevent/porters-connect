@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { ATTACHMENT_FIELD_NAMES } from "../../src/resources/attachment";
-import { decoderFor } from "../../src/accessor/decoder";
+import { createDecoder } from "../../src/accessor/decoder";
 import { buildWriteXml } from "../../src/xml/build-write-xml";
 import { parseResourcePage } from "../../src/xml/parse-resource-page";
 import { parseWriteResult } from "../../src/xml/parse-write-result";
@@ -89,7 +89,7 @@ describe("fake server wiring", () => {
     );
     expect(page.total).toBe(2);
 
-    const decode = decoderFor(CANDIDATE_DESCRIPTOR.fields);
+    const decode = createDecoder(CANDIDATE_DESCRIPTOR.fields);
     const first = decode(page.items[0]);
     expect(first.P_Id).toBe(10001);
     expect(first.P_Name).toBe("山田 太郎");

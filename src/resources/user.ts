@@ -9,7 +9,7 @@
 
 import type { ResourceDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { createFieldParam } from "../accessor/field-param-setter";
+import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
   FieldCatalog,
   ReadFieldAlias,
@@ -102,7 +102,7 @@ export type UserResource = {
 // once**, and the two `User`-typed ones go out parenthesised because that is what the shared
 // assembly sends — docs/live-verification.md (LV-18). If a particular field is rejected, drop it
 // from this default rather than from the catalog: `field` can still name it explicitly.
-const setField = createFieldParam(USER_DESCRIPTOR.prefix, FIELDS);
+const setField = createFieldParamSetter(USER_DESCRIPTOR.prefix, FIELDS);
 
 // The parameters User Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (

@@ -9,7 +9,7 @@ import {
   authorityOf,
   createFetchTransport,
   createRequester,
-  sharedThrottleFor,
+  sharedThrottle,
   expoBackoff,
   validateAccessPoint,
   warnIfInsecureScheme,
@@ -404,7 +404,7 @@ export class PortersClient {
       // Per destination, not per client (ADR-0073): building a client per tenant is something the guides
       // recommend, and a bucket each would let the process issue N times the limit — silently
       // (RV-43). An injected throttle takes over entirely, sharing included.
-      throttle: options.throttle ?? sharedThrottleFor(authorityOf(accessPoint)),
+      throttle: options.throttle ?? sharedThrottle(authorityOf(accessPoint)),
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;

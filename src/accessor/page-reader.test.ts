@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Requester } from "../http/requester";
 import { createPageReader } from "./page-reader";
-import { decoderFor } from "./decoder";
+import { createDecoder } from "./decoder";
 import type { FieldCatalog } from "./catalog";
 
 const FIELDS = {
@@ -33,7 +33,7 @@ describe("accessor/read — createPageReader（1 ページ読む）", () => {
     });
     const page = await read(
       new URLSearchParams({ partition: "12" }),
-      decoderFor(FIELDS),
+      createDecoder(FIELDS),
       1,
       2,
     );

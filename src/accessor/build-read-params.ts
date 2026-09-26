@@ -4,7 +4,7 @@
 import type { AccessPoint } from "../http/access-point";
 import type { ReferenceMap } from "./expand";
 import { fieldParam, type FieldParamContext } from "./field-param";
-import { readUrlOf } from "./page-url";
+import { pageUrl } from "./page-url";
 import type { FieldCatalog } from "./catalog";
 import type { Paging } from "./paging";
 import type { SearchQuery } from "./query";
@@ -28,7 +28,7 @@ export type ReadParamsContext = FieldParamContext & {
 /**
  * Serialise the Read query — `partition` / `field` / `condition` / `order` / `keywords` /
  * `itemstate` — into the parameters every page of that query shares. **Paging is deliberately not
- * here**: `count` / `start` are the only parts that differ page to page, so `readUrlOf` adds them
+ * here**: `count` / `start` are the only parts that differ page to page, so `pageUrl` adds them
  * to a copy and `searchAll` can serialise the caller's query exactly once (RV-32).
  * `field` (with `expand` / `image` folded in) is {@link fieldParam}; the rest is
  * {@link appendReadQuery}. Attachment is bespoke (no prefix / no catalog) and builds its own loose
@@ -60,7 +60,7 @@ export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
   q: SearchQuery<F, R> & Paging,
   ctx: ReadParamsContext,
 ): string =>
-  readUrlOf(
+  pageUrl(
     accessPoint,
     path,
     buildReadParams(partition, q, ctx),

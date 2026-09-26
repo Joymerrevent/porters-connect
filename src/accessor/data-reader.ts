@@ -5,9 +5,9 @@
 
 import type { RawItem } from "../xml/parse-resource-page";
 import { createPageReader } from "./page-reader";
-import { readUrlOf } from "./page-url";
+import { pageUrl } from "./page-url";
 import type { ResourcePageOf } from "./resource-page";
-import { decoderFor } from "./decoder";
+import { createDecoder } from "./decoder";
 import { paginateOnce } from "./paginate";
 import type { Paging } from "./paging";
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
@@ -55,7 +55,7 @@ export const createDataReader = <
   const references: ReferenceMap = config.references ?? {};
   // Phase uses `Id` (ADR-0061).
   const idAlias = idAliasOf(config);
-  const decode = decoderFor(config.fields);
+  const decode = createDecoder(config.fields);
   // `field` omitted -> every catalogued alias (ADR-0020): PORTERS returns only `{Resource}.P_Id` for
   // a fieldless request, so a typed-record read would otherwise drop every known field despite the
   // type promising them. `[]` stays empty (API-native primary key only). The default and the rest of
@@ -69,7 +69,7 @@ export const createDataReader = <
     buildReadParams(deps.partition, q, readContext);
 
   const readUrl = (q: SearchQuery<F, R> & Paging): string =>
-    readUrlOf(deps.accessPoint, config.path, readParams(q), q.count, q.start);
+    pageUrl(deps.accessPoint, config.path, readParams(q), q.count, q.start);
 
   // What a Read resolves to for a given `expand` / `image`: the record widened by the expansion,
   // with the selected Image sub-fields. The public types narrow it further by `field` (ADR-0096).
@@ -93,7 +93,9 @@ export const createDataReader = <
   ): ((item: RawItem) => T) => {
     const expansions = expansionCatalogs(expand, references);
     return (
-      expansions === undefined ? decode : decoderFor(config.fields, expansions)
+      expansions === undefined
+        ? decode
+        : createDecoder(config.fields, expansions)
     ) as (item: RawItem) => T;
   };
 

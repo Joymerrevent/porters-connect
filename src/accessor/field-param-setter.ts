@@ -9,7 +9,7 @@ import { fieldParamContext, fieldParam } from "./field-param";
  * The `field` parameter of a master resource: {@link fieldParam} for a catalog with no references,
  * as a setter. Built once per catalog; the returned setter runs per query.
  */
-export const createFieldParam = (
+export const createFieldParamSetter = (
   prefix: string,
   fields: FieldCatalog,
 ): ((p: URLSearchParams, field: readonly string[] | undefined) => void) => {

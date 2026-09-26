@@ -6,7 +6,7 @@
 
 import type { ResourceDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { createFieldParam } from "../accessor/field-param-setter";
+import { createFieldParamSetter } from "../accessor/field-param-setter";
 import type {
   FieldCatalog,
   ReadFieldAlias,
@@ -72,7 +72,7 @@ export type DepartmentResource = {
 // `P_Id,P_Name`; whether the 4 "参照取得できない" fields come back from a direct Department Read
 // with all 6 listed at once is unconfirmed — docs/live-verification.md (LV-30). If one is
 // rejected, drop it from this default rather than from the catalog: `field` can still name it.
-const setField = createFieldParam(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
+const setField = createFieldParamSetter(DEPARTMENT_DESCRIPTOR.prefix, FIELDS);
 
 // The parameters Department Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createFieldParam } from "./field-param-setter";
+import { createFieldParamSetter } from "./field-param-setter";
 import type { FieldCatalog } from "./catalog";
 
-describe("accessor/field-param — createFieldParam（省略時は全項目・裸の alias に接頭辞）", () => {
+describe("accessor/field-param — createFieldParamSetter（省略時は全項目・裸の alias に接頭辞）", () => {
   const CATALOG = {
     P_Id: "System[Id]",
     P_Owner: "User",
@@ -11,7 +11,7 @@ describe("accessor/field-param — createFieldParam（省略時は全項目・�
   } as const satisfies FieldCatalog;
   const fieldOf = (field: readonly string[] | undefined): string | null => {
     const p = new URLSearchParams();
-    createFieldParam("W", CATALOG)(p, field);
+    createFieldParamSetter("W", CATALOG)(p, field);
     return p.get("field");
   };
 

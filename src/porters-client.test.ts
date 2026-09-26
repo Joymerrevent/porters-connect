@@ -11,10 +11,7 @@ import type {
 } from "./porters-client";
 import { defineFields, type DeclaredCatalogs } from "./fields";
 import { resetInsecureSchemeWarning } from "./http/insecure-scheme-warner";
-import {
-  resetSharedThrottles,
-  sharedThrottleFor,
-} from "./http/shared-throttle";
+import { resetSharedThrottles, sharedThrottle } from "./http/shared-throttle";
 import type { Throttle } from "./http/throttle";
 import type { Transport, TransportRequest } from "./http/types";
 import type { UserRef } from "./xml/field-value";
@@ -631,7 +628,7 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
 
   it("同じホストの client は同じバケットを通る", async () => {
     resetSharedThrottles();
-    const shared = sharedThrottleFor("example.test");
+    const shared = sharedThrottle("example.test");
     const take = vi.spyOn(shared, "take");
 
     await clientFor("example.test").tenant(1).candidate.search();
@@ -645,7 +642,7 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
 
   it("別ホストの client は別のバケットを通る", async () => {
     resetSharedThrottles();
-    const take = vi.spyOn(sharedThrottleFor("example.test"), "take");
+    const take = vi.spyOn(sharedThrottle("example.test"), "take");
 
     await clientFor("other.test").tenant(1).candidate.search();
 
@@ -655,7 +652,7 @@ describe("PortersClient のスロットル（宛先ごとに共有・注入）",
 
   it("注入したスロットルが共有より優先される", async () => {
     resetSharedThrottles();
-    const sharedTake = vi.spyOn(sharedThrottleFor("example.test"), "take");
+    const sharedTake = vi.spyOn(sharedThrottle("example.test"), "take");
     const mineTake = vi.fn(() => Promise.resolve());
     const mine: Throttle = { take: mineTake };
 
