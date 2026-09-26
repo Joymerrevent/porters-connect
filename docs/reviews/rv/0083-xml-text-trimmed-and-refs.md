@@ -28,6 +28,8 @@ XML の読み込みで `trimValues: true` にしているので、複数行テ�
 
 **実施（2026-09-26・fix/xml-review・`0888bfc`）。** `src/xml/parse-xml.ts` で `trimValues: false`・`htmlEntities: true` にし、整形された応答の要素の間の空白だけを読んだあとに取り除く。
 
+**追加の修正（2026-09-26・`7fe6083`）。** 再レビューで、数や日時の項目の空白だけの値が `Number("  ")` の 0 として読まれると分かった。空白を残すのはテキストの項目だけにし、それ以外の項目の空白だけの値は以前と同じく null とした。
+
 ## 検証
 
 `src/xml/parse-resource-page.test.ts` の「keeps the whitespace around a value, and decodes character references」「drops the layout whitespace of a pretty-printed response」「keeps text that sits next to child elements」。

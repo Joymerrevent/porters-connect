@@ -29,6 +29,8 @@
 
 **実施（2026-09-26・fix/xml-review・`c6d9c68`）。** `src/util/datetime.ts` の `isoToPortersDate` を、日付だけなら完全一致で暦にある日付に限り、日時の形は DateTime と同じ検査を通して UTC の日付にする形にした（ADR-0038 のとおり、Date の条件も ISO で受ける）。
 
+**追加の修正（2026-09-26・`41d23cc`）。** 再レビューで、ほかのゾーンの日時を UTC に直すと、日本時間の 0 時（+09:00）が黙って前日になると分かった。decider が「Z だけ受ける」を選んだので、時刻の付いた値は UTC（`Z` / `±00:00`）のものだけを受け、ほかのオフセットは送る前に拒否する。
+
 ## 検証
 
 `src/util/datetime.test.ts` の「isoToPortersDate refuses …」「takes the UTC date of a datetime」「accepts a leap day」。
