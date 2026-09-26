@@ -1,7 +1,7 @@
 # RV-87 🟡 XML の属性が、値に混ざる
 
 - 重要度: 🟡 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`118c6ac`）。** `src/xml/parse-xml.ts` の `ignoreAttributes` を、ルート要素の属性だけを読む関数にした。
+
+## 検証
+
+`src/xml/parse-xml.test.ts` の「keeps the root's attributes and ignores every other element's」。

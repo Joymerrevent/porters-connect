@@ -47,12 +47,31 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(page.start).toBe(6);
   });
 
-  it("trims surrounding whitespace from raw values", () => {
+  // RV-83。値の前後の空白と改行は、値の一部として残す（複数行テキストを読んで書き戻すと変わらないように）。
+  it("keeps the whitespace around a value, and decodes character references", () => {
     const page = parseResourcePage(
-      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><A>  hi  </A></Item></Candidate>`,
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><A>  hi  </A><B>\n line1\n</B><C>&#12354;&#x41;&amp;</C></Item></Candidate>`,
       "Candidate",
     );
-    expect(page.items[0].A).toBe("hi");
+    expect(page.items[0]).toEqual({ A: "  hi  ", B: "\n line1\n", C: "あA&" });
+  });
+
+  it("keeps text that sits next to child elements when it is not just whitespace", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><A>note<B>1</B></A></Item></Candidate>`,
+      "Candidate",
+    );
+    expect(page.items[0]).toEqual({ A: { "#text": "note", B: "1" } });
+  });
+
+  it("drops the layout whitespace of a pretty-printed response", () => {
+    const page = parseResourcePage(
+      `<Candidate Total="1" Count="1" Start="0">\n  <Code>0</Code>\n  <Item>\n    <A>hi</A>\n    <P><OptionRoot>\n      <Option.X/>\n    </OptionRoot></P>\n  </Item>\n</Candidate>`,
+      "Candidate",
+    );
+    expect(page.items).toEqual([
+      { A: "hi", P: { OptionRoot: { "Option.X": "" } } },
+    ]);
   });
 
   it("routes <Code>!=0 to a mapped PortersError (200+Code is an error)", () => {

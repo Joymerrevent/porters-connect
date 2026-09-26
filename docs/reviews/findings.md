@@ -84,7 +84,7 @@
 | [RV-67][rv67]   | 🔴     | フェイルセーフ / API 忠実性     | fixed   | update(-1) が新規作成になる                                                                          |
 | [RV-68][rv68]   | 🔴     | API 忠実性 / フェイルセーフ     | fixed   | 条件の値のカンマが別の条件になる                                                                     |
 | [RV-69][rv69]   | 🔴     | エラーモデル / フェイルセーフ   | fixed   | createMany の途中失敗で先のバッチの失敗が消える                                                      |
-| [RV-70][rv70]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | 応答の Code / Id の崩れを 0（成功）と読む                                                            |
+| [RV-70][rv70]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | 応答の Code / Id の崩れを 0（成功）と読む                                                            |
 | [RV-71][rv71]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | searchAll が Total の無い応答で黙って止まる                                                          |
 | [RV-72][rv72]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | getMany が切れた応答を「存在しない」にする                                                           |
 | [RV-73][rv73]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | get が返ったレコードの id を確かめない                                                               |
@@ -97,11 +97,11 @@
 | [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | open    | 宣言できない項目の宣言で verifyFields が ok                                                          |
 | [RV-81][rv81]   | 🟡     | フェイルセーフ                  | open    | attachment.create が undefined を送る                                                                |
 | [RV-82][rv82]   | 🟡     | フェイルセーフ / DX             | open    | generateFieldDecls が項目名をエスケープしない                                                        |
-| [RV-83][rv83]   | 🟡     | API 忠実性                      | open    | 値の前後の空白が消え、数値文字参照が残る                                                             |
-| [RV-84][rv84]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | 入れ子の P_Id が空で 0、文字で NaN                                                                   |
-| [RV-85][rv85]   | 🟡     | フェイルセーフ                  | open    | 書き込みで NaN / Infinity を送る                                                                     |
-| [RV-86][rv86]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | Date の書き込みが前方一致だけで通す                                                                  |
-| [RV-87][rv87]   | 🟡     | API 忠実性                      | open    | XML の属性が値に混ざる                                                                               |
+| [RV-83][rv83]   | 🟡     | API 忠実性                      | fixed   | 値の前後の空白が消え、数値文字参照が残る                                                             |
+| [RV-84][rv84]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | 入れ子の P_Id が空で 0、文字で NaN                                                                   |
+| [RV-85][rv85]   | 🟡     | フェイルセーフ                  | fixed   | 書き込みで NaN / Infinity を送る                                                                     |
+| [RV-86][rv86]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | Date の書き込みが前方一致だけで通す                                                                  |
+| [RV-87][rv87]   | 🟡     | API 忠実性                      | fixed   | XML の属性が値に混ざる                                                                               |
 | [RV-88][rv88]   | 🟢     | フェイルセーフ                  | fixed   | 時計が戻るとスロットルが止まる                                                                       |
 | [RV-89][rv89]   | 🟢     | 認証                            | open    | ExpiresIn の欠けと非数の扱いが違う                                                                   |
 | [RV-90][rv90]   | 🟢     | 認証 / フェイルセーフ           | open    | 認証応答の Error 欠けを成功と読む                                                                    |
@@ -146,6 +146,10 @@
 | [RV-129][rv129] | 🟢     | エラーモデル / DX               | open    | updateMany の再送の案内が紛らわしい                                                                  |
 | [RV-130][rv130] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの resourceId を検査しない                                                               |
 | [RV-131][rv131] | 🟢     | エラーモデル                    | open    | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
+| [RV-132][rv132] | 🟢     | API 忠実性                      | open    | 空白だけの空の入れ子要素がエラーになる                                                               |
+| [RV-133][rv133] | 🟢     | API 忠実性                      | open    | 空白付きの日時・属性・トークン                                                                       |
+| [RV-134][rv134] | 🟢     | エラーモデル                    | open    | 0001〜0099 年の日付の弾き方                                                                          |
+| [RV-135][rv135] | 🟢     | フェイルセーフ                  | open    | 残っている数の検査の抜け                                                                             |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -285,3 +289,7 @@
 [rv129]: rv/0129-update-many-resend-hint-confusing.md
 [rv130]: rv/0130-attachment-resource-id-unchecked.md
 [rv131]: rv/0131-bulk-write-unsent-first-batch-may-have.md
+[rv132]: rv/0132-padded-empty-nested-record-errors.md
+[rv133]: rv/0133-padded-dates-and-attributes.md
+[rv134]: rv/0134-early-year-date-message.md
+[rv135]: rv/0135-remaining-lenient-number-paths.md

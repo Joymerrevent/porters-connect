@@ -499,3 +499,94 @@ describe("decodeField: Link (ADR-0064 論点4)", () => {
     expect(decode("Link", [])).toBeNull();
   });
 });
+
+// RV-84。入れ子の P_Id は、空なら null（id が無い）、数でなければ項目名付きのエラー。0 や NaN を id にしない。
+describe("decodeField — the id inside a nested record (RV-84)", () => {
+  const user = (id: string) => ({ User: { "User.P_Id": id } });
+  const dept = (id: string) => ({ Department: { "Department.P_Id": id } });
+  const ref = (id: string) => ({ Client: { "Client.P_Id": id } });
+
+  it.each([
+    ["User", user],
+    ["System[Department]", dept],
+    ["Link", user],
+    ["Link", dept],
+  ] as const)(
+    "%s: an empty id is null, and a padded number is read",
+    (type, make) => {
+      expect(decodeField(type, make(""), "P_X")).toMatchObject({ P_Id: null });
+      expect(decodeField(type, make("  "), "P_X")).toMatchObject({
+        P_Id: null,
+      });
+      expect(decodeField(type, make(" 5 "), "P_X")).toMatchObject({ P_Id: 5 });
+    },
+  );
+
+  it("System[Reference]: an empty id is null, and a padded number is read", () => {
+    expect(decodeField("System[Reference]", ref(""), "P_Client")).toBeNull();
+    expect(decodeField("System[Reference]", ref(" 5 "), "P_Client")).toBe(5);
+  });
+
+  it.each([
+    ["User", user("abc"), "User"],
+    ["System[Department]", dept("abc"), "System[Department]"],
+    ["Link", user("abc"), "Link"],
+    ["Link", dept("abc"), "Link"],
+    ["System[Reference]", ref("abc"), "System[Reference]"],
+  ] as const)(
+    "%s: an id that is not a number is refused, naming the field",
+    (type, raw, named) => {
+      let err: unknown;
+      try {
+        decodeField(type, raw, "P_X");
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersResourceError);
+      expect((err as PortersResourceError).message).toBe(
+        `P_X: declared ${named}, but "abc" is not a PORTERS ${named} value`,
+      );
+    },
+  );
+});
+
+// RV-83 の再レビュー。空白を残すのはテキストの項目だけ。数や日時の項目の空白だけの値は null（0 に化けない）。
+describe("decodeField — a value that is only whitespace", () => {
+  it.each([
+    "Number",
+    "System[Id]",
+    "Link",
+    "Date",
+    "DateTime",
+    "Age",
+    "System[DateTime]",
+  ] as const)("%s reads it as null", (type) => {
+    expect(decodeField(type, "  ", "P_X")).toBeNull();
+    expect(decodeField(type, "\n  ", "P_X")).toBeNull();
+  });
+
+  // 入れ子の項目も、空白だけなら null（型の食い違いのエラーにしない。RV-83 の再レビュー 2 回目）。
+  it.each([
+    "Option",
+    "User",
+    "System[Reference]",
+    "System[Department]",
+    "Image",
+  ] as const)("%s (nested) reads it as null", (type) => {
+    expect(decodeField(type, "\n  ", "P_X")).toBeNull();
+  });
+
+  it("a field with no Data Type keeps it", () => {
+    expect(decodeField(null, "  ", "P_Deleted")).toBe("  ");
+  });
+
+  it.each([
+    "SinglelineText",
+    "MultilineText",
+    "Mail",
+    "Telephone",
+    "URL",
+  ] as const)("%s keeps it", (type) => {
+    expect(decodeField(type, "  ", "P_X")).toBe("  ");
+  });
+});

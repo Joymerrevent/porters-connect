@@ -1,7 +1,7 @@
 # RV-83 🟡 読み込みで、値の前後の空白と改行が消え、数値文字参照がデコードされない
 
 - 重要度: 🟡 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,12 @@ XML の読み込みで `trimValues: true` にしているので、複数行テ�
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`0888bfc`）。** `src/xml/parse-xml.ts` で `trimValues: false`・`htmlEntities: true` にし、整形された応答の要素の間の空白だけを読んだあとに取り除く。
+
+**追加の修正（2026-09-26・`7fe6083`）。** 再レビューで、数や日時の項目の空白だけの値が `Number("  ")` の 0 として読まれると分かった。空白を残すのはテキストの項目だけにし、それ以外の項目の空白だけの値は以前と同じく null とした。
+
+**さらに追加の修正（2026-09-26・`490caa3`）。** 2 回目の再レビューで、入れ子の項目（Option・User・Reference・Department・Image）の空白だけの値が型の食い違いのエラーになると分かった。空白の検査を入れ子の型の分岐の前に移し、テキストの項目と型の無い項目以外は null として読む。
+
+## 検証
+
+`src/xml/parse-resource-page.test.ts` の「keeps the whitespace around a value, and decodes character references」「drops the layout whitespace of a pretty-printed response」「keeps text that sits next to child elements」。

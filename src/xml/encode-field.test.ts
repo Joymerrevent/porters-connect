@@ -286,3 +286,70 @@ describe("要素名になる値の検証（ADR-0085 / RV-48）", () => {
     );
   });
 });
+
+// RV-85。数の値は 10 進の表記になるものだけを書く。id の項目は整数に限る（新規作成の -1 は通る）。
+describe("encodeField — numbers PORTERS can read (RV-85)", () => {
+  it.each([
+    ["Number", 12],
+    ["Number", -12.5],
+    ["Number", 0],
+    [undefined, 3.25],
+    ["System[Id]", -1],
+    ["User", 10001],
+    ["Link", 10001],
+    ["System[Reference]", 5],
+  ] as const)("writes %s %s", (type, n) => {
+    expect(encodeField(type, n, "P_X")).toBe(String(n));
+  });
+
+  it.each([
+    ["Number", Number.NaN, "NaN"],
+    ["Number", Number.POSITIVE_INFINITY, "Infinity"],
+    ["Number", 1e21, "1e+21"],
+    ["Number", 1e-7, "1e-7"],
+    ["SinglelineText", Number.NaN, "NaN"],
+  ] as const)("refuses %s %s", (type, n, shown) => {
+    let err: unknown;
+    try {
+      encodeField(type, n, "P_X");
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    const e = err as PortersConfigError;
+    expect(e.message).toBe(`P_X: cannot write ${shown} as ${type}`);
+    expect(e.category).toBe("validation");
+    expect(e.hint).toContain("plain decimals");
+    expect(e.context).toEqual({ operation: "encode" });
+  });
+
+  it("names no Data Type for a field that has none", () => {
+    expect(() => encodeField(undefined, Number.NaN, "U_x")).toThrow(
+      "U_x: cannot write NaN",
+    );
+    expect(() => encodeField(null, Number.NaN, "P_Deleted")).toThrow(
+      /^P_Deleted: cannot write NaN$/,
+    );
+  });
+
+  it.each([
+    ["User", 1.5],
+    ["System[Reference]", Number.NaN],
+    ["Link", 2 ** 53],
+    ["System[Department]", 1.5],
+    ["System[Id]", 1.5],
+  ] as const)("refuses %s %s, which is not a whole-number id", (type, n) => {
+    let err: unknown;
+    try {
+      encodeField(type, n, "P_X");
+    } catch (e) {
+      err = e;
+    }
+    expect((err as PortersConfigError).message).toBe(
+      `P_X: cannot write ${String(n)} as ${type}`,
+    );
+    expect((err as PortersConfigError).hint).toBe(
+      `${type} values are written as a record id, a whole number.`,
+    );
+  });
+});

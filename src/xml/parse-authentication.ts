@@ -4,7 +4,7 @@ import { authError } from "../errors/auth-error";
 import { PortersAuthError, PortersError } from "../errors/index";
 import { asRecord } from "./as-record";
 import { asString } from "./as-string";
-import { parseXml, toInt } from "./parse-xml";
+import { parseXml, toCode } from "./parse-xml";
 
 /** Parsed `<Authentication>` response (OAuth `code_direct` / Token). */
 export type AuthResponse = {
@@ -31,7 +31,7 @@ export const parseAuthentication = (xml: string): AuthResponse => {
     throw unparseable();
   }
 
-  const error = toInt(body.Error);
+  const error = toCode(body.Error, unparseable);
   if (error !== 0) {
     throw authError(
       error,

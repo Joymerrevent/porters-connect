@@ -67,7 +67,7 @@ const resultCode = (body: string): number => {
 // which parseWriteResult reads first (ADR-0045).
 const writeResultCode = (body: string): number => {
   try {
-    return parseWriteResult(body)[0]?.code ?? -1;
+    return parseWriteResult(body, "Candidate")[0]?.code ?? -1;
   } catch (error) {
     return error instanceof PortersError ? (error.code ?? -1) : -1;
   }
