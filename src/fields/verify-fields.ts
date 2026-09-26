@@ -17,6 +17,7 @@ import type {
 import {
   readCustomCatalog,
   type FieldCatalogSource,
+  type TenantCustomCatalog,
   type UndeclarableField,
 } from "./read-custom-catalog";
 
@@ -117,6 +118,82 @@ const declaredResources = (
 ): readonly CustomFieldResource[] =>
   Object.keys(fields) as CustomFieldResource[];
 
+// 見つけたものを種類ごとに積む入れ物。`verifyFields` がこれに `ok` を足して返す。
+type Findings = {
+  missing: MissingField[];
+  typeMismatch: FieldTypeMismatch[];
+  undeclared: UndeclaredField[];
+  unverifiable: UnverifiableResource[];
+  undeclarable: UndeclarableTenantField[];
+  requiredMismatch: RequiredMismatch[];
+};
+
+// 宣言した 1 項目を、テナントの項目と突き合わせる。
+const compareDeclared = (
+  resource: CustomFieldResource,
+  alias: string,
+  declaredType: DataType,
+  declaredReq: boolean,
+  actual: TenantCustomCatalog,
+  found: Findings,
+): void => {
+  const actualType = actual.fields[alias];
+  if (actualType === undefined) {
+    // Not in `actual.fields` — but it may be one of the fields that exists and simply cannot
+    // be declared, and calling that "missing" would be wrong.
+    if (!actual.undeclarable.some((u) => u.alias === alias)) {
+      found.missing.push({ resource, alias, declared: declaredType });
+    }
+    return;
+  }
+  if (actualType !== declaredType) {
+    found.typeMismatch.push({
+      resource,
+      alias,
+      declared: declaredType,
+      actual: actualType,
+    });
+  }
+  const tenantReq = actual.required[alias] === true;
+  if (declaredReq !== tenantReq) {
+    found.requiredMismatch.push({
+      resource,
+      alias,
+      declared: declaredReq,
+      tenant: tenantReq,
+    });
+  }
+};
+
+// 1 リソース分の宣言を、読んだテナントのカタログと突き合わせる。
+const compareResource = (
+  resource: CustomFieldResource,
+  fields: DeclaredCatalogs,
+  actual: TenantCustomCatalog,
+  found: Findings,
+): void => {
+  const declared = fields[resource] ?? {};
+  const declaredAsRequired = declaredRequired(fields, resource);
+  for (const entry of actual.undeclarable) {
+    found.undeclarable.push({ ...entry, resource });
+  }
+  for (const [alias, declaredType] of Object.entries(declared)) {
+    compareDeclared(
+      resource,
+      alias,
+      declaredType,
+      declaredAsRequired.has(alias),
+      actual,
+      found,
+    );
+  }
+  for (const [alias, actualType] of Object.entries(actual.fields)) {
+    if (declared[alias] === undefined) {
+      found.undeclared.push({ resource, alias, actual: actualType });
+    }
+  }
+};
+
 /**
  * Read each declared resource's real catalog and compare it with the declaration.
  *
@@ -136,78 +213,34 @@ export const verifyFields = async (
   fields: DeclaredCatalogs,
   options: VerifyFieldsOptions = {},
 ): Promise<FieldVerification> => {
-  const missing: MissingField[] = [];
-  const typeMismatch: FieldTypeMismatch[] = [];
-  const undeclared: UndeclaredField[] = [];
-  const unverifiable: UnverifiableResource[] = [];
-  const undeclarable: UndeclarableTenantField[] = [];
-  const requiredMismatch: RequiredMismatch[] = [];
+  const found: Findings = {
+    missing: [],
+    typeMismatch: [],
+    undeclared: [],
+    unverifiable: [],
+    undeclarable: [],
+    requiredMismatch: [],
+  };
 
   for (const resource of declaredResources(fields)) {
-    const declared = fields[resource] ?? {};
-    const declaredAsRequired = declaredRequired(fields, resource);
-    let actual;
+    let actual: TenantCustomCatalog;
     try {
       actual = await readCustomCatalog(source, resource, {
         active: options.active ?? -1,
       });
     } catch (cause) {
-      unverifiable.push({ resource, cause });
+      found.unverifiable.push({ resource, cause });
       continue;
     }
-    for (const entry of actual.undeclarable) {
-      undeclarable.push({ ...entry, resource });
-    }
-    for (const [alias, declaredType] of Object.entries(declared)) {
-      const actualType = actual.fields[alias];
-      if (actualType === undefined) {
-        // Not in `actual.fields` — but it may be one of the fields that exists and simply cannot
-        // be declared, and calling that "missing" would be wrong.
-        const undeclarableHere = actual.undeclarable.some(
-          (u) => u.alias === alias,
-        );
-        if (!undeclarableHere) {
-          missing.push({ resource, alias, declared: declaredType });
-        }
-        continue;
-      }
-      if (actualType !== declaredType) {
-        typeMismatch.push({
-          resource,
-          alias,
-          declared: declaredType,
-          actual: actualType,
-        });
-      }
-      const declaredReq = declaredAsRequired.has(alias);
-      const tenantReq = actual.required[alias] === true;
-      if (declaredReq !== tenantReq) {
-        requiredMismatch.push({
-          resource,
-          alias,
-          declared: declaredReq,
-          tenant: tenantReq,
-        });
-      }
-    }
-    for (const [alias, actualType] of Object.entries(actual.fields)) {
-      if (declared[alias] === undefined) {
-        undeclared.push({ resource, alias, actual: actualType });
-      }
-    }
+    compareResource(resource, fields, actual, found);
   }
 
   return {
     ok:
-      missing.length === 0 &&
-      typeMismatch.length === 0 &&
-      unverifiable.length === 0,
-    missing,
-    typeMismatch,
-    undeclared,
-    unverifiable,
-    undeclarable,
-    requiredMismatch,
+      found.missing.length === 0 &&
+      found.typeMismatch.length === 0 &&
+      found.unverifiable.length === 0,
+    ...found,
   };
 };
 
