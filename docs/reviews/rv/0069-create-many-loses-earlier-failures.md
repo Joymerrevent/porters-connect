@@ -1,7 +1,7 @@
 # RV-69 🔴 `createMany` が途中のバッチで失敗すると、それまでのバッチの 1 件ごとの失敗が消える
 
 - 重要度: 🔴 ／ 観点: エラーモデル / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -31,6 +31,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`a6e034f`）。** `src/accessor/write-many.ts` の `batchFailure` が、失敗したバッチの index の範囲（結果が分からない `create` のときは書かれた可能性があること）・まだ送っていない index・それまでのバッチで断られた index（20 件を超えたら残りは件数）を hint に書く。応答の件数が合わないときも同じ形で届ける。`requester.ts` に `isUnknownOutcome` を足した。
+
+## 検証
+
+`src/accessor/write-many.test.ts` の途中の失敗のテスト（先に断られた index の一覧、20 件ちょうどと超えたとき、結果が分からないバッチ、最初のバッチの結果が分からないとき、`updateMany`、件数が合わない応答）。`write-many.ts` のミューテーションはすべて検出。
 
 [adr41]: ../../adr/0041-bulk-write-surface-impl.md

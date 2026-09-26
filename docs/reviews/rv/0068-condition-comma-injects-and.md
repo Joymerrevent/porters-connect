@@ -1,7 +1,7 @@
 # RV-68 🔴 条件の値の中のカンマが、別の AND 条件として読まれる
 
 - 重要度: 🔴 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -29,7 +29,12 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`49f16c2`）。** [ADR-0105][adr105] の案A で、`src/accessor/append-read-query.ts` が、条件の値のカンマ、一覧の要素のカンマとコロン、キーワードの要素のカンマを送る前に `PortersConfigError` で拒否する。テキストと日時の値のコロンは拒否しない。
+
+## 検証
+
+`src/accessor/append-read-query.test.ts` の「区切り文字を含む値（ADR-0105・RV-68）」。削除済みを読むときの項目の制限も、値の細工で越えられないことを確かめる。`append-read-query.ts` のミューテーションはすべて検出。
 
 [adr38]: ../../adr/0038-read-query-surface-impl.md
 [readref]: ../../usage/reference/resource-api/README.md
+[adr105]: ../../adr/0105-reject-delimiters-in-query-values.md

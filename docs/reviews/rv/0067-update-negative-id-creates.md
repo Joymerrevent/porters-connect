@@ -1,7 +1,7 @@
 # RV-67 🔴 `update(-1)` がエラーにならず、新規作成として送られる
 
 - 重要度: 🔴 ／ 観点: フェイルセーフ / API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`30b8142`）。** `src/accessor/assert-record-id.ts` の `assertRecordId` で、id が正の安全な整数でなければ送る前に `PortersConfigError` にする。データ系の `update` / `updateMany` と、添付ファイルの `update` で使う。
+
+## 検証
+
+`src/accessor/data-writer.test.ts` の「the id update / updateMany receive (RV-67)」が、`-1` / `0` / `1.5` / `NaN` で何も送らずに拒否することを確かめる。`assert-record-id.test.ts` が境界（1・`MAX_SAFE_INTEGER` と、その外）を確かめる。
 
 [wf]: ../../usage/reference/resource-api/write-format.md
