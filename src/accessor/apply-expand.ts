@@ -1,5 +1,6 @@
 // Folding `expand` into the `field` list (ADR-0058).
 
+import { qualify } from "../util/alias";
 import type { ReferenceTarget, ExpandSelection, ExpandContext } from "./expand";
 import { selectedExpansions } from "./selected-expansions";
 
@@ -18,7 +19,7 @@ const expandEntry = (
   target: ReferenceTarget,
   sub: readonly string[],
 ): string =>
-  `${prefix}.${alias}(${sub.map((s) => `${target.prefix}.${s}`).join(",")})`;
+  `${qualify(prefix, alias)}(${sub.map((s) => qualify(target.prefix, s)).join(",")})`;
 
 /**
  * Fold `expand` into an already-assembled `field` list: an expanded alias **replaces** its plain
@@ -40,7 +41,7 @@ export const applyExpand = (
     ctx.references,
   )) {
     const entry = expandEntry(ctx.prefix, alias, target, sub);
-    const at = out.indexOf(`${ctx.prefix}.${alias}`);
+    const at = out.indexOf(qualify(ctx.prefix, alias));
     if (at === -1) out.push(entry);
     else out[at] = entry;
   }

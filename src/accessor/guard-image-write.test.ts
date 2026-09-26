@@ -111,22 +111,75 @@ describe("guardImageWrite — 送信前に PORTERS の 3 つの上限を検査�
     );
   });
 
-  it("欠けているサブ項目は検査しない（部分的な値を落とさない）", () => {
-    // Content / FileName / ContentType のどれが無くても、無いものは見ない — 型検査を外して
-    // 「無いのに文字列として測る」と TypeError で落ちる（survivor 3 件がその条件）。
-    const partial = (v: Record<string, string>) =>
+  // 型を迂回した値は、"null" などの文字列として送られていた。3 つとも文字列であることを求める（RV-98）。
+  it.each([
+    [{ FileName: "a.png", ContentType: "image/png" }, "Content", "undefined"],
+    [{ ContentType: "image/png", Content: "QUJD" }, "FileName", "undefined"],
+    [{ FileName: "a.png", Content: "QUJD" }, "ContentType", "undefined"],
+    [
+      { FileName: "a.png", ContentType: "image/png", Content: null },
+      "Content",
+      "null",
+    ],
+    [
+      { FileName: ["x".repeat(300)], ContentType: "image/png", Content: "" },
+      "FileName",
+      "object",
+    ],
+  ])("refuses %j before sending", (v, sub, got) => {
+    let err: unknown;
+    try {
       guardImageWrite({ U_photo: v as unknown as ImageWriteValue }, FIELDS);
-    expect(partial({ FileName: "a.png", ContentType: "image/png" })).toBe(true);
-    expect(partial({ ContentType: "image/png", Content: "QUJD" })).toBe(true);
-    expect(partial({ FileName: "a.png", Content: "QUJD" })).toBe(true);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).message).toBe(
+      `image "U_photo" must have ${sub} as a string, got ${got}`,
+    );
+    expect((err as PortersConfigError).hint).toBe(
+      "Write an image as { FileName, ContentType, Content }, with Content the file as Base64 (see bytesToBase64).",
+    );
   });
 
-  it("文字列でない FileName は検査しない（型の外の値を測って偽の警報にしない）", () => {
-    // 配列を文字列化すると 300 バイトになるが、ガードは string だけを測る。
-    const odd = { FileName: ["x".repeat(300)], ContentType: "image/png" };
+  it("accepts empty strings, which PORTERS' handling of is only unverified", () => {
     expect(
-      guardImageWrite({ U_photo: odd as unknown as ImageWriteValue }, FIELDS),
+      guardImageWrite(
+        { U_photo: { FileName: "", ContentType: "image/png", Content: "" } },
+        FIELDS,
+      ),
     ).toBe(true);
+  });
+
+  // 改行入りの Base64 は、改行を除いて大きさを数える（RV-98）。
+  it("measures Base64 with line breaks by its content only", () => {
+    // ちょうど 2MB（2796200 文字 ＋ "AAA="）を、MIME の形（76 文字ごとに CRLF）で折り返す。
+    const exactly2MB = `${"A".repeat(2796200)}AAA=`;
+    const wrapped = (exactly2MB.match(/.{1,76}/g) ?? []).join("\r\n");
+    expect(
+      guardImageWrite(
+        {
+          U_photo: {
+            FileName: "a.png",
+            ContentType: "image/png",
+            Content: wrapped,
+          },
+        },
+        FIELDS,
+      ),
+    ).toBe(true);
+    expect(() =>
+      guardImageWrite(
+        {
+          U_photo: {
+            FileName: "a.png",
+            ContentType: "image/png",
+            Content: `${wrapped}\r\nAAAA`,
+          },
+        },
+        FIELDS,
+      ),
+    ).toThrow(/over the 2MB limit/);
   });
 
   it("Image 型の項目に文字列が渡されても（cast 経由）オブジェクトとしては検査しない", () => {

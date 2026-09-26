@@ -1,7 +1,7 @@
 # RV-126 🟢 id に BigInt を渡すと、PortersError ではない TypeError が漏れる
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`4c69a3a`）。** メッセージを作るとき、BigInt も `String()` で書く。
+
+## 検証
+
+`src/accessor/assert-record-id.test.ts` の「refuses a BigInt id as a PortersConfigError」。

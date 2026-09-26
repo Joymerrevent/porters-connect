@@ -158,7 +158,9 @@ export type SearchQuery<
    * `order`; the library adds the resource's prefix. **Omit** to fetch every catalogued
    * field by default: PORTERS returns only the primary key for a fieldless request, so
    * the library sends a catalog-derived default field set instead. Pass `[]` to opt into that
-   * API-native "primary key only" response (e.g. counting).
+   * API-native "primary key only" response (e.g. counting). With `[]`, `expand` and `image` are not
+   * sent either — there is no field list to add them to — so list the fields you want when you use
+   * them. An alias listed twice is sent once.
    */
   field?: readonly ReadFieldAlias<F>[];
   // expand の設計は ADR-0058。
@@ -200,7 +202,8 @@ export type SearchQuery<
   order?: Order<F>;
   /**
    * Keyword AND-search over text fields (MultilineText/SinglelineText/Mail/URL; Telephone digits
-   * only). OR is not supported. Max 100 characters including commas — guarded before send.
+   * only). OR is not supported. Max 100 characters including commas — guarded before send, as is
+   * a keyword that is empty or contains a comma.
    */
   keywords?: string[];
   /** Delete-state filter (default `existing`). `deleted`/`all` restrict `condition` — see {@link ItemState}. */

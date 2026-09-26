@@ -1,7 +1,7 @@
 # RV-129 🟢 `updateMany` の途中の失敗の hint が、失敗したバッチを再送してよいのかを読み取りにくい
 
 - 重要度: 🟢 ／ 観点: エラーモデル / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`4a00e75`）。** update が途中で止まったときの hint を「The records … failed. … Updates can be resent as they are: resend the failed batch, the records not sent, and any earlier record that failed.」にした。
+
+## 検証
+
+`src/accessor/write-many.test.ts` の「tells an update that failed midway it can be resent」。

@@ -100,7 +100,7 @@ page.items[0]?.P_Mail; // ✗ 型エラー（読んでいない項目）
 
 - `field` を省略したとき、または中身をコンパイラが読めない配列（`string[]` の変数など）を渡したときは、知っている
   項目すべてを持つ型になります。
-- `search` / `searchAll` に `field: []` を渡すと、項目を 1 つも持たない型になります（件数だけを見るとき）。
+- `search` / `searchAll` に `field: []` を渡すと、項目を 1 つも持たない型になります（件数だけを見るとき）。このとき `expand` / `image` も送られません（足す先の `field` が無いため）。
 - 読んだ項目も、値が空なら `null`、PORTERS が返さなければキーごと無い（`undefined`）ので、型は
   `値 | null | undefined` です。
 - 型に無い項目を読む必要があるときは [`rawValue`][f-rawValue] を使います。
@@ -349,6 +349,29 @@ page.start; // 今回の開始インデックス
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
 `total` に達するか空ページで停止します）。応答が頼んだページと合わないとき（応答の `start` が頼んだ位置と違うときなど）は、
 同じレコードを繰り返し返したり抜かしたりせずに、`PortersResourceError`（`category` は `"unknown"`）で止まります。
+
+`searchAll` は「何件目から」でページを辿るので、辿っている途中で条件に合うレコードが減ると（削除・更新で条件から外れるなど）、
+その件数だけ後ろのレコードが前のページへずれ、**取りこぼします**。途中で増えたときは、同じレコードを 2 回受け取ることがあります。
+取りこぼしは、後から件数を比べても見つけられません（減った後の `total` と、受け取った件数が一致するため）。
+
+辿っている間にレコードが減りうるときは、`searchAll` の代わりに、`P_Id` の昇順で「前のページの最後の `P_Id` より大きいもの」を
+読み続けてください。何件目かではなく `P_Id` で続きを指すので、途中で減っても、残っているレコードは取りこぼしません。
+`field` を指定するときは、`P_Id` を必ず含めてください（含めないと、1 ページ目の後で続きが分からずに止まります）。
+
+```ts
+let lastId = 0;
+for (;;) {
+  const page = await t.candidate.search({
+    condition: { P_Id: { gt: lastId } },
+    order: [{ P_Id: "asc" }],
+    count: 200,
+  });
+  for (const c of page.items) console.log(c.P_Id);
+  const last = page.items.at(-1)?.P_Id;
+  if (last === undefined || last === null) break;
+  lastId = last;
+}
+```
 
 <!-- 根拠: ADR-0099 -->
 

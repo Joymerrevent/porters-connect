@@ -1,7 +1,7 @@
 # RV-125 🟢 `createMany` の 1 件ごとの Code 302 に、再送すると重複のおそれがあるという案内が無い
 
 - 重要度: 🟢 ／ 観点: エラーモデル / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`4a00e75・7cbd5c7`）。** `BulkWriteResultItem.code` の公開の説明と `write.md` に、`createMany` の件ごとの `302` は作られたかが分からないので確かめてから再送することを書いた。
+
+## 検証
+
+文書の記述。

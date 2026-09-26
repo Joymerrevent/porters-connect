@@ -2,7 +2,7 @@
 
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
-import type { WriteItem } from "../xml/write-value";
+import type { ImageWriteValue, WriteItem } from "../xml/write-value";
 import {
   IMAGE_CONTENT_TYPES,
   MAX_IMAGE_BYTES,
@@ -24,6 +24,8 @@ const paddingBytes = (b64: string): number => {
 // padding. No need to actually decode 2MB of image just to measure it.
 const base64Bytes = (b64: string): number =>
   Math.floor(b64.length / 4) * 3 - paddingBytes(b64);
+
+const IMAGE_SUB_ELEMENTS = ["FileName", "ContentType", "Content"] as const;
 
 const configError = (message: string, hint: string): PortersConfigError =>
   new PortersConfigError(message, { category: "config", hint });
@@ -56,26 +58,33 @@ export const guardImageWrite = (
 ): boolean => {
   const values = imageValues(item, fields);
   for (const [alias, value] of values) {
-    const { FileName, ContentType, Content } = value;
-    if (typeof Content === "string" && base64Bytes(Content) > MAX_IMAGE_BYTES) {
+    // 型を迂回した値（Content が null・子要素が欠けたもの）は、"null" などの文字列として送られていた（RV-98）。
+    // 3 つとも文字列であることを先に確かめる。空文字は止めない（PORTERS がどう扱うかが未確認なだけ）。
+    for (const sub of IMAGE_SUB_ELEMENTS) {
+      if (typeof value[sub] !== "string") {
+        throw configError(
+          `image "${alias}" must have ${sub} as a string, got ${value[sub] === null ? "null" : typeof value[sub]}`,
+          "Write an image as { FileName, ContentType, Content }, with Content the file as Base64 (see bytesToBase64).",
+        );
+      }
+    }
+    const { FileName, ContentType, Content } = value as ImageWriteValue;
+    // 改行などの空白は Base64 の中身ではないので、数える前に除く（除かないと、ちょうど 2MB の画像が
+    // 改行の分だけ大きく見えて拒否されていた。RV-98）。
+    const bytes = base64Bytes(Content.replace(/[\r\n\t ]/g, ""));
+    if (bytes > MAX_IMAGE_BYTES) {
       throw configError(
-        `image "${alias}" is ${base64Bytes(Content)} bytes once decoded, over the 2MB limit`,
+        `image "${alias}" is ${bytes} bytes once decoded, over the 2MB limit`,
         "PORTERS accepts an image of 2MB or less. Resize or re-compress it before writing.",
       );
     }
-    if (
-      typeof FileName === "string" &&
-      utf8Bytes(FileName) > MAX_IMAGE_FILE_NAME_BYTES
-    ) {
+    if (utf8Bytes(FileName) > MAX_IMAGE_FILE_NAME_BYTES) {
       throw configError(
         `image "${alias}" has a ${utf8Bytes(FileName)}-byte file name, over the ${MAX_IMAGE_FILE_NAME_BYTES}-byte limit`,
         `The file name, extension included, must be ${MAX_IMAGE_FILE_NAME_BYTES} bytes or fewer — multi-byte characters count for more than one.`,
       );
     }
-    if (
-      typeof ContentType === "string" &&
-      !(IMAGE_CONTENT_TYPES as readonly string[]).includes(ContentType)
-    ) {
+    if (!(IMAGE_CONTENT_TYPES as readonly string[]).includes(ContentType)) {
       throw configError(
         `image "${alias}" has content type "${ContentType}", which PORTERS does not accept`,
         `Use one of ${IMAGE_CONTENT_TYPES.join(" / ")}.`,

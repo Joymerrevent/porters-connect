@@ -1,7 +1,7 @@
 # RV-98 🟢 Image の検査が、型を迂回した値や改行入りの Base64 を正しく扱わない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`3f86913`）。** 画像の値の `FileName` / `ContentType` / `Content` がすべて文字列であることを確かめる（空文字は、PORTERS の扱いが未確認なだけなので止めない）。大きさは、改行・タブ・半角スペースを除いてから数える。
+
+## 検証
+
+`src/accessor/guard-image-write.test.ts` の「refuses … before sending」「measures Base64 with line breaks by its content only」。

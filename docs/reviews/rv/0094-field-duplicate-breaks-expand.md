@@ -1,7 +1,7 @@
 # RV-94 🟢 `field` に同じ alias が 2 つあると、`expand` / `image` で素の項目も一緒に送る
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`3ac0766`）。** 接頭辞を付けた後で `field` の重複を取り除く。`P_Name` と `Person.P_Name` も 1 つになり、展開や Image はその 1 件を置き換える。
+
+## 検証
+
+`src/accessor/field-param.test.ts` の「sends an alias given twice once, and expands or images that one entry」。

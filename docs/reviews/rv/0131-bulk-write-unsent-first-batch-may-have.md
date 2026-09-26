@@ -1,7 +1,7 @@
 # RV-131 🟢 一括の create の最初のバッチで、送る前に失敗しても「書き込まれた可能性がある」と書く
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`4a00e75`）。** requester が、一度も送らずに失敗したエラーにライブラリの中だけで見える印（`WeakSet`）を付け、`knownNotWritten` がそれを見る。前の試行が送っていれば、再試行でトークンの取得に失敗しても印は付けない。
+
+## 検証
+
+`src/http/requester.test.ts` の「neverSent」と、`write-many.test.ts` の「rethrows a create that never reached the wire as it is」。

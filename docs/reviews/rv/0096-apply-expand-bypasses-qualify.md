@@ -1,7 +1,7 @@
 # RV-96 🟢 `applyExpand` が、alias の組み立てに `qualify()` を使っていない
 
 - 重要度: 🟢 ／ 観点: アーキテクチャ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`3ac0766`）。** 展開の alias（外側と `()` の中）を `qualify()` で組み立てる。
+
+## 検証
+
+`src/accessor/apply-expand.test.ts` の「builds the alias without a leading dot when the resource has no prefix」。

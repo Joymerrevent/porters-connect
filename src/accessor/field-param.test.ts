@@ -60,6 +60,25 @@ describe("accessor/field-param — fieldParam（既定・検査・接頭辞・�
     );
   });
 
+  // 同じ alias を 2 回渡しても 1 回だけ送る。展開や Image は、その 1 件を置き換える（RV-94）。
+  it("sends an alias given twice once, and expands or images that one entry", () => {
+    expect(fieldParam(ctx, { field: ["P_Name", "P_Name", "G.P_Name"] })).toBe(
+      "G.P_Name",
+    );
+    expect(
+      fieldParam(ctx, {
+        field: ["P_Part", "P_Part"],
+        expand: { P_Part: ["P_Id"] },
+      }),
+    ).toBe("G.P_Part(Pt.P_Id)");
+    expect(
+      fieldParam(ctx, {
+        field: ["U_photo", "U_photo"],
+        image: { U_photo: ["FileName"] },
+      }),
+    ).toBe("G.U_photo(FileName)");
+  });
+
   it("strips a prefix that came in through a cast rather than doubling it", () => {
     expect(fieldParam(ctx, { field: ["G.P_Name"] })).toBe("G.P_Name");
   });
