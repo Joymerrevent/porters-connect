@@ -62,6 +62,7 @@ import type {
   RequiredFor,
 } from "./fields";
 import type { EmptyCatalog } from "./accessor/catalog";
+import type { ConnectionDeps } from "./accessor/deps";
 import type { Scheme } from "./http";
 import type { Scope } from "./auth";
 
@@ -303,6 +304,50 @@ const validateTokenProvider = (provider: unknown): void => {
   }
 };
 
+// Build the partition-bound accessor bundle for a given partition (ADR-0040 / F-3) by running
+// the same factories with that `partition` — resources are already `deps.partition`-driven, so
+// the factories need no change. The custom field catalog is bound here too (ADR-0087): it is
+// per partition, so it arrives with the partition and never outlives the scope. Partition Read
+// is App-level (no partition) and built once in the PortersClient constructor, not here.
+//
+// VERIFY(live): re-binding swaps only the `partition` query and keeps the **same token**, so
+// this assumes one App token reaches every partition it was granted. Whether a token's access
+// actually spans partitions is unconfirmed — docs/live-verification.md (LV-13). If it does not,
+// the recommended path becomes a dedicated client per tenant (ADR-0008 案3); the design already
+// allows that, so only the ergonomics of `tenant(id)` would change.
+const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
+  connection: ConnectionDeps,
+  partition: number,
+  scope: TenantOptions<C> = {},
+): TenantScope<C> => {
+  rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
+  // The per-resource custom catalog declared via defineFields (or {} when none). Branded
+  // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
+  const customFor = <K extends keyof DeclaredCatalogs>(
+    key: K,
+  ): CustomFor<C, K> => (scope.fields?.[key] ?? {}) as CustomFor<C, K>;
+  const deps = { ...connection, partition };
+  return {
+    candidate: createCandidateResource(deps, customFor("candidate")),
+    job: createJobResource(deps, customFor("job")),
+    client: createClientResource(deps, customFor("client")),
+    recruiter: createRecruiterResource(deps, customFor("recruiter")),
+    contact: createContactResource(deps, customFor("contact")),
+    opportunity: createOpportunityResource(deps, customFor("opportunity")),
+    activity: createActivityResource(deps, customFor("activity")),
+    contract: createContractResource(deps, customFor("contract")),
+    sales: createSalesResource(deps, customFor("sales")),
+    phase: createPhaseAccessor(deps),
+    process: createProcessResource(deps, customFor("process")),
+    resume: createResumeResource(deps, customFor("resume")),
+    attachment: createAttachmentAccessor(deps),
+    user: createUserResource(deps),
+    department: createDepartmentResource(deps),
+    field: createFieldAccessor(deps),
+    option: createOptionResource(deps),
+  };
+};
+
 /**
  * Entry point of the library. Wires the default transport / auth / throttle / requester and exposes
  * the **App-level** surface: `auth`, the `partition` master (discovery), and {@link PortersClient.tenant}.
@@ -408,51 +453,10 @@ export class PortersClient {
       backoff: expoBackoff(),
     });
     this.#accessPoint = accessPoint;
-    // Build the partition-bound accessor bundle for a given partition (ADR-0040 / F-3) by running
-    // the same factories with that `partition` — resources are already `deps.partition`-driven, so
-    // the factories need no change. The custom field catalog is bound here too (ADR-0087): it is
-    // per partition, so it arrives with the partition and never outlives the scope. Partition Read
-    // is App-level (no partition) and built once below, not here.
-    //
-    // VERIFY(live): re-binding swaps only the `partition` query and keeps the **same token**, so
-    // this assumes one App token reaches every partition it was granted. Whether a token's access
-    // actually spans partitions is unconfirmed — docs/live-verification.md (LV-13). If it does not,
-    // the recommended path becomes a dedicated client per tenant (ADR-0008 案3); the design already
-    // allows that, so only the ergonomics of `tenant(id)` would change.
-    const buildScope = <C extends DeclaredCatalogs = EmptyCatalog>(
-      partition: number,
-      scope: TenantOptions<C> = {},
-    ): TenantScope<C> => {
-      rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
-      // The per-resource custom catalog declared via defineFields (or {} when none). Branded
-      // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
-      const customFor = <K extends keyof DeclaredCatalogs>(
-        key: K,
-      ): CustomFor<C, K> => (scope.fields?.[key] ?? {}) as CustomFor<C, K>;
-      const deps = { requester, accessPoint, partition };
-      return {
-        candidate: createCandidateResource(deps, customFor("candidate")),
-        job: createJobResource(deps, customFor("job")),
-        client: createClientResource(deps, customFor("client")),
-        recruiter: createRecruiterResource(deps, customFor("recruiter")),
-        contact: createContactResource(deps, customFor("contact")),
-        opportunity: createOpportunityResource(deps, customFor("opportunity")),
-        activity: createActivityResource(deps, customFor("activity")),
-        contract: createContractResource(deps, customFor("contract")),
-        sales: createSalesResource(deps, customFor("sales")),
-        phase: createPhaseAccessor(deps),
-        process: createProcessResource(deps, customFor("process")),
-        resume: createResumeResource(deps, customFor("resume")),
-        attachment: createAttachmentAccessor(deps),
-        user: createUserResource(deps),
-        department: createDepartmentResource(deps),
-        field: createFieldAccessor(deps),
-        option: createOptionResource(deps),
-      };
-    };
-    this.tenant = buildScope;
+    const connection: ConnectionDeps = { requester, accessPoint };
+    this.tenant = (id, options) => createTenantScope(connection, id, options);
     // Partition Read takes no `partition` param (it discovers them); App-level, not tenant-bound.
-    this.partition = createPartitionResource({ requester, accessPoint });
+    this.partition = createPartitionResource(connection);
   }
 
   /** The configured API server name (no port — see {@link PortersClient.port}). */

@@ -8,7 +8,7 @@
 
 > **TenantScope**\<`C`\> = `object`
 
-Defined in: [src/porters-client.ts:166](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L166)
+Defined in: [src/porters-client.ts:167](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L167)
 
 The partition-bound resource accessors returned by [PortersClient.tenant](../classes/PortersClient.md#tenant).
 **This is the only way to reach a partition-scoped resource**: PORTERS requires
@@ -29,7 +29,7 @@ The partition-bound resource accessors returned by [PortersClient.tenant](../cla
 
 > `readonly` **activity**: [`ActivityResource`](ActivityResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"activity"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"activity"`\>\>
 
-Defined in: [src/porters-client.ts:188](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L188)
+Defined in: [src/porters-client.ts:189](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L189)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [src/porters-client.ts:188](https://github.com/Joymerrevent/porters-
 
 > `readonly` **attachment**: [`AttachmentAccessor`](AttachmentAccessor.md)
 
-Defined in: [src/porters-client.ts:217](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L217)
+Defined in: [src/porters-client.ts:218](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L218)
 
 Attachments, reached through the resource they belong to: `t.attachment.of("resume")`.
 PORTERS requires that `resource` on every Attachment Read, and the same value fills the
@@ -49,7 +49,7 @@ PORTERS requires that `resource` on every Attachment Read, and the same value fi
 
 > `readonly` **candidate**: [`CandidateResource`](CandidateResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"candidate"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"candidate"`\>\>
 
-Defined in: [src/porters-client.ts:167](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L167)
+Defined in: [src/porters-client.ts:168](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L168)
 
 ***
 
@@ -57,7 +57,7 @@ Defined in: [src/porters-client.ts:167](https://github.com/Joymerrevent/porters-
 
 > `readonly` **client**: [`ClientResource`](ClientResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"client"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"client"`\>\>
 
-Defined in: [src/porters-client.ts:172](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L172)
+Defined in: [src/porters-client.ts:173](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L173)
 
 ***
 
@@ -65,7 +65,7 @@ Defined in: [src/porters-client.ts:172](https://github.com/Joymerrevent/porters-
 
 > `readonly` **contact**: [`ContactResource`](ContactResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"contact"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"contact"`\>\>
 
-Defined in: [src/porters-client.ts:180](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L180)
+Defined in: [src/porters-client.ts:181](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L181)
 
 ***
 
@@ -73,7 +73,7 @@ Defined in: [src/porters-client.ts:180](https://github.com/Joymerrevent/porters-
 
 > `readonly` **contract**: [`ContractResource`](ContractResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"contract"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"contract"`\>\>
 
-Defined in: [src/porters-client.ts:192](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L192)
+Defined in: [src/porters-client.ts:193](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L193)
 
 ***
 
@@ -81,7 +81,7 @@ Defined in: [src/porters-client.ts:192](https://github.com/Joymerrevent/porters-
 
 > `readonly` **department**: [`DepartmentResource`](DepartmentResource.md)
 
-Defined in: [src/porters-client.ts:224](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L224)
+Defined in: [src/porters-client.ts:225](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L225)
 
 Department master Read (Connect API 8.2.1+): the user departments a department-typed Link field
 or `User.P_Department` points at. Read-only, listed whole — no filter, no `get(id)`. Covered
@@ -93,7 +93,7 @@ by the `user_r` scope (PORTERS defines no `department_r`).
 
 > `readonly` **field**: [`FieldAccessor`](FieldAccessor.md)
 
-Defined in: [src/porters-client.ts:231](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L231)
+Defined in: [src/porters-client.ts:232](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L232)
 
 Field master Read, reached through the resource whose catalog you want:
 `t.field.of("candidate")`. PORTERS requires `resource=` on every Field Read, so it is bound
@@ -105,7 +105,7 @@ once.
 
 > `readonly` **job**: [`JobResource`](JobResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"job"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"job"`\>\>
 
-Defined in: [src/porters-client.ts:171](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L171)
+Defined in: [src/porters-client.ts:172](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L172)
 
 ***
 
@@ -113,7 +113,7 @@ Defined in: [src/porters-client.ts:171](https://github.com/Joymerrevent/porters-
 
 > `readonly` **opportunity**: [`OpportunityResource`](OpportunityResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"opportunity"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"opportunity"`\>\>
 
-Defined in: [src/porters-client.ts:184](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L184)
+Defined in: [src/porters-client.ts:185](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L185)
 
 ***
 
@@ -121,7 +121,7 @@ Defined in: [src/porters-client.ts:184](https://github.com/Joymerrevent/porters-
 
 > `readonly` **option**: [`OptionResource`](OptionResource.md)
 
-Defined in: [src/porters-client.ts:232](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L232)
+Defined in: [src/porters-client.ts:233](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L233)
 
 ***
 
@@ -129,7 +129,7 @@ Defined in: [src/porters-client.ts:232](https://github.com/Joymerrevent/porters-
 
 > `readonly` **phase**: [`PhaseAccessor`](PhaseAccessor.md)
 
-Defined in: [src/porters-client.ts:202](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L202)
+Defined in: [src/porters-client.ts:203](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L203)
 
 Phase history, reached through the resource it belongs to: `t.phase.of("client")`.
 PORTERS requires that `resource` on every Phase call, so it is bound once.
@@ -140,7 +140,7 @@ PORTERS requires that `resource` on every Phase call, so it is bound once.
 
 > `readonly` **process**: [`ProcessResource`](ProcessResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"process"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"process"`\>\>
 
-Defined in: [src/porters-client.ts:203](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L203)
+Defined in: [src/porters-client.ts:204](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L204)
 
 ***
 
@@ -148,7 +148,7 @@ Defined in: [src/porters-client.ts:203](https://github.com/Joymerrevent/porters-
 
 > `readonly` **recruiter**: [`RecruiterResource`](RecruiterResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"recruiter"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"recruiter"`\>\>
 
-Defined in: [src/porters-client.ts:176](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L176)
+Defined in: [src/porters-client.ts:177](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L177)
 
 ***
 
@@ -156,7 +156,7 @@ Defined in: [src/porters-client.ts:176](https://github.com/Joymerrevent/porters-
 
 > `readonly` **resume**: [`ResumeResource`](ResumeResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"resume"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"resume"`\>\>
 
-Defined in: [src/porters-client.ts:207](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L207)
+Defined in: [src/porters-client.ts:208](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L208)
 
 ***
 
@@ -164,7 +164,7 @@ Defined in: [src/porters-client.ts:207](https://github.com/Joymerrevent/porters-
 
 > `readonly` **sales**: [`SalesResource`](SalesResource.md)\<[`CustomFor`](CustomFor.md)\<`C`, `"sales"`\>, [`RequiredFor`](RequiredFor.md)\<`C`, `"sales"`\>\>
 
-Defined in: [src/porters-client.ts:196](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L196)
+Defined in: [src/porters-client.ts:197](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L197)
 
 ***
 
@@ -172,4 +172,4 @@ Defined in: [src/porters-client.ts:196](https://github.com/Joymerrevent/porters-
 
 > `readonly` **user**: [`UserResource`](UserResource.md)
 
-Defined in: [src/porters-client.ts:218](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L218)
+Defined in: [src/porters-client.ts:219](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters-client.ts#L219)
