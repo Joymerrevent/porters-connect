@@ -31,6 +31,8 @@
 
 **実施（2026-09-26・fix/accessor-review・`49f16c2`）。** [ADR-0105][adr105] の案A で、`src/accessor/append-read-query.ts` が、条件の値のカンマ、一覧の要素のカンマとコロン、キーワードの要素のカンマを送る前に `PortersConfigError` で拒否する。テキストと日時の値のコロンは拒否しない。
 
+**追加の修正（2026-09-26・`3f993db` / `d4f4719`）。** 再レビューで、条件の演算子（キー）に区切り文字を入れると、削除済みを読むときの項目の制限も越えられると分かった。演算子を PORTERS が決めた集合（`src/porters/read-rules.ts` の `CONDITION_SUFFIXES`）に限り、項目名のカンマ・コロン・等号を拒否した。値の中のコロンを実機で確かめる項目を LV-35 として登録した。
+
 ## 検証
 
 `src/accessor/append-read-query.test.ts` の「区切り文字を含む値（ADR-0105・RV-68）」。削除済みを読むときの項目の制限も、値の細工で越えられないことを確かめる。`append-read-query.ts` のミューテーションはすべて検出。

@@ -33,6 +33,10 @@
 
 **実施（2026-09-26・fix/accessor-review・`a6e034f`）。** `src/accessor/write-many.ts` の `batchFailure` が、失敗したバッチの index の範囲（結果が分からない `create` のときは書かれた可能性があること）・まだ送っていない index・それまでのバッチで断られた index（20 件を超えたら残りは件数）を hint に書く。応答の件数が合わないときも同じ形で届ける。`requester.ts` に `isUnknownOutcome` を足した。
 
+**追加の修正（2026-09-26・`c7c08f1`）。** 再レビューで、200 で読めない応答や送った後の生の Error で失敗した create のバッチを「書き込まれていない」と書いていたと分かった。PORTERS がルートの Result Code で断ったもの・4xx（408 以外）・設定の誤りだけを「書き込まれていない」とし、それ以外は「書き込まれた可能性がある」とした。
+
+**さらに追加の修正（2026-09-26・`c41e42f`）。** 2 回目の再レビューで、ルートに Result Code があれば「書き込まれていない」としていたため、Code 1000 や表に無いコードまで「書き込まれていない」になっていたと分かった。断られたことがはっきりしている分類（validation / permission / auth / conflict / notFound / config）と Code 9、4xx（408 以外）だけを「書き込まれていない」とした。
+
 ## 検証
 
 `src/accessor/write-many.test.ts` の途中の失敗のテスト（先に断られた index の一覧、20 件ちょうどと超えたとき、結果が分からないバッチ、最初のバッチの結果が分からないとき、`updateMany`、件数が合わない応答）。`write-many.ts` のミューテーションはすべて検出。

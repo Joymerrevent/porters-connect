@@ -140,6 +140,12 @@
 | [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
 | [RV-124][rv124] | 🟢     | 性能                            | open    | スロットルの shift が容量に比例                                                                      |
 | [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
+| [RV-126][rv126] | 🟢     | エラーモデル                    | open    | BigInt の id で TypeError が漏れる                                                                   |
+| [RV-127][rv127] | 🟢     | ドキュメント                    | fixed   | 文字列の id の拒否が changeset に無い                                                                |
+| [RV-128][rv128] | 🟢     | ドキュメント                    | fixed   | 一括書き込みの文書の言い方が実装と違う                                                               |
+| [RV-129][rv129] | 🟢     | エラーモデル / DX               | open    | updateMany の再送の案内が紛らわしい                                                                  |
+| [RV-130][rv130] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの resourceId を検査しない                                                               |
+| [RV-131][rv131] | 🟢     | エラーモデル                    | open    | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -273,3 +279,9 @@
 [rv123]: rv/0123-create-nonretryable-unknown-without-hint.md
 [rv124]: rv/0124-throttle-window-shift-linear.md
 [rv125]: rv/0125-create-many-per-record-302-no-guidance.md
+[rv126]: rv/0126-record-id-bigint-typeerror.md
+[rv127]: rv/0127-string-id-now-refused-undocumented.md
+[rv128]: rv/0128-write-doc-bulk-failure-wording.md
+[rv129]: rv/0129-update-many-resend-hint-confusing.md
+[rv130]: rv/0130-attachment-resource-id-unchecked.md
+[rv131]: rv/0131-bulk-write-unsent-first-batch-may-have.md
