@@ -4,23 +4,26 @@
 // (`read-master.ts`); both share the paging / decoding / sending in `read.ts`.
 
 import type { RawItem } from "../xml/parse-resource-page";
-import { createPageReader, readUrlOf, type ResourcePageOf } from "./read";
+import { createPageReader } from "./page-reader";
+import { readUrlOf } from "./page-url";
+import type { ResourcePageOf } from "./resource-page";
 import { decoderFor } from "./decoder";
-import { paginateOnce, type Paging } from "./paging";
+import { paginateOnce } from "./paginate";
+import type { Paging } from "./paging";
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { ResourceDeps } from "./deps";
 import type { Condition, SearchQuery } from "./query";
-import { buildReadParams, type ReadParamsContext } from "./query-encode";
+import { buildReadParams, type ReadParamsContext } from "./build-read-params";
 import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../porters/read-rules";
 import { readMany } from "./read-many";
-import {
-  expansionCatalogs,
-  type EmptyReferences,
-  type Expand,
-  type ExpandedReadRecord,
-  type ExpandSelection,
-  type ReferenceMap,
+import { expansionCatalogs } from "./expansion-catalogs";
+import type {
+  EmptyReferences,
+  Expand,
+  ExpandedReadRecord,
+  ExpandSelection,
+  ReferenceMap,
 } from "./expand";
 import type { ImageOption, ImageReadRecord } from "./image";
 import { idAliasOf, type ResourceDescriptor } from "./descriptor";

@@ -8,7 +8,7 @@
 
 > **Attachment** = `object`
 
-Defined in: [src/resources/attachment.ts:53](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L53)
+Defined in: [src/resources/attachment.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L55)
 
 A decoded Attachment. A field is `null` unless it was returned (see `field`).
 
@@ -18,7 +18,7 @@ A decoded Attachment. A field is `null` unless it was returned (see `field`).
 
 > **content**: `string` \| `null`
 
-Defined in: [src/resources/attachment.ts:62](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L62)
+Defined in: [src/resources/attachment.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L64)
 
 Base64 file body.
 
@@ -28,7 +28,7 @@ Base64 file body.
 
 > **contentType**: `string` \| `null`
 
-Defined in: [src/resources/attachment.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L59)
+Defined in: [src/resources/attachment.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L61)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/resources/attachment.ts:59](https://github.com/Joymerrevent/por
 
 > **fileName**: `string` \| `null`
 
-Defined in: [src/resources/attachment.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L60)
+Defined in: [src/resources/attachment.ts:62](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L62)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [src/resources/attachment.ts:60](https://github.com/Joymerrevent/por
 
 > **id**: `number` \| `null`
 
-Defined in: [src/resources/attachment.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L54)
+Defined in: [src/resources/attachment.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L56)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [src/resources/attachment.ts:54](https://github.com/Joymerrevent/por
 
 > **resource**: `number` \| `null`
 
-Defined in: [src/resources/attachment.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L56)
+Defined in: [src/resources/attachment.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L58)
 
 Related resource type code (see the PORTERS Resource List).
 
@@ -62,6 +62,6 @@ Related resource type code (see the PORTERS Resource List).
 
 > **resourceId**: `number` \| `null`
 
-Defined in: [src/resources/attachment.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L58)
+Defined in: [src/resources/attachment.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/attachment.ts#L60)
 
 Related record id.

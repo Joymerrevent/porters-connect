@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Requester } from "../http/requester";
-import { createPageReader } from "./read";
+import { createPageReader } from "./page-reader";
 import { decoderFor } from "./decoder";
 import type { FieldCatalog } from "./catalog";
 

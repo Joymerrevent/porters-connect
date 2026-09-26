@@ -12,7 +12,7 @@ import type { ResourceDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourcePage } from "../accessor/read";
+import type { ResourcePage } from "../accessor/resource-page";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import { createMasterResource } from "../accessor/master-resource";
 

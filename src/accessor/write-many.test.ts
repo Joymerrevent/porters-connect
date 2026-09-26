@@ -11,7 +11,7 @@ import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { encodeWriteItem } from "../xml/encode-write-item";
 import { createDataResource } from "./data-resource";
 import type { FieldCatalog } from "./catalog";
-import { buildWriteUrl } from "./write";
+import { buildWriteUrl } from "./build-write-url";
 
 const FIELDS = {
   P_Id: "System[Id]",

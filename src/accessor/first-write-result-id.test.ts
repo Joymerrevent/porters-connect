@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PortersResourceError } from "../errors";
-import { buildWriteUrl, firstWriteResultId } from "./write";
-
-describe("buildWriteUrl", () => {
-  it("puts only the partition on the Write URL, at the access point", () => {
-    expect(buildWriteUrl({ hostname: "h.test" }, 12, "candidate")).toBe(
-      "https://h.test/v1/candidate?partition=12",
-    );
-  });
-});
+import { firstWriteResultId } from "./first-write-result-id";
 
 describe("firstWriteResultId", () => {
   it("returns the id of the first result Item", () => {

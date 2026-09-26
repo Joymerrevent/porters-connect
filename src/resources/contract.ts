@@ -31,7 +31,7 @@ import type {
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
 import type { ResourceDeps } from "../accessor/deps";
-import type { ResourcePage, ResourcePageOf } from "../accessor/read";
+import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
 import type { EmptyReferences, Expand, ReferenceMap } from "../accessor/expand";
 import type { ImageOption } from "../accessor/image";
 import type { BulkWriteResult } from "../accessor/write-many";

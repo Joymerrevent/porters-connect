@@ -14,9 +14,11 @@
 // resource and stays with the resource, passed in as `params` (ADR-0022).
 
 import type { ResourceDescriptor } from "./descriptor";
-import { createPageReader, type ResourcePageOf } from "./read";
+import { createPageReader } from "./page-reader";
+import type { ResourcePageOf } from "./resource-page";
 import { decoderFor } from "./decoder";
-import { paginateOnce, type Paging } from "./paging";
+import { paginateOnce } from "./paginate";
+import type { Paging } from "./paging";
 import type { FieldCatalog, ReadRecord } from "./catalog";
 import type { ConnectionDeps } from "./deps";
 

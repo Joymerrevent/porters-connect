@@ -9,14 +9,14 @@
 
 import type { ResourceDeps } from "../accessor/deps";
 import type { ResourceDescriptor } from "../accessor/descriptor";
-import { createFieldParam } from "../accessor/field-param";
+import { createFieldParam } from "../accessor/field-param-setter";
 import type {
   FieldCatalog,
   ReadFieldAlias,
   ReadRecord,
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
-import type { ResourcePage } from "../accessor/read";
+import type { ResourcePage } from "../accessor/resource-page";
 import { createMasterResource } from "../accessor/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。

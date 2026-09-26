@@ -1,8 +1,5 @@
-// Turning a typed Read query into the wire params: condition / order / keywords / itemstate,
-// normalising dates ISO -> PORTERS and guarding the caller-side limits (keywords length, itemstate
-// condition restriction) before send (fail-safe), plus the whole query -> parameters for a data
-// resource's Read. The query types themselves are `query.ts`. XML/value formatting stays in xml/;
-// this owns only the Read query string.
+// Turning a typed Read query's condition / order / keywords / itemstate into wire params
+// (ADR-0038), normalising dates ISO -> PORTERS and guarding the caller-side limits before send.
 
 import { PortersConfigError } from "../errors";
 import { qualify } from "../util/alias";
@@ -12,12 +9,7 @@ import {
   isoToPortersDateTime,
 } from "../util/datetime";
 import type { DataType } from "../porters/data-type";
-import type { AccessPoint } from "../http/access-point";
-import type { ReferenceMap } from "./expand";
-import { fieldParam, type FieldParamContext } from "./field-param";
-import { readUrlOf } from "./read";
 import type { FieldCatalog } from "./catalog";
-import type { Paging } from "./paging";
 import type { Condition, ItemState, Order, SearchQuery } from "./query";
 import {
   DELETED_CONDITION_FIELDS,
@@ -172,59 +164,3 @@ export const appendReadQuery = <F extends FieldCatalog>(
 };
 
 // --- the whole Read query -> URL parameters ---
-
-/**
- * What a data resource's Read needs to turn a query into parameters: the `field` assembly's
- * context ({@link FieldParamContext}) plus any parameter the resource always sends.
- */
-export type ReadParamsContext = FieldParamContext & {
-  /**
-   * Fixed query parameters this resource always sends. **Phase requires `resource=`** — the
-   * upper resource whose history is being read — and it is a parameter of its own, not a
-   * `condition` (ADR-0061 / Phase Read). Set once by the accessor, never by the caller.
-   */
-  params?: Readonly<Record<string, string>>;
-};
-
-/**
- * Serialise the Read query — `partition` / `field` / `condition` / `order` / `keywords` /
- * `itemstate` — into the parameters every page of that query shares. **Paging is deliberately not
- * here**: `count` / `start` are the only parts that differ page to page, so `readUrlOf` adds them
- * to a copy and `searchAll` can serialise the caller's query exactly once (RV-32).
- * `field` (with `expand` / `image` folded in) is {@link fieldParam}; the rest is
- * {@link appendReadQuery}. Attachment is bespoke (no prefix / no catalog) and builds its own loose
- * URL — see attachment.ts.
- */
-export const buildReadParams = <F extends FieldCatalog, R extends ReferenceMap>(
-  partition: number,
-  q: SearchQuery<F, R>,
-  ctx: ReadParamsContext,
-): URLSearchParams => {
-  const p = new URLSearchParams();
-  p.set("partition", String(partition));
-  for (const [key, value] of Object.entries(ctx.params ?? {}))
-    p.set(key, value);
-  const field = fieldParam(ctx, q);
-  if (field !== undefined) p.set("field", field);
-  appendReadQuery(p, q, ctx);
-  return p;
-};
-
-/**
- * Build a Read URL: `/v1/{path}?partition=…&field=…&condition=…&order=…&keywords=…&itemstate=…&count=…&start=…`
- * at the configured access point (ADR-0047) — the single-page form of {@link buildReadParams}.
- */
-export const buildReadUrl = <F extends FieldCatalog, R extends ReferenceMap>(
-  accessPoint: AccessPoint,
-  partition: number,
-  path: string,
-  q: SearchQuery<F, R> & Paging,
-  ctx: ReadParamsContext,
-): string =>
-  readUrlOf(
-    accessPoint,
-    path,
-    buildReadParams(partition, q, ctx),
-    q.count,
-    q.start,
-  );

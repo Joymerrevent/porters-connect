@@ -10,9 +10,10 @@ import { fieldTypesOf, type FieldCatalog } from "./catalog";
 import type { ResourceDeps } from "./deps";
 import { writeMany, type BulkWriteResult } from "./write-many";
 import type { CreateInput, UpdateInput } from "./write-record";
-import { guardImageWrite, guardNoImageInBulk } from "./image";
+import { guardImageWrite, guardNoImageInBulk } from "./guard-image-write";
 import { idAliasOf, type ResourceDescriptor } from "./descriptor";
-import { buildWriteUrl, firstWriteResultId } from "./write";
+import { buildWriteUrl } from "./build-write-url";
+import { firstWriteResultId } from "./first-write-result-id";
 
 /**
  * What the Write half needs: the resource's {@link ResourceDescriptor}, the aliases required on

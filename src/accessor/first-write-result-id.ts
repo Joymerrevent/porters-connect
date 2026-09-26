@@ -1,22 +1,7 @@
-// Small Write helpers shared by the data resources' factory and the bespoke Attachment accessor:
-// the Write URL and reading the id out of a single-Item Write response.
+// Reading the id out of a single-Item Write response.
 
 import { PortersResourceError, resourceError } from "../errors";
-import { apiUrl } from "../http/api-url";
-import type { AccessPoint } from "../http/access-point";
 import { parseWriteResult } from "../xml/parse-write-result";
-
-/** Build a Write URL: `/v1/{path}?partition=…` at the configured access point. */
-export const buildWriteUrl = (
-  accessPoint: AccessPoint,
-  partition: number,
-  path: string,
-): string =>
-  apiUrl(
-    accessPoint,
-    path,
-    new URLSearchParams({ partition: String(partition) }),
-  );
 
 /**
  * A single-Item Write response -> the assigned/updated id. A non-zero per-item Code is a

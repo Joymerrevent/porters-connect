@@ -45,7 +45,7 @@ import type {
 } from "../accessor/catalog";
 import type { Paging } from "../accessor/paging";
 import type { ResourceDeps } from "../accessor/deps";
-import type { ResourcePage, ResourcePageOf } from "../accessor/read";
+import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
 import type { SearchQuery } from "../accessor/query";
 import type { ResourceDescriptor } from "../accessor/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";

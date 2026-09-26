@@ -4,7 +4,6 @@
 
 import type { DataType } from "../porters/data-type";
 import type { DecodedValue } from "../xml/field-value";
-import { asRecord } from "../xml/as-record";
 
 // A field catalog: bare alias -> Data Type. Declared `as const` per resource so the static
 // Read/Write types derive from it — the catalog is the single source of truth (ADR-0019).
@@ -34,36 +33,6 @@ export type EmptyCatalog = Record<never, never>;
  */
 export type ReadRecord<F extends FieldCatalog> = {
   [K in keyof F]?: DecodedValue<F[K]> | null;
-};
-
-// 未宣言項目の逃げ道として名前付きで公開する決定は ADR-0074 D2。
-/**
- * Read a field the catalog does not know — the named escape hatch for a value that
- * arrived without a declaration: through a cast in `field`, inside an expanded reference record,
- * or because PORTERS returned a field that was not asked for.
- *
- * Returns what the record actually holds, unconverted:
- *
- * - `undefined` — the alias is not on the record (it was never returned)
- * - `null` — it is there but not a scalar (PORTERS sends a nested node for Option / User / Image)
- * - `string` — the raw text, exactly as PORTERS sent it
- *
- * **No conversion happens.** A date comes back in PORTERS' own format (`2026/09/10 12:00:00`), not
- * ISO 8601, and a number comes back as text. Declare the field with `defineFields` to get the
- * converted, typed value instead — this is the escape hatch, not the normal path.
- *
- * @example
- * const page = await t.candidate.search({ field: ["P_Name"] });
- * const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
- */
-export const rawValue = (
-  record: unknown,
-  alias: string,
-): string | null | undefined => {
-  const rec = asRecord(record);
-  if (rec === undefined || !(alias in rec)) return undefined;
-  const value = rec[alias];
-  return typeof value === "string" ? value : null;
 };
 
 // 裸 alias（ADR-0059）・カタログ済みだけを受ける（ADR-0074 D1）・宣言は defineFields（ADR-0023）。

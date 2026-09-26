@@ -9,7 +9,7 @@
 import type { FieldCatalog, ReadFieldAlias } from "./catalog";
 import type { Paging } from "./paging";
 import type { ResourceDeps } from "./deps";
-import type { ResourcePageOf } from "./read";
+import type { ResourcePageOf } from "./resource-page";
 import type { SearchQuery } from "./query";
 import type { BulkWriteResult } from "./write-many";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";

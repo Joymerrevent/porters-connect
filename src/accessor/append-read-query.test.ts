@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError } from "../errors";
 import type { DataType } from "../porters/data-type";
 import type { SearchQuery } from "./query";
-import { appendReadQuery } from "./query-encode";
+import { appendReadQuery } from "./append-read-query";
 
 // A synthetic catalog with one field per condition group, exercising every Data-Type branch
 // of the encoder (decode/encode value tests live in their own files; here we test the query).
