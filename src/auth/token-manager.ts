@@ -113,11 +113,12 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   // the store already has (RV-75). A failed read is not remembered: the next call reads again.
   const load = (): Promise<void> =>
     (loading ??= (async () => {
+      // 手元にあれば読まない（保存先が止まっていても、cache() で入れたトークンを使える）。
+      if (cached !== undefined) return;
       const before = generation;
       const stored = readStoredTokens(await store.get());
-      // 読む前から手元にあるか、読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。
-      // 手元が空かは読んだ後に見る（読む前に見ると、読んでいる間の cache() を古い値で上書きする）。
-      if (cached === undefined && generation === before) cached = stored;
+      // 読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。
+      if (generation === before) cached = stored;
     })().catch((e: unknown) => {
       loading = undefined;
       throw e;
@@ -125,8 +126,9 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
 
   // refresh when it can work: the issuer hands out no refresh token (its own way of renewing), or
   // the refresh token is still usable. Otherwise start over with acquire.
-  // 取り直しの間に clear() が呼ばれたら、取れたトークンはこのリクエストにだけ使い、手元にも保存先にも
-  // 戻さない（消したはずのトークンが戻らないように）。cache() が呼ばれたときも、そちらを残す。
+  // 取り直しの間に clear() が呼ばれたら、取れたトークンは手元にも保存先にも戻さない（消したはずの
+  // トークンが戻らないように）。走っている取り直しを待つリクエストには、clear() の後に来たものも含めて
+  // そのトークンを返す。cache() が呼ばれたときも、そちらを残す。
   const renew = async (): Promise<StoredTokens> => {
     const before = generation;
     const current = cached;

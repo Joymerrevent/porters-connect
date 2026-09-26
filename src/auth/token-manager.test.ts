@@ -452,6 +452,25 @@ describe("createTokenManager — tokenStore", () => {
     return s;
   };
 
+  it("uses a token cached before the first request, even when the store cannot be read", async () => {
+    let gets = 0;
+    const m = createTokenManager({
+      provider: provider("ACQ"),
+      tokenStore: {
+        get: () => {
+          gets += 1;
+          return Promise.reject(new Error("store down"));
+        },
+        set: () => Promise.resolve(),
+        clear: () => Promise.resolve(),
+      },
+    });
+    await m.cache({ accessToken: { token: "EXCHANGED" } });
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+    expect(await m.getAccessToken()).toBe("EXCHANGED");
+    expect(gets).toBe(0);
+  });
+
   it("keeps a token cached while the store was being read", async () => {
     const store = slowStore();
     const m = createTokenManager({
