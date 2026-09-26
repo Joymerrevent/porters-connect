@@ -114,14 +114,36 @@ describe("validateAccessPoint (ADR-0048 / ADR-0078)", () => {
     expect((err as PortersConfigError).hint).toContain("https");
   });
 
-  // `%` は https の URL では復号されて別の名前になるか、組み立てられずに通信エラーとして届く。
-  // punycode として成り立たない名前も、送るときの scheme で組み立てられないので起動時に止める（RV-92）。
-  it.each(["a%41.test", "a%40evil.com", "xn--", "xn--a.test", "XN--ABC.test"])(
-    "rejects %s, which https cannot address as written",
+  // `%` は https の URL では復号されて別の名前になるか、組み立てられずに通信エラーとして届く（RV-92）。
+  it.each(["a%41.test", "a%40evil.com"])("rejects %s", (hostname) => {
+    expect(() => validateAccessPoint({ hostname })).toThrow(PortersConfigError);
+  });
+
+  // 送るときの scheme（https）で組み立てられない名前は、起動時に止める（RV-92）。punycode として成り立たない
+  // 名前を組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）ので、
+  // 名前を決め打ちせず、その Node で https の URL が組み立てられないときだけ拒否することを確かめる。
+  it.each([
+    "xn--",
+    "xn--a.test",
+    "XN--ABC.test",
+    "a.test",
+    "xn--eckwd4c7c.test",
+  ])(
+    "rejects %s exactly when https cannot address it on this Node",
     (hostname) => {
-      expect(() => validateAccessPoint({ hostname })).toThrow(
-        PortersConfigError,
-      );
+      let unaddressable = false;
+      try {
+        new URL(`https://${hostname}`);
+      } catch {
+        unaddressable = true;
+      }
+      let err: unknown;
+      try {
+        validateAccessPoint({ hostname });
+      } catch (e) {
+        err = e;
+      }
+      expect(err instanceof PortersConfigError).toBe(unaddressable);
     },
   );
 

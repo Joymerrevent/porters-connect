@@ -82,8 +82,10 @@ const assertHostname = (hostname: string): void => {
   let url: URL;
   try {
     url = new URL(`${PROBE_SCHEME}://${hostname}`);
-    // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、punycode として
-    // 成り立たない `xn--` などは、ここで確かめないと最初のリクエストまで分からない（RV-92）。
+    // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、https で組み立てられない
+    // 名前は、ここで確かめないと最初のリクエストまで分からない（RV-92）。punycode として成り立たない `xn--` などを
+    // 組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）。どちらでも、
+    // 送るときに組み立てられない名前はここで止まる。
     // 空の名前もここで止まる。未知の scheme は空の authority を許し、`porters-check://` の hostname が
     // `""` になって空の入力と「一致」してしまう。`!` で押し通した未設定の `PORTERS_HOST` は、この検査が
     // 止めるべき誤りそのもの（RV-17）。
