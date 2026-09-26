@@ -1,7 +1,7 @@
 # RV-71 🟡 `searchAll` が、`Total` の無い応答で 1 ページだけ返して黙って終わる
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -28,6 +28,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`4436ff6`）。** `src/xml/parse-resource-page.ts` が、Option 以外の応答で `Total` / `Count` / `Start` が無いか数字でなければ読めない応答として投げる（Option は `src/porters/read-rules.ts` の `RESOURCES_WITHOUT_PAGE_ATTRIBUTES`）。`src/accessor/paginate.ts` が、応答の `Start` が要求した `start` と同じかを確かめる（LV-34 に登録）。
+
+## 検証
+
+`src/xml/parse-resource-page.test.ts` と `src/accessor/paginate.test.ts`。2 ページ目以降も `Start="0"` を返していたテストの偽の応答を、要求した `start` を返す形に直した。
 
 [readref]: ../../usage/reference/resource-api/README.md

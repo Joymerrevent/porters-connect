@@ -1,4 +1,5 @@
-// Setting `count` / `start` on a Read, with `count` checked against PORTERS' range (RV-28).
+// Setting `count` / `start` on a Read, with `count` checked against PORTERS' range (RV-28) and
+// `start` checked to be a non-negative integer (RV-74).
 
 import { PortersConfigError } from "../errors";
 import { MAX_READ_COUNT, MIN_READ_COUNT } from "../porters/read-rules";
@@ -32,5 +33,17 @@ export const appendPaging = (
     }
     p.set("count", String(count));
   }
-  if (start !== undefined) p.set("start", String(start));
+  if (start !== undefined) {
+    // start は 0 から数える位置。負の数・小数・NaN を送ると、PORTERS の答えが読めないものになる。
+    if (!Number.isInteger(start) || start < 0) {
+      throw new PortersConfigError(
+        `start must be an integer of 0 or more, got ${start}`,
+        {
+          category: "config",
+          hint: "start is the 0-based position of the first record to return. Use searchAll() to walk every page.",
+        },
+      );
+    }
+    p.set("start", String(start));
+  }
 };

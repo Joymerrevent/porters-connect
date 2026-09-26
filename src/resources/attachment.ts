@@ -18,6 +18,8 @@ import { asString } from "../xml/as-string";
 import { appendPaging } from "../accessor/append-paging";
 import { paginateOnce } from "../accessor/paginate";
 import { runRead } from "../accessor/run-read";
+import { assertRecordId } from "../accessor/assert-record-id";
+import { recordsById } from "../accessor/read-many";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import type { Paging } from "../accessor/paging";
 import type { PartitionBoundConnectionDeps } from "../accessor/deps";
@@ -243,8 +245,16 @@ export const createAttachmentAccessor = (
     // The only path that carries the body: `requestType=0` for one `id`. One record at a time is
     // a size PORTERS' own 10MB-per-file limit keeps readable (ADR-0075).
     const get = async (id: number): Promise<Attachment | undefined> => {
+      assertRecordId(id, "get", ATTACHMENT_RESOURCE);
       const page = await read({ requestType: WITH_CONTENT, resource, id });
-      return page.items[0];
+      // 返ってきた添付が頼んだ id のものかを確かめる。id の指定が効くかは実機で未確認（LV-24・RV-73）。
+      return recordsById(
+        page,
+        [id],
+        (a) => a.id,
+        ATTACHMENT_RESOURCE,
+        "get",
+      ).get(id);
     };
 
     const write = (inner: string, idempotent: boolean): Promise<number> =>
@@ -279,6 +289,7 @@ export const createAttachmentAccessor = (
       id: number,
       input: AttachmentUpdate,
     ): Promise<number> => {
+      assertRecordId(id, "update", ATTACHMENT_RESOURCE);
       guardContent(input.content);
       let inner = tag("Id", id);
       if (input.contentType !== undefined) {

@@ -281,3 +281,169 @@ describe("condition の変換できない日時（RV-36）", () => {
     );
   });
 });
+
+// RV-74。空の一覧は `or=`（値なし）として送られていた。PORTERS がそれをどう読むかは分からない。
+describe("condition の空の一覧（RV-74）", () => {
+  it.each(["or", "and"] as const)(
+    "P_Phase の %s に空の一覧を渡すと、送信前に弾く",
+    (op) => {
+      let err: unknown;
+      try {
+        encode({ condition: { P_Phase: { [op]: [] } } });
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersConfigError);
+      expect((err as PortersConfigError).message).toBe(
+        "condition P_Phase: the list of values is empty",
+      );
+      expect((err as PortersConfigError).category).toBe("config");
+      expect((err as PortersConfigError).hint).toContain("at least one value");
+      expect((err as PortersConfigError).context).toEqual({
+        operation: "read",
+      });
+    },
+  );
+
+  it("1 つでも値があれば通る", () => {
+    expect(
+      encode({ condition: { P_Phase: { or: ["Option.P_A"] } } }).get(
+        "condition",
+      ),
+    ).toBe("W.P_Phase:or=Option.P_A");
+  });
+});
+
+// ADR-0105・RV-68。区切り文字を含む値は、値の途中から別の条件（またはキーワード・一覧の値）として
+// 読まれる。PORTERS はエスケープの方法を示していないので、送る前に拒否する。
+describe("区切り文字を含む値（ADR-0105・RV-68）", () => {
+  const errorOf = (q: SearchQuery<typeof FIELDS>): PortersConfigError => {
+    try {
+      encode(q);
+    } catch (e) {
+      return e as PortersConfigError;
+    }
+    throw new Error("expected encode to throw");
+  };
+
+  it("テキストの値のカンマを弾く（別の条件として読まれるため）", () => {
+    const e = errorOf({
+      condition: { P_Name: { part: "山田,Person.P_Owner:eq=5" } },
+    });
+    expect(e).toBeInstanceOf(PortersConfigError);
+    expect(e.message).toBe(
+      'condition P_Name: "山田,Person.P_Owner:eq=5" contains a comma, which PORTERS reads as a separator',
+    );
+    expect(e.category).toBe("config");
+    expect(e.hint).toContain("narrow the results yourself");
+    expect(e.context).toEqual({ operation: "read" });
+  });
+
+  it("削除済みを読むときの項目の制限も、値の細工で越えられない", () => {
+    const e = errorOf({
+      itemstate: "deleted",
+      condition: { P_UpdatedBy: { eq: "1,W.P_Name:part=x" } as never },
+    });
+    expect(e.message).toContain("contains a comma");
+  });
+
+  it.each([
+    ["Option.P_A,Option.P_B", "a comma or a colon"],
+    ["Option.P_A:Option.P_B", "a comma or a colon"],
+  ])(
+    "一覧の要素 %s を弾く（値どうしの区切りとして読まれるため）",
+    (value, what) => {
+      const e = errorOf({ condition: { P_Phase: { or: [value] } } });
+      expect(e.message).toBe(
+        `condition P_Phase: ${JSON.stringify(value)} contains ${what}, which PORTERS reads as a separator`,
+      );
+    },
+  );
+
+  it("日時の値のコロンは弾かない（HH:MM:SS を含むため）", () => {
+    expect(
+      encode({ condition: { P_When: { ge: "2026-09-26T00:00:00Z" } } }).get(
+        "condition",
+      ),
+    ).toBe("W.P_When:ge=2026/09/26 00:00:00");
+  });
+
+  it("テキストの値のコロンは弾かない", () => {
+    expect(
+      encode({ condition: { P_Name: { part: "12:00" } } }).get("condition"),
+    ).toBe("W.P_Name:part=12:00");
+  });
+
+  it("キーワードの要素のカンマを弾く（キーワードが 1 つ増えるため）", () => {
+    const e = errorOf({ keywords: ["営業", "東京,大阪"] });
+    expect(e.message).toBe(
+      'keywords: "東京,大阪" contains a comma, which PORTERS reads as a separator',
+    );
+  });
+});
+
+// RV-68 の再レビュー。演算子（キー）や項目名に区切り文字を入れると、値と同じく別の条件として読まれた。
+describe("condition のキー（演算子と項目名）", () => {
+  const errorOf = (q: unknown): PortersConfigError => {
+    try {
+      encode(q as SearchQuery<typeof FIELDS>);
+    } catch (e) {
+      return e as PortersConfigError;
+    }
+    throw new Error("expected encode to throw");
+  };
+
+  it("演算子の細工で、削除済みを読むときの項目の制限を越えられない", () => {
+    const e = errorOf({
+      itemstate: "deleted",
+      condition: { P_Id: { "eq=1,W.P_Name:part": "x" } },
+    });
+    expect(e.message).toBe(
+      'condition P_Id: unknown operator "eq=1,W.P_Name:part"',
+    );
+    expect(e.category).toBe("config");
+    expect(e.hint).toBe(
+      "Use one of eq, gt, ge, le, lt, part, full, or, and; which ones a field takes depends on its Data Type.",
+    );
+    expect(e.context).toEqual({ operation: "read" });
+  });
+
+  it("知らない演算子を弾く", () => {
+    expect(errorOf({ condition: { P_Name: { like: "x" } } }).message).toBe(
+      'condition P_Name: unknown operator "like"',
+    );
+  });
+
+  it.each(["P_Name,W.P_Id", "P_Name:part", "P_Name=x"])(
+    "区切り文字を含む項目名 %s を弾く",
+    (alias) => {
+      const e = errorOf({ condition: { [alias]: { part: "x" } } });
+      expect(e.message).toBe(
+        `condition: ${JSON.stringify(alias)} contains a comma, a colon or an equals sign, which PORTERS reads as a separator`,
+      );
+    },
+  );
+
+  it.each(["eq", "gt", "ge", "le", "lt"] as const)(
+    "数の演算子 %s は通る",
+    (op) => {
+      expect(
+        encode({ condition: { P_Num: { [op]: 1 } } }).get("condition"),
+      ).toBe(`W.P_Num:${op}=1`);
+    },
+  );
+
+  it.each(["part", "full"] as const)("テキストの演算子 %s は通る", (op) => {
+    expect(
+      encode({ condition: { P_Name: { [op]: "x" } } }).get("condition"),
+    ).toBe(`W.P_Name:${op}=x`);
+  });
+
+  it.each(["or", "and"] as const)("一覧の演算子 %s は通る", (op) => {
+    expect(
+      encode({ condition: { P_Phase: { [op]: ["Option.P_A"] } } }).get(
+        "condition",
+      ),
+    ).toBe(`W.P_Phase:${op}=Option.P_A`);
+  });
+});

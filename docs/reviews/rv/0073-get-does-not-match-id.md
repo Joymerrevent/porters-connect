@@ -1,7 +1,7 @@
 # RV-73 🟡 `get` と `attachment.get` が、返ってきたレコードの id を確かめない
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,4 +27,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`f7fe10c`）。** `get` と添付ファイルの `get` が、`getMany` と同じ `recordsById` の突き合わせを通す（エラーは `get` の名前と hint で届く）。添付ファイルの `id` の指定が効くかは LV-24 で未確認のまま。
+
+## 検証
+
+`src/accessor/data-reader.test.ts` の「get checks the record it got back (RV-73)」と、`src/resources/attachment.test.ts` の「get checks the attachment it got back」。評価用の例（`examples/offline-sandbox.ts`）の偽の応答も、`get` の条件に合う 1 件だけを返す形に直した。

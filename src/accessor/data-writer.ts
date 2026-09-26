@@ -4,6 +4,7 @@
 // the id back (`first-write-result-id.ts`) are shared with the Attachment accessor; batching is
 // `write-many.ts`.
 
+import { assertRecordId } from "./assert-record-id";
 import { PortersConfigError } from "../errors";
 import { buildWriteXml } from "../xml/build-write-xml";
 import type { WriteItem, WriteValue } from "../xml/write-value";
@@ -141,8 +142,10 @@ export const createDataWriter = <
   const create = async (input: CreateInput<F, Req[number]>): Promise<number> =>
     write(toItem(input, NEW_RECORD), false);
 
-  const update = async (id: number, input: UpdateInput<F>): Promise<number> =>
-    write(toItem(input, id), true);
+  const update = async (id: number, input: UpdateInput<F>): Promise<number> => {
+    assertRecordId(id, "update", config.name);
+    return write(toItem(input, id), true);
+  };
 
   const createMany = async (
     inputs: CreateInput<F, Req[number]>[],
@@ -157,7 +160,10 @@ export const createDataWriter = <
     items: { id: number; fields: UpdateInput<F> }[],
   ): Promise<BulkWriteResult> =>
     writeAll(
-      items.map(({ id, fields }) => toItem(fields, id)),
+      items.map(({ id, fields }) => {
+        assertRecordId(id, "updateMany", config.name);
+        return toItem(fields, id);
+      }),
       "updateMany",
       true,
     );

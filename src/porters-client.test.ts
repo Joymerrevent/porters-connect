@@ -32,9 +32,9 @@ const emptyPageFor = (url: string): string => {
   return `<${root} Total="0" Count="0" Start="0"><Code>0</Code></${root}>`;
 };
 
-const mockClient = (): PortersClient => {
+const mockClient = (body: string = candidateXml): PortersClient => {
   const transport: Transport = {
-    send: () => Promise.resolve({ status: 200, body: candidateXml }),
+    send: () => Promise.resolve({ status: 200, body }),
   };
   return new PortersClient({
     hostname: "example.test",
@@ -78,7 +78,9 @@ describe("PortersClient + candidate (E2E, mock transport)", () => {
   });
 
   it("get(id) returns a single candidate", async () => {
-    const c = await mockClient().tenant(999).candidate.get(10001);
+    // get は返ってきたレコードを頼んだ id と突き合わせるので、応答は 1 件（Total 1）にする。
+    const one = `<Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item><Person.P_Id>10001</Person.P_Id></Item></Candidate>`;
+    const c = await mockClient(one).tenant(999).candidate.get(10001);
     expect(c?.P_Id).toBe(10001);
   });
 

@@ -81,14 +81,14 @@
 | [RV-64][rv64]   | 🟢     | API 忠実性 / エラーモデル       | fixed   | 単件の `create` / `update` が、束ねた alias を渡されたときだけ同期 throw する（ADR-0046 の契約違反） |
 | [RV-65][rv65]   | 🔴     | エラーモデル / フェイルセーフ   | fixed   | 送信済み create の通信失敗が retryable:true で届く                                                   |
 | [RV-66][rv66]   | 🔴     | API 忠実性 / フェイルセーフ     | fixed   | スロットルが 1 分間に上限の約 1.8 倍を通す                                                           |
-| [RV-67][rv67]   | 🔴     | フェイルセーフ / API 忠実性     | open    | update(-1) が新規作成になる                                                                          |
-| [RV-68][rv68]   | 🔴     | API 忠実性 / フェイルセーフ     | open    | 条件の値のカンマが別の条件になる                                                                     |
-| [RV-69][rv69]   | 🔴     | エラーモデル / フェイルセーフ   | open    | createMany の途中失敗で先のバッチの失敗が消える                                                      |
+| [RV-67][rv67]   | 🔴     | フェイルセーフ / API 忠実性     | fixed   | update(-1) が新規作成になる                                                                          |
+| [RV-68][rv68]   | 🔴     | API 忠実性 / フェイルセーフ     | fixed   | 条件の値のカンマが別の条件になる                                                                     |
+| [RV-69][rv69]   | 🔴     | エラーモデル / フェイルセーフ   | fixed   | createMany の途中失敗で先のバッチの失敗が消える                                                      |
 | [RV-70][rv70]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | 応答の Code / Id の崩れを 0（成功）と読む                                                            |
-| [RV-71][rv71]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | searchAll が Total の無い応答で黙って止まる                                                          |
-| [RV-72][rv72]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | getMany が切れた応答を「存在しない」にする                                                           |
-| [RV-73][rv73]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | get が返ったレコードの id を確かめない                                                               |
-| [RV-74][rv74]   | 🟡     | フェイルセーフ / 設定検証       | open    | start・id・空配列の条件を送信前に検査しない                                                          |
+| [RV-71][rv71]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | searchAll が Total の無い応答で黙って止まる                                                          |
+| [RV-72][rv72]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | getMany が切れた応答を「存在しない」にする                                                           |
+| [RV-73][rv73]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | get が返ったレコードの id を確かめない                                                               |
+| [RV-74][rv74]   | 🟡     | フェイルセーフ / 設定検証       | fixed   | start・id・空配列の条件を送信前に検査しない                                                          |
 | [RV-75][rv75]   | 🟡     | 認証                            | fixed   | 同時の 401 で取り直しが何度も走る                                                                    |
 | [RV-76][rv76]   | 🟡     | セキュリティ / フェイルセーフ   | fixed   | リダイレクト先へトークン・Secret を送る                                                              |
 | [RV-77][rv77]   | 🟡     | 設定検証                        | fixed   | timeoutMs が 2^31 以上で即中断                                                                       |
@@ -140,6 +140,12 @@
 | [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
 | [RV-124][rv124] | 🟢     | 性能                            | open    | スロットルの shift が容量に比例                                                                      |
 | [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
+| [RV-126][rv126] | 🟢     | エラーモデル                    | open    | BigInt の id で TypeError が漏れる                                                                   |
+| [RV-127][rv127] | 🟢     | ドキュメント                    | fixed   | 文字列の id の拒否が changeset に無い                                                                |
+| [RV-128][rv128] | 🟢     | ドキュメント                    | fixed   | 一括書き込みの文書の言い方が実装と違う                                                               |
+| [RV-129][rv129] | 🟢     | エラーモデル / DX               | open    | updateMany の再送の案内が紛らわしい                                                                  |
+| [RV-130][rv130] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの resourceId を検査しない                                                               |
+| [RV-131][rv131] | 🟢     | エラーモデル                    | open    | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -273,3 +279,9 @@
 [rv123]: rv/0123-create-nonretryable-unknown-without-hint.md
 [rv124]: rv/0124-throttle-window-shift-linear.md
 [rv125]: rv/0125-create-many-per-record-302-no-guidance.md
+[rv126]: rv/0126-record-id-bigint-typeerror.md
+[rv127]: rv/0127-string-id-now-refused-undocumented.md
+[rv128]: rv/0128-write-doc-bulk-failure-wording.md
+[rv129]: rv/0129-update-many-resend-hint-confusing.md
+[rv130]: rv/0130-attachment-resource-id-unchecked.md
+[rv131]: rv/0131-bulk-write-unsent-first-batch-may-have.md

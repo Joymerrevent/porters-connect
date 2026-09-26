@@ -3,6 +3,7 @@
 // the Write half (`data-writer.ts`) into one accessor. Master resources have their own, smaller Read
 // (`master-reader.ts`); both share the paging / decoding / sending (`page-reader.ts` and its neighbours).
 
+import { assertRecordId } from "./assert-record-id";
 import type { RawItem } from "../xml/parse-resource-page";
 import { createPageReader } from "./page-reader";
 import { pageUrl } from "./page-url";
@@ -16,7 +17,7 @@ import type { Condition, SearchQuery } from "./query";
 import { buildReadParams, type ReadParamsContext } from "./build-read-params";
 import { fieldParamContext } from "./field-param";
 import { MAX_READ_COUNT } from "../porters/read-rules";
-import { readMany } from "./read-many";
+import { readMany, recordsById } from "./read-many";
 import { expansionCatalogs } from "./expansion-catalogs";
 import type {
   EmptyReferences,
@@ -168,6 +169,7 @@ export const createDataReader = <
     id: number,
     options: IdReadOptions<E, I> = {},
   ): Promise<Decoded<E, I> | undefined> => {
+    assertRecordId(id, "get", config.name);
     const page = await search<E, I>({
       condition: idCondition("eq", id),
       count: 1,
@@ -175,7 +177,14 @@ export const createDataReader = <
       expand: options.expand,
       image: options.image,
     });
-    return page.items[0];
+    // getMany と同じく、返ってきたレコードが頼んだ id のものかを確かめる（RV-73）。
+    return recordsById(
+      page,
+      [id],
+      (record) => (record as Record<string, unknown>)[idAlias],
+      config.name,
+      "get",
+    ).get(id);
   };
 
   // The chunking, the check against the requested ids and the ordering are `readMany`'s
@@ -187,6 +196,7 @@ export const createDataReader = <
     ids: readonly number[],
     options: IdReadOptions<E, I> = {},
   ): Promise<(Decoded<E, I> | undefined)[]> => {
+    for (const id of ids) assertRecordId(id, "getMany", config.name);
     const field = withIdField(options.field);
     const query = (chunk: readonly number[], count: number) => ({
       condition: idCondition("or", [...chunk]),

@@ -37,8 +37,8 @@ const CONFIG = {
 // A prefixed key (`W.P_Id`) exercises bareAlias; an unknown alias passes through.
 const OK = `<?xml version="1.0"?><Widget Total="1" Count="1" Start="0"><Code>0</Code><Item><W.P_Id>7</W.P_Id><W.U_x>raw</W.U_x></Item></Widget>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Widget Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Widget Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><W.P_Id>${id}</W.P_Id></Item>`).join("") +
   `</Widget>`;
 
@@ -416,7 +416,8 @@ describe("createDataReader — expand (ADR-0058)", () => {
   it("get(id) expands too", async () => {
     const calls: Call[] = [];
     // PORTERS returns only what was selected, so the body carries just the narrowed field.
-    const narrowed = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
+    // get は id も必ず要求するので、応答にも id が入る。
+    const narrowed = `<Gadget Total="1" Count="1" Start="0"><Code>0</Code><Item><G.P_Id>1</G.P_Id><G.P_Part><Part><Pt.P_Name>bolt</Pt.P_Name></Part></G.P_Part></Item></Gadget>`;
     const one = await gadget(calls, narrowed).get(1, {
       expand: { P_Part: ["P_Name"] },
     });
@@ -481,7 +482,7 @@ describe("createDataReader — searchAll", () => {
   it("pages through all results (200/page) until total is reached", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -498,7 +499,7 @@ describe("createDataReader — searchAll", () => {
   it("makes a single request when the first page reaches total", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(2, [1, 2]), page(2, [])], calls),
+      requester: stub([page(2, [1, 2]), page(2, [], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -510,7 +511,7 @@ describe("createDataReader — searchAll", () => {
   it("stops on an empty page even if total claims more (no infinite loop)", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(5, []), page(5, [])], calls),
+      requester: stub([page(5, []), page(5, [], 0)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -522,7 +523,7 @@ describe("createDataReader — searchAll", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -714,5 +715,42 @@ describe("createDataReader — get の field と getMany（ADR-0095）", () => {
     expect(conditionOf(calls[0])).toBe("Id:or=1:2");
     expect(fieldOf(calls)).toBe("Id,Memo");
     expect(out.map((r) => r?.Id)).toEqual([1, 2]);
+  });
+});
+
+// RV-74。get(NaN) は `eq=NaN` を送って「見つからない」に見えていた。id は送る前に確かめる。
+describe("createDataReader — the id get / getMany receive (RV-74)", () => {
+  it.each([0, -1, 1.5, Number.NaN])(
+    "get(%s) rejects before sending anything",
+    async (id) => {
+      const calls: Call[] = [];
+      await expect(res(calls).get(id)).rejects.toThrow(
+        `Widget.get: id must be a positive integer, got ${String(id)}`,
+      );
+      expect(calls).toHaveLength(0);
+    },
+  );
+
+  it("getMany rejects the whole call when any id is not a positive integer", async () => {
+    const calls: Call[] = [];
+    await expect(res(calls).getMany([1, Number.NaN])).rejects.toThrow(
+      "Widget.getMany: id must be a positive integer, got NaN",
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
+
+// RV-73。get は応答の 1 件目をそのまま返していた。条件が効かず別のレコードが返っても気づかなかった。
+describe("createDataReader — get checks the record it got back (RV-73)", () => {
+  it("rejects a record with another id", async () => {
+    const calls: Call[] = [];
+    await expect(res(calls, page(1, [999])).get(1)).rejects.toThrow(
+      "Widget: get received a record that was not requested (id 999)",
+    );
+  });
+
+  it("returns undefined when no record has the id", async () => {
+    const calls: Call[] = [];
+    expect(await res(calls, page(0, [])).get(1)).toBeUndefined();
   });
 });

@@ -343,3 +343,34 @@ describe("attachment — search はページ送りを受け、searchAll は受�
     expect(typeOnly).toBeTypeOf("function");
   });
 });
+
+// RV-67 / RV-74。添付ファイルでも、書き込みの Id -1 は新規作成を意味する。get と update の id は送る前に確かめる。
+describe("createAttachmentAccessor — the id get / update receive", () => {
+  it("update(-1) rejects before sending anything", async () => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).update(-1, { fileName: "x.txt" }),
+    ).rejects.toThrow(
+      "Attachment.update: id must be a positive integer, got -1",
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it("get(0) rejects before sending anything", async () => {
+    const calls: Call[] = [];
+    await expect(files(calls, READ_OK).get(0)).rejects.toThrow(
+      "Attachment.get: id must be a positive integer, got 0",
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
+
+// RV-73。添付ファイルの get も、返ってきた添付が頼んだ id のものかを確かめる（id の指定が効くかは LV-24）。
+describe("createAttachmentAccessor — get checks the attachment it got back", () => {
+  it("rejects an attachment with another id, rather than handing over its body", async () => {
+    const calls: Call[] = [];
+    await expect(files(calls, READ_OK).get(900)).rejects.toThrow(
+      "Attachment: get received a record that was not requested",
+    );
+  });
+});

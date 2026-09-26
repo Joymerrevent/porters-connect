@@ -13,8 +13,8 @@ const ONE =
   `<Item><Partition.P_Id>999999</Partition.P_Id><Partition.P_Name>Company Name</Partition.P_Name>` +
   `<Partition.P_CompanyId>My Company Id</Partition.P_CompanyId></Item></Partition>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Partition Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Partition Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids
     .map((id) => `<Item><Partition.P_Id>${id}</Partition.P_Id></Item>`)
     .join("") +
@@ -66,7 +66,7 @@ describe("createPartitionResource", () => {
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
     const r = createPartitionResource({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
     });
     const items = await collect(r.searchAll());
@@ -80,7 +80,7 @@ describe("createPartitionResource", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createPartitionResource({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
     });
     const query: PartitionSearchQuery = {

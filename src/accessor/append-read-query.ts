@@ -12,6 +12,7 @@ import type { DataType } from "../porters/data-type";
 import type { FieldCatalog } from "./catalog";
 import type { Condition, ItemState, Order, SearchQuery } from "./query";
 import {
+  CONDITION_SUFFIXES,
   DELETED_CONDITION_FIELDS,
   KEYWORDS_MAX_CHARS,
 } from "../porters/read-rules";
@@ -51,18 +52,29 @@ const convertedForQuery = (
   }
 };
 
-/**
- * Serialise one condition value by the field's Data Type: dates ISO -> PORTERS, arrays (Option
- * aliases / id sets) colon-joined, everything else stringified. No Data Type — an unknown alias
- * (`undefined`) or a field PORTERS types none (`null` — ADR-0056) -> raw scalar, mirroring
- * read/write passthrough. Reaching the `null` case needs a cast: `ConditionFor<null>` is `never`.
- */
-const serializeConditionValue = (
+// 区切り文字を含む値（ADR-0105・RV-68）。PORTERS は condition の条件どうしをカンマで、一覧の値どうしを
+// コロンで区切り、値の中の区切り文字を書く方法（エスケープ）を示していない。URLSearchParams は区切りの
+// カンマも値の中のカンマも同じ `%2C` にするので、値の途中から別の条件として読まれる。送る前に拒否する。
+const delimiterError = (
+  where: string,
+  value: string,
+  delimiter: string,
+): PortersConfigError =>
+  new PortersConfigError(
+    `${where}: ${JSON.stringify(value)} contains ${delimiter}, which PORTERS reads as a separator`,
+    {
+      category: "config",
+      hint: "PORTERS offers no way to put a separator inside a value. Search on a part of the value without it, then narrow the results yourself.",
+      context: { operation: "read" },
+    },
+  );
+
+// One scalar condition value by the field's Data Type: dates ISO -> PORTERS, everything else stringified.
+const serializeScalar = (
   type: DataType | null | undefined,
   value: unknown,
   alias: string,
 ): string => {
-  if (Array.isArray(value)) return value.map(String).join(":");
   if (type === "DateTime" || type === "System[DateTime]") {
     return convertedForQuery(alias, type, value, () =>
       isoToPortersDateTime(String(value)),
@@ -74,6 +86,48 @@ const serializeConditionValue = (
     );
   }
   return String(value);
+};
+
+/**
+ * Serialise one condition value by the field's Data Type: dates ISO -> PORTERS, arrays (Option
+ * aliases / id sets) colon-joined, everything else stringified. No Data Type — an unknown alias
+ * (`undefined`) or a field PORTERS types none (`null` — ADR-0056) -> raw scalar, mirroring
+ * read/write passthrough. Reaching the `null` case needs a cast: `ConditionFor<null>` is `never`.
+ */
+const serializeConditionValue = (
+  type: DataType | null | undefined,
+  value: unknown,
+  alias: string,
+): string => {
+  if (Array.isArray(value)) {
+    // 空の一覧は `or=`（値なし）として送られ、PORTERS がそれをどう読むかは分からない（RV-74）。
+    if (value.length === 0) {
+      throw new PortersConfigError(
+        `condition ${alias}: the list of values is empty`,
+        {
+          category: "config",
+          hint: "Pass at least one value, or leave the field out of the condition.",
+          context: { operation: "read" },
+        },
+      );
+    }
+    return value
+      .map((v) => {
+        const s = String(v);
+        if (s.includes(",") || s.includes(":"))
+          throw delimiterError(`condition ${alias}`, s, "a comma or a colon");
+        return s;
+      })
+      .join(":");
+  }
+  const out = serializeScalar(type, value, alias);
+  // テキストと日時の値の中のコロンは拒否しない（日時の値 HH:MM:SS に含まれ、PORTERS は最初の `:` で
+  // alias と suffix を区切るとみられる — ADR-0105）。
+  // VERIFY(live): 値の中のコロンを PORTERS がどう読むか（日時・テキストの値のコロンがそのまま値として
+  // 扱われるか）は未確認 — docs/live-verification.md (LV-35)。
+  if (out.includes(","))
+    throw delimiterError(`condition ${alias}`, out, "a comma");
+  return out;
 };
 
 // condition -> `Prefix.alias:suffix=value,...`. Throws if itemstate=deleted/all names a field
@@ -88,6 +142,15 @@ const encodeCondition = (
   const parts: string[] = [];
   for (const [alias, ops] of Object.entries(condition)) {
     if (ops === undefined) continue;
+    // 項目名と演算子（キー）も文字列として条件に入る。区切り文字を含むキーや知らない演算子は、値と同じく
+    // 別の条件として読まれうる（削除済みを読むときの項目の制限も越えられた。RV-68 の再レビュー）。
+    if (/[,:=]/.test(alias)) {
+      throw delimiterError(
+        "condition",
+        alias,
+        "a comma, a colon or an equals sign",
+      );
+    }
     if (restricted && !DELETED_CONDITION_FIELDS.has(alias)) {
       throw new PortersConfigError(
         `condition field "${alias}" is not allowed when itemstate is "${itemstate}"`,
@@ -100,6 +163,16 @@ const encodeCondition = (
     const type = ctx.fields.get(alias);
     for (const [suffix, value] of Object.entries(ops)) {
       if (value === undefined) continue;
+      if (!CONDITION_SUFFIXES.has(suffix)) {
+        throw new PortersConfigError(
+          `condition ${alias}: unknown operator ${JSON.stringify(suffix)}`,
+          {
+            category: "config",
+            hint: `Use one of ${[...CONDITION_SUFFIXES].join(", ")}; which ones a field takes depends on its Data Type.`,
+            context: { operation: "read" },
+          },
+        );
+      }
       parts.push(
         `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value, alias)}`,
       );
@@ -141,6 +214,10 @@ export const appendReadQuery = <F extends FieldCatalog>(
     if (order.length > 0) p.set("order", order);
   }
   if (q.keywords && q.keywords.length > 0) {
+    for (const k of q.keywords) {
+      // キーワードどうしもカンマで区切るので、要素の中のカンマはキーワードを 1 つ増やす（ADR-0105）。
+      if (k.includes(",")) throw delimiterError("keywords", k, "a comma");
+    }
     const kw = q.keywords.join(",");
     if (kw.length > KEYWORDS_MAX_CHARS) {
       throw new PortersConfigError(

@@ -1,7 +1,7 @@
 # RV-74 🟡 `start` と、条件に使う id・空の配列を、送信前に検査していない
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,4 +27,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`30b8142` / `cc705a0`）。** `get` / `getMany` の id を `assertRecordId` で確かめる。`start` を 0 以上の整数に限る（`src/accessor/append-paging.ts`）。条件の `or` / `and` の空の配列を拒否する（`src/accessor/append-read-query.ts`）。
+
+## 検証
+
+`src/accessor/data-reader.test.ts` の「the id get / getMany receive (RV-74)」、`append-paging.test.ts` の start のガード、`append-read-query.test.ts` の「condition の空の一覧（RV-74）」。

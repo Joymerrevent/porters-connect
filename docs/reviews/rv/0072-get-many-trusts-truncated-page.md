@@ -1,7 +1,7 @@
 # RV-72 🟡 `getMany` が、途中で切れた応答や id の重複した応答を「存在しない」として返す
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/accessor-review・`f7fe10c`）。** `src/accessor/read-many.ts` の `recordsById` が、応答のレコード数が `Total` と合わないときと、同じ id が 2 件あるときに止める。
+
+## 検証
+
+`src/accessor/read-many.test.ts` の「a page that does not add up (RV-72)」。
 
 [adr95]: ../../adr/0095-get-many-by-ids.md
