@@ -1,7 +1,7 @@
 # RV-86 🟡 Date の書き込みが前方一致しか見ず、存在しない日付や後ろに続く文字を通す
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,4 +27,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`c6d9c68`）。** `src/util/datetime.ts` の `isoToPortersDate` を、日付だけなら完全一致で暦にある日付に限り、日時の形は DateTime と同じ検査を通して UTC の日付にする形にした（ADR-0038 のとおり、Date の条件も ISO で受ける）。
+
+## 検証
+
+`src/util/datetime.test.ts` の「isoToPortersDate refuses …」「takes the UTC date of a datetime」「accepts a leap day」。

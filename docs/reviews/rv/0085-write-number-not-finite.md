@@ -1,7 +1,7 @@
 # RV-85 🟡 書き込みで、NaN・Infinity・指数表記の数をそのまま送る
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ Number や id の項目に NaN・Infinity・1e21 を渡すと、`"NaN"`・`"Infi
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`42765d9`）。** `src/xml/encode-field.ts` の `assertWritableNumber` で、数の値は 10 進の表記になるものだけ、id の項目は安全な整数だけを書く。外れたら送る前に `PortersConfigError`（validation）。
+
+## 検証
+
+`src/xml/encode-field.test.ts` の「numbers PORTERS can read (RV-85)」。

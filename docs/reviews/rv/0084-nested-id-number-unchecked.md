@@ -1,7 +1,7 @@
 # RV-84 🟡 入れ子の `P_Id` を検査なしの `Number()` で読み、空は 0、文字は NaN になる
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ User・Department・Reference・Link の入れ子の `P_Id` を `Number()` で�
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`dc4f707`）。** `src/xml/decode-field.ts` の `nestedId` で、入れ子の `P_Id` を「空（空白だけを含む）なら null、それ以外は `numeric()`」で読む（User・Department・Reference・Link）。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「the id inside a nested record (RV-84)」。

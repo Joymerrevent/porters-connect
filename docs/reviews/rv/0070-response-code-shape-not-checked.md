@@ -1,7 +1,7 @@
 # RV-70 🟡 応答の `<Code>` / `<Id>` を形しか見ておらず、崩れた値を 0（成功）として読む
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -29,7 +29,11 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/xml-review・`0d53d3d`）。** `src/xml/parse-xml.ts` に `toCode` を足し、`<Code>` / `<Error>` を「無い・空なら 0、数字ならその数、それ以外は読めない応答」として読む（読み込み・書き込み・認証）。書き込みの応答は Item ごとに `Code` を必須にし、成功した Item の `Id` は正の整数を必須にし、ルート要素名を確かめる。単件の書き込みは結果がちょうど 1 件であることを確かめる。
+
+## 検証
+
+`src/xml/parse-xml.test.ts` の `toCode` の表、`parse-write-result.test.ts` の拒否する形の表とルート要素名、`first-write-result-id.test.ts` の 0 件と 2 件。テストの偽の応答のルート要素を、送った本文と同じにした。
 
 [adr51]: ../../adr/0051-read-envelope-identification.md
 [wf]: ../../usage/reference/resource-api/write-format.md
