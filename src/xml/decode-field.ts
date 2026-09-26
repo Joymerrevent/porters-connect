@@ -164,9 +164,7 @@ const TEXT_TYPES: ReadonlySet<DataType> = new Set([
 
 const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   const scalar = asString(raw);
-  // 空白だけの Contact id は、空（null）として読む（数の項目と同じ）。
-  if (scalar !== undefined)
-    return scalar.trim() === "" ? null : numeric(alias, "Link", scalar);
+  if (scalar !== undefined) return numeric(alias, "Link", scalar);
   const outer = asRecord(raw);
   if (!outer) return null;
   if ("User" in outer) return decodeUser(outer, alias, "Link");
@@ -269,6 +267,11 @@ export const decodeField = (
   // itemstate 省略時にも返るか、値が 0/1 以外を取りうるかは未確認。
   // docs/live-verification.md（LV-14）。外れたらこの分岐を直す。
   if (type === null) return asString(raw) ?? null;
+  // 値の前後の空白は残す（RV-83）が、それが意味を持つのはテキストの項目だけ。ほかの項目（数・日時・入れ子）の
+  // 空白だけの値は、空（null）として読む。Number("  ") は 0 になり、入れ子の項目では型の食い違いのエラーになる
+  // （RV-83 の再レビュー 2 回）。
+  if (typeof raw === "string" && raw.trim() === "" && !TEXT_TYPES.has(type))
+    return null;
   // Link is the one type where both shapes are correct — a Contact id is a scalar, a User /
   // Department is nested, and the shape is the discriminator (ADR-0064 案4a). So no shape check.
   if (type === "Link") return decodeLink(raw, alias);
@@ -295,9 +298,6 @@ export const decodeField = (
   // `type` is `ScalarShaped` here, so a Data Type added to the union without joining either the
   // record-shaped list or this switch fails to compile (the ADR-0016 property, kept).
   const scalarType: ScalarShaped = type;
-  // 値の前後の空白は残す（RV-83）が、それが意味を持つのはテキストの項目だけ。数や日時の項目の空白だけの
-  // 値は、空（null）として読む。Number("  ") は 0 になり、無い値が 0 に化ける（RV-83 の再レビュー）。
-  if (value.trim() === "" && !TEXT_TYPES.has(scalarType)) return null;
   switch (scalarType) {
     case "System[Id]":
     case "Number":

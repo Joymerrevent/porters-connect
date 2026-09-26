@@ -168,8 +168,12 @@ describe("isoExample", () => {
   it("DateTime はゾーンつきの例を、Date / Age は日付だけの例を返す", () => {
     expect(isoExample("DateTime")).toContain("a time and a zone");
     expect(isoExample("System[DateTime]")).toContain("a time and a zone");
-    expect(isoExample("Date")).toBe('ISO 8601 (e.g. "2026-09-10")');
-    expect(isoExample("Age")).toBe('ISO 8601 (e.g. "2026-09-10")');
+    expect(isoExample("Date")).toBe(
+      'ISO 8601: a date only (e.g. "2026-09-10") or a UTC datetime ending in Z',
+    );
+    expect(isoExample("Age")).toBe(
+      'ISO 8601: a date only (e.g. "2026-09-10") or a UTC datetime ending in Z',
+    );
   });
 });
 

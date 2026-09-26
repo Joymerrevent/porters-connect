@@ -69,7 +69,7 @@ export const isoToPortersDateTime = (value: string): string => {
 export const isoExample = (type: string): string =>
   type === "DateTime" || type === "System[DateTime]"
     ? 'ISO 8601 with a time and a zone (e.g. "2026-09-10T12:00:00Z" or "2026-09-10T21:00:00+09:00")'
-    : 'ISO 8601 (e.g. "2026-09-10")';
+    : 'ISO 8601: a date only (e.g. "2026-09-10") or a UTC datetime ending in Z';
 
 /** PORTERS `yyyy/mm/dd` -> ISO date `yyyy-mm-dd` (no timezone). */
 export const portersDateToIso = (value: string): string => {

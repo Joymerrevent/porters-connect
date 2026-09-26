@@ -565,6 +565,21 @@ describe("decodeField — a value that is only whitespace", () => {
     expect(decodeField(type, "\n  ", "P_X")).toBeNull();
   });
 
+  // 入れ子の項目も、空白だけなら null（型の食い違いのエラーにしない。RV-83 の再レビュー 2 回目）。
+  it.each([
+    "Option",
+    "User",
+    "System[Reference]",
+    "System[Department]",
+    "Image",
+  ] as const)("%s (nested) reads it as null", (type) => {
+    expect(decodeField(type, "\n  ", "P_X")).toBeNull();
+  });
+
+  it("a field with no Data Type keeps it", () => {
+    expect(decodeField(null, "  ", "P_Deleted")).toBe("  ");
+  });
+
   it.each([
     "SinglelineText",
     "MultilineText",
