@@ -93,6 +93,8 @@ const makeWindow = (
 ): (() => Promise<void>) => {
   // 送った時刻を、容量の長さの輪として持つ（head がいちばん古い時刻、count が窓の中の件数）。
   // 配列の先頭を shift で取り除くと、容量に比例して遅くなる（RV-124）。
+  // 初めの中身は結果に効かない（count の外の場所は、読む前に必ず書く）。
+  // Stryker disable next-line ArrayDeclaration: equivalent — slots outside count are written before read
   const sent: number[] = [];
   let head = 0;
   let count = 0;

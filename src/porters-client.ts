@@ -361,8 +361,9 @@ const validateOptionShapes = (options: PortersClientOptions): void => {
 };
 
 // NaN・"12 "・-1・1.5 がそのまま `partition=` になっていた（RV-113）。
-const assertPartitionId = (id: unknown): void => {
-  if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0) {
+// JS から文字列などが来ても、Number.isSafeInteger が false を返すので拒否される。
+const assertPartitionId = (id: number): void => {
+  if (!Number.isSafeInteger(id) || id <= 0) {
     throw new PortersConfigError(
       `tenant: partition id must be a positive integer, got ${typeof id === "number" ? String(id) : (JSON.stringify(id) ?? String(id))}`,
       {

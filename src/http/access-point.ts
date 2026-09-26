@@ -76,11 +76,6 @@ const assertHostname = (hostname: string): void => {
       `hostname ${JSON.stringify(hostname)} is not a bare server name`,
       HOSTNAME_HINT,
     );
-  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
-  // `porters-check://` parses and `url.hostname` is `""` — which "matches" an empty input. An unset
-  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
-  // so it is spelled out rather than inferred.
-  if (hostname === "") throw rejected();
   // `%` は往復の比較を通るが、https の URL では復号されて別の名前になる（`a%41.test` → `aa.test`）か、
   // 組み立てられずに通信エラー（再試行できる扱い）として届く。サーバー名に `%` は現れない（RV-92）。
   if (hostname.includes("%")) throw rejected();
@@ -89,6 +84,9 @@ const assertHostname = (hostname: string): void => {
     url = new URL(`${PROBE_SCHEME}://${hostname}`);
     // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、punycode として
     // 成り立たない `xn--` などは、ここで確かめないと最初のリクエストまで分からない（RV-92）。
+    // 空の名前もここで止まる。未知の scheme は空の authority を許し、`porters-check://` の hostname が
+    // `""` になって空の入力と「一致」してしまう。`!` で押し通した未設定の `PORTERS_HOST` は、この検査が
+    // 止めるべき誤りそのもの（RV-17）。
     new URL(`https://${hostname}`);
   } catch {
     throw rejected();

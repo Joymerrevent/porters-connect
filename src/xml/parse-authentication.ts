@@ -44,8 +44,9 @@ export const parseAuthentication = (xml: string): AuthResponse => {
   // 10 進の整数でない値（"30min" など）は欠けたのと同じ扱い＝期限 0 で取り直す側に倒す（RV-89）。
   // NaN のまま返すと期限の比較がいつも偽になり、期限切れと見なされずに使い続けられる。
   const num = (v: unknown): number | undefined => {
-    const s = asString(v)?.trim();
-    return s !== undefined && /^\d+$/.test(s) ? Number(s) : undefined;
+    // 欠けた値は "undefined" になり、数字だけの検査で落ちる。
+    const s = String(asString(v)).trim();
+    return /^\d+$/.test(s) ? Number(s) : undefined;
   };
   return {
     code: asString(body.Code),

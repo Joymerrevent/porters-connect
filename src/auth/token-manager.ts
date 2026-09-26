@@ -99,7 +99,9 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const usable = (t: IssuedToken): boolean =>
     t.expiresAt === undefined || now() < t.expiresAt - margin;
 
+  // 世代は「変わったか」だけを比べるので、増やすか減らすかは結果に効かない。
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
+    // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
     generation += 1;
     cached = tokens;
     await store.set(tokens);
@@ -168,6 +170,7 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
       await save(requireTokens(tokens, "exchange"));
     },
     clear: async () => {
+      // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
       generation += 1;
       cached = undefined;
       await store.clear();
