@@ -104,6 +104,14 @@ field 選択は実行時。選択で型を絞る案は将来 P1）。
   未宣言の扱いは [ADR-0074][0074] で「宣言必須」に揃い、生値は `rawValue()` で読む）。
   一方 **`field` 選択での返り値型の絞り込みは現在も未実装**（案U1・SD-3 簡易のまま）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+
 [0004]: 0004-field-type-model.md
 [0005]: 0005-public-api-shape.md
 [0016]: 0016-field-type-granularity.md

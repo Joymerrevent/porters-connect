@@ -272,6 +272,14 @@ reference が「Write 時の指定はできません」と明記している項�
 - `itemstate` の実装: [ADR-0038][adr38]（F-2）。削除 API が無いこと自体は `CLAUDE.md` の前提。
 - 同じ「捏造しない」原則を扱った直近の決定: [ADR-0055][adr55]（`partition=0` の廃止）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+
 [adr5]: 0005-public-api-shape.md
 [adr16]: 0016-field-type-granularity.md
 [adr19]: 0019-static-resource-types.md

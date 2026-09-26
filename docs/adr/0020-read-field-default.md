@@ -113,6 +113,14 @@ PORTERS の Read 系 API は、**`field` パラメータを省略すると `{Res
   （応答に来た値は `rawValue()` で読む）。「省略時はカタログ導出の既定 field・`field: []` で主キーのみ」
   という決定そのものは不変。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+
 [0005]: 0005-public-api-shape.md
 [0011]: 0011-xml-parse-serialize.md
 [0016]: 0016-field-type-granularity.md

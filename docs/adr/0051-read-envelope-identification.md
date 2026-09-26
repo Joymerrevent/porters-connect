@@ -258,6 +258,15 @@
   [ADR-0006][adr6]（エラーモデル・category）／[ADR-0024][adr24]（公開 mock transport）／
   [ADR-0022][adr22]（マスタ Read の封筒の形・事実5）／[ADR-0002][adr2]（実記事への接地）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+
 [findings]: ../reviews/findings.md
 [guide]: ../usage/topics/errors.md
 [lv]: ../live-verification.md

@@ -147,6 +147,14 @@ PORTERS の Write は **1 リクエストに `<Item>` を複数並べて一括�
 - 不確実性 → [live-verification][lv]: 部分失敗時のロールバック有無（非アトミックの実挙動）。
 - 後続/対象外: 実装は別 PR（ADR 先行 → 実装）。混在 `writeMany`・Attachment 一括・件数並列化は将来 follow-up。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+
 [wf]: ../usage/reference/resource-api/write-format.md
 [ra]: ../usage/reference/resource-api/README.md
 [lv]: ../live-verification.md

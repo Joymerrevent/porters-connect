@@ -178,6 +178,15 @@ decider が 2026-08-11 に選択。
 - 関連: [ADR-0047][adr47]（`host` と `scheme` の分離＝本 ADR の前提）／[ADR-0006][adr6]（エラーモデル）／
   [ADR-0046][adr46]（例外の届き方。コンストラクタは対象外）／[ADR-0009][adr9]（Transport seam）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference/authentication-api/oauth.md` → `docs/usage/reference/authentication-api/oauth.md`（2026-09-12・ADR-0071）
+- `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+
 [findings]: ../reviews/findings.md
 [run]: ../reviews/2026-08-10-01.md
 [guide]: ../usage/topics/errors.md

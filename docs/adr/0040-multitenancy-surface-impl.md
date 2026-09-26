@@ -149,6 +149,14 @@ partition の渡し方を **3 つ**（案1 呼び出し毎指定＋client 既定
 - 不確実性 → [live-verification][lv]: 「App トークンで複数 partition を partition ルーティングで叩けるか」（[[0008-multitenancy-partition]] オープン質問）。accept 後に LV エントリ追加を検討（案4b の前提）。
 - 後続/対象外: 実装は別 PR（ADR 先行 → 実装の順・[[0033-post-mvp-direction]] 案F の進め方）。一括書き込み（F-4）は本 ADR 対象外。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+
 [prd]: ../design/requirements.md
 [bd]: ../design/basic-design.md
 [rev]: ../reviews/2026-06-22-03.md

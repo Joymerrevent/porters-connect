@@ -353,6 +353,16 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 - follow-up（本 ADR スコープ外）: **値レベルの実行時検証**（案D の残り 1 つ・[RV-36][rv36] を含む）／
   Attachment のカスタム項目（[ADR-0023][0023] D6）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference/gotchas.md` → `docs/usage/reference/gotchas.md`（2026-09-12・ADR-0071）
+- `docs/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（ADR-0071 / ADR-0088）
+- `src/resources/resource-list.ts` → `src/porters/resource-list.ts`（2026-09-25・ADR-0098）
+
 [0004]: 0004-field-type-model.md
 [0006]: 0006-error-model.md
 [0011]: 0011-xml-parse-serialize.md
