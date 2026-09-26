@@ -155,6 +155,8 @@
 | [RV-138][rv138] | 🟢     | フェイルセーフ                  | open    | prototype 経由の宣言                                                                                 |
 | [RV-139][rv139] | 🟢     | ドキュメント                    | open    | 添付ファイルの検査の文書                                                                             |
 | [RV-140][rv140] | 🟢     | エラーモデル                    | open    | 入力の渡し忘れが TypeError                                                                           |
+| [RV-141][rv141] | 🟢     | エラーモデル                    | open    | hostname 未設定・BigInt で TypeError                                                                 |
+| [RV-142][rv142] | 🟢     | 認証                            | open    | 保存中の clear() でトークンが戻る                                                                    |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -303,3 +305,5 @@
 [rv138]: rv/0138-tenant-fields-prototype.md
 [rv139]: rv/0139-attachment-checks-undocumented.md
 [rv140]: rv/0140-attachment-undefined-input-type-error.md
+[rv141]: rv/0141-client-options-type-error-paths.md
+[rv142]: rv/0142-token-save-cleared-during-store-set.md

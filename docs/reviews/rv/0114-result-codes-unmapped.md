@@ -26,6 +26,6 @@
 
 ## 処置
 
-—
+**一部を実施（2026-09-26・fix/http-auth-low-review・`18c39cd`）。** reference の 2 つの表を読み込み、分類していないコードがちょうど Resource の 5 と Authentication の -1・113 であることを確かめるテストを足した。表に行が足されたときや、分類を決めたときに落ちる。5 と 113 を分類するかは、ADR-0006 の表を変えることになるので、RV-123 とあわせて起票する ADR で決める。状態は open のまま。
 
 [rc]: ../../usage/reference/resource-api/result-codes.md
