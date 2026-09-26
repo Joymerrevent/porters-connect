@@ -7,7 +7,12 @@ import {
   PortersNetworkError,
   PortersResourceError,
 } from "../errors/index";
-import { createRequester, recoveryFor, type AttemptState } from "./requester";
+import {
+  asUnknownOutcome,
+  createRequester,
+  recoveryFor,
+  type AttemptState,
+} from "./requester";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
 
@@ -137,13 +142,54 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
       backoff: noBackoff,
     });
 
+    const error: unknown = await r
+      .request({ method: "POST", url: "u", headers: {} }, (b) => b, {
+        write: true,
+        idempotent: false,
+      })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(PortersNetworkError);
+    expect(error).toMatchObject({ retryable: false });
+    expect((error as PortersNetworkError).hint).toMatch(
+      /may have been applied/,
+    );
+    expect(n).toBe(1); // sent once, not retried
+  });
+
+  // ADR-0103: a sent create answered with Code 302 is not resent either.
+  it("does not resend a create answered with Code 302", async () => {
+    let n = 0;
+    const transport: Transport = {
+      send: () => {
+        n += 1;
+        return Promise.resolve({ status: 200, body: "302" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+    // 応答の `<Code>` を読んで投げるのは parse の役目（parseWriteResult と同じ形のエラー）。
+    const parse = (): never => {
+      throw new PortersResourceError("transaction", {
+        category: "transient",
+        code: 302,
+        retryable: true,
+      });
+    };
     await expect(
-      r.request({ method: "POST", url: "u", headers: {} }, (b) => b, {
+      r.request({ method: "POST", url: "u", headers: {} }, parse, {
         write: true,
         idempotent: false,
       }),
-    ).rejects.toBeInstanceOf(PortersNetworkError);
-    expect(n).toBe(1); // sent once, not retried
+    ).rejects.toMatchObject({
+      name: "PortersResourceError",
+      code: 302,
+      retryable: false,
+    });
+    expect(n).toBe(1);
   });
 
   // ADR-0063: the guard asks "may this write have applied?", not "is this a network error?".
@@ -293,6 +339,72 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(await r.request(base, parse)).toBe("RESULT");
     // initial=false, 401-retry=true, transient-retry back to false
     expect(calls.map((c) => c.force)).toEqual([false, true, false]);
+  });
+
+  // RV-75。取り直しを頼むときに、断られたトークンを渡す（ほかのリクエストが取り直していれば、それを使うため）。
+  it("passes the refused token along when it asks for a refresh", async () => {
+    const asked: (
+      { forceRefresh?: boolean; failedToken?: string } | undefined
+    )[] = [];
+    let n = 0;
+    const auth: AccessTokenSource = {
+      getAccessToken: (o) => {
+        asked.push(o);
+        n += 1;
+        return Promise.resolve(`T${n}`);
+      },
+    };
+    let sends = 0;
+    const transport: Transport = {
+      send: () => {
+        sends += 1;
+        return sends === 1
+          ? Promise.reject(authErr(401))
+          : Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth,
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+    await r.request(base, (b) => b);
+    expect(asked).toEqual([
+      undefined,
+      { forceRefresh: true, failedToken: "T1" },
+    ]);
+  });
+
+  // RV-66 の再レビュー。スロットルは送る直前に数える（トークンの取得を待つ間のずれで、上限を超えないように）。
+  it("takes the throttle slot after the token is in hand, right before sending", async () => {
+    const order: string[] = [];
+    const auth: AccessTokenSource = {
+      getAccessToken: () => {
+        order.push("token");
+        return Promise.resolve("TKN");
+      },
+    };
+    const throttle: Throttle = {
+      take: () => {
+        order.push("throttle");
+        return Promise.resolve();
+      },
+    };
+    const transport: Transport = {
+      send: () => {
+        order.push("send");
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth,
+      throttle,
+      backoff: noBackoff,
+    });
+    await r.request(base, (b) => b);
+    expect(order).toEqual(["token", "throttle", "send"]);
   });
 
   it("refreshes on 402 as well as 401", async () => {
@@ -722,9 +834,15 @@ describe("recoveryFor", () => {
     expect(recoveryFor(transientErr(), state({ attempt: 3 }))).toBe("throw");
   });
 
-  it("throws a network error on a sent create, whose outcome is unknown", () => {
+  it("reports an unknown outcome for a network error on a sent create", () => {
     const create = state({ write: true, idempotent: false });
-    expect(recoveryFor(networkErr(), create)).toBe("throw");
+    expect(recoveryFor(networkErr(), create)).toBe("unknownOutcome");
+    // 再試行しない通信の失敗（3xx を unknown と分類した場合など）も、適用されたかは分からない。
+    const redirected = new PortersNetworkError("302 Found", {
+      category: "unknown",
+      httpStatus: 302,
+    });
+    expect(recoveryFor(redirected, create)).toBe("unknownOutcome");
     // 送信前の失敗と 429 は、書き込まれていないと分かっているので送り直してよい。
     expect(recoveryFor(networkErr(), { ...create, sent: false })).toBe(
       "backoff",
@@ -736,8 +854,61 @@ describe("recoveryFor", () => {
     expect(recoveryFor(tooMany, create)).toBe("backoff");
   });
 
+  // ADR-0103: 送信済みの create で再送してよいのは、未処理が確定する Code 9 だけ。
+  it("resends a sent create only on Code 9, and reports 302 as an unknown outcome", () => {
+    const create = state({ write: true, idempotent: false });
+    const code = (c: number): PortersResourceError =>
+      new PortersResourceError("temp", {
+        category: "transient",
+        code: c,
+        retryable: true,
+      });
+    expect(recoveryFor(code(9), create)).toBe("backoff");
+    expect(recoveryFor(code(302), create)).toBe("unknownOutcome");
+    // 冪等な書き込み（update）と読み込みは、302 でも送り直す。
+    expect(recoveryFor(code(302), state({ write: true }))).toBe("backoff");
+    expect(recoveryFor(code(302), state())).toBe("backoff");
+    // PORTERS が状態を返した、再試行しない失敗は、そのまま投げる。
+    const invalid = new PortersResourceError("bad value", {
+      category: "validation",
+      code: 103,
+    });
+    expect(recoveryFor(invalid, create)).toBe("throw");
+  });
+
   it("throws an error that is not retryable", () => {
     const denied = new PortersAuthError("denied", { category: "auth" });
     expect(recoveryFor(denied, state())).toBe("throw");
+  });
+});
+
+describe("asUnknownOutcome", () => {
+  it("keeps the class and details, but is not retryable and carries the original as cause", () => {
+    const original = new PortersNetworkError("timeout", {
+      category: "network",
+      retryable: true,
+      httpStatus: 504,
+      context: { resource: "Candidate" },
+    });
+    const e = asUnknownOutcome(original);
+    expect(e).toBeInstanceOf(PortersNetworkError);
+    expect(e).toMatchObject({
+      message: "timeout",
+      category: "network",
+      retryable: false,
+      httpStatus: 504,
+      context: { resource: "Candidate" },
+      cause: original,
+    });
+    expect(e.hint).toMatch(/may have been applied/);
+
+    const busy = new PortersResourceError("transaction", {
+      category: "transient",
+      code: 302,
+      retryable: true,
+    });
+    const r = asUnknownOutcome(busy);
+    expect(r).toBeInstanceOf(PortersResourceError);
+    expect(r).toMatchObject({ code: 302, retryable: false, cause: busy });
   });
 });

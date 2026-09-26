@@ -14,6 +14,8 @@
 - [ADR-0041][adr41] SD-4 は途中で失敗したときに進み具合を示すと決めている。
 - 実測（2026-09-26）: 250 件の `createMany` で、1 つ目のバッチの index 0 を Code 107 で失敗させ、2 つ目のバッチを HTTP 500 にした。例外の hint は「135 record(s) … were already written; retry only the records from index 135 onward」で、例外に `results` は無かった。
 
+- 追記（2026-09-26・通信と認証の修正の再レビュー）: 2 つ目以降のバッチが送った後の通信エラーで失敗すると、外側の hint は「index N 以降を再送して」と案内するが、失敗したバッチそのもの（index N 以降）は登録済みかもしれない。「登録された可能性あり」の hint は `cause.hint` にしか残らない。実測（`createMany` 201 件、2 つ目のバッチを通信エラーに）。
+
 ## 影響
 
 🔴。hint どおりに index 135 以降だけを再送すると、index 0（失敗していた）は永久に登録されない。利用者はそれを知る手段が無い。

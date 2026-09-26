@@ -1,7 +1,7 @@
 # RV-77 🟡 `timeoutMs` に 2^31 以上を渡すと、すべてのリクエストがすぐに中断される
 
 - 重要度: 🟡 ／ 観点: 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`13dd26b`）。** `timeoutMs` の上限を 2147483647 にし、超えたら構築時に `PortersConfigError` にする。
+
+## 検証
+
+`src/http/fetch-transport.test.ts` で、2147483647 は通り、2147483648 と `Number.MAX_SAFE_INTEGER` は弾くことを確かめる。
 
 [adr77]: ../../adr/0077-fetch-transport-timeout.md

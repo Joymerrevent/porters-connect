@@ -94,8 +94,9 @@ export type AttemptState = {
   maxRetries: number;
 };
 
-// 失敗したときの次の手: トークンを取り直して送り直す／待ってから送り直す／そのまま投げる。
-export type Recovery = "refresh" | "backoff" | "throw";
+// 失敗したときの次の手: トークンを取り直して送り直す／待ってから送り直す／そのまま投げる／
+// 書き込みが適用されたか分からないことを添えて投げる。
+export type Recovery = "refresh" | "backoff" | "throw" | "unknownOutcome";
 
 // 判断だけを純粋な関数にして、送信のループから分けている（requester.test.ts が直接確かめる）。
 export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
@@ -117,16 +118,37 @@ export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
   // expected to drop the connection instead, so 429 comes from an intermediary. See
   // docs/live-verification.md (LV-9).
   const mayHaveApplied = s.sent && e.category !== "rateLimit";
-  if (
-    mayHaveApplied &&
-    e instanceof PortersNetworkError &&
-    s.write &&
-    !s.idempotent
-  )
-    return "throw";
+  if (mayHaveApplied && s.write && !s.idempotent) {
+    // 通信の失敗は、書き込みが適用されたか分からない（ADR-0010）。
+    if (e instanceof PortersNetworkError) return "unknownOutcome";
+    // PORTERS が状態を返した一時的な失敗のうち、再送してよいのは未処理が確定する Code 9 だけ。
+    // 302（トランザクションエラー / 対象削除済み）は、登録まで進んだかが分からない（ADR-0103）。
+    if (e.retryable && e.code !== 9) return "unknownOutcome";
+  }
   // transient (9/302) / network -> bounded backoff.
   if (e.retryable && s.attempt < s.maxRetries) return "backoff";
   return "throw";
+};
+
+const UNKNOWN_OUTCOME_HINT =
+  "The write may have been applied before this failure. It is not safe to resend as is: check whether the record was created, then retry only if it was not.";
+
+// 送信済みの非冪等な書き込みが失敗したときのエラー。`retryable` は「利用者がそのまま再送してよいか」を
+// 表すので false にし、元のエラーは `cause` に残す（ADR-0010 / ADR-0103）。ここに来るのは通信の失敗
+// （PortersNetworkError）か、PORTERS が返した一時的な失敗（PortersResourceError）だけ。
+export const asUnknownOutcome = (e: PortersError): PortersError => {
+  const options = {
+    category: e.category,
+    code: e.code,
+    retryable: false,
+    hint: UNKNOWN_OUTCOME_HINT,
+    httpStatus: e.httpStatus,
+    context: e.context,
+    cause: e,
+  };
+  return e instanceof PortersResourceError
+    ? new PortersResourceError(e.message, options)
+    : new PortersNetworkError(e.message, options);
 };
 
 export const createRequester = (o: RequesterOptions): Requester => {
@@ -142,19 +164,26 @@ export const createRequester = (o: RequesterOptions): Requester => {
     const idempotent = spec.idempotent ?? !write;
     let authRetried = false;
     let forceRefresh = false;
+    // 401 / 402 で断られたトークン。取り直しを頼むときに渡し、ほかのリクエストがすでに取り直して
+    // いれば、それを使う（同時の 401 で取り直しが何度も走らないように。ADR-0012 / RV-75）。
+    let failedToken: string | undefined;
     let attempt = 0;
 
     for (;;) {
-      await o.throttle.take(write);
       // Whether *this* attempt reached the wire. The idempotency guard needs "the write may have
       // applied", not "the error is a network one" (ADR-0063): a token fetch that fails never put
       // the request on the wire, so replaying it cannot duplicate anything.
       let sent = false;
       try {
         const token = await o.auth.getAccessToken(
-          forceRefresh ? { forceRefresh: true } : undefined,
+          forceRefresh ? { forceRefresh: true, failedToken } : undefined,
         );
         forceRefresh = false;
+        failedToken = token;
+        // スロットルは送る直前に数える。トークンの取得の前に数えると、取得を待つ間に数えた時刻と
+        // PORTERS に届く時刻がずれ、起動直後の 1 分間に上限の 2 倍が届きうる（RV-66 の再レビュー）。
+        // 待つ間にトークンの期限が切れても、401 を受けて 1 回だけ取り直す経路で回復する。
+        await o.throttle.take(write);
         sent = true;
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);
@@ -178,6 +207,7 @@ export const createRequester = (o: RequesterOptions): Requester => {
           await sleep(o.backoff(attempt - 1));
           continue;
         }
+        if (next === "unknownOutcome") throw asUnknownOutcome(e);
         throw e;
       }
     }

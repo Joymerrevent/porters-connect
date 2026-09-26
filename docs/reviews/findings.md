@@ -79,8 +79,8 @@
 | [RV-62][rv62]   | 🟢     | DX / API 忠実性                 | fixed   | カスタム項目を `create` の必須として宣言できない（テナントの `P_Required` を型に写せない）           |
 | [RV-63][rv63]   | 🟢     | DX / アーキテクチャ             | fixed   | トークンの「取得」だけを差し替えて「管理」をライブラリに任せる入口が無い                             |
 | [RV-64][rv64]   | 🟢     | API 忠実性 / エラーモデル       | fixed   | 単件の `create` / `update` が、束ねた alias を渡されたときだけ同期 throw する（ADR-0046 の契約違反） |
-| [RV-65][rv65]   | 🔴     | エラーモデル / フェイルセーフ   | open    | 送信済み create の通信失敗が retryable:true で届く                                                   |
-| [RV-66][rv66]   | 🔴     | API 忠実性 / フェイルセーフ     | open    | スロットルが 1 分間に上限の約 1.8 倍を通す                                                           |
+| [RV-65][rv65]   | 🔴     | エラーモデル / フェイルセーフ   | fixed   | 送信済み create の通信失敗が retryable:true で届く                                                   |
+| [RV-66][rv66]   | 🔴     | API 忠実性 / フェイルセーフ     | fixed   | スロットルが 1 分間に上限の約 1.8 倍を通す                                                           |
 | [RV-67][rv67]   | 🔴     | フェイルセーフ / API 忠実性     | open    | update(-1) が新規作成になる                                                                          |
 | [RV-68][rv68]   | 🔴     | API 忠実性 / フェイルセーフ     | open    | 条件の値のカンマが別の条件になる                                                                     |
 | [RV-69][rv69]   | 🔴     | エラーモデル / フェイルセーフ   | open    | createMany の途中失敗で先のバッチの失敗が消える                                                      |
@@ -89,10 +89,10 @@
 | [RV-72][rv72]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | getMany が切れた応答を「存在しない」にする                                                           |
 | [RV-73][rv73]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | get が返ったレコードの id を確かめない                                                               |
 | [RV-74][rv74]   | 🟡     | フェイルセーフ / 設定検証       | open    | start・id・空配列の条件を送信前に検査しない                                                          |
-| [RV-75][rv75]   | 🟡     | 認証                            | open    | 同時の 401 で取り直しが何度も走る                                                                    |
-| [RV-76][rv76]   | 🟡     | セキュリティ / フェイルセーフ   | open    | リダイレクト先へトークン・Secret を送る                                                              |
-| [RV-77][rv77]   | 🟡     | 設定検証                        | open    | timeoutMs が 2^31 以上で即中断                                                                       |
-| [RV-78][rv78]   | 🟡     | エラーモデル / フェイルセーフ   | open    | create の Code 302 を自動で再送する                                                                  |
+| [RV-75][rv75]   | 🟡     | 認証                            | fixed   | 同時の 401 で取り直しが何度も走る                                                                    |
+| [RV-76][rv76]   | 🟡     | セキュリティ / フェイルセーフ   | fixed   | リダイレクト先へトークン・Secret を送る                                                              |
+| [RV-77][rv77]   | 🟡     | 設定検証                        | fixed   | timeoutMs が 2^31 以上で即中断                                                                       |
+| [RV-78][rv78]   | 🟡     | エラーモデル / フェイルセーフ   | fixed   | create の Code 302 を自動で再送する                                                                  |
 | [RV-79][rv79]   | 🟡     | フェイルセーフ / 設定検証       | open    | defineFields が存在しない Data Type を受け付ける                                                     |
 | [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | open    | 宣言できない項目の宣言で verifyFields が ok                                                          |
 | [RV-81][rv81]   | 🟡     | フェイルセーフ                  | open    | attachment.create が undefined を送る                                                                |
@@ -102,7 +102,7 @@
 | [RV-85][rv85]   | 🟡     | フェイルセーフ                  | open    | 書き込みで NaN / Infinity を送る                                                                     |
 | [RV-86][rv86]   | 🟡     | API 忠実性 / フェイルセーフ     | open    | Date の書き込みが前方一致だけで通す                                                                  |
 | [RV-87][rv87]   | 🟡     | API 忠実性                      | open    | XML の属性が値に混ざる                                                                               |
-| [RV-88][rv88]   | 🟢     | フェイルセーフ                  | open    | 時計が戻るとスロットルが止まる                                                                       |
+| [RV-88][rv88]   | 🟢     | フェイルセーフ                  | fixed   | 時計が戻るとスロットルが止まる                                                                       |
 | [RV-89][rv89]   | 🟢     | 認証                            | open    | ExpiresIn の欠けと非数の扱いが違う                                                                   |
 | [RV-90][rv90]   | 🟢     | 認証 / フェイルセーフ           | open    | 認証応答の Error 欠けを成功と読む                                                                    |
 | [RV-91][rv91]   | 🟢     | 認証                            | open    | token-manager の clear と読み込み失敗                                                                |
@@ -134,6 +134,12 @@
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
 | [RV-118][rv118] | 🟢     | テスト厳密性                    | open    | 新規必須の突き合わせにテストが無い                                                                   |
 | [RV-119][rv119] | 🟢     | ドキュメント                    | open    | 実装と合わないコメント 4 か所                                                                        |
+| [RV-120][rv120] | 🟢     | エラーモデル / DX               | open    | 3xx のエラーの hint が一般的                                                                         |
+| [RV-121][rv121] | 🟢     | 認証                            | open    | 読み込み中の cache() が上書きされる                                                                  |
+| [RV-122][rv122] | 🟢     | エラーモデル                    | open    | asUnknownOutcome がクラスを変えうる                                                                  |
+| [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
+| [RV-124][rv124] | 🟢     | 性能                            | open    | スロットルの shift が容量に比例                                                                      |
+| [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -261,3 +267,9 @@
 [rv117]: rv/0117-public-constraint-types-unexported.md
 [rv118]: rv/0118-required-on-create-untested.md
 [rv119]: rv/0119-stale-comments-2026-09-26.md
+[rv120]: rv/0120-redirect-hint-generic.md
+[rv121]: rv/0121-token-cache-during-load-overwritten.md
+[rv122]: rv/0122-unknown-outcome-rewraps-base-error.md
+[rv123]: rv/0123-create-nonretryable-unknown-without-hint.md
+[rv124]: rv/0124-throttle-window-shift-linear.md
+[rv125]: rv/0125-create-many-per-record-302-no-guidance.md

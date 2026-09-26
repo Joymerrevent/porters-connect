@@ -89,7 +89,7 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const now = opts.now ?? (() => Date.now());
 
   let cached: StoredTokens | undefined;
-  let loaded = false;
+  let loading: Promise<void> | undefined;
   let inflight: Promise<StoredTokens> | undefined;
 
   // An unknown expiry counts as usable: the reactive 401/402 retry is the backstop.
@@ -102,12 +102,16 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
     return tokens;
   };
 
-  // Read the store once, on the first need, so a restart reuses what another run saved.
-  const load = async (): Promise<void> => {
-    if (loaded) return;
-    loaded = true;
-    if (cached === undefined) cached = readStoredTokens(await store.get());
-  };
+  // Read the store once, on the first need, so a restart reuses what another run saved. Calls that
+  // arrive while it is being read wait for the same read, rather than going on to acquire a token
+  // the store already has (RV-75). A failed read is not remembered: the next call reads again.
+  const load = (): Promise<void> =>
+    (loading ??= (async () => {
+      if (cached === undefined) cached = readStoredTokens(await store.get());
+    })().catch((e: unknown) => {
+      loading = undefined;
+      throw e;
+    }));
 
   // refresh when it can work: the issuer hands out no refresh token (its own way of renewing), or
   // the refresh token is still usable. Otherwise start over with acquire.
@@ -123,9 +127,21 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
     return save(requireTokens(await provider.acquire(), "acquire"));
   };
 
-  const ensure = async (forceRefresh: boolean): Promise<StoredTokens> => {
+  // `failedToken` is the token a 401 / 402 refused. If the cache already holds another one, a
+  // concurrent request renewed it meanwhile: use that instead of renewing again, so N requests
+  // refused together cost one renewal, not N (ADR-0012 の single-flight。RV-75).
+  const ensure = async (
+    forceRefresh: boolean,
+    failedToken?: string,
+  ): Promise<StoredTokens> => {
     await load();
-    if (!forceRefresh && cached !== undefined && usable(cached.accessToken))
+    const renewedMeanwhile =
+      failedToken !== undefined && cached?.accessToken.token !== failedToken;
+    if (
+      (!forceRefresh || renewedMeanwhile) &&
+      cached !== undefined &&
+      usable(cached.accessToken)
+    )
       return cached;
     return (inflight ??= renew().finally(() => {
       inflight = undefined;
@@ -134,7 +150,8 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
 
   return {
     getAccessToken: async (o) =>
-      (await ensure(o?.forceRefresh ?? false)).accessToken.token,
+      (await ensure(o?.forceRefresh ?? false, o?.failedToken)).accessToken
+        .token,
     // 写しを返す: 受け取った側が書き換えても、キャッシュの値（リクエストに使う値）は変わらない。
     getIssuedToken: async () => ({ ...(await ensure(false)).accessToken }),
     cache: async (tokens) => {

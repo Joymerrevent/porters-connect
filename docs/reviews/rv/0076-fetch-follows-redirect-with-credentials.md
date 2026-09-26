@@ -1,7 +1,7 @@
 # RV-76 🟡 fetch がリダイレクトを追いかけ、トークンや App Secret を別の宛先へ送る
 
 - 重要度: 🟡 ／ 観点: セキュリティ / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,10 @@ fetch の `redirect` を指定していないので既定の follow になり、
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`13dd26b`）。** `src/http/fetch-transport.ts` で fetch に `redirect: "manual"` を渡し、3xx を追いかけずにそのまま応答として返す。
+
+## 検証
+
+`src/http/fetch-transport.test.ts` の「does not follow a redirect」が、本物の fetch とローカルのサーバーで、307 の転送先に何も届かないことを確かめる。
 
 [adr48]: ../../adr/0048-access-point-host-validation.md

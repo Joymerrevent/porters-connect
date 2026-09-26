@@ -9,43 +9,94 @@ const flush = async (): Promise<void> => {
   for (let i = 0; i < 5; i++) await Promise.resolve();
 };
 
-describe("createThrottle (token-bucket, ADR-0010)", () => {
-  it("allows a burst up to capacity, then refills over time", async () => {
-    let t = 0;
-    // readPerMin 600 * safety 1.0 = capacity 600 -> 10 tokens/sec.
-    const throttle = createThrottle({
-      readPerMin: 600,
-      safety: 1,
-      now: () => t,
-    });
-
-    // capacity tokens are immediately available without advancing the clock.
-    for (let i = 0; i < 600; i++) await throttle.take(false);
-
-    // refill: advancing 1s grants ~10 more tokens.
-    t = 1000;
-    await throttle.take(false); // resolves from refilled tokens, no real wait
-    expect(t).toBe(1000);
-  });
-
-  it("blocks when depleted, then resolves after the bucket refills", async () => {
+describe("createThrottle (sliding window, ADR-0102)", () => {
+  it("lets the capacity through at once, then waits until the oldest request is a minute old", async () => {
     vi.useFakeTimers();
     let t = 0;
-    // readPerMin 60 * safety 1.0 = capacity 60 -> 1 token/sec.
+    // readPerMin 60 * safety 1.0 = capacity 60.
     const throttle = createThrottle({
       readPerMin: 60,
       safety: 1,
       now: () => t,
     });
-    for (let i = 0; i < 60; i++) await throttle.take(false); // deplete
-    const pending = throttle.take(false); // tokens < 1 -> awaits sleep
-    t = 2000; // advance the virtual clock so the refill yields tokens
-    await vi.advanceTimersByTimeAsync(2000);
+    for (let i = 0; i < 60; i++) await throttle.take(false); // all at t = 0
+
+    let settled = false;
+    const pending = throttle.take(false).then(() => {
+      settled = true;
+    });
+    t = 59_999; // still inside the minute of the first 60
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(settled).toBe(false);
+    t = 60_000; // the first 60 leave the window
+    await vi.advanceTimersByTimeAsync(1);
     await pending;
+    expect(settled).toBe(true);
     vi.useRealTimers();
   });
 
-  it("uses the write bucket for writes", async () => {
+  it("sleeps exactly until the oldest request leaves the window", async () => {
+    vi.useFakeTimers();
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    let t = 0;
+    const throttle = createThrottle({
+      readPerMin: 60,
+      safety: 1,
+      now: () => t,
+    });
+    await throttle.take(false); // the oldest, at t = 0
+    t = 1000;
+    for (let i = 0; i < 59; i++) await throttle.take(false); // full at t = 1000
+
+    t = 1500;
+    void throttle.take(false); // blocks until t = 60_000
+    const delays = setTimeoutSpy.mock.calls.map((c) => Number(c[1]));
+    expect(delays.at(-1)).toBe(58_500);
+
+    setTimeoutSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  // ADR-0102 の性質そのもの。token-bucket は満杯から始めて毎分補充するので、起動直後の 60 秒で
+  // 容量の約 2 倍を通していた（RV-66）。どの 60 秒を切り取っても容量以下であることを、
+  // 休まず呼び続けたときの時刻の列で確かめる。
+  it("never lets more than the capacity through in any 60 seconds", async () => {
+    vi.useFakeTimers({ now: 0 });
+    const capacity = 10;
+    const throttle = createThrottle({
+      readPerMin: capacity,
+      safety: 1,
+      now: () => Date.now(),
+    });
+    const times: number[] = [];
+    for (let i = 0; i < capacity * 3 + 5; i++) {
+      let done = false;
+      const p = throttle.take(false).then(() => {
+        done = true;
+      });
+      while (!done) await vi.advanceTimersToNextTimerAsync();
+      await p;
+      times.push(Date.now());
+    }
+    // 窓の外に出るまでは次の容量ぶんを通さない＝ times[i + capacity] は times[i] から 60 秒以上あと。
+    for (let i = 0; i + capacity < times.length; i++) {
+      expect(times[i + capacity] - times[i]).toBeGreaterThanOrEqual(60_000);
+    }
+    // ただし待ちすぎない: 容量ぶんは最初に通り、次の容量ぶんはちょうど 60 秒後に通る。
+    expect(times.slice(0, capacity)).toEqual(Array(capacity).fill(0));
+    expect(times[capacity]).toBe(60_000);
+    vi.useRealTimers();
+  });
+
+  it("measures time with performance.now() by default, which never goes backwards", async () => {
+    const spy = vi.spyOn(performance, "now").mockReturnValue(123);
+    const throttle = createThrottle({ readPerMin: 60, safety: 1 });
+    await throttle.take(false);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("uses the write window for writes", async () => {
     const throttle = createThrottle({
       writePerMin: 60,
       safety: 1,
@@ -74,7 +125,7 @@ describe("createThrottle (token-bucket, ADR-0010)", () => {
     vi.useRealTimers();
   });
 
-  it("meters writes through a separate bucket sized by writePerMin", async () => {
+  it("meters writes through a separate window sized by writePerMin", async () => {
     vi.useFakeTimers();
     const t = 0;
     // floor(600 * 0.5) = 300 write capacity
@@ -93,53 +144,9 @@ describe("createThrottle (token-bucket, ADR-0010)", () => {
     expect(settled).toBe(false);
     vi.useRealTimers();
   });
-
-  it("refills at the configured per-minute rate", async () => {
-    vi.useFakeTimers();
-    let t = 1000; // construct + deplete here so `last` is non-zero (catches t + last)
-    // capacity 60, rate 60/60000 = 0.001 token/ms = 1 token/sec
-    const throttle = createThrottle({
-      readPerMin: 60,
-      safety: 1,
-      now: () => t,
-    });
-    for (let i = 0; i < 60; i++) await throttle.take(false); // deplete; last = 1000
-
-    t = 6000; // 5s elapsed -> exactly 5 tokens refilled
-    for (let i = 0; i < 5; i++) await throttle.take(false); // 5 immediate
-
-    let settled = false;
-    void throttle.take(false).then(() => {
-      settled = true;
-    });
-    await flush();
-    expect(settled).toBe(false); // only 5 refilled; the 6th blocks
-    vi.useRealTimers();
-  });
-
-  it("sleeps for the remaining token deficit when blocked", async () => {
-    vi.useFakeTimers();
-    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
-    let t = 0;
-    // capacity 60, rate 0.001 token/ms
-    const throttle = createThrottle({
-      readPerMin: 60,
-      safety: 1,
-      now: () => t,
-    });
-    for (let i = 0; i < 60; i++) await throttle.take(false); // deplete; last = 0, tokens = 0
-
-    t = 500; // refills 0.5 token -> deficit 0.5 -> sleep ceil(0.5 / 0.001) = 500ms
-    void throttle.take(false); // blocks, scheduling exactly one setTimeout
-    const delays = setTimeoutSpy.mock.calls.map((c) => Number(c[1]));
-    expect(delays.at(-1)).toBe(500);
-
-    setTimeoutSpy.mockRestore();
-    vi.useRealTimers();
-  });
 });
 
-// RV-49。容量 0 のバケットは「1 ミリ秒ごとに起きて token を待つ」ループになり、**永久に返らない**。
+// RV-49。容量 0 のスロットルは「1 ミリ秒ごとに起きて空きを待つ」ループになり、**永久に返らない**。
 // 上限を下げて優しく叩くのは createThrottle を公開した目的そのもの（ADR-0073）なので、
 // そこで無言のハングに倒れるのは安全側ではない。構築時に落とす。
 describe("createThrottle の設定検証（RV-49）", () => {

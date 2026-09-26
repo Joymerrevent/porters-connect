@@ -8,7 +8,7 @@
 
 > **FetchTransportOptions** = `object`
 
-Defined in: [src/http/fetch-transport.ts:14](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L14)
+Defined in: [src/http/fetch-transport.ts:18](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L18)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [src/http/fetch-transport.ts:14](https://github.com/Joymerrevent/por
 
 > `optional` **fetchImpl?**: *typeof* `fetch`
 
-Defined in: [src/http/fetch-transport.ts:31](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L31)
+Defined in: [src/http/fetch-transport.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L36)
 
 Injectable fetch (tests / custom dispatcher). Default global fetch.
 
@@ -26,7 +26,7 @@ Injectable fetch (tests / custom dispatcher). Default global fetch.
 
 > `optional` **timeoutMs?**: `number`
 
-Defined in: [src/http/fetch-transport.ts:29](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L29)
+Defined in: [src/http/fetch-transport.ts:34](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/fetch-transport.ts#L34)
 
 How long one request may take, in milliseconds. Default 30,000.
 
@@ -37,5 +37,6 @@ when the headers came back instantly. It is **per request**, so a retried call c
 slot (throttling sits above the transport).
 
 Raise it to read large attachments over a slow link; lower it to fail fast in an interactive
-tool. Must be a positive integer — `0` would abort every request immediately, which reads
-like "no timeout" and is not.
+tool. Must be a positive integer, at most 2,147,483,647 (about 24.8 days — the longest timer
+Node can set) — `0` would abort every request immediately, which reads like "no timeout" and
+is not.

@@ -1,7 +1,7 @@
 # RV-65 🔴 送信済みの `create` が通信エラーで失敗すると、`retryable: true` のまま hint も無しに届く
 
 - 重要度: 🔴 ／ 観点: エラーモデル / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`5832644`）。** `src/http/requester.ts` の `recoveryFor` が、送信済みの非冪等な書き込みの通信エラーに `"unknownOutcome"` を返し、`asUnknownOutcome` が `retryable: false` と「登録された可能性あり」の hint を持つエラーに包み直す（元のエラーは `cause`）。[ADR-0010][adr10] の決定どおり。
+
+## 検証
+
+`src/http/requester.test.ts` の `recoveryFor` / `asUnknownOutcome` のテストと、送信済みの `create` が `retryable: false`・hint 付きで届き 1 回しか送らないテスト。`requester.ts` のミューテーションはすべて検出。
 
 [adr10]: ../../adr/0010-retry-throttle.md
