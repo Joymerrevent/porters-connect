@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
-import { buildReadUrl } from "../../src/resources/core/query-encode";
+import { buildReadUrl } from "../../src/accessor/query-encode";
 import { parseReadQuery, runReadQuery } from "./query";
 import type { FakeRecord } from "./types";
 

@@ -3,15 +3,19 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 
-// ADR-0097 / ADR-0098: 各モジュールが import してはいけない先（自分より上の層）。直下の client / index は全員にとって上。
+// ADR-0097 / ADR-0098 / ADR-0101: 各モジュールが import してはいけない先（自分より上の層）。直下の client / index は全員にとって上。
 // 一番下の porters/（PORTERS が決めた値と定義表）は、ほかのどのモジュールも import しない（下の layerRules で別に止める）。
 const LAYERS = [
-  ["errors", ["util", "xml", "http", "auth", "resources", "fields"]],
-  ["util", ["xml", "http", "auth", "resources", "fields"]],
-  ["xml", ["http", "auth", "resources", "fields"]],
-  ["http", ["auth", "resources", "fields"]],
-  ["auth", ["resources", "fields"]],
-  // resources は auth を使っていないので、import してよい先に含めない（ADR-0097 の表）。
+  [
+    "errors",
+    ["util", "xml", "http", "auth", "accessor", "resources", "fields"],
+  ],
+  ["util", ["xml", "http", "auth", "accessor", "resources", "fields"]],
+  ["xml", ["http", "auth", "accessor", "resources", "fields"]],
+  ["http", ["auth", "accessor", "resources", "fields"]],
+  ["auth", ["accessor", "resources", "fields"]],
+  // accessor と resources は auth を使っていないので、import してよい先に含めない（ADR-0097 / ADR-0101 の表）。
+  ["accessor", ["auth", "resources", "fields"]],
   ["resources", ["auth", "fields"]],
   ["fields", ["auth"]],
 ];
@@ -47,30 +51,6 @@ const layerRules = () => [
               regex: "^\\.\\./",
               message:
                 "src/porters/ は一番下の層で、ほかのモジュールを import できません（ADR-0098）。",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  // resources/core/ は共通の仕組み。resources/ 直下（リソース本体と定義表）を import しない。
-  {
-    files: ["src/resources/core/**/*.ts"],
-    ignores: ["**/*.test.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              regex: "^(\\.\\./)+(auth|fields|client|index)(/|$)",
-              message:
-                "src/resources/ は auth・fields・直下を import できません（ADR-0097 の層の表）。",
-            },
-            {
-              regex: "^\\.\\./(?!\\.\\./)",
-              message:
-                "resources/core/ は resources/ 直下（リソース本体と定義表）を import できません（ADR-0097）。",
             },
           ],
         },

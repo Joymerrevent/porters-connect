@@ -8,7 +8,7 @@
 
 > **rawValue**(`record`, `alias`): `string` \| `null` \| `undefined`
 
-Defined in: [src/resources/core/catalog.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/core/catalog.ts#L59)
+Defined in: [src/accessor/catalog.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/catalog.ts#L59)
 
 Read a field the catalog does not know — the named escape hatch for a value that
 arrived without a declaration: through a cast in `field`, inside an expanded reference record,

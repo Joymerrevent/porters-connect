@@ -8,12 +8,12 @@
 import { apiUrl, type AccessPoint } from "../http/access-point";
 import { parseResourcePage, type RawItem } from "../xml/parser";
 import { asArray, asRecord } from "../xml/raw";
-import { appendPaging } from "./core/paging";
-import { decoderFor } from "./core/decoder";
-import type { FieldCatalog, ReadRecord } from "./core/catalog";
-import type { Limit } from "./core/paging";
-import type { ResourceDeps } from "./core/deps";
-import type { ResourceDescriptor } from "./core/descriptor";
+import { appendPaging } from "../accessor/paging";
+import { decoderFor } from "../accessor/decoder";
+import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
+import type { Limit } from "../accessor/paging";
+import type { ResourceDeps } from "../accessor/deps";
+import type { ResourceDescriptor } from "../accessor/descriptor";
 
 const FIELDS = {
   P_Id: "System[Id]",

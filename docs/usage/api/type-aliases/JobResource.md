@@ -8,7 +8,7 @@
 
 > **JobResource**\<`C`, `CR`\> = `object`
 
-Defined in: [src/resources/job.ts:143](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L143)
+Defined in: [src/resources/job.ts:146](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L146)
 
 The Job accessor. `C` is the declared custom-field catalog merged on; `CR` names the
 custom fields that are required on `create`.
@@ -29,7 +29,7 @@ custom fields that are required on `create`.
 
 > **create**(`input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/job.ts:215](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L215)
+Defined in: [src/resources/job.ts:218](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L218)
 
 Create one Job record; resolves to the newly assigned id.
 
@@ -49,7 +49,7 @@ Create one Job record; resolves to the newly assigned id.
 
 > **createMany**(`inputs`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/job.ts:226](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L226)
+Defined in: [src/resources/job.ts:229](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L229)
 
 Create many Job records in one call. Auto-batched to ≤200 records and under the request
 size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
@@ -73,7 +73,7 @@ duplicate creates. Empty input sends no request.
 
 > **get**\<`E`, `I`, `FL`\>(`id`, `options?`): `Promise`\<`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; `P_Recruiter`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Client`: `"System[Reference]"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Division`: `"SinglelineText"`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Telephone"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_Title`: `"SinglelineText"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Recruiter"`; `path`: `"recruiter"`; `prefix`: `"Recruiter"`; `references`: \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}; \}; \}, `E`, `I`, `FL`\> \| `undefined`\>
 
-Defined in: [src/resources/job.ts:183](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L183)
+Defined in: [src/resources/job.ts:186](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L186)
 
 Read one Job record by id; `undefined` when there is none. `field` picks the fields to
 read, the same way it does for `search` (omit it to read every known field); the record's id
@@ -115,7 +115,7 @@ since it fetches one record rather than a page.
 
 > **getMany**\<`E`, `I`, `FL`\>(`ids`, `options?`): `Promise`\<(`GetRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; `P_Recruiter`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Client`: `"System[Reference]"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Division`: `"SinglelineText"`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Telephone"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_Title`: `"SinglelineText"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Recruiter"`; `path`: `"recruiter"`; `prefix`: `"Recruiter"`; `references`: \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}; \}; \}, `E`, `I`, `FL`\> \| `undefined`)[]\>
 
-Defined in: [src/resources/job.ts:205](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L205)
+Defined in: [src/resources/job.ts:208](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L208)
 
 Read many Job records by id. Resolves to an array in the order of `ids`, holding
 `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
@@ -162,7 +162,7 @@ readonly `number`[]
 
 > **search**\<`E`, `I`, `FL`\>(`query?`): `Promise`\<[`ResourcePageOf`](ResourcePageOf.md)\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; `P_Recruiter`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Client`: `"System[Reference]"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Division`: `"SinglelineText"`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Telephone"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_Title`: `"SinglelineText"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Recruiter"`; `path`: `"recruiter"`; `prefix`: `"Recruiter"`; `references`: \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}; \}; \}, `E`, `I`, `FL`\>\>\>
 
-Defined in: [src/resources/job.ts:154](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L154)
+Defined in: [src/resources/job.ts:157](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L157)
 
 Search Job records: resolves to one page of the records matching `query`. `field` picks
 the fields to read (omit it to read every known field), `expand` reads referenced records
@@ -198,7 +198,7 @@ too, `image` picks an Image field's sub-fields, and `count` / `start` choose the
 
 > **searchAll**\<`E`, `I`, `FL`\>(`query?`): `AsyncIterable`\<`SearchRecord`\<`Fields`\<`C`\>, \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; `P_Recruiter`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Client`: `"System[Reference]"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Division`: `"SinglelineText"`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Mail`: `"Mail"`; `P_Memo`: `"MultilineText"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Telephone"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_Reading`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_Title`: `"SinglelineText"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Recruiter"`; `path`: `"recruiter"`; `prefix`: `"Recruiter"`; `references`: \{ `P_Client`: \{ `fields`: \{ `P_City`: `"SinglelineText"`; `P_Country`: `"SinglelineText"`; `P_Deleted`: `null`; `P_Fax`: `"Telephone"`; `P_Id`: `"System[Id]"`; `P_Memo`: `"MultilineText"`; `P_Name`: `"SinglelineText"`; `P_Owner`: `"User"`; `P_Phase`: `"Option"`; `P_PhaseDate`: `"DateTime"`; `P_PhaseMemo`: `"MultilineText"`; `P_Prefecture`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_Street`: `"MultilineText"`; `P_Telephone`: `"Telephone"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_Zipcode`: `"SinglelineText"`; \}; `name`: `"Client"`; `path`: `"client"`; `prefix`: `"Client"`; \}; \}; \}; \}, `E`, `I`, `FL`\>\>
 
-Defined in: [src/resources/job.ts:168](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L168)
+Defined in: [src/resources/job.ts:171](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L171)
 
 Search every Job record matching `query`, page after page (200 records per request).
 Takes the same `field` / `expand` / `image` as `search`.
@@ -233,7 +233,7 @@ Takes the same `field` / `expand` / `image` as `search`.
 
 > **update**(`id`, `input`): `Promise`\<`number`\>
 
-Defined in: [src/resources/job.ts:217](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L217)
+Defined in: [src/resources/job.ts:220](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L220)
 
 Update one Job record by id; resolves to that id.
 
@@ -257,7 +257,7 @@ Update one Job record by id; resolves to that id.
 
 > **updateMany**(`items`): `Promise`\<[`BulkWriteResult`](BulkWriteResult.md)\>
 
-Defined in: [src/resources/job.ts:231](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L231)
+Defined in: [src/resources/job.ts:234](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L234)
 
 Update many Job records by id in one call. Auto-batched like `createMany`; per-record
 failures are returned in the `BulkWriteResult`, not thrown.

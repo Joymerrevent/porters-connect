@@ -7,13 +7,17 @@
 // 3.12.31, so the library sends the catalog default like every other resource (ADR-0020) —
 // otherwise the typed record would promise 17 fields and quietly deliver 4 (RV-1).
 
-import type { ResourceDeps } from "./core/deps";
-import type { ResourceDescriptor } from "./core/descriptor";
-import { createFieldParam } from "./core/field-param";
-import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
-import type { Paging } from "./core/paging";
-import type { ResourcePage } from "./core/read";
-import { createMasterResource } from "./core/master-resource";
+import type { ResourceDeps } from "../accessor/deps";
+import type { ResourceDescriptor } from "../accessor/descriptor";
+import { createFieldParam } from "../accessor/field-param";
+import type {
+  FieldCatalog,
+  ReadFieldAlias,
+  ReadRecord,
+} from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { ResourcePage } from "../accessor/read";
+import { createMasterResource } from "../accessor/master-resource";
 
 // docs/usage/reference resources/user.md（出典: User - Field List / Timezone List）の全 17 項目。
 // 先頭 4 つは PORTERS が field 省略時に返すもので、**参照先として読める唯一の 4 つ**でもある

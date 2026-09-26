@@ -16,31 +16,38 @@
 // `CustomFieldResource` and carries no `P_Deleted` analogue.
 //
 // VERIFY(live): a `User`-typed field is requested with its sub-fields — `Owner(User.P_Id,…)` —
-// because that is what the shared `field` assembly (core/field-param.ts) sends for all 13
+// because that is what the shared `field` assembly (accessor/field-param.ts) sends for all 13
 // resources. PORTERS' own Phase sample requests them **bare**
 // (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the parenthesised form for
 // this resource. The response shape is the same either way, so if the
 // parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
-import { createDataResource, type catalogMark } from "./core/data-resource";
+import {
+  createDataResource,
+  type catalogMark,
+} from "../accessor/data-resource";
 import type {
   EmptyImages,
   GetOptions,
   GetRecord,
   ReadSelection,
   SearchRecord,
-} from "./core/read-record";
-import type { CreateInput, UpdateInput } from "./core/write-record";
+} from "../accessor/read-record";
+import type { CreateInput, UpdateInput } from "../accessor/write-record";
 import type { Without } from "../util/types";
-import type { EmptyReferences, Expand } from "./core/expand";
-import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/write-many";
-import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
-import type { Paging } from "./core/paging";
-import type { ResourceDeps } from "./core/deps";
-import type { ResourcePage, ResourcePageOf } from "./core/read";
-import type { SearchQuery } from "./core/query";
-import type { ResourceDescriptor } from "./core/descriptor";
+import type { EmptyReferences, Expand } from "../accessor/expand";
+import type { ImageOption } from "../accessor/image";
+import type { BulkWriteResult } from "../accessor/write-many";
+import type {
+  FieldCatalog,
+  ReadFieldAlias,
+  ReadRecord,
+} from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { ResourceDeps } from "../accessor/deps";
+import type { ResourcePage, ResourcePageOf } from "../accessor/read";
+import type { SearchQuery } from "../accessor/query";
+import type { ResourceDescriptor } from "../accessor/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
 const FIELDS = {

@@ -248,6 +248,7 @@ Attachment の項目は出典の一覧で 6 つ（`Id` / `Resource` / `ResourceI
 
 - `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
 - `docs/usage/howto/attachments.md` → `docs/usage/resources/attachment.md`（2026-09-23・ADR-0088）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
 
 [coverage]: ../design/endpoint-coverage.md
 [rv45]: ../reviews/rv/0045-attachment-search-all-absent.md

@@ -134,6 +134,7 @@
 
 - `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
 - `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
 
 [findings]: ../reviews/findings.md
 [guide]: ../usage/topics/errors.md

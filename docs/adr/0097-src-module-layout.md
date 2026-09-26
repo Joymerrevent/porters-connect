@@ -244,6 +244,15 @@ accept の後、この ADR の PR がマージされる前に、decider が「�
 - 順番: この ADR の実装を、[ADR-0096][adr96]（`field` で戻り値の型を絞る）の実装より先に行う。ADR-0096 は
   `core/` に移るファイルを触るので、先に移しておくと移動と変更がぶつからない。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）
+- `resources/core/read.ts` → 送信は `src/accessor/read.ts`、項目の一覧の型は `src/accessor/catalog.ts`、応答の変換は `src/accessor/decoder.ts`、ページ送りは `src/accessor/paging.ts`、`field` の組み立ては `src/accessor/field-param.ts`（2026-09-26 に分けて `src/accessor/` へ移した・ADR-0101）
+
 [adr13]: 0013-coding-conventions-class-vs-function.md
 [adr71]: 0071-usage-docs-single-root.md
 [adr96]: 0096-narrow-record-type-by-field.md

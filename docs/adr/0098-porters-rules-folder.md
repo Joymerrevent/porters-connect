@@ -145,6 +145,19 @@ PORTERS が決めた値と定義表を 1 か所にまとめるか。まとめる
 - 実装は [ADR-0096][adr96]（`field` で戻り値の型を絞る）より先に行う（accepted のときに決めた）。ADR-0096 は
   `resources/core/` のファイルを触るので、値の置き場所を先に決めておくと 2 つの変更がぶつかりにくい。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）
+- `resources/core/bulk-write.ts` → `src/accessor/write-many.ts`（2026-09-26 に名前を変えて `src/accessor/` へ移した）
+- `resources/core/get-many.ts` → `src/accessor/read-many.ts`（2026-09-26 に名前を変えて `src/accessor/` へ移した）
+- `resources/core/image.ts` → `src/accessor/image.ts`（2026-09-26・ADR-0101）
+- `resources/core/query.ts` → 型は `src/accessor/query.ts`、組み立ては `src/accessor/query-encode.ts`（2026-09-26 に分けて `src/accessor/` へ移した）
+- `resources/core/read.ts` → 送信は `src/accessor/read.ts`、項目の一覧の型は `src/accessor/catalog.ts`、応答の変換は `src/accessor/decoder.ts`、ページ送りは `src/accessor/paging.ts`、`field` の組み立ては `src/accessor/field-param.ts`（2026-09-26 に分けて `src/accessor/` へ移した・ADR-0101）
+
 [adr96]: 0096-narrow-record-type-by-field.md
 [adr97]: 0097-src-module-layout.md
 [basic-design]: ../design/basic-design.md

@@ -5,8 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/decode";
 import { ACTIVITY_DESCRIPTOR, createActivityResource } from "./activity";
 
-// The generic Read/Write flow is unit-tested in core/read-data.test.ts and
-// core/write-data.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
+// accessor/write-data.test.ts; here we pin the
 // Activity-specific catalog (each field decodes by its Data Type) and config
 // (root name `Activity`, path `activity`, alias prefix `Activity`).
 const USER_FIELDS = [

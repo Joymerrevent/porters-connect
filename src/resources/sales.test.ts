@@ -5,8 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/decode";
 import { SALES_DESCRIPTOR, createSalesResource } from "./sales";
 
-// The generic Read/Write flow is unit-tested in core/read-data.test.ts and
-// core/write-data.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in accessor/read-data.test.ts and
+// accessor/write-data.test.ts; here we pin the
 // Sales-specific catalog (each field decodes by its Data Type) and config
 // (root name `Sales`, path `sales`, alias prefix `Sales`).
 const REF_FIELDS = [

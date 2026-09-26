@@ -8,7 +8,7 @@
 
 > **UserResource** = `object`
 
-Defined in: [src/resources/user.ts:80](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L80)
+Defined in: [src/resources/user.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L84)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/user.ts:80](https://github.com/Joymerrevent/porters-c
 
 > **current**(): `Promise`\<`ReadRecord`\<\{ `P_Department`: `"System[Department]"`; `P_EndDate`: `"Date"`; `P_Id`: `"System[Id]"`; `P_Language`: `"SinglelineText"`; `P_Mail`: `"Mail"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_StartDate`: `"Date"`; `P_Telephone`: `"Telephone"`; `P_TimeZone`: `"SinglelineText"`; `P_Type`: `"Number"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_UserName`: `"SinglelineText"`; \}\> \| `undefined`\>
 
-Defined in: [src/resources/user.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L89)
+Defined in: [src/resources/user.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L93)
 
 The current API user (`request_type=0`). Under the library's default `code_direct` auth
 this resolves to the App's own user (username = app name) — useful for self-identification.
@@ -32,7 +32,7 @@ Under the browser `code` grant it is the logged-in user. Resolves `undefined` if
 
 > **search**(`query?`): `Promise`\<[`UserPage`](UserPage.md)\>
 
-Defined in: [src/resources/user.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L81)
+Defined in: [src/resources/user.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L85)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [src/resources/user.ts:81](https://github.com/Joymerrevent/porters-c
 
 > **searchAll**(`query?`): `AsyncIterable`\<`ReadRecord`\<\{ `P_Department`: `"System[Department]"`; `P_EndDate`: `"Date"`; `P_Id`: `"System[Id]"`; `P_Language`: `"SinglelineText"`; `P_Mail`: `"Mail"`; `P_Mobile`: `"Telephone"`; `P_MobileMail`: `"Mail"`; `P_Name`: `"SinglelineText"`; `P_RegisteredBy`: `"User"`; `P_RegistrationDate`: `"System[DateTime]"`; `P_StartDate`: `"Date"`; `P_Telephone`: `"Telephone"`; `P_TimeZone`: `"SinglelineText"`; `P_Type`: `"Number"`; `P_UpdateDate`: `"System[DateTime]"`; `P_UpdatedBy`: `"User"`; `P_UserName`: `"SinglelineText"`; \}\>\>
 
-Defined in: [src/resources/user.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L83)
+Defined in: [src/resources/user.ts:87](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/user.ts#L87)
 
 Auto-paginating search: yields every matching user.
 
