@@ -12,6 +12,9 @@
 >
 > **decider が推奨案どおり選択し `accepted`（2026-09-10）**。実装は accept 後・別 PR。
 > **着手前に [RV-37][rv37] を塞ぐ**こと（論点6＝案6a）。
+>
+> **Amended by [ADR-0104][0104]（2026-09-26）**: 論点5 の区分に、宣言できない項目を宣言している場合の決めが無く
+> `ok: true` になっていた（[RV-80][rv80]）。新しい区分を足し、Data Type を持たない・宣言の対象外の項目の宣言で `ok` を倒すよう改めた。
 
 ## Context and Problem Statement
 
@@ -377,3 +380,5 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [rv58]: ../reviews/rv/0058-number-decode-nan-unchecked.md
 [rv37]: ../reviews/rv/0037-field-read-missing-process.md
+[0104]: 0104-verify-fields-declared-undeclarable.md
+[rv80]: ../reviews/rv/0080-verify-fields-undeclarable-ok.md
