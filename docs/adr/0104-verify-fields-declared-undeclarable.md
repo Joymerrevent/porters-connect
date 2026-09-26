@@ -1,12 +1,14 @@
 # 104. 宣言できない項目を宣言していたら、`verifyFields` の `ok` を倒す
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-80][rv80]。[ADR-0069][adr69] が決めた突合の区分に、
 > 「テナントでは宣言できない型の項目を、宣言している」場合の決めが無く、その場合 `verifyFields` は `ok: true` を返す。
 > ADR-0069 の区分の表を改めるので、この ADR で決める。
+>
+> **decider が案A を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -60,7 +62,7 @@ Reference 型は値を持たない（参照表示専用）ので、宣言どお�
 
 ## Decision Outcome
 
-推奨: **案A**（proposed。decider の判断待ち）。
+採用: **案A**（decider が 2026-09-26 に選択）。
 
 - `no-data-type` と `not-declarable` は、どう宣言しても正しく読めないと分かっている。黙って `null` になるので `ok` を倒す。
 - `unknown-field-type` は、ライブラリが型を知らないだけで、宣言が正しい可能性がある。正誤を判定できないので `ok` は倒さず、区分に載せて知らせる。

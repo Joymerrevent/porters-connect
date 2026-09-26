@@ -1,12 +1,14 @@
 # 103. `create` の応答が Code 302 のときは自動で再送しない
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-78][rv78]。[ADR-0010][adr10] は「`create` の `302` は安全側で
 > 非再試行」と決めたが、実装は `302` を再送している。reference の Result Code の表は `302` を「再試行する」としているので、
 > 実装を ADR-0010 に合わせるのか、決定を変えるのかを決める。
+>
+> **decider が案A を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -44,7 +46,7 @@ PORTERS には削除 API が無いので、重複は取り消せない。
 
 ## Decision Outcome
 
-推奨: **案A**（proposed。decider の判断待ち）。
+採用: **案A**（decider が 2026-09-26 に選択）。
 
 - `302` の後に `create` が登録済みかは分からないので、再送は重複のおそれを伴う。取り消せない書き込みでは安全側に倒す（ADR-0010 と同じ理由）。
 - reference の「再試行する」は操作を区別していない一般の案内で、`create` の冪等性までは述べていない。

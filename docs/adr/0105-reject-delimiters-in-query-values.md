@@ -1,12 +1,14 @@
 # 105. 検索の条件とキーワードの値に区切り文字があれば、送る前に拒否する
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-68][rv68]。[ADR-0038][adr38] SD-8 は「値の中のエンコードは
 > URLSearchParams に任せる」と決めたが、URLSearchParams は区切りのカンマと値の中のカンマを同じ `%2C` にするので、
 > PORTERS 側では区別できないと分かった。SD-8 の前提を改めるので、この ADR で決める。
+>
+> **decider が案A を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -48,7 +50,7 @@ reference（[Read の README][readref]）は、値の中に区切り文字を入
 
 ## Decision Outcome
 
-推奨: **案A**（proposed。decider の判断待ち）。
+採用: **案A**（decider が 2026-09-26 に選択）。
 
 - 案B は、PORTERS が解釈する保証の無いエスケープを発明することになる。解釈されなければ、別の意味の検索が黙って走る。
 - 案C は、利用者の入力を条件に使う場面で、検索結果が黙って変わる形を残す。

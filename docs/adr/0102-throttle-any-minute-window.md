@@ -1,12 +1,14 @@
 # 102. スロットルを、どの 1 分間を切り取っても上限を超えない形にする
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-66][rv66]。[ADR-0010][adr10] のスロットルの方式（token-bucket・
 > 容量＝上限 × 安全率・毎分同じ量を補充）では、ADR-0010 自身が決めた「1 分窓で上限内に収める」が成り立たないと分かった。
 > 方式を変えるので、ADR-0010 のスロットルの部分をこの ADR で置き換える（リトライの部分は変えない）。
+>
+> **decider が案A を選択し `accepted`（2026-09-26）。** 実装は accept 後・別 PR。
 
 ## Context and Problem Statement
 
@@ -49,7 +51,7 @@ PORTERS は上限を超えた接続を切る（reference の gotchas）。書き
 
 ## Decision Outcome
 
-推奨: **案A**（proposed。decider の判断待ち）。
+採用: **案A**（decider が 2026-09-26 に選択）。
 
 - 案A は「直近 60 秒の数が容量以下」を**定義そのもの**として持つので、動く 1 分でも固定の 1 分でも上限を超えない。
   1 分あたりの最大のスループットは今の容量（1800 / 450）のまま落ちない。
