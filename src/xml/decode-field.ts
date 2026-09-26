@@ -102,8 +102,9 @@ const decodeOption = (outer: Record<string, unknown>): string[] | null => {
 };
 
 // System[Reference] Read mirrors User: <Field><Resource>...</Resource></Field>, but the
-// inner tag varies (Client/Recruiter/...). Write is ID-only, so we decode the referenced
-// record's id — enough to round-trip. Richer reference reading is future work (SD-3).
+// inner tag varies (Client/Recruiter/...). Write is ID-only, so this decodes the referenced
+// record's id — enough to round-trip. Reading the referenced record's fields is `expand`
+// (ADR-0058), decoded by `decodeReferenceRecord`.
 // NB: the label is literally `System[Reference]` (a nested record). It is NOT the
 // display-only Field-Type-16 "Reference" (a scalar mirror, Data Type `—`), left uncatalogued.
 const decodeReference = (

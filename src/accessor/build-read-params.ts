@@ -9,7 +9,6 @@ import type { FieldCatalog } from "./catalog";
 import type { Paging } from "./paging";
 import type { SearchQuery } from "./query";
 
-// The keyword cap and the fields a deleted read may condition on are PORTERS values (porters/read-rules.ts).
 import { appendReadQuery } from "./append-read-query";
 
 /**
