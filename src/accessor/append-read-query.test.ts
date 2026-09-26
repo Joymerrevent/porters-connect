@@ -144,6 +144,29 @@ describe("appendReadQuery — order", () => {
 });
 
 describe("appendReadQuery — keywords", () => {
+  // 空の要素は空のキーワードとして送られるので、送る前に拒否する（RV-97）。
+  it.each([[["a", ""]], [["", "b"]], [[" "]], [["a", "\t"]]])(
+    "refuses an empty keyword in %j",
+    (keywords) => {
+      let err: unknown;
+      try {
+        encode({ keywords });
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersConfigError);
+      expect((err as PortersConfigError).message).toMatch(
+        /^keywords has an empty keyword "/,
+      );
+      expect((err as PortersConfigError).hint).toBe(
+        "Remove the empty keyword, or leave keywords out to search without one.",
+      );
+      expect((err as PortersConfigError).context).toEqual({
+        operation: "read",
+      });
+    },
+  );
+
   it("joins keywords with commas (AND)", () => {
     expect(encode({ keywords: ["foo", "bar"] }).get("keywords")).toBe(
       "foo,bar",

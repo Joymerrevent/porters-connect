@@ -217,8 +217,23 @@ export const appendReadQuery = <F extends FieldCatalog>(
     for (const k of q.keywords) {
       // キーワードどうしもカンマで区切るので、要素の中のカンマはキーワードを 1 つ増やす（ADR-0105）。
       if (k.includes(",")) throw delimiterError("keywords", k, "a comma");
+      // 空の要素は ",a," のような空のキーワードとして送られ、何に一致するか分からない（RV-97）。
+      if (k.trim() === "") {
+        throw new PortersConfigError(
+          `keywords has an empty keyword ${JSON.stringify(k)}`,
+          {
+            category: "config",
+            hint: "Remove the empty keyword, or leave keywords out to search without one.",
+            context: { operation: "read" },
+          },
+        );
+      }
     }
     const kw = q.keywords.join(",");
+    // 長さは UTF-16 の単位で数える。絵文字などは 2 と数えるので、PORTERS の数え方より長く見積もることは
+    // あっても、短く見積もって上限を超えたまま送ることは無い（安全側）。
+    // VERIFY(live): PORTERS が 100 文字を何の単位で数えるか（文字・UTF-16・バイト）は未確認 —
+    // docs/live-verification.md (LV-36)。
     if (kw.length > KEYWORDS_MAX_CHARS) {
       throw new PortersConfigError(
         `keywords is ${kw.length} characters, over the ${KEYWORDS_MAX_CHARS}-character limit`,
