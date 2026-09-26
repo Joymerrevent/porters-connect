@@ -17,3 +17,11 @@ export const DELETED_CONDITION_FIELDS: ReadonlySet<string> = new Set([
   "P_UpdateDate",
   "P_UpdatedBy",
 ]);
+
+/**
+ * Read responses that carry no `Total` / `Count` / `Start` attributes on the root (reference: every
+ * resource's Read has them except Option). Any other resource's response without them is not read.
+ */
+export const RESOURCES_WITHOUT_PAGE_ATTRIBUTES: ReadonlySet<string> = new Set([
+  "Option",
+]);

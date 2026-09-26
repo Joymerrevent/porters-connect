@@ -15,8 +15,13 @@ const FIELDS = {
 // The master's own query (paging aside).
 type Query = { tag?: string };
 
-const page = (total: number, ids: number[], root = "Thing"): string =>
-  `<${root} Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (
+  total: number,
+  ids: number[],
+  root = "Thing",
+  start = 0,
+): string =>
+  `<${root} Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><T.P_Id>${id}</T.P_Id></Item>`).join("") +
   `</${root}>`;
 
@@ -92,7 +97,10 @@ describe("createMasterReader — search", () => {
 describe("createMasterReader — searchAll", () => {
   it("walks every page (200 at a time) until total", async () => {
     const first = Array.from({ length: 200 }, (_, i) => i + 1);
-    const { methods, urls } = setup([page(201, first), page(201, [201])]);
+    const { methods, urls } = setup([
+      page(201, first),
+      page(201, [201], "Thing", 200),
+    ]);
     const all = await collect(methods.searchAll({ tag: "b" }));
     expect(all).toHaveLength(201);
     expect(urls).toEqual([
@@ -103,7 +111,10 @@ describe("createMasterReader — searchAll", () => {
 
   it("reads the query once: changing it mid-walk does not change a later page (RV-32)", async () => {
     const first = Array.from({ length: 200 }, (_, i) => i + 1);
-    const { methods, urls } = setup([page(201, first), page(201, [201])]);
+    const { methods, urls } = setup([
+      page(201, first),
+      page(201, [201], "Thing", 200),
+    ]);
     const query = { tag: "before" };
     for await (const _ of methods.searchAll(query)) query.tag = "after";
     expect(urls.every((u) => u.includes("tag=before"))).toBe(true);

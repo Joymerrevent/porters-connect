@@ -5,6 +5,8 @@ import { PortersError, PortersResourceError } from "../errors/index";
 import { asArray } from "./as-array";
 import { asRecord } from "./as-record";
 import { parseXml, toInt } from "./parse-xml";
+import { asString } from "./as-string";
+import { RESOURCES_WITHOUT_PAGE_ATTRIBUTES } from "../porters/read-rules";
 
 /** One `<Item>`: a map of field alias -> raw node (string or nested object). */
 export type RawItem = Record<string, unknown>;
@@ -76,10 +78,26 @@ export const parseResourcePage = (
     throw resourceError(code, `resource returned code ${code}`, { resource });
   }
 
+  // Option だけは属性を持たない（reference）。ほかのリソースで欠けていたり数でなかったりすると、
+  // 読んだ件数と全体の件数が分からない。0 として読むと、searchAll が 1 ページで黙って止まる（RV-71）。
+  const pageNumber = (name: "Total" | "Count" | "Start"): number => {
+    const raw = body[`@_${name}`];
+    if (RESOURCES_WITHOUT_PAGE_ATTRIBUTES.has(resource)) return toInt(raw);
+    const s = asString(raw);
+    // 無い（undefined）ときは "undefined" になり、数字でないので同じく弾く。
+    if (!/^\d+$/.test(String(s))) {
+      throw new PortersResourceError(
+        `resource response has no valid ${name} attribute (got ${JSON.stringify(s ?? null)})`,
+        { category: "unknown", hint: MIDDLEBOX_HINT, context: { resource } },
+      );
+    }
+    return Number(s);
+  };
+
   return {
-    total: toInt(body["@_Total"]),
-    count: toInt(body["@_Count"]),
-    start: toInt(body["@_Start"]),
+    total: pageNumber("Total"),
+    count: pageNumber("Count"),
+    start: pageNumber("Start"),
     items: asArray(body.Item).map((it) => asRecord(it) ?? {}),
   };
 };

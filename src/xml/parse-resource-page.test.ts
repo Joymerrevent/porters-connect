@@ -85,12 +85,64 @@ describe("parseResourcePage (ADR-0011)", () => {
     );
   });
 
-  it("defaults missing attributes to 0 (the envelope still carries <Code>)", () => {
+  // RV-71。Total が無い応答を 0 と読むと、searchAll が 1 ページで黙って止まる。Option 以外は読まない。
+  it.each([
+    [
+      "Total",
+      `<Candidate Count="1" Start="0"><Code>0</Code></Candidate>`,
+      "null",
+    ],
+    [
+      "Count",
+      `<Candidate Total="1" Start="0"><Code>0</Code></Candidate>`,
+      "null",
+    ],
+    [
+      "Start",
+      `<Candidate Total="1" Count="1"><Code>0</Code></Candidate>`,
+      "null",
+    ],
+    [
+      "Total",
+      `<Candidate Total="abc" Count="1" Start="0"><Code>0</Code></Candidate>`,
+      '"abc"',
+    ],
+    [
+      "Start",
+      `<Candidate Total="1" Count="1" Start="-1"><Code>0</Code></Candidate>`,
+      '"-1"',
+    ],
+    [
+      "Count",
+      `<Candidate Total="1" Count="1x" Start="0"><Code>0</Code></Candidate>`,
+      '"1x"',
+    ],
+  ])(
+    "refuses a response whose %s attribute is missing or not a count",
+    (name, xml, got) => {
+      let err: unknown;
+      try {
+        parseResourcePage(xml, "Candidate");
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeInstanceOf(PortersResourceError);
+      const e = err as PortersResourceError;
+      expect(e.message).toBe(
+        `resource response has no valid ${name} attribute (got ${got})`,
+      );
+      expect(e.category).toBe("unknown");
+      expect(e.hint).toContain("middlebox");
+      expect(e.context).toEqual({ resource: "Candidate" });
+    },
+  );
+
+  it("reads Option, whose response carries no page attributes, with them as 0", () => {
     const page = parseResourcePage(
-      "<Candidate><Code>0</Code><Item><Person.P_Id>1</Person.P_Id></Item></Candidate>",
-      "Candidate",
+      "<Option><Code>0</Code><Item><Option.P_Id>1</Option.P_Id></Item></Option>",
+      "Option",
     );
-    expect(page.total).toBe(0); // @_Total missing -> "0"
+    expect(page).toMatchObject({ total: 0, count: 0, start: 0 });
     expect(page.items).toHaveLength(1);
   });
 

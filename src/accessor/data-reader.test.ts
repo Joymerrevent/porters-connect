@@ -37,8 +37,8 @@ const CONFIG = {
 // A prefixed key (`W.P_Id`) exercises bareAlias; an unknown alias passes through.
 const OK = `<?xml version="1.0"?><Widget Total="1" Count="1" Start="0"><Code>0</Code><Item><W.P_Id>7</W.P_Id><W.U_x>raw</W.U_x></Item></Widget>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Widget Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Widget Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><W.P_Id>${id}</W.P_Id></Item>`).join("") +
   `</Widget>`;
 
@@ -481,7 +481,7 @@ describe("createDataReader — searchAll", () => {
   it("pages through all results (200/page) until total is reached", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -498,7 +498,7 @@ describe("createDataReader — searchAll", () => {
   it("makes a single request when the first page reaches total", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(2, [1, 2]), page(2, [])], calls),
+      requester: stub([page(2, [1, 2]), page(2, [], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -510,7 +510,7 @@ describe("createDataReader — searchAll", () => {
   it("stops on an empty page even if total claims more (no infinite loop)", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(5, []), page(5, [])], calls),
+      requester: stub([page(5, []), page(5, [], 0)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -522,7 +522,7 @@ describe("createDataReader — searchAll", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createDataReader(CONFIG, {
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });

@@ -21,8 +21,8 @@ const TWO =
   `<Field.P_DecimalFraction>0</Field.P_DecimalFraction><Field.P_ReferTo><Option.P_Area/></Field.P_ReferTo><Field.P_ResourceType>3</Field.P_ResourceType></Item>` +
   `</Field>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Field Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Field Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><Field.P_Id>${id}</Field.P_Id></Item>`).join("") +
   `</Field>`;
 
@@ -82,7 +82,7 @@ describe("createFieldAccessor", () => {
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
     const r = createFieldAccessor({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -95,7 +95,7 @@ describe("createFieldAccessor", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createFieldAccessor({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });

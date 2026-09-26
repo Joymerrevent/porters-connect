@@ -12,8 +12,8 @@ const TWO =
   `<Item><Department.P_Id>2</Department.P_Id><Department.P_Name>部署2</Department.P_Name></Item>` +
   `</Department>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Department Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Department Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids
     .map((id) => `<Item><Department.P_Id>${id}</Department.P_Id></Item>`)
     .join("") +
@@ -118,7 +118,7 @@ describe("createDepartmentResource", () => {
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
     const r = createDepartmentResource({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -133,7 +133,7 @@ describe("createDepartmentResource", () => {
   it("searchAll() keeps the field selection on every page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createDepartmentResource({
-      requester: stub([page(2, [1]), page(2, [2])], calls),
+      requester: stub([page(2, [1]), page(2, [2], 1)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
