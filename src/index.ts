@@ -97,6 +97,7 @@ export type {
   UndeclarableField,
   UndeclarableTenantField,
   RequiredMismatch,
+  DeclaredUndeclarableField,
   UndeclarableReason,
   UndeclaredField,
   UnverifiableResource,

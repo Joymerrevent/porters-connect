@@ -201,6 +201,48 @@ const guardContent = (content: string | undefined): void => {
   }
 };
 
+// 書き込む値を送る前に確かめる。型で止まるのは TypeScript の呼び出し側だけで、JS から渡し忘れると
+// "undefined" の文字列が送られ、壊れた添付ができていた。削除 API が無いので取り消せない（RV-81）。
+const invalidInput = (
+  field: string,
+  rule: string,
+  value: unknown,
+): PortersConfigError =>
+  new PortersConfigError(
+    `attachment ${field} must be ${rule}, got ${typeof value === "string" ? JSON.stringify(value.slice(0, 40)) : String(value)}`,
+    {
+      category: "config",
+      hint: "Pass resourceId (the record the file belongs to), contentType, fileName and content (the file as Base64 — see bytesToBase64).",
+    },
+  );
+
+// JS から文字列などが来ても、Number.isSafeInteger が false を返すので拒否される。
+const assertResourceId = (value: number): void => {
+  if (!Number.isSafeInteger(value) || value <= 0)
+    throw invalidInput("resourceId", "a positive integer", value);
+};
+
+const assertText = (field: string, value: unknown): void => {
+  if (typeof value !== "string" || value.trim() === "")
+    throw invalidInput(field, "a non-empty string", value);
+};
+
+// Base64 として成り立つ形か（4 文字単位で、= は末尾の埋めだけ）。文字の種類だけ見ると、生のテキスト
+// "hello" や "a" が通って壊れた添付ができる。除く空白は改行・タブ・半角スペースだけ（全角空白などは
+// 送る値に残るので、読み飛ばしてから判定しない）。0 バイトのファイルは空文字になるので受ける。
+// 形は「長さが 4 の倍数」と「= が末尾の 2 文字まで」に分けて見る。4 文字の繰り返しを 1 つの正規表現で
+// 書くと、上限の 1,400 万文字でバックトラックがスタックを使い切る。
+const assertBase64 = (value: unknown): void => {
+  const text =
+    typeof value === "string" ? value.replace(/[\r\n\t ]/g, "") : undefined;
+  if (
+    text === undefined ||
+    text.length % 4 !== 0 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(text)
+  )
+    throw invalidInput("content", "Base64 text", value);
+};
+
 export const createAttachmentAccessor = (
   deps: PartitionBoundConnectionDeps,
 ): AttachmentAccessor => ({
@@ -272,7 +314,12 @@ export const createAttachmentAccessor = (
     // create forces Id=-1 (non-idempotent) and fills `Resource` from the binding.
     // `async` so the 10MB guard rejects instead of throwing synchronously (ADR-0046).
     const create = async (input: AttachmentCreate): Promise<number> => {
+      assertResourceId(input.resourceId);
+      assertText("contentType", input.contentType);
+      assertText("fileName", input.fileName);
+      // 大きさを先に見る（上限を超える文字列に正規表現をかけない）。
       guardContent(input.content);
+      assertBase64(input.content);
       const inner =
         tag("Id", -1) +
         tag("Resource", resource) +
@@ -290,7 +337,11 @@ export const createAttachmentAccessor = (
       input: AttachmentUpdate,
     ): Promise<number> => {
       assertRecordId(id, "update", ATTACHMENT_RESOURCE);
+      if (input.contentType !== undefined)
+        assertText("contentType", input.contentType);
+      if (input.fileName !== undefined) assertText("fileName", input.fileName);
       guardContent(input.content);
+      if (input.content !== undefined) assertBase64(input.content);
       let inner = tag("Id", id);
       if (input.contentType !== undefined) {
         inner += tag("ContentType", input.contentType);

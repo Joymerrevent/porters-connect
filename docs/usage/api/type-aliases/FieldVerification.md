@@ -8,17 +8,25 @@
 
 > **FieldVerification** = `object`
 
-Defined in: [src/fields/verify-fields.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L85)
+Defined in: [src/fields/verify-fields.ts:106](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L106)
 
 What [verifyFields](../functions/verifyFields.md) found.
 
 ## Properties
 
+### declaredUndeclarable
+
+> `readonly` **declaredUndeclarable**: readonly [`DeclaredUndeclarableField`](DeclaredUndeclarableField.md)[]
+
+Defined in: [src/fields/verify-fields.ts:123](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L123)
+
+***
+
 ### missing
 
 > `readonly` **missing**: readonly [`MissingField`](MissingField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L95)
+Defined in: [src/fields/verify-fields.ts:117](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L117)
 
 ***
 
@@ -26,11 +34,12 @@ Defined in: [src/fields/verify-fields.ts:95](https://github.com/Joymerrevent/por
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [src/fields/verify-fields.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L94)
+Defined in: [src/fields/verify-fields.ts:116](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L116)
 
 `true` when every declared resource was read and nothing needs attention — no
-[FieldVerification.missing](#missing), [FieldVerification.typeMismatch](#typemismatch) or
-[FieldVerification.unverifiable](#unverifiable).
+[FieldVerification.missing](#missing), [FieldVerification.typeMismatch](#typemismatch),
+[FieldVerification.unverifiable](#unverifiable), and no [FieldVerification.declaredUndeclarable](#declaredundeclarable)
+whose reason is `no-data-type` or `not-declarable`.
 
 `undeclared`, `undeclarable` and `requiredMismatch` do **not** clear this flag: none of them
 breaks anything, they are there to be read.
@@ -41,7 +50,7 @@ breaks anything, they are there to be read.
 
 > `readonly` **requiredMismatch**: readonly [`RequiredMismatch`](RequiredMismatch.md)[]
 
-Defined in: [src/fields/verify-fields.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L100)
+Defined in: [src/fields/verify-fields.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L122)
 
 ***
 
@@ -49,7 +58,7 @@ Defined in: [src/fields/verify-fields.ts:100](https://github.com/Joymerrevent/po
 
 > `readonly` **typeMismatch**: readonly [`FieldTypeMismatch`](FieldTypeMismatch.md)[]
 
-Defined in: [src/fields/verify-fields.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L96)
+Defined in: [src/fields/verify-fields.ts:118](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L118)
 
 ***
 
@@ -57,7 +66,7 @@ Defined in: [src/fields/verify-fields.ts:96](https://github.com/Joymerrevent/por
 
 > `readonly` **undeclarable**: readonly [`UndeclarableTenantField`](UndeclarableTenantField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L99)
+Defined in: [src/fields/verify-fields.ts:121](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L121)
 
 ***
 
@@ -65,7 +74,7 @@ Defined in: [src/fields/verify-fields.ts:99](https://github.com/Joymerrevent/por
 
 > `readonly` **undeclared**: readonly [`UndeclaredField`](UndeclaredField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L97)
+Defined in: [src/fields/verify-fields.ts:119](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L119)
 
 ***
 
@@ -73,4 +82,4 @@ Defined in: [src/fields/verify-fields.ts:97](https://github.com/Joymerrevent/por
 
 > `readonly` **unverifiable**: readonly [`UnverifiableResource`](UnverifiableResource.md)[]
 
-Defined in: [src/fields/verify-fields.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L98)
+Defined in: [src/fields/verify-fields.ts:120](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L120)

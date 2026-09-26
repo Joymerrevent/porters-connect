@@ -93,10 +93,10 @@
 | [RV-76][rv76]   | 🟡     | セキュリティ / フェイルセーフ   | fixed   | リダイレクト先へトークン・Secret を送る                                                              |
 | [RV-77][rv77]   | 🟡     | 設定検証                        | fixed   | timeoutMs が 2^31 以上で即中断                                                                       |
 | [RV-78][rv78]   | 🟡     | エラーモデル / フェイルセーフ   | fixed   | create の Code 302 を自動で再送する                                                                  |
-| [RV-79][rv79]   | 🟡     | フェイルセーフ / 設定検証       | open    | defineFields が存在しない Data Type を受け付ける                                                     |
-| [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | open    | 宣言できない項目の宣言で verifyFields が ok                                                          |
-| [RV-81][rv81]   | 🟡     | フェイルセーフ                  | open    | attachment.create が undefined を送る                                                                |
-| [RV-82][rv82]   | 🟡     | フェイルセーフ / DX             | open    | generateFieldDecls が項目名をエスケープしない                                                        |
+| [RV-79][rv79]   | 🟡     | フェイルセーフ / 設定検証       | fixed   | defineFields が存在しない Data Type を受け付ける                                                     |
+| [RV-80][rv80]   | 🟡     | フェイルセーフ / API 忠実性     | fixed   | 宣言できない項目の宣言で verifyFields が ok                                                          |
+| [RV-81][rv81]   | 🟡     | フェイルセーフ                  | fixed   | attachment.create が undefined を送る                                                                |
+| [RV-82][rv82]   | 🟡     | フェイルセーフ / DX             | fixed   | generateFieldDecls が項目名をエスケープしない                                                        |
 | [RV-83][rv83]   | 🟡     | API 忠実性                      | fixed   | 値の前後の空白が消え、数値文字参照が残る                                                             |
 | [RV-84][rv84]   | 🟡     | API 忠実性 / フェイルセーフ     | fixed   | 入れ子の P_Id が空で 0、文字で NaN                                                                   |
 | [RV-85][rv85]   | 🟡     | フェイルセーフ                  | fixed   | 書き込みで NaN / Infinity を送る                                                                     |
@@ -150,6 +150,11 @@
 | [RV-133][rv133] | 🟢     | API 忠実性                      | open    | 空白付きの日時・属性・トークン                                                                       |
 | [RV-134][rv134] | 🟢     | エラーモデル                    | open    | 0001〜0099 年の日付の弾き方                                                                          |
 | [RV-135][rv135] | 🟢     | フェイルセーフ                  | open    | 残っている数の検査の抜け                                                                             |
+| [RV-136][rv136] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの空の update                                                                            |
+| [RV-137][rv137] | 🟢     | フェイルセーフ                  | open    | constName の予約語                                                                                   |
+| [RV-138][rv138] | 🟢     | フェイルセーフ                  | open    | prototype 経由の宣言                                                                                 |
+| [RV-139][rv139] | 🟢     | ドキュメント                    | open    | 添付ファイルの検査の文書                                                                             |
+| [RV-140][rv140] | 🟢     | エラーモデル                    | open    | 入力の渡し忘れが TypeError                                                                           |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -293,3 +298,8 @@
 [rv133]: rv/0133-padded-dates-and-attributes.md
 [rv134]: rv/0134-early-year-date-message.md
 [rv135]: rv/0135-remaining-lenient-number-paths.md
+[rv136]: rv/0136-attachment-empty-update.md
+[rv137]: rv/0137-generate-field-decls-reserved-const-name.md
+[rv138]: rv/0138-tenant-fields-prototype.md
+[rv139]: rv/0139-attachment-checks-undocumented.md
+[rv140]: rv/0140-attachment-undefined-input-type-error.md

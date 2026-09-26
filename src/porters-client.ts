@@ -63,6 +63,7 @@ import type {
 } from "./fields";
 import type { EmptyCatalog } from "./accessor/catalog";
 import type { ConnectionDeps } from "./accessor/deps";
+import { assertDeclaredCatalogs } from "./fields/assert-declared-catalogs";
 import type { Scheme } from "./http";
 import type { Scope } from "./auth";
 
@@ -321,8 +322,10 @@ const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
   scope: TenantOptions<C> = {},
 ): TenantScope<C> => {
   rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
-  // The per-resource custom catalog declared via defineFields (or {} when none). Branded
-  // = already validated (ADR-0023 D4), so the factory merges it without re-checking.
+  // 検証済みの印は型だけなので、素のオブジェクトや JS から渡された宣言も確かめる（RV-79）。
+  if (scope.fields !== undefined)
+    assertDeclaredCatalogs("tenant", scope.fields);
+  // The per-resource custom catalog declared via defineFields (or {} when none), checked above.
   const customFor = <K extends keyof DeclaredCatalogs>(
     key: K,
   ): CustomFor<C, K> => (scope.fields?.[key] ?? {}) as CustomFor<C, K>;

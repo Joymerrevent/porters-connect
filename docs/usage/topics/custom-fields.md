@@ -373,16 +373,17 @@ const report = await verifyFields(porters.tenant(1), myFields);
 if (!report.ok) logger.warn({ report }, "宣言がテナントと合っていません");
 ```
 
-レポートは 6 つに分かれます。
+レポートは 7 つに分かれます。
 
-| 区分               | 意味                                                         | 深刻度                                                        |
-| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------- |
-| `typeMismatch`     | 実在するが Data Type が違う                                  | **最悪**（読み取りがエラーになるか、型が違う値が入る）        |
-| `missing`          | 宣言したがテナントに無い                                     | 高                                                            |
-| `unverifiable`     | そのリソースの項目定義を PORTERS から**読めなかった**        | 中（項目が無いのか、読めなかっただけなのかは分からない）      |
-| `undeclared`       | テナントにあるが宣言していない                               | 低（宣言しなくても動作は変わらない）                          |
-| `undeclarable`     | 存在するが宣言では表せない                                   | 情報                                                          |
-| `requiredMismatch` | 宣言の `required` とテナントの入力必須（`P_Required`）が違う | 情報（読み書きは壊れない。`create` で止まるかどうかが変わる） |
+| 区分                   | 意味                                                         | 深刻度                                                        |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| `typeMismatch`         | 実在するが Data Type が違う                                  | **最悪**（読み取りがエラーになるか、型が違う値が入る）        |
+| `missing`              | 宣言したがテナントに無い                                     | 高                                                            |
+| `unverifiable`         | そのリソースの項目定義を PORTERS から**読めなかった**        | 中（項目が無いのか、読めなかっただけなのかは分からない）      |
+| `undeclared`           | テナントにあるが宣言していない                               | 低（宣言しなくても動作は変わらない）                          |
+| `declaredUndeclarable` | 宣言したが、テナントの項目は宣言では表せない型               | 高（値を持たない型・システムの項目なら、読むと常に `null`）   |
+| `undeclarable`         | 存在するが宣言では表せない                                   | 情報                                                          |
+| `requiredMismatch`     | 宣言の `required` とテナントの入力必須（`P_Required`）が違う | 情報（読み書きは壊れない。`create` で止まるかどうかが変わる） |
 
 **`verifyFields` は例外を投げません。** テナント管理者が項目を 1 つ改名しただけでアプリが起動しなくなるのは
 安全側ではないので、止めるかどうかは利用側が決めます。起動時に止めたいなら 1 行足します。
@@ -395,6 +396,11 @@ assertFieldsMatch(await verifyFields(porters.tenant(1), myFields));
 
 `assertFieldsMatch` は **`unverifiable` でも例外を投げます**。「確かめられなかった」は「問題なし」ではない
 ためです（`field_r` スコープが要ります）。`undeclared` / `undeclarable` / `requiredMismatch` では例外を投げません。
+
+`declaredUndeclarable` は、宣言した項目がテナントでは宣言では表せない型だったものです。理由（`reason`）が
+`no-data-type`（Reference など、値を持たない型）か `not-declarable`（システムの項目）なら、どう宣言しても正しく
+読めないので **`ok` が `false` になり、`assertFieldsMatch` も例外を投げます**。宣言から外してください。
+`unknown-field-type`（このライブラリがまだ知らない型）は、宣言が正しい可能性があるので、知らせるだけで `ok` は倒しません。
 
 > **`defineFields` は PORTERS を呼びません。** Field Read を呼ぶのは `generateFieldDecls` と `verifyFields` だけで、
 > 呼んだときだけです（`field_r` スコープが必要）。CI や起動時フックに置く使い方を想定しています。
@@ -414,10 +420,11 @@ for await (const f of t.field.of("candidate").searchAll()) {
 
 ## 検証されること
 
-`defineFields` は、次の 3 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
+`defineFields` は、次の 4 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）はライブラリがあらかじめ型を持っているので、宣言の対象外です。
 - **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume` のみ。
+- **Data Type がカスタム項目に使えるものであること** — ビルダー（`f.number()` など）で宣言すれば常に満たします。JavaScript から、またはビルダーを使わずに作った宣言を渡したときに効きます。
 - **`required` を付けるなら `true` か `false` であること** — `"true"` のような文字列は、黙って任意の項目として扱わずにエラーにします。
 
 ```ts
@@ -426,8 +433,9 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 //   must start with "U_" or "A_" (standard P_ fields are built in)
 ```
 
-検証を通った宣言は、`tenant()` で再検証されません。
-なお `defineFields` は `Promise` を返さないため、**この 2 つの検査は同期 throw** です
+`tenant(id, { fields })` も、渡された宣言のリソース名・alias・Data Type を確かめ、違反すると `PortersConfigError` を投げます。
+`defineFields` を通さずに作った宣言を渡しても、読み書きの前に止まります。
+なお `defineFields` と `tenant()` は `Promise` を返さないため、**これらの検査は同期 throw** です
 （`Promise` を返さない関数はすべて同様）。`Promise` を返す公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
 ## どこまで検証するか

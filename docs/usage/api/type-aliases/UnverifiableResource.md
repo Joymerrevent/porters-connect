@@ -8,7 +8,7 @@
 
 > **UnverifiableResource** = `object`
 
-Defined in: [src/fields/verify-fields.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L57)
+Defined in: [src/fields/verify-fields.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L58)
 
 A resource whose catalog could not be read, so **nothing about it was checked**.
 
@@ -21,7 +21,7 @@ as "missing" would be a false alarm — and a report that cries wolf stops being
 
 > `readonly` **cause**: `unknown`
 
-Defined in: [src/fields/verify-fields.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L60)
+Defined in: [src/fields/verify-fields.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L61)
 
 Whatever Field Read rejected with (a `PortersError`, typically permission or network).
 
@@ -31,4 +31,4 @@ Whatever Field Read rejected with (a `PortersError`, typically permission or net
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/verify-fields.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L58)
+Defined in: [src/fields/verify-fields.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L59)

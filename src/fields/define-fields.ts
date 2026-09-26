@@ -1,11 +1,16 @@
 // Custom field declaration DSL (ADR-0023, grounding ADR-0004 案H / ADR-0005 SD-2).
 // `defineFields` is the single validation boundary: a typed builder declares each
 // tenant custom field's Data Type per data resource, validation runs synchronously,
-// and the result is branded so `tenant(id, { fields })` trusts it without re-validating. Standard
+// and the result is branded. The brand is only a type, so `tenant(id, { fields })` checks the
+// declaration it is handed again (RV-79: a plain object or a JS caller gets past the brand). Standard
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
+import {
+  assertCustomAlias,
+  assertCustomDataType,
+  assertKnownResource,
+} from "./assert-declared-catalogs";
 import { PortersConfigError } from "../errors";
-import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
 import type {
   CustomCatalog,
   CustomFieldResource,
@@ -67,39 +72,6 @@ export const declaredRequired = (
   return new Set(marker?.[resource] ?? []);
 };
 
-const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
-  "candidate",
-  "job",
-  "client",
-  "recruiter",
-  "contact",
-  "opportunity",
-  "activity",
-  "contract",
-  "sales",
-  "process",
-  "resume",
-];
-
-// 宣言 DSL は ADR-0023、渡し先が tenant(id, { fields }) なのは ADR-0087。
-const assertKnownResource = (resource: string): void => {
-  if (!KNOWN_RESOURCES.includes(resource as CustomFieldResource)) {
-    throw new PortersConfigError(
-      `defineFields: unknown resource "${resource}" (expected one of ${KNOWN_RESOURCES.join(", ")})`,
-      { category: "config" },
-    );
-  }
-};
-
-const assertCustomAlias = (alias: string, resource: string): void => {
-  if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
-    throw new PortersConfigError(
-      `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
-      { category: "config" },
-    );
-  }
-};
-
 // JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
 const isRequired = (
   fieldDef: { readonly required?: unknown },
@@ -118,8 +90,9 @@ const isRequired = (
 
 /**
  * Declare tenant-specific custom fields per data resource. This is the validation
- * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key or an
- * alias that is not `U_`/`A_`-prefixed. The branded result is passed to the partition it describes,
+ * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key, an
+ * alias that is not `U_`/`A_`-prefixed, a Data Type a custom field cannot have, or a `required` flag
+ * that is not a boolean. The branded result is passed to the partition it describes,
  * `porters.tenant(id, { fields })`, which merges each catalog into the resource so the
  * custom fields decode/encode by their declared Data Type and appear typed on reads / writes.
  *
@@ -136,10 +109,17 @@ export const defineFields = <D extends FieldDecls>(
   const required: Record<string, string[]> = {};
   for (const [resource, declare] of Object.entries(decls)) {
     if (declare === undefined) continue;
-    assertKnownResource(resource);
+    assertKnownResource("defineFields", resource);
     const catalog: CustomCatalog = {};
     for (const [alias, fieldDef] of Object.entries(declare(builder))) {
-      assertCustomAlias(alias, resource);
+      assertCustomAlias("defineFields", alias, resource);
+      // 型を迂回した宣言（JS から、または cast で）も、Data Type を確かめてから受ける（RV-79）。
+      assertCustomDataType(
+        "defineFields",
+        (fieldDef as { dataType?: unknown } | null)?.dataType,
+        alias,
+        resource,
+      );
       catalog[alias] = fieldDef.dataType;
       if (isRequired(fieldDef, alias, resource))
         (required[resource] ??= []).push(alias);

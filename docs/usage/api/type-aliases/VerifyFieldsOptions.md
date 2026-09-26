@@ -8,7 +8,7 @@
 
 > **VerifyFieldsOptions** = `object`
 
-Defined in: [src/fields/verify-fields.ts:104](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L104)
+Defined in: [src/fields/verify-fields.ts:127](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L127)
 
 Options for [verifyFields](../functions/verifyFields.md).
 
@@ -18,7 +18,7 @@ Options for [verifyFields](../functions/verifyFields.md).
 
 > `readonly` `optional` **active?**: `-1` \| `0` \| `1`
 
-Defined in: [src/fields/verify-fields.ts:111](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L111)
+Defined in: [src/fields/verify-fields.ts:134](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L134)
 
 Field Read's `active` filter. Defaults to `-1` (every field) and should stay there: with `1`
 a field that exists but is currently unused is absent from the response, and its declaration

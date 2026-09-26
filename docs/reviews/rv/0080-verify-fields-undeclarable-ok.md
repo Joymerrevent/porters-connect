@@ -1,7 +1,7 @@
 # RV-80 🟡 宣言できない項目（Reference 型など）を宣言しても、`verifyFields` が `ok: true` を返す
 
 - 重要度: 🟡 ／ 観点: フェイルセーフ / API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,6 +27,11 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/fields-attachment-review・`c2df875`）。** [ADR-0104][adr104] の案A で、報告に `declaredUndeclarable` を足し、理由が `no-data-type` / `not-declarable` なら `ok` を倒し、`assertFieldsMatch` のメッセージに並べる。`unknown-field-type` は知らせるだけ。型 `DeclaredUndeclarableField` を公開した。
+
+## 検証
+
+`src/fields/verify-fields.test.ts` の「declaring a field the tenant cannot express」（Reference・System 系・知らない型・メッセージに並ぶもの）。
 
 [adr69]: ../../adr/0069-tenant-field-catalog-tooling.md
+[adr104]: ../../adr/0104-verify-fields-declared-undeclarable.md

@@ -901,3 +901,21 @@ describe("TenantScope — 宣言が違うスコープは渡せない", () => {
     expect([scored, memo]).toHaveLength(2);
   });
 });
+
+// RV-79。検証済みの印は型だけなので、素のオブジェクトで渡された宣言も tenant() が確かめる。
+describe("PortersClient.tenant — a declaration that did not come from defineFields", () => {
+  it("refuses an unknown Data Type before building the scope", () => {
+    const porters = mockClient();
+    expect(() =>
+      porters.tenant(1, { fields: { job: { U_x: "Bogus" } } } as never),
+    ).toThrow(
+      'tenant: "U_x" on "job" has Data Type "Bogus", which a custom field cannot have',
+    );
+  });
+
+  it("accepts a declaration from defineFields", () => {
+    const porters = mockClient();
+    const fields = defineFields({ job: (f) => ({ U_x: f.number() }) });
+    expect(() => porters.tenant(1, { fields })).not.toThrow();
+  });
+});
