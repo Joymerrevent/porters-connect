@@ -165,7 +165,8 @@ const NEVER_SENT = new WeakSet<object>();
 
 /** Whether `error` was thrown before the request it belongs to was ever put on the wire. */
 export const neverSent = (error: unknown): boolean =>
-  typeof error === "object" && error !== null && NEVER_SENT.has(error);
+  // WeakSet.has はオブジェクトでない値に false を返す（例外にならない）ので、型で分けなくてよい。
+  NEVER_SENT.has(error as object);
 
 export const createRequester = (o: RequesterOptions): Requester => {
   const maxRetries = o.maxRetries ?? 3;
@@ -207,8 +208,9 @@ export const createRequester = (o: RequesterOptions): Requester => {
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);
       } catch (e) {
-        if (!everSent && typeof e === "object" && e !== null) NEVER_SENT.add(e);
         if (!(e instanceof PortersError)) throw e;
+        // 印は、一括書き込みが見る PortersError にだけ付ける。
+        if (!everSent) NEVER_SENT.add(e);
         const next = recoveryFor(e, {
           sent,
           authRetried,

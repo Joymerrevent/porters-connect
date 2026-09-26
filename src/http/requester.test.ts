@@ -1005,7 +1005,7 @@ describe("neverSent", () => {
     expect(neverSent(e)).toBe(false);
   });
 
-  it("marks a thrown non-PortersError too, and ignores values that are not objects", async () => {
+  it("does not mark a thrown non-PortersError, and reads other values as not marked", async () => {
     const odd = new TypeError("provider bug");
     const e = await build(
       () => Promise.reject(odd),
@@ -1014,7 +1014,7 @@ describe("neverSent", () => {
       .request(req, (b) => b)
       .catch((x: unknown) => x);
     expect(e).toBe(odd);
-    expect(neverSent(e)).toBe(true);
+    expect(neverSent(e)).toBe(false);
     expect(neverSent("text")).toBe(false);
     expect(neverSent(null)).toBe(false);
   });

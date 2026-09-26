@@ -158,6 +158,7 @@ describe("appendReadQuery — keywords", () => {
       expect((err as PortersConfigError).message).toMatch(
         /^keywords has an empty keyword "/,
       );
+      expect((err as PortersConfigError).category).toBe("config");
       expect((err as PortersConfigError).hint).toBe(
         "Remove the empty keyword, or leave keywords out to search without one.",
       );
