@@ -83,13 +83,25 @@ const packBatches = (encoded: Encoded[], budget: number): Encoded[][] => {
   return batches;
 };
 
-// 送った create が、書き込まれていないと分かっている失敗か。PORTERS がルートの Result Code で断った
-// （Code 9 を再送し尽くした場合を含む）、4xx で断られた（408 以外。レート超過の 429 もここ）、設定の誤り。
+// 断られたことがはっきりしている分類（入力・権限・認証・重複・対象なし・設定の誤り）。
+const REFUSED_CATEGORIES: ReadonlySet<string> = new Set([
+  "validation",
+  "permission",
+  "auth",
+  "conflict",
+  "notFound",
+  "config",
+]);
+
+// 送った create が、書き込まれていないと分かっている失敗か。断られたことがはっきりしている分類、
+// 未処理が確定する Code 9（再送し尽くした場合）、4xx（408 以外。レート超過の 429 もここ）。
+// Code 1000（処理失敗）や表に無いコードは、途中まで処理されたかが分からないので含めない（RV-69 の再レビュー）。
 // それ以外（200 で読めない応答、送った後の生の Error など）は、書き込まれた可能性がある（RV-69 の再レビュー）。
 const knownNotWritten = (cause: unknown): boolean => {
+  // 型を絞るための判定。PortersError でない値では下の判定がすべて偽になるので、外しても同じ動きになる。
+  // Stryker disable next-line ConditionalExpression: equivalent — a non-PortersError fails every check below
   if (!(cause instanceof PortersError)) return false;
-  if (cause.category === "config") return true;
-  if (cause.code !== null) return true;
+  if (REFUSED_CATEGORIES.has(cause.category) || cause.code === 9) return true;
   const status = cause.httpStatus;
   // `status !== undefined` は型のため。undefined との比較は偽なので、外しても同じ動きになる（等価なミュータント）。
   return (

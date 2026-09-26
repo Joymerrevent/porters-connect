@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import {
+  PortersAuthError,
   PortersConfigError,
   PortersError,
   PortersNetworkError,
@@ -270,7 +271,8 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     expect(e.retryable).toBe(false);
     expect(e.message).toBe("bulk write failed at records 200–200 of 201: boom");
     expect(e.hint).toBe(
-      "The records 200–200 were not written. The 200 record(s) sent in earlier batches were written. Resend only the records that were not written.",
+      // 通信の失敗は、書き込まれた可能性がある。
+      "The records 200–200 may have been written before the failure: check whether they exist before resending them. The 200 record(s) sent in earlier batches were written. Resend only the records that were not written.",
     );
     expect(e.category).toBe("network"); // base category preserved
     expect(e.code).toBe(503); // base code preserved
@@ -404,11 +406,51 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       "were not written",
     ],
     [
+      "a Code 1000 (processing failed)",
+      new PortersResourceError("failed", { category: "server", code: 1000 }),
+      "may have been written",
+    ],
+    [
+      "a Result Code not in the table",
+      new PortersResourceError("odd", { category: "unknown", code: 999 }),
+      "may have been written",
+    ],
+    [
+      "a Code 9 after the retries ran out",
+      new PortersResourceError("busy", { category: "transient", code: 9 }),
+      "were not written",
+    ],
+    [
+      "a Code 301 (conflict)",
+      new PortersResourceError("exists", { category: "conflict", code: 301 }),
+      "were not written",
+    ],
+    [
+      "a Code 404 (not found)",
+      new PortersResourceError("none", { category: "notFound", code: 404 }),
+      "were not written",
+    ],
+    [
+      "a Code 403 (permission)",
+      new PortersResourceError("denied", { category: "permission", code: 403 }),
+      "were not written",
+    ],
+    [
+      "an auth failure",
+      new PortersAuthError("expired", { category: "auth" }),
+      "were not written",
+    ],
+    [
       "an HTTP 400",
       new PortersError("bad request", {
         category: "validation",
         httpStatus: 400,
       }),
+      "were not written",
+    ],
+    [
+      "an HTTP 400 with no category to go by",
+      new PortersError("bad request", { category: "unknown", httpStatus: 400 }),
       "were not written",
     ],
     [
