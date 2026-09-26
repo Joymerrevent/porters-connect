@@ -68,7 +68,10 @@ export const createDataReader = <
   const readParams = (q: SearchQuery<F, R>): URLSearchParams =>
     buildReadParams(deps.partition, q, readContext);
 
-  const readUrl = (q: SearchQuery<F, R> & Paging): string =>
+  // What `search` takes besides the selection: the query and the paging.
+  type PagedQuery = SearchQuery<F, R> & Paging;
+
+  const readUrl = (q: PagedQuery): string =>
     pageUrl(deps.accessPoint, config.path, readParams(q), q.count, q.start);
 
   // What a Read resolves to for a given `expand` / `image`: the record widened by the expansion,
@@ -120,7 +123,7 @@ export const createDataReader = <
     const E extends Expand<R> = EmptyReferences,
     const I extends ImageOption<F> = EmptyImages,
   >(
-    query: SearchQuery<F, R> & Paging & { expand?: E; image?: I } = {},
+    query: PagedQuery & { expand?: E; image?: I } = {},
   ): Promise<ResourcePageOf<Decoded<E, I>>> => {
     const { base, decode } = prepare<E, I>(query);
     return read(base, decode, query.count, query.start);
