@@ -5,7 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/decode";
 import { CONTRACT_DESCRIPTOR, createContractResource } from "./contract";
 
-// The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in core/read-data.test.ts and
+// core/write-data.test.ts; here we pin the
 // Contract-specific catalog (each field decodes by its Data Type) and config
 // (root name `Contract`, path `contract`, alias prefix `Contract`).
 const USER_FIELDS = ["P_RegisteredBy", "P_UpdatedBy"];

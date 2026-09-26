@@ -7,12 +7,14 @@
 // This file owns the vocabulary (what a reference target is, what `expand` accepts, what the read
 // record becomes) plus the three mechanical halves: the `field` entries to send, the catalogs to
 // decode the answer with, and the guard that turns a hand-written expansion into a clear error.
-// Resource wiring lives in resource.ts, XML in xml/.
+// The `field` assembly (field-param.ts) and the data resources' Read (read-data.ts) use it; XML
+// stays in xml/.
 
 import { PortersConfigError } from "../../errors";
 import type { DataType } from "../../porters/data-type";
 import type { DecodedValue } from "../../xml/decode";
-import { bareAlias, type FieldCatalog, type ReadRecord } from "./read";
+import { bareAlias } from "../../util/alias";
+import { fieldTypesOf, type FieldCatalog, type ReadRecord } from "./catalog";
 
 /**
  * The resource a `System[Reference]` field points at, as far as expansion needs it: its alias
@@ -173,10 +175,7 @@ export const expansionCatalogs = (
   return selected.length === 0
     ? undefined
     : new Map(
-        selected.map(([alias, target]) => [
-          alias,
-          new Map(Object.entries(target.fields)),
-        ]),
+        selected.map(([alias, target]) => [alias, fieldTypesOf(target.fields)]),
       );
 };
 

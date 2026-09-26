@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersResourceError } from "../../errors";
 import { MAX_READ_COUNT } from "../../porters/read-rules";
 import { MAX_REQUEST_LENGTH } from "../../porters/request";
-import { packIds, recordsById } from "./get-many";
+import { packIds, readMany, recordsById } from "./read-many";
 
 // A stand-in for the real URL: a fixed base of 10 characters plus the ids joined by a 3-character
 // separator — the same shape as `…%3Aor%3D1%3A2…`, with round numbers.
@@ -146,5 +146,57 @@ describe("recordsById", () => {
       "No records were returned. Read the records one at a time with get() instead.",
     );
     expect(e.context).toEqual({ resource: "Widget", operation: "getMany" });
+  });
+});
+
+describe("readMany", () => {
+  type Rec = { P_Id: number };
+  // Answers each chunk with a record for every id in it except the ones in `missing`.
+  const reader = (missing: readonly number[] = []) => {
+    const chunks: (readonly number[])[] = [];
+    return {
+      chunks,
+      read: (chunk: readonly number[]) => {
+        chunks.push(chunk);
+        const items = chunk
+          .filter((id) => !missing.includes(id))
+          .map((id): Rec => ({ P_Id: id }));
+        return Promise.resolve({ items, total: items.length });
+      },
+      urlLength: measure,
+      idOf: (record: Rec) => record.P_Id,
+      resource: "Widget",
+    };
+  };
+
+  it("answers in the order of ids, undefined where there is no record, a repeat at each position", async () => {
+    const r = reader([2]);
+    const out = await readMany([3, 2, 1, 3], r);
+    expect(out).toEqual([{ P_Id: 3 }, undefined, { P_Id: 1 }, { P_Id: 3 }]);
+    // Each id is asked for once.
+    expect(r.chunks).toEqual([[3, 2, 1]]);
+  });
+
+  it("reads nothing for no ids", async () => {
+    const r = reader();
+    expect(await readMany([], r)).toEqual([]);
+    expect(r.chunks).toEqual([]);
+  });
+
+  it("reads the chunks packIds makes, one request each", async () => {
+    const r = reader();
+    const ids = range(1, MAX_READ_COUNT + 1);
+    const out = await readMany(ids, r);
+    expect(r.chunks.map((c) => c.length)).toEqual([MAX_READ_COUNT, 1]);
+    expect(out.map((x) => x?.P_Id)).toEqual(ids);
+  });
+
+  it("rejects the whole call when a chunk returns a record it did not ask for", async () => {
+    await expect(
+      readMany([1], {
+        ...reader(),
+        read: () => Promise.resolve({ items: [{ P_Id: 9 }], total: 1 }),
+      }),
+    ).rejects.toBeInstanceOf(PortersResourceError);
   });
 });

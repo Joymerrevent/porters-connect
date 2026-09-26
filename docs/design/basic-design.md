@@ -37,12 +37,12 @@ src/
   client.ts           # PortersClient・porters.tenant(id) スコープ
   porters/            # PORTERS が決めた値と定義表（上限・Data Type・Field Type・Resource List 等）。何も import しない
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
-  util/               # 他のモジュールに依存しない関数（datetime：PORTERS 形式 ⇄ ISO8601（UTC）ほか）
+  util/               # 他のモジュールに依存しない関数と型（datetime：PORTERS 形式 ⇄ ISO8601（UTC）・alias の接頭辞・汎用の型ほか）
   xml/                # parse / serialize（データ型別エンコード）
   http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
   auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
   resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
-    core/             # アクセサを組み立てる共通の仕組み（データ系の data-resource・マスタの master-resource・共有の descriptor / write / read / query / expand / image / bulk-write / get-many）
+    core/             # アクセサを組み立てる共通の仕組み。ファイル名は読み込みを read-、書き込みを write- で始める（データ系の data-resource が read-data と write-data を、マスタの master-resource が read-master をまとめる。戻り値の型は read-record、入力の型は write-record、複数件は read-many / write-many。共有の read（送信）/ write / descriptor / catalog / deps / paging / decoder / field-param / query / query-encode / expand / image）
   fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
 

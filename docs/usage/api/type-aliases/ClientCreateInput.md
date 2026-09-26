@@ -8,7 +8,7 @@
 
 > **ClientCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/client.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L91)
+Defined in: [src/resources/client.ts:88](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/client.ts#L88)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. `C` is
 the declared custom-field catalog merged on; `CR` names the custom fields that are required on

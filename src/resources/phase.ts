@@ -2,7 +2,7 @@
 // unlike the other 12 data resources in four ways — all of them decided in ADR-0061:
 //
 //   1. **No alias prefix and no `P_`.** Its aliases are bare (`Id` / `Resource` / `Date` / …), so
-//      the descriptor carries `prefix: ""` and the generic factory qualifies through `qualify`
+//      the descriptor carries `prefix: ""` and the shared assembly qualifies through `qualify`
 //      (案1a). The primary key is `Id`, not `P_Id` — hence `idAlias`.
 //   2. **Read requires `resource=`.** Which upper resource's history to read is a *parameter*, not
 //      a `condition`. `of(name)` binds it once and every call inherits it (案2a), so a caller
@@ -16,35 +16,29 @@
 // `CustomFieldResource` and carries no `P_Deleted` analogue.
 //
 // VERIFY(live): a `User`-typed field is requested with its sub-fields — `Owner(User.P_Id,…)` —
-// because that is what the generic factory sends for all 13 resources. PORTERS' own Phase sample
-// requests them **bare** (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the
-// parenthesised form for this resource. The response shape is the same either way, so if the
+// because that is what the shared `field` assembly (core/field-param.ts) sends for all 13
+// resources. PORTERS' own Phase sample requests them **bare**
+// (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the parenthesised form for
+// this resource. The response shape is the same either way, so if the
 // parenthesised form is rejected, the fix is the request string only — docs/live-verification.md (LV-17).
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-  type Without,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/read-record";
+import type { CreateInput, UpdateInput } from "./core/write-record";
+import type { Without } from "../util/types";
 import type { EmptyReferences, Expand } from "./core/expand";
 import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/bulk-write";
-import type {
-  FieldCatalog,
-  Paging,
-  ReadFieldAlias,
-  ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./core/read";
+import type { BulkWriteResult } from "./core/write-many";
+import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
+import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";

@@ -8,6 +8,6 @@
 
 > **Option** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/option.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L47)
+Defined in: [src/resources/option.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L45)
 
 A decoded Option (one choice). `P_ParentId` links to the parent; `P_Type` 0 = normal, 1–11 = a phase kind.

@@ -8,6 +8,6 @@
 
 > **Recruiter** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/recruiter.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L96)
+Defined in: [src/resources/recruiter.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L93)
 
 A decoded Recruiter (a person at a client company): known `P_` fields, each `value | null`.

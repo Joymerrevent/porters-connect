@@ -546,7 +546,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   「Phase API の Id および Resource Id にしか使用できません」と書き、同じ行の例は `Job.P_Id:or=10003:43405`。
   Job Read と Opportunity Read の記事の例も `P_Id:or=1234:1235` で、Job Read の応答例は 2 件とも返している。
   Phase の `Id` は Phase Read の記事が明記している
-- **コード箇所**: `src/resources/core/get-many.ts`（`recordsById` の突き合わせ）
+- **コード箇所**: `src/resources/core/read-many.ts`（`recordsById` の突き合わせ）
 - **確認方法**: データ系（Candidate など）で `condition=Person.P_Id:or=<存在する ID>:<存在する ID>` を送り、2 件だけが
   返るか（`Total` も 2 か）を確かめる。条件がエラーで返るか、条件を無視して先頭から返るかも見分ける
 - **状態**: 未確認

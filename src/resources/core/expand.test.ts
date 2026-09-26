@@ -10,7 +10,7 @@ import {
   type ReferenceTarget,
 } from "./expand";
 
-// Unit-level counterpart to the wiring tests in resource.test.ts: those drive expansion through
+// Unit-level counterpart to the wiring tests in read-data.test.ts: those drive expansion through
 // the resource factory (does a search send/decode the right thing), these pin the three pieces
 // this module owns on their own. Two targets, because the interesting case is the one where a
 // resource's alias *prefix* differs from its *name* — Candidate is `Person` (LV-16).

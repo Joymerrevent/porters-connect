@@ -1,12 +1,23 @@
 // Barrel: re-exports the shared machinery of the resources module (ADR-0097).
 
 export * from "./data-resource";
-export type * from "./descriptor";
+export * from "./read-data";
+export type * from "./read-record";
+export * from "./write-data";
+export type * from "./write-record";
+export * from "./descriptor";
 export * from "./write";
 export * from "./read";
+export * from "./catalog";
+export type * from "./deps";
+export * from "./decoder";
+export * from "./paging";
+export * from "./field-param";
 export * from "./query";
+export * from "./query-encode";
 export * from "./expand";
 export * from "./image";
-export * from "./bulk-write";
-export * from "./get-many";
+export * from "./write-many";
+export * from "./read-many";
 export * from "./master-resource";
+export * from "./read-master";

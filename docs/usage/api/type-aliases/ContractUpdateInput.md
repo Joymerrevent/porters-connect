@@ -8,7 +8,7 @@
 
 > **ContractUpdateInput**\<`C`\> = `UpdateInput`\<*typeof* `FIELDS` & `C`\>
 
-Defined in: [src/resources/contract.ts:135](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L135)
+Defined in: [src/resources/contract.ts:132](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/contract.ts#L132)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
 declared custom-field catalog merged on.

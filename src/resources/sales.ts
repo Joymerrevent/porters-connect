@@ -21,30 +21,27 @@
 // are Field Type `Reference` (16) — display-only mirrors of the referenced record's owner,
 // with no value of their own — so they are deliberately absent from the catalog, like Job's.
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/read-record";
+import type { CreateInput, UpdateInput } from "./core/write-record";
 import type {
   EmptyCatalog,
   FieldCatalog,
-  Paging,
   ReadFieldAlias,
   ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./core/read";
+} from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
+import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { EmptyReferences, Expand, ReferenceMap } from "./core/expand";
 import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/bulk-write";
+import type { BulkWriteResult } from "./core/write-many";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";

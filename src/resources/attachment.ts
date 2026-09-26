@@ -6,7 +6,7 @@
 // method, ADR-0075), `resourceId` and `id`. There is no `field` and no `condition`: the article
 // lists neither, and what they were standing in for now has a parameter of its own. Attachment is unlike the other resources — no alias prefix, fixed
 // short field names (Id / Resource / ResourceId / ContentType / FileName / Content), and
-// `Content` is the Base64 file body (up to 10MB). It does not fit the generic factory but
+// `Content` is the Base64 file body (up to 10MB). It does not fit the data resources' factory (`createDataResource`) but
 // reuses the requester, parsers, and `firstWriteResultId`. Turn raw bytes into the Base64
 // `content` with `util/base64`.
 
@@ -15,9 +15,10 @@ import { apiUrl, type AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode";
 import { parseResourcePage } from "../xml/parser";
 import { asString } from "../xml/raw";
-import { appendPaging, paginateOnce } from "./core/read";
+import { appendPaging, paginateOnce } from "./core/paging";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
-import type { Paging, ResourceDeps } from "./core/read";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
 import { buildWriteUrl, firstWriteResultId } from "./core/write";
 import {
   ATTACHMENT_REQUEST_TYPE,

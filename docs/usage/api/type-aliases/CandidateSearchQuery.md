@@ -8,7 +8,7 @@
 
 > **CandidateSearchQuery**\<`C`\> = [`SearchQuery`](SearchQuery.md)\<*typeof* `FIELDS` & `C`\>
 
-Defined in: [src/resources/candidate.ts:89](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L89)
+Defined in: [src/resources/candidate.ts:86](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L86)
 
 The Candidate Read query. `C` is the declared custom-field catalog merged on, so a condition or an
 order can name a custom field too.

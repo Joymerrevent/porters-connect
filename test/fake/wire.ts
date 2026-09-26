@@ -343,7 +343,7 @@ export const buildReadPageXml = (args: {
 
 /**
  * Build a Write result: one `<Item><Id/><Code/></Item>` per sent record, same order and count
- * (write-format.md — the library asserts that count in `runBulkWrite`).
+ * (write-format.md — the library asserts that count in `writeMany`).
  */
 export const buildWriteResultXml = (
   resource: string,

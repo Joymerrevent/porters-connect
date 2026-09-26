@@ -8,7 +8,7 @@
 
 > **ResumeCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/resume.ts:119](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L119)
+Defined in: [src/resources/resume.ts:116](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resume.ts#L116)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. `C` is
 the declared custom-field catalog merged on; `CR` names the custom fields that are required on

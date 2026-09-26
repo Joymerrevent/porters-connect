@@ -4,16 +4,12 @@
 // only — no `request_type`, no `condition`/`get(id)` — and its scope is **`user_r`**: the source
 // lists no `department_r`, so the User grant covers it. No Write API ("Department は read のみ").
 
-import type { ResourceDeps } from "./core/read";
+import type { ResourceDeps } from "./core/deps";
 import type { ResourceDescriptor } from "./core/descriptor";
-import {
-  createFieldParam,
-  type FieldCatalog,
-  type ReadFieldAlias,
-  type Paging,
-  type ReadRecord,
-  type ResourcePage,
-} from "./core/read";
+import { createFieldParam } from "./core/field-param";
+import type { FieldCatalog, ReadFieldAlias, ReadRecord } from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourcePage } from "./core/read";
 import { createMasterResource } from "./core/master-resource";
 
 // docs/usage/reference resources/department.md（出典: Department - Field List）の全 6 項目。

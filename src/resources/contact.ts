@@ -8,30 +8,27 @@
 // shared factory: the catalogs are independent facts about the API and are checked against
 // docs/usage/reference one by one, so a future divergence shows up as a diff, not as a surprise.
 
-import {
-  createDataResource,
-  type catalogMark,
-  type CreateInput,
-  type EmptyImages,
-  type GetOptions,
-  type GetRecord,
-  type ReadSelection,
-  type SearchRecord,
-  type UpdateInput,
-} from "./core/data-resource";
+import { createDataResource, type catalogMark } from "./core/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "./core/read-record";
+import type { CreateInput, UpdateInput } from "./core/write-record";
 import type {
   EmptyCatalog,
   FieldCatalog,
-  Paging,
   ReadFieldAlias,
   ReadRecord,
-  ResourceDeps,
-  ResourcePage,
-  ResourcePageOf,
-} from "./core/read";
+} from "./core/catalog";
+import type { Paging } from "./core/paging";
+import type { ResourceDeps } from "./core/deps";
+import type { ResourcePage, ResourcePageOf } from "./core/read";
 import type { EmptyReferences, Expand, ReferenceMap } from "./core/expand";
 import type { ImageOption } from "./core/image";
-import type { BulkWriteResult } from "./core/bulk-write";
+import type { BulkWriteResult } from "./core/write-many";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
 import { CLIENT_DESCRIPTOR } from "./client";

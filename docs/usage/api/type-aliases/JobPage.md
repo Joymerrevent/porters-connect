@@ -8,4 +8,4 @@
 
 > **JobPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/job.ts:110](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L110)
+Defined in: [src/resources/job.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/job.ts#L107)

@@ -5,7 +5,8 @@ import type { TransportRequest } from "../http/types";
 import type { FieldValue, UserRef } from "../xml/decode";
 import { createResumeResource } from "./resume";
 
-// The generic Read/Write flow is unit-tested in resource.test.ts; here we pin the
+// The generic Read/Write flow is unit-tested in core/read-data.test.ts and
+// core/write-data.test.ts; here we pin the
 // Resume-specific catalog (each field decodes by its Data Type) and config
 // (root name `Resume`, path `resume`, alias prefix `Resume`).
 const USER_FIELDS = ["P_Owner", "P_RegisteredBy", "P_UpdatedBy"];

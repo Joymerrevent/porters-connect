@@ -3,7 +3,7 @@
 // splits the input into size- and count-bounded batches, sends them sequentially (the write
 // throttle paces them), and concatenates the per-item results in input order. A batch is NOT
 // atomic — each `<Item>` carries its own `<Code>` — so per-item failures are returned (not
-// thrown); only a whole-request failure throws. The generic factory wires this; XML stays in xml/.
+// thrown); only a whole-request failure throws. write-data.ts wires this; XML stays in xml/.
 
 import {
   PortersConfigError,
@@ -108,7 +108,7 @@ const batchFailure = (
  * update. Per-item `code !== 0` is returned in the result; a whole-request failure throws — with the
  * already-written count once at least one earlier batch succeeded (SD-4).
  */
-export const runBulkWrite = async (
+export const writeMany = async (
   requester: Requester,
   target: {
     name: string;

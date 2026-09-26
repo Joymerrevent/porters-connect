@@ -8,7 +8,7 @@
 
 > **CandidateCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/candidate.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L97)
+Defined in: [src/resources/candidate.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/candidate.ts#L94)
 
 Fields for `create`: `P_Owner` is required; `P_Id` / system timestamps are not settable. `C`
 is the declared custom-field catalog merged on; `CR` names the custom fields that are required
