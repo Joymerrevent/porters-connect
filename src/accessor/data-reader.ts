@@ -73,10 +73,10 @@ export const createDataReader = <
 
   // What a Read resolves to for a given `expand` / `image`: the record widened by the expansion,
   // with the selected Image sub-fields. The public types narrow it further by `field` (ADR-0096).
-  type Selected<
-    E extends Expand<R>,
-    I extends ImageOption<F>,
-  > = ImageReadRecord<ExpandedReadRecord<F, R, E>, I>;
+  type Decoded<E extends Expand<R>, I extends ImageOption<F>> = ImageReadRecord<
+    ExpandedReadRecord<F, R, E>,
+    I
+  >;
   // What `get` / `getMany` take besides the ids: the same selection a search takes.
   type IdReadOptions<E, I> = {
     field?: readonly ReadFieldAlias<F>[];
@@ -113,7 +113,7 @@ export const createDataReader = <
     query: SearchQuery<F, R>,
   ) => ({
     base: readParams(query),
-    decode: decoderWith<Selected<E, I>>(query.expand),
+    decode: decoderWith<Decoded<E, I>>(query.expand),
   });
 
   const search = async <
@@ -121,7 +121,7 @@ export const createDataReader = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     query: SearchQuery<F, R> & Paging & { expand?: E; image?: I } = {},
-  ): Promise<ResourcePageOf<Selected<E, I>>> => {
+  ): Promise<ResourcePageOf<Decoded<E, I>>> => {
     const { base, decode } = prepare<E, I>(query);
     return read(base, decode, query.count, query.start);
   };
@@ -136,7 +136,7 @@ export const createDataReader = <
     const I extends ImageOption<F> = EmptyImages,
   >(
     query: SearchQuery<F, R> & { expand?: E; image?: I } = {},
-  ): AsyncIterable<Selected<E, I>> =>
+  ): AsyncIterable<Decoded<E, I>> =>
     paginateOnce(() => {
       const { base, decode } = prepare<E, I>(query);
       return (count, start) => read(base, decode, count, start);
@@ -167,7 +167,7 @@ export const createDataReader = <
   >(
     id: number,
     options: IdReadOptions<E, I> = {},
-  ): Promise<Selected<E, I> | undefined> => {
+  ): Promise<Decoded<E, I> | undefined> => {
     const page = await search<E, I>({
       condition: idCondition("eq", id),
       count: 1,
@@ -186,7 +186,7 @@ export const createDataReader = <
   >(
     ids: readonly number[],
     options: IdReadOptions<E, I> = {},
-  ): Promise<(Selected<E, I> | undefined)[]> => {
+  ): Promise<(Decoded<E, I> | undefined)[]> => {
     const field = withIdField(options.field);
     const query = (chunk: readonly number[], count: number) => ({
       condition: idCondition("or", [...chunk]),
