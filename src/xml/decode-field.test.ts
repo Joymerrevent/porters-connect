@@ -549,3 +549,29 @@ describe("decodeField — the id inside a nested record (RV-84)", () => {
     },
   );
 });
+
+// RV-83 の再レビュー。空白を残すのはテキストの項目だけ。数や日時の項目の空白だけの値は null（0 に化けない）。
+describe("decodeField — a value that is only whitespace", () => {
+  it.each([
+    "Number",
+    "System[Id]",
+    "Link",
+    "Date",
+    "DateTime",
+    "Age",
+    "System[DateTime]",
+  ] as const)("%s reads it as null", (type) => {
+    expect(decodeField(type, "  ", "P_X")).toBeNull();
+    expect(decodeField(type, "\n  ", "P_X")).toBeNull();
+  });
+
+  it.each([
+    "SinglelineText",
+    "MultilineText",
+    "Mail",
+    "Telephone",
+    "URL",
+  ] as const)("%s keeps it", (type) => {
+    expect(decodeField(type, "  ", "P_X")).toBe("  ");
+  });
+});

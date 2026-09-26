@@ -153,9 +153,20 @@ const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
 // VERIFY(live): the User / Department forms are assumed to nest exactly like the `User` and
 // `System[Department]` Data Types do, which is what the reference implies but does not show for
 // Link specifically. See docs/live-verification.md (LV-19).
+// 値の空白に意味があるテキストの Data Type。これ以外の項目では、空白だけの値は空として読む。
+const TEXT_TYPES: ReadonlySet<DataType> = new Set([
+  "SinglelineText",
+  "MultilineText",
+  "Mail",
+  "Telephone",
+  "URL",
+]);
+
 const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   const scalar = asString(raw);
-  if (scalar !== undefined) return numeric(alias, "Link", scalar);
+  // 空白だけの Contact id は、空（null）として読む（数の項目と同じ）。
+  if (scalar !== undefined)
+    return scalar.trim() === "" ? null : numeric(alias, "Link", scalar);
   const outer = asRecord(raw);
   if (!outer) return null;
   if ("User" in outer) return decodeUser(outer, alias, "Link");
@@ -284,6 +295,9 @@ export const decodeField = (
   // `type` is `ScalarShaped` here, so a Data Type added to the union without joining either the
   // record-shaped list or this switch fails to compile (the ADR-0016 property, kept).
   const scalarType: ScalarShaped = type;
+  // 値の前後の空白は残す（RV-83）が、それが意味を持つのはテキストの項目だけ。数や日時の項目の空白だけの
+  // 値は、空（null）として読む。Number("  ") は 0 になり、無い値が 0 に化ける（RV-83 の再レビュー）。
+  if (value.trim() === "" && !TEXT_TYPES.has(scalarType)) return null;
   switch (scalarType) {
     case "System[Id]":
     case "Number":
