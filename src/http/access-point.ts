@@ -81,9 +81,15 @@ const assertHostname = (hostname: string): void => {
   // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
   // so it is spelled out rather than inferred.
   if (hostname === "") throw rejected();
+  // `%` は往復の比較を通るが、https の URL では復号されて別の名前になる（`a%41.test` → `aa.test`）か、
+  // 組み立てられずに通信エラー（再試行できる扱い）として届く。サーバー名に `%` は現れない（RV-92）。
+  if (hostname.includes("%")) throw rejected();
   let url: URL;
   try {
     url = new URL(`${PROBE_SCHEME}://${hostname}`);
+    // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、punycode として
+    // 成り立たない `xn--` などは、ここで確かめないと最初のリクエストまで分からない（RV-92）。
+    new URL(`https://${hostname}`);
   } catch {
     throw rejected();
   }
@@ -135,11 +141,25 @@ export const validateAccessPoint = (accessPoint: AccessPoint): void => {
 
 /**
  * The authority this access point addresses: `hostname` plus `:port` when one is configured.
- * Assembled in one place because three things read it — the URL, the throttle bucket key
- * (ADR-0073) and the insecure-http warning (ADR-0047) — and they must agree on what "the same
+ * Assembled in one place because the URL and the insecure-http warning (ADR-0047) read it, and the
+ * throttle bucket key (ADR-0073) is derived from it — they must agree on what "the same
  * destination" means. Two access points that differ only by port are different destinations.
  */
 export const authorityOf = (accessPoint: AccessPoint): string =>
   accessPoint.port === undefined
     ? accessPoint.hostname
     : `${accessPoint.hostname}:${accessPoint.port}`;
+
+/**
+ * The key that decides which access points share a throttle bucket (ADR-0073): the authority as
+ * the request goes out — lower-cased, without the scheme's default port and without a trailing
+ * `.`. `a.test`, `A.test:443` and `a.test.` reach the same server, so they must count against the
+ * same limit (RV-92). Expects an access point that passed {@link validateAccessPoint}.
+ */
+export const throttleKeyOf = (accessPoint: AccessPoint): string => {
+  const url = new URL(
+    `${accessPoint.scheme ?? "https"}://${authorityOf(accessPoint)}`,
+  );
+  const hostname = url.hostname.replace(/\.$/, "");
+  return url.port === "" ? hostname : `${hostname}:${url.port}`;
+};
