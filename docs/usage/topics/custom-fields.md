@@ -420,10 +420,11 @@ for await (const f of t.field.of("candidate").searchAll()) {
 
 ## 検証されること
 
-`defineFields` は、次の 3 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
+`defineFields` は、次の 4 つを**呼んだその場で**検査し、違反すると `PortersConfigError` を投げます<!-- 根拠: ADR-0023 D4 -->。
 
 - **alias が `U_` / `A_` で始まること** — 標準項目（`P_`）はライブラリがあらかじめ型を持っているので、宣言の対象外です。
 - **リソース名が既知であること** — `candidate` / `job` / `client` / `recruiter` / `contact` / `opportunity` / `activity` / `contract` / `sales` / `process` / `resume` のみ。
+- **Data Type がカスタム項目に使えるものであること** — ビルダー（`f.number()` など）で宣言すれば常に満たします。JavaScript から、またはビルダーを使わずに作った宣言を渡したときに効きます。
 - **`required` を付けるなら `true` か `false` であること** — `"true"` のような文字列は、黙って任意の項目として扱わずにエラーにします。
 
 ```ts
@@ -432,8 +433,9 @@ defineFields({ candidate: (f) => ({ score: f.number() }) });
 //   must start with "U_" or "A_" (standard P_ fields are built in)
 ```
 
-検証を通った宣言は、`tenant()` で再検証されません。
-なお `defineFields` は `Promise` を返さないため、**この 2 つの検査は同期 throw** です
+`tenant(id, { fields })` も、渡された宣言のリソース名・alias・Data Type を確かめ、違反すると `PortersConfigError` を投げます。
+`defineFields` を通さずに作った宣言を渡しても、読み書きの前に止まります。
+なお `defineFields` と `tenant()` は `Promise` を返さないため、**これらの検査は同期 throw** です
 （`Promise` を返さない関数はすべて同様）。`Promise` を返す公開メソッドは常に reject します<!-- 根拠: ADR-0046 -->。
 
 ## どこまで検証するか
