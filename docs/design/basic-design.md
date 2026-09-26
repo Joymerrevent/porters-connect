@@ -60,9 +60,13 @@ src/
 ### ファイル
 
 - **1 ファイル 1 責務**・ファイル名は **kebab-case**（[ADR-0013][a13]。大文字小文字を区別しない FS での import 事故を避ける）。
-- **ファイル名は、そのファイルの主な export の名前を kebab-case にしたもの**（[ADR-0097][a97]）。factory の `create` は
-  付けても付けなくてもよい（`createTokenManager` → `token-manager.ts` でも `create-token-manager.ts` でもよい。[ADR-0101][a101]）。
-  主な export が 1 つに決まらないファイルは、役割を表す名前にする。
+- **1 ファイルに主な export は 1 つ**。ファイル名はその名前を kebab-case にしたもの（[ADR-0097][a97] / [ADR-0101][a101]）。
+  factory の `create` は付けても付けなくてもよい（`createTokenManager` → `token-manager.ts` でも `create-token-manager.ts` でもよい）。
+  その export の引数・戻り値・設定にだけ使う型は、同じファイルに置いてよい（例: `createDataReader` と `DataReadConfig`）。
+- **まとめてよいのは次の例外だけ**。例外のファイルは役割を表す名前にする（[ADR-0101][a101]）。
+  - 対になる関数（変換と逆変換のように、片方を直すともう片方も直すもの。例: `util/alias.ts` の `qualify` / `bareAlias`）
+  - 一緒に使う型の集まり（1 つの概念を複数の型で表すもの。例: 検索クエリの `Condition` / `Order` / `SearchQuery`）
+  - PORTERS が決めた値の表（`porters/` の中。[ADR-0098][a98]）
 - **フォルダ名と重なる語は付けない**（`accessor/` の中に `-accessor` を付けない。[ADR-0097][a97]）。
 - **`index.ts` はバレル**（`export *` / `export type *` の再 export だけ）。宣言は名前の付いたファイルに置き、
   モジュールの中で公開するかどうかは、そのファイルの `export` の有無で決める（[ADR-0013][a13]）。
