@@ -4,30 +4,38 @@ import { PortersResourceError } from "./porters-error";
 import { resourceCategory, resourceError } from "./resource-error";
 
 describe("resource error classification (ADR-0006)", () => {
-  it("maps resource codes to categories", () => {
-    expect(resourceCategory(9)).toBe("transient");
-    expect(resourceCategory(302)).toBe("transient");
-    expect(resourceCategory(401)).toBe("auth");
-    expect(resourceCategory(402)).toBe("auth");
-    // every member of the permission OR-chain
-    expect(resourceCategory(6)).toBe("permission");
-    expect(resourceCategory(400)).toBe("permission");
-    expect(resourceCategory(403)).toBe("permission");
-    expect(resourceCategory(406)).toBe("permission");
-    expect(resourceCategory(601)).toBe("permission");
-    expect(resourceCategory(404)).toBe("notFound");
-    expect(resourceCategory(7)).toBe("notFound"); // the `7` branch
-    // every member of the conflict OR-chain
-    expect(resourceCategory(301)).toBe("conflict");
-    expect(resourceCategory(303)).toBe("conflict");
-    expect(resourceCategory(304)).toBe("conflict");
-    expect(resourceCategory(1000)).toBe("server");
-    expect(resourceCategory(100)).toBe("validation"); // range floor
-    expect(resourceCategory(116)).toBe("validation"); // range ceiling
-    expect(resourceCategory(8)).toBe("validation"); // RESOURCE_VALIDATION set member
-    expect(resourceCategory(500)).toBe("validation"); // set member outside 100-116
-    expect(resourceCategory(50)).toBe("unknown"); // below the range floor, not in set
-    expect(resourceCategory(99999)).toBe("unknown");
+  // 表を写すのではなく、コードごとの期待値を並べる（表の行が抜けたら、ここで落ちる）。
+  it.each([
+    [9, "transient"],
+    [302, "transient"],
+    [401, "auth"],
+    [402, "auth"],
+    [6, "permission"],
+    [400, "permission"],
+    [403, "permission"],
+    [406, "permission"],
+    [601, "permission"],
+    [7, "notFound"],
+    [404, "notFound"],
+    [301, "conflict"],
+    [303, "conflict"],
+    [304, "conflict"],
+    [1000, "server"],
+    [8, "validation"],
+    [124, "validation"],
+    [126, "validation"],
+    [127, "validation"],
+    [133, "validation"],
+    [146, "validation"],
+    [500, "validation"],
+    [100, "validation"], // the range's floor
+    [116, "validation"], // the range's ceiling
+    [99, "unknown"], // just below the range
+    [117, "unknown"], // just above the range
+    [50, "unknown"],
+    [99999, "unknown"],
+  ] as const)("maps resource code %i to %s", (code, category) => {
+    expect(resourceCategory(code)).toBe(category);
   });
 
   it("retryable: only transient resource codes", () => {

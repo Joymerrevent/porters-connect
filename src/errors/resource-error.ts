@@ -8,25 +8,39 @@ import {
   type PortersErrorContext,
 } from "./porters-error";
 
-const RESOURCE_VALIDATION = new Set([8, 124, 126, 127, 133, 146, 500]);
+// Result Code ごとの category。reference の resource-api/result-codes.md の表と、
+// 行どうしで突き合わせられる形にしている。
+const RESOURCE_CATEGORIES: ReadonlyMap<number, ErrorCategory> = new Map([
+  [9, "transient"],
+  [302, "transient"],
+  [401, "auth"],
+  [402, "auth"],
+  [6, "permission"],
+  [400, "permission"],
+  [403, "permission"],
+  [406, "permission"],
+  [601, "permission"],
+  [7, "notFound"],
+  [404, "notFound"],
+  [301, "conflict"],
+  [303, "conflict"],
+  [304, "conflict"],
+  [1000, "server"],
+  [8, "validation"],
+  [124, "validation"],
+  [126, "validation"],
+  [127, "validation"],
+  [133, "validation"],
+  [146, "validation"],
+  [500, "validation"],
+]);
 
 /** Resource API `<Code>` -> category (ADR-0006). */
 export const resourceCategory = (code: number): ErrorCategory => {
-  if (code === 9 || code === 302) return "transient";
-  if (code === 401 || code === 402) return "auth";
-  if (
-    code === 6 ||
-    code === 400 ||
-    code === 403 ||
-    code === 406 ||
-    code === 601
-  )
-    return "permission";
-  if (code === 7 || code === 404) return "notFound";
-  if (code === 301 || code === 303 || code === 304) return "conflict";
-  if (code === 1000) return "server";
-  if (RESOURCE_VALIDATION.has(code) || (code >= 100 && code <= 116))
-    return "validation";
+  const category = RESOURCE_CATEGORIES.get(code);
+  if (category !== undefined) return category;
+  // 100〜116 は入力の誤り（項目の値・条件の書き方）がまとまった範囲。
+  if (code >= 100 && code <= 116) return "validation";
   return "unknown";
 };
 
