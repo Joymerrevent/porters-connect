@@ -82,9 +82,9 @@ export type FieldRequest = {
  * The value of the `field` parameter, or `undefined` when none is sent. In order:
  *
  * 1. `field` omitted -> every catalogued alias; `[]` -> nothing is sent (PORTERS' own answer, the
- *    primary key only — so `expand` / `image` are not sent either)
+ *    primary key only — so `expand` / `image` are not sent either. ADR-0096 types it that way)
  * 2. an expansion hand-written into `field` is rejected (it belongs in `expand`)
- * 3. each alias gets the prefix (and a User field its sub-fields)
+ * 3. each alias gets the prefix (and a User field its sub-fields); an alias given twice is sent once
  * 4. each selected reference replaces its plain entry with the expanded one
  * 5. each selected Image field replaces its plain entry with the sub-fields to read
  */
@@ -95,7 +95,11 @@ export const fieldParam = (
   const aliases = request.field ?? ctx.defaults;
   if (aliases.length === 0) return undefined;
   guardRawExpansion(aliases, ctx.fields);
-  const qualified = qualifyReadFields(ctx.prefix, ctx.fields, aliases);
+  // 同じ alias を 2 回送ると、展開や Image で置き換えるのは最初の 1 件だけになり、素の項目も残る（RV-94）。
+  // 接頭辞を付けた後で重複を取り除くので、`P_Name` と `Person.P_Name` も 1 つになる。
+  const qualified = [
+    ...new Set(qualifyReadFields(ctx.prefix, ctx.fields, aliases)),
+  ];
   const expanded = applyExpand(qualified, request.expand, ctx);
   return applyImage(expanded, request.image, ctx.prefix).join(",");
 };

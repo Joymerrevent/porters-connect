@@ -102,3 +102,21 @@ describe("applyExpand — 展開を field エントリに畳み込む", () => {
     expect(entries).toEqual(["Process.P_Client"]);
   });
 });
+
+// 接頭辞の無いリソース（Phase）でも、alias は qualify() で組み立てる（".P_Client" にしない。RV-96）。
+it("builds the alias without a leading dot when the resource has no prefix", () => {
+  const bare: ExpandContext = { prefix: "", references: { P_Client: CLIENT } };
+  expect(applyExpand(["P_Client"], { P_Client: ["P_Id"] }, bare)).toEqual([
+    "P_Client(Client.P_Id)",
+  ]);
+  expect(
+    applyExpand(
+      [],
+      { P_Client: ["P_Id"] },
+      {
+        prefix: "Process",
+        references: { P_Client: { ...CLIENT, prefix: "" } },
+      },
+    ),
+  ).toEqual(["Process.P_Client(P_Id)"]);
+});

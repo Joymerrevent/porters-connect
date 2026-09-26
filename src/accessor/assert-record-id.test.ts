@@ -59,3 +59,15 @@ describe("assertRecordId", () => {
     }).toThrow("Job.get: id must be a positive integer, got undefined");
   });
 });
+
+// BigInt を渡しても、メッセージを作るところで TypeError にせず PortersConfigError で止める（RV-126）。
+it("refuses a BigInt id as a PortersConfigError", () => {
+  expect(() =>
+    assertRecordId(10001n as unknown as number, "get", "Candidate"),
+  ).toThrow(
+    expect.objectContaining({
+      name: "PortersConfigError",
+      message: "Candidate.get: id must be a positive integer, got 10001",
+    }),
+  );
+});

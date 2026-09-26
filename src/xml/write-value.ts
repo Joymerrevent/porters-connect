@@ -13,7 +13,7 @@ import type { ImageContentType } from "../porters/image";
  * is tolerated as a 1-element selection (fail-safe). `null` / `undefined` omits the
  * field (leaves it unchanged) — send `""` to clear a string field.
  *
- * Per-field static typing (Option fields as `string[]`, etc.) is future work.
+ * Per-field static typing is {@link WriteValueOf}, which narrows this by a field's Data Type.
  */
 export type WriteValue =
   string | number | string[] | ImageWriteValue | null | undefined;

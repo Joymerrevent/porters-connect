@@ -1,7 +1,7 @@
 # RV-95 🟢 `field: []` と `expand` / `image` を一緒に指定すると、`expand` / `image` が黙って落ちる
 
 - 重要度: 🟢 ／ 観点: ドキュメント / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`30cfcc3・7cbd5c7`）。** 推奨のうち「公開の JSDoc に書く」を採った。拒否は採らなかった。ADR-0096（accepted）が「`field: []` のときは `expand` / `image` も送られない」を前提に型を決めているため、拒否に変えるとその決定を変えることになる。公開の説明（`SearchQuery.field`）と利用者向け文書（`query.md`）に書いた。
+
+## 検証
+
+`docs/usage/api/type-aliases/SearchQuery.md` と `docs/usage/topics/query.md` の記述。振る舞いは `field-param.test.ts` の「sends nothing for []」が固定している。

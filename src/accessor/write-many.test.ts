@@ -8,7 +8,11 @@ import {
   PortersNetworkError,
   PortersResourceError,
 } from "../errors";
-import { asUnknownOutcome, type Requester } from "../http/requester";
+import {
+  asUnknownOutcome,
+  createRequester,
+  type Requester,
+} from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { encodeWriteItem } from "../xml/encode-write-item";
 import { createDataResource } from "./data-resource";
@@ -519,9 +523,29 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
     const e = (await smallResource(requester)
       .updateMany(items)
       .catch((x: unknown) => x)) as PortersResourceError;
-    expect(e.hint).toContain(
-      "The records 200–200 failed; updates can be resent as they are.",
+    // 失敗したバッチも送り直してよいことを、1 つの文で読めるようにする（RV-129）。
+    expect(e.hint).toBe(
+      "The records 200–200 failed. The 200 record(s) sent in earlier batches were written. Updates can be resent as they are: resend the failed batch, the records not sent, and any earlier record that failed.",
     );
+  });
+
+  // トークンの取得で失敗して何も送っていないなら、書き込まれていないので元のエラーのまま（RV-131）。
+  it("rethrows a create that never reached the wire as it is", async () => {
+    const tokenDown = new PortersNetworkError("token fetch failed", {
+      category: "network",
+      retryable: true,
+    });
+    const requester = createRequester({
+      transport: { send: () => Promise.reject(new Error("never called")) },
+      auth: { getAccessToken: () => Promise.reject(tokenDown) },
+      throttle: { take: () => Promise.resolve() },
+      backoff: () => 0,
+      maxRetries: 0,
+    });
+    const err = await smallResource(requester)
+      .createMany([{ P_A: 1 }])
+      .catch((x: unknown) => x);
+    expect(err).toBe(tokenDown);
   });
 
   it("wraps a non-PortersError batch failure with unknown category / null code", async () => {

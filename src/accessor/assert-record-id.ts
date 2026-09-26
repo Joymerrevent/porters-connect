@@ -6,8 +6,9 @@
 import { PortersConfigError } from "../errors";
 
 // 数は String で書く（JSON.stringify は NaN / Infinity を "null" にし、渡した値と違って見える）。
+// BigInt も String で書く（JSON.stringify は BigInt で TypeError を投げ、エラーの系統が外れる。RV-126）。
 const shown = (value: unknown): string =>
-  typeof value === "number"
+  typeof value === "number" || typeof value === "bigint"
     ? String(value)
     : (JSON.stringify(value) ?? String(value));
 

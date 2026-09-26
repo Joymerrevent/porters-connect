@@ -41,11 +41,4 @@ export const applyImage = (
   return out;
 };
 
-// --- Write-side guards (ADR-0064 論点3) ------------------------------------------------------
-//
-// An image write bypasses the ~15000-char request guard (a 2MB Base64 body can never fit under
-// it), so **the guard that is lifted has to be replaced**: the three limits the reference states
-// are checked here, before anything is sent. This is the same trade Attachment makes (ADR-0018),
-// with the checks written out because an Image has three parts rather than one.
-
-// The three limits themselves are PORTERS values (porters/image.ts).
+// 書き込みの側の検査（3 つの上限）は guard-image-write.ts にある（ADR-0064 論点3）。

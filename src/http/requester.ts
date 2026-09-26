@@ -159,6 +159,15 @@ export const asUnknownOutcome = (e: PortersError): PortersError => {
   return new Family(e.message, options);
 };
 
+// 一度も送らずに失敗したエラー（トークンの取得の失敗など）。一括書き込みが「書き込まれていない」と
+// 判断するのに使う（RV-131）。エラーそのものは変えず、ライブラリの中だけで見える印として持つ。
+const NEVER_SENT = new WeakSet<object>();
+
+/** Whether `error` was thrown before the request it belongs to was ever put on the wire. */
+export const neverSent = (error: unknown): boolean =>
+  // WeakSet.has はオブジェクトでない値に false を返す（例外にならない）ので、型で分けなくてよい。
+  NEVER_SENT.has(error as object);
+
 export const createRequester = (o: RequesterOptions): Requester => {
   const maxRetries = o.maxRetries ?? 3;
 
@@ -176,6 +185,8 @@ export const createRequester = (o: RequesterOptions): Requester => {
     // いれば、それを使う（同時の 401 で取り直しが何度も走らないように。ADR-0012 / RV-75）。
     let failedToken: string | undefined;
     let attempt = 0;
+    // どれかの試行が送ったか。再試行の後でトークンの取得に失敗しても、前の試行は送っている。
+    let everSent = false;
 
     for (;;) {
       // Whether *this* attempt reached the wire. The idempotency guard needs "the write may have
@@ -193,10 +204,13 @@ export const createRequester = (o: RequesterOptions): Requester => {
         // 待つ間にトークンの期限が切れても、401 を受けて 1 回だけ取り直す経路で回復する。
         await o.throttle.take(write);
         sent = true;
+        everSent = true;
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
+        // 印は、一括書き込みが見る PortersError にだけ付ける。
+        if (!everSent) NEVER_SENT.add(e);
         const next = recoveryFor(e, {
           sent,
           authRetried,
