@@ -80,8 +80,9 @@ export const portersDateToIso = (value: string): string => {
 
 /**
  * ISO date (or datetime) -> PORTERS `yyyy/mm/dd`. A date-only value must be a real calendar date and
- * is written as-is. A datetime (ADR-0038: a Date condition takes ISO with a zone) goes through the
- * DateTime checks and is written as its UTC date — `2026-09-10T23:00:00-09:00` is 2026/09/11.
+ * is written as-is. A datetime (ADR-0038: a Date condition takes ISO in UTC, `…Z`) must be in UTC
+ * (`Z` or `±00:00`), goes through the DateTime checks and is written as its date. Another offset is
+ * refused rather than shifted: `2026-09-10T00:00:00+09:00` would silently become 2026/09/09.
  * Anything else is refused: the date prefix used to be taken from `2026-09-10garbage`, and
  * `2026-02-30` went out as is (RV-86).
  */
@@ -96,6 +97,14 @@ export const isoToPortersDate = (value: string): string => {
       throw new RangeError(`invalid ISO date: "${value}"`);
     }
     return `${m[1]}/${m[2]}/${m[3]}`;
+  }
+  // 日時の形は UTC（末尾が Z か ±00:00）のものだけを受ける。ほかのオフセットを UTC に直すと、日本時間の
+  // 0 時（+09:00）が黙って前日になる（RV-86 の再レビュー。decider が「Z だけ受ける」を選んだ）。
+  // 末尾の $ は読みやすさのため。有効な日時で Z や ±00:00 が末尾以外に出ることはなく、続く日時の検査も末尾まで
+  // 固定しているので、無くても同じ動きになる。
+  // Stryker disable next-line Regex: equivalent — isoToPortersDateTime anchors the whole value
+  if (!/(?:Z|[+-]00:00)$/.test(value)) {
+    throw new RangeError(`invalid ISO date: "${value}"`);
   }
   try {
     return isoToPortersDateTime(value).slice(0, 10);

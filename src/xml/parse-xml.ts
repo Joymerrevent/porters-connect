@@ -82,9 +82,10 @@ export const toInt = (v: unknown): number => {
 
 /**
  * Read a Result `<Code>` / `<Error>`. Absent or empty reads as 0 (success), as PORTERS omits the
- * root `<Code>` on a successful Write. Anything else must be a plain number: a node carrying
- * attributes, nested elements or a repeated tag, or text that is not a number, is not a PORTERS
- * answer — reading it as 0 would turn an error into a success (RV-70).
+ * root `<Code>` on a successful Write. Anything else must be a plain number: a node with nested
+ * elements or a repeated tag, or text that is not a number, is not a PORTERS answer — reading it as
+ * 0 would turn an error into a success (RV-70). Attributes are dropped by the parser, so a code
+ * carrying one reads by its text.
  */
 export const toCode = (
   v: unknown,

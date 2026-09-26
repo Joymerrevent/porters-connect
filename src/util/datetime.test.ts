@@ -61,10 +61,21 @@ describe("datetime (PORTERS <-> ISO, UTC)", () => {
     expect(() => portersDateToIso("2026/01/02x")).toThrow();
   });
 
-  it("isoToPortersDate takes the UTC date of a datetime", () => {
+  it("isoToPortersDate takes the date of a datetime in UTC", () => {
     expect(isoToPortersDate("2026-01-02T10:00:00Z")).toBe("2026/01/02");
-    // オフセット付きは UTC に直した日付（RV-86。前方一致では 9/10 になっていた）
-    expect(isoToPortersDate("2026-09-10T23:00:00-09:00")).toBe("2026/09/11");
+    expect(isoToPortersDate("2026-01-02T10:00:00+00:00")).toBe("2026/01/02");
+    expect(isoToPortersDate("2026-01-02T10:00:00-00:00")).toBe("2026/01/02");
+  });
+
+  // RV-86 の再レビュー。ほかのオフセットを UTC に直すと、日本時間の 0 時が黙って前日になる。受けずに弾く。
+  it.each([
+    "2026-09-10T00:00:00+09:00",
+    "2026-09-10T23:00:00-09:00",
+    "2026-09-10T00:00:00+00:30",
+  ])("isoToPortersDate refuses a datetime outside UTC: %s", (value) => {
+    expect(() => isoToPortersDate(value)).toThrow(
+      `invalid ISO date: "${value}"`,
+    );
   });
 
   // RV-86。前方一致だった頃は、後ろに文字が続く値や、暦に無い日付をそのまま送っていた。
