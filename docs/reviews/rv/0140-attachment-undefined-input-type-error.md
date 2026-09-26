@@ -5,7 +5,7 @@
 
 ## 概要
 
-`create(undefined)` / `update(5, undefined)` は `PortersConfigError` でなく `TypeError` で reject する。
+`create(undefined)` / `update(5, undefined)` は `PortersConfigError` でなく `TypeError` で reject する。`content: null` も同じで、大きさの検査が `null.length` を読んで `TypeError` になる（Base64 の検査より大きさの検査を先にした `46e45d9` からの振る舞い。以前は `PortersConfigError` だった）。
 
 ## 根拠
 
@@ -21,7 +21,7 @@
 
 ## 推奨
 
-- 入力がオブジェクトでなければ `PortersConfigError` にする。
+- 入力がオブジェクトでなければ `PortersConfigError` にする。大きさの検査は、文字列のときだけ長さを見る。
 - 止めどきの規則（Low だけになったら直さずに記録する）により、この回では直さずに記録する。
 
 ## 処置
