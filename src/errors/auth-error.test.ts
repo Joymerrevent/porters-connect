@@ -19,6 +19,7 @@ describe("auth error classification (ADR-0006)", () => {
     [109, "auth"],
     [114, "auth"],
     [117, "auth"],
+    [113, "auth"],
     [100, "validation"],
     [101, "validation"],
     [102, "validation"],
@@ -29,7 +30,6 @@ describe("auth error classification (ADR-0006)", () => {
     [116, "permission"],
     [402, "permission"],
     [108, "server"],
-    [113, "unknown"],
     [999, "unknown"],
   ] as const)("maps auth code %i to %s", (code, category) => {
     expect(authCategory(code)).toBe(category);
@@ -47,8 +47,7 @@ describe("auth error classification (ADR-0006)", () => {
 
 // reference の表を読み、載っているコードのうち分類していないものを確かめる（RV-114）。
 // 表に行が足されたのに実装の表を直し忘れると、ここで落ちる。
-// -1（キャンセル）と 113（登録アプリのサイトが無い）は ADR-0006 の表に無く、unknown（再試行しない）に
-// 倒している。分類するかは RV-114 / RV-123 の ADR で決める。決まったら、この一覧から外す。
+// -1（キャンセル）は意味が状況で変わるので、unknown（再試行しない）のまま残す（ADR-0106 案2A）。
 it("leaves only the known codes unclassified in the reference table", () => {
   const table = readFileSync(
     fileURLToPath(
@@ -66,5 +65,5 @@ it("leaves only the known codes unclassified in the reference table", () => {
   const unclassified = codes.filter(
     (c) => c !== 0 && authCategory(c) === "unknown",
   );
-  expect(unclassified).toEqual([-1, 113]);
+  expect(unclassified).toEqual([-1]);
 });
