@@ -63,8 +63,25 @@ describe("HTTP status classification (ADR-0044)", () => {
     expect(misdirected.hint).toContain("host");
   });
 
+  // 3xx はリダイレクト。追いかけないので、scheme とアドレスを確かめるよう案内する（RV-120）。
+  it.each([300, 301, 302, 303, 307, 308, 399])(
+    "says a %i is a redirect the library does not follow",
+    (status) => {
+      const e = httpStatusError(status);
+      expect(e.category).toBe("unknown");
+      expect(e.retryable).toBe(false);
+      expect(e.hint).toBe(
+        "Redirected (HTTP 3xx) — the library does not follow redirects. Check that `scheme` is https and that `hostname` / `port` is the API's own address, not one that forwards to it.",
+      );
+    },
+  );
+
+  it.each([200, 299, 400])("does not call a %i a redirect", (status) => {
+    expect(httpStatusError(status).hint).not.toContain("Redirected");
+  });
+
   it("falls back to the base class for a status it cannot place (fail-safe)", () => {
-    const odd = httpStatusError(302);
+    const odd = httpStatusError(204);
     expect(odd).toBeInstanceOf(PortersError);
     expect(odd).not.toBeInstanceOf(PortersNetworkError);
     expect(odd.category).toBe("unknown");
