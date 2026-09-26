@@ -1,8 +1,8 @@
 // The master resources' Read (search / searchAll): how a read-only master's Read is sent — the
 // library's own contract, kept in one place so it changes in one place (the data resources'
-// counterpart is `data-reader.ts`). Every master resource used to spell it out itself, and each
-// change to the contract below had to be repeated in all of them (ADR-0046 / RV-15, ADR-0051 /
-// RV-20, RV-28, RV-32, ADR-0047). `master-resource.ts` turns this into the accessor.
+// counterpart is `data-reader.ts`). Each master passes only what its Read accepts; the contract
+// below lives here alone (ADR-0046 / RV-15, ADR-0051 / RV-20, RV-28, RV-32, ADR-0047).
+// `master-resource.ts` turns this into the accessor.
 //
 //   - a Promise-returning method never throws synchronously — `search` is `async` (ADR-0046)
 //   - `searchAll` serialises the caller's query once, at the first page (RV-32)

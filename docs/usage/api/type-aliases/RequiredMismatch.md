@@ -8,7 +8,7 @@
 
 > **RequiredMismatch** = `object`
 
-Defined in: [src/fields/verify-fields.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L69)
+Defined in: [src/fields/verify-fields.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L70)
 
 Declared `required: true` while the tenant does not mark the field required, or the reverse.
 Harmless either way — reads and writes work — so it does not clear [FieldVerification.ok](FieldVerification.md#ok).
@@ -21,7 +21,7 @@ Harmless either way — reads and writes work — so it does not clear [FieldVer
 
 > `readonly` **alias**: `string`
 
-Defined in: [src/fields/verify-fields.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L71)
+Defined in: [src/fields/verify-fields.ts:72](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L72)
 
 ***
 
@@ -29,7 +29,7 @@ Defined in: [src/fields/verify-fields.ts:71](https://github.com/Joymerrevent/por
 
 > `readonly` **declared**: `boolean`
 
-Defined in: [src/fields/verify-fields.ts:73](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L73)
+Defined in: [src/fields/verify-fields.ts:74](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L74)
 
 Whether the declaration says `required: true`.
 
@@ -39,7 +39,7 @@ Whether the declaration says `required: true`.
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/verify-fields.ts:70](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L70)
+Defined in: [src/fields/verify-fields.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L71)
 
 ***
 
@@ -47,6 +47,6 @@ Defined in: [src/fields/verify-fields.ts:70](https://github.com/Joymerrevent/por
 
 > `readonly` **tenant**: `boolean`
 
-Defined in: [src/fields/verify-fields.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L75)
+Defined in: [src/fields/verify-fields.ts:76](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L76)
 
 Whether the tenant marks the field required (`Field.P_Required` is `1`).

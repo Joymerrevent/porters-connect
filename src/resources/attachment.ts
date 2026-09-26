@@ -14,10 +14,10 @@ import { PortersConfigError } from "../errors";
 import { apiUrl } from "../http/api-url";
 import type { AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode-field";
-import { parseResourcePage } from "../xml/parse-resource-page";
 import { asString } from "../xml/as-string";
 import { appendPaging } from "../accessor/append-paging";
 import { paginateOnce } from "../accessor/paginate";
+import { runRead } from "../accessor/run-read";
 import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 import type { Paging } from "../accessor/paging";
 import type { PartitionBoundConnectionDeps } from "../accessor/deps";
@@ -209,21 +209,11 @@ export const createAttachmentAccessor = (
     const resource = RESOURCE_VALUES[resourceName];
 
     const read = (params: ReadParams): Promise<AttachmentPage> =>
-      deps.requester.request(
-        {
-          method: "GET",
-          url: buildAttachmentReadUrl(deps.accessPoint, deps.partition, params),
-          headers: {},
-        },
-        (body) => {
-          const page = parseResourcePage(body, ATTACHMENT_RESOURCE);
-          return {
-            items: page.items.map(decodeAttachment),
-            total: page.total,
-            count: page.count,
-            start: page.start,
-          };
-        },
+      runRead(
+        deps.requester,
+        ATTACHMENT_RESOURCE,
+        buildAttachmentReadUrl(deps.accessPoint, deps.partition, params),
+        decodeAttachment,
       );
 
     // A listing never carries bodies (ADR-0075): `requestType=1`. `async` for the exception

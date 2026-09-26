@@ -47,6 +47,65 @@ const configError = (message: string, hint: string): PortersConfigError =>
 // this file; nothing is sent anywhere with it.
 const PROBE_SCHEME = "porters-check";
 
+// The type says `"https" | "http"`, but JS callers and `as` casts get past it — and a silently
+// assembled `ftp://host/v1/...` is exactly the ambiguity ADR-0047 refused to keep.
+const assertScheme = (scheme: Scheme | undefined): void => {
+  if (scheme !== undefined && scheme !== "https" && scheme !== "http") {
+    throw configError(
+      `scheme ${JSON.stringify(scheme)} is not supported`,
+      'Use "https" (default) or "http" (local fake server / trusted tunnel only).',
+    );
+  }
+};
+
+const assertPort = (port: number | undefined): void => {
+  if (
+    port !== undefined &&
+    (!Number.isInteger(port) || port < MIN_PORT || port > MAX_PORT)
+  ) {
+    throw configError(
+      `port ${JSON.stringify(port)} is not a valid port number`,
+      `Pass an integer between ${MIN_PORT} and ${MAX_PORT}, or omit it to use the scheme's own port.`,
+    );
+  }
+};
+
+const assertHostname = (hostname: string): void => {
+  const rejected = (): PortersConfigError =>
+    configError(
+      `hostname ${JSON.stringify(hostname)} is not a bare server name`,
+      HOSTNAME_HINT,
+    );
+  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
+  // `porters-check://` parses and `url.hostname` is `""` — which "matches" an empty input. An unset
+  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
+  // so it is spelled out rather than inferred.
+  if (hostname === "") throw rejected();
+  let url: URL;
+  try {
+    url = new URL(`${PROBE_SCHEME}://${hostname}`);
+  } catch {
+    throw rejected();
+  }
+  // An unknown scheme leaves the name's case alone (a special scheme lowercases it), so compare
+  // case-insensitively — an upper-case name is valid.
+  //
+  // `url.port` / `url.pathname` を並べるのは、「名前と、その後ろに何も無いこと」を契約として読めるように
+  // するため（ADR-0078 / ADR-0048）。`a.test:4010` は `hostname` が `a.test` として parse できてしまい、
+  // 見逃すとポートが黙って落ちる。ただ、ポートやパスが混ざれば `url.hostname` は入力と一致しなく
+  // なるので、先頭の比較がすでに弾いている。後ろ 2 つは等価なミュータントになる（実測 2026-09-16）ため、
+  // ミューテーションから外す。IPv6 は `[::1]` と括弧で囲むので、ポートとは見なされない。
+  // Stryker disable ConditionalExpression: equivalent — a port or a path implies a hostname mismatch
+  if (
+    url.hostname.toLowerCase() !== hostname.toLowerCase() ||
+    url.port !== "" ||
+    url.pathname !== ""
+  ) {
+    throw rejected();
+  }
+  // Stryker restore ConditionalExpression
+};
+
 /**
  * Reject an access point the library cannot honour — **before** a single request is built
  * (ADR-0048). `hostname` means the server name and nothing else (ADR-0078): a value carrying a
@@ -69,67 +128,9 @@ const PROBE_SCHEME = "porters-check";
  * names). The hint says so.
  */
 export const validateAccessPoint = (accessPoint: AccessPoint): void => {
-  const { hostname, port, scheme } = accessPoint;
-  // The type says `"https" | "http"`, but JS callers and `as` casts get past it — and a silently
-  // assembled `ftp://host/v1/...` is exactly the ambiguity ADR-0047 refused to keep.
-  if (scheme !== undefined && scheme !== "https" && scheme !== "http") {
-    throw configError(
-      `scheme ${JSON.stringify(scheme)} is not supported`,
-      'Use "https" (default) or "http" (local fake server / trusted tunnel only).',
-    );
-  }
-
-  if (
-    port !== undefined &&
-    (!Number.isInteger(port) || port < MIN_PORT || port > MAX_PORT)
-  ) {
-    throw configError(
-      `port ${JSON.stringify(port)} is not a valid port number`,
-      `Pass an integer between ${MIN_PORT} and ${MAX_PORT}, or omit it to use the scheme's own port.`,
-    );
-  }
-
-  const rejected = (): PortersConfigError =>
-    configError(
-      `hostname ${JSON.stringify(hostname)} is not a bare server name`,
-      HOSTNAME_HINT,
-    );
-  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
-  // `porters-check://` parses and `url.hostname` is `""` — which "matches" an empty input. An unset
-  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
-  // so it is spelled out rather than inferred.
-  if (hostname === "") throw rejected();
-  let url: URL;
-  try {
-    url = new URL(`${PROBE_SCHEME}://${hostname}`);
-  } catch {
-    throw rejected();
-  }
-  // An unknown scheme leaves the name's case alone (a special scheme lowercases it), so compare
-  // case-insensitively — an upper-case name is valid.
-  //
-  // `url.port` catches the shape this split exists to remove: `a.test:4010` parses fine and its
-  // `hostname` is `a.test`, so without this check the port would be silently dropped — the caller
-  // would think they configured one and the library would send to the default port instead
-  // (ADR-0078). An IPv6 address still works because it is bracketed: `[::1]` has no port.
-  //
-  // The `pathname` half is belt-and-suspenders, as it was under `https://` (ADR-0048): a path can
-  // only follow a delimiter that also ends the authority, so any input carrying one already fails
-  // the name comparison. It stays because "the name, and nothing after it" is the contract being
-  // read, not because a test can tell the difference.
-  // 後ろ 2 つは**どちらも等価なミュータント**になる（実測 2026-09-16）。ポートが混ざれば
-  // `url.hostname` は入力より短くなり、パスが付けば同じく一致しなくなるので、**先頭の比較が
-  // すでに弾いている**。それでも書いてあるのは、読む人に「名前と、その後ろに何も無いこと」を
-  // 契約として見せるため。テストで差が出ないので、ミューテーションからは外す。
-  // Stryker disable ConditionalExpression: equivalent — a port or a path implies a hostname mismatch
-  if (
-    url.hostname.toLowerCase() !== hostname.toLowerCase() ||
-    url.port !== "" ||
-    url.pathname !== ""
-  ) {
-    throw rejected();
-  }
-  // Stryker restore ConditionalExpression
+  assertScheme(accessPoint.scheme);
+  assertPort(accessPoint.port);
+  assertHostname(accessPoint.hostname);
 };
 
 /**

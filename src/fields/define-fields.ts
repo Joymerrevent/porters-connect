@@ -82,6 +82,40 @@ const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
 ];
 
 // 宣言 DSL は ADR-0023、渡し先が tenant(id, { fields }) なのは ADR-0087。
+const assertKnownResource = (resource: string): void => {
+  if (!KNOWN_RESOURCES.includes(resource as CustomFieldResource)) {
+    throw new PortersConfigError(
+      `defineFields: unknown resource "${resource}" (expected one of ${KNOWN_RESOURCES.join(", ")})`,
+      { category: "config" },
+    );
+  }
+};
+
+const assertCustomAlias = (alias: string, resource: string): void => {
+  if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
+    throw new PortersConfigError(
+      `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
+      { category: "config" },
+    );
+  }
+};
+
+// JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
+const isRequired = (
+  fieldDef: { readonly required?: unknown },
+  alias: string,
+  resource: string,
+): boolean => {
+  const flag = fieldDef.required;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    throw new PortersConfigError(
+      `defineFields: "required" for "${alias}" on "${resource}" must be true or false`,
+      { category: "config" },
+    );
+  }
+  return flag === true;
+};
+
 /**
  * Declare tenant-specific custom fields per data resource. This is the validation
  * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key or an
@@ -102,30 +136,13 @@ export const defineFields = <D extends FieldDecls>(
   const required: Record<string, string[]> = {};
   for (const [resource, declare] of Object.entries(decls)) {
     if (declare === undefined) continue;
-    if (!KNOWN_RESOURCES.includes(resource as CustomFieldResource)) {
-      throw new PortersConfigError(
-        `defineFields: unknown resource "${resource}" (expected one of ${KNOWN_RESOURCES.join(", ")})`,
-        { category: "config" },
-      );
-    }
+    assertKnownResource(resource);
     const catalog: CustomCatalog = {};
     for (const [alias, fieldDef] of Object.entries(declare(builder))) {
-      if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
-        throw new PortersConfigError(
-          `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
-          { category: "config" },
-        );
-      }
+      assertCustomAlias(alias, resource);
       catalog[alias] = fieldDef.dataType;
-      // JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
-      const flag: unknown = (fieldDef as { required?: unknown }).required;
-      if (flag !== undefined && typeof flag !== "boolean") {
-        throw new PortersConfigError(
-          `defineFields: "required" for "${alias}" on "${resource}" must be true or false`,
-          { category: "config" },
-        );
-      }
-      if (flag === true) (required[resource] ??= []).push(alias);
+      if (isRequired(fieldDef, alias, resource))
+        (required[resource] ??= []).push(alias);
     }
     catalogs[resource] = catalog;
   }

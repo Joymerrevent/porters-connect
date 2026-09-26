@@ -8,7 +8,7 @@
 
 > **FieldVerification** = `object`
 
-Defined in: [src/fields/verify-fields.ts:84](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L84)
+Defined in: [src/fields/verify-fields.ts:85](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L85)
 
 What [verifyFields](../functions/verifyFields.md) found.
 
@@ -18,7 +18,7 @@ What [verifyFields](../functions/verifyFields.md) found.
 
 > `readonly` **missing**: readonly [`MissingField`](MissingField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L94)
+Defined in: [src/fields/verify-fields.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L95)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [src/fields/verify-fields.ts:94](https://github.com/Joymerrevent/por
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [src/fields/verify-fields.ts:93](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L93)
+Defined in: [src/fields/verify-fields.ts:94](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L94)
 
 `true` when every declared resource was read and nothing needs attention — no
 [FieldVerification.missing](#missing), [FieldVerification.typeMismatch](#typemismatch) or
@@ -41,7 +41,7 @@ breaks anything, they are there to be read.
 
 > `readonly` **requiredMismatch**: readonly [`RequiredMismatch`](RequiredMismatch.md)[]
 
-Defined in: [src/fields/verify-fields.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L99)
+Defined in: [src/fields/verify-fields.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L100)
 
 ***
 
@@ -49,7 +49,7 @@ Defined in: [src/fields/verify-fields.ts:99](https://github.com/Joymerrevent/por
 
 > `readonly` **typeMismatch**: readonly [`FieldTypeMismatch`](FieldTypeMismatch.md)[]
 
-Defined in: [src/fields/verify-fields.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L95)
+Defined in: [src/fields/verify-fields.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L96)
 
 ***
 
@@ -57,7 +57,7 @@ Defined in: [src/fields/verify-fields.ts:95](https://github.com/Joymerrevent/por
 
 > `readonly` **undeclarable**: readonly [`UndeclarableTenantField`](UndeclarableTenantField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L98)
+Defined in: [src/fields/verify-fields.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L99)
 
 ***
 
@@ -65,7 +65,7 @@ Defined in: [src/fields/verify-fields.ts:98](https://github.com/Joymerrevent/por
 
 > `readonly` **undeclared**: readonly [`UndeclaredField`](UndeclaredField.md)[]
 
-Defined in: [src/fields/verify-fields.ts:96](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L96)
+Defined in: [src/fields/verify-fields.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L97)
 
 ***
 
@@ -73,4 +73,4 @@ Defined in: [src/fields/verify-fields.ts:96](https://github.com/Joymerrevent/por
 
 > `readonly` **unverifiable**: readonly [`UnverifiableResource`](UnverifiableResource.md)[]
 
-Defined in: [src/fields/verify-fields.ts:97](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L97)
+Defined in: [src/fields/verify-fields.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L98)

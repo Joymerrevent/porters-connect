@@ -4,13 +4,32 @@ import { PortersAuthError } from "./porters-error";
 import { authCategory, authError } from "./auth-error";
 
 describe("auth error classification (ADR-0006)", () => {
-  it("maps auth codes to categories", () => {
-    expect(authCategory(400)).toBe("auth");
-    expect(authCategory(401)).toBe("auth");
-    expect(authCategory(100)).toBe("validation");
-    expect(authCategory(111)).toBe("permission");
-    expect(authCategory(108)).toBe("server");
-    expect(authCategory(999)).toBe("unknown");
+  // 表を写すのではなく、コードごとの期待値を並べる（表の行が抜けたら、ここで落ちる）。
+  it.each([
+    [400, "auth"],
+    [401, "auth"],
+    [103, "auth"],
+    [104, "auth"],
+    [105, "auth"],
+    [106, "auth"],
+    [107, "auth"],
+    [109, "auth"],
+    [114, "auth"],
+    [117, "auth"],
+    [100, "validation"],
+    [101, "validation"],
+    [102, "validation"],
+    [110, "validation"],
+    [112, "validation"],
+    [111, "permission"],
+    [115, "permission"],
+    [116, "permission"],
+    [402, "permission"],
+    [108, "server"],
+    [113, "unknown"],
+    [999, "unknown"],
+  ] as const)("maps auth code %i to %s", (code, category) => {
+    expect(authCategory(code)).toBe(category);
   });
 
   it("produces the right instance, an actionable hint for auth, and is never retryable", () => {

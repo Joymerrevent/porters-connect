@@ -1,8 +1,8 @@
 // Printing a `defineFields` declaration from a tenant's real catalog (ADR-0069 論点1 / 案1b).
 //
-// Replaces the manual step the guide used to describe: walk Field Read, read `P_Type` off each row,
-// look the number up in the Field Type table by hand, and write the matching `f.x()`. The library
-// already holds that table, so the translation belongs here.
+// Without it, a caller would walk Field Read, read `P_Type` off each row, look the number up in the
+// Field Type table by hand, and write the matching `f.x()`. The library already holds that table,
+// so the translation belongs here.
 //
 // It returns **source text** and writes no files (ADR-0069 論点2 / Decision Drivers: 薄さ). The
 // output goes through `defineFields`, so the declaration it produces is statically typed like any

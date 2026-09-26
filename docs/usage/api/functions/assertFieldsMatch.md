@@ -8,7 +8,7 @@
 
 > **assertFieldsMatch**(`report`): `void`
 
-Defined in: [src/fields/verify-fields.ts:243](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L243)
+Defined in: [src/fields/verify-fields.ts:276](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L276)
 
 Throw unless [verifyFields](verifyFields.md) came back clean — for callers who would rather fail at startup
 than read a `null` in production.

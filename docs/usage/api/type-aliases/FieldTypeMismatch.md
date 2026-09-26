@@ -8,7 +8,7 @@
 
 > **FieldTypeMismatch** = `object`
 
-Defined in: [src/fields/verify-fields.ts:35](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L35)
+Defined in: [src/fields/verify-fields.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L36)
 
 Declared with a different Data Type than the tenant actually uses. **The worst of the four**:
 the value silently decodes to `null` (or throws deep in a date conversion), so nothing in the
@@ -20,7 +20,7 @@ calling code reveals that a field is being read through the wrong type.
 
 > `readonly` **actual**: [`CustomDataType`](CustomDataType.md)
 
-Defined in: [src/fields/verify-fields.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L39)
+Defined in: [src/fields/verify-fields.ts:40](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L40)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [src/fields/verify-fields.ts:39](https://github.com/Joymerrevent/por
 
 > `readonly` **alias**: `string`
 
-Defined in: [src/fields/verify-fields.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L37)
+Defined in: [src/fields/verify-fields.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L38)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/fields/verify-fields.ts:37](https://github.com/Joymerrevent/por
 
 > `readonly` **declared**: `DataType`
 
-Defined in: [src/fields/verify-fields.ts:38](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L38)
+Defined in: [src/fields/verify-fields.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L39)
 
 ***
 
@@ -44,4 +44,4 @@ Defined in: [src/fields/verify-fields.ts:38](https://github.com/Joymerrevent/por
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/verify-fields.ts:36](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L36)
+Defined in: [src/fields/verify-fields.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/verify-fields.ts#L37)

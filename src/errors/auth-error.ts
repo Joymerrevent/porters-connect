@@ -3,16 +3,34 @@
 
 import { PortersAuthError, type ErrorCategory } from "./porters-error";
 
+// Authentication API の `<Error>` ごとの category。reference の authentication-api/errors.md の表と、
+// 行どうしで突き合わせられる形にしている。
+const AUTH_CATEGORIES: ReadonlyMap<number, ErrorCategory> = new Map([
+  [400, "auth"],
+  [401, "auth"],
+  [103, "auth"],
+  [104, "auth"],
+  [105, "auth"],
+  [106, "auth"],
+  [107, "auth"],
+  [109, "auth"],
+  [114, "auth"],
+  [117, "auth"],
+  [100, "validation"],
+  [101, "validation"],
+  [102, "validation"],
+  [110, "validation"],
+  [112, "validation"],
+  [111, "permission"],
+  [115, "permission"],
+  [116, "permission"],
+  [402, "permission"],
+  [108, "server"],
+]);
+
 /** Authentication API `<Error>` -> category (ADR-0006). */
-export const authCategory = (code: number): ErrorCategory => {
-  if (code === 400) return "auth";
-  if ([401, 103, 104, 105, 106, 107, 109, 114, 117].includes(code))
-    return "auth";
-  if ([100, 101, 102, 110, 112].includes(code)) return "validation";
-  if ([111, 115, 116, 402].includes(code)) return "permission";
-  if (code === 108) return "server";
-  return "unknown";
-};
+export const authCategory = (code: number): ErrorCategory =>
+  AUTH_CATEGORIES.get(code) ?? "unknown";
 
 /** Build a PortersAuthError from an Authentication API `<Error>`. */
 export const authError = (code: number, message: string): PortersAuthError => {

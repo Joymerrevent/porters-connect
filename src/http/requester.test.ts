@@ -7,7 +7,7 @@ import {
   PortersNetworkError,
   PortersResourceError,
 } from "../errors/index";
-import { createRequester } from "./requester";
+import { createRequester, recoveryFor, type AttemptState } from "./requester";
 import type { Throttle } from "./throttle";
 import type { Transport, TransportRequest } from "./types";
 
@@ -693,5 +693,51 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
 
     setTimeoutSpy.mockRestore();
     vi.useRealTimers();
+  });
+});
+
+describe("recoveryFor", () => {
+  // 1 回目の試行で、送信まで届いた読み込み。各テストは、ここから 1 つだけ変える。
+  const state = (over: Partial<AttemptState> = {}): AttemptState => ({
+    sent: true,
+    authRetried: false,
+    write: false,
+    idempotent: true,
+    attempt: 0,
+    maxRetries: 3,
+    ...over,
+  });
+
+  it("refreshes on the first Resource API 401 / 402, and only the first", () => {
+    expect(recoveryFor(authErr(401), state())).toBe("refresh");
+    expect(recoveryFor(authErr(402), state())).toBe("refresh");
+    expect(recoveryFor(authErr(401), state({ authRetried: true }))).toBe(
+      "throw",
+    );
+  });
+
+  it("backs off on a retryable error while retries remain", () => {
+    expect(recoveryFor(transientErr(), state())).toBe("backoff");
+    expect(recoveryFor(networkErr(), state({ attempt: 2 }))).toBe("backoff");
+    expect(recoveryFor(transientErr(), state({ attempt: 3 }))).toBe("throw");
+  });
+
+  it("throws a network error on a sent create, whose outcome is unknown", () => {
+    const create = state({ write: true, idempotent: false });
+    expect(recoveryFor(networkErr(), create)).toBe("throw");
+    // 送信前の失敗と 429 は、書き込まれていないと分かっているので送り直してよい。
+    expect(recoveryFor(networkErr(), { ...create, sent: false })).toBe(
+      "backoff",
+    );
+    const tooMany = new PortersNetworkError("429", {
+      category: "rateLimit",
+      retryable: true,
+    });
+    expect(recoveryFor(tooMany, create)).toBe("backoff");
+  });
+
+  it("throws an error that is not retryable", () => {
+    const denied = new PortersAuthError("denied", { category: "auth" });
+    expect(recoveryFor(denied, state())).toBe("throw");
   });
 });

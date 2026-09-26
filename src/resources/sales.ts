@@ -1,8 +1,8 @@
-// Sales accessor (ADR-0004/0005/0011/0019): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Only the Data-Type catalog and
-// names are Sales-specific; the static Sales / input types derive from the catalog
-// (ADR-0019). Sales ties the whole chain together — it references Client, Recruiter, Job,
-// Contract, Candidate and Resume, and every one of them is expandable (ADR-0058).
+// Sales accessor (ADR-0004/0005/0011/0019): built on the data resources' factory
+// (`createDataResource`), which gives every data resource the same methods. Only the Data-Type
+// catalog and names are Sales-specific; the static Sales / input types derive from the catalog
+// (ADR-0019). Sales ties the whole chain together — it references Client, Recruiter, Job, Contract,
+// Candidate and Resume, and every one of them is expandable (ADR-0058).
 //
 // **Why the six references are not in `requiredOnCreate`** — ADR-0083 draws the line: only the
 // `●` (unconditionally required) column becomes a type-level requirement, and PORTERS marks
@@ -253,12 +253,8 @@ export const createSalesResource = <C extends FieldCatalog = EmptyCatalog>(
   deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): SalesResource<C> => {
-  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
-  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  // `C` が型引数のままだと、共通の実装の型（DataResource）とこのファイルで書き出した型が同じだと
-  // コンパイラが示しきれないので、ここで名前を付け替える（ADR-0100）。同じであることは
-  // data-resource-shapes.test.ts が具体的な `C` で確かめる。
   return createDataResource(
     { ...SALES_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
