@@ -170,7 +170,6 @@ export const createRequester = (o: RequesterOptions): Requester => {
     let attempt = 0;
 
     for (;;) {
-      await o.throttle.take(write);
       // Whether *this* attempt reached the wire. The idempotency guard needs "the write may have
       // applied", not "the error is a network one" (ADR-0063): a token fetch that fails never put
       // the request on the wire, so replaying it cannot duplicate anything.
@@ -181,6 +180,10 @@ export const createRequester = (o: RequesterOptions): Requester => {
         );
         forceRefresh = false;
         failedToken = token;
+        // スロットルは送る直前に数える。トークンの取得の前に数えると、取得を待つ間に数えた時刻と
+        // PORTERS に届く時刻がずれ、起動直後の 1 分間に上限の 2 倍が届きうる（RV-66 の再レビュー）。
+        // 待つ間にトークンの期限が切れても、401 を受けて 1 回だけ取り直す経路で回復する。
+        await o.throttle.take(write);
         sent = true;
         const res = await o.transport.send(withAuth(req, token, write));
         return readResponse(res, parse);

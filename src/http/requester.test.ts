@@ -376,6 +376,37 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     ]);
   });
 
+  // RV-66 の再レビュー。スロットルは送る直前に数える（トークンの取得を待つ間のずれで、上限を超えないように）。
+  it("takes the throttle slot after the token is in hand, right before sending", async () => {
+    const order: string[] = [];
+    const auth: AccessTokenSource = {
+      getAccessToken: () => {
+        order.push("token");
+        return Promise.resolve("TKN");
+      },
+    };
+    const throttle: Throttle = {
+      take: () => {
+        order.push("throttle");
+        return Promise.resolve();
+      },
+    };
+    const transport: Transport = {
+      send: () => {
+        order.push("send");
+        return Promise.resolve({ status: 200, body: "ok" });
+      },
+    };
+    const r = createRequester({
+      transport,
+      auth,
+      throttle,
+      backoff: noBackoff,
+    });
+    await r.request(base, (b) => b);
+    expect(order).toEqual(["token", "throttle", "send"]);
+  });
+
   it("refreshes on 402 as well as 401", async () => {
     const calls: { force: boolean }[] = [];
     let n = 0;
