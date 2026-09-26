@@ -1,7 +1,7 @@
 # RV-88 🟢 時計が戻ると、スロットルが戻った分だけ待ち続ける
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`5a2fc61`）。** RV-66 の修正で、スロットルの既定の時計を `performance.now()`（戻らない時計）にした。
+
+## 検証
+
+`src/http/throttle.test.ts` の「measures time with performance.now() by default」。

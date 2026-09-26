@@ -1,7 +1,7 @@
 # RV-75 🟡 同時に届いた 401 で取り直しが何度も走り、初回に同時に呼ばれると保存済みのトークンを使わない
 
 - 重要度: 🟡 ／ 観点: 認証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -28,6 +28,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`8499ef4`）。** 取り直しを頼むときに断られたトークン（`failedToken`）を渡し、手元のトークンがすでに別のものなら取り直さずにそれを使う（`src/auth/token-manager.ts` の `ensure`、`src/http/requester.ts`）。保存先の読み込みを 1 本の Promise にまとめた。
+
+## 検証
+
+`src/auth/token-manager.test.ts` の「renews once for requests refused together with the same token」「reuses a token another request already renewed」「makes calls that arrive during a slow store read wait for it」と、`requester.test.ts` の「passes the refused token along」。`token-manager.ts` のミューテーションはすべて検出。
 
 [adr12]: ../../adr/0012-token-cache-refresh.md

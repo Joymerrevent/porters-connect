@@ -1,7 +1,7 @@
 # RV-66 🔴 スロットルが、起動直後の 1 分間に上限の約 1.8 倍まで通す
 
 - 重要度: 🔴 ／ 観点: API 忠実性 / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -28,6 +28,11 @@ token-bucket が容量いっぱい（上限 × 安全率）から始まり、同
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`5a2fc61`）。** [ADR-0102][adr102] の案A で、`src/http/throttle.ts` を「直近 60 秒に通した時刻を覚え、容量に達したら、いちばん古い時刻から 60 秒たつまで待つ」形にした。容量・設定・既定値は変えていない。
+
+## 検証
+
+`src/http/throttle.test.ts` の「never lets more than the capacity through in any 60 seconds」が、休まず呼び続けたときの時刻の列で、どの 60 秒でも容量以下で、容量ぶんは最初に・次はちょうど 60 秒後に通ることを確かめる。`throttle.ts` のミューテーションはすべて検出。
 
 [adr10]: ../../adr/0010-retry-throttle.md
+[adr102]: ../../adr/0102-throttle-any-minute-window.md

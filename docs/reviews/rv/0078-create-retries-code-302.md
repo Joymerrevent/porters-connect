@@ -1,7 +1,7 @@
 # RV-78 🟡 `create` の応答が Code 302 のとき、自動で再送する（ADR-0010 と食い違う）
 
 - 重要度: 🟡 ／ 観点: エラーモデル / フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,7 +27,12 @@ Code 302（トランザクションエラー / 対象削除済み）は `transie
 
 ## 処置
 
-—
+**実施（2026-09-26・fix/http-auth-review・`5832644`）。** [ADR-0103][adr103] の案A で、送信済みの非冪等な書き込みで再送してよい Result Code を 9 だけにし、302 などは RV-65 と同じく `retryable: false` と hint で届ける。`update` と読み込みは今までどおり 302 を再送する。
+
+## 検証
+
+`src/http/requester.test.ts` の「resends a sent create only on Code 9, and reports 302 as an unknown outcome」と「does not resend a create answered with Code 302」。
 
 [adr10]: ../../adr/0010-retry-throttle.md
 [rc]: ../../usage/reference/resource-api/result-codes.md
+[adr103]: ../../adr/0103-create-code-302-not-retried.md
