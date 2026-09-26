@@ -230,8 +230,9 @@ export const appendReadQuery = <F extends FieldCatalog>(
       }
     }
     const kw = q.keywords.join(",");
-    // 長さは UTF-16 の単位で数える。絵文字などは 2 と数えるので、PORTERS の数え方より長く見積もることは
-    // あっても、短く見積もって上限を超えたまま送ることは無い（安全側）。
+    // 長さは UTF-16 の単位で数える。PORTERS が文字または UTF-16 で数えるなら、短く見積もって上限を超えたまま
+    // 送ることは無い（絵文字などは 2 と数えるので、長く見積もる側）。バイトで数えるなら、日本語は上限を超えたまま
+    // 送られうる（その場合は PORTERS が 400 で断る）。
     // VERIFY(live): PORTERS が 100 文字を何の単位で数えるか（文字・UTF-16・バイト）は未確認 —
     // docs/live-verification.md (LV-36)。
     if (kw.length > KEYWORDS_MAX_CHARS) {

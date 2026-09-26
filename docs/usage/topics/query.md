@@ -352,7 +352,25 @@ page.start; // 今回の開始インデックス
 
 `searchAll` は「何件目から」でページを辿るので、辿っている途中で条件に合うレコードが減ると（削除・更新で条件から外れるなど）、
 その件数だけ後ろのレコードが前のページへずれ、**取りこぼします**。途中で増えたときは、同じレコードを 2 回受け取ることがあります。
-取りこぼしが困るときは、`P_UpdateDate` などで条件を固定して辿る、辿った後で `total` と受け取った件数を比べる、などで確かめてください。
+取りこぼしは、後から件数を比べても見つけられません（減った後の `total` と、受け取った件数が一致するため）。
+
+辿っている間にレコードが減りうるときは、`searchAll` の代わりに、`P_Id` の昇順で「前のページの最後の `P_Id` より大きいもの」を
+読み続けてください。何件目かではなく `P_Id` で続きを指すので、途中で減っても、残っているレコードは取りこぼしません。
+
+```ts
+let lastId = 0;
+for (;;) {
+  const page = await t.candidate.search({
+    condition: { P_Id: { gt: lastId } },
+    order: [{ P_Id: "asc" }],
+    count: 200,
+  });
+  for (const c of page.items) console.log(c.P_Id);
+  const last = page.items.at(-1)?.P_Id;
+  if (last === undefined || last === null) break;
+  lastId = last;
+}
+```
 
 <!-- 根拠: ADR-0099 -->
 
