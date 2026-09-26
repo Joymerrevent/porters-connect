@@ -4,7 +4,7 @@ import type { Field } from "../resources/field";
 import { CUSTOM_DATA_TYPES } from "./define-fields";
 import { generateFieldDecls } from "./generate-field-decls";
 import { fieldTypeValueOf } from "../porters/field-type";
-import type { FieldCatalogSource } from "./tenant-catalog";
+import type { FieldCatalogSource } from "./read-custom-catalog";
 
 const sourceOf = (
   byResource: Readonly<Record<string, readonly Partial<Field>[]>>,

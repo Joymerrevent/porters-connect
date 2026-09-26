@@ -3,5 +3,5 @@
 
 export * from "./define-fields";
 export * from "./generate-field-decls";
-export * from "./tenant-catalog";
+export * from "./read-custom-catalog";
 export * from "./verify-fields";

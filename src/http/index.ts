@@ -2,7 +2,7 @@
 
 export type * from "./types";
 export * from "./access-point";
-export * from "./insecure-http-warning";
+export * from "./insecure-scheme-warner";
 export * from "./fetch-transport";
 export * from "./mock-transport";
 export * from "./throttle";

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError, PortersResourceError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import { createDataWriter } from "./write-data";
+import { createDataWriter } from "./data-writer";
 import type { FieldCatalog } from "./catalog";
 
 // A synthetic resource exercises the factory in isolation (the concrete catalogs

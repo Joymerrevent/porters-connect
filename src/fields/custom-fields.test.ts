@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import { PortersClient } from "../client";
-import type { PortersClientOptions, TenantScope } from "../client";
+import { PortersClient } from "../porters-client";
+import type { PortersClientOptions, TenantScope } from "../porters-client";
 import { PortersConfigError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { Transport, TransportRequest } from "../http/types";

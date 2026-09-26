@@ -9,8 +9,8 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PortersClient } from "../../src/client";
-import { resetInsecureSchemeWarning } from "../../src/http/insecure-http-warning";
+import { PortersClient } from "../../src/porters-client";
+import { resetInsecureSchemeWarning } from "../../src/http/insecure-scheme-warner";
 import type { UserRef } from "../../src/xml/decode";
 import { startFakeServer, type FakeServer } from "../fake/index";
 

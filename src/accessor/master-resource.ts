@@ -7,7 +7,7 @@ import type { ConnectionDeps } from "./deps";
 import type { FieldCatalog, ReadRecord } from "./catalog";
 import type { Paging } from "./paging";
 import type { ResourcePageOf } from "./read";
-import { createMasterReader, type MasterReadConfig } from "./read-master";
+import { createMasterReader, type MasterReadConfig } from "./master-reader";
 
 // Function-typed properties rather than methods: they close over the config, never `this`, so a
 // caller may take them apart (`const { search } = …`).

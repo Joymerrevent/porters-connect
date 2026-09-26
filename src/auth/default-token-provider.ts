@@ -11,7 +11,7 @@ import {
   type Transport,
 } from "../http/index";
 import { parseAuthentication } from "../xml/parser";
-import { exchangeToken, type TokenGrantType } from "./token-exchange";
+import { exchangeToken, type TokenGrantType } from "./exchange-token";
 import type { StoredTokens, TokenProvider } from "./types";
 
 // PORTERS が Refresh Token を受け付けないときの認証エラー: 401 = 期限切れ、107 = 無効（別のプロセスが先に

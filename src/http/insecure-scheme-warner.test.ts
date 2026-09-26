@@ -9,7 +9,7 @@ import {
   resetInsecureSchemeWarning,
   warnIfInsecureScheme,
   SUPPRESS_INSECURE_HTTP_WARNING_ENV,
-} from "./insecure-http-warning";
+} from "./insecure-scheme-warner";
 
 const spyWarn = () =>
   vi.spyOn(console, "warn").mockImplementation(() => undefined);

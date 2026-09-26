@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError, PortersResourceError } from "../errors";
 import type { Field } from "../resources/field";
 import { defineFields } from "./define-fields";
-import type { FieldCatalogSource } from "./tenant-catalog";
+import type { FieldCatalogSource } from "./read-custom-catalog";
 import { assertFieldsMatch, verifyFields } from "./verify-fields";
 
 // Field Read stub keyed by resource, so a per-resource failure is expressible.

@@ -6,7 +6,7 @@ import type {
   TransportRequest,
   TransportResponse,
 } from "../http/index";
-import { exchangeToken, type TokenExchangeDeps } from "./token-exchange";
+import { exchangeToken, type TokenExchangeDeps } from "./exchange-token";
 
 // `exchangeToken` is reached through two callers (the transparent provider's code_direct grant and
 // the public auth API's browser `code` exchange), so their tests exercise it only along the paths

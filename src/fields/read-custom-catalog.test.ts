@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { Field, FieldSearchQuery } from "../resources/field";
 import type { CustomFieldResource } from "./define-fields";
-import { readCustomCatalog, type FieldCatalogSource } from "./tenant-catalog";
+import {
+  readCustomCatalog,
+  type FieldCatalogSource,
+} from "./read-custom-catalog";
 
 // A Field Read stub. Records the queries it was asked, so the `active` default is testable.
 const sourceOf = (

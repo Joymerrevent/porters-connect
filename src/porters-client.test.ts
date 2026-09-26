@@ -3,14 +3,14 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import { PortersClient } from "./client";
+import { PortersClient } from "./porters-client";
 import type {
   PortersClientOptions,
   TenantOptions,
   TenantScope,
-} from "./client";
+} from "./porters-client";
 import { defineFields, type DeclaredCatalogs } from "./fields";
-import { resetInsecureSchemeWarning } from "./http/insecure-http-warning";
+import { resetInsecureSchemeWarning } from "./http/insecure-scheme-warner";
 import { resetSharedThrottles, sharedThrottleFor } from "./http/throttle";
 import type { Throttle } from "./http/throttle";
 import type { Transport, TransportRequest } from "./http/types";

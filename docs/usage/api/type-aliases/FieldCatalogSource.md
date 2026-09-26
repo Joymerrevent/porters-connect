@@ -8,7 +8,7 @@
 
 > **FieldCatalogSource** = `object`
 
-Defined in: [src/fields/tenant-catalog.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L24)
+Defined in: [src/fields/read-custom-catalog.ts:24](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L24)
 
 The slice of a `tenant(id)` scope this tooling needs. Structural on purpose: pass
 `porters.tenant(1)` and it fits, but a test can hand over just a `field` stub.
@@ -19,7 +19,7 @@ The slice of a `tenant(id)` scope this tooling needs. Structural on purpose: pas
 
 > `readonly` **field**: `object`
 
-Defined in: [src/fields/tenant-catalog.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/tenant-catalog.ts#L25)
+Defined in: [src/fields/read-custom-catalog.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L25)
 
 #### of()
 

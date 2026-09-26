@@ -357,7 +357,7 @@ export class PortersClient {
 }
 `;
   const reader = (source) => (path) => {
-    if (path.endsWith("src/client.ts")) return source;
+    if (path.endsWith("src/porters-client.ts")) return source;
     throw new Error(`想定外の読み取り: ${path}`);
   };
 
@@ -430,7 +430,7 @@ export class PortersClient {
       () => ["candidate.md"],
     );
     expect(problems).toHaveLength(1);
-    expect(problems[0]).toContain("src/client.ts");
+    expect(problems[0]).toContain("src/porters-client.ts");
   });
 });
 
@@ -447,7 +447,7 @@ export class PortersClient {
 }
 `;
   const reader = (source) => (path) => {
-    if (path.endsWith("src/client.ts")) return source;
+    if (path.endsWith("src/porters-client.ts")) return source;
     throw new Error(`想定外の読み取り: ${path}`);
   };
   const PAGES = ["client.md", "auth.md", "tenant-scope.md"];

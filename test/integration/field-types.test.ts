@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { PortersClient } from "../../src/client";
+import { PortersClient } from "../../src/porters-client";
 import { defineFields } from "../../src/fields/define-fields";
 import type { UserRef } from "../../src/xml/decode";
 import { createFakeTransport } from "../fake/index";

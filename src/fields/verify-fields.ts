@@ -18,7 +18,7 @@ import {
   readCustomCatalog,
   type FieldCatalogSource,
   type UndeclarableField,
-} from "./tenant-catalog";
+} from "./read-custom-catalog";
 
 /** Declared, but the tenant has no such field. The read/write request would still ask for it. */
 export type MissingField = {

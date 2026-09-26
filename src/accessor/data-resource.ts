@@ -14,7 +14,7 @@ import type { SearchQuery } from "./query";
 import type { BulkWriteResult } from "./write-many";
 import type { EmptyReferences, Expand, ReferenceMap } from "./expand";
 import type { ImageOption } from "./image";
-import { createDataReader, type DataReadConfig } from "./read-data";
+import { createDataReader, type DataReadConfig } from "./data-reader";
 import type {
   EmptyImages,
   GetOptions,
@@ -22,7 +22,7 @@ import type {
   ReadSelection,
   SearchRecord,
 } from "./read-record";
-import { createDataWriter, type DataWriteConfig } from "./write-data";
+import { createDataWriter, type DataWriteConfig } from "./data-writer";
 import type { CreateInput, UpdateInput } from "./write-record";
 
 /** Static description of a data resource: what its Read half and its Write half need. */

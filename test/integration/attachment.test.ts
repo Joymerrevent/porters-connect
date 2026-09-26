@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { TenantScope } from "../../src/index";
-import { PortersClient } from "../../src/client";
+import { PortersClient } from "../../src/porters-client";
 import { bytesToBase64 } from "../../src/util/base64";
 import { createFakeTransport } from "../fake/index";
 

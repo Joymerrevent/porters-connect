@@ -15,7 +15,7 @@ import {
   type FieldCatalogSource,
   type TenantCustomCatalog,
   type UndeclarableField,
-} from "./tenant-catalog";
+} from "./read-custom-catalog";
 
 /**
  * Which builder method declares each Data Type.
