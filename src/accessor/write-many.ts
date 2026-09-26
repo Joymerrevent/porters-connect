@@ -10,7 +10,7 @@ import {
   PortersError,
   PortersResourceError,
 } from "../errors";
-import type { Requester } from "../http/requester";
+import { neverSent, type Requester } from "../http/requester";
 import { MAX_REQUEST_LENGTH } from "../porters/request";
 import { MAX_WRITE_ITEMS } from "../porters/write-rules";
 import type { DataType } from "../porters/data-type";
@@ -28,7 +28,10 @@ export type BulkWriteResultItem = {
   index: number;
   /** Assigned (create) / echoed (update) record id. Meaningful only when `ok`. */
   id: number;
-  /** PORTERS per-item Result Code (`0` = success). */
+  /**
+   * PORTERS per-item Result Code (`0` = success). For `createMany`, a `302` (transaction error) does
+   * not say whether the record was created: check whether it exists before resending it.
+   */
   code: number;
   /** `code === 0`. */
   ok: boolean;
@@ -101,6 +104,8 @@ const knownNotWritten = (cause: unknown): boolean => {
   // 型を絞るための判定。PortersError でない値では下の判定がすべて偽になるので、外しても同じ動きになる。
   // Stryker disable next-line ConditionalExpression: equivalent — a non-PortersError fails every check below
   if (!(cause instanceof PortersError)) return false;
+  // 一度も送らずに失敗した（トークンの取得の失敗など）なら、書き込まれていない（RV-131）。
+  if (neverSent(cause)) return true;
   if (REFUSED_CATEGORIES.has(cause.category) || cause.code === 9) return true;
   // HTTP のステータスで決めるのは、PORTERS の封筒（Result Code）が無いときだけ。封筒の Code は
   // ステータスより優先する（read-response と同じ方針）。4xx に載った Code 1000 を「書き込まれていない」と
@@ -151,7 +156,7 @@ const batchFailure = (
   const failedBatch = at.unknownOutcome
     ? `The ${range} may have been written before the failure: check whether they exist before resending them.`
     : at.idempotent
-      ? `The ${range} failed; updates can be resent as they are.`
+      ? `The ${range} failed.`
       : `The ${range} were not written.`;
   const notSent =
     at.last + 1 < at.total
@@ -174,7 +179,11 @@ const batchFailure = (
         failedBatch,
         notSent,
         earlier,
-        "Resend only the records that were not written.",
+        // update は id 指定で冪等なので、失敗したバッチもそのまま送り直してよい。create と同じ
+        // 「書き込まれなかったものだけ」の言い方だと、失敗したバッチを送ってよいのかが読み取りにくい（RV-129）。
+        at.idempotent
+          ? "Updates can be resent as they are: resend the failed batch, the records not sent, and any earlier record that failed."
+          : "Resend only the records that were not written.",
       ]
         .filter((part) => part !== undefined)
         .join(" "),

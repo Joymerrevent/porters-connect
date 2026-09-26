@@ -11,6 +11,7 @@ import {
 import {
   asUnknownOutcome,
   createRequester,
+  neverSent,
   recoveryFor,
   type AttemptState,
 } from "./requester";
@@ -931,5 +932,90 @@ describe("asUnknownOutcome", () => {
       retryable: false,
       cause: original,
     });
+  });
+});
+
+// 一度も送らずに失敗したエラーにだけ印を付ける（一括書き込みが「書き込まれていない」と判断する材料。RV-131）。
+describe("neverSent", () => {
+  const req = {
+    method: "POST" as const,
+    url: "https://h.test/v1/x",
+    headers: {},
+    body: "<X/>",
+  };
+  const build = (
+    getAccessToken: () => Promise<string>,
+    send: () => Promise<{ status: number; body: string }>,
+    maxRetries = 0,
+  ) =>
+    createRequester({
+      transport: { send },
+      auth: { getAccessToken },
+      throttle: { take: () => Promise.resolve() },
+      backoff: () => 0,
+      maxRetries,
+    });
+
+  it("marks a failure to obtain the token", async () => {
+    const down = new PortersNetworkError("token", { category: "network" });
+    const e = await build(
+      () => Promise.reject(down),
+      () => Promise.reject(new Error("never called")),
+    )
+      .request(req, (b) => b, { write: true, idempotent: false })
+      .catch((x: unknown) => x);
+    expect(e).toBe(down);
+    expect(neverSent(e)).toBe(true);
+  });
+
+  it("does not mark a failure after the request was sent", async () => {
+    const e = await build(
+      () => Promise.resolve("T"),
+      () =>
+        Promise.reject(
+          new PortersNetworkError("reset", {
+            category: "network",
+            retryable: true,
+          }),
+        ),
+    )
+      .request(req, (b) => b, { write: true, idempotent: true })
+      .catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(PortersNetworkError);
+    expect(neverSent(e)).toBe(false);
+  });
+
+  it("does not mark a token failure on a retry after an earlier attempt was sent", async () => {
+    let tokens = 0;
+    const down = new PortersNetworkError("token", { category: "network" });
+    const e = await build(
+      () => (++tokens === 1 ? Promise.resolve("T") : Promise.reject(down)),
+      () =>
+        Promise.reject(
+          new PortersNetworkError("reset", {
+            category: "network",
+            retryable: true,
+          }),
+        ),
+      1,
+    )
+      .request(req, (b) => b, { write: true, idempotent: true })
+      .catch((x: unknown) => x);
+    expect(e).toBe(down);
+    expect(neverSent(e)).toBe(false);
+  });
+
+  it("marks a thrown non-PortersError too, and ignores values that are not objects", async () => {
+    const odd = new TypeError("provider bug");
+    const e = await build(
+      () => Promise.reject(odd),
+      () => Promise.reject(new Error("never called")),
+    )
+      .request(req, (b) => b)
+      .catch((x: unknown) => x);
+    expect(e).toBe(odd);
+    expect(neverSent(e)).toBe(true);
+    expect(neverSent("text")).toBe(false);
+    expect(neverSent(null)).toBe(false);
   });
 });

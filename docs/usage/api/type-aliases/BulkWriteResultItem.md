@@ -18,9 +18,10 @@ One record's outcome from a bulk write, in the position it was sent.
 
 > **code**: `number`
 
-Defined in: [src/accessor/write-many.ts:32](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L32)
+Defined in: [src/accessor/write-many.ts:35](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L35)
 
-PORTERS per-item Result Code (`0` = success).
+PORTERS per-item Result Code (`0` = success). For `createMany`, a `302` (transaction error) does
+not say whether the record was created: check whether it exists before resending it.
 
 ***
 
@@ -48,6 +49,6 @@ Defined in: [src/accessor/write-many.ts:28](https://github.com/Joymerrevent/port
 
 > **ok**: `boolean`
 
-Defined in: [src/accessor/write-many.ts:34](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L34)
+Defined in: [src/accessor/write-many.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L37)
 
 `code === 0`.
