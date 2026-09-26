@@ -30,9 +30,11 @@ token-bucket が容量いっぱい（上限 × 安全率）から始まり、同
 
 **実施（2026-09-26・fix/http-auth-review・`5a2fc61`）。** [ADR-0102][adr102] の案A で、`src/http/throttle.ts` を「直近 60 秒に通した時刻を覚え、容量に達したら、いちばん古い時刻から 60 秒たつまで待つ」形にした。容量・設定・既定値は変えていない。
 
+**追加の修正（2026-09-26・`745b74a`）。** 再レビューで、スロットルをトークンの取得より前に数えていたため、起動直後は数えた時刻と PORTERS に届く時刻がずれ、届いた時刻で見て 60 秒に上限の 2 倍が届きうると分かった。スロットルの待ちを、トークンを取得した後の送る直前に移した。
+
 ## 検証
 
-`src/http/throttle.test.ts` の「never lets more than the capacity through in any 60 seconds」が、休まず呼び続けたときの時刻の列で、どの 60 秒でも容量以下で、容量ぶんは最初に・次はちょうど 60 秒後に通ることを確かめる。`throttle.ts` のミューテーションはすべて検出。
+`src/http/throttle.test.ts` の「never lets more than the capacity through in any 60 seconds」が、休まず呼び続けたときの時刻の列で、どの 60 秒でも容量以下で、容量ぶんは最初に・次はちょうど 60 秒後に通ることを確かめる。`throttle.ts` のミューテーションはすべて検出。`requester.test.ts` の「takes the throttle slot after the token is in hand」が順番を確かめる。起動直後に Read を 3600 件同時に投げ、トークンの取得に 500ms かかる試験で、届いた時刻で見て 60 秒あたりの最大が、直す前は 3600 件、直した後は 1800 件以下になった。
 
 [adr10]: ../../adr/0010-retry-throttle.md
 [adr102]: ../../adr/0102-throttle-any-minute-window.md

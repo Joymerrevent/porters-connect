@@ -134,6 +134,12 @@
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
 | [RV-118][rv118] | 🟢     | テスト厳密性                    | open    | 新規必須の突き合わせにテストが無い                                                                   |
 | [RV-119][rv119] | 🟢     | ドキュメント                    | open    | 実装と合わないコメント 4 か所                                                                        |
+| [RV-120][rv120] | 🟢     | エラーモデル / DX               | open    | 3xx のエラーの hint が一般的                                                                         |
+| [RV-121][rv121] | 🟢     | 認証                            | open    | 読み込み中の cache() が上書きされる                                                                  |
+| [RV-122][rv122] | 🟢     | エラーモデル                    | open    | asUnknownOutcome がクラスを変えうる                                                                  |
+| [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
+| [RV-124][rv124] | 🟢     | 性能                            | open    | スロットルの shift が容量に比例                                                                      |
+| [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -261,3 +267,9 @@
 [rv117]: rv/0117-public-constraint-types-unexported.md
 [rv118]: rv/0118-required-on-create-untested.md
 [rv119]: rv/0119-stale-comments-2026-09-26.md
+[rv120]: rv/0120-redirect-hint-generic.md
+[rv121]: rv/0121-token-cache-during-load-overwritten.md
+[rv122]: rv/0122-unknown-outcome-rewraps-base-error.md
+[rv123]: rv/0123-create-nonretryable-unknown-without-hint.md
+[rv124]: rv/0124-throttle-window-shift-linear.md
+[rv125]: rv/0125-create-many-per-record-302-no-guidance.md
