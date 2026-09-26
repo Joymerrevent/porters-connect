@@ -15,6 +15,10 @@
 > 再検討され、**`itemstate: "existing"` を明示したらそのまま送る**ようになった（省略＝API の既定に委ねる、と
 > 明示＝生存のみを要求する、を別の意思表示として扱う）。SD-4 以外は不変。
 >
+> **Amended by [ADR-0105][0105]（2026-09-26）**: **SD-8** の前提（値の中のエンコードは URLSearchParams に任せる）が
+> 成り立たないと分かった（区切りのカンマと値の中のカンマが同じ `%2C` になる。[RV-68][rv68]）。区切り文字を含む値は、
+> 送る前に拒否するよう改めた。SD-8 以外は不変。
+>
 > 公開型 `condition` の loose→typed は破壊的変更で、pre-1.0 ゆえ semver minor（`0.3.0` → `0.4.0`）として実装 PR で出す。
 >
 > **Amended by [ADR-0099][0099]（2026-09-25）**: 公開の検索クエリ `SearchQuery` から `count` / `start` を外し、ページ送りを
@@ -181,3 +185,5 @@ reference が定める事実（要点）:
 [adr]: README.md
 [0057]: 0057-itemstate-existing-explicit.md
 [0099]: 0099-search-query-without-paging.md
+[0105]: 0105-reject-delimiters-in-query-values.md
+[rv68]: ../reviews/rv/0068-condition-comma-injects-and.md

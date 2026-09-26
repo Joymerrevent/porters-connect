@@ -115,6 +115,10 @@
 | [0099][0099] | 検索クエリの型からページ送りを外し、`Paging` / `Limit` を足す      | 詳細設計 | accepted           | —      |
 | [0100][0100] | リソースの公開の型は、各リソースのファイルでメソッドを書き出す     | 基本設計 | accepted           | —      |
 | [0101][0101] | 共通の仕組みを `src/accessor/` に出し、`create` を任意にする       | 基本設計 | accepted           | —      |
+| [0102][0102] | スロットルを、どの 1 分間でも上限を超えない形にする                | 詳細設計 | accepted           | —      |
+| [0103][0103] | `create` の Code 302 は自動で再送しない                            | 詳細設計 | accepted           | —      |
+| [0104][0104] | 宣言できない項目の宣言で `verifyFields` の `ok` を倒す             | 詳細設計 | accepted           | —      |
+| [0105][0105] | 検索の値の区切り文字は送る前に拒否する                             | 詳細設計 | accepted           | —      |
 
 [readme]: README.md
 [changelog]: ../../CHANGELOG.md
@@ -220,3 +224,7 @@
 [0099]: 0099-search-query-without-paging.md
 [0100]: 0100-expand-resource-types.md
 [0101]: 0101-accessor-layer-and-file-names.md
+[0102]: 0102-throttle-any-minute-window.md
+[0103]: 0103-create-code-302-not-retried.md
+[0104]: 0104-verify-fields-declared-undeclarable.md
+[0105]: 0105-reject-delimiters-in-query-values.md
