@@ -4,10 +4,17 @@
 
 [@joymerrevent/porters-connect](../index.md) / RecruiterUpdateInput
 
-# Type Alias: RecruiterUpdateInput
+# Type Alias: RecruiterUpdateInput\<C\>
 
-> **RecruiterUpdateInput** = `UpdateInput`\<*typeof* `FIELDS`\>
+> **RecruiterUpdateInput**\<`C`\> = `UpdateInput`\<*typeof* `FIELDS` & `C`\>
 
-Defined in: [src/resources/recruiter.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L99)
+Defined in: [src/resources/recruiter.ts:118](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L118)
 
-Fields for `update`: all optional (`null` omits, `""` clears a text field).
+Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+declared custom-field catalog merged on.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`

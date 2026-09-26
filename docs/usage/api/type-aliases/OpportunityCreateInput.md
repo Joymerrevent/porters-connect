@@ -4,10 +4,22 @@
 
 [@joymerrevent/porters-connect](../index.md) / OpportunityCreateInput
 
-# Type Alias: OpportunityCreateInput
+# Type Alias: OpportunityCreateInput\<C, CR\>
 
-> **OpportunityCreateInput** = `CreateInput`\<*typeof* `FIELDS`, *typeof* `REQUIRED_ON_CREATE`\[`number`\]\>
+> **OpportunityCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/opportunity.ts:82](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L82)
+Defined in: [src/resources/opportunity.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/opportunity.ts#L98)
 
 Fields for `create`: owner and both references required; `P_Id` / timestamps are not settable.
+`C` is the declared custom-field catalog merged on; `CR` names the custom fields that are
+required on `create`.
+
+## Type Parameters
+
+### C
+
+`C` *extends* `FieldCatalog` = `EmptyCatalog`
+
+### CR
+
+`CR` *extends* keyof `C` = `never`

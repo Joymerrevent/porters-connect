@@ -101,6 +101,23 @@
   `DataResource` / `MasterResource` の扱い、揃っていることを確かめる型のテスト、API リファレンスの生成し直し。
 - 順番: [ADR-0096][adr96]（`field` で戻り値の型を絞る）の実装の**後**に行う。ADR-0096 は `search` / `searchAll` / `get` /
   `getMany` の型を変えるので、共通の型 1 か所で変えてから書き出せば、変更は 1 回で済む（先に書き出すと 12 か所になる）。
+- **実装時の補足（2026-09-25）**:
+  1. 宣言が違うスコープを取り違えないための型だけの印（[ADR-0096][adr96] の実装で足したメソッド）は、各リソースの型の
+     **メンバーとして**置く。`{ 印 } & { search … }` のような交差型にすると、`TenantScope<DeclaredCatalogs>` が宣言した
+     スコープを受けなくなった（型引数の比べ方が変わるため。`client.test.ts` の型のテストが見つけた）。
+  2. `DataResource` は factory が返す実装の型として残し、型の引数から `Unsupported` / `Bound` を外した。Phase の違い
+     （受けないクエリのキー・束ねる項目）は `PhaseResource` の中で直接書く。`MasterResource` はもともと公開の型に
+     使っていなかったので変えていない。
+  3. 各 factory（`createCandidateResource` など）は、`createDataResource` の戻り値を書き出した型へ `as` で付け替える。
+     宣言した項目 `C` が型引数のままだと、2 つの型が同じだとコンパイラが示しきれないため。同じであることは型のテスト
+     （`src/resources/data-resource-shapes.test.ts`）が、宣言が無いときと、宣言した項目（必須の項目を含む）を足したときの
+     両方で確かめる。1 リソースの書き出しをわざと崩すとそのリソースの行が、共通の型を変えると 11 種すべてと Phase の
+     共通のメソッドの行が落ちることを確かめた。
+  4. API リファレンスに印が「Internal」として載らないよう、typedoc の `excludeInternal` を有効にした。引数や戻り値に
+     使う共通の部品（`SearchRecord` / `GetRecord` / `ReadSelection` / `GetOptions` と、各ファイルの `Fields` /
+     `RequiredOnCreate`）は公開していないので、typedoc の警告（公開していない型への参照）は 61 件から 89 件に増えた
+     （[ADR-0068][adr68] の決定4 のとおり、警告のまま生成する）。
 
 [adr19]: 0019-static-resource-types.md
+[adr68]: 0068-api-reference-tooling.md
 [adr96]: 0096-narrow-record-type-by-field.md

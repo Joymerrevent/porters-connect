@@ -3,14 +3,17 @@ import { describe, expectTypeOf, it } from "vitest";
 import type { DepartmentRef, UserRef } from "../xml/decode";
 import type {
   Candidate,
+  CANDIDATE_DESCRIPTOR,
   CandidateCreateInput,
+  CandidateResource,
   CandidateSearchQuery,
   CandidateUpdateInput,
 } from "./candidate";
 import type { JobResource, JobSearchQuery } from "./job";
 import type { PhaseResource } from "./phase";
 import type { ProcessCreateInput } from "./process";
-import type { ItemState } from "./core/query";
+import type { ItemState, SearchQuery } from "./core/query";
+import type { CreateInput, UpdateInput } from "./core/data-resource";
 
 // The Read shapes a Job accessor resolves to, at three levels of expansion. `declare` keeps these
 // purely type-level: nothing is constructed or called at runtime. The `_` prefix says so — they
@@ -313,6 +316,76 @@ describe("Phase の Read クエリ（ADR-0076）", () => {
     >();
     expectTypeOf<JobSearchQuery["itemstate"]>().toEqualTypeOf<
       ItemState | undefined
+    >();
+  });
+});
+
+// 各リソースの検索クエリの型は、宣言した項目を型引数で受ける（ADR-0100 の書き出しで、メソッドの引数にも使う）。
+describe("…SearchQuery<C>: 宣言した項目を足したクエリ", () => {
+  type Declared = { U_score: "Number" };
+
+  it("型引数を省くと、標準の項目だけのクエリ（今までと同じ型）", () => {
+    expectTypeOf<CandidateSearchQuery>().toEqualTypeOf<
+      SearchQuery<(typeof CANDIDATE_DESCRIPTOR)["fields"]>
+    >();
+  });
+
+  it("宣言した項目で condition / order を書ける", () => {
+    const q: CandidateSearchQuery<Declared> = {
+      condition: { U_score: { ge: 80 } },
+      order: [{ U_score: "desc" }],
+    };
+    const wrong: CandidateSearchQuery<Declared> = {
+      // @ts-expect-error — 宣言していない項目は書けない
+      order: [{ U_memo: "asc" }],
+    };
+    expectTypeOf([q, wrong]).toBeArray();
+  });
+
+  it("アクセサの search / searchAll が受けるクエリそのもの", () => {
+    type Query = NonNullable<
+      Parameters<CandidateResource<Declared>["searchAll"]>[0]
+    >;
+    expectTypeOf<Query["condition"]>().toEqualTypeOf<
+      CandidateSearchQuery<Declared>["condition"]
+    >();
+  });
+});
+
+// 書き込みの入力の型も、宣言した項目を型引数で受ける（検索クエリと揃える）。
+describe("…CreateInput<C, CR> / …UpdateInput<C>: 宣言した項目を足した入力", () => {
+  type Declared = { U_score: "Number"; U_memo: "MultilineText" };
+  type Fields = (typeof CANDIDATE_DESCRIPTOR)["fields"];
+
+  it("型引数を省くと、標準の項目だけの入力（今までと同じ型）", () => {
+    expectTypeOf<CandidateCreateInput>().toEqualTypeOf<
+      CreateInput<Fields, "P_Owner">
+    >();
+    expectTypeOf<CandidateUpdateInput>().toEqualTypeOf<UpdateInput<Fields>>();
+  });
+
+  it("宣言した項目を書ける。CR に挙げた項目は create で必須になる", () => {
+    const create: CandidateCreateInput<Declared, "U_score"> = {
+      P_Owner: 1,
+      U_score: 80,
+    };
+    // @ts-expect-error — U_score is required on create
+    const missing: CandidateCreateInput<Declared, "U_score"> = { P_Owner: 1 };
+    const update: CandidateUpdateInput<Declared> = { U_memo: "note" };
+    const wrong: CandidateUpdateInput<Declared> = {
+      // @ts-expect-error — the declared Data Type is Number
+      U_score: "80",
+    };
+    expectTypeOf([create, missing, update, wrong]).toBeArray();
+  });
+
+  it("アクセサの create / update が受ける入力そのもの", () => {
+    type R = CandidateResource<Declared, "U_score">;
+    expectTypeOf<Parameters<R["create"]>[0]>().toEqualTypeOf<
+      CandidateCreateInput<Declared, "U_score">
+    >();
+    expectTypeOf<Parameters<R["update"]>[1]>().toEqualTypeOf<
+      CandidateUpdateInput<Declared>
     >();
   });
 });

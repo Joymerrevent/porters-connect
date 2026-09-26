@@ -352,6 +352,32 @@ for await (const c of t.candidate.searchAll(query)) {
 
 クエリの変数に `count` / `start` も入れておきたいときは、型を `CandidateSearchQuery & Paging` にします。
 
+宣言したカスタム項目も `condition` や `order` に書くときは、`CandidateSearchQuery` の型引数に、宣言から取り出した
+その 1 リソース分の項目を渡します。取り出すには [`CustomFor`][t-CustomFor] を使います。
+
+```ts
+import { defineFields } from "@joymerrevent/porters-connect";
+import type {
+  CandidateSearchQuery,
+  CustomFor,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+type CandidateCustom = CustomFor<typeof fields, "candidate">;
+
+const highScore: CandidateSearchQuery<CandidateCustom> = {
+  condition: { U_score: { ge: 80 } },
+  order: [{ U_score: "desc" }],
+};
+
+const scope = porters.tenant(123, { fields });
+for await (const c of scope.candidate.searchAll(highScore)) {
+  console.log(c.P_Id);
+}
+```
+
 ## `get` / `getMany` — ID で読む
 
 ID が分かっているレコードは、`get`（1 件）か `getMany`（複数）で読みます。どちらも `field` / `expand` / `image` を
@@ -454,5 +480,6 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [resources]: ../resources/README.md
 [sync-batch]: ../recipes/sync-batch.md
 [t-Paging]: ../api/type-aliases/Paging.md
+[t-CustomFor]: ../api/type-aliases/CustomFor.md
 [t-Limit]: ../api/type-aliases/Limit.md
 [f-rawValue]: ../api/functions/rawValue.md

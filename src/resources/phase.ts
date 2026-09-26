@@ -23,16 +23,27 @@
 
 import {
   createDataResource,
+  type catalogMark,
   type CreateInput,
-  type DataResource,
+  type EmptyImages,
+  type GetOptions,
+  type GetRecord,
+  type ReadSelection,
+  type SearchRecord,
   type UpdateInput,
+  type Without,
 } from "./core/data-resource";
-import type { EmptyReferences } from "./core/expand";
+import type { EmptyReferences, Expand } from "./core/expand";
+import type { ImageOption } from "./core/image";
+import type { BulkWriteResult } from "./core/bulk-write";
 import type {
   FieldCatalog,
+  Paging,
+  ReadFieldAlias,
   ReadRecord,
   ResourceDeps,
   ResourcePage,
+  ResourcePageOf,
 } from "./core/read";
 import type { SearchQuery } from "./core/query";
 import type { ResourceDescriptor } from "./core/descriptor";
@@ -115,19 +126,114 @@ export type PhaseCreateInput = CreateInput<
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type PhaseUpdateInput = UpdateInput<typeof FIELDS>;
 
-// keywords / itemstate を外すのは ADR-0076、write 入力から Resource を外すのは RV-47。
+// 書き込みの入力から外す、of() で束ねた項目（ADR-0061。型で塞ぐ経緯は RV-47）。
+type PhaseBound = "Resource";
+
+// メソッドはこのファイルで書き出す（ADR-0100）。ほかのデータ系と違うのは、検索が keywords / itemstate を
+// 受けないこと（ADR-0076）と、書き込みの入力が Resource を受けないこと（RV-47）の 2 つだけ。
+// 違いの無いメソッドが揃っていることは data-resource-shapes.test.ts が確かめる。
 /**
  * The Phase accessor for one bound resource — the same shape as every other resource, except that
  * `search` / `searchAll` do not take `keywords` / `itemstate` and the write inputs do
  * not take `Resource`: `of()` binds it, and supplying it again could only contradict the binding.
  */
-export type PhaseResource = DataResource<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number],
-  EmptyReferences,
-  PhaseUnsupportedQuery,
-  "Resource"
->;
+export type PhaseResource = {
+  /** @internal Type-level mark of the field catalog; never present at runtime. */
+  [catalogMark]?(field: ReadFieldAlias<typeof FIELDS>): void;
+  /**
+   * Search the Phase history of the bound resource: resolves to one page of the entries matching
+   * `query`. `field` picks the fields to read (omit it to read every known field), and
+   * `count` / `start` choose the page. `keywords` / `itemstate` are not taken.
+   */
+  search<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<typeof FIELDS> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<typeof FIELDS>[] | undefined =
+      undefined,
+  >(
+    query?: PhaseSearchQuery & Paging & ReadSelection<FL, E, I>,
+  ): Promise<
+    ResourcePageOf<SearchRecord<typeof FIELDS, EmptyReferences, E, I, FL>>
+  >;
+  /**
+   * Search every Phase entry of the bound resource matching `query`, page after page (200 entries
+   * per request). Takes the same `field` as `search`.
+   */
+  searchAll<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<typeof FIELDS> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<typeof FIELDS>[] | undefined =
+      undefined,
+  >(
+    query?: PhaseSearchQuery & ReadSelection<FL, E, I>,
+  ): AsyncIterable<SearchRecord<typeof FIELDS, EmptyReferences, E, I, FL>>;
+  /**
+   * Read one Phase entry by id; `undefined` when there is none. `field` picks the fields to read,
+   * the same way it does for `search` (omit it to read every known field); the entry's `Id` is
+   * always read, even when `field` leaves it out.
+   */
+  get<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<typeof FIELDS> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<typeof FIELDS>[] | undefined =
+      undefined,
+  >(
+    id: number,
+    options?: GetOptions<typeof FIELDS, FL, E, I>,
+  ): Promise<GetRecord<typeof FIELDS, EmptyReferences, E, I, FL> | undefined>;
+  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+  /**
+   * Read many Phase entries by id. Resolves to an array in the order of `ids`, holding
+   * `undefined` where no entry has that id — the same answer `get` gives for one id. A repeated
+   * id gets the same entry at each of its positions; an empty `ids` sends no request.
+   *
+   * The ids are sent together (up to 200 per request, and as many as fit under the request size
+   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
+   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
+   *
+   * Every entry that comes back is checked against the ids that were asked for. If PORTERS
+   * returns one that was not requested, the call rejects instead of returning it.
+   */
+  getMany<
+    const E extends Expand<EmptyReferences> = EmptyReferences,
+    const I extends ImageOption<typeof FIELDS> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<typeof FIELDS>[] | undefined =
+      undefined,
+  >(
+    ids: readonly number[],
+    options?: GetOptions<typeof FIELDS, FL, E, I>,
+  ): Promise<
+    (GetRecord<typeof FIELDS, EmptyReferences, E, I, FL> | undefined)[]
+  >;
+  /**
+   * Create one Phase entry for the bound resource; resolves to the newly assigned id. `Resource`
+   * is filled from the binding and cannot be supplied.
+   */
+  create(input: Without<PhaseCreateInput, PhaseBound>): Promise<number>;
+  /** Update one Phase entry by id; resolves to that id. `Resource` cannot be supplied. */
+  update(
+    id: number,
+    input: Without<PhaseUpdateInput, PhaseBound>,
+  ): Promise<number>;
+  // 一括書き込みの設計は ADR-0041 / F-4。
+  /**
+   * Create many Phase entries in one call. Auto-batched to ≤200 entries and under the request
+   * size cap. **Not atomic** — inspect the `BulkWriteResult`: per-entry failures are returned
+   * (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
+   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
+   * duplicate creates. Empty input sends no request.
+   */
+  createMany(
+    inputs: Without<PhaseCreateInput, PhaseBound>[],
+  ): Promise<BulkWriteResult>;
+  /**
+   * Update many Phase entries by id in one call. Auto-batched like `createMany`; per-entry
+   * failures are returned in the `BulkWriteResult`, not thrown.
+   */
+  updateMany(
+    items: { id: number; fields: Without<PhaseUpdateInput, PhaseBound> }[],
+  ): Promise<BulkWriteResult>;
+};
 
 // of(resource) で束ねる形は ADR-0061 案2a、名前を文字列 union にするのは同 案5b。
 /**
