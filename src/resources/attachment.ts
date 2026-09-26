@@ -20,7 +20,8 @@ import { paginateOnce } from "../accessor/paginate";
 import { runRead } from "../accessor/run-read";
 import { assertRecordId } from "../accessor/assert-record-id";
 import { recordsById } from "../accessor/read-many";
-import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
+import type { ResourceName } from "../porters/resource-list";
+import { resourceValueFor } from "../accessor/resource-value-for";
 import type { Paging } from "../accessor/paging";
 import type { PartitionBoundConnectionDeps } from "../accessor/deps";
 import { buildWriteUrl } from "../accessor/build-write-url";
@@ -250,7 +251,7 @@ export const createAttachmentAccessor = (
     // One binding, two places PORTERS wants it: `resource=` on every Read and the `<Resource>`
     // field on write (ADR-0080). Neither can be forgotten, and neither can be contradicted —
     // the write input has no `resource` at all.
-    const resource = RESOURCE_VALUES[resourceName];
+    const resource = resourceValueFor("attachment", resourceName);
 
     const read = (params: ReadParams): Promise<AttachmentPage> =>
       runRead(

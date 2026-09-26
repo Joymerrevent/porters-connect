@@ -154,3 +154,14 @@ describe("ResourceType (Field Read's resource selector)", () => {
     expect(Object.keys(RESOURCE_VALUES)).toHaveLength(11);
   });
 });
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createFieldAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createFieldAccessor({
+      requester: stub([TWO], []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('field.of: unknown resource "user"');
+});

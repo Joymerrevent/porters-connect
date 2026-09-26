@@ -8,6 +8,6 @@
 
 > **Field** = `ReadRecord`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/field.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L60)
+Defined in: [src/resources/field.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L61)
 
 A decoded Field definition. `P_Required`: 0 = normal, 1 = required.

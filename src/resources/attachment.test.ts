@@ -497,3 +497,14 @@ describe("createAttachmentAccessor — the values create / update send", () => {
     expect(calls).toHaveLength(1);
   });
 });
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createAttachmentAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createAttachmentAccessor({
+      requester: stub("", []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('attachment.of: unknown resource "user"');
+});

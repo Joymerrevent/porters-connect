@@ -261,3 +261,14 @@ describe("createPhaseAccessor — write", () => {
     expect(url.searchParams.get("resource")).toBe("5");
   });
 });
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createPhaseAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createPhaseAccessor({
+      requester: stub("", []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('phase.of: unknown resource "user"');
+});

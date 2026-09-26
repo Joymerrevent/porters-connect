@@ -8,7 +8,7 @@
 
 > **FieldAccessor** = `object`
 
-Defined in: [src/resources/field.ts:90](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L90)
+Defined in: [src/resources/field.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L91)
 
 Field Read is reached through the resource whose catalog you want:
 
@@ -27,7 +27,7 @@ it once means it cannot be forgotten or contradicted.
 
 > **of**(`resource`): [`FieldResource`](FieldResource.md)
 
-Defined in: [src/resources/field.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L91)
+Defined in: [src/resources/field.ts:92](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/field.ts#L92)
 
 #### Parameters
 
