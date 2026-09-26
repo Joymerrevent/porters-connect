@@ -209,6 +209,16 @@ PORTERS が効かない条件をエラーで返すなら、利用者はエラー
 - reference（`docs/usage/reference/resource-api/README.md`）の「Phase の Id は `or` も可」は、出典の記述が割れていることが
   分かるように書き直す（実装 PR と同じか、その前の docs の PR）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+- `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/bulk-write.ts` → `src/resources/core/write-many.ts`（2026-09-25 に `core/bulk-write.ts` へ移し（ADR-0097）、2026-09-26 に名前を変えた）
+
 [adr5]: 0005-public-api-shape.md
 [adr20]: 0020-read-field-default.md
 [adr38]: 0038-read-query-surface-impl.md

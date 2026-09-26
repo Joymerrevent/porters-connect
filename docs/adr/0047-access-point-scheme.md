@@ -120,6 +120,14 @@
 - 関連: [ADR-0009][adr9]（Transport seam。汎用ネットワーク要件はこちらに委ねる）／
   [ADR-0005][adr5]（公開 API の形）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/guide` → ガイドは 2026-09-11 に `docs/howto/` / `docs/concepts/` へ分け（ADR-0070）、いまは主に `docs/usage/topics/` にある（ADR-0071 / ADR-0088）
+
 [fake-plan]: ../design/fake-server-plan.md
 [adr5]: 0005-public-api-shape.md
 [adr9]: 0009-http-transport.md

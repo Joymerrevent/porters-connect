@@ -158,6 +158,16 @@ allowlist か独自 Data Type が要り、どちらも上記の理由で採ら�
   `docs/usage/concepts/aliases.md`（**パラメータは名前・項目の値は数値**という規則と、
   例を関数で書く形に）、CHANGELOG（minor・**追加のみ**）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource-list.ts` → `src/porters/resource-list.ts`（2026-09-25・ADR-0098）
+- `docs/usage/howto/attachments.md` → `docs/usage/resources/attachment.md`（2026-09-23・ADR-0088）
+- `docs/usage/concepts/aliases.md` → `docs/usage/topics/fields.md`（2026-09-23・ADR-0088）
+
 [adr61]: 0061-phase-resource-surface.md
 [adr22]: 0022-master-read-query-surface.md
 [adr18]: 0018-attachment-design.md

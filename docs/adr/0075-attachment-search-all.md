@@ -240,6 +240,15 @@ Attachment の項目は出典の一覧で 6 つ（`Id` / `Resource` / `ResourceI
   co-located テスト、`docs/usage/index.md` の表、`docs/usage/howto/attachments.md`、
   マトリクスの表 D、[RV-45][rv45] の処置、CHANGELOG（**Breaking**）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `docs/usage/howto/attachments.md` → `docs/usage/resources/attachment.md`（2026-09-23・ADR-0088）
+
 [coverage]: ../design/endpoint-coverage.md
 [rv45]: ../reviews/rv/0045-attachment-search-all-absent.md
 [lv]: ../live-verification.md

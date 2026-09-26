@@ -189,6 +189,15 @@ if (q.itemstate !== undefined) p.set("itemstate", q.itemstate);
   「将来ポーターズの仕様が変わった場合に `existing` 指定しているのに `existing` にならないのは
   問題になる。指定されたら送った方が安全ではないか」と問われて論点化した（2026-08-22）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/query.test.ts` → `src/resources/core/query-encode.test.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に組み立てのテストとして分けた）
+
 [adr16]: 0016-field-type-granularity.md
 [adr38]: 0038-read-query-surface-impl.md
 [adr56]: 0056-deleted-flag-typing.md

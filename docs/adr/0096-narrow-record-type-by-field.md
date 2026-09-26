@@ -157,6 +157,15 @@ c.P_Mail; // 型 string | null | undefined → 読んでいないので必ず un
 - 実機で確かめたい点（「空の項目のタグが出るか」「`field` に主キーが無いとき主キーが返るか」）は、実装 PR で
   live-verification に足す。案1c に進むかの判断材料になる。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+
 [adr5]: 0005-public-api-shape.md
 [adr20]: 0020-read-field-default.md
 [adr59]: 0059-read-field-bare-alias.md

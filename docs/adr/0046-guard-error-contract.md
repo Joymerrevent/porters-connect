@@ -126,6 +126,15 @@
 - **その後**: 本文の例にある `porters.candidate.*` は、[ADR-0055][adr55] 以降 `porters.tenant(id).candidate.*`
   （partition は `tenant(id)` で一度だけ束ねる）。同期 throw と reject の契約そのものは変わらない。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/resource.ts` → データ系の factory は `src/resources/core/data-resource.ts`（読み込みは `core/read-data.ts`、書き込みは `core/write-data.ts`）、`ResourceDescriptor` は `core/descriptor.ts`、書き込みの URL と結果の読み取りは `core/write.ts`、マスタは `core/master-resource.ts` / `core/read-master.ts`（2026-09-25 に `core/` へ移して分け（ADR-0097）、2026-09-26 にさらに分けた）
+- `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+
 [findings]: ../reviews/findings.md
 [guide]: ../usage/topics/errors.md
 [adr5]: 0005-public-api-shape.md

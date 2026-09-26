@@ -252,6 +252,14 @@ type TokenProvider = {
 - 実装は accepted 後・別 PR（管理の部分の切り出し・既定の取得の組み直し・`tokenProvider` と `auth` の拒否・`StoredTokens`・
   `porters.auth`・テストの書き換え・ガイド「認証とトークン」「契約なしでテストする」とクライアントの章）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`（2026-09-25・ADR-0097 で名前を変えた）
+
 [rv63]: ../reviews/rv/0063-token-provider-acquire-store-split.md
 [adr07]: 0007-oauth-public-surface.md
 [adr12]: 0012-token-cache-refresh.md

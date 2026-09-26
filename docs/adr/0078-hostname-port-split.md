@@ -155,6 +155,14 @@ scheme?: "https" | "http";
   `src/http/insecure-http-warning.ts`、テスト（42 ファイル）、`README.md` ＋ `docs/usage/` 8 本、
   `.env.example`、CHANGELOG（**Breaking**）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/usage/howto/handle-failures.md` → `docs/usage/topics/errors.md`（2026-09-23・ADR-0088）
+
 [coverage]: ../design/endpoint-coverage.md
 [rv10]: ../reviews/rv/0010-per-call-partition-jsdoc.md
 [rv28]: ../reviews/rv/0028-count-range-unvalidated.md

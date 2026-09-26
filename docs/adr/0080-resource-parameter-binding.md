@@ -151,6 +151,14 @@ PORTERS に無い絞り込みをライブラリが発明することにもなる
   `docs/usage/index.md` のメソッド表、`docs/usage/howto/custom-fields.md`、[ADR-0022][adr22] への
   改訂注記、CHANGELOG（**Breaking**）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/usage/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（2026-09-23・ADR-0088）
+
 [adr79]: 0079-resource-by-name.md
 [adr22]: 0022-master-read-query-surface.md
 [adr61]: 0061-phase-resource-surface.md
