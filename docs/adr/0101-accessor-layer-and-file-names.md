@@ -14,6 +14,7 @@
 > **追記（accepted・マージ後 2026-09-26）**: 基本設計の議論の続きで、「1 ファイルに主な export は 1 つ」を原則にし、
 > まとめてよいものを例外として挙げることにした（下の「追記: ファイルの分け方」）。accepted の ADR は新しい ADR で
 > 置き換える運用だが、いま進めている作業の範囲なので、**stakeholder の指示で例外として本文に追記した**。
+> 同じ日の 2 つ目の追記で、付随する小さな関数・クラスの階層・名前が合わないときの直し方・`client.ts` の名前を足した。
 
 ## Context and Problem Statement
 
@@ -105,15 +106,23 @@
   ファイル名と中の名前が同じになるので、名前だけで置き場所が分かる。
 - **その export の引数・戻り値・設定にだけ使う型は、同じファイルに置いてよく、数に入れない**
   （例: `createDataReader` と `DataReadConfig`）。
+- **主な export と組でしか意味のない小さな関数も、同じファイルに置いてよく、数に入れない**
+  （例: `ResourceDescriptor` と `idAliasOf`、`fieldParam` と `fieldParamContext`、`paginate` と `paginateOnce`）。
+  （2026-09-26 の 2 つ目の追記）
 - **例外（1 ファイルにまとめてよいもの）**。例外のファイルは役割を表す名前にする。
   - **対になる関数**: 変換と逆変換のように、片方を直すともう片方も直すもの（例: `util/alias.ts` の `qualify` / `bareAlias`、
     `util/base64.ts`、`util/datetime.ts`、`util/time-of-day.ts`）
   - **一緒に使う型の集まり**: 1 つの概念を複数の型で表すもの（例: 検索クエリの `Condition` / `Order` / `SearchQuery`、
     `auth/types.ts`）
   - **PORTERS が決めた値の表**: `porters/` の中（[ADR-0098][adr98] で値の種類ごとに分けると決めている）
-- **いまあるファイル**: 原則に合わないもの（2026-09-26 に数えて 17 本前後。名前だけずれているもの 8 本前後と、
-  複数の関数や型を持つもの 9 本前後）は、`src/accessor/` への移動の後に、1 本のリファクタリングの PR でまとめて直す。
-  それまでに新しく作るファイルは原則に合わせる。
+  - **クラスの階層**: 基底のクラスとそのサブクラス（例: `errors/porters-error.ts` の `PortersError` と Auth / Resource /
+    Network / Config）。（2026-09-26 の 2 つ目の追記）
+- **名前が主な export と合わないとき**: ファイル名を変えるのを基本にする。ファイル名が不自然になるときだけ、export の
+  名前のほうを変える（例: `decoderFor` の `decoder-for.ts` ではなく、関数を `createDecoder` にして `decoder.ts`）。
+  （2026-09-26 の 2 つ目の追記）
+- **いまあるファイル**: 原則に合わないものは、`src/accessor/` への移動の後に、1 本のリファクタリングの PR でまとめて直す
+  （2026-09-26 に数え直して、名前だけずれているもの 6 本と、関数を複数持つもの 20 本前後）。`src/client.ts` も
+  主な export に合わせて `src/porters-client.ts` にする。それまでに新しく作るファイルは原則に合わせる。
 
 ### 対象外
 

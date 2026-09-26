@@ -34,7 +34,7 @@
 ```text
 src/
   index.ts            # public export（ここからのみ公開）
-  client.ts           # PortersClient・porters.tenant(id) スコープ
+  porters-client.ts   # PortersClient・porters.tenant(id) スコープ
   porters/            # PORTERS が決めた値と定義表（上限・Data Type・Field Type・Resource List 等）。何も import しない
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
   util/               # 他のモジュールに依存しない関数と型（datetime：PORTERS 形式 ⇄ ISO8601（UTC）・alias の接頭辞・汎用の型ほか）
@@ -62,11 +62,14 @@ src/
 - **1 ファイル 1 責務**・ファイル名は **kebab-case**（[ADR-0013][a13]。大文字小文字を区別しない FS での import 事故を避ける）。
 - **1 ファイルに主な export は 1 つ**。ファイル名はその名前を kebab-case にしたもの（[ADR-0097][a97] / [ADR-0101][a101]）。
   factory の `create` は付けても付けなくてもよい（`createTokenManager` → `token-manager.ts` でも `create-token-manager.ts` でもよい）。
-  その export の引数・戻り値・設定にだけ使う型は、同じファイルに置いてよい（例: `createDataReader` と `DataReadConfig`）。
+  その export の引数・戻り値・設定にだけ使う型と、組でしか意味のない小さな関数は、同じファイルに置いてよい
+  （例: `createDataReader` と `DataReadConfig`、`ResourceDescriptor` と `idAliasOf`）。
+  名前が合わないときはファイル名を変えるのを基本にし、ファイル名が不自然になるときだけ export の名前を変える。
 - **まとめてよいのは次の例外だけ**。例外のファイルは役割を表す名前にする（[ADR-0101][a101]）。
   - 対になる関数（変換と逆変換のように、片方を直すともう片方も直すもの。例: `util/alias.ts` の `qualify` / `bareAlias`）
   - 一緒に使う型の集まり（1 つの概念を複数の型で表すもの。例: 検索クエリの `Condition` / `Order` / `SearchQuery`）
   - PORTERS が決めた値の表（`porters/` の中。[ADR-0098][a98]）
+  - クラスの階層（基底のクラスとそのサブクラス。例: `PortersError` と Auth / Resource / Network / Config）
 - **フォルダ名と重なる語は付けない**（`accessor/` の中に `-accessor` を付けない。[ADR-0097][a97]）。
 - **`index.ts` はバレル**（`export *` / `export type *` の再 export だけ）。宣言は名前の付いたファイルに置き、
   モジュールの中で公開するかどうかは、そのファイルの `export` の有無で決める（[ADR-0013][a13]）。
