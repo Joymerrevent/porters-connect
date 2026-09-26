@@ -4,6 +4,7 @@ import type { AccessTokenSource } from "./types";
 import {
   PortersAuthError,
   PortersConfigError,
+  PortersError,
   PortersNetworkError,
   PortersResourceError,
 } from "../errors/index";
@@ -910,5 +911,25 @@ describe("asUnknownOutcome", () => {
     const r = asUnknownOutcome(busy);
     expect(r).toBeInstanceOf(PortersResourceError);
     expect(r).toMatchObject({ code: 302, retryable: false, cause: busy });
+  });
+
+  // 自作の Transport が投げた基底の PortersError や、ほかの系統は、系統を変えずに作り直す（RV-122）。
+  it.each([
+    ["PortersError", PortersError],
+    ["PortersAuthError", PortersAuthError],
+    ["PortersConfigError", PortersConfigError],
+  ] as const)("keeps a %s in its own class", (_, C) => {
+    const original = new C("gateway", {
+      category: "server",
+      retryable: true,
+    });
+    const e = asUnknownOutcome(original);
+    expect(e.constructor).toBe(C);
+    expect(e).toMatchObject({
+      message: "gateway",
+      category: "server",
+      retryable: false,
+      cause: original,
+    });
   });
 });
