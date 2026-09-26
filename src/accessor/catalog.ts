@@ -1,6 +1,6 @@
 // A resource's field catalog and the record type derived from it: which aliases a resource has,
 // what Data Type each carries, and what a decoded record looks like (ADR-0019). Every other part of
-// core/ — query types, the decoder, the `field` parameter, the Write inputs — derives from these.
+// accessor/ — query types, the decoder, the `field` parameter, the Write inputs — derives from these.
 
 import type { DataType } from "../porters/data-type";
 import type { DecodedValue } from "../xml/decode";

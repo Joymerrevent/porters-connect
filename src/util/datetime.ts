@@ -9,7 +9,7 @@
 // path as `PortersResourceError` (`category: "validation"`, the response is at fault), the write and
 // condition paths as `PortersConfigError` (the caller's value is). Adding the alias here instead
 // would push field knowledge into a date utility, so the wrapping stays at the call sites:
-// `src/xml/decode.ts`, `src/xml/encode.ts`, `src/resources/core/query.ts`.
+// `src/xml/decode.ts`, `src/xml/encode.ts`, `src/accessor/query-encode.ts`.
 
 const DATETIME_RE = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
 const DATE_RE = /^(\d{4})\/(\d{2})\/(\d{2})$/;

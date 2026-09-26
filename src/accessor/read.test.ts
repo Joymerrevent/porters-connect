@@ -12,7 +12,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-describe("core/read — createPageReader（1 ページ読む）", () => {
+describe("accessor/read — createPageReader（1 ページ読む）", () => {
   it("sends the parameters plus paging to the resource's path and decodes with the given decoder", async () => {
     const urls: string[] = [];
     const requester: Requester = {

@@ -43,7 +43,7 @@ describe("rawValue — カタログ外の値を読む（ADR-0074 D2）", () => {
   });
 });
 
-describe("core/catalog — fieldTypesOf", () => {
+describe("accessor/catalog — fieldTypesOf", () => {
   it("looks each alias up by name, keeping a catalogued null apart from an unknown alias", () => {
     const types = fieldTypesOf({ P_Id: "System[Id]", P_Deleted: null });
     expect(types.get("P_Id")).toBe("System[Id]");

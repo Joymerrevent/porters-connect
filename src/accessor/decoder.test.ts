@@ -12,7 +12,7 @@ const FIELDS = {
   P_Deleted: null,
 } as const satisfies FieldCatalog;
 
-describe("core/decoder — decoderFor", () => {
+describe("accessor/decoder — decoderFor", () => {
   it("decodes catalogued fields by both prefixed and prefix-less alias", () => {
     const rec = decoderFor(FIELDS)({ "X.P_Id": "7", P_Name: "hi" }) as Record<
       string,

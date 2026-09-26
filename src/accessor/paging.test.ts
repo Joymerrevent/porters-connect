@@ -3,7 +3,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import { PortersConfigError } from "../errors";
 import { appendPaging, paginateOnce, type Limit, type Paging } from "./paging";
 
-describe("core/paging — appendPaging（count のガード・RV-28）", () => {
+describe("accessor/paging — appendPaging（count のガード・RV-28）", () => {
   const params = (count?: number, start?: number): string => {
     const p = new URLSearchParams();
     appendPaging(p, count, start);
@@ -45,7 +45,7 @@ describe("core/paging — appendPaging（count のガード・RV-28）", () => {
   });
 });
 
-describe("core/paging — paginateOnce", () => {
+describe("accessor/paging — paginateOnce", () => {
   const drain = async <T>(it: AsyncIterable<T>): Promise<T[]> => {
     const out: T[] = [];
     for await (const x of it) out.push(x);
@@ -78,7 +78,7 @@ describe("core/paging — paginateOnce", () => {
 // カタログ外の値を読む逃げ道（ADR-0074 D2）。3 つの状態（無い / スカラでない / 生の値）を
 // 別物として返すことが決定の中身なので、潰れていないことをここで固定する。
 
-describe("core/paging — Limit / Paging（ADR-0099）", () => {
+describe("accessor/paging — Limit / Paging（ADR-0099）", () => {
   it("Paging is Limit plus start", () => {
     expectTypeOf<Paging>().toEqualTypeOf<Limit & { start?: number }>();
     expectTypeOf<Limit>().toEqualTypeOf<{ count?: number }>();

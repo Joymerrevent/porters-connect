@@ -1,5 +1,5 @@
 // What PORTERS' Read accepts and returns (ADR-0098). The query encoder and the `field` assembly in
-// resources/core/ enforce these; the values are PORTERS' own.
+// accessor/ enforce these; the values are PORTERS' own.
 
 /** `count` bounds on every Read (docs/usage/reference: `count` is 1–200, default 10). */
 export const MIN_READ_COUNT = 1;

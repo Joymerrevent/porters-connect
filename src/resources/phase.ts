@@ -16,7 +16,7 @@
 // `CustomFieldResource` and carries no `P_Deleted` analogue.
 //
 // VERIFY(live): a `User`-typed field is requested with its sub-fields — `Owner(User.P_Id,…)` —
-// because that is what the shared `field` assembly (core/field-param.ts) sends for all 13
+// because that is what the shared `field` assembly (accessor/field-param.ts) sends for all 13
 // resources. PORTERS' own Phase sample requests them **bare**
 // (`field=Id,RegisteredBy,…,Owner,OwnerDepartment`) and does not show the parenthesised form for
 // this resource. The response shape is the same either way, so if the

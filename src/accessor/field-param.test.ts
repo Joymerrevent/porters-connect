@@ -4,7 +4,7 @@ import { PortersConfigError } from "../errors";
 import { createFieldParam, fieldParam, fieldParamContext } from "./field-param";
 import type { FieldCatalog } from "./catalog";
 
-describe("core/field-param — createFieldParam（省略時は全項目・裸の alias に接頭辞）", () => {
+describe("accessor/field-param — createFieldParam（省略時は全項目・裸の alias に接頭辞）", () => {
   const CATALOG = {
     P_Id: "System[Id]",
     P_Owner: "User",
@@ -33,7 +33,7 @@ describe("core/field-param — createFieldParam（省略時は全項目・裸の
 
 // データ系が通る組み立て（既定 → 検査 → 接頭辞 → 展開 → 画像）。展開と画像の書式そのものは
 // expand.test.ts / image.test.ts が確かめる。ここでは順番と、足し合わせたときの形を確かめる。
-describe("core/field-param — fieldParam（既定・検査・接頭辞・展開・画像を 1 か所で）", () => {
+describe("accessor/field-param — fieldParam（既定・検査・接頭辞・展開・画像を 1 か所で）", () => {
   const ctx = fieldParamContext(
     "G",
     {
