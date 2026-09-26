@@ -91,12 +91,16 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   let cached: StoredTokens | undefined;
   let loading: Promise<void> | undefined;
   let inflight: Promise<StoredTokens> | undefined;
+  // 手元のトークンを入れ替えた（cache / clear）回数。読み込みや取り直しを待つ間に入れ替わったら、
+  // 待っていた側の結果で上書きしない（RV-91・RV-121）。
+  let generation = 0;
 
   // An unknown expiry counts as usable: the reactive 401/402 retry is the backstop.
   const usable = (t: IssuedToken): boolean =>
     t.expiresAt === undefined || now() < t.expiresAt - margin;
 
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
+    generation += 1;
     cached = tokens;
     await store.set(tokens);
     return tokens;
@@ -107,7 +111,11 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   // the store already has (RV-75). A failed read is not remembered: the next call reads again.
   const load = (): Promise<void> =>
     (loading ??= (async () => {
-      if (cached === undefined) cached = readStoredTokens(await store.get());
+      const before = generation;
+      const stored = readStoredTokens(await store.get());
+      // 読む前から手元にあるか、読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。
+      // 手元が空かは読んだ後に見る（読む前に見ると、読んでいる間の cache() を古い値で上書きする）。
+      if (cached === undefined && generation === before) cached = stored;
     })().catch((e: unknown) => {
       loading = undefined;
       throw e;
@@ -115,16 +123,18 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
 
   // refresh when it can work: the issuer hands out no refresh token (its own way of renewing), or
   // the refresh token is still usable. Otherwise start over with acquire.
+  // 取り直しの間に clear() が呼ばれたら、取れたトークンはこのリクエストにだけ使い、手元にも保存先にも
+  // 戻さない（消したはずのトークンが戻らないように）。cache() が呼ばれたときも、そちらを残す。
   const renew = async (): Promise<StoredTokens> => {
+    const before = generation;
     const current = cached;
-    if (
+    const tokens =
       provider.refresh !== undefined &&
       current !== undefined &&
       (current.refreshToken === undefined || usable(current.refreshToken))
-    ) {
-      return save(requireTokens(await provider.refresh(current), "refresh"));
-    }
-    return save(requireTokens(await provider.acquire(), "acquire"));
+        ? requireTokens(await provider.refresh(current), "refresh")
+        : requireTokens(await provider.acquire(), "acquire");
+    return generation === before ? save(tokens) : tokens;
   };
 
   // `failedToken` is the token a 401 / 402 refused. If the cache already holds another one, a
@@ -158,6 +168,7 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
       await save(requireTokens(tokens, "exchange"));
     },
     clear: async () => {
+      generation += 1;
       cached = undefined;
       await store.clear();
     },
