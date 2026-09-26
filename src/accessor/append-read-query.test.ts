@@ -313,3 +313,71 @@ describe("condition の空の一覧（RV-74）", () => {
     ).toBe("W.P_Phase:or=Option.P_A");
   });
 });
+
+// ADR-0105・RV-68。区切り文字を含む値は、値の途中から別の条件（またはキーワード・一覧の値）として
+// 読まれる。PORTERS はエスケープの方法を示していないので、送る前に拒否する。
+describe("区切り文字を含む値（ADR-0105・RV-68）", () => {
+  const errorOf = (q: SearchQuery<typeof FIELDS>): PortersConfigError => {
+    try {
+      encode(q);
+    } catch (e) {
+      return e as PortersConfigError;
+    }
+    throw new Error("expected encode to throw");
+  };
+
+  it("テキストの値のカンマを弾く（別の条件として読まれるため）", () => {
+    const e = errorOf({
+      condition: { P_Name: { part: "山田,Person.P_Owner:eq=5" } },
+    });
+    expect(e).toBeInstanceOf(PortersConfigError);
+    expect(e.message).toBe(
+      'condition P_Name: "山田,Person.P_Owner:eq=5" contains a comma, which PORTERS reads as a separator',
+    );
+    expect(e.category).toBe("config");
+    expect(e.hint).toContain("narrow the results yourself");
+    expect(e.context).toEqual({ operation: "read" });
+  });
+
+  it("削除済みを読むときの項目の制限も、値の細工で越えられない", () => {
+    const e = errorOf({
+      itemstate: "deleted",
+      condition: { P_UpdatedBy: { eq: "1,W.P_Name:part=x" } as never },
+    });
+    expect(e.message).toContain("contains a comma");
+  });
+
+  it.each([
+    ["Option.P_A,Option.P_B", "a comma or a colon"],
+    ["Option.P_A:Option.P_B", "a comma or a colon"],
+  ])(
+    "一覧の要素 %s を弾く（値どうしの区切りとして読まれるため）",
+    (value, what) => {
+      const e = errorOf({ condition: { P_Phase: { or: [value] } } });
+      expect(e.message).toBe(
+        `condition P_Phase: ${JSON.stringify(value)} contains ${what}, which PORTERS reads as a separator`,
+      );
+    },
+  );
+
+  it("日時の値のコロンは弾かない（HH:MM:SS を含むため）", () => {
+    expect(
+      encode({ condition: { P_When: { ge: "2026-09-26T00:00:00Z" } } }).get(
+        "condition",
+      ),
+    ).toBe("W.P_When:ge=2026/09/26 00:00:00");
+  });
+
+  it("テキストの値のコロンは弾かない", () => {
+    expect(
+      encode({ condition: { P_Name: { part: "12:00" } } }).get("condition"),
+    ).toBe("W.P_Name:part=12:00");
+  });
+
+  it("キーワードの要素のカンマを弾く（キーワードが 1 つ増えるため）", () => {
+    const e = errorOf({ keywords: ["営業", "東京,大阪"] });
+    expect(e.message).toBe(
+      'keywords: "東京,大阪" contains a comma, which PORTERS reads as a separator',
+    );
+  });
+});

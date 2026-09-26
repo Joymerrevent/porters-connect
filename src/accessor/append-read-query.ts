@@ -51,6 +51,42 @@ const convertedForQuery = (
   }
 };
 
+// 区切り文字を含む値（ADR-0105・RV-68）。PORTERS は condition の条件どうしをカンマで、一覧の値どうしを
+// コロンで区切り、値の中の区切り文字を書く方法（エスケープ）を示していない。URLSearchParams は区切りの
+// カンマも値の中のカンマも同じ `%2C` にするので、値の途中から別の条件として読まれる。送る前に拒否する。
+const delimiterError = (
+  where: string,
+  value: string,
+  delimiter: string,
+): PortersConfigError =>
+  new PortersConfigError(
+    `${where}: ${JSON.stringify(value)} contains ${delimiter}, which PORTERS reads as a separator`,
+    {
+      category: "config",
+      hint: "PORTERS offers no way to put a separator inside a value. Search on a part of the value without it, then narrow the results yourself.",
+      context: { operation: "read" },
+    },
+  );
+
+// One scalar condition value by the field's Data Type: dates ISO -> PORTERS, everything else stringified.
+const serializeScalar = (
+  type: DataType | null | undefined,
+  value: unknown,
+  alias: string,
+): string => {
+  if (type === "DateTime" || type === "System[DateTime]") {
+    return convertedForQuery(alias, type, value, () =>
+      isoToPortersDateTime(String(value)),
+    );
+  }
+  if (type === "Date" || type === "Age") {
+    return convertedForQuery(alias, type, value, () =>
+      isoToPortersDate(String(value)),
+    );
+  }
+  return String(value);
+};
+
 /**
  * Serialise one condition value by the field's Data Type: dates ISO -> PORTERS, arrays (Option
  * aliases / id sets) colon-joined, everything else stringified. No Data Type — an unknown alias
@@ -74,19 +110,21 @@ const serializeConditionValue = (
         },
       );
     }
-    return value.map(String).join(":");
+    return value
+      .map((v) => {
+        const s = String(v);
+        if (s.includes(",") || s.includes(":"))
+          throw delimiterError(`condition ${alias}`, s, "a comma or a colon");
+        return s;
+      })
+      .join(":");
   }
-  if (type === "DateTime" || type === "System[DateTime]") {
-    return convertedForQuery(alias, type, value, () =>
-      isoToPortersDateTime(String(value)),
-    );
-  }
-  if (type === "Date" || type === "Age") {
-    return convertedForQuery(alias, type, value, () =>
-      isoToPortersDate(String(value)),
-    );
-  }
-  return String(value);
+  const out = serializeScalar(type, value, alias);
+  // テキストと日時の値の中のコロンは拒否しない（日時の値 HH:MM:SS に含まれ、PORTERS は最初の `:` で
+  // alias と suffix を区切るとみられる — ADR-0105）。
+  if (out.includes(","))
+    throw delimiterError(`condition ${alias}`, out, "a comma");
+  return out;
 };
 
 // condition -> `Prefix.alias:suffix=value,...`. Throws if itemstate=deleted/all names a field
@@ -154,6 +192,10 @@ export const appendReadQuery = <F extends FieldCatalog>(
     if (order.length > 0) p.set("order", order);
   }
   if (q.keywords && q.keywords.length > 0) {
+    for (const k of q.keywords) {
+      // キーワードどうしもカンマで区切るので、要素の中のカンマはキーワードを 1 つ増やす（ADR-0105）。
+      if (k.includes(",")) throw delimiterError("keywords", k, "a comma");
+    }
     const kw = q.keywords.join(",");
     if (kw.length > KEYWORDS_MAX_CHARS) {
       throw new PortersConfigError(
