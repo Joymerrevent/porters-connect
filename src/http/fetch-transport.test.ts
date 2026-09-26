@@ -53,9 +53,43 @@ describe("createFetchTransport (ADR-0009)", () => {
         method: "POST",
         headers: { "X-A": "1" },
         body: "B",
+        redirect: "manual",
       }),
     );
     vi.unstubAllGlobals();
+  });
+
+  // RV-76。本物の fetch とローカルのサーバーで、307 を追いかけず、転送先に何も届かないことを確かめる。
+  it("does not follow a redirect, so the token and body never reach another destination", async () => {
+    const { createServer } = await import("node:http");
+    let forwarded = 0;
+    const target = createServer((_req, res) => {
+      forwarded += 1;
+      res.end("taken");
+    });
+    await new Promise<void>((r) => target.listen(0, "127.0.0.1", r));
+    const targetPort = (target.address() as { port: number }).port;
+    const origin = createServer((_req, res) => {
+      res.writeHead(307, {
+        Location: `http://127.0.0.1:${targetPort}/v1/token`,
+      });
+      res.end();
+    });
+    await new Promise<void>((r) => origin.listen(0, "127.0.0.1", r));
+    const originPort = (origin.address() as { port: number }).port;
+    try {
+      const res = await createFetchTransport().send({
+        method: "POST",
+        url: `http://127.0.0.1:${originPort}/v1/token`,
+        headers: { "X-porters-hrbc-oauth-token": "SECRET-TOKEN" },
+        body: "secret=APP-SECRET",
+      });
+      expect(res.status).toBe(307);
+      expect(forwarded).toBe(0);
+    } finally {
+      await new Promise((r) => origin.close(r));
+      await new Promise((r) => target.close(r));
+    }
   });
 });
 
@@ -132,6 +166,25 @@ describe("createFetchTransport — timeoutMs（ADR-0077）", () => {
         "timeoutMs must be a positive integer",
       );
       expect((err as PortersConfigError).hint).toContain("30000");
+    }
+  });
+
+  // RV-77。Node のタイマーの上限を超えると、すべてのリクエストがすぐ中断される。
+  it("上限（2147483647）までは通り、超えると構築時に弾く", () => {
+    expect(() =>
+      createFetchTransport({ timeoutMs: 2_147_483_647 }),
+    ).not.toThrow();
+    for (const timeoutMs of [2_147_483_648, Number.MAX_SAFE_INTEGER]) {
+      expect(
+        () => createFetchTransport({ timeoutMs }),
+        `timeoutMs=${timeoutMs}`,
+      ).toThrow(PortersConfigError);
+    }
+    try {
+      createFetchTransport({ timeoutMs: 2_147_483_648 });
+    } catch (e) {
+      expect((e as PortersConfigError).message).toContain("up to 2147483647");
+      expect((e as PortersConfigError).hint).toContain("at most 2147483647");
     }
   });
 
