@@ -108,12 +108,12 @@
 | [RV-91][rv91]   | 🟢     | 認証                            | fixed   | token-manager の clear と読み込み失敗                                                                |
 | [RV-92][rv92]   | 🟢     | 設定検証                        | fixed   | ホスト名の % と、スロットルの鍵の揺れ                                                                |
 | [RV-93][rv93]   | 🟢     | 設定検証                        | fixed   | transport などの形を構築時に確かめない                                                               |
-| [RV-94][rv94]   | 🟢     | API 忠実性                      | open    | field の重複で expand が崩れる                                                                       |
-| [RV-95][rv95]   | 🟢     | ドキュメント / DX               | open    | field: [] で expand が落ちる                                                                         |
-| [RV-96][rv96]   | 🟢     | アーキテクチャ                  | open    | applyExpand が qualify を使わない                                                                    |
-| [RV-97][rv97]   | 🟢     | API 忠実性                      | open    | keywords の空要素と長さの単位                                                                        |
-| [RV-98][rv98]   | 🟢     | フェイルセーフ                  | open    | Image の検査の迂回と改行入り Base64                                                                  |
-| [RV-99][rv99]   | 🟢     | ドキュメント                    | open    | searchAll の取りこぼしが文書に無い                                                                   |
+| [RV-94][rv94]   | 🟢     | API 忠実性                      | fixed   | field の重複で expand が崩れる                                                                       |
+| [RV-95][rv95]   | 🟢     | ドキュメント / DX               | fixed   | field: [] で expand が落ちる                                                                         |
+| [RV-96][rv96]   | 🟢     | アーキテクチャ                  | fixed   | applyExpand が qualify を使わない                                                                    |
+| [RV-97][rv97]   | 🟢     | API 忠実性                      | fixed   | keywords の空要素と長さの単位                                                                        |
+| [RV-98][rv98]   | 🟢     | フェイルセーフ                  | fixed   | Image の検査の迂回と改行入り Base64                                                                  |
+| [RV-99][rv99]   | 🟢     | ドキュメント                    | fixed   | searchAll の取りこぼしが文書に無い                                                                   |
 | [RV-100][rv100] | 🟢     | API 忠実性                      | open    | Number の読み込みが寛容で精度を落とす                                                                |
 | [RV-101][rv101] | 🟢     | API 忠実性                      | open    | 日時の読み込みが不正な日付を通す                                                                     |
 | [RV-102][rv102] | 🟢     | API 忠実性                      | open    | 型と形の食い違いが黙って通る                                                                         |
@@ -133,19 +133,19 @@
 | [RV-116][rv116] | 🟢     | ドキュメント / DX               | open    | Option の count の上限と hint                                                                        |
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
 | [RV-118][rv118] | 🟢     | テスト厳密性                    | open    | 新規必須の突き合わせにテストが無い                                                                   |
-| [RV-119][rv119] | 🟢     | ドキュメント                    | open    | 実装と合わないコメント 4 か所                                                                        |
+| [RV-119][rv119] | 🟢     | ドキュメント                    | fixed   | 実装と合わないコメント 4 か所                                                                        |
 | [RV-120][rv120] | 🟢     | エラーモデル / DX               | fixed   | 3xx のエラーの hint が一般的                                                                         |
 | [RV-121][rv121] | 🟢     | 認証                            | fixed   | 読み込み中の cache() が上書きされる                                                                  |
 | [RV-122][rv122] | 🟢     | エラーモデル                    | fixed   | asUnknownOutcome がクラスを変えうる                                                                  |
 | [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
 | [RV-124][rv124] | 🟢     | 性能                            | fixed   | スロットルの shift が容量に比例                                                                      |
-| [RV-125][rv125] | 🟢     | エラーモデル / DX               | open    | createMany の件ごとの 302 に案内が無い                                                               |
-| [RV-126][rv126] | 🟢     | エラーモデル                    | open    | BigInt の id で TypeError が漏れる                                                                   |
+| [RV-125][rv125] | 🟢     | エラーモデル / DX               | fixed   | createMany の件ごとの 302 に案内が無い                                                               |
+| [RV-126][rv126] | 🟢     | エラーモデル                    | fixed   | BigInt の id で TypeError が漏れる                                                                   |
 | [RV-127][rv127] | 🟢     | ドキュメント                    | fixed   | 文字列の id の拒否が changeset に無い                                                                |
 | [RV-128][rv128] | 🟢     | ドキュメント                    | fixed   | 一括書き込みの文書の言い方が実装と違う                                                               |
-| [RV-129][rv129] | 🟢     | エラーモデル / DX               | open    | updateMany の再送の案内が紛らわしい                                                                  |
+| [RV-129][rv129] | 🟢     | エラーモデル / DX               | fixed   | updateMany の再送の案内が紛らわしい                                                                  |
 | [RV-130][rv130] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの resourceId を検査しない                                                               |
-| [RV-131][rv131] | 🟢     | エラーモデル                    | open    | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
+| [RV-131][rv131] | 🟢     | エラーモデル                    | fixed   | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
 | [RV-132][rv132] | 🟢     | API 忠実性                      | open    | 空白だけの空の入れ子要素がエラーになる                                                               |
 | [RV-133][rv133] | 🟢     | API 忠実性                      | open    | 空白付きの日時・属性・トークン                                                                       |
 | [RV-134][rv134] | 🟢     | エラーモデル                    | open    | 0001〜0099 年の日付の弾き方                                                                          |

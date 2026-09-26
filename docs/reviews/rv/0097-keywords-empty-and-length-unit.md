@@ -1,7 +1,7 @@
 # RV-97 🟢 `keywords` の空の要素をそのまま送り、長さを UTF-16 の単位で数える
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/accessor-low-review・`30cfcc3`）。** 空文字や空白だけのキーワードを、送る前に拒否する。長さは UTF-16 の単位で数えるまま（長く見積もる側＝安全側）にし、PORTERS の数え方は LV-36 に記録した。
+
+## 検証
+
+`src/accessor/append-read-query.test.ts` の「refuses an empty keyword」と、`pnpm check:lv`。
