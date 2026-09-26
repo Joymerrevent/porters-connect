@@ -56,13 +56,33 @@ describe("datetime (PORTERS <-> ISO, UTC)", () => {
     expect(() => portersDateTimeToIso("x2026/01/02 03:04:05")).toThrow();
     expect(() => portersDateToIso("x2026/01/02")).toThrow();
     expect(() => isoToPortersDate("x2026-01-02")).toThrow();
-    // $ anchor (ISO_DATE_RE intentionally has none — it takes the date prefix)
+    // $ anchor
     expect(() => portersDateTimeToIso("2026/01/02 03:04:05x")).toThrow();
     expect(() => portersDateToIso("2026/01/02x")).toThrow();
   });
 
-  it("isoToPortersDate takes the date part of a datetime", () => {
+  it("isoToPortersDate takes the UTC date of a datetime", () => {
     expect(isoToPortersDate("2026-01-02T10:00:00Z")).toBe("2026/01/02");
+    // オフセット付きは UTC に直した日付（RV-86。前方一致では 9/10 になっていた）
+    expect(isoToPortersDate("2026-09-10T23:00:00-09:00")).toBe("2026/09/11");
+  });
+
+  // RV-86。前方一致だった頃は、後ろに文字が続く値や、暦に無い日付をそのまま送っていた。
+  it.each([
+    "2026-09-10garbage",
+    "2026-02-30",
+    "2026-13-01",
+    "2026-02-29",
+    "2026-09-10T25:00:00Z",
+    "2026-09-10T00:00:00",
+  ])("isoToPortersDate refuses %s", (value) => {
+    expect(() => isoToPortersDate(value)).toThrow(
+      `invalid ISO date: "${value}"`,
+    );
+  });
+
+  it("isoToPortersDate accepts a leap day", () => {
+    expect(isoToPortersDate("2024-02-29")).toBe("2024/02/29");
   });
 });
 

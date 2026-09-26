@@ -13,7 +13,9 @@
 
 const DATETIME_RE = /^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
 const DATE_RE = /^(\d{4})\/(\d{2})\/(\d{2})$/;
-const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})/;
+// 先頭の ^ は読みやすさのため。isoToPortersDate は組み直した日付を値の全体と比べるので、無くても同じ動きになる。
+// Stryker disable next-line Regex: equivalent — the calendar check compares the whole value
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 // 時刻とゾーン（`Z` か `±hh:mm`）が揃った形だけを受ける。`Date.parse` に任せると、ゾーンの無い値を
 // 実行環境のタイムゾーンで読み（サーバーの TZ で送る値がずれる）、`2026-02-30` を 3/2 に、`24:00` を
 // 翌日に繰り上げて通してしまう。秒と小数秒は省略可（`Date#toISOString()` の出力をそのまま受けるため）。
@@ -76,9 +78,28 @@ export const portersDateToIso = (value: string): string => {
   return `${m[1]}-${m[2]}-${m[3]}`;
 };
 
-/** ISO date (or datetime) -> PORTERS `yyyy/mm/dd` (calendar date as-is, no shift). */
+/**
+ * ISO date (or datetime) -> PORTERS `yyyy/mm/dd`. A date-only value must be a real calendar date and
+ * is written as-is. A datetime (ADR-0038: a Date condition takes ISO with a zone) goes through the
+ * DateTime checks and is written as its UTC date — `2026-09-10T23:00:00-09:00` is 2026/09/11.
+ * Anything else is refused: the date prefix used to be taken from `2026-09-10garbage`, and
+ * `2026-02-30` went out as is (RV-86).
+ */
 export const isoToPortersDate = (value: string): string => {
   const m = ISO_DATE_RE.exec(value);
-  if (!m) throw new RangeError(`invalid ISO date: "${value}"`);
-  return `${m[1]}/${m[2]}/${m[3]}`;
+  if (m) {
+    const date = new Date(
+      Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+    );
+    // 暦に無い日付（2/30・13 月）は、組み直すと別の日付になる。
+    if (date.toISOString().slice(0, 10) !== value) {
+      throw new RangeError(`invalid ISO date: "${value}"`);
+    }
+    return `${m[1]}/${m[2]}/${m[3]}`;
+  }
+  try {
+    return isoToPortersDateTime(value).slice(0, 10);
+  } catch {
+    throw new RangeError(`invalid ISO date: "${value}"`);
+  }
 };
