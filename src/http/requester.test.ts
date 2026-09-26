@@ -882,9 +882,89 @@ describe("recoveryFor", () => {
     const denied = new PortersAuthError("denied", { category: "auth" });
     expect(recoveryFor(denied, state())).toBe("throw");
   });
+
+  // ADR-0106 案1A: 再試行しない失敗でも、登録まで進んだかが分からないものは、結果の分からない失敗として届ける。
+  it("reports an unknown outcome for a sent create that fails without saying it was not processed", () => {
+    const create = state({ write: true, idempotent: false });
+    const failed = new PortersResourceError("処理失敗", {
+      category: "server",
+      code: 1000,
+      httpStatus: 200,
+    });
+    const unmapped = new PortersResourceError("resource error 777", {
+      category: "unknown",
+      code: 777,
+      httpStatus: 200,
+    });
+    const unreadable = new PortersResourceError("unparseable write response", {
+      category: "unknown",
+      httpStatus: 200,
+    });
+    const unreadable299 = new PortersResourceError("unparseable", {
+      category: "unknown",
+      httpStatus: 299,
+    });
+    // PORTERS の Code が載っていれば、HTTP のステータスが 2xx でなくても分からない側に倒す。
+    const failedOn500 = new PortersResourceError("処理失敗", {
+      category: "server",
+      code: 1000,
+      httpStatus: 500,
+    });
+    for (const e of [
+      failed,
+      failedOn500,
+      unmapped,
+      unreadable,
+      unreadable299,
+    ]) {
+      expect(recoveryFor(e, create)).toBe("unknownOutcome");
+    }
+    // PORTERS の本文が無い 3xx / 4xx は API の手前で止まったとみて、そのまま投げる。
+    for (const status of [199, 300, 302, 404]) {
+      const beforeApi = new PortersError(`HTTP ${status}`, {
+        category: "unknown",
+        httpStatus: status,
+      });
+      expect(recoveryFor(beforeApi, create)).toBe("throw");
+    }
+    // status も Code も無い失敗（自作の Transport など）も、そのまま投げる。
+    expect(
+      recoveryFor(new PortersError("odd", { category: "server" }), create),
+    ).toBe("throw");
+    // 送っていない create、update、読み込みは、今までどおりそのまま投げる。
+    expect(recoveryFor(failed, { ...create, sent: false })).toBe("throw");
+    expect(recoveryFor(failed, state({ write: true }))).toBe("throw");
+    expect(recoveryFor(failed, state())).toBe("throw");
+  });
 });
 
 describe("asUnknownOutcome", () => {
+  // 再試行しないエラーの hint は手がかりなので残し、後ろに続ける。再試行の案内は置き換える（ADR-0106 案1A）。
+  it("keeps a non-retryable error's hint and appends the outcome hint", () => {
+    const middlebox = new PortersResourceError("unparseable write response", {
+      category: "unknown",
+      hint: "A middlebox may be answering instead of PORTERS.",
+    });
+    expect(asUnknownOutcome(middlebox).hint).toBe(
+      "A middlebox may be answering instead of PORTERS. The write may have been applied before this failure. It is not safe to resend as is: check whether the record was created, then retry only if it was not.",
+    );
+    const retryable = new PortersNetworkError("reset", {
+      category: "network",
+      retryable: true,
+      hint: "Retry.",
+    });
+    expect(asUnknownOutcome(retryable).hint).toBe(
+      "The write may have been applied before this failure. It is not safe to resend as is: check whether the record was created, then retry only if it was not.",
+    );
+    const bare = new PortersResourceError("x", {
+      category: "server",
+      code: 1000,
+    });
+    expect(asUnknownOutcome(bare).hint).toBe(
+      "The write may have been applied before this failure. It is not safe to resend as is: check whether the record was created, then retry only if it was not.",
+    );
+  });
+
   it("keeps the class and details, but is not retryable and carries the original as cause", () => {
     const original = new PortersNetworkError("timeout", {
       category: "network",
