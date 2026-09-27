@@ -58,18 +58,16 @@ const dropLayoutText = (node: unknown): unknown => {
  * the top of their application unhandled (ADR-0006 — the same hole RV-36 closed for date
  * conversion). The original is kept on `cause`, so the parser's own message is still readable.
  */
-const DOCTYPE_IN_PROLOG =
-  /^\uFEFF?\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<!DOCTYPE/i;
-
 export const parseXml = (
   xml: string,
   unparseable: (cause?: unknown) => PortersError,
 ): unknown => {
   // DOCTYPE は PORTERS の応答に無い。あればその中で定義した実体（&x;）が展開され、応答の値が書き換わる
   // （RV-108）。中間装置などが返した別物として、読めない応答にする。
-  // DOCTYPE を置けるのは文書の先頭（XML 宣言・コメント・空白の後）だけなので、そこだけを見る。値の中
-  // （CDATA・コメント）の同じ文字列で、応答全体を拒否しない。
-  if (DOCTYPE_IN_PROLOG.test(xml)) throw unparseable();
+  // 文書の先頭だけを正規表現で見ると、処理命令を挟んだ DOCTYPE を見逃し、コメントを並べた応答で処理時間が
+  // 指数的に増えた（再レビュー）。文書全体から探す（時間は長さに比例し、見逃さない）。値の中（CDATA・
+  // コメント）の同じ文字列でも拒否するが、エラーで止まる側に倒れる（RV-149）。
+  if (/<!DOCTYPE/i.test(xml)) throw unparseable();
   let parsed: unknown;
   try {
     parsed = parser.parse(xml);

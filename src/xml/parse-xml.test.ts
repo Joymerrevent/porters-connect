@@ -194,19 +194,27 @@ it("refuses a response with a DOCTYPE", () => {
     '<!DOCTYPE r [<!ENTITY x "injected">]><r><v>&x;</v></r>',
     "<!doctype html><html></html>",
     '\uFEFF<?xml version="1.0"?>\n<!-- c --><!DOCTYPE r><r/>',
+    "  \n<!DOCTYPE r><r/>",
+    '<?xml version="1.0"?><!DOCTYPE r><r/>',
+    '<?xml version="1.0"?>\n\n<!-- a -->\n<!-- b -->\n<!DOCTYPE r><r/>',
   ]) {
     expect(() => parseXml(xml, unparseable)).toThrow("unparseable");
   }
 });
 
-// 値の中（CDATA・コメント）の "<!DOCTYPE" という文字列では、応答を拒否しない。
-it("reads a value that merely contains the text <!DOCTYPE", () => {
+// 値の中（CDATA・コメント）の "<!DOCTYPE" でも拒否する（見逃さないことと、時間が長さに比例することを優先。
+// エラーで止まる側に倒れる — RV-149）。コメントを並べた応答でも、すぐに終わる（再レビューの ReDoS）。
+it("refuses a DOCTYPE anywhere, quickly, even after processing instructions", () => {
   const unparseable = (): PortersError =>
     new PortersResourceError("unparseable", { category: "unknown" });
-  expect(
-    parseXml(
-      '<?xml version="1.0"?><r><!-- <!DOCTYPE x --><v><![CDATA[<!DOCTYPE html>]]></v></r>',
-      unparseable,
-    ),
-  ).toEqual({ r: { v: "<!DOCTYPE html>" } });
+  for (const xml of [
+    '<?xml version="1.0"?><?xml-stylesheet href="a.xsl"?><!DOCTYPE r [<!ENTITY e "EVIL">]><r>&e;</r>',
+    'x<!DOCTYPE r [<!ENTITY e "EVIL">]><r>&e;</r>',
+    "<r><v><![CDATA[<!DOCTYPE html>]]></v></r>",
+  ]) {
+    expect(() => parseXml(xml, unparseable)).toThrow("unparseable");
+  }
+  const started = performance.now();
+  parseXml(`${"<!--a-->".repeat(10_000)}<r/>`, unparseable);
+  expect(performance.now() - started).toBeLessThan(1000);
 });
