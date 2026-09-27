@@ -87,7 +87,8 @@ const FIELDS = {
 
 // Required on create per docs/usage/reference (resources/contract.md「新規必須」列): P_Client のみ
 // （P_Id は System[Id]＝lib 供給のため除外）。P_Owner はこのリソースには存在しない。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const CONTRACT_REQUIRED_ON_CREATE = [
   "P_Client",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
@@ -127,7 +128,10 @@ export type ContractSearchQuery<C extends FieldCatalog = EmptyCatalog> =
 export type ContractCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof CONTRACT_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -244,7 +248,11 @@ export const createContractResource = <C extends FieldCatalog = EmptyCatalog>(
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...CONTRACT_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    {
+      ...CONTRACT_DESCRIPTOR,
+      fields,
+      requiredOnCreate: CONTRACT_REQUIRED_ON_CREATE,
+    },
     deps,
   ) as ContractResource<C>;
 };

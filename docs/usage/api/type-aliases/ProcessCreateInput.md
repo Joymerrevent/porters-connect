@@ -6,9 +6,9 @@
 
 # Type Alias: ProcessCreateInput\<C, CR\>
 
-> **ProcessCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
+> **ProcessCreateInput**\<`C`, `CR`\> = `CreateInput`\<*typeof* `FIELDS` & `C`, *typeof* `PROCESS_REQUIRED_ON_CREATE`\[`number`\] \| `CR`\>
 
-Defined in: [src/resources/process.ts:120](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L120)
+Defined in: [src/resources/process.ts:121](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L121)
 
 Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. `C` is
 the declared custom-field catalog merged on; `CR` names the custom fields that are required on

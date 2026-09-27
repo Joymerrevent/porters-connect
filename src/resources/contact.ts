@@ -71,7 +71,8 @@ const FIELDS = {
 
 // Required on create per docs/usage/reference (resources/contact.md「新規必須」列): P_Owner /
 // P_Client（P_Id は System[Id]＝lib 供給のため除外）。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const CONTACT_REQUIRED_ON_CREATE = [
   "P_Owner",
   "P_Client",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
@@ -113,7 +114,10 @@ export type ContactSearchQuery<C extends FieldCatalog = EmptyCatalog> =
 export type ContactCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof CONTACT_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -230,7 +234,11 @@ export const createContactResource = <C extends FieldCatalog = EmptyCatalog>(
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...CONTACT_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    {
+      ...CONTACT_DESCRIPTOR,
+      fields,
+      requiredOnCreate: CONTACT_REQUIRED_ON_CREATE,
+    },
     deps,
   ) as ContactResource<C>;
 };

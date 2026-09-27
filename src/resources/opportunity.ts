@@ -55,7 +55,8 @@ const FIELDS = {
 
 // Required on create per docs/usage/reference (resources/opportunity.md「新規必須」列): P_Owner /
 // P_Client / P_Recruiter（P_Id は System[Id]＝lib 供給のため除外）。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const OPPORTUNITY_REQUIRED_ON_CREATE = [
   "P_Owner",
   "P_Client",
   "P_Recruiter",
@@ -98,7 +99,10 @@ export type OpportunitySearchQuery<C extends FieldCatalog = EmptyCatalog> =
 export type OpportunityCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof OPPORTUNITY_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -217,7 +221,11 @@ export const createOpportunityResource = <
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...OPPORTUNITY_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    {
+      ...OPPORTUNITY_DESCRIPTOR,
+      fields,
+      requiredOnCreate: OPPORTUNITY_REQUIRED_ON_CREATE,
+    },
     deps,
   ) as OpportunityResource<C>;
 };

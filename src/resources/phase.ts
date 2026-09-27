@@ -77,7 +77,8 @@ const FIELDS = {
 // Required on create per docs/usage/reference (resources/phase.md「新規必須」列): Id / Resource /
 // ResourceId。`Id` はライブラリが供給し、`Resource` は `of(name)` が埋めるので、
 // 呼び出し側に残るのは `ResourceId` だけ。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const PHASE_REQUIRED_ON_CREATE = [
   "ResourceId",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
@@ -123,7 +124,7 @@ export type PhaseSearchQuery = Omit<
 /** Fields for `create`: `ResourceId` required (`Id` and `Resource` are supplied for you). */
 export type PhaseCreateInput = CreateInput<
   typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
+  (typeof PHASE_REQUIRED_ON_CREATE)[number]
 >;
 /** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
 export type PhaseUpdateInput = UpdateInput<typeof FIELDS>;
@@ -263,7 +264,7 @@ export const createPhaseAccessor = (
     return createDataResource(
       {
         ...PHASE_DESCRIPTOR,
-        requiredOnCreate: REQUIRED_ON_CREATE,
+        requiredOnCreate: PHASE_REQUIRED_ON_CREATE,
         readParams: { resource: String(value) },
         writeDefaults: { Resource: value },
       },
