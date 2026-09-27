@@ -13,7 +13,10 @@ import {
 const RESOURCE_CATEGORIES: ReadonlyMap<number, ErrorCategory> = new Map([
   [9, "transient"],
   [302, "transient"],
-  // 5（ユーザー ID 無効）はトークンに結びついたユーザーの問題（ADR-0106 案2A）。
+  // 5（ユーザー ID 無効）はトークンに結びついたユーザーの問題（ADR-0106 案2A）。auth は「断られた」分類なので、
+  // 一括書き込みは Code 5 のバッチを書き込まれていないとみる。
+  // VERIFY(live): Code 5 が処理の前に断る応答か（途中まで書き込むことが無いか）は未確認 —
+  // docs/live-verification.md (LV-39)。
   [5, "auth"],
   [401, "auth"],
   [402, "auth"],

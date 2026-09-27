@@ -51,6 +51,7 @@ grep -rn "VERIFY(live)" src test
 | LV-36 | `keywords` の 100 文字は、何の単位で数えるか             | 未確認 |
 | LV-37 | Option の `count` にも 1〜200 の上限があるか             | 未確認 |
 | LV-38 | 添付ファイルの 10MB は、何の単位で数えるか               | 未確認 |
+| LV-39 | Resource の Code 5 は、処理の前に断る応答か              | 未確認 |
 
 ---
 
@@ -625,6 +626,17 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **状態**: 未確認
 - **確認結果**: —
 - **関連**: 分かった単位で上限の値と数え方を直す（ADR-0018 の値を変えるなら ADR で）
+
+## LV-39 Resource の Code 5 は、処理の前に断る応答か
+
+- **現在の対応 / 仮定**: **処理の前に断る応答とみる**。Code 5（ユーザー ID 無効）を `auth` に分類しているので、`createMany` は Code 5 で
+  失敗したバッチを「書き込まれていない」と案内する
+- **不確実な理由**: reference（Result Code の表）は Code 5 を「ユーザー ID 無効」と書くだけで、登録まで進んだかどうかを書いていない
+- **コード箇所**: `src/errors/resource-error.ts`（Code 5 の分類）、`src/accessor/write-many.ts`（`knownNotWritten`）
+- **確認方法**: 無効なユーザーのトークンで `createMany` を送り、Code 5 が返ったときにレコードが作られていないかを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 途中まで書き込むことがあると分かったら、一括書き込みでは Code 5 を「書き込まれた可能性がある」側に倒す
 
 ## 状態の意味
 
