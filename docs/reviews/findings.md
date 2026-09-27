@@ -161,6 +161,8 @@
 | [RV-144][rv144] | 🟢     | フェイルセーフ                  | open    | Code 5 を書き込まれていないとみる前提                                                                |
 | [RV-145][rv145] | 🟢     | 一貫性                          | open    | 3xx の案内が単発と一括で逆                                                                           |
 | [RV-146][rv146] | 🟢     | ドキュメント                    | open    | 結果の分からない create の文書の範囲                                                                 |
+| [RV-147][rv147] | 🟢     | API 忠実性                      | open    | 大きな小数の丸め                                                                                     |
+| [RV-148][rv148] | 🟢     | 一貫性                          | open    | 0000 年の読み書きの非対称                                                                            |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -315,3 +317,5 @@
 [rv144]: rv/0144-code-5-bulk-not-written-assumption.md
 [rv145]: rv/0145-bulk-vs-single-3xx-outcome-hint.md
 [rv146]: rv/0146-unknown-outcome-doc-narrower-than-code.md
+[rv147]: rv/0147-large-decimal-number-rounded.md
+[rv148]: rv/0148-year-0000-read-but-not-written.md

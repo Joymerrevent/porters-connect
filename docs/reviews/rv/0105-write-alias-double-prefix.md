@@ -26,8 +26,8 @@
 
 ## 処置
 
-**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`）。** 書き込みの alias に自分のリソースの接頭辞が付いていたら外してから付け、型も素の alias で引く。ほかのリソースの接頭辞なら拒否する。
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`、再レビューを受けて直し直した）。** 書き込みの alias に接頭辞が付いていたら（自分のリソースのものでも）拒否する。最初は「自分の接頭辞なら外してから書く」にしたが、外すのが XML にする段階なので、キー名で見る書き込みの前の検査（id の上書き・画像の上限）を素通りすると再レビューで分かり、拒否に改めた。
 
 ## 検証
 
-`src/xml/encode-write-item.test.ts` の「a prefixed alias」。
+`src/xml/encode-write-item.test.ts` の「a prefixed alias」と、`src/accessor/data-writer.test.ts` の「a prefixed key never reaches the wire」（update の id・create・画像のいずれも、何も送らずに止まる）。
