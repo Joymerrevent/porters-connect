@@ -1,7 +1,7 @@
 # RV-139 🟢 添付ファイルの送る前の検査が、利用者向け文書に載っていない
 
 - 重要度: 🟢 ／ 観点: ドキュメント
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8179ef3・692d240`）。** `docs/usage/topics/limits.md` の送信前に弾くものの一覧と、`AttachmentCreate` / `AttachmentUpdate` の公開の説明に書いた。
+
+## 検証
+
+文書の記述（`check:usage` が通る）。

@@ -1,7 +1,7 @@
 # RV-130 🟢 添付ファイルの `resourceId`（検索と作成）を検査していない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8179ef3`）。** `search` / `searchAll` の `resourceId` も、渡されたときは正の整数かを確かめる（`create` は RV-81 で直し済み）。
+
+## 検証
+
+`src/resources/attachment.test.ts` の「search and searchAll refuse the resourceId …」。

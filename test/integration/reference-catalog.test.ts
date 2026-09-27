@@ -36,6 +36,18 @@ import { OPPORTUNITY_DESCRIPTOR } from "../../src/resources/opportunity";
 import { RECRUITER_DESCRIPTOR } from "../../src/resources/recruiter";
 import { RESUME_DESCRIPTOR } from "../../src/resources/resume";
 import { SALES_DESCRIPTOR } from "../../src/resources/sales";
+import { ACTIVITY_REQUIRED_ON_CREATE } from "../../src/resources/activity";
+import { CANDIDATE_REQUIRED_ON_CREATE } from "../../src/resources/candidate";
+import { CLIENT_REQUIRED_ON_CREATE } from "../../src/resources/client";
+import { CONTACT_REQUIRED_ON_CREATE } from "../../src/resources/contact";
+import { CONTRACT_REQUIRED_ON_CREATE } from "../../src/resources/contract";
+import { JOB_REQUIRED_ON_CREATE } from "../../src/resources/job";
+import { OPPORTUNITY_REQUIRED_ON_CREATE } from "../../src/resources/opportunity";
+import { PHASE_REQUIRED_ON_CREATE } from "../../src/resources/phase";
+import { PROCESS_REQUIRED_ON_CREATE } from "../../src/resources/process";
+import { RECRUITER_REQUIRED_ON_CREATE } from "../../src/resources/recruiter";
+import { RESUME_REQUIRED_ON_CREATE } from "../../src/resources/resume";
+import { SALES_REQUIRED_ON_CREATE } from "../../src/resources/sales";
 import type { ResourceDescriptor } from "../../src/accessor/descriptor";
 import type { DataType } from "../../src/porters/data-type";
 
@@ -335,3 +347,111 @@ describe("Data Type の網羅（ADR-0060 D3）", () => {
     }
   });
 });
+
+// reference の「新規必須」列（●＝無条件に必須）↔ 各リソースの必須の一覧（RV-118）。
+// ※（条件つきで必須）は PORTERS が判断するので必須にしない（ADR-0083）。ID の項目（P_Id / Phase の Id）は
+// ライブラリが -1 を入れるので、利用者の入力の必須には数えない。
+const readRequiredOnCreate = (path: string, prefix: string): string[] => {
+  const lines = readFileSync(path, "utf8").split("\n");
+  const header = lines.find((l) => l.startsWith("| Alias"));
+  const column = header
+    ?.split("|")
+    .slice(1, -1)
+    .map((c) => c.trim())
+    .indexOf("新規必須");
+  if (column === undefined || column < 0) return [];
+  const required: string[] = [];
+  for (const line of lines) {
+    if (prefix === "") {
+      const m = BARE_ALIAS_ROW.exec(line);
+      if (!m || m[1] === "Alias") continue;
+    } else if (!line.startsWith(`| ${prefix}.`)) continue;
+    const cells = line
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+    const alias = prefix === "" ? cells[0] : cells[0]?.slice(prefix.length + 1);
+    if (alias === undefined || alias === "P_Id" || alias === "Id") continue;
+    if (cells[column] === "●") required.push(alias);
+  }
+  return required;
+};
+
+describe.each([
+  {
+    descriptor: CANDIDATE_DESCRIPTOR,
+    doc: "candidate",
+    required: CANDIDATE_REQUIRED_ON_CREATE,
+  },
+  { descriptor: JOB_DESCRIPTOR, doc: "job", required: JOB_REQUIRED_ON_CREATE },
+  {
+    descriptor: CLIENT_DESCRIPTOR,
+    doc: "client",
+    required: CLIENT_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: RECRUITER_DESCRIPTOR,
+    doc: "recruiter",
+    required: RECRUITER_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: CONTACT_DESCRIPTOR,
+    doc: "contact",
+    required: CONTACT_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: OPPORTUNITY_DESCRIPTOR,
+    doc: "opportunity",
+    required: OPPORTUNITY_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: ACTIVITY_DESCRIPTOR,
+    doc: "activity",
+    required: ACTIVITY_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: CONTRACT_DESCRIPTOR,
+    doc: "contract",
+    required: CONTRACT_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: SALES_DESCRIPTOR,
+    doc: "sales",
+    required: SALES_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: PHASE_DESCRIPTOR,
+    doc: "phase",
+    required: PHASE_REQUIRED_ON_CREATE,
+    // Phase の Resource は of(name) で束ねた値をライブラリが入れる（ADR-0080）。
+    supplied: ["Resource"],
+  },
+  {
+    descriptor: PROCESS_DESCRIPTOR,
+    doc: "process",
+    required: PROCESS_REQUIRED_ON_CREATE,
+  },
+  {
+    descriptor: RESUME_DESCRIPTOR,
+    doc: "resume",
+    required: RESUME_REQUIRED_ON_CREATE,
+  },
+] as {
+  descriptor: ResourceDescriptor;
+  doc: string;
+  required: readonly string[];
+  supplied?: readonly string[];
+}[])(
+  "reference ↔ 新規必須: $descriptor.name",
+  ({ descriptor, doc, required, supplied = [] }) => {
+    it("必須の一覧が、reference の「新規必須」（●）と一致する", () => {
+      const fromReference = readRequiredOnCreate(
+        `docs/usage/reference/resource-api/resources/${doc}.md`,
+        descriptor.prefix,
+      );
+      expect([...required].sort()).toEqual(
+        fromReference.filter((alias) => !supplied.includes(alias)).sort(),
+      );
+    });
+  },
+);

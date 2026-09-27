@@ -11,6 +11,7 @@ import { parseResourcePage, type RawItem } from "../xml/parse-resource-page";
 import { asArray } from "../xml/as-array";
 import { asRecord } from "../xml/as-record";
 import { appendPaging } from "../accessor/append-paging";
+import { MAX_READ_COUNT } from "../porters/read-rules";
 import { createDecoder } from "../accessor/decoder";
 import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
 import type { Limit } from "../accessor/paging";
@@ -71,7 +72,16 @@ const buildUrl = (
   if (q.alias !== undefined) p.set("alias", q.alias);
   if (q.level !== undefined) p.set("level", String(q.level));
   if (q.enabled !== undefined) p.set("enabled", String(q.enabled));
-  appendPaging(p, q.count); // Option は start を持たない（ADR-0022 事実5）
+  // Option は start を持たない（ADR-0022 事実5）。searchAll も無く、count を省けば全件を返す（reference）ので、
+  // 上限を超えたときは count を省くよう案内する（RV-116）。
+  // VERIFY(live): Option の count にも 1〜200 の上限があるかは、reference に書かれていない —
+  // docs/live-verification.md (LV-37)。
+  appendPaging(
+    p,
+    q.count,
+    undefined,
+    `Omit count to read every option; a count of 1–${MAX_READ_COUNT} limits how many are returned.`,
+  );
   return apiUrl(accessPoint, "option", p);
 };
 

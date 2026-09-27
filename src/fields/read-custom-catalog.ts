@@ -12,7 +12,19 @@ import { bareAlias } from "../util/alias";
 import type { DataType } from "../porters/data-type";
 import { CUSTOM_DATA_TYPES, type CustomDataType } from "./custom-data-types";
 import type { CustomFieldResource } from "./declared-catalogs";
-import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
+import { PortersResourceError } from "../errors";
+import { CUSTOM_ALIAS_PREFIX } from "../porters/custom-field";
+import { ACTIVITY_DESCRIPTOR } from "../resources/activity";
+import { CANDIDATE_DESCRIPTOR } from "../resources/candidate";
+import { CLIENT_DESCRIPTOR } from "../resources/client";
+import { CONTACT_DESCRIPTOR } from "../resources/contact";
+import { CONTRACT_DESCRIPTOR } from "../resources/contract";
+import { JOB_DESCRIPTOR } from "../resources/job";
+import { OPPORTUNITY_DESCRIPTOR } from "../resources/opportunity";
+import { PROCESS_DESCRIPTOR } from "../resources/process";
+import { RECRUITER_DESCRIPTOR } from "../resources/recruiter";
+import { RESUME_DESCRIPTOR } from "../resources/resume";
+import { SALES_DESCRIPTOR } from "../resources/sales";
 
 /**
  * The slice of a `tenant(id)` scope this tooling needs. Structural on purpose: pass
@@ -108,6 +120,35 @@ const isDeclarable = (dataType: DataType): dataType is CustomDataType =>
 // is the fail-safe side: expecting a bare alias and receiving `Person.U_score` would match nothing
 // and report the tenant as having **no** custom fields — indistinguishable from "could not read it".
 
+// 各リソースの alias の接頭辞（Candidate は Person）。記述子が正本。
+const PREFIX_OF: Readonly<Record<CustomFieldResource, string>> = {
+  candidate: CANDIDATE_DESCRIPTOR.prefix,
+  job: JOB_DESCRIPTOR.prefix,
+  client: CLIENT_DESCRIPTOR.prefix,
+  recruiter: RECRUITER_DESCRIPTOR.prefix,
+  contact: CONTACT_DESCRIPTOR.prefix,
+  opportunity: OPPORTUNITY_DESCRIPTOR.prefix,
+  activity: ACTIVITY_DESCRIPTOR.prefix,
+  contract: CONTRACT_DESCRIPTOR.prefix,
+  sales: SALES_DESCRIPTOR.prefix,
+  process: PROCESS_DESCRIPTOR.prefix,
+  resume: RESUME_DESCRIPTOR.prefix,
+};
+
+// 接頭辞の付いた alias が、頼んだリソースのものか。Job の Field Read が Person.U_a を返したとき、Job の U_a と
+// して読むと、別のリソースの項目を宣言に入れてしまう（RV-115）。接頭辞の無い alias は受ける（LV-12）。
+const assertOwnPrefix = (
+  alias: string,
+  resource: CustomFieldResource,
+): void => {
+  const dot = alias.indexOf(".");
+  if (dot === -1 || alias.slice(0, dot) === PREFIX_OF[resource]) return;
+  throw new PortersResourceError(
+    `Field Read for "${resource}" returned "${alias}", which belongs to another resource (expected the prefix "${PREFIX_OF[resource]}")`,
+    { category: "unknown", context: { resource: "Field" } },
+  );
+};
+
 // One Field Read row -> either a declarable (alias, Data Type) pair or a reason it is not one.
 const classify = (
   alias: string,
@@ -178,8 +219,9 @@ export const readCustomCatalog = async (
     // anything — there is nothing to report about it either, so it is the one case that is
     // simply not a custom field.
     if (row.P_Alias === null || row.P_Alias === undefined) continue;
+    assertOwnPrefix(row.P_Alias, resource);
     const alias = bareAlias(row.P_Alias);
-    if (!CUSTOM_ALIAS_PATTERN.test(alias)) continue;
+    if (!CUSTOM_ALIAS_PREFIX.test(alias)) continue;
     if (row.P_Name !== null && row.P_Name !== undefined)
       names[alias] = row.P_Name;
     const result = classify(alias, row.P_Type ?? null);

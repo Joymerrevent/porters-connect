@@ -1,7 +1,7 @@
 # RV-138 🟢 tenant() の宣言の検査が、prototype 経由の宣言を見ない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`2d94c46`）。** `tenant()` は、検査と同じく宣言の列挙できる自分のプロパティだけを読む（`Object.entries`）。最初は `Object.hasOwn` で読んでいたが、列挙できない宣言が検査を通らないまま読まれると再レビューで分かり、検査と同じ読み方にそろえた。さらに、宣言を 1 回だけ読んで写しを検査と読み取りの両方に使う（読むたびに値が変わる getter で、検査した値と使う値が食い違っていた。2 巡目の再レビュー）。
+
+## 検証
+
+`src/porters-client.test.ts` の「does not read a declaration that sits only on the prototype」「does not read a declaration that is not enumerable」。

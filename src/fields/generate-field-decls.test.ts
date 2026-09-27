@@ -371,7 +371,106 @@ describe("generateFieldDecls — tenant values in the generated source", () => {
       'generateFieldDecls: constName "my-fields" is not a valid identifier',
     );
     expect((err as PortersConfigError).category).toBe("config");
-    expect((err as PortersConfigError).hint).toContain("myFields");
+    expect((err as PortersConfigError).hint).toBe(
+      "Use letters, digits, _ and $, not starting with a digit and not a reserved word (e.g. myFields).",
+    );
+  });
+
+  // 形は識別子でも、const の名前にできない語は拒否する（RV-137）。
+  it.each(["class", "default", "enum", "eval", "arguments", "yield", "await"])(
+    "refuses the reserved word %j as a constName",
+    async (constName) => {
+      await expect(
+        generateFieldDecls(sourceOf({}), ["job"], { constName }),
+      ).rejects.toThrow(
+        `generateFieldDecls: constName "${constName}" is not a valid identifier`,
+      );
+    },
+  );
+
+  // 答えの正本は JavaScript のエンジン: strict モードで `const 語 = 1` が書けない語は、すべて拒否する。
+  // await はモジュールの中でだけ予約語なので、エンジンでは確かめられず、別に書く。
+  const WORDS = [
+    "arguments",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "eval",
+    "export",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "instanceof",
+    "interface",
+    "let",
+    "new",
+    "null",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "return",
+    "static",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+  ];
+  const strictConstFails = (word: string): boolean => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      new Function(`"use strict"; const ${word} = 1;`);
+      return false;
+    } catch {
+      return true;
+    }
+  };
+  it.each([...WORDS, "undefined", "NaN", "myFields"])(
+    "refuses %j exactly when strict mode cannot declare it",
+    async (constName) => {
+      const run = generateFieldDecls(sourceOf({}), ["job"], { constName });
+      if (strictConstFails(constName)) {
+        await expect(run).rejects.toThrow("is not a valid identifier");
+      } else {
+        await expect(run).resolves.toContain(`export const ${constName} =`);
+      }
+    },
+  );
+
+  it("refuses await, reserved inside a module", async () => {
+    await expect(
+      generateFieldDecls(sourceOf({}), ["job"], { constName: "await" }),
+    ).rejects.toThrow("is not a valid identifier");
+  });
+
+  it("accepts a name that only starts with a reserved word", async () => {
+    const out = await generateFieldDecls(sourceOf({}), ["job"], {
+      constName: "classFields",
+    });
+    expect(out).toContain("export const classFields = defineFields({");
   });
 
   it("prints a resource passed twice once", async () => {

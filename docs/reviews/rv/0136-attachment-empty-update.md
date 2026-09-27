@@ -1,7 +1,7 @@
 # RV-136 🟢 添付ファイルの update が、何も変えない更新と本文を空にする更新を通す
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8179ef3`）。** 変える項目が 1 つも無い `update` を拒否する。本文を空にする `update`（`content: ""`）は、`create` が 0 バイトのファイルを受けるのとそろえて受ける。
+
+## 検証
+
+`src/resources/attachment.test.ts` の「refuses an update that changes nothing」。

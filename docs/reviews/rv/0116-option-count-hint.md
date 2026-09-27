@@ -1,7 +1,7 @@
 # RV-116 🟢 Option の `count` の上限 200 に reference の根拠が無く、hint が無い `searchAll` を勧める
 
 - 重要度: 🟢 ／ 観点: ドキュメント / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ reference は Option の `count` を「省略時は全アイテム」と書き�
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`c1a242f`）。** Option の `count` が上限を超えたときの hint を、`count` を省けば全件と案内する形にした（`appendPaging` に hint を渡せるようにした）。上限 200 が Option にもあるかは LV-37 に登録した。
+
+## 検証
+
+`src/resources/option.test.ts` の「refuses a count over 200 with a hint that fits Option」と `pnpm check:lv`。
