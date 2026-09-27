@@ -19,15 +19,26 @@ description: >-
   **ドキュメント ↔ 実態のドリフト**そのものを、検査の効かない場所に持ち込むことになる。
 - リリースは**戻せない工程**を含む（npm は上書き不可・runbook §4）。だから
   「たぶん通った」で先へ進まない。**ゲートは実出力を見てから次へ行く**。
-- **マージはユーザーが行う**。CC は PR を出すところまで。マージは本番公開の連鎖
-  （タグ自動付与 → Release → publish）を起動しうるので、引き金は人が握る。
+- **マージと公開は、実行フローの最初に取る 1 回の承認の範囲で CC が行う**（2026-09-27 にユーザーが決めた）。
+  マージは本番公開の連鎖（タグ自動付与 → Release → publish）を起動し、publish は取り消せないので、引き金は人が
+  握る。握り方を「各段で押す」から「最初に範囲を承認する」に変えた。**範囲の外へは広げない**。
+  - porters-connect の中では、`gh pr merge` / `gh pr create` / `gh release create` の確認画面が出ない
+    （`~/.claude/hooks/porters-release-guard.sh`。承認は、このスキルの最初の 1 回が引き受ける）。
 - コマンドは **pnpm** で統一する（`npm` は使わない・runbook 冒頭）。
   例外は `npm view`（レジストリの参照）だけ。
 
 ## 実行フロー
 
-1. **版を決める** — 破壊的変更の有無を `.changeset/*.md` と差分から判断し、semver のどれかを
-   ユーザーに確認する。`engines` の引き上げも破壊的変更（0.19.0 の実績）。
+1. **版を決め、リリース全体の承認を 1 回だけ取る** — 破壊的変更の有無を `.changeset/*.md` と差分から判断し、
+   semver のどれかを決める。`engines` の引き上げも破壊的変更（0.19.0 の実績）。
+   そのうえで、**版・changeset の一覧（破壊的変更の有無）・次の範囲を示して、1 回だけ承認を取る**:
+   - リリース PR（`release/X.Y.Z` → `main`）を **merge commit** でマージする
+   - GitHub Release を作る（＝ **npm に公開する。取り消せない**）
+   - back-merge の PR（`main` → `develop`）を作り、**merge commit** でマージする
+   - 公開の記録の PR（runbook §5）を作り、**squash** でマージする
+
+   承認されなかったら、リリース PR を作るところで止まり、残りはユーザーに渡す（従来の形）。
+   承認の後は、下の各段の「止まる条件」に当たらない限り、途中で聞き直さない。
 
 2. **ベースを明示して切る** — 取り違えが実際に起きているので、**切った先の SHA を出してから**進む:
 
@@ -46,21 +57,37 @@ description: >-
    **赤があれば直してから再実行**する。赤を抱えたまま PR にしない。
    準備中に見つけた欠陥・手順の穴は**このリリース PR に含める**（後回しにしない・runbook §1 の判断軸）。
 
-5. **PR を作ってユーザーに渡す** — `release/X.Y.Z` → `main`。
-   PR 本文には**実行したゲートの出力**（要約ではなく結果そのもの）を添える。
-   **ここで止まる**。マージ方式（**merge commit**・squash しない）は PR 本文に明記して、
-   ユーザーが押し間違えないようにする（0.17.0 で squash して巻き戻した実績がある）。
+5. **リリース PR を作り、緑を確かめてマージする** — `release/X.Y.Z` → `main`。
+   PR 本文には**実行したゲートの出力**（要約ではなく結果そのもの）と、マージ方式（**merge commit**）を書く。
+   - `main` への PR なので `stryker` は必ず全体を走らせる（約 11 分）。**すべてのチェックが緑になるまで待つ**。
+   - マージの直前に、**PR の head が、ゲートを通したコミットのままか**を確かめる
+     （`gh pr view N --json headRefOid` とゲートを通した SHA を比べる）。違えばマージせず、ゲートからやり直す。
+   - `gh pr merge N --merge`（**squash しない**。0.17.0 で squash して巻き戻した実績がある）。
+     マージの後、`main` のマージコミットの親が 2 つあることを確かめる（`git log -1 --format=%p origin/main`）。
 
-6. **マージ後**（ユーザーがマージしたら）— runbook §2〜§4 に従う。
-   Tag ワークフロー green → `gh release create` → Release ワークフロー green →
-   `npm view @joymerrevent/porters-connect version` で反映を確認。
-   **publish 直後の `npm view` は前版を返すことがある**（伝播待ち・0.16.0 の実績）。
-   ワークフローのログで publish 成功を確認してから待つ。慌てて再実行しない。
-   あわせて back-merge（`main` → `develop`・**PR 経由**・merge commit）。
+6. **公開する** — runbook §2〜§4 に従う。
+   - Tag ワークフロー green と `vX.Y.Z` のタグを確かめる。
+   - **`main` への push で走る Test / CI / Mutation が green になってから** `gh release create`。
+     notes は CHANGELOG の該当節で、参照スタイルのリンクを絶対 URL（タグの `blob/vX.Y.Z/…`）に解決する。
+   - Release ワークフロー green → `npm view @joymerrevent/porters-connect version` で反映を確認。
+     **publish 直後の `npm view` は前版を返すことがある**（伝播待ち・0.16.0 の実績）。
+     ワークフローのログで publish 成功を確認してから待つ。慌てて再実行しない。
+   - back-merge: `gh pr create --base develop --head main --title "chore: X.Y.Z を develop へ back-merge する"`
+     → チェックが緑になるのを待って `gh pr merge N --merge`（**squash しない**）。
 
 7. **公開を記録する（後追い PR・develop へ）** — runbook §5。
    **落としやすいのは「利用者向けの変更が無い版」**（0.13.0 / 0.15.1 で実際に落ちた）ので、
    patch でも必ず行う。入れてよいのは**公開が成功して初めて真になる事実**だけ。
+   チェックが緑になるのを待って `gh pr merge N --squash --delete-branch`。
+   最後に、develop を最新にし、使い終わったローカルのブランチを消して報告する。
+
+### 止まる条件（承認の後でも止めて、ユーザーに聞く）
+
+- ゲートやチェックが赤い（直してから再実行できるものは直す。直し方に判断が要るものは聞く）。
+- PR の head が、ゲートを通したコミットから変わっている。
+- マージコミットの親が 1 つしかない（squash された）。runbook §2 の手順が要る。
+- Release ワークフローが失敗した、または `npm view` が長く前版のまま。
+- 承認の範囲の外の操作が要る（別の PR のマージ、force-push、タグの付け直しなど）。
 
 ## 主張するときの作法
 
@@ -74,7 +101,8 @@ squash は押した本人に見えない、ゲートは緑に見えて fail-open
 
 ## やらないこと
 
-- **`gh pr merge` を実行しない**（マージはユーザー）。
+- **承認の範囲の外の PR をマージしない**。承認を別のリリースや別の PR へ引き継がない。
+- **`main` への PR を squash でマージしない**（merge commit だけ）。
 - **手順を runbook から写経しない**。runbook と実態が食い違っていたら、**runbook のほうを直す**。
 - `package.json` の `version` を手で書き換えない（`pnpm changeset:version` を使う）。
 - 手で `npm publish` しない（Release 公開が引き金・OIDC Trusted Publishing）。
