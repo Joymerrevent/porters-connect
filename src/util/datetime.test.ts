@@ -207,6 +207,9 @@ describe("reading refuses values the calendar does not have", () => {
       /invalid PORTERS Date/,
     );
     expect(portersDateToIso("0001/01/01")).toBe("0001-01-01");
+    expect(portersDateTimeToIso("0001/01/01 00:00:00")).toBe(
+      "0001-01-01T00:00:00Z",
+    );
   });
 
   it("reads a leap day and an early year as they are", () => {

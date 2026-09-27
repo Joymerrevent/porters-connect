@@ -106,9 +106,10 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
     const mine = generation;
     cached = tokens;
     await store.set(tokens);
-    // 保存先に書いている間に clear() が走ったら、書き終えたトークンが保存先に戻ってしまう。手元が消えたままなら、
-    // 保存先ももう一度消す（RV-142）。後から cache() で入れ直していれば手元にあるので、消さない。
-    if (generation !== mine && cached === undefined) await store.clear();
+    // 保存先に書いている間に手元が入れ替わった（clear() や、後の cache()）なら、書き終えた値が保存先に残って
+    // 手元と食い違う（RV-142。書き込みが追い越された場合も）。保存先を今の手元に合わせ直す。
+    if (generation !== mine)
+      await (cached === undefined ? store.clear() : store.set(cached));
     return tokens;
   };
 

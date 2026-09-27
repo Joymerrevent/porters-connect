@@ -700,10 +700,15 @@ it("keeps a token cached after the clear(), even when an earlier write finishes 
   const first = m.cache({ accessToken: { token: "OLD" } });
   await m.clear();
   const second = m.cache({ accessToken: { token: "NEW" } });
-  releases[0]?.();
-  await first;
+  // 後から頼んだ書き込みが先に終わり、前の書き込みが追い越して OLD を書く。
   releases[1]?.();
   await second;
+  releases[0]?.();
+  await vi.waitFor(() => {
+    expect(releases).toHaveLength(3);
+  });
+  releases[2]?.();
+  await first;
   expect(stored).toEqual({ accessToken: { token: "NEW" } });
   expect(await m.getAccessToken()).toBe("NEW");
 });

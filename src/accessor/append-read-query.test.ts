@@ -72,6 +72,12 @@ describe("appendReadQuery — numbers in a condition", () => {
     );
   });
 
+  it("refuses a null number with a PortersConfigError", () => {
+    expect(() =>
+      encode({ condition: { P_Num: { eq: null } } } as never),
+    ).toThrow('condition P_Num: "null" is not a decimal number');
+  });
+
   it("accepts P_Id ge 0, a range that means every record", () => {
     expect(encode({ condition: { P_Id: { ge: 0 } } }).get("condition")).toBe(
       "W.P_Id:ge=0",
