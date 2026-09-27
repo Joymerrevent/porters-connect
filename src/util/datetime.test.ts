@@ -171,6 +171,7 @@ describe("isoToPortersDateTime: 受け付ける形", () => {
     ["0999-12-31T23:59:59Z", "0999/12/31 23:59:59"],
     ["1000-01-01T00:30:00+01:00", "0999/12/31 23:30:00"],
     ["9999-12-31T23:59:59Z", "9999/12/31 23:59:59"],
+    ["0001-01-01T00:00:00Z", "0001/01/01 00:00:00"],
   ])("writes %s with a 4-digit year: %s", (value, expected) => {
     expect(isoToPortersDateTime(value)).toBe(expected);
   });

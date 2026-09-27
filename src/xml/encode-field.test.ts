@@ -414,6 +414,7 @@ describe("values that only arrive through a cast", () => {
           name: "PortersConfigError",
           category: "validation",
           message: `P_Phase: option alias ${String(value[0])} is not a string`,
+          hint: 'Pass the selected option aliases as strings, e.g. ["Option.P_Tokyo"].',
           context: { operation: "encode" },
         }),
       );

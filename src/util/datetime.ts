@@ -32,7 +32,8 @@ const utcTime = (
   mi = 0,
   sec = 0,
 ): Date => {
-  const t = new Date(Date.UTC(2000, mo - 1, d, h, mi, sec));
+  // 月と日は次の行で入れ直すので、ここでは時刻だけを入れる。
+  const t = new Date(Date.UTC(2000, 0, 1, h, mi, sec));
   t.setUTCFullYear(y, mo - 1, d);
   return t;
 };
