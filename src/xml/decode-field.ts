@@ -24,6 +24,21 @@ const pickPrefixed = (
 ): string | undefined =>
   asString(obj[`${prefix}.${key}`]) ?? asString(obj[key]);
 
+// 宣言した型と、届いた値の形が合わない（ADR-0006 の「宣言と実データの食い違い」）。
+const mismatch = (
+  alias: string,
+  type: DataType,
+  wants: "a nested record" | "a scalar value" | "a set of option aliases",
+): PortersResourceError =>
+  new PortersResourceError(
+    `${alias}: declared ${type}, but the value is not ${wants} — PORTERS sends ${wants} for ${type}`,
+    {
+      category: "validation",
+      hint: `The Data Type declared for "${alias}" does not match the field in this partition. Check it against Field Read (verifyFields / generateFieldDecls) and fix the declaration.`,
+      context: { operation: "decode" },
+    },
+  );
+
 // A scalar that must be a number: `Number` / `System[Id]`, and the Contact-id form of `Link`.
 // `Number(text)` never throws — it yields `NaN` — so unlike the date conversions this is checked
 // rather than caught. `NaN` is the one decoded value that passes `typeof === "number"` and
@@ -32,9 +47,16 @@ const pickPrefixed = (
 // declared Data Type is wrong (a text field declared `number()`), or PORTERS sent a format the
 // reference does not describe. Either way it is a mismatch to report, not a number to invent
 // (ADR-0006: no silent mis-conversion).
+// 10 進の表記だけを数として読む。Number() は "0x1A"・"1e3"・"0b11" も数にし、安全な整数を超える整数は
+// 近い値に丸める（"9007199254740993" -> …992）。どちらも黙って別の数になる（RV-100）。
+const DECIMAL = /^-?\d+(?:\.\d+)?$/;
+
 const numeric = (alias: string, type: DataType, value: string): number => {
-  const n = Number(value);
-  if (Number.isFinite(n)) return n;
+  // 前後の空白は数の一部ではないので取ってから確かめる（Number() も同じく許していた）。
+  const text = value.trim();
+  const n = Number(text);
+  if (DECIMAL.test(text) && (text.includes(".") || Number.isSafeInteger(n)))
+    return n;
   throw new PortersResourceError(
     `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
     {
@@ -92,12 +114,19 @@ const decodeDepartment = (
 // — incl. the `Option.` prefix (ADR-0017). None / empty -> null.
 // VERIFY(live): the `Option.` prefix and the `OptionRoot` wrapper come from the Read API
 // doc, not a live contract; we tolerate a missing wrapper. See docs/live-verification.md (LV-1, LV-2).
-const decodeOption = (outer: Record<string, unknown>): string[] | null => {
+const decodeOption = (
+  outer: Record<string, unknown>,
+  alias: string,
+): string[] | null => {
   // Aliases live under `<OptionRoot>` when present; the doc's sample omits it, so fall
   // back to the field's own children.
   const root = "OptionRoot" in outer ? asRecord(outer.OptionRoot) : outer;
   if (!root) return null;
   const keys = Object.keys(root);
+  // User / Department の入れ子の形（<User> / <Department>）は選択肢ではなく、宣言した型が違う。["User"] の
+  // ような値にしない（RV-102）。選択肢の alias の書き方は確かめていない（LV-1）ので、それ以外の名前は受ける。
+  if (keys.includes("User") || keys.includes("Department"))
+    throw mismatch(alias, "Option", "a set of option aliases");
   return keys.length > 0 ? keys : null;
 };
 
@@ -207,20 +236,6 @@ const RECORD_SHAPED: ReadonlySet<DataType> = new Set<RecordShaped>([
 const isRecordShaped = (type: DataType): type is RecordShaped =>
   RECORD_SHAPED.has(type);
 
-const mismatch = (
-  alias: string,
-  type: DataType,
-  wants: "a nested record" | "a scalar value",
-): PortersResourceError =>
-  new PortersResourceError(
-    `${alias}: declared ${type}, but the value is not ${wants} — PORTERS sends ${wants} for ${type}`,
-    {
-      category: "validation",
-      hint: `The Data Type declared for "${alias}" does not match the field in this partition. Check it against Field Read (verifyFields / generateFieldDecls) and fix the declaration.`,
-      context: { operation: "decode" },
-    },
-  );
-
 // A value whose shape is right but whose *format* is not: a date-like type whose text does not
 // parse (the numeric case is `numeric` above — checked, because `Number()` does not throw).
 // `portersDate*ToIso` throw `RangeError`, which is outside the PortersError family and so escapes
@@ -285,7 +300,7 @@ export const decodeField = (
       case "System[Department]":
         return decodeDepartment(outer, alias, type);
       case "Option":
-        return decodeOption(outer);
+        return decodeOption(outer, alias);
       case "System[Reference]":
         return decodeReference(outer, alias);
       case "Image":
@@ -315,13 +330,16 @@ export const decodeField = (
     // format; System[DateTime] is Write-restricted, but that is a write-time concern.
     case "DateTime":
     case "System[DateTime]":
+      // 前後の空白は日時の一部ではないので取ってから変換する（RV-133）。
       return converted(alias, scalarType, value, () =>
-        portersDateTimeToIso(value),
+        portersDateTimeToIso(value.trim()),
       );
     // Age shares Date's wire format (`yyyy/mm/dd`); PORTERS transmits the birthdate
     // and derives the age in its UI, so the faithful value is the date itself.
     case "Date":
     case "Age":
-      return converted(alias, scalarType, value, () => portersDateToIso(value));
+      return converted(alias, scalarType, value, () =>
+        portersDateToIso(value.trim()),
+      );
   }
 };
