@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-68][rv68]。[ADR-0038][adr38] SD-8 は「値の中のエンコードは
 > URLSearchParams に任せる」と決めたが、URLSearchParams は区切りのカンマと値の中のカンマを同じ `%2C` にするので、

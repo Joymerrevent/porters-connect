@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-66][rv66]。[ADR-0010][adr10] のスロットルの方式（token-bucket・
 > 容量＝上限 × 安全率・毎分同じ量を補充）では、ADR-0010 自身が決めた「1 分窓で上限内に収める」が成り立たないと分かった。

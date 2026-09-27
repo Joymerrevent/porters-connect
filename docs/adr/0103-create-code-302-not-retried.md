@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-78][rv78]。[ADR-0010][adr10] は「`create` の `302` は安全側で
 > 非再試行」と決めたが、実装は `302` を再送している。reference の Result Code の表は `302` を「再試行する」としているので、

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は `src` 全体のレビュー（2026-09-26）の [RV-80][rv80]。[ADR-0069][adr69] が決めた突合の区分に、
 > 「テナントでは宣言できない型の項目を、宣言している」場合の決めが無く、その場合 `verifyFields` は `ok: true` を返す。

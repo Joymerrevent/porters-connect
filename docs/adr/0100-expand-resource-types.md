@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder との議論（2026-09-25）。マスタの公開の型を、データ系と同じく共通の型（`MasterResource<Q, T>`）の
 > 別名で書こうとしたところ、API リファレンスからメソッドの説明が消えることが分かった。調べると、データ系は以前から同じ

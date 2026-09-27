@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は [ADR-0095][adr95] の議論（2026-09-25）。`get` と `getMany` に `field` を足すときに「戻り値の型を `field` で
 > 絞るか」が問いになり、`search` / `searchAll` とまとめて別の ADR で決めることにした。

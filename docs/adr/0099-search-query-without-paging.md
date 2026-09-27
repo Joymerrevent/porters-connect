@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder の問い（2026-09-25）。データ系とマスタの読み取りの組み立てを揃えているときに「マスタは
 > `search` が `Q & Paging`（独自のクエリ ＋ ページ送り）なのに、データ系はなぜ違うのか。データ系も揃えられないか」と

@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder の問い（2026-09-25）。はじめは「`src/resources/` のリソース本体とメソッドをフォルダで分けたい」
 > だったが、議論で「`src/resources/` の中だけでなく `src/` 全体を整理する ADR にしたい」に広げた。

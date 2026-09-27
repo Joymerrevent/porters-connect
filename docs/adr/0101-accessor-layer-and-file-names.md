@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder との議論（2026-09-26）。`src/resources/core/` のリファクタリング（#434）の後、`src/` のフォルダと
 > ファイルのルールを基本設計にまとめる議論の中で、stakeholder が「`resources/core/` を `core/` に分離するのはどうか」
