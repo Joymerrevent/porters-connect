@@ -128,7 +128,7 @@
 | [RV-111][rv111] | 🟢     | API 忠実性                      | open    | 添付ファイルの上限の値と出典                                                                         |
 | [RV-112][rv112] | 🟢     | 設定検証                        | open    | カスタム項目の alias の文字を確かめない                                                              |
 | [RV-113][rv113] | 🟢     | 設定検証                        | fixed   | tenant の id と of の名前を確かめない                                                                |
-| [RV-114][rv114] | 🟢     | エラーモデル                    | open    | コード 5 と 113 が表に無い                                                                           |
+| [RV-114][rv114] | 🟢     | エラーモデル                    | fixed   | コード 5 と 113 が表に無い                                                                           |
 | [RV-115][rv115] | 🟢     | API 忠実性                      | open    | readCustomCatalog が接頭辞を突き合わせない                                                           |
 | [RV-116][rv116] | 🟢     | ドキュメント / DX               | open    | Option の count の上限と hint                                                                        |
 | [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
@@ -137,7 +137,7 @@
 | [RV-120][rv120] | 🟢     | エラーモデル / DX               | fixed   | 3xx のエラーの hint が一般的                                                                         |
 | [RV-121][rv121] | 🟢     | 認証                            | fixed   | 読み込み中の cache() が上書きされる                                                                  |
 | [RV-122][rv122] | 🟢     | エラーモデル                    | fixed   | asUnknownOutcome がクラスを変えうる                                                                  |
-| [RV-123][rv123] | 🟢     | エラーモデル                    | open    | create の一部の失敗に hint が付かない                                                                |
+| [RV-123][rv123] | 🟢     | エラーモデル                    | fixed   | create の一部の失敗に hint が付かない                                                                |
 | [RV-124][rv124] | 🟢     | 性能                            | fixed   | スロットルの shift が容量に比例                                                                      |
 | [RV-125][rv125] | 🟢     | エラーモデル / DX               | fixed   | createMany の件ごとの 302 に案内が無い                                                               |
 | [RV-126][rv126] | 🟢     | エラーモデル                    | fixed   | BigInt の id で TypeError が漏れる                                                                   |
@@ -158,6 +158,9 @@
 | [RV-141][rv141] | 🟢     | エラーモデル                    | open    | hostname 未設定・BigInt で TypeError                                                                 |
 | [RV-142][rv142] | 🟢     | 認証                            | open    | 保存中の clear() でトークンが戻る                                                                    |
 | [RV-143][rv143] | 🟢     | フェイルセーフ                  | open    | 使い回したエラーに印が漏れる                                                                         |
+| [RV-144][rv144] | 🟢     | フェイルセーフ                  | open    | Code 5 を書き込まれていないとみる前提                                                                |
+| [RV-145][rv145] | 🟢     | 一貫性                          | open    | 3xx の案内が単発と一括で逆                                                                           |
+| [RV-146][rv146] | 🟢     | ドキュメント                    | open    | 結果の分からない create の文書の範囲                                                                 |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -309,3 +312,6 @@
 [rv141]: rv/0141-client-options-type-error-paths.md
 [rv142]: rv/0142-token-save-cleared-during-store-set.md
 [rv143]: rv/0143-never-sent-mark-on-reused-error.md
+[rv144]: rv/0144-code-5-bulk-not-written-assumption.md
+[rv145]: rv/0145-bulk-vs-single-3xx-outcome-hint.md
+[rv146]: rv/0146-unknown-outcome-doc-narrower-than-code.md

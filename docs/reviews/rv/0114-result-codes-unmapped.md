@@ -1,7 +1,7 @@
 # RV-114 🟢 Resource のコード 5 と、Authentication のコード 113 が表に無い
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -27,5 +27,11 @@
 ## 処置
 
 **一部を実施（2026-09-26・fix/http-auth-low-review・`18c39cd`）。** reference の 2 つの表を読み込み、分類していないコードがちょうど Resource の 5 と Authentication の -1・113 であることを確かめるテストを足した。表に行が足されたときや、分類を決めたときに落ちる。5 と 113 を分類するかは、ADR-0006 の表を変えることになるので、RV-123 とあわせて起票する ADR で決める。状態は open のまま。
+
+**残りを実施（2026-09-27・feat/adr-0106-unknown-outcome-and-codes・`c682c3b`）。** ADR-0106 案2A で、5 と 113 を `auth` に分類した。-1 は `unknown` のまま。
+
+## 検証
+
+`src/errors/*-error.test.ts` の reference の表との突き合わせ（分類していないのは Authentication の -1 だけ）と、`test/fake/errors.test.ts` の表。
 
 [rc]: ../../usage/reference/resource-api/result-codes.md

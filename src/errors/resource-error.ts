@@ -13,6 +13,8 @@ import {
 const RESOURCE_CATEGORIES: ReadonlyMap<number, ErrorCategory> = new Map([
   [9, "transient"],
   [302, "transient"],
+  // 5（ユーザー ID 無効）はトークンに結びついたユーザーの問題（ADR-0106 案2A）。
+  [5, "auth"],
   [401, "auth"],
   [402, "auth"],
   [6, "permission"],

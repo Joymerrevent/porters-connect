@@ -16,6 +16,8 @@ const AUTH_CATEGORIES: ReadonlyMap<number, ErrorCategory> = new Map([
   [109, "auth"],
   [114, "auth"],
   [117, "auth"],
+  // 113（登録アプリのサイトが無い）は 104・105 と同じくアプリの登録の問題（ADR-0106 案2A）。
+  [113, "auth"],
   [100, "validation"],
   [101, "validation"],
   [102, "validation"],

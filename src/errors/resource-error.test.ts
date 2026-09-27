@@ -11,6 +11,7 @@ describe("resource error classification (ADR-0006)", () => {
   it.each([
     [9, "transient"],
     [302, "transient"],
+    [5, "auth"],
     [401, "auth"],
     [402, "auth"],
     [6, "permission"],
@@ -64,9 +65,8 @@ describe("resource error classification (ADR-0006)", () => {
 
 // reference の表を読み、載っているコードのうち分類していないものを確かめる（RV-114）。
 // 表に行が足されたのに実装の表を直し忘れると、ここで落ちる。「126 / 127」「104〜116」の形も読む。
-// 5（ユーザー ID 無効）は ADR-0006 の表に無く、unknown（再試行しない）に倒している。分類するかは
-// RV-114 / RV-123 の ADR で決める。決まったら、この一覧から外す。
-it("leaves only the known codes unclassified in the reference table", () => {
+// 表のコードはすべて分類している（5 は ADR-0106 案2A で auth にした）。
+it("classifies every code in the reference table", () => {
   const table = readFileSync(
     fileURLToPath(
       new URL(
@@ -88,5 +88,5 @@ it("leaves only the known codes unclassified in the reference table", () => {
   const unclassified = codes.filter(
     (c) => c !== 0 && resourceCategory(c) === "unknown",
   );
-  expect(unclassified).toEqual([5]);
+  expect(unclassified).toEqual([]);
 });

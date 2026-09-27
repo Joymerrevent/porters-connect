@@ -136,7 +136,7 @@ describe("Result Code catalogue -> category", () => {
   // it to. Driving them through the fake's envelope proves the fake can *raise* each of them and
   // that the classification survives the round-trip.
   const catalogue: [number, string][] = [
-    [5, "unknown"], // ユーザー ID 無効 (uncategorised by ADR-0006)
+    [5, "auth"], // ユーザー ID 無効 (ADR-0106 案2A)
     [6, "permission"],
     [7, "notFound"],
     [8, "validation"],
@@ -205,6 +205,7 @@ describe("Authentication error family", () => {
     [115, "permission"],
     [116, "permission"],
     [117, "auth"],
+    [113, "auth"], // 登録アプリのサイトが無い (ADR-0106 案2A)
     [400, "auth"],
     [401, "auth"],
     [402, "permission"],

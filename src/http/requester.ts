@@ -99,6 +99,17 @@ export type AttemptState = {
 // 書き込みが適用されたか分からないことを添えて投げる。
 export type Recovery = "refresh" | "backoff" | "throw" | "unknownOutcome";
 
+// 送った create の失敗のうち、PORTERS が「処理しなかった」と言っていないもの（ADR-0106 案1A）。
+// server（Code 1000）と unknown（表に無い Code、読めない応答）で、PORTERS の Code があるか、2xx で本文が
+// 読めなかったもの。3xx / 4xx で PORTERS の本文が無いものは、API の手前で止まったとみて含めない。
+const outcomeUnknown = (e: PortersError): boolean => {
+  const status = e.httpStatus ?? 0;
+  return (
+    (e.category === "server" || e.category === "unknown") &&
+    (e.code !== null || (status >= 200 && status < 300))
+  );
+};
+
 // 判断だけを純粋な関数にして、送信のループから分けている（requester.test.ts が直接確かめる）。
 export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
   // reactive: token expired -> refresh once and retry (safe even for create). Only the
@@ -125,6 +136,9 @@ export const recoveryFor = (e: PortersError, s: AttemptState): Recovery => {
     // PORTERS が状態を返した一時的な失敗のうち、再送してよいのは未処理が確定する Code 9 だけ。
     // 302（トランザクションエラー / 対象削除済み）は、登録まで進んだかが分からない（ADR-0103）。
     if (e.retryable && e.code !== 9) return "unknownOutcome";
+    // 再試行しない失敗でも、登録まで進んだかが分からないもの（Code 1000・表に無い Code・2xx で本文が
+    // 読めない応答）には同じ案内を付ける（ADR-0106 案1A）。
+    if (outcomeUnknown(e)) return "unknownOutcome";
   }
   // transient (9/302) / network -> bounded backoff.
   if (e.retryable && s.attempt < s.maxRetries) return "backoff";
@@ -146,11 +160,17 @@ const FAMILIES = [
 // 送信済みの非冪等な書き込みが失敗したときのエラー。`retryable` は「利用者がそのまま再送してよいか」を
 // 表すので false にし、元のエラーは `cause` に残す（ADR-0010 / ADR-0103）。系統（クラス）は元のまま。
 export const asUnknownOutcome = (e: PortersError): PortersError => {
+  // 再試行できるエラーの hint は再試行の案内なので置き換える。再試行しないエラーの hint（中間装置を疑う
+  // 案内など）は、それ自体が手がかりなので残し、後ろに続ける（ADR-0106 案1A）。
+  const hint =
+    e.retryable || e.hint === undefined
+      ? UNKNOWN_OUTCOME_HINT
+      : `${e.hint} ${UNKNOWN_OUTCOME_HINT}`;
   const options = {
     category: e.category,
     code: e.code,
     retryable: false,
-    hint: UNKNOWN_OUTCOME_HINT,
+    hint,
     httpStatus: e.httpStatus,
     context: e.context,
     cause: e,
