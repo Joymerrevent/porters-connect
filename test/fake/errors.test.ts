@@ -11,11 +11,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { PortersError } from "../../src/errors/index";
-import {
-  parseAuthentication,
-  parseResourcePage,
-  parseWriteResult,
-} from "../../src/xml/parser";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import {
   buildAuthenticationXml,
   buildResourceErrorXml,
@@ -54,7 +52,7 @@ const authFailure = (body: string): PortersError => {
 // A Write rejected as a whole: the reason is at the root, not in an <Item> (ADR-0045).
 const writeFailure = (body: string): PortersError => {
   try {
-    parseWriteResult(body);
+    parseWriteResult(body, "Candidate");
     throw new Error("expected the envelope to fail");
   } catch (error) {
     if (error instanceof PortersError) return error;
@@ -92,12 +90,14 @@ describe("the fake's error envelopes match the reference fixtures", () => {
   it("produces the same per-item outcomes as the partial-write fixture", () => {
     const fromFixture = parseWriteResult(
       fixture("candidate/write-partial.xml"),
+      "Candidate",
     );
     const fromFake = parseWriteResult(
       buildWriteResultXml("Candidate", [
         { id: 10001, code: 0 },
         { id: 0, code: 133 },
       ]),
+      "Candidate",
     );
 
     expect(fromFake).toEqual(fromFixture);
@@ -136,7 +136,7 @@ describe("Result Code catalogue -> category", () => {
   // it to. Driving them through the fake's envelope proves the fake can *raise* each of them and
   // that the classification survives the round-trip.
   const catalogue: [number, string][] = [
-    [5, "unknown"], // ユーザー ID 無効 (uncategorised by ADR-0006)
+    [5, "auth"], // ユーザー ID 無効 (ADR-0106 案2A)
     [6, "permission"],
     [7, "notFound"],
     [8, "validation"],
@@ -205,6 +205,7 @@ describe("Authentication error family", () => {
     [115, "permission"],
     [116, "permission"],
     [117, "auth"],
+    [113, "auth"], // 登録アプリのサイトが無い (ADR-0106 案2A)
     [400, "auth"],
     [401, "auth"],
     [402, "permission"],

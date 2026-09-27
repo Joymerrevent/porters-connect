@@ -11,9 +11,9 @@
 
 このリソースで呼べるメソッドと、使い方の例です。
 
-| 読み                           | 書き                                              |
-| ------------------------------ | ------------------------------------------------- |
-| `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |
+| 読み                                       | 書き                                              |
+| ------------------------------------------ | ------------------------------------------------- |
+| `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |
 
 ```ts
 const existing = await t.process.search({

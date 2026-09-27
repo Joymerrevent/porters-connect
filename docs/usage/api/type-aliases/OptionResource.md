@@ -24,7 +24,7 @@ Read options, flattened depth-first (all nodes; tree is reconstructable via `P_P
 
 ##### query?
 
-[`OptionSearchQuery`](OptionSearchQuery.md)
+[`OptionSearchQuery`](OptionSearchQuery.md) & [`Limit`](Limit.md)
 
 #### Returns
 

@@ -2,11 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PortersError, PortersNetworkError } from "../../src/errors/index";
 import type { TransportRequest } from "../../src/http/types";
-import {
-  parseAuthentication,
-  parseResourcePage,
-  parseWriteResult,
-} from "../../src/xml/parser";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import { createFakeTransport } from "./fake-transport";
 import type { FakeTransport } from "./types";
 
@@ -69,7 +67,7 @@ const resultCode = (body: string): number => {
 // which parseWriteResult reads first (ADR-0045).
 const writeResultCode = (body: string): number => {
   try {
-    return parseWriteResult(body)[0]?.code ?? -1;
+    return parseWriteResult(body, "Candidate")[0]?.code ?? -1;
   } catch (error) {
     return error instanceof PortersError ? (error.code ?? -1) : -1;
   }

@@ -87,5 +87,13 @@ doc 側を実装の事実に合わせ、`PortersAuthError`（再認証が必要�
 - 根拠コード: `src/auth/token-provider.ts`（`renew()` → `acquire()` フォールバック、`acquire()` 失敗時のみ `PortersAuthError`）。
 - 関連: [[0006-error-model]]（`category: "auth"`）、PRD R-1。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/auth/token-provider.ts` → `src/auth/default-token-provider.ts`（2026-09-25・ADR-0097 で名前を変えた）
+
 [findings]: ../reviews/findings.md
 [adr-workflow]: README.md

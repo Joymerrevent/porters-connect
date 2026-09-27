@@ -1,7 +1,7 @@
-// Contract accessor (ADR-0004/0005/0011/0019): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Only the Data-Type catalog and
-// names are Contract-specific; the static Contract / input types derive from the catalog
-// (ADR-0019).
+// Contract accessor (ADR-0004/0005/0011/0019): built on the data resources' factory
+// (`createDataResource`), which gives every data resource the same methods. Only the Data-Type
+// catalog and names are Contract-specific; the static Contract / input types derive from the
+// catalog (ADR-0019).
 //
 // Two things set Contract apart from every other data resource:
 //   - **No `P_Owner`.** PORTERS does not publish one, so `create` requires only `P_Client`.
@@ -12,20 +12,33 @@
 //     Data Type is needed and the values decode as plain numbers.
 
 import {
-  createResource,
-  type CreateInput,
-  type EmptyCatalog,
-  type FieldCatalog,
-  type ReadRecord,
-  type ReferenceMap,
-  type Resource,
-  type ResourceDeps,
-  type ResourceDescriptor,
-  type ResourcePage,
-  type SearchQuery,
-  type UpdateInput,
-} from "./resource";
+  createDataResource,
+  type catalogMark,
+} from "../accessor/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "../accessor/read-record";
+import type { CreateInput, UpdateInput } from "../accessor/write-record";
+import type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadFieldAlias,
+  ReadRecord,
+} from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
+import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
+import type { EmptyReferences, Expand, ReferenceMap } from "../accessor/expand";
+import type { ImageOption } from "../accessor/image";
+import type { BulkWriteResult } from "../accessor/write-many";
+import type { SearchQuery } from "../accessor/query";
+import type { ResourceDescriptor } from "../accessor/descriptor";
 import { CLIENT_DESCRIPTOR } from "./client";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -90,7 +103,7 @@ const REFERENCES = {
  */
 export const CONTRACT_DESCRIPTOR = {
   name: "Contract",
-  path: "contract",
+  path: "contract" satisfies ResourceName,
   prefix: "Contract",
   fields: FIELDS,
   references: REFERENCES,
@@ -99,34 +112,139 @@ export const CONTRACT_DESCRIPTOR = {
 /** A decoded Contract (an agreement with a client): known `P_` fields, each `value | null`. */
 export type Contract = ReadRecord<typeof FIELDS>;
 export type ContractPage = ResourcePage<typeof FIELDS>;
-export type ContractSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Contract Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ContractSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
-/** Fields for `create`: only `P_Client` required (Contract has no owner field). */
-export type ContractCreateInput = CreateInput<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
-/** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
-export type ContractUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Contract accessor; `C` is the declared custom-field catalog merged on. */
+/**
+ * Fields for `create`: only `P_Client` required (Contract has no owner field). `C` is the
+ * declared custom-field catalog merged on; `CR` names the custom fields that are required on
+ * `create`.
+ */
+export type ContractCreateInput<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+/**
+ * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+ * declared custom-field catalog merged on.
+ */
+export type ContractUpdateInput<C extends FieldCatalog = EmptyCatalog> =
+  UpdateInput<typeof FIELDS & C>;
+
+// 公開の型の書き出しで繰り返す、利用者が宣言した項目を足した一覧。
+type Fields<C extends FieldCatalog> = typeof FIELDS & C;
+
+// メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
+// data-resource-shapes.test.ts が確かめる。
+/**
+ * The Contract accessor. `C` is the declared custom-field catalog merged on; `CR` names the
+ * custom fields that are required on `create`.
+ */
 export type ContractResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = Resource<
-  typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number] | CR,
-  typeof REFERENCES
->;
+> = {
+  /** @internal Type-level mark of the field catalog; never present at runtime. */
+  [catalogMark]?(field: ReadFieldAlias<Fields<C>>): void;
+  /**
+   * Search Contract records: resolves to one page of the records matching `query`. `field` picks
+   * the fields to read (omit it to read every known field), `expand` reads referenced records
+   * too, `image` picks an Image field's sub-fields, and `count` / `start` choose the page.
+   */
+  search<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: ContractSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
+  ): Promise<
+    ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
+  >;
+  /**
+   * Search every Contract record matching `query`, page after page (200 records per request).
+   * Takes the same `field` / `expand` / `image` as `search`.
+   */
+  searchAll<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: ContractSearchQuery<C> & ReadSelection<FL, E, I>,
+  ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
+  /**
+   * Read one Contract record by id; `undefined` when there is none. `field` picks the fields to
+   * read, the same way it does for `search` (omit it to read every known field); the record's id
+   * is always read, even when `field` leaves it out. `expand` reads referenced records too;
+   * `image` picks an Image field's sub-fields — `get` is where asking for a `Content` belongs,
+   * since it fetches one record rather than a page.
+   */
+  get<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    id: number,
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined>;
+  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+  /**
+   * Read many Contract records by id. Resolves to an array in the order of `ids`, holding
+   * `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
+   * id gets the same record at each of its positions; an empty `ids` sends no request.
+   *
+   * The ids are sent together (up to 200 per request, and as many as fit under the request size
+   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
+   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
+   *
+   * Every record that comes back is checked against the ids that were asked for. If PORTERS
+   * returns one that was not requested, the call rejects instead of returning it.
+   */
+  getMany<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    ids: readonly number[],
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<(GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined)[]>;
+  /** Create one Contract record; resolves to the newly assigned id. */
+  create(input: ContractCreateInput<C, CR>): Promise<number>;
+  /** Update one Contract record by id; resolves to that id. */
+  update(id: number, input: ContractUpdateInput<C>): Promise<number>;
+  // 一括書き込みの設計は ADR-0041 / F-4。
+  /**
+   * Create many Contract records in one call. Auto-batched to ≤200 records and under the request
+   * size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
+   * (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
+   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
+   * duplicate creates. Empty input sends no request.
+   */
+  createMany(inputs: ContractCreateInput<C, CR>[]): Promise<BulkWriteResult>;
+  /**
+   * Update many Contract records by id in one call. Auto-batched like `createMany`; per-record
+   * failures are returned in the `BulkWriteResult`, not thrown.
+   */
+  updateMany(
+    items: { id: number; fields: ContractUpdateInput<C> }[],
+  ): Promise<BulkWriteResult>;
+};
 
 export const createContractResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): ContractResource<C> => {
-  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
-  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  return createResource(
+  return createDataResource(
     { ...CONTRACT_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
-  );
+  ) as ContractResource<C>;
 };

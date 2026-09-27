@@ -114,4 +114,12 @@ fixture にする段階に留まる。**layer-1 の結合テストも、次の�
 - 位置づけ: [[0033-post-mvp-direction]] 案C（MCP 評価基盤）→ 案A（MCP）。未文書挙動は [live-verification][lv] へ。
 - 実装（accept 後・別 PR）: **まず in-repo・dev-only**（`test/fake/`）に挙動コア＋**Fake `Transport` アダプタ**→ L1 結合テスト・注入 API・`test/fixtures` 共有・`createMockTransport` との棲み分けを README/ガイドへ。**HTTP サーバー・アダプタ＋package 昇格（pnpm workspace / monorepo 判断）＋ライブラリ側の小変更（URL 組立 8 箇所の集約・アクセスポイント/scheme 設定・ループバック外含む http 警告）は N2・MCP e2e の需要時**（ライブラリ変更は別 PR ／必要なら別 ADR）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+
 [lv]: ../live-verification.md

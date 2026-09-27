@@ -7,7 +7,7 @@
 // HTTP server adapter is phase 5 of the plan).
 
 import type { Transport } from "../../src/http/types";
-import type { DataType } from "../../src/xml/decode";
+import type { DataType } from "../../src/porters/data-type";
 
 /**
  * A stored image (ADR-0064): the sub-elements a write carried, kept as they arrived so a read can

@@ -8,17 +8,14 @@
 // `P_ReferTo` is a nested alias (the option group for Option-type fields, the parent field for
 // Reference-type) — decoded like an Option value to the referenced alias(es) (ADR-0022).
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
-import {
-  decoderFor,
-  paginateOnce,
-  readUrlOf,
-  runRead,
-  type FieldCatalog,
-  type ReadRecord,
-  type ResourcePage,
-} from "./read-core";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
+import type { ResourceDescriptor } from "../accessor/descriptor";
+import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { ResourcePage } from "../accessor/resource-page";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
+import { resourceValueFor } from "../accessor/resource-value-for";
+import { createMasterResource } from "../accessor/master-resource";
 
 // 別テーブルを持たず alias にしたのは、独自コピーが Process を落としていた RV-37 の再発防止。
 /**
@@ -69,17 +66,13 @@ export type FieldPage = ResourcePage<typeof FIELDS>;
 export type FieldSearchQuery = {
   /** -1 = all (default), 0 = unused only, 1 = in-use only. */
   active?: -1 | 0 | 1;
-  count?: number;
-  start?: number;
 };
 
 /** The Field accessor for one bound resource. */
 export type FieldResource = {
-  search(query?: FieldSearchQuery): Promise<FieldPage>;
+  search(query?: FieldSearchQuery & Paging): Promise<FieldPage>;
   /** Auto-paginating search: yields every field of the resource. */
-  searchAll(
-    query?: Omit<FieldSearchQuery, "count" | "start">,
-  ): AsyncIterable<Field>;
+  searchAll(query?: FieldSearchQuery): AsyncIterable<Field>;
 };
 
 // of(resource) で束ねる形は ADR-0080。
@@ -99,12 +92,11 @@ export type FieldAccessor = {
   of(resource: ResourceType): FieldResource;
 };
 
-// Paging is left out on purpose: `count` / `start` are the only per-page difference, so
-// `searchAll` serialises the caller's query once and `readUrlOf` adds the rest (RV-32).
+// The parameters Field Read takes; paging and sending are the shared `createMasterResource`.
 const buildParams = (
   partition: number,
   resource: ResourceType,
-  q: Omit<FieldSearchQuery, "count" | "start">,
+  q: FieldSearchQuery,
 ): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("partition", String(partition));
@@ -113,35 +105,18 @@ const buildParams = (
   return p;
 };
 
-export const createFieldAccessor = (deps: ResourceDeps): FieldAccessor => ({
+export const createFieldAccessor = (
+  deps: PartitionBoundConnectionDeps,
+): FieldAccessor => ({
   of: (resource) => {
-    const decode = decoderFor(FIELDS);
-    // `async` for the exception contract (ADR-0046).
-    const readUrl = (q: FieldSearchQuery): string =>
-      readUrlOf(
-        deps.accessPoint,
-        "field",
-        buildParams(deps.partition, resource, q),
-        q.count,
-        q.start,
-      );
-    const search = async (query: FieldSearchQuery = {}): Promise<FieldPage> =>
-      runRead(deps.requester, FIELD_DESCRIPTOR.name, readUrl(query), decode);
-    // The query is read once, at the first page — mutating it mid-iteration cannot change a later
-    // page (RV-32). Same shape as the data resources' `searchAll`.
-    const searchAll = (
-      query: Omit<FieldSearchQuery, "count" | "start"> = {},
-    ): AsyncIterable<Field> =>
-      paginateOnce(() => {
-        const base = buildParams(deps.partition, resource, query);
-        return (count, start) =>
-          runRead(
-            deps.requester,
-            FIELD_DESCRIPTOR.name,
-            readUrlOf(deps.accessPoint, "field", base, count, start),
-            decode,
-          );
-      });
-    return { search, searchAll };
+    resourceValueFor("field", resource);
+    return createMasterResource(
+      {
+        ...FIELD_DESCRIPTOR,
+        params: (q: FieldSearchQuery) =>
+          buildParams(deps.partition, resource, q),
+      },
+      deps,
+    );
   },
 });

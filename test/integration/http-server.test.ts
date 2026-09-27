@@ -9,9 +9,9 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PortersClient } from "../../src/client";
-import { resetInsecureSchemeWarning } from "../../src/http/insecure-http-warning";
-import type { UserRef } from "../../src/xml/decode";
+import { PortersClient } from "../../src/porters-client";
+import { resetInsecureSchemeWarning } from "../../src/http/insecure-scheme-warner";
+import type { UserRef } from "../../src/xml/field-value";
 import { startFakeServer, type FakeServer } from "../fake/index";
 
 const OWNER = { P_Id: 5, P_Type: "0", P_Name: "採用 花子", P_Mail: "h@ex.com" };

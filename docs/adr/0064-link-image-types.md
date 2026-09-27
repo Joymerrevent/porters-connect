@@ -182,6 +182,14 @@ System 系（`System[Id]` / `[DateTime]` / `[Reference]` / `[Department]`）を�
   この文脈）。**恩恵を受けるのは当該カスタム項目を持つテナントだけ**という前提で採用している。
 - 実装は accepted 後に別 PR。フェイクサーバーと突合テストの追従を含む。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+
 [adr18]: 0018-attachment-design.md
 [adr20]: 0020-read-field-default.md
 [adr23]: 0023-custom-field-declaration-dsl.md

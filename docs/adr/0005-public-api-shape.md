@@ -19,6 +19,12 @@
 > 宣言を受ける形）も、現在の公開 API ではない**。カスタム項目は partition ごとのものなので、宣言は
 > `porters.tenant(id, { fields })` で partition と一緒に束ねる（client は宣言を持たない）。
 > SD-2 の宣言 DSL（`defineFields`・ビルダー・検証境界）そのものは不変。
+>
+> **Amended by [ADR-0095][0095]（2026-09-25）**: 本文の `get(id)` に加えて、複数の ID でまとめて読む `getMany(ids)` を足し、
+> `get` / `getMany` の両方で取得する項目（`field`）を受ける。`get(id)` の形と「見つからなければ `undefined`」は不変。
+>
+> **Amended by [ADR-0096][0096]（2026-09-25）**: SD-3「`field` 選択と返り値型 → 簡易」を改める。読み取りの戻り値の型から、
+> `field`（と `expand` / `image`）で要求していない項目のキーを外す（読んだ項目のキーは省略可能のまま）。
 
 ## Context and Problem Statement
 
@@ -171,3 +177,5 @@ try {
 [0048]: 0048-access-point-host-validation.md
 [0055]: 0055-partition-binding-guard.md
 [0087]: 0087-tenant-scoped-field-declarations.md
+[0095]: 0095-get-many-by-ids.md
+[0096]: 0096-narrow-record-type-by-field.md

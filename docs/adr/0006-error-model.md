@@ -100,6 +100,9 @@ type ErrorCategory =
 > `PortersNetworkError`（`category: "network"`・retryable）に倒れる。`rateLimit` が produce されるのは
 > **HTTP 429 を観測できたときだけ**（前段のプロキシ等が返した場合・[ADR-0044][0044] の status 写像）。
 > 分類の枠組み（2 系統＋HTTP を 1 モデルに正規化する）という決定そのものは変わらない。
+>
+> **追記（[ADR-0106][0106]・2026-09-27）**: 表に無かった resource `5`（ユーザー ID 無効）と auth `113`（登録アプリのサイトが無い）は
+> `auth` に分類する。auth `-1`（キャンセル）は「上記以外」＝ `unknown` のまま。
 
 **トークン期限切れの自動回復**: resource `401`/`402`・auth `400`（Access Token 期限切れ）は
 ライブラリが内部で Refresh して**自動再試行**（[OAuth の ADR] で詳細）。**再認証が本当に必要なときだけ**
@@ -170,6 +173,7 @@ type ErrorCategory =
 [0005]: 0005-public-api-shape.md
 [rv3]: ../reviews/rv/0003-unreachable-ratelimit-category.md
 [0044]: 0044-http-status-handling.md
+[0106]: 0106-unknown-outcome-scope-and-unmapped-codes.md
 [0069]: 0069-tenant-field-catalog-tooling.md
 [rapi]: ../usage/reference/resource-api/README.md
 [auth]: ../usage/reference/authentication-api/README.md

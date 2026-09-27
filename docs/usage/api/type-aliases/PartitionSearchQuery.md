@@ -8,32 +8,16 @@
 
 > **PartitionSearchQuery** = `object`
 
-Defined in: [src/resources/partition.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L43)
+Defined in: [src/resources/partition.ts:39](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L39)
 
 Partition Read query. `requestType` 1 = partitions this App can access (default).
 
 ## Properties
 
-### count?
-
-> `optional` **count?**: `number`
-
-Defined in: [src/resources/partition.ts:46](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L46)
-
-***
-
 ### requestType?
 
 > `optional` **requestType?**: `0` \| `1`
 
-Defined in: [src/resources/partition.ts:45](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L45)
+Defined in: [src/resources/partition.ts:41](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L41)
 
 1 = accessible partitions (default). 0 = login partition (browser `code` grant only).
-
-***
-
-### start?
-
-> `optional` **start?**: `number`
-
-Defined in: [src/resources/partition.ts:47](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/partition.ts#L47)

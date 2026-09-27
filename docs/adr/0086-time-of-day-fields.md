@@ -334,6 +334,14 @@ await t.job.search({
   型・カタログ・decode / encode・フェイクサーバーは触らない。
 - 起票の経緯: [ロードマップ][roadmap]「要 ADR」（2026-09-20）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/field-type.ts` → `src/porters/field-type.ts`（2026-09-25・ADR-0098）
+
 [pr347]: https://github.com/Joymerrevent/porters-connect/pull/347
 [src-announce]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
 [src-fdt]: https://hrbcapi.porters.jp/hc/ja/articles/115008017407-Field-Type-Data-Type-List

@@ -1,0 +1,33 @@
+# RV-133 🟢 前後に空白の付いた日時や件数の属性、改行を含むトークンが、エラーになるか空白付きのまま返る
+
+- 重要度: 🟢 ／ 観点: API 忠実性
+- 状態: fixed
+
+## 概要
+
+値の前後の空白を残すようにしたので、`" 2026/01/02 "` のような日時はエラーに、`Total=" 1 "` の属性はエラーに、改行を含む `AccessToken` は空白付きのまま返る。
+
+## 根拠
+
+- 実測（再レビュー・2026-09-26）。PORTERS がこの形で返すかは確かめていない。トークンの空白は、Headers が前後の空白を落とすので実害は無い見込み（読んだだけ）。
+
+## 影響
+
+🟢。PORTERS が整形して返さない限り起きない。
+
+## 検出経緯
+
+2026-09-26 の応答の読み方と書き込みの値の修正（fix/xml-review）を、change-review の手順でレビューし直したときに見つけた。止めどきの規則により、この回では直さずに記録する。
+
+## 推奨
+
+- 日時・件数・トークンなど、空白に意味の無い値は読むときに前後の空白を取る。
+- 止めどきの規則（Low だけになったら直さずに記録する）により、この回では直さずに記録する。
+
+## 処置
+
+**実施（2026-09-27・fix/xml-util-low-review・`5494f88・4c1beb9`）。** 数と日時の値、件数の属性、トークンとコードは、前後の空白を取って読む。トークンとコードは、空白だけなら欠けたのと同じ扱いにする。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「reads dates with surrounding whitespace」、`parse-resource-page.test.ts` の「reads Total/Count/Start with surrounding whitespace」、`parse-authentication.test.ts` の「trims tokens and codes」。

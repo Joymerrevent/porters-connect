@@ -210,6 +210,14 @@ index と各ファイルのズレは **`pnpm check:findings`** が検出し、**
   （`grep -rn "findings\.md#"`）、ADR index の突合（本文 `Status:` ↔ 一覧テーブル・51 本）。
   **ADR index の散文で見つかった陳腐化 5 件は本 ADR とは別に是正する**（決定の対象ではなく、実測の副産物）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/guide` → ガイドは 2026-09-11 に `docs/howto/` / `docs/concepts/` へ分け（ADR-0070）、いまは主に `docs/usage/topics/` にある（ADR-0071 / ADR-0088）
+
 [0001]: 0001-record-architecture-decisions.md
 [0014]: 0014-test-coverage-policy.md
 [0028]: 0028-ci-path-filtering.md

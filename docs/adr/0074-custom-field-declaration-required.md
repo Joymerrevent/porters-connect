@@ -224,6 +224,16 @@ const memo = rawValue(page.items[0], "U_memo"); // string | null | undefined
 - 案B を採る場合、ガイドから消える説明: 「要求と受け取りは別です」「未宣言のカスタム項目は
   『読めるだけ』」「未宣言のまま押し通すなら自分で型を当てます」。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/read-core.ts` → 送信は `src/resources/core/read.ts`、項目の一覧の型は `core/catalog.ts`、応答の変換は `core/decoder.ts`、ページ送りは `core/paging.ts`、`field` の組み立ては `core/field-param.ts`（2026-09-25 に `core/read.ts` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
+
 [pr286]: https://github.com/Joymerrevent/porters-connect/pull/286
 [0020]: 0020-read-field-default.md
 [0023]: 0023-custom-field-declaration-dsl.md

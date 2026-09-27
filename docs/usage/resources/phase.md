@@ -20,9 +20,9 @@ const phases = t.phase.of("candidate"); // 個人連絡先のフェーズ履歴
 
 このリソースで呼べるメソッドと、使い方の例です。
 
-| 読み                           | 書き                                              |
-| ------------------------------ | ------------------------------------------------- |
-| `search` / `searchAll` / `get` | `create` / `update` / `createMany` / `updateMany` |
+| 読み                                       | 書き                                              |
+| ------------------------------------------ | ------------------------------------------------- |
+| `search` / `searchAll` / `get` / `getMany` | `create` / `update` / `createMany` / `updateMany` |
 
 ```ts
 const phases = t.phase.of("candidate");

@@ -2,4 +2,7 @@
 // by `export` per file; the npm public surface is curated in src/index.ts.
 
 export * from "./porters-error";
-export * from "./classify";
+export * from "./resource-error";
+export * from "./auth-error";
+export * from "./network-error";
+export * from "./http-status-error";

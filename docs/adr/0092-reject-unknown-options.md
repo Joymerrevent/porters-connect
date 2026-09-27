@@ -150,6 +150,15 @@
   （本文の決定は書き換えない）。
 - 関連: [ADR-0046][adr46]（`Promise` を返さない API は同期 throw）、[ADR-0048][adr48]（設定の誤りを構築時に止める）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/client.test.ts` → `src/porters-client.test.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+- `src/client.ts` → `src/porters-client.ts`（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）
+
 [adr46]: 0046-guard-error-contract.md
 [adr48]: 0048-access-point-host-validation.md
 [adr87]: 0087-tenant-scoped-field-declarations.md

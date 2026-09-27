@@ -1,13 +1,13 @@
 // Public surface. Only what is exported here is part of the supported API.
 
-export { PortersClient } from "./client";
+export { PortersClient } from "./porters-client";
 // `TenantScope` is the partition-bound accessor bundle from `porters.tenant(id, options)` (ADR-0040 /
 // F-3); `TenantOptions` carries that partition's custom field declaration (ADR-0087).
 export type {
   PortersClientOptions,
   TenantOptions,
   TenantScope,
-} from "./client";
+} from "./porters-client";
 
 export {
   PortersError,
@@ -49,7 +49,9 @@ export type { MockHandler, MockReply, MockTransportOptions } from "./http";
 export { createFetchTransport } from "./http";
 export type { FetchTransportOptions } from "./http";
 // `Scheme` is the access-point URL scheme accepted by `PortersClientOptions.scheme` (ADR-0047).
-export type { PartitionId, Scheme, Scope } from "./types";
+export type { PartitionId } from "./porters-client";
+export type { Scheme } from "./http";
+export type { Scope } from "./auth";
 
 // Custom field declaration DSL (R-16 / ADR-0023): declare tenant U_/A_ fields so they
 // are typed and decode/encode by their declared Data Type.
@@ -95,6 +97,7 @@ export type {
   UndeclarableField,
   UndeclarableTenantField,
   RequiredMismatch,
+  DeclaredUndeclarableField,
   UndeclarableReason,
   UndeclaredField,
   UnverifiableResource,
@@ -110,12 +113,12 @@ export type {
   Order,
   ReadFieldAlias,
   SearchQuery,
-} from "./resources";
+} from "./accessor";
 // Bulk write result from createMany / updateMany (ADR-0041 / F-4).
-export type { BulkWriteResult, BulkWriteResultItem } from "./resources";
+export type { BulkWriteResult, BulkWriteResultItem } from "./accessor";
 // Read a field the catalog does not know, unconverted (ADR-0074 D2). `field` only accepts
 // catalogued aliases, so this is the deliberate way out when a value arrives without a declaration.
-export { rawValue } from "./resources";
+export { rawValue } from "./accessor";
 // Reference expansion (ADR-0058): `expand` reads the referenced record's fields, not just its id.
 // `ExpandedReadRecord` / `ResourcePageOf` name what a read with `expand` resolves to.
 export type {
@@ -123,14 +126,14 @@ export type {
   ExpandedReadRecord,
   ReferenceMap,
   ResourcePageOf,
-} from "./resources";
+} from "./accessor";
 // Image sub-field selection (ADR-0064): `image` reads an Image field's ContentType / Content.
 // `ImageOption` is what the option accepts, `ImageReadRecord` what such a read resolves to.
 export type {
   ImageOption,
   ImageReadRecord,
   ImageSelectedValue,
-} from "./resources";
+} from "./accessor";
 
 export type {
   Candidate,
@@ -167,10 +170,12 @@ export type {
 } from "./resources";
 // 文字列 union にするのは ADR-0061 案5b。
 /** The resource names `t.phase.of(...)` accepts. */
-export type { ResourceName } from "./resources";
+export type { Limit, Paging } from "./accessor";
+export type { ResourceName } from "./porters";
+export type { ImageContentType } from "./porters";
 // Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
 // declares, so these are what you write and read it with.
-export { resourceNameOf, resourceValueOf } from "./resources";
+export { resourceNameOf, resourceValueOf } from "./porters";
 export type {
   Sales,
   SalesCreateInput,
@@ -243,7 +248,6 @@ export type {
   AttachmentResource,
   AttachmentSearchQuery,
   AttachmentUpdate,
-  AttachmentWalkQuery,
 } from "./resources";
 
 // Master Read resources (read-only — ADR-0021/0022).
@@ -281,7 +285,6 @@ export type { Option, OptionResource, OptionSearchQuery } from "./resources";
 export type {
   DepartmentRef,
   FieldValue,
-  ImageContentType,
   ImageSubField,
   ImageValue,
   ImageWriteValue,

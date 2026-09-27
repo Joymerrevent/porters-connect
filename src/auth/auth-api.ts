@@ -7,9 +7,8 @@
 
 import { PortersConfigError } from "../errors/index";
 import { apiUrl, type AccessPoint } from "../http/index";
-import type { Scope } from "../types/index";
 import type { TokenManager } from "./token-manager";
-import type { IssuedToken, TokenProvider } from "./types";
+import type { IssuedToken, Scope, TokenProvider } from "./types";
 
 /** Shared options for the browser `code` / `remove` OAuth URLs (docs/usage/reference/authentication-api/oauth.md). */
 export type AuthorizationUrlOptions = {

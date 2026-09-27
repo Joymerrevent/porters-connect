@@ -7,7 +7,7 @@ import {
   type FieldSearchQuery,
   type ResourceType,
 } from "./field";
-import { RESOURCE_VALUES, type ResourceName } from "./resource-list";
+import { RESOURCE_VALUES, type ResourceName } from "../porters/resource-list";
 
 // Fixture from the canonical Field Read sample (115012160308): two Job fields — one with an
 // empty P_ReferTo, one whose P_ReferTo nests the referenced option group alias.
@@ -21,8 +21,8 @@ const TWO =
   `<Field.P_DecimalFraction>0</Field.P_DecimalFraction><Field.P_ReferTo><Option.P_Area/></Field.P_ReferTo><Field.P_ResourceType>3</Field.P_ResourceType></Item>` +
   `</Field>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<Field Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<Field Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><Field.P_Id>${id}</Field.P_Id></Item>`).join("") +
   `</Field>`;
 
@@ -82,7 +82,7 @@ describe("createFieldAccessor", () => {
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
     const r = createFieldAccessor({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -95,11 +95,11 @@ describe("createFieldAccessor", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createFieldAccessor({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const query: Omit<FieldSearchQuery, "count" | "start"> = { active: 1 };
+    const query: FieldSearchQuery = { active: 1 };
     for await (const item of r.of("job").searchAll(query)) {
       expect(item.P_Id).toBeGreaterThan(0);
       query.active = 0;
@@ -153,4 +153,15 @@ describe("ResourceType (Field Read's resource selector)", () => {
     expect(RESOURCE_VALUES.process).toBe(7);
     expect(Object.keys(RESOURCE_VALUES)).toHaveLength(11);
   });
+});
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createFieldAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createFieldAccessor({
+      requester: stub([TWO], []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('field.of: unknown resource "user"');
 });
