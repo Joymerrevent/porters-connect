@@ -1,7 +1,7 @@
 # RV-100 🟢 Number の読み込みが、16 進・2 進・指数表記を受け付け、大きな数の精度を黙って落とす
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`5494f88`）。** 10 進の表記（符号と小数を含む）だけを数として読み、安全な整数を超える整数はエラーにする。前後の空白は取ってから確かめる。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「reading a Number only from decimal text」。

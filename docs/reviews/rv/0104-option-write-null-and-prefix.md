@@ -1,7 +1,7 @@
 # RV-104 🟢 Option の書き込みで `[null]` を `<null/>` として送り、`x:y` の形の alias を通す
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`）。** 文字列でない選択肢（`[null]` / `[undefined]`）を拒否する。要素名のコロンは直していない。ADR-0085（accepted）が「XML の Name が許すものはすべて許す（狭めない）」と決めており、コロンを拒否するとその決定を狭めるため。
+
+## 検証
+
+`src/xml/encode-field.test.ts` の「refuses the option selection …」。

@@ -1,7 +1,7 @@
 # RV-133 🟢 前後に空白の付いた日時や件数の属性、改行を含むトークンが、エラーになるか空白付きのまま返る
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`5494f88・4c1beb9`）。** 数と日時の値、件数の属性、トークンとコードは、前後の空白を取って読む。トークンとコードは、空白だけなら欠けたのと同じ扱いにする。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「reads dates with surrounding whitespace」、`parse-resource-page.test.ts` の「reads Total/Count/Start with surrounding whitespace」、`parse-authentication.test.ts` の「trims tokens and codes」。

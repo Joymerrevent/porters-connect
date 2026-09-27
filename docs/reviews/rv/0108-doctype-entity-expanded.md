@@ -1,7 +1,7 @@
 # RV-108 🟢 応答の DOCTYPE で定義した実体を展開する
 
 - 重要度: 🟢 ／ 観点: セキュリティ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`4f75b0d`）。** `<!DOCTYPE` のある応答は、読めない応答として止める。
+
+## 検証
+
+`src/xml/parse-xml.test.ts` の「refuses a response with a DOCTYPE」。

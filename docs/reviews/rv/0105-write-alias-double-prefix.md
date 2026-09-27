@@ -1,7 +1,7 @@
 # RV-105 🟢 書き込みで、接頭辞付きの alias に接頭辞をもう一度付ける
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`）。** 書き込みの alias に自分のリソースの接頭辞が付いていたら外してから付け、型も素の alias で引く。ほかのリソースの接頭辞なら拒否する。
+
+## 検証
+
+`src/xml/encode-write-item.test.ts` の「a prefixed alias」。
