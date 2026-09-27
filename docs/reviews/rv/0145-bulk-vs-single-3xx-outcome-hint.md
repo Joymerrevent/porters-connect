@@ -1,7 +1,7 @@
 # RV-145 🟢 PORTERS の本文が無い 3xx の応答で、単発の create と createMany の案内が逆になる
 
 - 重要度: 🟢 ／ 観点: 一貫性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`6c3a94b`）。** 一括書き込みの `knownNotWritten` も、本文の無い 3xx を API の手前で止まったとみる（単発の create と同じ ADR-0106 の境界）。
+
+## 検証
+
+`src/accessor/write-many.test.ts` の HTTP 300 / 399 / 299 のケース。

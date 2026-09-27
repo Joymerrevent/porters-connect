@@ -1,7 +1,7 @@
 # RV-152 🟢 constName の予約語のテストが、実装の一覧を写しているので、一覧の漏れを見つけられない
 
 - 重要度: 🟢 ／ 観点: テスト
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`1d9972e`）。** テストの候補に、実装の一覧から独立した TS の文脈上のキーワードや組み込みの名前を足し、JavaScript のエンジンの判定と突き合わせる。
+
+## 検証
+
+`src/fields/generate-field-decls.test.ts` の「refuses … exactly when strict mode cannot declare it」。

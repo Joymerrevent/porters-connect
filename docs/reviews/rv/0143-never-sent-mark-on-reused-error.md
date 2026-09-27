@@ -1,7 +1,7 @@
 # RV-143 🟢 Transport が同じエラーの実体を使い回すと、送らずに失敗した印が送った後の失敗に漏れる
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`6c3a94b`）。** 送った後に捕まえたエラーの実体を別の WeakSet に記録し、送らずに失敗した印があり、送った後の記録が無いときだけ `neverSent` を真にする。
+
+## 検証
+
+`src/http/requester.test.ts` の「does not treat a reused error as never sent once it was seen after sending」。

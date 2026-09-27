@@ -1,7 +1,7 @@
 # RV-142 🟢 取り直したトークンを保存先に書いている間に clear() が走ると、保存先にトークンが戻る
 
 - 重要度: 🟢 ／ 観点: 認証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`ffddf11`）。** 保存先への書き込みを待つ間に世代が変わり、手元が消えたまま（`clear()` の後）なら、保存先ももう一度消す。後から `cache()` で入れ直したトークンは残す。
+
+## 検証
+
+`src/auth/token-manager.test.ts` の「does not leave a token in the store when clear() ran while it was being written」「keeps a token cached after the clear(), even when an earlier write finishes late」。

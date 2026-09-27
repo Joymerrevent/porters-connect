@@ -1,7 +1,7 @@
 # RV-150 🟢 とても小さい・大きい数の検索の条件は、指数表記に変わって拒否される
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`bfecd2d`）。** 検索の条件の数は、`toLocaleString`（桁区切りなし・小数 20 桁まで）で 10 進の表記にして送る。10 進に直すと値が変わる数（`5e-324` など）は、今までどおり拒否する。
+
+## 検証
+
+`src/accessor/append-read-query.test.ts` の「writes … as …」と「refuses …」（`5e-324`）。

@@ -1,7 +1,7 @@
 # RV-147 🟢 小数点の付いた大きな数は、安全な整数の検査を通らず黙って丸められる
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`bfecd2d`）。** 小数でも、整数の部分（`Math.trunc`）が安全な整数を超える数は読まない。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「reading a Number only from decimal text」（`9007199254740993.0` を拒否）。
