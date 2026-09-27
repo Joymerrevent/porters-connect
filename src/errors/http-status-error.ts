@@ -99,7 +99,9 @@ export const successBodyStatusError = (status: number): PortersError => {
       code: 0,
       // 読み取りはステータスどおりに再試行してよい。送った書き込みは、再試行せず結果が分からないとして返る。
       retryable: RETRYABLE_HTTP_CATEGORIES.has(category),
-      hint: "The HTTP status and the PORTERS response body disagree, so the outcome is unclear. Read the record back before repeating a write, and check any intermediary in front of the API.",
+      // 読み取りや認証の経路にも付くので、書き込みの案内は書かない。送った書き込みには、requester の
+      // asUnknownOutcome と一括書き込みの案内が、結果が分からないことの案内を足す（RV-155）。
+      hint: "The HTTP status and the PORTERS response body disagree, so the outcome is unclear. Check any intermediary (proxy / load balancer / gateway) in front of the API.",
       httpStatus: status,
     },
   );

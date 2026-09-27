@@ -124,6 +124,8 @@ describe("successBodyStatusError", () => {
         `HTTP ${status} with a successful PORTERS response body`,
       );
       expect(e.hint).toContain("disagree");
+      // 読み取りや認証の経路にも付くので、書き込みの案内を含めない（RV-155）。
+      expect(e.hint).not.toMatch(/write|resend|record/i);
     }
   });
 
