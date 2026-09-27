@@ -393,13 +393,19 @@ const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
   assertPartitionId(partition);
   rejectUnknownKeys("tenant", scope, TENANT_OPTION_KEYS);
   // 検証済みの印は型だけなので、素のオブジェクトや JS から渡された宣言も確かめる（RV-79）。
-  if (scope.fields !== undefined)
-    assertDeclaredCatalogs("tenant", scope.fields);
-  // The per-resource custom catalog declared via defineFields (or {} when none), checked above.
-  // 検査（assertDeclaredCatalogs）と同じく、列挙できる自分のプロパティだけを読む。prototype の上の宣言や、
-  // 列挙できない宣言は、検査を通らないまま読まれていた（RV-138 とその再レビュー）。
+  // 宣言は列挙できる自分のプロパティを 1 回だけ読み、その写しを検査と読み取りの両方に使う。prototype の上や
+  // 列挙できない宣言は読まず（RV-138 とその再レビュー）、読むたびに値が変わる getter でも、検査した値と
+  // 使う値が食い違わない（2 巡目の再レビュー）。
+  const fields: unknown = scope.fields;
+  const snapshot =
+    typeof fields === "object" && fields !== null
+      ? Object.fromEntries(Object.entries(fields))
+      : fields;
+  if (snapshot !== undefined) assertDeclaredCatalogs("tenant", snapshot);
   const declared = new Map<string, unknown>(
-    scope.fields === undefined ? [] : Object.entries(scope.fields),
+    typeof snapshot === "object" && snapshot !== null
+      ? Object.entries(snapshot)
+      : [],
   );
   const customFor = <K extends keyof DeclaredCatalogs>(
     key: K,

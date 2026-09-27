@@ -1073,3 +1073,33 @@ it("does not read a declaration that is not enumerable", async () => {
     .candidate.get(1, { field: ["U_score"] as never });
   expect(read).not.toHaveProperty("U_score", 7);
 });
+
+// 宣言は 1 回だけ読む。読むたびに値が変わる getter でも、検査した値と使う値が食い違わない（2 巡目の再レビュー）。
+it("checks and uses the same reading of a declaration", async () => {
+  const declared = defineFields({
+    candidate: (f) => ({ U_score: f.number() }),
+  });
+  let reads = 0;
+  const shifty = {} as typeof declared;
+  Object.defineProperty(shifty, "candidate", {
+    enumerable: true,
+    get: () => {
+      reads += 1;
+      return reads === 1 ? declared.candidate : { U_score: "Bogus" };
+    },
+  });
+  const body =
+    '<?xml version="1.0"?><Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>' +
+    "<Person.P_Id>1</Person.P_Id><Person.U_score>7</Person.U_score></Item></Candidate>";
+  const read = await mockClient(body)
+    .tenant(1, { fields: shifty })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(reads).toBe(1);
+  expect(read?.U_score).toBe(7);
+});
+
+it("rejects a declaration that is not an object before reading it", () => {
+  expect(() => mockClient().tenant(1, { fields: "x" as never })).toThrow(
+    "tenant: fields must be the result of defineFields",
+  );
+});
