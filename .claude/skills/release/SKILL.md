@@ -22,8 +22,8 @@ description: >-
 - **マージと公開は、実行フローの最初に取る 1 回の承認の範囲で CC が行う**（2026-09-27 にユーザーが決めた）。
   マージは本番公開の連鎖（タグ自動付与 → Release → publish）を起動し、publish は取り消せないので、引き金は人が
   握る。握り方を「各段で押す」から「最初に範囲を承認する」に変えた。**範囲の外へは広げない**。
-  - porters-connect の中では、`gh pr merge` / `gh pr create` / `gh release create` の確認画面が出ない
-    （`~/.claude/hooks/porters-release-guard.sh`。承認は、このスキルの最初の 1 回が引き受ける）。
+  - `gh pr merge` / `gh pr create` / `gh release create` を実行するたびに確認画面（`permissions.ask`）が出る。
+    承認の中身は最初の 1 回で済んでいるので、ユーザーは押すだけで進む。確認画面は仕組み側のフェイルセーフとして残す。
 - コマンドは **pnpm** で統一する（`npm` は使わない・runbook 冒頭）。
   例外は `npm view`（レジストリの参照）だけ。
 
