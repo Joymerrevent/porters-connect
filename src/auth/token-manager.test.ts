@@ -644,9 +644,11 @@ describe("readStoredTokens", () => {
 });
 
 // 保存先に書いている間に clear() が走っても、書き終えたトークンを保存先に残さない（RV-142）。
+// 書き込みは呼ばれた順に流すので、clear() は先の書き込みが終わってから保存先を消す（RV-153）。
 it("does not leave a token in the store when clear() ran while it was being written", async () => {
   let stored: StoredTokens | undefined;
   let release: () => void = () => undefined;
+  let clears = 0;
   const store: TokenStore = {
     get: () => Promise.resolve(stored),
     set: (v) =>
@@ -657,6 +659,7 @@ it("does not leave a token in the store when clear() ran while it was being writ
         };
       }),
     clear: () => {
+      clears += 1;
       stored = undefined;
       return Promise.resolve();
     },
@@ -668,13 +671,16 @@ it("does not leave a token in the store when clear() ran while it was being writ
     tokenStore: store,
   });
   const caching = m.cache({ accessToken: { token: "EX" } });
-  await m.clear();
+  const clearing = m.clear();
+  await Promise.resolve();
+  expect(clears).toBe(0); // 先の書き込みが終わるまで消さない
   release();
+  await clearing;
   await caching;
   expect(stored).toBeUndefined();
 });
 
-it("keeps a token cached after the clear(), even when an earlier write finishes late", async () => {
+it("writes to the store in call order, so the last call wins", async () => {
   let stored: StoredTokens | undefined;
   const releases: (() => void)[] = [];
   const store: TokenStore = {
@@ -698,17 +704,19 @@ it("keeps a token cached after the clear(), even when an earlier write finishes 
     tokenStore: store,
   });
   const first = m.cache({ accessToken: { token: "OLD" } });
-  await m.clear();
+  const cleared = m.clear();
   const second = m.cache({ accessToken: { token: "NEW" } });
-  // 後から頼んだ書き込みが先に終わり、前の書き込みが追い越して OLD を書く。
+  // 前の書き込みが終わるまで、後の書き込みは始まらない（追い越しが起きない）。
+  await Promise.resolve();
+  expect(releases).toHaveLength(1);
+  releases[0]?.();
+  await first;
+  await cleared;
+  await vi.waitFor(() => {
+    expect(releases).toHaveLength(2);
+  });
   releases[1]?.();
   await second;
-  releases[0]?.();
-  await vi.waitFor(() => {
-    expect(releases).toHaveLength(3);
-  });
-  releases[2]?.();
-  await first;
   expect(stored).toEqual({ accessToken: { token: "NEW" } });
   expect(await m.getAccessToken()).toBe("NEW");
 });
@@ -748,30 +756,52 @@ it("does not bring a cleared token back through the first store read", async () 
     tokenStore: store,
   });
   const caching = m.cache({ accessToken: { token: "A" } });
-  await m.clear();
+  const clearing = m.clear();
+  await Promise.resolve(); // A の書き込みが始まるのを待つ
+  // A が保存先に届き、clear() の消去がまだ流れていない間に、最初の読み込みが走る。
   release();
   const token = await m.getAccessToken();
+  await clearing;
   await caching;
   expect(token).not.toBe("A");
   expect(acquires).toBe(1);
 });
 
-// 合わせ直しの最中に clear() が重なっても、保存先を最後の状態（空）に合わせる（再レビュー）。
-it("keeps reconciling the store until the local state stops changing", async () => {
+// 先の書き込みが終わった後の clear() が失敗したら、clear() が失敗を返す（成功で返って保存先に残さない。RV-153）。
+it("rejects clear() when its own store write fails after an earlier write", async () => {
   let stored: StoredTokens | undefined;
-  const pending: { v: StoredTokens; done: () => void }[] = [];
+  let release: () => void = () => undefined;
   const store: TokenStore = {
     get: () => Promise.resolve(stored),
     set: (v) =>
       new Promise<void>((r) => {
-        pending.push({
-          v,
-          done: () => {
-            stored = v;
-            r();
-          },
-        });
+        release = () => {
+          stored = v;
+          r();
+        };
       }),
+    clear: () => Promise.reject(new Error("store down")),
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const caching = m.cache({ accessToken: { token: "A" } });
+  const clearing = m.clear();
+  await Promise.resolve(); // A の書き込みが始まるのを待つ
+  release();
+  await expect(caching).resolves.toBeUndefined();
+  await expect(clearing).rejects.toThrow("store down");
+});
+
+// 先の書き込みが失敗しても、後の書き込みは流れ、失敗は先の呼び出しにだけ返る。
+it("keeps writing after an earlier store write fails", async () => {
+  let stored: StoredTokens | undefined = { accessToken: { token: "OLD" } };
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: () => Promise.reject(new Error("store down")),
     clear: () => {
       stored = undefined;
       return Promise.resolve();
@@ -783,16 +813,9 @@ it("keeps reconciling the store until the local state stops changing", async () 
     },
     tokenStore: store,
   });
-  const a = m.cache({ accessToken: { token: "A" } });
-  const b = m.cache({ accessToken: { token: "B" } });
-  pending[1]?.done(); // B が先に届く
-  await b;
-  pending[0]?.done(); // A が遅れて届き、合わせ直しの set(B) が始まる
-  await vi.waitFor(() => {
-    expect(pending).toHaveLength(3);
-  });
-  await m.clear(); // 合わせ直しの最中に消す
-  pending[2]?.done(); // 合わせ直しの set(B) が clear の後に届く
-  await a;
+  const caching = m.cache({ accessToken: { token: "A" } });
+  const clearing = m.clear();
+  await expect(caching).rejects.toThrow("store down");
+  await expect(clearing).resolves.toBeUndefined();
   expect(stored).toBeUndefined();
 });
