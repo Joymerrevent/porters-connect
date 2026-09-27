@@ -143,6 +143,24 @@ type Progress = {
   idempotent: boolean;
 };
 
+// hint の 1 文目: 失敗したバッチがどうなったか。
+const failedBatchSentence = (at: Progress, range: string): string => {
+  if (at.unknownOutcome)
+    return `The ${range} may have been written before the failure: check whether they exist before resending them.`;
+  return at.idempotent
+    ? `The ${range} failed.`
+    : `The ${range} were not written.`;
+};
+
+// hint の 3 文目: それより前のバッチがどうなったか（前に送ったものが無ければ書かない）。
+const earlierBatchesSentence = (at: Progress): string | undefined => {
+  if (at.earlierFailed.length > 0)
+    return `Of the ${at.sent} record(s) sent in earlier batches, index ${listIndexes(at.earlierFailed)} failed and were not written; the rest were written.`;
+  if (at.sent > 0)
+    return `The ${at.sent} record(s) sent in earlier batches were written.`;
+  return undefined;
+};
+
 // 一括書き込みが途中で止まった。create は非冪等なので、全体を送り直すと重複する（SD-4）。どこまで
 // 書けたか・どこが分からないかを書いて返す。バッチごとの結果（results）は返せないので、それまでに
 // 失敗した index は hint に並べる（RV-69）。
@@ -154,21 +172,12 @@ const batchFailure = (
 ): PortersError => {
   const base = cause instanceof PortersError ? cause : undefined;
   const range = `records ${at.first}–${at.last}`;
-  const failedBatch = at.unknownOutcome
-    ? `The ${range} may have been written before the failure: check whether they exist before resending them.`
-    : at.idempotent
-      ? `The ${range} failed.`
-      : `The ${range} were not written.`;
+  const failedBatch = failedBatchSentence(at, range);
   const notSent =
     at.last + 1 < at.total
       ? `Records from index ${at.last + 1} onward were not sent.`
       : undefined;
-  const earlier =
-    at.earlierFailed.length > 0
-      ? `Of the ${at.sent} record(s) sent in earlier batches, index ${listIndexes(at.earlierFailed)} failed and were not written; the rest were written.`
-      : at.sent > 0
-        ? `The ${at.sent} record(s) sent in earlier batches were written.`
-        : undefined;
+  const earlier = earlierBatchesSentence(at);
   return new PortersResourceError(
     `bulk write failed at ${range} of ${at.total}: ${cause instanceof Error ? cause.message : String(cause)}`,
     {

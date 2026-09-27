@@ -205,6 +205,10 @@ const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
 const tag = (name: string, value: string | number): string =>
   `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
+// update で渡されなかった項目は送らない（空の要素は「空にする」と読まれる）。
+const optionalTag = (name: string, value: string | undefined): string =>
+  value === undefined ? "" : tag(name, value);
+
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
 // 文字列のときだけ長さを見る（null などは、続く Base64 の検査が PortersConfigError で止める。RV-140）。
 const guardContent = (content: unknown): void => {
@@ -395,13 +399,11 @@ export const createAttachmentAccessor = (
       if (input.fileName !== undefined) assertText("fileName", input.fileName);
       guardContent(input.content);
       if (input.content !== undefined) assertBase64(input.content);
-      let inner = tag("Id", id);
-      if (input.contentType !== undefined) {
-        inner += tag("ContentType", input.contentType);
-      }
-      if (input.fileName !== undefined)
-        inner += tag("FileName", input.fileName);
-      if (input.content !== undefined) inner += tag("Content", input.content);
+      const inner =
+        tag("Id", id) +
+        optionalTag("ContentType", input.contentType) +
+        optionalTag("FileName", input.fileName) +
+        optionalTag("Content", input.content);
       return write(inner, true);
     };
 
