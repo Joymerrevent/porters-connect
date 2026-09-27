@@ -51,20 +51,24 @@ const mismatch = (
 // 近い値に丸める（"9007199254740993" -> …992）。どちらも黙って別の数になる（RV-100）。
 const DECIMAL = /^-?\d+(?:\.\d+)?$/;
 
+// 10 進の表記 `text` を数にした `n` が、丸められずに同じ値を表しているか。
+// 整数は安全な整数だけ（書き込み側と同じ範囲）。小数は、整数の部分が安全な整数で、本文の整数の部分と数にした後の整数の
+// 部分が同じときだけ読む（"9007199254740993.0" が …992 に、"4503599627370497.5" が …498 になる。RV-147 と
+// その再レビュー）。安全な整数かを先に見ないと、桁の多すぎる値で BigInt が RangeError を投げる。
+const isExactNumber = (text: string, n: number): boolean => {
+  if (!text.includes(".")) return Number.isSafeInteger(n);
+  const whole = Math.trunc(n);
+  return (
+    Number.isSafeInteger(whole) &&
+    BigInt(text.slice(0, text.indexOf("."))) === BigInt(whole)
+  );
+};
+
 const numeric = (alias: string, type: DataType, value: string): number => {
   // 前後の空白は数の一部ではないので取ってから確かめる（Number() も同じく許していた）。
   const text = value.trim();
   const n = Number(text);
-  // 整数は安全な整数だけ（書き込み側と同じ範囲）。小数は、整数の部分が安全な整数で、本文の整数の部分と数にした後の整数の
-  // 部分が同じときだけ読む（"9007199254740993.0" が …992 に、"4503599627370497.5" が …498 になる。RV-147 と
-  // その再レビュー）。安全な整数かを先に見ないと、桁の多すぎる値で BigInt が RangeError を投げる。
-  const ok =
-    DECIMAL.test(text) &&
-    (text.includes(".")
-      ? Number.isSafeInteger(Math.trunc(n)) &&
-        BigInt(text.slice(0, text.indexOf("."))) === BigInt(Math.trunc(n))
-      : Number.isSafeInteger(n));
-  if (ok) return n;
+  if (DECIMAL.test(text) && isExactNumber(text, n)) return n;
   throw new PortersResourceError(
     `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
     {
@@ -191,15 +195,6 @@ const decodeImage = (outer: Record<string, unknown>): ImageValue | null => {
 // VERIFY(live): the User / Department forms are assumed to nest exactly like the `User` and
 // `System[Department]` Data Types do, which is what the reference implies but does not show for
 // Link specifically. See docs/live-verification.md (LV-19).
-// 値の空白に意味があるテキストの Data Type。これ以外の項目では、空白だけの値は空として読む。
-const TEXT_TYPES: ReadonlySet<DataType> = new Set([
-  "SinglelineText",
-  "MultilineText",
-  "Mail",
-  "Telephone",
-  "URL",
-]);
-
 const decodeLink = (raw: unknown, alias: string): LinkValue | null => {
   const scalar = asString(raw);
   if (scalar !== undefined) return numeric(alias, "Link", scalar);
@@ -272,6 +267,15 @@ const converted = (
     );
   }
 };
+
+// 値の空白に意味があるテキストの Data Type。これ以外の項目では、空白だけの値は空として読む。
+const TEXT_TYPES: ReadonlySet<DataType> = new Set([
+  "SinglelineText",
+  "MultilineText",
+  "Mail",
+  "Telephone",
+  "URL",
+]);
 
 /** Decode one field's raw node by its Data Type (`null` = PORTERS assigns none — ADR-0056). */
 export const decodeField = (
