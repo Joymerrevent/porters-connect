@@ -604,6 +604,8 @@ describe("reading a Number only from decimal text", () => {
     ".5",
     "9007199254740993",
     "-9007199254740993",
+    "9007199254740993.0",
+    "12345678901234567890.5",
   ])("refuses %j", (text) => {
     expect(() => decode("Number", text, "U_score")).toThrow(
       PortersResourceError,
@@ -613,7 +615,6 @@ describe("reading a Number only from decimal text", () => {
   it.each([
     ["9007199254740991", 9007199254740991],
     ["-9007199254740991", -9007199254740991],
-    ["12345678901234567890.5", Number("12345678901234567890.5")],
     ["-0.25", -0.25],
   ])("reads %j", (text, expected) => {
     expect(decode("Number", text, "U_score")).toBe(expected);

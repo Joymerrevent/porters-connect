@@ -55,8 +55,8 @@ const numeric = (alias: string, type: DataType, value: string): number => {
   // 前後の空白は数の一部ではないので取ってから確かめる（Number() も同じく許していた）。
   const text = value.trim();
   const n = Number(text);
-  if (DECIMAL.test(text) && (text.includes(".") || Number.isSafeInteger(n)))
-    return n;
+  // 小数でも、整数の部分が安全な整数を超えれば丸まる（"9007199254740993.0" が …992 になる。RV-147）。
+  if (DECIMAL.test(text) && Number.isSafeInteger(Math.trunc(n))) return n;
   throw new PortersResourceError(
     `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
     {
