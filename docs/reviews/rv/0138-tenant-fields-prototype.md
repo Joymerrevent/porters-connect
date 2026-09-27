@@ -26,8 +26,8 @@
 
 ## 処置
 
-**実施（2026-09-27・fix/fields-attachment-low-review・`2d94c46`）。** `tenant()` は、検査と同じく宣言の自分のプロパティだけを読む（`Object.hasOwn`）。
+**実施（2026-09-27・fix/fields-attachment-low-review・`2d94c46`）。** `tenant()` は、検査と同じく宣言の列挙できる自分のプロパティだけを読む（`Object.entries`）。最初は `Object.hasOwn` で読んでいたが、列挙できない宣言が検査を通らないまま読まれると再レビューで分かり、検査と同じ読み方にそろえた。
 
 ## 検証
 
-`src/porters-client.test.ts` の「does not read a declaration that sits only on the prototype」。
+`src/porters-client.test.ts` の「does not read a declaration that sits only on the prototype」「does not read a declaration that is not enumerable」。

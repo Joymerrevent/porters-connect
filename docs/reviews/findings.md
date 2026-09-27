@@ -164,6 +164,8 @@
 | [RV-147][rv147] | 🟢     | API 忠実性                      | open    | 大きな小数の丸め                                                                                     |
 | [RV-148][rv148] | 🟢     | 一貫性                          | open    | 0000 年の読み書きの非対称                                                                            |
 | [RV-149][rv149] | 🟢     | API 忠実性                      | open    | 値の中の <!DOCTYPE で拒否                                                                            |
+| [RV-150][rv150] | 🟢     | API 忠実性                      | open    | 小さな小数の条件が拒否される                                                                         |
+| [RV-151][rv151] | 🟢     | API 忠実性                      | open    | Field Read の接頭辞の前提                                                                            |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -321,3 +323,5 @@
 [rv147]: rv/0147-large-decimal-number-rounded.md
 [rv148]: rv/0148-year-0000-read-but-not-written.md
 [rv149]: rv/0149-doctype-text-in-values-rejected.md
+[rv150]: rv/0150-condition-tiny-decimal-exponent.md
+[rv151]: rv/0151-field-read-prefix-check-assumption.md
