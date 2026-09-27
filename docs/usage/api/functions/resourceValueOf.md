@@ -8,7 +8,7 @@
 
 > **resourceValueOf**(`name`): `number`
 
-Defined in: [src/resources/resource-list.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L64)
+Defined in: [src/porters/resource-list.ts:54](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters/resource-list.ts#L54)
 
 The number PORTERS knows a resource by. The library takes **names** where PORTERS
 takes a `resource=` parameter, but a *field value* stays the number its Data Type declares —
@@ -21,7 +21,7 @@ Write the name and let this do the lookup; the numbers are non-contiguous
 
 ### name
 
-`"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+`"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
 ## Returns
 

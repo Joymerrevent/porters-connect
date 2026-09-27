@@ -19,6 +19,7 @@
    │   ├─ xml/          XML パース/シリアライズ（外に XML を漏らさない）                 │
    │   ├─ errors/       PortersError 階層（Auth/Resource/Network/Config）＋ category     │
    │   ├─ fields/       defineFields DSL（標準 P_ 静的型 ＋ カスタム U_/A_ 宣言＋検証）  │
+   │   ├─ accessor/     アクセサを組み立てる共通の仕組み（Read・クエリ・展開・一括）    │
    │   ├─ resources/    リソース別アクセサ（candidate.search/get/create/update …）      │
    │   └─ util/         datetime（PORTERS 形式 ⇄ ISO8601）ほか                           │
    └───────────────────────────────────────────────────────────────────────────────────┘
@@ -33,18 +34,53 @@
 ```text
 src/
   index.ts            # public export（ここからのみ公開）
-  client.ts           # PortersClient・porters.tenant(id) スコープ
-  auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
-  http/               # transport（注入 IF・既定 fetch）・headers・throttle・retry
-  xml/                # parse / serialize（データ型別エンコード）
+  porters-client.ts   # PortersClient・porters.tenant(id) スコープ
+  porters/            # PORTERS が決めた値と定義表（上限・Data Type・Field Type・Resource List 等）。何も import しない
   errors/             # PortersError ＋ Auth/Resource/Network/Config・code→category マップ
-  fields/             # defineFields（ビルダー）・標準 P_ 型・実行時検証
+  util/               # 他のモジュールに依存しない関数と型（datetime：PORTERS 形式 ⇄ ISO8601（UTC）・alias の接頭辞・汎用の型ほか）
+  xml/                # parse / serialize（データ型別エンコード）
+  http/               # transport（注入 IF・既定 fetch）・headers・throttle・backoff・アクセスポイント
+  auth/               # TokenProvider（取得）・既定の code_direct・token manager（管理）・TokenStore・porters.auth
+  accessor/           # アクセサを組み立てる共通の仕組み（データ系の data-resource・マスタの master-resource と、共有の読み込み・書き込みの部品）
   resources/          # candidate / job / client / process / resume / attachment …（＋マスタ Read）
-  types/              # 共有型
-  util/datetime.ts    # PORTERS 形式 ⇄ ISO8601（UTC）
+  fields/             # defineFields（ビルダー）・テナントの項目を読む道具・実行時検証
 ```
 
-- **UT は co-located**：`src/xml/parser.ts` ↔ `src/xml/parser.test.ts`（vitest 既定の `**/*.test.ts`）。
+`src/` のフォルダとファイルは、次のルールで置く。根拠は各 ADR にあり、ここはその要約である。
+
+### フォルダと依存の向き
+
+- **フォルダは責務の境界**。上の一覧のモジュールがそれぞれ 1 つの責務を持つ。
+- **層**（[ADR-0097][a97] / [ADR-0098][a98] / [ADR-0101][a101]）：上の一覧の順（`porters` → `errors` → `util` → `xml` →
+  `http` → `auth` → `accessor` → `resources` → `fields` → 直下）に下から並ぶ。各モジュールは自分より下の層だけを import する
+  （`accessor` と `resources` は `auth` を使わない）。
+- `porters/` は PORTERS が決めた値と定義表だけを持ち、判断や検査のコードは置かない。何も import しない。
+- 層と向きは eslint の `no-restricted-imports` で止める（テストは対象外）。
+
+### ファイル
+
+- **1 ファイル 1 責務**・ファイル名は **kebab-case**（[ADR-0013][a13]。大文字小文字を区別しない FS での import 事故を避ける）。
+- **1 ファイルに主な export は 1 つ**。ファイル名はその名前を kebab-case にしたもの（[ADR-0097][a97] / [ADR-0101][a101]）。
+  factory の `create` は付けても付けなくてもよい（`createTokenManager` → `token-manager.ts` でも `create-token-manager.ts` でもよい）。
+  その export の引数・戻り値・設定にだけ使う型と、組でしか意味のない小さな関数は、同じファイルに置いてよい
+  （例: `createDataReader` と `DataReadConfig`、`ResourceDescriptor` と `idAliasOf`）。
+  名前が合わないときはファイル名を変えるのを基本にし、ファイル名が不自然になるときだけ export の名前を変える。
+- **まとめてよいのは次の例外だけ**。例外のファイルは役割を表す名前にする（[ADR-0101][a101]）。
+  - 対になる関数（変換と逆変換のように、片方を直すともう片方も直すもの。例: `util/alias.ts` の `qualify` / `bareAlias`）
+  - 一緒に使う型の集まり（1 つの概念を複数の型で表すもの。例: 検索クエリの `Condition` / `Order` / `SearchQuery`）
+  - PORTERS が決めた値の表（`porters/` の中。[ADR-0098][a98]）
+  - クラスの階層（基底のクラスとそのサブクラス。例: `PortersError` と Auth / Resource / Network / Config）
+- **フォルダ名と重なる語は付けない**（`accessor/` の中に `-accessor` を付けない。[ADR-0097][a97]）。
+- **`index.ts` はバレル**（`export *` / `export type *` の再 export だけ）。宣言は名前の付いたファイルに置き、
+  モジュールの中で公開するかどうかは、そのファイルの `export` の有無で決める（[ADR-0013][a13]）。
+- **パッケージの公開 API は `src/index.ts` の明示 export だけ**。モジュールをまたいで見えても npm に出さない記号があるので、
+  ここだけはバレルにせず選んで export する。
+- どのモジュールにも属さない型だけの部品は `util/types.ts` に置く。
+
+### テスト
+
+- **UT は co-located**：実装の隣に 1 対 1 で置く（`src/xml/parse-resource-page.ts` ↔ `src/xml/parse-resource-page.test.ts`。vitest 既定の `**/*.test.ts`）。
+  型だけのファイル（実行されるコードを持たないもの）には置かない。
   ビルド（tsup）は `src/index.ts` の依存グラフからバンドルするため `*.test.ts` は **dist/型に含まれない**。`package.json` は `dist` のみ publish。
 - **モック XML フィクスチャ**：再利用する**全パターンの見本帳は集約** `test/fixtures/`（データ型別・リソース別 Read/Write・エラー系。[ADR-0002][a2]：契約が無い間は出典 XML を fixture 化し使い回す）。
   **テスト固有のカスタム（空結果・壊れ XML・特定値などのエッジケース）はテスト内に inline**（大きく/再利用しだしたら `test/fixtures/` へ昇格）。各所 `__fixtures__/` は作らない。
@@ -135,7 +171,7 @@ accessor 呼び出し
   - ※ 数値は理解のための目安。**正典は [docs/usage/reference][ref]**（サイズは将来 16KB 化を検討中＝追従する）。
 - **日時**：ISO 8601（UTC, `...Z`）に正規化。業務 TZ 変換はしない（[PRD R-10][prd]）。
 - **機密情報**：App ID/Secret/トークンをログ・エラーに出さない。ホストは `PORTERS_HOST` 経由でハードコード禁止。
-  - **アクセスポイント**：URL 組立は 1 関数（`http/access-point.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
+  - **アクセスポイント**：URL 組立は 1 関数（`http/api-url.ts`）に集約。scheme の既定は `https`、`http` は明示時のみで毎プロセス 1 回警告し、
     抑止は専用 env のみ（許可と沈黙は別・[ADR-0047][a47]）。
 - **バージョン**：`X-P-ConnectAPI-Version: 2` を既定送信。対応バージョンを README/コードに明記。
 - **言語**：公開サーフェスは英語、内部コメントは日本語可（CLAUDE.md）。
@@ -177,5 +213,9 @@ accessor 呼び出し
 [a10]: ../adr/0010-retry-throttle.md
 [a11]: ../adr/0011-xml-parse-serialize.md
 [a12]: ../adr/0012-token-cache-refresh.md
+[a13]: ../adr/0013-coding-conventions-class-vs-function.md
 [a47]: ../adr/0047-access-point-scheme.md
 [a91]: ../adr/0091-token-provider-and-store.md
+[a97]: ../adr/0097-src-module-layout.md
+[a98]: ../adr/0098-porters-rules-folder.md
+[a101]: ../adr/0101-accessor-layer-and-file-names.md

@@ -8,7 +8,7 @@
 
 > **DepartmentRef** = `object`
 
-Defined in: [src/xml/decode.ts:42](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L42)
+Defined in: [src/xml/field-value.ts:12](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/field-value.ts#L12)
 
 A referenced Department (`System[Department]`). Read is nested exactly like
 `User`: `<OwnerDepartment><Department><Department.P_Id>…`. Only the two fields PORTERS shows in
@@ -20,7 +20,7 @@ its sample are modelled — inventing more would be guessing.
 
 > **P\_Id**: `number` \| `null`
 
-Defined in: [src/xml/decode.ts:43](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L43)
+Defined in: [src/xml/field-value.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/field-value.ts#L13)
 
 ***
 
@@ -28,4 +28,4 @@ Defined in: [src/xml/decode.ts:43](https://github.com/Joymerrevent/porters-conne
 
 > **P\_Name**: `string` \| `null`
 
-Defined in: [src/xml/decode.ts:44](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/decode.ts#L44)
+Defined in: [src/xml/field-value.ts:14](https://github.com/Joymerrevent/porters-connect/blob/main/src/xml/field-value.ts#L14)

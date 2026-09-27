@@ -8,4 +8,4 @@
 
 > **ProcessPage** = `ResourcePage`\<*typeof* `FIELDS`\>
 
-Defined in: [src/resources/process.ts:95](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L95)
+Defined in: [src/resources/process.ts:107](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/process.ts#L107)

@@ -173,5 +173,13 @@ docs/
   記録の値打ちが保てる」）をそのまま踏襲する
 - 実装は本 ADR の accept 後、**別 PR**で行う（ADR と実装を分ける運用）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/guide` → ガイドは 2026-09-11 に `docs/howto/` / `docs/concepts/` へ分け（ADR-0070）、いまは主に `docs/usage/topics/` にある（ADR-0071 / ADR-0088）
+
 [0070]: 0070-usage-documentation-architecture.md
 [pr259]: https://github.com/Joymerrevent/porters-connect/pull/259

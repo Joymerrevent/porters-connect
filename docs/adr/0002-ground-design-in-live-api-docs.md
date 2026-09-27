@@ -68,3 +68,12 @@ ADR を 1 本ずつ詰める前に、**設計を何にどこまで接地し、�
 - 収集済み: 用語集（`glossary.md`）／ Attachment Mime Type（`resources/attachment.md` 付録）。
   出典リンクのみ（転記しない）: Option - Default Option List（巨大・テナント依存。実値は Option Read）。
 - 関連: [[0001-record-architecture-decisions]], `SPEC_v1.md`。
+
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+- `docs/reference/README.md` → `docs/usage/reference/README.md`（2026-09-12・ADR-0071）

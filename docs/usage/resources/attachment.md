@@ -193,8 +193,7 @@ await files.create({ ...file, content: base64 });
 | [`Attachment`][t-Attachment]                       | 読み取った 1 件                      |
 | [`AttachmentCreate`][t-AttachmentCreate]           | `create` の入力                      |
 | [`AttachmentUpdate`][t-AttachmentUpdate]           | `update` の入力                      |
-| [`AttachmentSearchQuery`][t-AttachmentSearchQuery] | `search` のクエリ                    |
-| [`AttachmentWalkQuery`][t-AttachmentWalkQuery]     | `searchAll` のクエリ                 |
+| [`AttachmentSearchQuery`][t-AttachmentSearchQuery] | `search` / `searchAll` のクエリ      |
 | [`AttachmentPage`][t-AttachmentPage]               | `search` の戻り値（1 ページ）        |
 | [`AttachmentAccessor`][t-AttachmentAccessor]       | `t.attachment` の型（`of()` を持つ） |
 | [`AttachmentResource`][t-AttachmentResource]       | `t.attachment.of(...)` の型          |
@@ -218,7 +217,6 @@ await files.create({ ...file, content: base64 });
 [t-AttachmentCreate]: ../api/type-aliases/AttachmentCreate.md
 [t-AttachmentUpdate]: ../api/type-aliases/AttachmentUpdate.md
 [t-AttachmentSearchQuery]: ../api/type-aliases/AttachmentSearchQuery.md
-[t-AttachmentWalkQuery]: ../api/type-aliases/AttachmentWalkQuery.md
 [t-AttachmentPage]: ../api/type-aliases/AttachmentPage.md
 [t-AttachmentAccessor]: ../api/type-aliases/AttachmentAccessor.md
 [t-AttachmentResource]: ../api/type-aliases/AttachmentResource.md

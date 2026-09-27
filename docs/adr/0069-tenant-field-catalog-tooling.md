@@ -12,6 +12,9 @@
 >
 > **decider が推奨案どおり選択し `accepted`（2026-09-10）**。実装は accept 後・別 PR。
 > **着手前に [RV-37][rv37] を塞ぐ**こと（論点6＝案6a）。
+>
+> **Amended by [ADR-0104][0104]（2026-09-26）**: 論点5 の区分に、宣言できない項目を宣言している場合の決めが無く
+> `ok: true` になっていた（[RV-80][rv80]）。新しい区分を足し、Data Type を持たない・宣言の対象外の項目の宣言で `ok` を倒すよう改めた。
 
 ## Context and Problem Statement
 
@@ -353,6 +356,16 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 - follow-up（本 ADR スコープ外）: **値レベルの実行時検証**（案D の残り 1 つ・[RV-36][rv36] を含む）／
   Attachment のカスタム項目（[ADR-0023][0023] D6）。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/reference/gotchas.md` → `docs/usage/reference/gotchas.md`（2026-09-12・ADR-0071）
+- `docs/howto/custom-fields.md` → `docs/usage/topics/custom-fields.md`（ADR-0071 / ADR-0088）
+- `src/resources/resource-list.ts` → `src/porters/resource-list.ts`（2026-09-25・ADR-0098）
+
 [0004]: 0004-field-type-model.md
 [0006]: 0006-error-model.md
 [0011]: 0011-xml-parse-serialize.md
@@ -367,3 +380,5 @@ const src = await generateFieldDecls(porters.tenant(1), ["candidate", "job"]);
 [rv36]: ../reviews/rv/0036-write-value-validation-partial.md
 [rv58]: ../reviews/rv/0058-number-decode-nan-unchecked.md
 [rv37]: ../reviews/rv/0037-field-read-missing-process.md
+[0104]: 0104-verify-fields-declared-undeclarable.md
+[rv80]: ../reviews/rv/0080-verify-fields-undeclarable-ok.md

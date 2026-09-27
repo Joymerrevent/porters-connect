@@ -8,7 +8,7 @@
 
 > **PhaseAccessor** = `object`
 
-Defined in: [src/resources/phase.ts:142](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L142)
+Defined in: [src/resources/phase.ts:252](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L252)
 
 Phase is reached through the resource whose history you want:
 
@@ -26,13 +26,13 @@ are compile errors.
 
 > **of**(`resource`): [`PhaseResource`](PhaseResource.md)
 
-Defined in: [src/resources/phase.ts:143](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L143)
+Defined in: [src/resources/phase.ts:253](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/phase.ts#L253)
 
 #### Parameters
 
 ##### resource
 
-`"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+`"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
 #### Returns
 

@@ -1,45 +1,10 @@
-// The single URL builder (ADR-0047). Every request in the library is rendered here, so these
-// cases pin the shape the API sees: scheme default, opt-in http, and query joining.
-// The validator (ADR-0048) is pinned alongside it: what `apiUrl` is allowed to be handed.
+// The access point validator (ADR-0048 / ADR-0078): what `apiUrl` is allowed to be handed.
 
 import { describe, expect, it } from "vitest";
 
 import { PortersConfigError } from "../errors/index";
-import { apiUrl, validateAccessPoint } from "./access-point";
-import type { Scheme } from "../types/index";
-
-describe("apiUrl (ADR-0047)", () => {
-  it("defaults to https when no scheme is configured", () => {
-    expect(apiUrl({ hostname: "example.test" }, "token")).toBe(
-      "https://example.test/v1/token",
-    );
-  });
-
-  it("uses http only when it is asked for, port and all", () => {
-    expect(
-      apiUrl(
-        { hostname: "localhost", port: 4010, scheme: "http" },
-        "candidate",
-      ),
-    ).toBe("http://localhost:4010/v1/candidate");
-    expect(
-      apiUrl({ hostname: "gw.internal", scheme: "https" }, "candidate"),
-    ).toBe("https://gw.internal/v1/candidate");
-  });
-
-  it("appends the query, and omits the `?` when there is none", () => {
-    const params = new URLSearchParams({ partition: "12" });
-    params.append("field", "Person.P_Id,Person.P_Name");
-
-    expect(apiUrl({ hostname: "h.test" }, "candidate", params)).toBe(
-      "https://h.test/v1/candidate?partition=12&field=Person.P_Id%2CPerson.P_Name",
-    );
-    // An empty parameter set is not "?" — the URL stays exactly as it would without one.
-    expect(
-      apiUrl({ hostname: "h.test" }, "candidate", new URLSearchParams()),
-    ).toBe("https://h.test/v1/candidate");
-  });
-});
+import { throttleKeyOf, validateAccessPoint } from "./access-point";
+import type { Scheme } from "./access-point";
 
 describe("validateAccessPoint (ADR-0048 / ADR-0078)", () => {
   it("accepts a bare server name — with or without a port alongside it", () => {
@@ -147,5 +112,62 @@ describe("validateAccessPoint (ADR-0048 / ADR-0078)", () => {
     expect(err).toBeInstanceOf(PortersConfigError);
     expect((err as PortersConfigError).message).toContain("ftp");
     expect((err as PortersConfigError).hint).toContain("https");
+  });
+
+  // `%` は https の URL では復号されて別の名前になるか、組み立てられずに通信エラーとして届く（RV-92）。
+  it.each(["a%41.test", "a%40evil.com"])("rejects %s", (hostname) => {
+    expect(() => validateAccessPoint({ hostname })).toThrow(PortersConfigError);
+  });
+
+  // 送るときの scheme（https）で組み立てられない名前は、起動時に止める（RV-92）。punycode として成り立たない
+  // 名前を組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）ので、
+  // 名前を決め打ちせず、その Node で https の URL が組み立てられないときだけ拒否することを確かめる。
+  it.each([
+    "xn--",
+    "xn--a.test",
+    "XN--ABC.test",
+    "a.test",
+    "xn--eckwd4c7c.test",
+  ])(
+    "rejects %s exactly when https cannot address it on this Node",
+    (hostname) => {
+      let unaddressable = false;
+      try {
+        new URL(`https://${hostname}`);
+      } catch {
+        unaddressable = true;
+      }
+      let err: unknown;
+      try {
+        validateAccessPoint({ hostname });
+      } catch (e) {
+        err = e;
+      }
+      expect(err instanceof PortersConfigError).toBe(unaddressable);
+    },
+  );
+
+  it("accepts an upper-case punycode name", () => {
+    expect(() =>
+      validateAccessPoint({ hostname: "XN--ECKWD4C7C.TEST" }),
+    ).not.toThrow();
+  });
+});
+
+// 同じサーバーに届く書き方は、同じスロットルの鍵になる（RV-92）。
+describe("throttleKeyOf", () => {
+  it.each([
+    [{ hostname: "a.test" }, "a.test"],
+    [{ hostname: "A.Test" }, "a.test"],
+    [{ hostname: "a.test." }, "a.test"],
+    [{ hostname: "a.test", port: 443 }, "a.test"],
+    [{ hostname: "a.test", port: 443, scheme: "https" as const }, "a.test"],
+    [{ hostname: "a.test", port: 80, scheme: "http" as const }, "a.test"],
+    [{ hostname: "a.test", port: 80 }, "a.test:80"],
+    [{ hostname: "a.test", port: 443, scheme: "http" as const }, "a.test:443"],
+    [{ hostname: "a.test.", port: 4010 }, "a.test:4010"],
+    [{ hostname: "[::1]", port: 4010 }, "[::1]:4010"],
+  ])("keys %j as %s", (accessPoint, key) => {
+    expect(throttleKeyOf(accessPoint)).toBe(key);
   });
 });

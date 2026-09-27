@@ -8,7 +8,7 @@
 
 > **BulkWriteResultItem** = `object`
 
-Defined in: [src/resources/bulk-write.ts:23](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L23)
+Defined in: [src/accessor/write-many.ts:26](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L26)
 
 One record's outcome from a bulk write, in the position it was sent.
 
@@ -18,9 +18,10 @@ One record's outcome from a bulk write, in the position it was sent.
 
 > **code**: `number`
 
-Defined in: [src/resources/bulk-write.ts:29](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L29)
+Defined in: [src/accessor/write-many.ts:35](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L35)
 
-PORTERS per-item Result Code (`0` = success).
+PORTERS per-item Result Code (`0` = success). For `createMany`, a `302` (transaction error) does
+not say whether the record was created: check whether it exists before resending it.
 
 ***
 
@@ -28,7 +29,7 @@ PORTERS per-item Result Code (`0` = success).
 
 > **id**: `number`
 
-Defined in: [src/resources/bulk-write.ts:27](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L27)
+Defined in: [src/accessor/write-many.ts:30](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L30)
 
 Assigned (create) / echoed (update) record id. Meaningful only when `ok`.
 
@@ -38,7 +39,7 @@ Assigned (create) / echoed (update) record id. Meaningful only when `ok`.
 
 > **index**: `number`
 
-Defined in: [src/resources/bulk-write.ts:25](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L25)
+Defined in: [src/accessor/write-many.ts:28](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L28)
 
 0-based index in the input array.
 
@@ -48,6 +49,6 @@ Defined in: [src/resources/bulk-write.ts:25](https://github.com/Joymerrevent/por
 
 > **ok**: `boolean`
 
-Defined in: [src/resources/bulk-write.ts:31](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/bulk-write.ts#L31)
+Defined in: [src/accessor/write-many.ts:37](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/write-many.ts#L37)
 
 `code === 0`.

@@ -104,7 +104,18 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.25.0**（npm latest・`v0.25.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.26.0**（npm latest・`v0.26.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1377.4 kB**・2026-09-27）。**累計 34 版**（うち **0.2.0 以降の 32 版**がこの半自動フロー）。
+  changeset **13 枚**（minor 5・patch 8）を消費した minor リリースで、検索クエリの型からページ送りを外す（[ADR-0099][adr99]）、
+  読み取りの戻り値の型を要求した項目で絞る（[ADR-0096][adr96]）、`getMany` を足す（[ADR-0095][adr95]）、`src` 全体のレビューで
+  見つけた不具合の修正（#449〜#457・[ADR-0102][adr102]〜[ADR-0106][adr106]）。**破壊的変更 2 つ**と、Result Code の 5・113 の
+  `category` の変更（CHANGELOG の Changed に明記）。
+  - **unpacked は 1067.7 → 1377.4 kB（+309.7 kB）**。同梱ファイル数は 10 のまま。
+  - 手順の面では、リリース PR [#458][pr458]（merge commit）のチェックがすべて green になってから、ユーザーの依頼でマージした。
+    Tag ワークフロー green → `main` の Test / CI / Mutation が green になるのを待ってから `gh release create`（notes は
+    CHANGELOG の該当節・参照スタイルのリンクを絶対 URL に解決）→ Release ワークフロー green → `npm view` で 0.26.0 を確認。
+    back-merge は [#459][pr459]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.25.0**（npm latest・`v0.25.0` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **10 files / 1067.7 kB**・2026-09-25）。**累計 33 版**（うち **0.2.0 以降の 31 版**がこの半自動フロー）。
   changeset **2 枚**（minor 2）を消費した minor リリースで、定義していないオプションのキーを弾く（[#406][pr406]・
   [ADR-0092][adr92]）と、`porters.auth.getToken()` が期限も返す（[#409][pr409]・[ADR-0093][adr93]）。**破壊的変更 2 つ**。
@@ -391,9 +402,16 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr413]: https://github.com/Joymerrevent/porters-connect/pull/413
 [pr416]: https://github.com/Joymerrevent/porters-connect/pull/416
 [pr417]: https://github.com/Joymerrevent/porters-connect/pull/417
+[pr458]: https://github.com/Joymerrevent/porters-connect/pull/458
+[pr459]: https://github.com/Joymerrevent/porters-connect/pull/459
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
 [adr91]: adr/0091-token-provider-and-store.md
 [adr94]: adr/0094-mutation-changed-files-on-pr.md
 [adr92]: adr/0092-reject-unknown-options.md
 [adr93]: adr/0093-get-token-with-expiry.md
+[adr95]: adr/0095-get-many-by-ids.md
+[adr96]: adr/0096-narrow-record-type-by-field.md
+[adr99]: adr/0099-search-query-without-paging.md
+[adr102]: adr/0102-throttle-any-minute-window.md
+[adr106]: adr/0106-unknown-outcome-scope-and-unmapped-codes.md

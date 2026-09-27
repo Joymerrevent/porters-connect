@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { PortersClient } from "../../src/client";
+import { PortersClient } from "../../src/porters-client";
 import { createFakeTransport } from "../fake/index";
 
 const setup = () => {

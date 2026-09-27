@@ -8,7 +8,7 @@
 
 > **Expand**\<`R`\> = `{ [K in keyof R]?: readonly (keyof CatalogOf<R[K]> & string)[] }`
 
-Defined in: [src/resources/expand.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/expand.ts#L57)
+Defined in: [src/accessor/expand.ts:56](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/expand.ts#L56)
 
 What `expand` accepts: for each expandable reference field, the **bare aliases** to read from
 the referenced record. The referenced prefix is never written by the caller — the descriptor

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { PortersClient } from "../client";
+import { PortersClient } from "../porters-client";
 import { PortersConfigError, PortersError } from "../errors/index";
 import { createMockTransport } from "./mock-transport";
 import type { TransportRequest } from "./types";

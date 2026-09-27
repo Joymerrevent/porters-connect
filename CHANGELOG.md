@@ -5,6 +5,174 @@
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-09-27
+
+**読み取りの型を要求した項目で絞り、複数の ID でまとめて読めるようにし、`src` 全体のレビューで見つけた不具合をまとめて直した版**です。
+**破壊的変更を 2 つ**含みます（検索クエリの型からページ送りを外したことと、読み取りの戻り値の型を要求した項目で絞ったこと）。
+あわせて、Result Code の 5 と 113 の `category` が `unknown` から `auth` に変わります。
+
+### Changed
+
+- **（破壊的）検索クエリの型（`SearchQuery` と `CandidateSearchQuery` などの各 `…SearchQuery`）から `count` / `start` を外し、
+  ページ送りを別の型 `Paging`（`count` / `start`）にしました**（[ADR-0099][adr99]）。`search` はクエリと `Paging` を一緒に受け取り、
+  `searchAll` はクエリだけを受け取ります。同じクエリを `search` と `searchAll` の両方に渡せます。
+
+  ```ts
+  // 変更前
+  const query: CandidateSearchQuery = {
+    condition: { P_Name: { part: "山田" } },
+    count: 50,
+  };
+  // 変更後
+  const query: CandidateSearchQuery & Paging = {
+    condition: { P_Name: { part: "山田" } },
+    count: 50,
+  };
+  ```
+
+  - `t.candidate.search({ field: ["P_Name"], count: 50 })` のように、その場でオブジェクトを書いているコードはそのまま動きます。
+  - Option の `search` は件数の上限だけを受け取るので、`count` だけを持つ `Limit` を受けます（`OptionSearchQuery & Limit`）。
+  - `AttachmentWalkQuery` は無くしました。`AttachmentSearchQuery` に書き換えてください。
+
+- **（破壊的）読み取り（`search` / `searchAll` / `get` / `getMany`）の戻り値の型が、要求した項目だけを持つようになりました**
+  （[ADR-0096][adr96]）。要求した項目とは、`field` に書いた項目と、`expand` / `image` で選んだ項目です（`get` / `getMany` では ID も）。
+
+  - `field` に書いていない項目に触るコードは型エラーになります。そうしたコードは実行時にいつも `undefined` を読んでいたので、
+    `field` に足してください。型に無い項目を読む必要があるときは `rawValue` を使います。
+  - `field` を省略したとき、または中身をコンパイラが読めない配列（`string[]` の変数など）を渡したときは、これまでどおり
+    知っている項目すべてを持つ型です。
+  - `search` / `searchAll` に `field: []` を渡したときは、項目を 1 つも持たない型になります。このとき `expand` / `image` も
+    送られません。
+
+- **Resource の Code `5`（ユーザー ID 無効）と、Authentication の Code `113`（登録アプリのサイトが無い）の `category` が、
+  `unknown` から `auth` になりました**（[ADR-0106][adr106]）。`category` でエラーを振り分けている場合は、振る舞いが変わります。
+  再試行しないことは変わりません。`createMany` の 2 つ目以降のバッチが Code `5` で失敗したときは、そのバッチを
+  「書き込まれていない」と案内します。
+
+- **送った後の `create` が、Code `1000`（処理失敗）・表に無いコード・HTTP 200 で本文が読めない応答で終わったときも、
+  `hint` に「登録された可能性がある」ことが書かれます**（[ADR-0106][adr106]）。これまでは、再試行できる失敗（通信の失敗、
+  Code `302` など）のときだけでした。元の `hint` があれば、その後ろに続きます。
+
+- **送った後に失敗した `create` は、自動で再送せず `retryable: false` で届きます**（[ADR-0103][adr103]）。これまでは、接続エラーの
+  ときに `retryable: true` のまま届き、Code `302` のときは自動で再送していました（二重登録のおそれ）。`hint` に「登録された可能性が
+  ある」ことが書かれ、元のエラーは `cause` にあります。Code `9` は今までどおり再送します。
+
+- **内蔵のスロットルは、どの 60 秒を切り取っても上限の 90%（既定）を超えない形になりました**（[ADR-0102][adr102]）。これまでは
+  起動直後の 60 秒で、Read を最大約 3600 件送ることがありました。`createThrottle` の設定は変わりません。
+
+- **HTTP のリダイレクトを追いかけなくなりました。** これまでは 3xx の先へ Access Token や App Secret を送っていました。
+  3xx はエラーとして届き、`hint` がリダイレクトであることと、確かめる設定を案内します。
+
+- **検索の条件の値にカンマがあると、送る前に `PortersConfigError` になります**（[ADR-0105][adr105]）。PORTERS には値の中の
+  カンマを書く方法が無く、値の途中から別の条件として読まれていました。`or` / `and` の値のカンマとコロン、キーワードのカンマと
+  空のキーワード、知らない演算子、カンマ・コロン・等号を含む項目名も同じです。テキストや日時の値のコロンは拒否しません。
+
+- **`verifyFields` が、宣言では表せない項目（Reference など値を持たない型や、システムの項目）の宣言を見つけるようになりました**
+  （[ADR-0104][adr104]）。レポートの `declaredUndeclarable` に載り、`ok` が `false` になり、`assertFieldsMatch` も例外を投げます。
+  ライブラリがまだ知らない型は、知らせるだけで `ok` は倒しません。
+
+- **API リファレンスの `CandidateResource` などデータ系 12 種の型のページに、各メソッドの引数・戻り値・説明を載せました**
+  （[ADR-0100][adr100]）。型の中身は変わりません。
+
+- 内部の構成を変えました（利用者への影響はありません）。`src/` のモジュールを層に並べて依存の向きを lint で守り
+  （[ADR-0097][adr97]）、PORTERS が決めた値と定義表を `src/porters/` に（[ADR-0098][adr98]）、読み書きの共通の仕組みを
+  `src/accessor/` にまとめました（[ADR-0101][adr101]）。
+
+### Added
+
+- **複数の ID でまとめて読む `getMany(ids, { field?, expand?, image? })` を足しました**（[ADR-0095][adr95]。Attachment を除く
+  データ系 11 種と Phase）。戻り値は渡した ID と同じ順の配列で、見つからない ID の位置は `undefined` です。ID は 1 回の
+  リクエストで最大 200 件をまとめて送り、リクエストの長さの上限に収まるように自動で分けます。渡していない ID のレコードが
+  返ってきたときは、何も返さずに `PortersResourceError`（`category: "unknown"`）になります。
+  あわせて、`get(id, { field })` で取得する項目を指定できるようにしました。
+
+- **データ系 11 種の検索クエリと書き込みの入力の型が、宣言したカスタム項目を型引数で受け取れるようになりました**
+  （例: `CandidateSearchQuery<CustomFor<typeof fields, "candidate">>`、
+  `CandidateCreateInput<CustomFor<typeof fields, "candidate">, RequiredFor<typeof fields, "candidate">>`）。
+  型引数を省くと、これまでと同じ型です。
+
+### Fixed
+
+`src` 全体をレビューし、黙って誤った結果を返していた入力や応答を、送る前・受け取った時点・起動時に止めるようにしました。
+新しく止めるものはすべて `PortersError` の系統（多くは `PortersConfigError`）で届きます。
+
+- **書き込み・id**
+  - `update(-1, …)` が、更新ではなく新規作成になっていました。`update` / `updateMany` / `get` / `getMany`（添付ファイルの
+    `update` / `get` も）の id は、1 以上の整数でなければ送る前に止めます（文字列や BigInt の id も）。
+  - 書き込みで、`NaN`・`Infinity`・指数表記の数（`1e21` など）、XML に書けない文字（制御文字など）、文字列でない選択肢、
+    接頭辞が付いた項目名（`Person.P_Name` など。項目名は素の alias で書きます）を送らなくなりました。
+  - `Date` / `Age` / `DateTime` の値で、暦に無い日付や、日付の後ろに別の文字が続く値を送らなくなりました。`Date` / `Age` の
+    時刻の付いた値は UTC（末尾が `Z` または `+00:00`）のものだけを受けます。書き込む年は 4 桁（0001〜9999 年）にそろえます。
+  - 画像の値の `FileName` / `ContentType` / `Content` のどれかが文字列でないと、送る前に止めます。改行を含む Base64 は、
+    改行を除いた大きさで 2MB の上限と比べます。
+  - 添付ファイルの `create` / `update` は、`resourceId`（正の整数）・`contentType` と `fileName`（空でない文字列）・
+    `content`（Base64 として成り立つ形）を送る前に確かめます。これまでは渡し忘れると壊れた添付ファイルができていました。
+
+- **一括書き込み（`createMany` / `updateMany`）**
+  - 途中のバッチで止まったとき、`hint` に次のことを書くようになりました。
+    - 失敗したバッチの範囲と、それが書き込まれた可能性があるか
+    - まだ送っていない範囲
+    - 先のバッチで断られた index
+  - `updateMany` のときは、失敗したバッチもそのまま送り直してよいことを案内します。
+  - 最初のバッチで、トークンの取得に失敗して何も送らなかったときは、元のエラーをそのまま返します。
+  - `field` に同じ項目を 2 回書いても、1 回だけ送ります。
+
+- **読み取り**
+  - 崩れた応答を、成功として読まなくなりました。
+    - 読めないとして `PortersResourceError`（`category: "unknown"`）にする応答:
+      - `<Code>` が数でない・入れ子になっている・2 つある
+      - 書き込みの応答に件ごとの `<Code>` が無い
+      - 成功した件に `<Id>` が無い
+      - 件数の属性が無い
+      - DOCTYPE がある
+      - 書き込んだリソースと違うルート要素
+    - 1 件の書き込みに複数の結果が返ったときもエラーにします。
+  - `searchAll` が、件数の属性が無い応答で 1 ページで黙って終わることがなくなりました。応答が頼んだページと合わないときも
+    止まります。`get` / `getMany` も、返ってきたレコードを頼んだ id と突き合わせます。
+  - 値の前後の空白と改行が消えなくなりました（複数行テキストを読んで書き戻しても変わりません）。数値文字参照（`&#12354;` など）
+    も文字に直して返します。日時・数・件数の属性・トークンの前後の空白は、取ってから読みます。
+  - 数は 10 進の表記だけを読みます。16 進・指数表記や、丸めが起きる大きな整数はエラーにします。暦に無い日時や日付
+    （2/30・24:00 など）もエラーにします。
+  - ユーザー・部署・参照の項目の `P_Id` が空なら `null` を返します（これまでは `0`）。Option の項目に User / Department の形の
+    値が来たら、`["User"]` のような値にせず `validation` のエラーにします。
+  - XML の属性が値に混ざらなくなりました（読むのはルート要素の属性だけです）。
+
+- **通信・認証・クライアント**
+  - `PortersClient` の構築時に、次のオプションの形を確かめるようになりました。
+    - `transport` / `throttle` / `tokenStore` がメソッドを持つか
+    - `appId` / `appSecret` が文字列か
+    - `scopes` が文字列の配列か
+  - `hostname` に `%` を含む名前や、https の URL として組み立てられない名前は、起動時に止めます。
+  - `tenant(id)` の id は正の整数だけを受け付けます。添付ファイル・Phase・Field の `of(name)` も、知らない名前を止めます。
+  - 同じサーバーに届く書き方（`a.test`・`A.test`・`a.test.`・`port: 443`）は、1 つのレート制限を共有します。
+  - 同時に届いたトークン切れ（401 / 402）で、取り直しが 1 回にまとまるようになりました。起動直後に同時に呼んだときも、
+    保存済みのトークンがあれば新しく取得しません。
+  - トークンの読み込みや取り直しの途中で `porters.auth` の操作をしても、古いトークンで上書きしなくなりました。
+  - 認証の応答に `<Error>` が無いときは、成功と読まずにエラーにします。期限が数でないときは、期限切れとして取り直します。
+  - `createFetchTransport` の `timeoutMs` は 2,147,483,647 までになりました（超える値では、すべてのリクエストがすぐ
+    中断されていました）。
+  - 自作の `transport` が投げた `PortersError` を、書き込みの結果が分からないエラーとして作り直すとき、元のクラスを保ちます。
+
+- **カスタム項目**
+  - `defineFields` と `tenant()` が、存在しない Data Type の宣言を受け付けなくなりました。`tenant()` は、`defineFields` を
+    通さずに渡された宣言も確かめます。
+  - `generateFieldDecls` が、テナントの項目名や alias で生成物を壊さなくなりました（識別子でない alias は文字列のキーに、
+    項目名の改行は空白に）。`constName` が識別子でなければ止めます。
+
+- **関数**
+  - `base64ToBytes` は、Base64 でない値を `PortersConfigError` で止めます。
+  - 時分型のエラーの範囲を、受け付ける範囲（47:59:59 まで）に合わせました。
+
+- **使い方ドキュメント**
+  - `searchAll` は、辿っている途中でレコードが減ると取りこぼすことと、減りうるときの辿り方を書きました。
+  - `createMany` の件ごとの `code` が `302` のときは、作られたかを確かめてから再送することを書きました。
+
+- `createMockTransport` などで自前の偽の応答を返しているテストは、次の応答を返していると、エラーになります。
+  本物の PORTERS と同じ応答を返してください。
+  - `get` に一覧（2 件以上）を返している。
+  - `searchAll` の 2 ページ目以降も `Start="0"` を返している。
+  - 書き込みの応答のルート要素が、書き込んだリソースの名前でない。
+
 ## [0.25.0] - 2026-09-25
 
 **設定の誤りを黙って通さないようにし、トークンを期限つきで取り出せるようにした版**です。**破壊的変更を 2 つ**含みます
@@ -1508,7 +1676,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.22.0...v0.23.0
@@ -1557,6 +1726,18 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [adr91]: docs/adr/0091-token-provider-and-store.md
 [adr92]: docs/adr/0092-reject-unknown-options.md
 [adr93]: docs/adr/0093-get-token-with-expiry.md
+[adr95]: docs/adr/0095-get-many-by-ids.md
+[adr96]: docs/adr/0096-narrow-record-type-by-field.md
+[adr97]: docs/adr/0097-src-module-layout.md
+[adr98]: docs/adr/0098-porters-rules-folder.md
+[adr99]: docs/adr/0099-search-query-without-paging.md
+[adr100]: docs/adr/0100-expand-resource-types.md
+[adr101]: docs/adr/0101-accessor-layer-and-file-names.md
+[adr102]: docs/adr/0102-throttle-any-minute-window.md
+[adr103]: docs/adr/0103-create-code-302-not-retried.md
+[adr104]: docs/adr/0104-verify-fields-declared-undeclarable.md
+[adr105]: docs/adr/0105-reject-delimiters-in-query-values.md
+[adr106]: docs/adr/0106-unknown-outcome-scope-and-unmapped-codes.md
 [recipe-token-store-db]: docs/usage/recipes/token-store-db.md
 [recipe-central-token-service]: docs/usage/recipes/central-token-service.md
 [troubleshooting]: docs/usage/reference/troubleshooting.md

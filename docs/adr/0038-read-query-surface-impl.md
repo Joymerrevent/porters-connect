@@ -15,7 +15,15 @@
 > 再検討され、**`itemstate: "existing"` を明示したらそのまま送る**ようになった（省略＝API の既定に委ねる、と
 > 明示＝生存のみを要求する、を別の意思表示として扱う）。SD-4 以外は不変。
 >
+> **Amended by [ADR-0105][0105]（2026-09-26）**: **SD-8** の前提（値の中のエンコードは URLSearchParams に任せる）が
+> 成り立たないと分かった（区切りのカンマと値の中のカンマが同じ `%2C` になる。[RV-68][rv68]）。区切り文字を含む値は、
+> 送る前に拒否するよう改めた。SD-8 以外は不変。
+>
 > 公開型 `condition` の loose→typed は破壊的変更で、pre-1.0 ゆえ semver minor（`0.3.0` → `0.4.0`）として実装 PR で出す。
+>
+> **Amended by [ADR-0099][0099]（2026-09-25）**: 公開の検索クエリ `SearchQuery` から `count` / `start` を外し、ページ送りを
+> 公開の型 `Paging`（`Limit & { start?: number }`）に分けた。`search` は `SearchQuery & Paging`、`searchAll` は `SearchQuery` を受ける。
+> `condition` / `order` / `keywords` / `itemstate` の型付けという本 ADR の核は不変。
 
 ## Context and Problem Statement
 
@@ -159,6 +167,16 @@ reference が定める事実（要点）:
 - 不確実性 → [live-verification][lv]: `P_Deleted` の Data Type、`itemstate=deleted/all` の 90 日自動フィルタ実挙動、Telephone keyword の数字正規化。
 - 後続/対象外: 実装は別 PR（ADR 先行 → 実装の順・[[0033-post-mvp-direction]] 案F の進め方）。マルチテナント（F-3・[[0008-multitenancy-partition]]）・一括書き込み（F-4）は本 ADR 対象外。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `src/resources/query.ts` → 型は `src/resources/core/query.ts`、組み立ては `src/resources/core/query-encode.ts`（2026-09-25 に `core/` へ移し（ADR-0097）、2026-09-26 に分けた）
+- `src/resources/core/` → `src/accessor/`（2026-09-26・ADR-0101）。上に書いた `src/resources/core/…` と `core/…` のファイルは、いまは `src/accessor/` の中にある
+- `query-encode.ts` と `read.ts`（`src/accessor/`）: `query-encode.ts` は `append-read-query.ts` / `build-read-params.ts` に、`read.ts` は `page-reader.ts` / `run-read.ts` / `page-url.ts` / `resource-page.ts` に分けた（2026-09-26・ADR-0101 の追記＝1 ファイルに主な export は 1 つ）。上に書いたこの 2 つのファイルは、いまは分けた先にある
+
 [param]: ../../tmp/porters-docs/txt/115008016927-Read-API-Parameter.md
 [del]: ../../tmp/porters-docs/txt/360000589007-2018-04-10-Read系APIでの削除済みデータの取得.md
 [prd]: ../design/requirements.md
@@ -166,3 +184,6 @@ reference が定める事実（要点）:
 [lv]: ../live-verification.md
 [adr]: README.md
 [0057]: 0057-itemstate-existing-explicit.md
+[0099]: 0099-search-query-without-paging.md
+[0105]: 0105-reject-delimiters-in-query-values.md
+[rv68]: ../reviews/rv/0068-condition-comma-injects-and.md

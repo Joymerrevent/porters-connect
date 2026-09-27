@@ -8,7 +8,7 @@
 
 > **decodeTimeOfDay**(`iso`): `string`
 
-Defined in: [src/util/time-of-day.ts:55](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L55)
+Defined in: [src/util/time-of-day.ts:58](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/time-of-day.ts#L58)
 
 Read a **time-of-day** (時分型) field's value as a clock time.
 

@@ -95,6 +95,16 @@ F-1 への具体的な適用（accepted・別 PR で実施）:
 - 後続: 本 ADR が `accepted` になったら、**別 PR**で `docs/howto/authenticate.md` 新設＋README 追記（ADR 先行→実装の順）。
   F-2〜F-4 も同じ型（`docs/guide/<topic>.md` ＋ README 短節）で追加する。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/guide` → ガイドは 2026-09-11 に `docs/howto/` / `docs/concepts/` へ分け（ADR-0070）、いまは主に `docs/usage/topics/` にある（ADR-0071 / ADR-0088）
+- `docs/howto/handle-failures.md` → `docs/usage/topics/errors.md`（ADR-0071 / ADR-0088）
+- `docs/howto/authenticate.md` → `docs/usage/topics/auth.md`（2026-09-12 に `docs/usage/howto/` へ（ADR-0071）、2026-09-23 に `topics/` へ（ADR-0088））
+
 [auth-ref]: ../usage/reference/authentication-api/README.md
 [error-handling]: ../usage/topics/errors.md
 [0070]: 0070-usage-documentation-architecture.md
