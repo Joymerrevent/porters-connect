@@ -22,15 +22,52 @@ const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ISO_DATETIME_RE =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|([+-])(\d{2}):(\d{2}))$/;
 
+// 年・月・日・時・分・秒から UTC の時刻を作る。Date.UTC は 0〜99 年を 1900 年代に読み替えるので、
+// 年は setUTCFullYear で入れ直す（RV-134）。暦に無い値（2/30・24:00）は、別の日時に繰り上がる。
+const utcTime = (
+  y: number,
+  mo: number,
+  d: number,
+  h = 0,
+  mi = 0,
+  sec = 0,
+): Date => {
+  const t = new Date(Date.UTC(2000, mo - 1, d, h, mi, sec));
+  t.setUTCFullYear(y, mo - 1, d);
+  return t;
+};
+
+// 4 桁の年（0001〜9999）。PORTERS の日時は年を 4 桁で書く（RV-107）。
+const pad4 = (n: number): string => String(n).padStart(4, "0");
+
+// 組み直した UTC の時刻を `yyyy-mm-ddTHH:MM:SS` で書く。toISOString は 0〜9999 年の外で形が変わるので
+// 自分で書く。
+const wallClock = (t: Date): string => {
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  return (
+    `${pad4(t.getUTCFullYear())}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}` +
+    `T${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`
+  );
+};
+
 /** PORTERS `yyyy/mm/dd HH:MM:SS` (UTC) -> ISO 8601 `...Z`. */
 export const portersDateTimeToIso = (value: string): string => {
   const m = DATETIME_RE.exec(value);
   if (!m) throw new RangeError(`invalid PORTERS DateTime: "${value}"`);
-  const iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`;
-  if (Number.isNaN(Date.parse(iso))) {
+  const iso = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}`;
+  // 暦と時計に無い値（2/30・24:00）は、組み直すと別の日時になる。Date.parse は繰り上げて通す（RV-101）。
+  const [y, mo, d, h, mi, sec] = m.slice(1, 7).map(Number) as [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+  if (wallClock(utcTime(y, mo, d, h, mi, sec)) !== iso) {
     throw new RangeError(`invalid PORTERS DateTime: "${value}"`);
   }
-  return iso;
+  return `${iso}Z`;
 };
 
 /**
@@ -46,20 +83,22 @@ export const isoToPortersDateTime = (value: string): string => {
   const [y, mo, d, h, mi, sec, oh, om] = [1, 2, 3, 4, 5, 6, 8, 9].map((i) =>
     num(m[i]),
   ) as [number, number, number, number, number, number, number, number];
-  // 暦と時計の範囲は、UTC で組み直して同じ壁時計に戻るかで見る（2/30 や 24:00 は戻らない。
-  // 0〜99 年は Date.UTC が 1900 年代に読み替えるので、これも戻らずに弾かれる）。
-  const wall = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  // 暦と時計の範囲は、UTC で組み直して同じ壁時計に戻るかで見る（2/30 や 24:00 は戻らない）。
+  const wall = utcTime(y, mo, d, h, mi, sec);
   const written = `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6] ?? "00"}`;
-  if (wall.toISOString().slice(0, 19) !== written || oh > 23 || om > 59) {
+  if (wallClock(wall) !== written || oh > 23 || om > 59) {
     throw new RangeError(`invalid ISO datetime: "${value}"`);
   }
   const sign = m[7] === "-" ? -1 : 1;
   const utc = new Date(wall.getTime() - sign * (oh * 60 + om) * 60_000);
-  const pad = (n: number): string => String(n).padStart(2, "0");
-  return (
-    `${utc.getUTCFullYear()}/${pad(utc.getUTCMonth() + 1)}/${pad(utc.getUTCDate())} ` +
-    `${pad(utc.getUTCHours())}:${pad(utc.getUTCMinutes())}:${pad(utc.getUTCSeconds())}`
-  );
+  // オフセットを UTC に直すと、年が 4 桁の外（0 年・10000 年）に出ることがある。PORTERS の形で書けない（RV-107）。
+  const year = utc.getUTCFullYear();
+  if (year < 1 || year > 9999) {
+    throw new RangeError(
+      `invalid ISO datetime: "${value}" (the year in UTC must be 0001–9999)`,
+    );
+  }
+  return wallClock(utc).replace("T", " ").replaceAll("-", "/");
 };
 
 /**
@@ -75,7 +114,17 @@ export const isoExample = (type: string): string =>
 export const portersDateToIso = (value: string): string => {
   const m = DATE_RE.exec(value);
   if (!m) throw new RangeError(`invalid PORTERS Date: "${value}"`);
-  return `${m[1]}-${m[2]}-${m[3]}`;
+  const iso = `${m[1]}-${m[2]}-${m[3]}`;
+  // 暦に無い日付（2/30・13 月）は読まない（RV-101）。
+  if (
+    wallClock(utcTime(Number(m[1]), Number(m[2]), Number(m[3]))).slice(
+      0,
+      10,
+    ) !== iso
+  ) {
+    throw new RangeError(`invalid PORTERS Date: "${value}"`);
+  }
+  return iso;
 };
 
 /**
@@ -89,11 +138,9 @@ export const portersDateToIso = (value: string): string => {
 export const isoToPortersDate = (value: string): string => {
   const m = ISO_DATE_RE.exec(value);
   if (m) {
-    const date = new Date(
-      Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
-    );
-    // 暦に無い日付（2/30・13 月）は、組み直すと別の日付になる。
-    if (date.toISOString().slice(0, 10) !== value) {
+    const date = utcTime(Number(m[1]), Number(m[2]), Number(m[3]));
+    // 暦に無い日付（2/30・13 月）は、組み直すと別の日付になる。0000 年は PORTERS の年（0001〜9999）の外。
+    if (wallClock(date).slice(0, 10) !== value || m[1] === "0000") {
       throw new RangeError(`invalid ISO date: "${value}"`);
     }
     return `${m[1]}/${m[2]}/${m[3]}`;

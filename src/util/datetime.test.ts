@@ -158,9 +158,59 @@ describe("isoToPortersDateTime: 受け付ける形", () => {
     ["後ろに余分な文字", "2026-09-10T12:00:00Zx"],
     ["0 月", "2026-00-10T12:00:00Z"],
     ["0 日", "2026-09-00T12:00:00Z"],
-    ["2 桁の年（Date.UTC が 1900 年代に読み替える）", "0050-09-10T12:00:00Z"],
+    ["0 年", "0000-01-01T00:00:00Z"],
+    ["UTC に直すと 0 年", "0001-01-01T00:00:00+01:00"],
+    ["UTC に直すと 10000 年", "9999-12-31T23:30:00-01:00"],
   ])("%s（%s）は弾く", (_label, value) => {
     expect(() => isoToPortersDateTime(value)).toThrow(/invalid ISO datetime/);
+  });
+
+  // 年は 4 桁で書く。0〜99 年を Date.UTC が 1900 年代に読み替えないようにした（RV-107・RV-134）。
+  it.each([
+    ["0050-09-10T12:00:00Z", "0050/09/10 12:00:00"],
+    ["0999-12-31T23:59:59Z", "0999/12/31 23:59:59"],
+    ["1000-01-01T00:30:00+01:00", "0999/12/31 23:30:00"],
+    ["9999-12-31T23:59:59Z", "9999/12/31 23:59:59"],
+  ])("writes %s with a 4-digit year: %s", (value, expected) => {
+    expect(isoToPortersDateTime(value)).toBe(expected);
+  });
+});
+
+// 読み込みも、暦と時計に無い値を通さない（Date.parse は 2/30 を 3/2 に繰り上げていた。RV-101）。
+describe("reading refuses values the calendar does not have", () => {
+  it.each([
+    "2026/02/30 00:00:00",
+    "2026/01/01 24:00:00",
+    "2026/13/01 00:00:00",
+    "2026/01/01 00:60:00",
+    "2026/01/01 00:00:60",
+  ])("refuses the DateTime %s", (value) => {
+    expect(() => portersDateTimeToIso(value)).toThrow(
+      /invalid PORTERS DateTime/,
+    );
+  });
+
+  it.each(["2026/02/30", "2026/13/45", "2026/00/10"])(
+    "refuses the Date %s",
+    (value) => {
+      expect(() => portersDateToIso(value)).toThrow(/invalid PORTERS Date/);
+    },
+  );
+
+  it("reads a leap day and an early year as they are", () => {
+    expect(portersDateTimeToIso("2024/02/29 23:59:59")).toBe(
+      "2024-02-29T23:59:59Z",
+    );
+    expect(portersDateTimeToIso("0050/01/01 00:00:00")).toBe(
+      "0050-01-01T00:00:00Z",
+    );
+    expect(portersDateToIso("2024/02/29")).toBe("2024-02-29");
+    expect(portersDateToIso("0050/01/01")).toBe("0050-01-01");
+  });
+
+  it("refuses the date-only year 0000 on writes, and accepts an early year", () => {
+    expect(() => isoToPortersDate("0000-01-01")).toThrow(/invalid ISO date/);
+    expect(isoToPortersDate("0050-01-01")).toBe("0050/01/01");
   });
 });
 
