@@ -327,7 +327,8 @@ const PROBES: Probe[] = [
         .of("candidate")
         .search({ resourceId: SEEDED_ID, count: 5, start: 0 }),
     alsoRead: ({ t }) => t.attachment.of("candidate").get(SEEDED_ID),
-    write: ({ t }) => t.attachment.of("candidate").update(SEEDED_ID, {}),
+    write: ({ t }) =>
+      t.attachment.of("candidate").update(SEEDED_ID, { fileName: "a.txt" }),
   },
 ];
 

@@ -508,3 +508,105 @@ it("createAttachmentAccessor().of refuses a name missing from the Resource List"
     }).of("user" as never),
   ).toThrow('attachment.of: unknown resource "user"');
 });
+
+// 入力そのもの・変える項目・絞り込みの resourceId・応答の数を確かめる（RV-130・135・136・140）。
+describe("createAttachmentAccessor — the rest of the checks", () => {
+  const good = {
+    resourceId: 1,
+    contentType: "text/plain",
+    fileName: "a.txt",
+    content: "aGk=",
+  };
+
+  it.each([
+    ["create", undefined, "undefined"],
+    ["create", null, "null"],
+    ["update", undefined, "undefined"],
+    ["update", "x", "string"],
+  ] as const)("%s refuses the input %j", async (method, input, got) => {
+    const calls: Call[] = [];
+    const t = files(calls, WRITE_OK);
+    const run =
+      method === "create"
+        ? t.create(input as never)
+        : t.update(22222, input as never);
+    await expect(run).rejects.toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: `attachment ${method}: the input must be an object, got ${got}`,
+        hint: "Pass the fields to write, e.g. { resourceId, contentType, fileName, content }.",
+      }),
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it("refuses content: null with a PortersConfigError, not a TypeError", async () => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).create({ ...good, content: null } as never),
+    ).rejects.toThrow("attachment content must be Base64 text, got null");
+    await expect(
+      files(calls, WRITE_OK).update(22222, { content: null } as never),
+    ).rejects.toThrow(PortersConfigError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("refuses an update that changes nothing", async () => {
+    const calls: Call[] = [];
+    for (const input of [{}, { contentType: undefined }, { conent: "aGk=" }]) {
+      await expect(
+        files(calls, WRITE_OK).update(22222, input as never),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          message:
+            "attachment update: give at least one of contentType, fileName, content",
+          hint: "Pass the fields to change. Resource and resourceId cannot be changed.",
+        }),
+      );
+    }
+    expect(calls).toHaveLength(0);
+    await files(calls, WRITE_OK).update(22222, { content: "" });
+    expect(calls).toHaveLength(1);
+  });
+
+  it.each([0, -1, 1.5, Number.NaN])(
+    "search and searchAll refuse the resourceId %s",
+    async (resourceId) => {
+      const calls: Call[] = [];
+      await expect(
+        files(calls, READ_OK).search({ resourceId }),
+      ).rejects.toThrow("attachment resourceId must be a positive integer");
+      const walk = files(calls, READ_OK).searchAll({ resourceId });
+      await expect(
+        (async () => {
+          for await (const _ of walk) void _;
+        })(),
+      ).rejects.toThrow("attachment resourceId must be a positive integer");
+      expect(calls).toHaveLength(0);
+    },
+  );
+
+  it("reads an empty Id as null and refuses one that is not a number", async () => {
+    const calls: Call[] = [];
+    const page = (id: string) =>
+      `<?xml version="1.0"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>${id}</Id><Resource> 17 </Resource><ResourceId/></Item></Attachment>`;
+    const read = await files(calls, page("")).search();
+    expect(read.items[0]).toMatchObject({
+      id: null,
+      resource: 17,
+      resourceId: null,
+    });
+    await expect(files(calls, page("abc")).search()).rejects.toThrow(
+      expect.objectContaining({
+        name: "PortersResourceError",
+        category: "unknown",
+        message: 'attachment response Id is not a number (got "abc")',
+      }),
+    );
+    await expect(files(calls, page("-1")).search()).rejects.toThrow(
+      PortersResourceError,
+    );
+  });
+});

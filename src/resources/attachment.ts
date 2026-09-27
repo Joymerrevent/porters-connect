@@ -10,7 +10,7 @@
 // reuses the requester, parsers, and `firstWriteResultId`. Turn raw bytes into the Base64
 // `content` with `util/base64`.
 
-import { PortersConfigError } from "../errors";
+import { PortersConfigError, PortersResourceError } from "../errors";
 import { apiUrl } from "../http/api-url";
 import type { AccessPoint } from "../http/access-point";
 import { encodeField } from "../xml/encode-field";
@@ -86,7 +86,9 @@ export type AttachmentSearchQuery = {
 // resource は of(name) で束ねる（ADR-0080）・write でも同じ値を使う（ADR-0081）。
 /**
  * Fields for creating an Attachment. `content` is the Base64 file body; the resource it attaches
- * to comes from `of(name)` and cannot be given here.
+ * to comes from `of(name)` and cannot be given here. Checked before sending: `resourceId` is a
+ * positive integer, `contentType` and `fileName` are non-empty strings, and `content` is Base64
+ * text of about 10MB or less.
  */
 export type AttachmentCreate = {
   /** The record's id within the bound resource. */
@@ -96,7 +98,10 @@ export type AttachmentCreate = {
   content: string;
 };
 
-/** Fields for updating an Attachment. `Resource` / `ResourceId` are not updatable. */
+/**
+ * Fields for updating an Attachment. `Resource` / `ResourceId` are not updatable. Give at least one
+ * field; each given one is checked as in {@link AttachmentCreate}.
+ */
 export type AttachmentUpdate = {
   contentType?: string;
   fileName?: string;
@@ -174,15 +179,22 @@ const buildAttachmentReadUrl = (
   return apiUrl(accessPoint, "attachment", params);
 };
 
-const numOrNull = (v: unknown): number | null => {
-  const s = asString(v);
-  return s === undefined ? null : Number(s);
+// 空なら null（値が無い）。数でなければ、読めない応答として止める。<Id/> を 0 と読むと、無い添付ファイルの
+// id として扱ってしまう（RV-135）。
+const numOrNull = (field: string, v: unknown): number | null => {
+  const s = asString(v)?.trim();
+  if (s === undefined || s === "") return null;
+  if (/^\d+$/.test(s)) return Number(s);
+  throw new PortersResourceError(
+    `attachment response ${field} is not a number (got ${JSON.stringify(s)})`,
+    { category: "unknown", context: { resource: ATTACHMENT_RESOURCE } },
+  );
 };
 
 const decodeAttachment = (item: Record<string, unknown>): Attachment => ({
-  id: numOrNull(item.Id),
-  resource: numOrNull(item.Resource),
-  resourceId: numOrNull(item.ResourceId),
+  id: numOrNull("Id", item.Id),
+  resource: numOrNull("Resource", item.Resource),
+  resourceId: numOrNull("ResourceId", item.ResourceId),
   contentType: asString(item.ContentType) ?? null,
   fileName: asString(item.FileName) ?? null,
   content: asString(item.Content) ?? null,
@@ -193,8 +205,12 @@ const tag = (name: string, value: string | number): string =>
   `<${name}>${encodeField("SinglelineText", String(value), name)}</${name}>`;
 
 // Reject an over-10MB file before send (the request size guard is bypassed for uploads).
-const guardContent = (content: string | undefined): void => {
-  if (content !== undefined && content.length > MAX_ATTACHMENT_CONTENT_CHARS) {
+// 文字列のときだけ長さを見る（null などは、続く Base64 の検査が PortersConfigError で止める。RV-140）。
+const guardContent = (content: unknown): void => {
+  if (
+    typeof content === "string" &&
+    content.length > MAX_ATTACHMENT_CONTENT_CHARS
+  ) {
     throw new PortersConfigError(
       `attachment content is ${content.length} characters, over the ~10MB file limit`,
       { category: "config", hint: "Attachment files must be 10MB or less." },
@@ -216,6 +232,19 @@ const invalidInput = (
       hint: "Pass resourceId (the record the file belongs to), contentType, fileName and content (the file as Base64 — see bytesToBase64).",
     },
   );
+
+// 入力そのものがオブジェクトでなければ、項目を読む前に止める（create(undefined) が TypeError になっていた。RV-140）。
+const assertInput = (method: string, input: unknown): void => {
+  if (typeof input !== "object" || input === null) {
+    throw new PortersConfigError(
+      `attachment ${method}: the input must be an object, got ${input === null ? "null" : typeof input}`,
+      {
+        category: "config",
+        hint: "Pass the fields to write, e.g. { resourceId, contentType, fileName, content }.",
+      },
+    );
+  }
+};
 
 // JS から文字列などが来ても、Number.isSafeInteger が false を返すので拒否される。
 const assertResourceId = (value: number): void => {
@@ -263,10 +292,13 @@ export const createAttachmentAccessor = (
 
     // A listing never carries bodies (ADR-0075): `requestType=1`. `async` for the exception
     // contract (ADR-0046).
+    // 絞り込みの resourceId も、正の整数かを送る前に確かめる（RV-130）。
     const search = async (
       query: AttachmentSearchQuery & Paging = {},
-    ): Promise<AttachmentPage> =>
-      read({ ...query, requestType: WITHOUT_CONTENT, resource });
+    ): Promise<AttachmentPage> => {
+      if (query.resourceId !== undefined) assertResourceId(query.resourceId);
+      return read({ ...query, requestType: WITHOUT_CONTENT, resource });
+    };
 
     // Offset walk over the same Read. The query is read once, before the first page, so mutating
     // the object mid-iteration cannot change a later page (RV-32).
@@ -275,6 +307,7 @@ export const createAttachmentAccessor = (
     ): AsyncIterable<Attachment> =>
       paginateOnce(() => {
         const resourceId = query.resourceId;
+        if (resourceId !== undefined) assertResourceId(resourceId);
         return (count, start) =>
           read({
             requestType: WITHOUT_CONTENT,
@@ -315,6 +348,7 @@ export const createAttachmentAccessor = (
     // create forces Id=-1 (non-idempotent) and fills `Resource` from the binding.
     // `async` so the 10MB guard rejects instead of throwing synchronously (ADR-0046).
     const create = async (input: AttachmentCreate): Promise<number> => {
+      assertInput("create", input);
       assertResourceId(input.resourceId);
       assertText("contentType", input.contentType);
       assertText("fileName", input.fileName);
@@ -338,6 +372,21 @@ export const createAttachmentAccessor = (
       input: AttachmentUpdate,
     ): Promise<number> => {
       assertRecordId(id, "update", ATTACHMENT_RESOURCE);
+      assertInput("update", input);
+      // 変える項目が 1 つも無い update は、id だけを送って成功として返っていた（RV-136）。
+      if (
+        input.contentType === undefined &&
+        input.fileName === undefined &&
+        input.content === undefined
+      ) {
+        throw new PortersConfigError(
+          "attachment update: give at least one of contentType, fileName, content",
+          {
+            category: "config",
+            hint: "Pass the fields to change. Resource and resourceId cannot be changed.",
+          },
+        );
+      }
       if (input.contentType !== undefined)
         assertText("contentType", input.contentType);
       if (input.fileName !== undefined) assertText("fileName", input.fileName);
