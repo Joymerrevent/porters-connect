@@ -16,6 +16,8 @@ export const appendPaging = (
   p: URLSearchParams,
   count?: number,
   start?: number,
+  /** The hint for an out-of-range `count`, for a Read that has no `searchAll` (Option). */
+  countHint = `PORTERS returns 1–${MAX_READ_COUNT} records per Read. Use searchAll() to walk every page instead of raising count.`,
 ): void => {
   if (count !== undefined) {
     if (
@@ -27,7 +29,7 @@ export const appendPaging = (
         `count must be an integer between ${MIN_READ_COUNT} and ${MAX_READ_COUNT}, got ${count}`,
         {
           category: "config",
-          hint: `PORTERS returns 1–${MAX_READ_COUNT} records per Read. Use searchAll() to walk every page instead of raising count.`,
+          hint: countHint,
         },
       );
     }

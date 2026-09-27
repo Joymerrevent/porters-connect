@@ -99,3 +99,16 @@ describe("createOptionResource — 件数の上限だけを受ける（ADR-0099�
     expect(typeOnly).toBeTypeOf("function");
   });
 });
+
+// Option には searchAll が無い。上限を超えた count には、count を省くよう案内する（RV-116）。
+it("refuses a count over 200 with a hint that fits Option", async () => {
+  const calls: Call[] = [];
+  await expect(res(calls).search({ count: 201 })).rejects.toThrow(
+    expect.objectContaining({
+      name: "PortersConfigError",
+      message: "count must be an integer between 1 and 200, got 201",
+      hint: "Omit count to read every option; a count of 1–200 limits how many are returned.",
+    }),
+  );
+  expect(calls).toHaveLength(0);
+});

@@ -8,7 +8,7 @@
 
 > **OptionResource** = `object`
 
-Defined in: [src/resources/option.ts:59](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L59)
+Defined in: [src/resources/option.ts:60](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L60)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/resources/option.ts:59](https://github.com/Joymerrevent/porters
 
 > **search**(`query?`): `Promise`\<`ReadRecord`\<\{ `P_Alias`: `"SinglelineText"`; `P_Id`: `"System[Id]"`; `P_Name`: `"SinglelineText"`; `P_Order`: `"Number"`; `P_ParentId`: `"Number"`; `P_Type`: `"Number"`; \}\>[]\>
 
-Defined in: [src/resources/option.ts:61](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L61)
+Defined in: [src/resources/option.ts:62](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/option.ts#L62)
 
 Read options, flattened depth-first (all nodes; tree is reconstructable via `P_ParentId`).
 
