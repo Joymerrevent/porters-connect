@@ -1,7 +1,7 @@
 # RV-102 🟢 宣言した型と応答の形が違うときに、黙って別の値になる
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ Option と宣言した項目に User の形が来ると `["User"]` になる。U
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`5494f88`）。** Option と宣言した項目に User / Department の形（子要素が `User` / `Department`）が来たら、型の食い違いとして validation のエラーにする。選択肢の alias の書き方は確かめていない（LV-1）ので、それ以外の名前は受ける（`P_` / `U_` / `A_` で始まるかまでは見ない）。User・Department と宣言した項目の中身のタグの違い、型の無い項目の入れ子の値は直していない。前者はコードのコメントで「寛容に扱う」と決めた範囲で、入れ子の形も実機で確かめていない（LV-19 ほか）ので、厳しくすると本物の応答で読み取りがすべて失敗しうる。後者は ADR-0056 の素通し（カタログ外の alias と同じ扱い）に従う。
+
+## 検証
+
+`src/xml/decode-field.test.ts` の「an Option field whose children are not option aliases」。

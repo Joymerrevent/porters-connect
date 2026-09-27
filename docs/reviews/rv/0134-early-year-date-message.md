@@ -1,7 +1,7 @@
 # RV-134 🟢 0001〜0099 年の日付が「invalid ISO date」で弾かれ、理由が分かりにくい
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`43dfcfd`）。** 年を `setUTCFullYear` で入れ直し、0〜99 年を 1900 年代に読み替えないようにした。書き込める年は 0001〜9999 年。
+
+## 検証
+
+`src/util/datetime.test.ts` の「writes 0050-09-10T12:00:00Z with a 4-digit year」。

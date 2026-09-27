@@ -26,7 +26,28 @@ const escapeXml = (s: string): string =>
 const text = (v: NonNullable<WriteValue>): string =>
   typeof v === "object" && !Array.isArray(v) ? JSON.stringify(v) : String(v);
 
-const scalar = (v: NonNullable<WriteValue>): string => escapeXml(text(v));
+// XML 1.0 で書けない文字: 制御文字（タブ・改行・復帰を除く）、U+FFFE / U+FFFF、対になっていない
+// サロゲート。エスケープしても表せないので、送る前に拒否する（RV-106）。
+const NOT_XML_CHAR =
+  // eslint-disable-next-line no-control-regex
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+const xmlText = (alias: string, s: string): string => {
+  const bad = NOT_XML_CHAR.exec(s);
+  if (bad === null) return escapeXml(s);
+  const code = bad[0].charCodeAt(0).toString(16).toUpperCase().padStart(4, "0");
+  throw new PortersConfigError(
+    `${alias}: the value contains U+${code}, which XML cannot carry`,
+    {
+      category: "validation",
+      hint: "Remove control characters (other than tab and line breaks) and broken surrogate pairs from the value before writing it.",
+      context: { operation: "encode" },
+    },
+  );
+};
+
+const scalar = (alias: string, v: NonNullable<WriteValue>): string =>
+  xmlText(alias, text(v));
 
 // Write order follows PORTERS' own sample: `<FileName/><ContentType/><Content/>`.
 const IMAGE_SUBFIELDS: readonly ImageSubField[] = [
@@ -40,12 +61,17 @@ const IMAGE_SUBFIELDS: readonly ImageSubField[] = [
 // than an empty element PORTERS would read as "clear this" (fail-safe — we never invent a value).
 // A non-object value (also cast-only) has no nested form at all, so it falls back to a scalar,
 // the same passthrough an uncatalogued alias gets.
-const imageInner = (value: NonNullable<WriteValue>): string => {
-  if (typeof value !== "object" || Array.isArray(value)) return scalar(value);
-  const parts = value as Partial<Record<ImageSubField, string>>;
-  return IMAGE_SUBFIELDS.filter((sub) => parts[sub] !== undefined)
-    .map((sub) => `<${sub}>${escapeXml(String(parts[sub]))}</${sub}>`)
-    .join("");
+// 文字列でない子要素（null など。これも cast 経由）は書かない。"null" の文字列として送らない（RV-103）。
+const imageInner = (alias: string, value: NonNullable<WriteValue>): string => {
+  if (typeof value !== "object" || Array.isArray(value))
+    return scalar(alias, value);
+  const parts = value as Partial<Record<ImageSubField, unknown>>;
+  return IMAGE_SUBFIELDS.flatMap((sub) => {
+    const part = parts[sub];
+    return typeof part === "string"
+      ? [`<${sub}>${xmlText(alias, part)}</${sub}>`]
+      : [];
+  }).join("");
 };
 
 // A caller's value that cannot be converted (RV-36 / ADR-0006). `PortersConfigError` because the
@@ -135,14 +161,25 @@ export const encodeField = (
   alias: string,
 ): string => {
   if (typeof value === "number") assertWritableNumber(alias, type, value);
-  if (type === undefined || type === null) return scalar(value);
+  if (type === undefined || type === null) return scalar(alias, value);
   switch (type) {
     // Option: the selected aliases as empty child elements. Canonical input is an
     // array (ADR-0017, symmetric with read); a lone string is wrapped as a 1-element
     // selection (fail-safe).
     case "Option":
       return (Array.isArray(value) ? value : [text(value)])
-        .map((selected) => {
+        .map((selected: unknown) => {
+          // 文字列でない選択肢（[null] など。cast 経由）は <null/> のような要素にしない（RV-104）。
+          if (typeof selected !== "string") {
+            throw new PortersConfigError(
+              `${alias}: option alias ${String(selected)} is not a string`,
+              {
+                category: "validation",
+                hint: 'Pass the selected option aliases as strings, e.g. ["Option.P_Tokyo"].',
+                context: { operation: "encode" },
+              },
+            );
+          }
           // 選択肢 alias は**要素名になる**（write-format.md）。ここが ADR-0085 の主目的。
           assertTagName(selected, "option alias", alias);
           return `<${selected}/>`;
@@ -153,17 +190,19 @@ export const encodeField = (
     case "DateTime":
     case "System[DateTime]":
       return scalar(
+        alias,
         converted(alias, type, value, () => isoToPortersDateTime(text(value))),
       );
     // Age shares Date's wire format (`yyyy/mm/dd`): we write the birthdate.
     case "Date":
     case "Age":
       return scalar(
+        alias,
         converted(alias, type, value, () => isoToPortersDate(text(value))),
       );
     // Image: the three nested sub-elements (ADR-0064 論点3).
     case "Image":
-      return imageInner(value);
+      return imageInner(alias, value);
     // System[Id] / Number / User & System[Reference] / Link (all ID-only) / string Data Types all
     // serialize as a scalar (the string types stay distinct labels per ADR-0016).
     // Link の Read は 3 形の union だが、Write は ID ひとつ（`<Alias>10001</Alias>`）＝ User と同じ。
@@ -180,6 +219,6 @@ export const encodeField = (
     case "Mail":
     case "Telephone":
     case "URL":
-      return scalar(value);
+      return scalar(alias, value);
   }
 };

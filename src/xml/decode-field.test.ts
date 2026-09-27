@@ -590,3 +590,81 @@ describe("decodeField — a value that is only whitespace", () => {
     expect(decodeField(type, "  ", "P_X")).toBe("  ");
   });
 });
+
+// 10 進の表記だけを数として読む。16 進・2 進・指数表記と、丸めが起きる大きな整数は読まない（RV-100）。
+describe("reading a Number only from decimal text", () => {
+  it.each([
+    "0x1A",
+    "1e3",
+    "0b11",
+    "0o7",
+    "1_000",
+    "+1",
+    "1.",
+    ".5",
+    "9007199254740993",
+    "-9007199254740993",
+  ])("refuses %j", (text) => {
+    expect(() => decode("Number", text, "U_score")).toThrow(
+      PortersResourceError,
+    );
+  });
+
+  it.each([
+    ["9007199254740991", 9007199254740991],
+    ["-9007199254740991", -9007199254740991],
+    ["12345678901234567890.5", Number("12345678901234567890.5")],
+    ["-0.25", -0.25],
+  ])("reads %j", (text, expected) => {
+    expect(decode("Number", text, "U_score")).toBe(expected);
+  });
+});
+
+// Option の子要素が選択肢の alias でなければ、宣言した型が違う（RV-102）。
+describe("an Option field whose children are not option aliases", () => {
+  it('refuses a User-shaped value instead of reading it as ["User"]', () => {
+    expect(() =>
+      decode("Option", { User: { "User.P_Id": "1" } }, "U_rank"),
+    ).toThrow(
+      "U_rank: declared Option, but the value is not a set of option aliases — PORTERS sends a set of option aliases for Option",
+    );
+  });
+
+  it("refuses a Department-shaped value too", () => {
+    expect(() =>
+      decode("Option", { Department: { "Department.P_Id": "1" } }, "U_rank"),
+    ).toThrow("U_rank: declared Option");
+  });
+
+  it("reads option aliases with or without the Option. prefix", () => {
+    expect(
+      decode("Option", { "Option.U_001": "", U_002: "" }, "U_rank"),
+    ).toEqual(["Option.U_001", "U_002"]);
+    expect(
+      decode(
+        "Option",
+        { OptionRoot: { "Option.P_A": "", "Option.A_B": "" } },
+        "U_rank",
+      ),
+    ).toEqual(["Option.P_A", "Option.A_B"]);
+  });
+});
+
+// 日時の前後の空白は、取ってから読む（RV-133）。空白だけの入れ子の値は空として読む（RV-132）。
+describe("whitespace around values that it does not belong to", () => {
+  it("reads dates with surrounding whitespace", () => {
+    expect(decode("DateTime", " 2026/01/02 03:04:05 ", "U_at")).toBe(
+      "2026-01-02T03:04:05Z",
+    );
+    expect(decode("Date", "\n2026/01/02\n", "U_on")).toBe("2026-01-02");
+  });
+
+  it.each([
+    "User",
+    "Option",
+    "System[Reference]",
+    "System[Department]",
+  ] as const)("reads a whitespace-only %s as empty", (type) => {
+    expect(decode(type, "\n  ", "P_Owner")).toBeNull();
+  });
+});

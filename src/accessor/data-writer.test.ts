@@ -287,3 +287,35 @@ describe("createDataWriter — the id update / updateMany receive (RV-67)", () =
     expect(calls).toHaveLength(0);
   });
 });
+
+// 接頭辞の付いたキーは、キー名で見る書き込みの前の検査（id の上書き・画像の上限）に掛からないので、
+// 送る前に拒否する（RV-105 の再レビュー）。何も送られない。
+describe("createDataWriter — a prefixed key never reaches the wire", () => {
+  it.each([
+    [
+      "update",
+      (calls: Call[]) => res(calls).update(5, { "W.P_Id": 999 } as never),
+    ],
+    [
+      "create",
+      (calls: Call[]) => res(calls).create({ "W.P_Id": 999 } as never),
+    ],
+    [
+      "an image",
+      (calls: Call[]) =>
+        album(calls).create({
+          "Al.U_photo": {
+            FileName: "a.exe",
+            ContentType: "application/x-msdownload",
+            Content: "",
+          },
+        } as never),
+    ],
+  ])("refuses %s", async (_label, write) => {
+    const calls: Call[] = [];
+    await expect(write(calls)).rejects.toThrow(
+      /a field alias to write must be bare/,
+    );
+    expect(calls).toHaveLength(0);
+  });
+});

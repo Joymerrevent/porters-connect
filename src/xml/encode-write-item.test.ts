@@ -42,3 +42,36 @@ describe("encodeWriteItem", () => {
     );
   });
 });
+
+// 接頭辞の付いた alias は、自分のリソースのものでも拒否する（外すと、書き込みの前の検査を素通りする。RV-105）。
+describe("a prefixed alias", () => {
+  it.each(["Person.P_Name", "Person.P_Id", "Job.P_Name", "X.Y", ".P_Name"])(
+    "refuses %s",
+    (alias) => {
+      expect(() => encodeWriteItem("Person", FIELDS, { [alias]: "x" })).toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          category: "validation",
+          message: `${alias}: a field alias to write must be bare (like "P_Name"), without a prefix`,
+          hint: "Write each field under its bare alias; the library adds the resource's own prefix.",
+          context: { operation: "encode" },
+        }),
+      );
+    },
+  );
+
+  it("writes a bare alias with the resource's prefix, or as it is without one", () => {
+    expect(encodeWriteItem("Person", FIELDS, { P_Name: "x" })).toBe(
+      "<Item><Person.P_Name>x</Person.P_Name></Item>",
+    );
+    expect(encodeWriteItem("", FIELDS, { P_Name: "x" })).toBe(
+      "<Item><P_Name>x</P_Name></Item>",
+    );
+  });
+});
+
+it("names a field alias that is not an XML name", () => {
+  expect(() => encodeWriteItem("Person", FIELDS, { "a b": "x" })).toThrow(
+    'a b: field alias "a b" is not a valid XML element name',
+  );
+});

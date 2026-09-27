@@ -1,7 +1,7 @@
 # RV-103 🟢 Image の書き込みで、`Content: null` を文字列 `null` として送る
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`）。** 画像の子要素は、文字列のものだけを書く（`null` を `"null"` として送らない）。書き込みの前の検査（RV-98）でも、文字列でない子要素は止まる（接頭辞の付いたキーで渡した値は、その検査に掛からないが、RV-105 の直しで送る前に拒否される）。
+
+## 検証
+
+`src/xml/encode-field.test.ts` の「leaves out an image sub-element that is not a string」。

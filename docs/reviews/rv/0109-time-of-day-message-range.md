@@ -1,7 +1,7 @@
 # RV-109 🟢 `encodeTimeOfDay` が `47:59:59` を受け付けるのに、メッセージは `00:00-47:59` と書く
 
 - 重要度: 🟢 ／ 観点: ドキュメント / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`0263d87`）。** 書き込みと読み込みのメッセージの範囲を「00:00:00-47:59:59」にした。
+
+## 検証
+
+`src/util/time-of-day.test.ts` の「accepts up to 47:59:59 and names that range when refusing」。

@@ -35,6 +35,15 @@ describe("parseResourcePage (ADR-0011)", () => {
     expect(page.items).toEqual([]);
   });
 
+  // 属性の前後の空白は取って読む（RV-133）。
+  it("reads Total/Count/Start with surrounding whitespace", () => {
+    const page = parseResourcePage(
+      `<Candidate Total=" 9 " Count="3 " Start=" 6"><Code>0</Code></Candidate>`,
+      "Candidate",
+    );
+    expect([page.total, page.count, page.start]).toEqual([9, 3, 6]);
+  });
+
   it("reads non-zero Total/Count/Start from their own attributes", () => {
     // read-basic has Start="0", which can't distinguish the @_Start lookup from
     // the missing-attribute default — use non-zero values for all three.

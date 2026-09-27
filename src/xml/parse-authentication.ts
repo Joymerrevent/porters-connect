@@ -48,11 +48,17 @@ export const parseAuthentication = (xml: string): AuthResponse => {
     const s = String(asString(v)).trim();
     return /^\d+$/.test(s) ? Number(s) : undefined;
   };
+  // トークンとコードの前後の空白（改行で整形された応答など）は値の一部ではないので取る。空白だけなら
+  // 欠けたのと同じ扱い（RV-133）。
+  const text = (v: unknown): string | undefined => {
+    const s = asString(v)?.trim();
+    return s === "" ? undefined : s;
+  };
   return {
-    code: asString(body.Code),
-    accessToken: asString(body.AccessToken),
+    code: text(body.Code),
+    accessToken: text(body.AccessToken),
     accessTokenExpiresIn: num(body.AccessTokenExpiresIn),
-    refreshToken: asString(body.RefreshToken),
+    refreshToken: text(body.RefreshToken),
     refreshTokenExpiresIn: num(body.RefreshTokenExpiresIn),
   };
 };

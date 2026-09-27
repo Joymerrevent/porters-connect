@@ -1,7 +1,7 @@
 # RV-105 🟢 書き込みで、接頭辞付きの alias に接頭辞をもう一度付ける
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c` → `584db6d`、再レビューを受けて直し直した）。** 書き込みの alias に接頭辞が付いていたら（自分のリソースのものでも）拒否する。最初は「自分の接頭辞なら外してから書く」にしたが、外すのが XML にする段階なので、キー名で見る書き込みの前の検査（id の上書き・画像の上限）を素通りすると再レビューで分かり、拒否に改めた。
+
+## 検証
+
+`src/xml/encode-write-item.test.ts` の「a prefixed alias」と、`src/accessor/data-writer.test.ts` の「a prefixed key never reaches the wire」（update の id・create・画像のいずれも、何も送らずに止まる）。

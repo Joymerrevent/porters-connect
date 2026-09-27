@@ -1,7 +1,7 @@
 # RV-106 🟢 XML 1.0 で使えない文字を、そのまま送る
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`1c1378c`）。** XML 1.0 で書けない文字（タブ・改行・復帰を除く制御文字、U+FFFE / U+FFFF、対になっていないサロゲート）を、送る前に拒否する。
+
+## 検証
+
+`src/xml/encode-field.test.ts` の「characters XML cannot carry」。

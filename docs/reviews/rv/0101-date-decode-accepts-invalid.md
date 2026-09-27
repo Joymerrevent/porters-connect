@@ -1,7 +1,7 @@
 # RV-101 🟢 日時の読み込みが、存在しない日付や 24:00 を通す
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`43dfcfd`）。** 読み込みの日時と日付も、組み直して同じ値に戻るかで暦と時計を確かめる（2/30・24:00・13 月を通さない）。
+
+## 検証
+
+`src/util/datetime.test.ts` の「reading refuses values the calendar does not have」。

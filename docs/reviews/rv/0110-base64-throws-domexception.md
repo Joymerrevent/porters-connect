@@ -1,7 +1,7 @@
 # RV-110 🟢 `base64ToBytes` が不正な入力で、PortersError ではない DOMException を投げる
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/xml-util-low-review・`302bed8`）。** `atob` の例外を `PortersConfigError`（`category: "validation"`）に包み、元の例外は `cause` に残す。
+
+## 検証
+
+`src/util/base64.test.ts` の「refuses text that is not Base64 as a PortersConfigError」。
