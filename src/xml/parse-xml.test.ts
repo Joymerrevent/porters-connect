@@ -185,3 +185,15 @@ describe("attributes", () => {
     });
   });
 });
+
+// DOCTYPE の実体を展開して値を書き換えないよう、DOCTYPE のある応答は読めない応答にする（RV-108）。
+it("refuses a response with a DOCTYPE", () => {
+  const unparseable = (): PortersError =>
+    new PortersResourceError("unparseable", { category: "unknown" });
+  for (const xml of [
+    '<!DOCTYPE r [<!ENTITY x "injected">]><r><v>&x;</v></r>',
+    "<!doctype html><html></html>",
+  ]) {
+    expect(() => parseXml(xml, unparseable)).toThrow("unparseable");
+  }
+});

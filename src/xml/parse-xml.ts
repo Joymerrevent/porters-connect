@@ -62,6 +62,9 @@ export const parseXml = (
   xml: string,
   unparseable: (cause?: unknown) => PortersError,
 ): unknown => {
+  // DOCTYPE は PORTERS の応答に無い。あればその中で定義した実体（&x;）が展開され、応答の値が書き換わる
+  // （RV-108）。中間装置などが返した別物として、読めない応答にする。
+  if (/<!DOCTYPE/i.test(xml)) throw unparseable();
   let parsed: unknown;
   try {
     parsed = parser.parse(xml);
