@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder の問い（2026-09-25）:「`get` は ID を 1 つしか受けない。ID を複数渡して取得できるメソッドは
 > あったほうがいいのではないか」。

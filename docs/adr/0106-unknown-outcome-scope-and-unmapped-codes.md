@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-26
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元はレビュー台帳の [RV-123][rv123] と [RV-114][rv114]。どちらも Low で、動きは安全側に倒れている。
 > RV-123 は [ADR-0103][adr103] が決めた「登録された可能性あり」の案内の範囲を広げるか、RV-114 は [ADR-0006][adr6] の

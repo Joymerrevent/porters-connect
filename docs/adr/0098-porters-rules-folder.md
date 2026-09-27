@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-09-25
 - Deciders: jun.shiromoto (Joymerrevent)
+- Implemented: 0.26.0
 
 > 起票元は stakeholder の問い（2026-09-25）。[ADR-0097][adr97] の実装を見て「`src/resources/` の直下はリソースの
 > ファイルだけになると思った」と指摘があり、続けて「`field-type.ts` / `resource-list.ts` が PORTERS の仕組みのものなら、
