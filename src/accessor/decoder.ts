@@ -38,12 +38,11 @@ export const createDecoder = <F extends FieldCatalog>(
       // "not in the catalog" and only that. A catalogued `null` goes through `decodeField`,
       // which passes the raw string on (ADR-0056).
       const type = fieldMap.get(alias);
-      out[alias] =
-        type === undefined
-          ? typeof raw === "string"
-            ? raw
-            : null
-          : decodeField(type, raw, alias);
+      if (type === undefined) {
+        out[alias] = typeof raw === "string" ? raw : null;
+        continue;
+      }
+      out[alias] = decodeField(type, raw, alias);
     }
     return out as ReadRecord<F>;
   };
