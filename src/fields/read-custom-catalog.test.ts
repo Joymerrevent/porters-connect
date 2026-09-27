@@ -264,3 +264,34 @@ describe("readCustomCatalog — required", () => {
     expect(catalog.required).toStrictEqual({ U_score: true });
   });
 });
+
+// 返ってきた行の接頭辞が、頼んだリソースのものでなければ止める（RV-115）。
+describe("readCustomCatalog — the prefix of each row", () => {
+  it("refuses a row that belongs to another resource", async () => {
+    await expect(
+      readCustomCatalog(
+        sourceOf([{ P_Alias: "Person.U_a", P_Type: 3 }]),
+        "job",
+      ),
+    ).rejects.toThrow(
+      expect.objectContaining({
+        name: "PortersResourceError",
+        category: "unknown",
+        message:
+          'Field Read for "job" returned "Person.U_a", which belongs to another resource (expected the prefix "Job")',
+      }),
+    );
+  });
+
+  it.each([
+    ["job", "Job.U_a"],
+    ["job", "U_a"],
+    ["candidate", "Person.U_a"],
+  ] as const)("reads %s's row %s", async (resource, alias) => {
+    const catalog = await readCustomCatalog(
+      sourceOf([{ P_Alias: alias, P_Type: 3 }]),
+      resource,
+    );
+    expect(Object.keys(catalog.fields)).toEqual(["U_a"]);
+  });
+});

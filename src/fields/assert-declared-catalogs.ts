@@ -4,7 +4,10 @@
 // declaration as checked is only a type — a plain object or a JS caller gets past it (RV-79).
 
 import { PortersConfigError } from "../errors";
-import { CUSTOM_ALIAS_PATTERN } from "../porters/custom-field";
+import {
+  CUSTOM_ALIAS_PATTERN,
+  CUSTOM_ALIAS_PREFIX,
+} from "../porters/custom-field";
 import { CUSTOM_DATA_TYPES } from "./custom-data-types";
 import type { CustomFieldResource } from "./declared-catalogs";
 
@@ -37,10 +40,20 @@ export const assertCustomAlias = (
   alias: string,
   resource: string,
 ): void => {
-  if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
+  if (!CUSTOM_ALIAS_PREFIX.test(alias)) {
     throw new PortersConfigError(
       `${where}: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
       { category: "config" },
+    );
+  }
+  // 名前が空、または field / condition の書き方を壊す文字を含む（RV-112）。
+  if (!CUSTOM_ALIAS_PATTERN.test(alias)) {
+    throw new PortersConfigError(
+      `${where}: custom field alias "${alias}" on "${resource}" has no name after the prefix, or contains a character a request cannot carry`,
+      {
+        category: "config",
+        hint: 'Use the alias as Field Read lists it. It cannot contain "," ":" "=" "." "(" ")" or whitespace.',
+      },
     );
   }
 };

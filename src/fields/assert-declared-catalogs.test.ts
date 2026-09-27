@@ -103,3 +103,18 @@ describe("assertDeclaredCatalogs", () => {
     ).toBe("tenant: fields must be the result of defineFields, got undefined");
   });
 });
+
+// 名前が空、または書き方を壊す文字を含む alias は、宣言として止める（RV-112）。
+it.each(["U_", "U_a,Person.P_Memo"])(
+  "assertCustomAlias refuses %j with a hint",
+  (alias) => {
+    expect(() => assertCustomAlias("defineFields", alias, "job")).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "config",
+        message: `defineFields: custom field alias "${alias}" on "job" has no name after the prefix, or contains a character a request cannot carry`,
+        hint: 'Use the alias as Field Read lists it. It cannot contain "," ":" "=" "." "(" ")" or whitespace.',
+      }),
+    );
+  },
+);
