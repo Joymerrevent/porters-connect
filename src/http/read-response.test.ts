@@ -38,13 +38,19 @@ describe("readResponse — success", () => {
         "parsed:xml",
       );
     }
-    // A parseable body does not make a non-2xx a success — this is the case that would otherwise
-    // hand a proxy's HTML page back as "no results" (fail-safe).
+    // A parseable body does not make a non-2xx a success. The body's code 0 is kept, so a write is
+    // not reported as "not written" when the API said it succeeded (RV-154).
     for (const status of [199, 300, 404, 500]) {
       expect(
         () => readResponse({ status, body: "xml" }, parsedOk),
         `${status}`,
-      ).toThrow(expect.objectContaining({ httpStatus: status }));
+      ).toThrow(
+        expect.objectContaining({
+          httpStatus: status,
+          code: 0,
+          category: "unknown",
+        }),
+      );
     }
   });
 });

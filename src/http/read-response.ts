@@ -4,7 +4,12 @@
 // wherever a response is read. `requester` uses it for the Resource API; the OAuth / Token calls,
 // which sit outside the request pipeline, use it too.
 
-import { httpStatusError, withHttpStatus, PortersError } from "../errors/index";
+import {
+  httpStatusError,
+  successBodyStatusError,
+  withHttpStatus,
+  PortersError,
+} from "../errors/index";
 import type { TransportResponse } from "./types";
 
 /**
@@ -13,7 +18,8 @@ import type { TransportResponse } from "./types";
  * An envelope with a PORTERS code wins: it is the most specific answer there is, so that error is
  * kept and the status stamped alongside. Without one, a non-2xx is classified from the status,
  * because `parse` would otherwise read a proxy's HTML error page as a well-formed empty page and
- * hand the caller "no results" (fail-safe).
+ * hand the caller "no results" (fail-safe). A *successful* envelope on a non-2xx is neither: the
+ * two halves disagree, so the call fails with the envelope's code kept and the outcome left open.
  *
  * VERIFY(live): which statuses real PORTERS returns is unconfirmed — see
  * docs/live-verification.md (LV-9).
@@ -23,9 +29,9 @@ export const readResponse = <T>(
   parse: (body: string) => T,
 ): T => {
   const ok = res.status >= 200 && res.status < 300;
+  let parsed: T;
   try {
-    const parsed = parse(res.body);
-    if (ok) return parsed;
+    parsed = parse(res.body);
   } catch (e) {
     // Not ours: on a success status that failure *is* the failure, so it passes through untouched.
     if (!(e instanceof PortersError)) {
@@ -37,5 +43,8 @@ export const readResponse = <T>(
     if (ok || e.code !== null) throw withHttpStatus(e, res.status);
     throw httpStatusError(res.status, e);
   }
-  throw httpStatusError(res.status);
+  if (ok) return parsed;
+  // 本文は PORTERS の成功（Code 0）なのに、ステータスは 2xx でない。本文の Code を残して、
+  // 「書き込まれていない」とは扱わせない（RV-154）。
+  throw successBodyStatusError(res.status);
 };
