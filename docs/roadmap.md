@@ -14,7 +14,7 @@
 **主軸「全リソース網羅 ＋ ドキュメント充実」（[ADR-0060][adr60]）は D1〜D5 がすべて完了**し、
 **0.14.0 として公開済み**（2026-09-09）。D1 は 0.12.0（データ系 13/13）、**D2（マスタ項目）は 0.13.0**
 （User 4→17）、**D3（データ型網羅）は 0.14.0**（`Link` / `Image` を実装して 17/17）。
-**最新は 0.26.0**（2026-09-27）＝ 検索クエリの型からページ送りを外す（[ADR-0099][adr99]）・読み取りの戻り値の型を要求した
+**最新は 0.26.1**（2026-09-27）＝ 0.26.0 の後のレビューで見つけた細かな不具合を直す patch 版（トークンの保存先への書き込みの順番・2xx 以外の status に載った成功の応答の扱いほか）。**破壊的変更なし**。ひとつ前の **0.26.0**（2026-09-27）＝ 検索クエリの型からページ送りを外す（[ADR-0099][adr99]）・読み取りの戻り値の型を要求した
 項目で絞る（[ADR-0096][adr96]）・`getMany` を足す（[ADR-0095][adr95]）・`src` 全体のレビューで見つけた不具合を直す minor 版。
 **破壊的変更 2 つ**。ひとつ前の **0.25.0**（2026-09-25）＝ 定義していないオプションのキーを弾く（[ADR-0092][adr92]）・`porters.auth.getToken()` が
 期限も返す（[ADR-0093][adr93]）minor 版。**破壊的変更 2 つ**。ひとつ前の **0.24.0**（2026-09-24）＝ トークンの取り方（`tokenProvider`）と置き場所（`tokenStore`）を分ける（[ADR-0091][adr91]）・
@@ -61,7 +61,7 @@ findings の open も 0。[ADR-0084][adr84] の反映も済んだ（PRD §7・CI
 **2026-09-26〜27 に `src` 全体をレビューした**（change-review の手順・レビューと修正を指摘がなくなるまで繰り返す）。
 [RV-65][rv65]〜[RV-156][rv156] の 92 件（🔴 5・🟡 18・🟢 69）を記録し、fixed 88・wontfix 4・open 0。
 設計の判断が要る 5 件は [ADR-0102][adr102]〜[ADR-0106][adr106] として起票・accepted・実装し、**0.26.0 で公開**した。
-0.26.0 の後に残った 🟢 は #462〜#464 で直した（**未リリース**。changeset 3 件＝次の patch 版）。
+0.26.0 の後に残った 🟢 は #462〜#464・#466 で直し、**0.26.1 で公開**した。
 最後に残った 2 件は同日に処置した（[RV-155][rv155] は fixed、[RV-156][rv156] は実機で確かめるまで wontfix＝ LV-9 に見直しの条件を書いた）。
 **V3 は達成に戻った**（着手可能・判断待ち・要 ADR・open とも 0）。
 
@@ -651,8 +651,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 - [x] `version` 0.1.0 確定 ／ CHANGELOG 作成（Keep a Changelog・npm 同梱）
 - [x] `v0.1.0` タグ付与 ＋ git-flow（release → main → develop back-merge）
 - [x] **npm アカウント作成 ＋ `@joymerrevent` 組織作成 ＋ OIDC 信頼登録**
-- [x] 公開済み — **`@joymerrevent/porters-connect@0.26.0`**（npm latest・2026-09-27 にレジストリで確認・**10 files / 1377.4 kB**）。**全 34 版**を半自動フローでリリース:
-      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1 → 0.21.0 → 0.22.0 → 0.23.0 → 0.24.0 → 0.25.0 → 0.26.0
+- [x] 公開済み — **`@joymerrevent/porters-connect@0.26.1`**（npm latest・2026-09-27 にレジストリで確認・**10 files / 1412.9 kB**）。**全 35 版**を半自動フローでリリース:
+      0.1.0 → 0.1.1 → 0.2.0 → 0.2.1 → 0.3.0 → 0.4.0 → 0.5.0 → 0.6.0 → 0.6.1 → 0.6.2 → 0.7.0 → 0.8.0 → 0.9.0 → 0.10.0 → 0.11.0 → 0.12.0 → 0.12.1 → 0.13.0 → 0.14.0 → 0.15.0 → 0.15.1 → 0.16.0 → 0.17.0 → 0.18.0 → 0.19.0 → 0.19.1 → 0.20.0 → 0.20.1 → 0.21.0 → 0.22.0 → 0.23.0 → 0.24.0 → 0.25.0 → 0.26.0 → 0.26.1
       （0.1.1 でメンテナンス＝`src/` 変更なし・fast-xml-parser の下限を `^5.9.2` へ・開発依存の脆弱性 4 件を解消、
       0.3.0 で F-1 OAuth 公開 API `porters.auth.*`、0.4.0 で F-2 Read クエリ＝typed `condition` ＋ `order`/`keywords`/`itemstate`、
       0.5.0 で F-3 マルチテナント＝`porters.tenant(id)` ＋ `TenantScope`、0.6.0 で F-4 一括書き込み＝`createMany` / `updateMany` ＋ `BulkWriteResult`、
@@ -680,7 +680,8 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
       0.23.0 でカスタム項目の `create` の必須（[ADR-0089][adr89]）＋ TypeScript の下限 5.4 と CI の検査（[ADR-0090][adr90]）、
       **0.24.0 でトークンの取り方と置き場所の分離（[ADR-0091][adr91]・破壊的）＋ 日時の入力の制限（破壊的）＋ Refresh Token の取り直し**、
       **0.25.0 で定義していないオプションの拒否（[ADR-0092][adr92]・破壊的）＋ `getToken()` が期限も返す（[ADR-0093][adr93]・破壊的）**、
-      **0.26.0 で検索クエリの型からページ送りを外す（[ADR-0099][adr99]・破壊的）＋ 読み取りの戻り値の型を絞る（[ADR-0096][adr96]・破壊的）＋ `getMany`（[ADR-0095][adr95]）＋ レビューの修正**）。
+      **0.26.0 で検索クエリの型からページ送りを外す（[ADR-0099][adr99]・破壊的）＋ 読み取りの戻り値の型を絞る（[ADR-0096][adr96]・破壊的）＋ `getMany`（[ADR-0095][adr95]）＋ レビューの修正**、
+      0.26.1 でレビューの残りの修正（トークンの保存先への書き込みの順番ほか））。
       各版の詳細は [CHANGELOG][changelog]
 - [x] 対応 PORTERS / API バージョン明記の確定（[ADR-0042][adr42]・案A＝**Connect API Version を契約の正**／製品 8.x・9.x は参考。README「対応バージョン」節・PRD §8・CLAUDE.md・コードコメントへ反映済み）
 
@@ -755,7 +756,7 @@ F-4 一括書き込み（`createMany` / `updateMany` ＋ `BulkWriteResult`・[AD
 
 - [x] ADR-0025 を **accepted**（**changesets・git-flow 維持**。release-please/手運用は不採用）
 - [x] changesets 導入（`@changesets/cli`・config: `access: public` / `baseBranch: develop`・scripts）。**version bump のみ**に使用（CHANGELOG は**手書き**＝[ADR-0026][adr26] 案B・`changelog: false`）
-- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.26.0 の**全 34 版**で運用実績あり）
+- [x] publish ワークフロー `release.yml`（**Release 公開**で起動・**OIDC Trusted Publishing**・**NPM_TOKEN 不要**・provenance 自動）＋ npm 側の信頼登録済み（0.1.0〜0.26.1 の**全 35 版**で運用実績あり）
 - [x] タグ自動化 `tag.yml`（main マージで `vX.Y.Z` 自動作成・[ADR-0029][adr29]）／ back-merge は**手動**（[ADR-0030][adr30]）／ リリース前ゲート `check:release`（版番号 semver＋単調増加・[ADR-0027][adr27]/[0031][adr31]/[0032][adr32]）
 - [x] CHANGELOG 形式確定（[ADR-0026][adr26] 案B）／[release-runbook][rb] を半自動フローへ更新済み
 
