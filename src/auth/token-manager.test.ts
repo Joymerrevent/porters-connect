@@ -712,3 +712,46 @@ it("keeps a token cached after the clear(), even when an earlier write finishes 
   expect(stored).toEqual({ accessToken: { token: "NEW" } });
   expect(await m.getAccessToken()).toBe("NEW");
 });
+
+// clear() の後に、消す前に始まった書き込みが保存先に届いても、最初の読み込みで生き返らせない（RV-142 の再レビュー）。
+it("does not bring a cleared token back through the first store read", async () => {
+  let stored: StoredTokens | undefined;
+  let release: () => void = () => undefined;
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    // 1 回目の書き込み（A）だけを遅らせ、後の書き込みはすぐ終える。
+    set: (v) => {
+      if (v.accessToken.token !== "A") {
+        stored = v;
+        return Promise.resolve();
+      }
+      return new Promise<void>((r) => {
+        release = () => {
+          stored = v;
+          r();
+        };
+      });
+    },
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  let acquires = 0;
+  const m = createTokenManager({
+    provider: {
+      acquire: () => {
+        acquires += 1;
+        return Promise.resolve({ accessToken: { token: "FRESH" } });
+      },
+    },
+    tokenStore: store,
+  });
+  const caching = m.cache({ accessToken: { token: "A" } });
+  await m.clear();
+  release();
+  const token = await m.getAccessToken();
+  await caching;
+  expect(token).not.toBe("A");
+  expect(acquires).toBe(1);
+});

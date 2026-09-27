@@ -66,6 +66,8 @@ describe("appendReadQuery — numbers in a condition", () => {
     [1e-7, "0.0000001"],
     [1e21, "1000000000000000000000"],
     [-0.25, "-0.25"],
+    [1e-21, "0.000000000000000000001"],
+    [-0, "0"],
   ])("writes %s as %s", (n, text) => {
     expect(encode({ condition: { P_Num: { ge: n } } }).get("condition")).toBe(
       `W.P_Num:ge=${text}`,
@@ -76,6 +78,12 @@ describe("appendReadQuery — numbers in a condition", () => {
     expect(() =>
       encode({ condition: { P_Num: { eq: null } } } as never),
     ).toThrow('condition P_Num: "null" is not a decimal number');
+  });
+
+  it("writes -0 as 0 for a record id", () => {
+    expect(
+      encode({ condition: { P_Id: { or: [-0, 1] } } }).get("condition"),
+    ).toBe("W.P_Id:or=0:1");
   });
 
   it("accepts P_Id ge 0, a range that means every record", () => {

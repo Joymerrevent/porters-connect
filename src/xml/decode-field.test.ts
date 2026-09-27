@@ -605,6 +605,7 @@ describe("reading a Number only from decimal text", () => {
     "9007199254740993",
     "-9007199254740993",
     "9007199254740993.0",
+    "4503599627370497.5",
     "12345678901234567890.5",
   ])("refuses %j", (text) => {
     expect(() => decode("Number", text, "U_score")).toThrow(

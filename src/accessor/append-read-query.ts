@@ -99,9 +99,11 @@ const assertConditionNumber = (
 // （RV-150）。10 進に直すと値が変わる数（5e-324 が 0 になるなど）は、指数表記のまま残して拒否に任せる。
 const conditionText = (value: unknown): string => {
   if (typeof value !== "number") return String(value);
+  // -0 は "-0" ではなく "0" と書く（Math.round(-0.4) などで生まれ、id の条件で拒否されていた）。
+  if (Object.is(value, -0)) return "0";
   const plain = value.toLocaleString("en-US", {
     useGrouping: false,
-    maximumFractionDigits: 20,
+    maximumFractionDigits: 100,
   });
   return Number(plain) === value ? plain : String(value);
 };
