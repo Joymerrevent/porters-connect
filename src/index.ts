@@ -168,9 +168,9 @@ export type {
   PhaseAccessor,
   PhaseSearchQuery,
 } from "./resources";
+export type { Limit, Paging } from "./accessor";
 // 文字列 union にするのは ADR-0061 案5b。
 /** The resource names `t.phase.of(...)` accepts. */
-export type { Limit, Paging } from "./accessor";
 export type { ResourceName } from "./porters";
 export type { ImageContentType } from "./porters";
 // Name <-> number conversion (ADR-0079). A field's *value* stays the number its Data Type
