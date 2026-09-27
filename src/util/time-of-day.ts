@@ -35,6 +35,27 @@ const MAX_MINUTES = 59;
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
 
+// decodeTimeOfDay: 1970-01-01 / 1970-01-02 の ISO の日時でない（多くは、項目が時分型ではなく日時型）。
+const notTimeOfDay = (iso: string): PortersConfigError =>
+  new PortersConfigError(
+    `${JSON.stringify(iso)} is not a time-of-day value (expected an ISO date-time on 1970-01-01 or 1970-01-02)`,
+    {
+      category: "validation",
+      hint: 'A time-of-day (時分型) field reads back as "1970-01-01THH:mm:ssZ" ("1970-01-02" for 24:00-47:59). Any other date means this field is probably a date-time, not a time-of-day: keep its ISO value as is.',
+    },
+  );
+
+// encodeTimeOfDay: "HH:mm" / "HH:mm:ss" の形でないか、00:00:00-47:59:59 の外。
+const notClockTime = (time: string): PortersConfigError =>
+  new PortersConfigError(
+    // 秒まで書けば 47:59:59 まで受ける。メッセージの範囲も秒まで書く（RV-109）。
+    `time-of-day ${JSON.stringify(time)} is not "HH:mm" or "HH:mm:ss" within 00:00:00-47:59:59`,
+    {
+      category: "validation",
+      hint: 'PORTERS stores a time-of-day (時分型) field as a DateTime anchored to 1970/01/01 (24:00-47:59 -> 1970/01/02) and rejects any other value with Code 103 (write) / Code 100 (condition). Pass the clock time as "HH:mm", e.g. "09:00" or "26:00".',
+    },
+  );
+
 // 変換関数として公開する設計は ADR-0086。
 /**
  * Read a **time-of-day** (時分型) field's value as a clock time.
@@ -57,24 +78,16 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
  */
 export const decodeTimeOfDay = (iso: string): string => {
   const m = ISO_DATETIME_RE.exec(iso);
-  const extra = m === null ? undefined : TIME_OF_DAY_ANCHOR_DAYS[m[3]];
+  if (m === null) throw notTimeOfDay(iso);
+  const [, year, month, day, wireHourText, minutes, seconds] = m;
+  const extra = TIME_OF_DAY_ANCHOR_DAYS[day];
   if (
-    m === null ||
-    m[1] !== TIME_OF_DAY_ANCHOR_YEAR ||
-    m[2] !== TIME_OF_DAY_ANCHOR_MONTH ||
+    year !== TIME_OF_DAY_ANCHOR_YEAR ||
+    month !== TIME_OF_DAY_ANCHOR_MONTH ||
     extra === undefined
-  ) {
-    throw new PortersConfigError(
-      `${JSON.stringify(iso)} is not a time-of-day value (expected an ISO date-time on 1970-01-01 or 1970-01-02)`,
-      {
-        category: "validation",
-        hint: 'A time-of-day (時分型) field reads back as "1970-01-01THH:mm:ssZ" ("1970-01-02" for 24:00-47:59). Any other date means this field is probably a date-time, not a time-of-day: keep its ISO value as is.',
-      },
-    );
-  }
-  const wireHours = Number(m[4]);
-  const minutes = m[5];
-  const seconds = m[6];
+  )
+    throw notTimeOfDay(iso);
+  const wireHours = Number(wireHourText);
   // The regexp only fixes the shape (two digits per part); the range is checked here, on the wire
   // side, before the anchor is folded in. `1970-01-01T30:00:00Z` or `…T09:60:00Z` is shaped like
   // a value but never came from PORTERS (the wire hour is a clock hour, and `Date.parse` in the
@@ -124,24 +137,16 @@ export const decodeTimeOfDay = (iso: string): string => {
  */
 export const encodeTimeOfDay = (time: string): string => {
   const m = CLOCK_RE.exec(time);
-  const hours = m === null ? NaN : Number(m[1]);
-  const minutes = m === null ? NaN : Number(m[2]);
-  const seconds = m === null || m[3] === undefined ? 0 : Number(m[3]);
+  if (m === null) throw notClockTime(time);
+  const hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  const seconds = m[3] === undefined ? 0 : Number(m[3]);
   if (
-    m === null ||
     hours > TIME_OF_DAY_MAX_HOURS ||
     minutes > MAX_MINUTES ||
     seconds > MAX_MINUTES
-  ) {
-    throw new PortersConfigError(
-      // 秒まで書けば 47:59:59 まで受ける。メッセージの範囲も秒まで書く（RV-109）。
-      `time-of-day ${JSON.stringify(time)} is not "HH:mm" or "HH:mm:ss" within 00:00:00-47:59:59`,
-      {
-        category: "validation",
-        hint: 'PORTERS stores a time-of-day (時分型) field as a DateTime anchored to 1970/01/01 (24:00-47:59 -> 1970/01/02) and rejects any other value with Code 103 (write) / Code 100 (condition). Pass the clock time as "HH:mm", e.g. "09:00" or "26:00".',
-      },
-    );
-  }
+  )
+    throw notClockTime(time);
   const day = hours >= HOURS_PER_ANCHOR_DAY ? "02" : "01";
   const wireHours = hours % HOURS_PER_ANCHOR_DAY;
   return `${TIME_OF_DAY_ANCHOR_YEAR}-${TIME_OF_DAY_ANCHOR_MONTH}-${day}T${pad2(wireHours)}:${pad2(minutes)}:${pad2(seconds)}Z`;
