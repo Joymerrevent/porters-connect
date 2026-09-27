@@ -279,6 +279,7 @@ describe("readCustomCatalog — the prefix of each row", () => {
         category: "unknown",
         message:
           'Field Read for "job" returned "Person.U_a", which belongs to another resource (expected the prefix "Job")',
+        context: { resource: "Field" },
       }),
     );
   });

@@ -183,6 +183,8 @@ grep -rn "VERIFY(live)" src test
   `src/fields/read-custom-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
   `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
+- **関連**: 接頭辞の付いた alias が、頼んだリソースの接頭辞（Candidate は `Person`）でなければ、`readCustomCatalog` は止まる
+  （別のリソースの項目を宣言に入れないため）。実機が別の書き方の接頭辞を返すと分かったら、この突き合わせも直す
 - **状態**: 未確認
 - **確認結果**: —
 
@@ -615,8 +617,9 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 ## LV-38 添付ファイルの 10MB は、何の単位で数えるか
 
 - **現在の対応 / 仮定**: **Base64 の文字数で 14,000,000 文字まで**を送る。10 MiB を Base64 にした長さ（13,981,016 文字）より約 19,000 文字多い
-- **不確実な理由**: 10MB の上限とファイル名の 255 バイトの出典は ADR-0018 の調べだけで、reference に書かれていない。10MB が 10,000,000 バイトか
-  10 MiB か、デコード後のバイト数で数えるのかも分からない
+- **不確実な理由**: 上限そのものは出典（Attachment - Write の「新規登録および更新における注意点」）に「1 ファイルのサイズが
+  10MB を超えるものはサポートされません」とある。ただし 10MB が 10,000,000 バイトか 10 MiB かと、何で数えるか（デコード後の
+  バイト数か）は書かれていない
 - **コード箇所**: `src/porters/attachment.ts`（`MAX_ATTACHMENT_CONTENT_CHARS`）、`src/resources/attachment.ts`（`guardContent`）
 - **確認方法**: デコード後が 10,000,000 バイト・10 MiB（10,485,760 バイト）の前後のファイルを送り、どこから拒否されるかを確かめる
 - **状態**: 未確認

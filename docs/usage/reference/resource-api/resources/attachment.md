@@ -44,6 +44,14 @@
 | FileName    | —    | —          | —        | —        | Attachmentのファイル名です。                                                                                                 |
 | Content     | —    | —          | —        | —        | Base64 Encodeされたファイルです。                                                                                            |
 
+## 新規登録と更新の注意点
+
+出典: [Attachment - Write][write]（updated_at 2023-08-17）
+
+- ファイル数に制限は無いが、1 ファイルのサイズが **10MB** を超えるものはサポートされない。
+- Windows のファイル名で使えない文字は指定できない。
+- ファイル名は、拡張子を含めて **255 バイト**を超えるものを指定できない。
+
 ## 対応 MIME タイプ
 
 出典: [Mime Type List][mime]（updated_at 2022-06-13）
@@ -72,3 +80,4 @@
 [resource-api]: ../README.md
 [resources-list]: ../resources-list.md
 [write-format]: ../write-format.md
+[write]: https://hrbcapi.porters.jp/hc/ja/articles/115012161308-Attachment-Write
