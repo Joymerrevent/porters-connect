@@ -99,21 +99,26 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const usable = (t: IssuedToken): boolean =>
     t.expiresAt === undefined || now() < t.expiresAt - margin;
 
+  // 保存先への書き込み（set / clear）は、呼ばれた順に 1 つずつ流す。重なった書き込みが後から届いて
+  // 保存先が手元と食い違わないように（RV-142）。前の書き込みが失敗しても次は流し、失敗はその呼び出しにだけ返す。
+  // 最後の呼び出しの書き込みが最後に届くので、合わせ直しは要らず、消したつもりの clear() が成功で返って
+  // 保存先にトークンが残ることもない（RV-153）。
+  let writing: Promise<void> = Promise.resolve();
+  const write = (op: () => Promise<void>): Promise<void> => {
+    const run = writing.then(op);
+    writing = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  };
+
   // 世代は「変わったか」だけを比べるので、増やすか減らすかは結果に効かない。
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
     generation += 1;
-    const mine = generation;
     cached = tokens;
-    await store.set(tokens);
-    // 保存先に書いている間に手元が入れ替わった（clear() や、後の cache()）なら、書き終えた値が保存先に残って
-    // 手元と食い違う（RV-142。書き込みが追い越された場合も）。保存先を今の手元に合わせ直す。
-    // 合わせ直している間にも入れ替わりうるので、変わらなくなるまで確かめ直す（再レビュー）。
-    let seen = mine;
-    while (generation !== seen) {
-      seen = generation;
-      await (cached === undefined ? store.clear() : store.set(cached));
-    }
+    await write(() => store.set(tokens));
     return tokens;
   };
 
@@ -186,7 +191,7 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
       // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
       generation += 1;
       cached = undefined;
-      await store.clear();
+      await write(() => store.clear());
     },
   };
 };

@@ -7,6 +7,7 @@ import {
   PortersError,
   PortersNetworkError,
   PortersResourceError,
+  successBodyStatusError,
 } from "../errors";
 import {
   asUnknownOutcome,
@@ -494,6 +495,17 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       "an HTTP 300",
       new PortersError("redirect", { category: "unknown", httpStatus: 300 }),
       "were not written",
+    ],
+    // 本文が成功（Code 0）なら、3xx / 4xx でも書き込まれた可能性がある（RV-154）。
+    [
+      "an HTTP 302 with a successful body",
+      successBodyStatusError(302),
+      "may have been written",
+    ],
+    [
+      "an HTTP 404 with a successful body",
+      successBodyStatusError(404),
+      "may have been written",
     ],
     [
       "an HTTP 299 (a success whose body could not be read)",
