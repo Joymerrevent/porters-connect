@@ -220,3 +220,14 @@ describe("round trip", () => {
     );
   });
 });
+
+// 受け付ける範囲（秒まで書けば 47:59:59）と、メッセージの範囲を合わせる（RV-109）。
+it("accepts up to 47:59:59 and names that range when refusing", () => {
+  expect(encodeTimeOfDay("47:59:59")).toBe("1970-01-02T23:59:59Z");
+  expect(() => encodeTimeOfDay("48:00")).toThrow(
+    'time-of-day "48:00" is not "HH:mm" or "HH:mm:ss" within 00:00:00-47:59:59',
+  );
+  expect(() => decodeTimeOfDay("1970-01-01T24:00:00Z")).toThrow(
+    '"1970-01-01T24:00:00Z" is outside the time-of-day range (00:00:00-47:59:59)',
+  );
+});

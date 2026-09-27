@@ -87,7 +87,7 @@ export const decodeTimeOfDay = (iso: string): string => {
     Number(seconds) > MAX_MINUTES
   ) {
     throw new PortersConfigError(
-      `${JSON.stringify(iso)} is outside the time-of-day range (00:00-47:59)`,
+      `${JSON.stringify(iso)} is outside the time-of-day range (00:00:00-47:59:59)`,
       {
         category: "validation",
         hint: "PORTERS' time-of-day range is 00:00-47:59, carried as a clock time (hours 00-23, minutes and seconds 00-59) on 1970/01/01 or, for 24:00-47:59, 1970/01/02.",
@@ -134,7 +134,8 @@ export const encodeTimeOfDay = (time: string): string => {
     seconds > MAX_MINUTES
   ) {
     throw new PortersConfigError(
-      `time-of-day ${JSON.stringify(time)} is not "HH:mm" or "HH:mm:ss" within 00:00-47:59`,
+      // 秒まで書けば 47:59:59 まで受ける。メッセージの範囲も秒まで書く（RV-109）。
+      `time-of-day ${JSON.stringify(time)} is not "HH:mm" or "HH:mm:ss" within 00:00:00-47:59:59`,
       {
         category: "validation",
         hint: 'PORTERS stores a time-of-day (時分型) field as a DateTime anchored to 1970/01/01 (24:00-47:59 -> 1970/01/02) and rejects any other value with Code 103 (write) / Code 100 (condition). Pass the clock time as "HH:mm", e.g. "09:00" or "26:00".',
