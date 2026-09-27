@@ -402,10 +402,9 @@ const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
       ? Object.fromEntries(Object.entries(fields))
       : fields;
   if (snapshot !== undefined) assertDeclaredCatalogs("tenant", snapshot);
+  // 検査を通った写しはオブジェクト（null などは上で止まる）。
   const declared = new Map<string, unknown>(
-    typeof snapshot === "object" && snapshot !== null
-      ? Object.entries(snapshot)
-      : [],
+    snapshot === undefined ? [] : Object.entries(snapshot as object),
   );
   const customFor = <K extends keyof DeclaredCatalogs>(
     key: K,

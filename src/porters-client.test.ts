@@ -1098,8 +1098,16 @@ it("checks and uses the same reading of a declaration", async () => {
   expect(read?.U_score).toBe(7);
 });
 
-it("rejects a declaration that is not an object before reading it", () => {
-  expect(() => mockClient().tenant(1, { fields: "x" as never })).toThrow(
-    "tenant: fields must be the result of defineFields",
-  );
-});
+it.each(["x", null, 0])(
+  "rejects the declaration %j before reading it",
+  (fields) => {
+    expect(() => mockClient().tenant(1, { fields: fields as never })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        message: expect.stringMatching(
+          /^tenant: fields must be the result of defineFields/,
+        ) as unknown,
+      }),
+    );
+  },
+);
