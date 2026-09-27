@@ -371,7 +371,28 @@ describe("generateFieldDecls — tenant values in the generated source", () => {
       'generateFieldDecls: constName "my-fields" is not a valid identifier',
     );
     expect((err as PortersConfigError).category).toBe("config");
-    expect((err as PortersConfigError).hint).toContain("myFields");
+    expect((err as PortersConfigError).hint).toBe(
+      "Use letters, digits, _ and $, not starting with a digit and not a reserved word (e.g. myFields).",
+    );
+  });
+
+  // 形は識別子でも、const の名前にできない語は拒否する（RV-137）。
+  it.each(["class", "default", "enum", "eval", "arguments", "yield", "await"])(
+    "refuses the reserved word %j as a constName",
+    async (constName) => {
+      await expect(
+        generateFieldDecls(sourceOf({}), ["job"], { constName }),
+      ).rejects.toThrow(
+        `generateFieldDecls: constName "${constName}" is not a valid identifier`,
+      );
+    },
+  );
+
+  it("accepts a name that only starts with a reserved word", async () => {
+    const out = await generateFieldDecls(sourceOf({}), ["job"], {
+      constName: "classFields",
+    });
+    expect(out).toContain("export const classFields = defineFields({");
   });
 
   it("prints a resource passed twice once", async () => {

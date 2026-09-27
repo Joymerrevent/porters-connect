@@ -396,9 +396,14 @@ const createTenantScope = <C extends DeclaredCatalogs = EmptyCatalog>(
   if (scope.fields !== undefined)
     assertDeclaredCatalogs("tenant", scope.fields);
   // The per-resource custom catalog declared via defineFields (or {} when none), checked above.
+  // 検査（assertDeclaredCatalogs）と同じく、自分のプロパティだけを読む。prototype の上の宣言は、検査を
+  // 通らないまま読まれていた（RV-138）。
   const customFor = <K extends keyof DeclaredCatalogs>(
     key: K,
-  ): CustomFor<C, K> => (scope.fields?.[key] ?? {}) as CustomFor<C, K>;
+  ): CustomFor<C, K> =>
+    (scope.fields !== undefined && Object.hasOwn(scope.fields, key)
+      ? (scope.fields[key] ?? {})
+      : {}) as CustomFor<C, K>;
   const deps = { ...connection, partition };
   return {
     candidate: createCandidateResource(deps, customFor("candidate")),

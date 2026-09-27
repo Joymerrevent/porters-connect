@@ -1036,3 +1036,21 @@ describe("tenant(id) checks the partition id", () => {
     expect(() => porters.tenant(Number.MAX_SAFE_INTEGER)).not.toThrow();
   });
 });
+
+// 宣言は自分のプロパティだけを読む。prototype の上にだけある宣言は、検査も読みもしない（RV-138）。
+it("does not read a declaration that sits only on the prototype", async () => {
+  const declared = defineFields({
+    candidate: (f) => ({ U_score: f.number() }),
+  });
+  const body =
+    '<?xml version="1.0"?><Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>' +
+    "<Person.P_Id>1</Person.P_Id><Person.U_score>7</Person.U_score></Item></Candidate>";
+  const own = await mockClient(body)
+    .tenant(1, { fields: declared })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(own?.U_score).toBe(7);
+  const inherited = await mockClient(body)
+    .tenant(1, { fields: Object.create(declared) as typeof declared })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(inherited).not.toHaveProperty("U_score", 7);
+});
