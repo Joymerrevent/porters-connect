@@ -103,8 +103,12 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
     generation += 1;
+    const mine = generation;
     cached = tokens;
     await store.set(tokens);
+    // 保存先に書いている間に clear() が走ったら、書き終えたトークンが保存先に戻ってしまう。手元が消えたままなら、
+    // 保存先ももう一度消す（RV-142）。後から cache() で入れ直していれば手元にあるので、消さない。
+    if (generation !== mine && cached === undefined) await store.clear();
     return tokens;
   };
 

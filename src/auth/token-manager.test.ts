@@ -642,3 +642,68 @@ describe("readStoredTokens", () => {
     }
   });
 });
+
+// 保存先に書いている間に clear() が走っても、書き終えたトークンを保存先に残さない（RV-142）。
+it("does not leave a token in the store when clear() ran while it was being written", async () => {
+  let stored: StoredTokens | undefined;
+  let release: () => void = () => undefined;
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        release = () => {
+          stored = v;
+          r();
+        };
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const caching = m.cache({ accessToken: { token: "EX" } });
+  await m.clear();
+  release();
+  await caching;
+  expect(stored).toBeUndefined();
+});
+
+it("keeps a token cached after the clear(), even when an earlier write finishes late", async () => {
+  let stored: StoredTokens | undefined;
+  const releases: (() => void)[] = [];
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        releases.push(() => {
+          stored = v;
+          r();
+        });
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const first = m.cache({ accessToken: { token: "OLD" } });
+  await m.clear();
+  const second = m.cache({ accessToken: { token: "NEW" } });
+  releases[0]?.();
+  await first;
+  releases[1]?.();
+  await second;
+  expect(stored).toEqual({ accessToken: { token: "NEW" } });
+  expect(await m.getAccessToken()).toBe("NEW");
+});
