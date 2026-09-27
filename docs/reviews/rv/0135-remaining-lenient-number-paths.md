@@ -1,7 +1,7 @@
 # RV-135 🟢 添付ファイルの `Id`・検索の条件の数・文字列の "NaN" は、まだ検査していない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8179ef3・ccdc901`）。** 添付ファイルの応答の `Id` / `Resource` / `ResourceId` は、空なら null、数でなければ読めない応答にする。検索の条件の `Number` / `System[Id]` の値（`or` の一覧の要素も）は、10 進の表記と 1 以上の id だけを送る。書き込みの `Number` の項目に文字列（`"NaN"` など）を渡した場合は直していない。RV-36 の案 3（変換を持たない型は素通しにし、PORTERS が弾くものは手前で弾かない）の決定に従う。
+
+## 検証
+
+`src/resources/attachment.test.ts` の「reads an empty Id as null …」と、`src/accessor/append-read-query.test.ts` の「appendReadQuery — numbers in a condition」。

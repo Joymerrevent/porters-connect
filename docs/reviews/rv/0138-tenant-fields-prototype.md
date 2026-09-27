@@ -1,7 +1,7 @@
 # RV-138 🟢 tenant() の宣言の検査が、prototype 経由の宣言を見ない
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`2d94c46`）。** `tenant()` は、検査と同じく宣言の自分のプロパティだけを読む（`Object.hasOwn`）。
+
+## 検証
+
+`src/porters-client.test.ts` の「does not read a declaration that sits only on the prototype」。

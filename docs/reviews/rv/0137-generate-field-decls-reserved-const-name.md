@@ -1,7 +1,7 @@
 # RV-137 🟢 generateFieldDecls の constName が予約語でも通り、生成物が構文エラーになる
 
 - 重要度: 🟢 ／ 観点: フェイルセーフ
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`2d94c46`）。** `constName` が予約語や strict モードで宣言できない名前（`class` / `default` / `enum` / `eval` / `arguments` など）なら拒否する。
+
+## 検証
+
+`src/fields/generate-field-decls.test.ts` の「refuses the reserved word … as a constName」。

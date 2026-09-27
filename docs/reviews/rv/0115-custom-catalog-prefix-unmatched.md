@@ -1,7 +1,7 @@
 # RV-115 🟢 `readCustomCatalog` が、返ってきた行の接頭辞を、頼んだリソースと突き合わせていない
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@ Job の Field Read が `Person.U_a` を返すと、Job の `U_a` として扱う
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`1bf6ae3`）。** Field Read の行の alias に接頭辞が付いていて、それが頼んだリソースのもの（各リソースの記述子の `prefix`）でなければ、`PortersResourceError` で止める。接頭辞の無い alias は受ける（LV-12）。
+
+## 検証
+
+`src/fields/read-custom-catalog.test.ts` の「readCustomCatalog — the prefix of each row」。

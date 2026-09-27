@@ -1,7 +1,7 @@
 # RV-117 🟢 公開の型の制約に使う `FieldCatalog` / `EmptyCatalog` / `DataType` を export していない
 
 - 重要度: 🟢 ／ 観点: 型安全 / DX
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,6 +26,10 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`7853030`）。** ユーザーの判断で、型の export は増やさず、`src/index.ts` の `ResourceName` の説明を、指している export の上に移した。
+
+## 検証
+
+読んで確かめた（`docs:api` の生成物が一致する）。
 
 [adr68]: ../../adr/0068-api-reference-tooling.md
