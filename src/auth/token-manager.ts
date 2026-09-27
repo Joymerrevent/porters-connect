@@ -108,8 +108,12 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
     await store.set(tokens);
     // 保存先に書いている間に手元が入れ替わった（clear() や、後の cache()）なら、書き終えた値が保存先に残って
     // 手元と食い違う（RV-142。書き込みが追い越された場合も）。保存先を今の手元に合わせ直す。
-    if (generation !== mine)
+    // 合わせ直している間にも入れ替わりうるので、変わらなくなるまで確かめ直す（再レビュー）。
+    let seen = mine;
+    while (generation !== seen) {
+      seen = generation;
       await (cached === undefined ? store.clear() : store.set(cached));
+    }
     return tokens;
   };
 

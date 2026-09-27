@@ -55,13 +55,16 @@ const numeric = (alias: string, type: DataType, value: string): number => {
   // 前後の空白は数の一部ではないので取ってから確かめる（Number() も同じく許していた）。
   const text = value.trim();
   const n = Number(text);
-  // 小数でも、整数の部分が変わるなら読まない（"9007199254740993.0" が …992 に、"4503599627370497.5" が …498 に
-  // なる。RV-147 とその再レビュー）。本文の整数の部分と、数にした後の整数の部分を BigInt で正確に比べる。
-  if (
+  // 整数は安全な整数だけ（書き込み側と同じ範囲）。小数は、有限の数で、本文の整数の部分と数にした後の整数の
+  // 部分が同じときだけ読む（"9007199254740993.0" が …992 に、"4503599627370497.5" が …498 になる。RV-147 と
+  // その再レビュー）。有限かを先に見ないと、桁の多すぎる値で BigInt が RangeError を投げる。
+  const ok =
     DECIMAL.test(text) &&
-    BigInt(text.split(".")[0] ?? "") === BigInt(Math.trunc(n))
-  )
-    return n;
+    (text.includes(".")
+      ? Number.isFinite(n) &&
+        BigInt(text.slice(0, text.indexOf("."))) === BigInt(Math.trunc(n))
+      : Number.isSafeInteger(n));
+  if (ok) return n;
   throw new PortersResourceError(
     `${alias}: declared ${type}, but ${JSON.stringify(value)} is not a PORTERS ${type} value`,
     {

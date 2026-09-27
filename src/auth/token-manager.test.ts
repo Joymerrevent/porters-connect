@@ -755,3 +755,44 @@ it("does not bring a cleared token back through the first store read", async () 
   expect(token).not.toBe("A");
   expect(acquires).toBe(1);
 });
+
+// 合わせ直しの最中に clear() が重なっても、保存先を最後の状態（空）に合わせる（再レビュー）。
+it("keeps reconciling the store until the local state stops changing", async () => {
+  let stored: StoredTokens | undefined;
+  const pending: { v: StoredTokens; done: () => void }[] = [];
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        pending.push({
+          v,
+          done: () => {
+            stored = v;
+            r();
+          },
+        });
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const a = m.cache({ accessToken: { token: "A" } });
+  const b = m.cache({ accessToken: { token: "B" } });
+  pending[1]?.done(); // B が先に届く
+  await b;
+  pending[0]?.done(); // A が遅れて届き、合わせ直しの set(B) が始まる
+  await vi.waitFor(() => {
+    expect(pending).toHaveLength(3);
+  });
+  await m.clear(); // 合わせ直しの最中に消す
+  pending[2]?.done(); // 合わせ直しの set(B) が clear の後に届く
+  await a;
+  expect(stored).toBeUndefined();
+});
