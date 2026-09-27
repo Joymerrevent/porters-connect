@@ -55,13 +55,13 @@ const numeric = (alias: string, type: DataType, value: string): number => {
   // 前後の空白は数の一部ではないので取ってから確かめる（Number() も同じく許していた）。
   const text = value.trim();
   const n = Number(text);
-  // 整数は安全な整数だけ（書き込み側と同じ範囲）。小数は、有限の数で、本文の整数の部分と数にした後の整数の
+  // 整数は安全な整数だけ（書き込み側と同じ範囲）。小数は、整数の部分が安全な整数で、本文の整数の部分と数にした後の整数の
   // 部分が同じときだけ読む（"9007199254740993.0" が …992 に、"4503599627370497.5" が …498 になる。RV-147 と
-  // その再レビュー）。有限かを先に見ないと、桁の多すぎる値で BigInt が RangeError を投げる。
+  // その再レビュー）。安全な整数かを先に見ないと、桁の多すぎる値で BigInt が RangeError を投げる。
   const ok =
     DECIMAL.test(text) &&
     (text.includes(".")
-      ? Number.isFinite(n) &&
+      ? Number.isSafeInteger(Math.trunc(n)) &&
         BigInt(text.slice(0, text.indexOf("."))) === BigInt(Math.trunc(n))
       : Number.isSafeInteger(n));
   if (ok) return n;
