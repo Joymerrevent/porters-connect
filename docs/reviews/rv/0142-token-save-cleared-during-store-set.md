@@ -26,8 +26,8 @@
 
 ## 処置
 
-**実施（2026-09-27・fix/review-followup-low・`ffddf11` → `fd7ef1e`）。** 保存先への書き込みを待つ間に手元が入れ替わっていたら（`clear()` や後の `cache()`）、保存先を今の手元に合わせ直す（手元が空なら消し、あれば書き直す）。最初は「手元が空のときだけ消す」にしたが、書き込みが追い越されると（NEW → OLD の順に終わる）手元と保存先が食い違うとミューテーションで分かり、`fd7ef1e` で合わせ直す形にした。
+**実施（2026-09-27・fix/review-followup-low・`ffddf11` → `fd7ef1e`）。** 保存先への書き込みを待つ間に手元が入れ替わっていたら（`clear()` や後の `cache()`）、保存先を今の手元に合わせ直す（手元が空なら消し、あれば書き直す）。最初は「手元が空のときだけ消す」にしたが、書き込みが追い越されると（NEW → OLD の順に終わる）手元と保存先が食い違うとミューテーションで分かり、`fd7ef1e` で合わせ直す形にした。さらに、`clear()` の後に届いた古い書き込みを最初の読み込みが生き返らせると再レビューで分かり、`8f191bd` で `cache()` / `clear()` が走った後は保存先を読まないようにした。
 
 ## 検証
 
-`src/auth/token-manager.test.ts` の「does not leave a token in the store when clear() ran while it was being written」「keeps a token cached after the clear(), even when an earlier write finishes late」。
+`src/auth/token-manager.test.ts` の「does not leave a token in the store when clear() ran while it was being written」「keeps a token cached after the clear(), even when an earlier write finishes late」「does not bring a cleared token back through the first store read」。

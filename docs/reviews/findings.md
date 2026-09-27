@@ -167,6 +167,8 @@
 | [RV-150][rv150] | 🟢     | API 忠実性                      | fixed   | 小さな小数の条件が拒否される                                                                         |
 | [RV-151][rv151] | 🟢     | API 忠実性                      | wontfix | Field Read の接頭辞の前提                                                                            |
 | [RV-152][rv152] | 🟢     | テスト                          | fixed   | 予約語のテストが一覧の写し                                                                           |
+| [RV-153][rv153] | 🟢     | 認証                            | open    | 保存先の合わせ直しの失敗                                                                             |
+| [RV-154][rv154] | 🟢     | フェイルセーフ                  | open    | 成功の本文が載った 3xx                                                                               |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -327,3 +329,5 @@
 [rv150]: rv/0150-condition-tiny-decimal-exponent.md
 [rv151]: rv/0151-field-read-prefix-check-assumption.md
 [rv152]: rv/0152-reserved-word-test-copies-list.md
+[rv153]: rv/0153-token-store-reconcile-failure.md
+[rv154]: rv/0154-bulk-3xx-with-success-body.md
