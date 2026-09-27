@@ -202,13 +202,44 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
   });
 
   // 2xx でないのに本文が成功の応答は、送った create を送り直さず、結果が分からないとして返す（RV-154）。
-  it("does not resend a create whose non-2xx response carries a successful body", async () => {
-    let n = 0;
+  // 書き込みの案内は、ここで足される（エラー自体の hint は、読み取りや認証の経路にも合う文面。RV-155）。
+  it.each([503, 302])(
+    "does not resend a create whose non-2xx (%i) response carries a successful body",
+    async (status) => {
+      let n = 0;
+      const transport: Transport = {
+        send: () => {
+          n += 1;
+          return Promise.resolve({ status, body: "ok" });
+        },
+      };
+      const r = createRequester({
+        transport,
+        auth: mockAuth([]),
+        throttle: noThrottle,
+        backoff: noBackoff,
+      });
+      const error = await r
+        .request({ method: "POST", url: "u", headers: {} }, () => "parsed", {
+          write: true,
+          idempotent: false,
+        })
+        .catch((e: unknown) => e);
+      expect(error).toMatchObject({
+        code: 0,
+        httpStatus: status,
+        category: "unknown",
+        retryable: false,
+      });
+      expect((error as PortersError).hint).toMatch(/may have been applied/);
+      expect(n).toBe(1);
+    },
+  );
+
+  // 読み取りのエラーには、書き込みの案内を付けない（RV-155）。
+  it("gives a read with a successful body on a non-2xx no write guidance", async () => {
     const transport: Transport = {
-      send: () => {
-        n += 1;
-        return Promise.resolve({ status: 503, body: "ok" });
-      },
+      send: () => Promise.resolve({ status: 302, body: "ok" }),
     };
     const r = createRequester({
       transport,
@@ -217,19 +248,10 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
       backoff: noBackoff,
     });
     const error = await r
-      .request({ method: "POST", url: "u", headers: {} }, () => "parsed", {
-        write: true,
-        idempotent: false,
-      })
+      .request(base, () => "parsed")
       .catch((e: unknown) => e);
-    expect(error).toMatchObject({
-      code: 0,
-      httpStatus: 503,
-      category: "unknown",
-      retryable: false,
-    });
-    expect((error as PortersError).hint).toMatch(/may have been applied/);
-    expect(n).toBe(1);
+    expect(error).toMatchObject({ code: 0, httpStatus: 302 });
+    expect((error as PortersError).hint).not.toMatch(/write|resend|record/i);
   });
 
   // ADR-0063: the guard asks "may this write have applied?", not "is this a network error?".

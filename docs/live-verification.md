@@ -145,7 +145,9 @@ grep -rn "VERIFY(live)" src test
 - **確認結果**: —
 - **関連**: HTTP ステータスをライブラリが見ていない件は [findings][findings] RV-13。
   **ADR-0044（accepted・案A）で status→category の写像を実装済み**＝本 LV の確認結果しだいでは写像を見直す
-  （実装に `VERIFY(live)` を残してある）
+  （実装に `VERIFY(live)` を残してある）。
+  2xx 以外の応答に PORTERS の本文（成功の本文や、項目ごとの結果）が載るかも記録する。載るなら、一括書き込みが
+  2xx 以外の応答の項目ごとの結果を捨てている件（[findings][findings] RV-156）を見直す
 
 ## LV-10 System[Reference] Read の入れ子タグ
 
