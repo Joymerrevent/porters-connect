@@ -38,7 +38,7 @@ describe("appendReadQuery — numbers in a condition", () => {
   it.each([
     [{ P_Num: { eq: Number.NaN } }, "P_Num", "NaN", "a decimal number"],
     [{ P_Num: { ge: Infinity } }, "P_Num", "Infinity", "a decimal number"],
-    [{ P_Num: { le: 1e21 } }, "P_Num", "1e+21", "a decimal number"],
+    [{ P_Num: { le: 5e-324 } }, "P_Num", "5e-324", "a decimal number"],
     [{ P_Id: { eq: 1.5 } }, "P_Id", "1.5", "a record id"],
     [{ P_Id: { or: [1, Number.NaN] } }, "P_Id", "NaN", "a record id"],
   ])("refuses %j", (condition, alias, shown, what) => {
@@ -59,6 +59,31 @@ describe("appendReadQuery — numbers in a condition", () => {
         ? "Pass a record id, a whole number of 0 or more."
         : "Pass a plain decimal number (NaN, Infinity and exponent notation cannot be searched).",
     );
+  });
+
+  // とても小さい・大きい数も、10 進の表記で送る（RV-150）。
+  it.each([
+    [1e-7, "0.0000001"],
+    [1e21, "1000000000000000000000"],
+    [-0.25, "-0.25"],
+    [1e-21, "0.000000000000000000001"],
+    [-0, "0"],
+  ])("writes %s as %s", (n, text) => {
+    expect(encode({ condition: { P_Num: { ge: n } } }).get("condition")).toBe(
+      `W.P_Num:ge=${text}`,
+    );
+  });
+
+  it("refuses a null number with a PortersConfigError", () => {
+    expect(() =>
+      encode({ condition: { P_Num: { eq: null } } } as never),
+    ).toThrow('condition P_Num: "null" is not a decimal number');
+  });
+
+  it("writes -0 as 0 for a record id", () => {
+    expect(
+      encode({ condition: { P_Id: { or: [-0, 1] } } }).get("condition"),
+    ).toBe("W.P_Id:or=0:1");
   });
 
   it("accepts P_Id ge 0, a range that means every record", () => {

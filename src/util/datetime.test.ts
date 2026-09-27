@@ -198,6 +198,20 @@ describe("reading refuses values the calendar does not have", () => {
     },
   );
 
+  // 書き込みで受けない 0000 年は、読み込みでも受けない（RV-148）。
+  it("refuses the year 0000 on reads too", () => {
+    expect(() => portersDateTimeToIso("0000/01/01 00:00:00")).toThrow(
+      /invalid PORTERS DateTime/,
+    );
+    expect(() => portersDateToIso("0000/01/01")).toThrow(
+      /invalid PORTERS Date/,
+    );
+    expect(portersDateToIso("0001/01/01")).toBe("0001-01-01");
+    expect(portersDateTimeToIso("0001/01/01 00:00:00")).toBe(
+      "0001-01-01T00:00:00Z",
+    );
+  });
+
   it("reads a leap day and an early year as they are", () => {
     expect(portersDateTimeToIso("2024/02/29 23:59:59")).toBe(
       "2024-02-29T23:59:59Z",

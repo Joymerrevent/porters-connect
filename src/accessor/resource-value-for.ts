@@ -13,7 +13,8 @@ export const resourceValueFor = (
   // in 演算子は prototype もたどる（"toString" が通る）ので、自分のプロパティだけを見る。
   if (!Object.hasOwn(RESOURCE_VALUES, name)) {
     throw new PortersConfigError(
-      `${accessor}.of: unknown resource ${JSON.stringify(name) ?? String(name)}`,
+      // BigInt も String で書く（JSON.stringify は BigInt で TypeError を投げる。RV-141）。
+      `${accessor}.of: unknown resource ${typeof name === "bigint" ? String(name) : (JSON.stringify(name) ?? String(name))}`,
       {
         category: "config",
         hint: `Pass one of ${Object.keys(RESOURCE_VALUES).join(", ")}.`,

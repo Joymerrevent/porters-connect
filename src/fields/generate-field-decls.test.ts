@@ -448,7 +448,49 @@ describe("generateFieldDecls — tenant values in the generated source", () => {
       return true;
     }
   };
-  it.each([...WORDS, "undefined", "NaN", "myFields"])(
+  // 実装の一覧から独立した候補（RV-152）。TS の文脈上のキーワードや組み込みの名前は、const の名前にできるので
+  // 受けなければならない。一覧に語を足しすぎたときも、ここで落ちる。
+  const CONTEXTUAL = [
+    "as",
+    "async",
+    "get",
+    "set",
+    "of",
+    "from",
+    "type",
+    "declare",
+    "namespace",
+    "module",
+    "abstract",
+    "satisfies",
+    "using",
+    "accessor",
+    "infer",
+    "keyof",
+    "readonly",
+    "unique",
+    "never",
+    "unknown",
+    "any",
+    "override",
+    "is",
+    "asserts",
+    "require",
+    "global",
+    "object",
+    "string",
+    "number",
+    "boolean",
+    "symbol",
+    "bigint",
+    "target",
+    "meta",
+    "constructor",
+    "__proto__",
+    "globalThis",
+    "Infinity",
+  ];
+  it.each([...WORDS, ...CONTEXTUAL, "undefined", "NaN", "myFields"])(
     "refuses %j exactly when strict mode cannot declare it",
     async (constName) => {
       const run = generateFieldDecls(sourceOf({}), ["job"], { constName });

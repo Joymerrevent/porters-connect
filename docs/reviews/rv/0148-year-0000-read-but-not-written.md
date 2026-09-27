@@ -1,7 +1,7 @@
 # RV-148 🟢 0000 年の日付と日時は、読めるのに書けない
 
 - 重要度: 🟢 ／ 観点: 一貫性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`bfecd2d`）。** 読み込みでも 0000 年を拒否する（書き込みと同じ 0001〜9999 年）。
+
+## 検証
+
+`src/util/datetime.test.ts` の「refuses the year 0000 on reads too」。

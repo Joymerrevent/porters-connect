@@ -103,8 +103,17 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
     generation += 1;
+    const mine = generation;
     cached = tokens;
     await store.set(tokens);
+    // 保存先に書いている間に手元が入れ替わった（clear() や、後の cache()）なら、書き終えた値が保存先に残って
+    // 手元と食い違う（RV-142。書き込みが追い越された場合も）。保存先を今の手元に合わせ直す。
+    // 合わせ直している間にも入れ替わりうるので、変わらなくなるまで確かめ直す（再レビュー）。
+    let seen = mine;
+    while (generation !== seen) {
+      seen = generation;
+      await (cached === undefined ? store.clear() : store.set(cached));
+    }
     return tokens;
   };
 
@@ -113,8 +122,10 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   // the store already has (RV-75). A failed read is not remembered: the next call reads again.
   const load = (): Promise<void> =>
     (loading ??= (async () => {
-      // 手元にあれば読まない（保存先が止まっていても、cache() で入れたトークンを使える）。
-      if (cached !== undefined) return;
+      // cache() / clear() が一度でも走ったら、手元を正として保存先を読まない。手元にトークンがあれば（cache() の後）
+      // 読む必要が無く、clear() の後に、消す前に始まった書き込みが保存先に届くと、読み込みが消したトークンを
+      // 生き返らせていた（RV-142 の再レビュー）。手元に入れるのは cache() だけなので、世代だけで両方が分かる。
+      if (generation !== 0) return;
       const before = generation;
       const stored = readStoredTokens(await store.get());
       // 読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。

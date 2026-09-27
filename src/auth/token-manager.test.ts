@@ -642,3 +642,157 @@ describe("readStoredTokens", () => {
     }
   });
 });
+
+// 保存先に書いている間に clear() が走っても、書き終えたトークンを保存先に残さない（RV-142）。
+it("does not leave a token in the store when clear() ran while it was being written", async () => {
+  let stored: StoredTokens | undefined;
+  let release: () => void = () => undefined;
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        release = () => {
+          stored = v;
+          r();
+        };
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const caching = m.cache({ accessToken: { token: "EX" } });
+  await m.clear();
+  release();
+  await caching;
+  expect(stored).toBeUndefined();
+});
+
+it("keeps a token cached after the clear(), even when an earlier write finishes late", async () => {
+  let stored: StoredTokens | undefined;
+  const releases: (() => void)[] = [];
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        releases.push(() => {
+          stored = v;
+          r();
+        });
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const first = m.cache({ accessToken: { token: "OLD" } });
+  await m.clear();
+  const second = m.cache({ accessToken: { token: "NEW" } });
+  // 後から頼んだ書き込みが先に終わり、前の書き込みが追い越して OLD を書く。
+  releases[1]?.();
+  await second;
+  releases[0]?.();
+  await vi.waitFor(() => {
+    expect(releases).toHaveLength(3);
+  });
+  releases[2]?.();
+  await first;
+  expect(stored).toEqual({ accessToken: { token: "NEW" } });
+  expect(await m.getAccessToken()).toBe("NEW");
+});
+
+// clear() の後に、消す前に始まった書き込みが保存先に届いても、最初の読み込みで生き返らせない（RV-142 の再レビュー）。
+it("does not bring a cleared token back through the first store read", async () => {
+  let stored: StoredTokens | undefined;
+  let release: () => void = () => undefined;
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    // 1 回目の書き込み（A）だけを遅らせ、後の書き込みはすぐ終える。
+    set: (v) => {
+      if (v.accessToken.token !== "A") {
+        stored = v;
+        return Promise.resolve();
+      }
+      return new Promise<void>((r) => {
+        release = () => {
+          stored = v;
+          r();
+        };
+      });
+    },
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  let acquires = 0;
+  const m = createTokenManager({
+    provider: {
+      acquire: () => {
+        acquires += 1;
+        return Promise.resolve({ accessToken: { token: "FRESH" } });
+      },
+    },
+    tokenStore: store,
+  });
+  const caching = m.cache({ accessToken: { token: "A" } });
+  await m.clear();
+  release();
+  const token = await m.getAccessToken();
+  await caching;
+  expect(token).not.toBe("A");
+  expect(acquires).toBe(1);
+});
+
+// 合わせ直しの最中に clear() が重なっても、保存先を最後の状態（空）に合わせる（再レビュー）。
+it("keeps reconciling the store until the local state stops changing", async () => {
+  let stored: StoredTokens | undefined;
+  const pending: { v: StoredTokens; done: () => void }[] = [];
+  const store: TokenStore = {
+    get: () => Promise.resolve(stored),
+    set: (v) =>
+      new Promise<void>((r) => {
+        pending.push({
+          v,
+          done: () => {
+            stored = v;
+            r();
+          },
+        });
+      }),
+    clear: () => {
+      stored = undefined;
+      return Promise.resolve();
+    },
+  };
+  const m = createTokenManager({
+    provider: {
+      acquire: () => Promise.resolve({ accessToken: { token: "ACQ" } }),
+    },
+    tokenStore: store,
+  });
+  const a = m.cache({ accessToken: { token: "A" } });
+  const b = m.cache({ accessToken: { token: "B" } });
+  pending[1]?.done(); // B が先に届く
+  await b;
+  pending[0]?.done(); // A が遅れて届き、合わせ直しの set(B) が始まる
+  await vi.waitFor(() => {
+    expect(pending).toHaveLength(3);
+  });
+  await m.clear(); // 合わせ直しの最中に消す
+  pending[2]?.done(); // 合わせ直しの set(B) が clear の後に届く
+  await a;
+  expect(stored).toBeUndefined();
+});

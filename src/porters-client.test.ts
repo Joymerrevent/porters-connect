@@ -1111,3 +1111,34 @@ it.each(["x", null, 0])(
     );
   },
 );
+
+// hostname の未設定や BigInt の id でも、PortersError ではない TypeError にしない（RV-141）。
+describe("values that used to escape as a TypeError", () => {
+  it.each([
+    [undefined, "undefined"],
+    [null, "null"],
+    [123, "number"],
+  ])("rejects hostname %j at construction", (hostname, got) => {
+    expect(
+      () =>
+        new PortersClient({
+          hostname: hostname as never,
+          tokenProvider: {
+            acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+          },
+        }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        message: `PortersClient: hostname must be a string, got ${got}`,
+        hint: "Pass the server name issued with your contract, e.g. from process.env.PORTERS_HOST. Check that the variable is set.",
+      }),
+    );
+  });
+
+  it("names a BigInt partition id in the message", () => {
+    expect(() => mockClient().tenant(2n as never)).toThrow(
+      "tenant: partition id must be a positive integer, got 2",
+    );
+  });
+});

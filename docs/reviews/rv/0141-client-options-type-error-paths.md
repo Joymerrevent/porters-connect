@@ -1,7 +1,7 @@
 # RV-141 🟢 hostname の未設定や BigInt の id で、PortersError ではない TypeError が漏れる
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/review-followup-low・`0d9b546`）。** `hostname` が文字列でなければ、構築時に `PortersConfigError` にする（環境変数の未設定を hint で案内する）。`tenant(id)` と `of(name)` のメッセージでは、BigInt も `String()` で書く。
+
+## 検証
+
+`src/porters-client.test.ts` の「values that used to escape as a TypeError」と、`src/accessor/resource-value-for.test.ts` の BigInt のテスト。

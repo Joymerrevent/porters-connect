@@ -32,3 +32,9 @@ describe("resourceValueFor", () => {
     },
   );
 });
+
+it("names a BigInt in the message instead of throwing a TypeError", () => {
+  expect(() => resourceValueFor("phase", 1n as never)).toThrow(
+    "phase.of: unknown resource 1",
+  );
+});

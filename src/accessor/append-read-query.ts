@@ -95,6 +95,19 @@ const assertConditionNumber = (
   );
 };
 
+// 数は 10 進の表記で書く。String() はとても小さい・大きい数を指数表記（1e-7）にし、それが拒否されていた
+// （RV-150）。10 進に直すと値が変わる数（5e-324 が 0 になるなど）は、指数表記のまま残して拒否に任せる。
+const conditionText = (value: unknown): string => {
+  if (typeof value !== "number") return String(value);
+  // -0 は "-0" ではなく "0" と書く（Math.round(-0.4) などで生まれ、id の条件で拒否されていた）。
+  if (Object.is(value, -0)) return "0";
+  const plain = value.toLocaleString("en-US", {
+    useGrouping: false,
+    maximumFractionDigits: 100,
+  });
+  return Number(plain) === value ? plain : String(value);
+};
+
 const serializeScalar = (
   type: DataType | null | undefined,
   value: unknown,
@@ -110,7 +123,7 @@ const serializeScalar = (
       isoToPortersDate(String(value)),
     );
   }
-  const text = String(value);
+  const text = conditionText(value);
   assertConditionNumber(alias, type, text);
   return text;
 };
@@ -140,7 +153,7 @@ const serializeConditionValue = (
     }
     return value
       .map((v) => {
-        const s = String(v);
+        const s = conditionText(v);
         if (s.includes(",") || s.includes(":"))
           throw delimiterError(`condition ${alias}`, s, "a comma or a colon");
         assertConditionNumber(alias, type, s);

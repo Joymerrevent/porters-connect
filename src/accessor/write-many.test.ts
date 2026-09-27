@@ -484,9 +484,20 @@ describe("createMany / updateMany (bulk write, ADR-0041 / F-4)", () => {
       }),
       "may have been written",
     ],
+    // 本文の無い 3xx は API の手前でリダイレクトされた（単発の create と同じ境界。RV-145）。
     [
-      "an HTTP 399 (not a client error)",
+      "an HTTP 399 (a redirect before the API)",
       new PortersError("odd", { category: "unknown", httpStatus: 399 }),
+      "were not written",
+    ],
+    [
+      "an HTTP 300",
+      new PortersError("redirect", { category: "unknown", httpStatus: 300 }),
+      "were not written",
+    ],
+    [
+      "an HTTP 299 (a success whose body could not be read)",
+      new PortersError("odd", { category: "unknown", httpStatus: 299 }),
       "may have been written",
     ],
     [

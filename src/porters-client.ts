@@ -343,6 +343,15 @@ const assertOptionalString = (name: string, value: unknown): void => {
 };
 
 const validateOptionShapes = (options: PortersClientOptions): void => {
+  // hostname は環境変数から渡されることが多く、未設定だと undefined が来る。文字列でなければ、URL を組み立てる
+  // 前に止める（ここを通らないと、名前の検査の中で TypeError になっていた。RV-141）。
+  const { hostname } = options as { hostname?: unknown };
+  if (typeof hostname !== "string") {
+    throw shapeError(
+      `hostname must be a string, got ${hostname === null ? "null" : typeof hostname}`,
+      "Pass the server name issued with your contract, e.g. from process.env.PORTERS_HOST. Check that the variable is set.",
+    );
+  }
   assertOptionalString("appId", options.appId);
   assertOptionalString("appSecret", options.appSecret);
   const { scopes } = options as { scopes?: unknown };
@@ -365,7 +374,7 @@ const validateOptionShapes = (options: PortersClientOptions): void => {
 const assertPartitionId = (id: number): void => {
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new PortersConfigError(
-      `tenant: partition id must be a positive integer, got ${typeof id === "number" ? String(id) : (JSON.stringify(id) ?? String(id))}`,
+      `tenant: partition id must be a positive integer, got ${typeof id === "number" || typeof id === "bigint" ? String(id) : (JSON.stringify(id) ?? String(id))}`,
       {
         category: "config",
         hint: "Pass the partition's id. porters.partition.search() lists the ones this App can reach.",
