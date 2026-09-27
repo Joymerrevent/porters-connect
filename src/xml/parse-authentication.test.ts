@@ -112,3 +112,13 @@ describe("parseAuthentication (ADR-0011)", () => {
     expect(a.accessTokenExpiresIn).toBe(1800000);
   });
 });
+
+// 整形された応答のトークンとコードは、前後の空白を取って読む。空白だけなら欠けたのと同じ（RV-133）。
+it("trims tokens and codes, and reads a whitespace-only one as missing", () => {
+  const a = parseAuthentication(
+    "<Authentication><Code>\n C \n</Code><AccessToken>\n  A\n</AccessToken><RefreshToken> </RefreshToken><Error>0</Error></Authentication>",
+  );
+  expect(a.code).toBe("C");
+  expect(a.accessToken).toBe("A");
+  expect(a.refreshToken).toBeUndefined();
+});

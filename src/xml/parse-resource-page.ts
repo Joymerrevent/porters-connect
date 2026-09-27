@@ -83,7 +83,8 @@ export const parseResourcePage = (
   const pageNumber = (name: "Total" | "Count" | "Start"): number => {
     const raw = body[`@_${name}`];
     if (RESOURCES_WITHOUT_PAGE_ATTRIBUTES.has(resource)) return toInt(raw);
-    const s = asString(raw);
+    // 前後の空白は数の一部ではないので取る（RV-133）。
+    const s = asString(raw)?.trim();
     // 無い（undefined）ときは "undefined" になり、数字でないので同じく弾く。
     if (!/^\d+$/.test(String(s))) {
       throw new PortersResourceError(
