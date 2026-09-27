@@ -99,12 +99,26 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   const usable = (t: IssuedToken): boolean =>
     t.expiresAt === undefined || now() < t.expiresAt - margin;
 
+  // 保存先への書き込み（set / clear）は、呼ばれた順に 1 つずつ流す。重なった書き込みが後から届いて
+  // 保存先が手元と食い違わないように（RV-142）。前の書き込みが失敗しても次は流し、失敗はその呼び出しにだけ返す。
+  // 最後の呼び出しの書き込みが最後に届くので、合わせ直しは要らず、消したつもりの clear() が成功で返って
+  // 保存先にトークンが残ることもない（RV-153）。
+  let writing: Promise<void> = Promise.resolve();
+  const write = (op: () => Promise<void>): Promise<void> => {
+    const run = writing.then(op);
+    writing = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  };
+
   // 世代は「変わったか」だけを比べるので、増やすか減らすかは結果に効かない。
   const save = async (tokens: StoredTokens): Promise<StoredTokens> => {
     // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
     generation += 1;
     cached = tokens;
-    await store.set(tokens);
+    await write(() => store.set(tokens));
     return tokens;
   };
 
@@ -113,8 +127,10 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
   // the store already has (RV-75). A failed read is not remembered: the next call reads again.
   const load = (): Promise<void> =>
     (loading ??= (async () => {
-      // 手元にあれば読まない（保存先が止まっていても、cache() で入れたトークンを使える）。
-      if (cached !== undefined) return;
+      // cache() / clear() が一度でも走ったら、手元を正として保存先を読まない。手元にトークンがあれば（cache() の後）
+      // 読む必要が無く、clear() の後に、消す前に始まった書き込みが保存先に届くと、読み込みが消したトークンを
+      // 生き返らせていた（RV-142 の再レビュー）。手元に入れるのは cache() だけなので、世代だけで両方が分かる。
+      if (generation !== 0) return;
       const before = generation;
       const stored = readStoredTokens(await store.get());
       // 読んでいる間に cache / clear が入れ替えていたら、そちらが新しい。
@@ -175,7 +191,7 @@ export const createTokenManager = (opts: TokenManagerOptions): TokenManager => {
       // Stryker disable next-line AssignmentOperator: equivalent — only a change of generation is compared
       generation += 1;
       cached = undefined;
-      await store.clear();
+      await write(() => store.clear());
     },
   };
 };

@@ -8,7 +8,7 @@
 
 > **TenantCustomCatalog** = `object`
 
-Defined in: [src/fields/read-custom-catalog.ts:51](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L51)
+Defined in: [src/fields/read-custom-catalog.ts:63](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L63)
 
 One resource's custom fields as the tenant actually has them.
 
@@ -18,7 +18,7 @@ One resource's custom fields as the tenant actually has them.
 
 > `readonly` **fields**: `Readonly`\<`Record`\<`string`, [`CustomDataType`](CustomDataType.md)\>\>
 
-Defined in: [src/fields/read-custom-catalog.ts:57](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L57)
+Defined in: [src/fields/read-custom-catalog.ts:69](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L69)
 
 Bare alias -> declared Data Type — the same shape `defineFields` produces, so it compares
 directly against a declaration.
@@ -29,7 +29,7 @@ directly against a declaration.
 
 > `readonly` **names**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [src/fields/read-custom-catalog.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L71)
+Defined in: [src/fields/read-custom-catalog.ts:83](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L83)
 
 Bare alias -> `Field.P_Name`, for every custom field seen (declarable or not).
 
@@ -43,7 +43,7 @@ own business vocabulary**, so it is carried but never printed unless a caller ex
 
 > `readonly` **required**: `Readonly`\<`Record`\<`string`, `boolean`\>\>
 
-Defined in: [src/fields/read-custom-catalog.ts:79](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L79)
+Defined in: [src/fields/read-custom-catalog.ts:91](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L91)
 
 Bare alias -> whether the tenant marks the field required (`Field.P_Required` is `1`), for
 every field in [TenantCustomCatalog.fields](#fields). Any other value — `0`, absent, or one
@@ -56,7 +56,7 @@ a value the tenant does not, and the caller would get a compile error with no vi
 
 > `readonly` **resource**: [`CustomFieldResource`](CustomFieldResource.md)
 
-Defined in: [src/fields/read-custom-catalog.ts:52](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L52)
+Defined in: [src/fields/read-custom-catalog.ts:64](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L64)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [src/fields/read-custom-catalog.ts:52](https://github.com/Joymerreve
 
 > `readonly` **undeclarable**: readonly [`UndeclarableField`](UndeclarableField.md)[]
 
-Defined in: [src/fields/read-custom-catalog.ts:63](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L63)
+Defined in: [src/fields/read-custom-catalog.ts:75](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L75)
 
 Custom fields that exist but cannot be declared. **Never silently dropped**:
 an unknown Field Type means PORTERS grew a type, and nobody would notice if it vanished here.

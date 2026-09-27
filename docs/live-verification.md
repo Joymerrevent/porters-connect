@@ -49,6 +49,9 @@ grep -rn "VERIFY(live)" src test
 | LV-34 | Read の応答の `Start` は、要求した `start` と同じか      | 未確認 |
 | LV-35 | 条件の値の中のコロンは、値の一部として読まれるか         | 未確認 |
 | LV-36 | `keywords` の 100 文字は、何の単位で数えるか             | 未確認 |
+| LV-37 | Option の `count` にも 1〜200 の上限があるか             | 未確認 |
+| LV-38 | 添付ファイルの 10MB は、何の単位で数えるか               | 未確認 |
+| LV-39 | Resource の Code 5 は、処理の前に断る応答か              | 未確認 |
 
 ---
 
@@ -142,7 +145,9 @@ grep -rn "VERIFY(live)" src test
 - **確認結果**: —
 - **関連**: HTTP ステータスをライブラリが見ていない件は [findings][findings] RV-13。
   **ADR-0044（accepted・案A）で status→category の写像を実装済み**＝本 LV の確認結果しだいでは写像を見直す
-  （実装に `VERIFY(live)` を残してある）
+  （実装に `VERIFY(live)` を残してある）。
+  2xx 以外の応答に PORTERS の本文（成功の本文や、項目ごとの結果）が載るかも記録する。載るなら、一括書き込みが
+  2xx 以外の応答の項目ごとの結果を捨てている件（[findings][findings] RV-156）を見直す
 
 ## LV-10 System[Reference] Read の入れ子タグ
 
@@ -181,6 +186,8 @@ grep -rn "VERIFY(live)" src test
   `src/fields/read-custom-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
   `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
+- **関連**: 接頭辞の付いた alias が、頼んだリソースの接頭辞（Candidate は `Person`）でなければ、`readCustomCatalog` は止まる
+  （別のリソースの項目を宣言に入れないため）。実機が別の書き方の接頭辞を返すと分かったら、この突き合わせも直す
 - **状態**: 未確認
 - **確認結果**: —
 
@@ -598,6 +605,40 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **状態**: 未確認
 - **確認結果**: —
 - **関連**: 文字の数で数えると分かったら、ライブラリも文字の数で数える。バイトで数えると分かったら、バイトで数えて拒否する
+
+## LV-37 Option の `count` にも 1〜200 の上限があるか
+
+- **現在の対応 / 仮定**: **ほかの Read と同じく 1〜200 に限る**。201 以上は送る前に拒否し、`count` を省けば全件を返すと案内する
+- **不確実な理由**: reference（Option の Read）は `count` を「省略時は全アイテム」と書くだけで、上限を書いていない。200 はほかのリソースの
+  Read の上限を当てはめたもの
+- **コード箇所**: `src/resources/option.ts`（`buildUrl`）、`src/accessor/append-paging.ts`
+- **確認方法**: 選択肢が 200 を超える Option で `count=201` と `count` 省略を送り、それぞれ何件返るか・エラーになるかを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 上限が無いと分かったら、Option の `count` の上限の検査を外す
+
+## LV-38 添付ファイルの 10MB は、何の単位で数えるか
+
+- **現在の対応 / 仮定**: **Base64 の文字数で 14,000,000 文字まで**を送る。10 MiB を Base64 にした長さ（13,981,016 文字）より約 19,000 文字多い
+- **不確実な理由**: 上限そのものは出典（Attachment - Write の「新規登録および更新における注意点」）に「1 ファイルのサイズが
+  10MB を超えるものはサポートされません」とある。ただし 10MB が 10,000,000 バイトか 10 MiB かと、何で数えるか（デコード後の
+  バイト数か）は書かれていない
+- **コード箇所**: `src/porters/attachment.ts`（`MAX_ATTACHMENT_CONTENT_CHARS`）、`src/resources/attachment.ts`（`guardContent`）
+- **確認方法**: デコード後が 10,000,000 バイト・10 MiB（10,485,760 バイト）の前後のファイルを送り、どこから拒否されるかを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 分かった単位で上限の値と数え方を直す（ADR-0018 の値を変えるなら ADR で）
+
+## LV-39 Resource の Code 5 は、処理の前に断る応答か
+
+- **現在の対応 / 仮定**: **処理の前に断る応答とみる**。Code 5（ユーザー ID 無効）を `auth` に分類しているので、`createMany` は Code 5 で
+  失敗したバッチを「書き込まれていない」と案内する
+- **不確実な理由**: reference（Result Code の表）は Code 5 を「ユーザー ID 無効」と書くだけで、登録まで進んだかどうかを書いていない
+- **コード箇所**: `src/errors/resource-error.ts`（Code 5 の分類）、`src/accessor/write-many.ts`（`knownNotWritten`）
+- **確認方法**: 無効なユーザーのトークンで `createMany` を送り、Code 5 が返ったときにレコードが作られていないかを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 途中まで書き込むことがあると分かったら、一括書き込みでは Code 5 を「書き込まれた可能性がある」側に倒す
 
 ## 状態の意味
 

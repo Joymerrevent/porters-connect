@@ -20,20 +20,22 @@
 
 型（コンパイル時）か、送信前の検査（実行時）で止まります。
 
-| 何を                                                         | いつ         | どうなる                                                      |
-| ------------------------------------------------------------ | ------------ | ------------------------------------------------------------- |
-| 綴り間違い・未宣言の項目                                     | コンパイル時 | 型エラー                                                      |
-| **新規必須の項目の欠落**                                     | コンパイル時 | 型エラー（`create` の入力型が要求する。**標準項目のみ**）     |
-| Data Type に合わない値                                       | コンパイル時 | 型エラー                                                      |
-| リクエスト長 **約 15000 文字**超                             | 送信前       | `PortersConfigError`（URL ＋ body の合算）                    |
-| 一括書き込みの **200 件**超                                  | 送信前       | 200 件ずつに自動分割（[書き込み][bulk]）                      |
-| `count` の範囲外（1–200）                                    | 送信前       | `PortersConfigError`                                          |
-| **画像が 2MB 超**                                            | 送信前       | `PortersConfigError`（Base64 長から算出）                     |
-| **画像のファイル名が 255 バイト超**                          | 送信前       | `PortersConfigError`（文字数ではなくバイト数）                |
-| **画像の ContentType が 4 種（jpeg / gif / png / bmp）以外** | 送信前       | `PortersConfigError`                                          |
-| **一括書き込みに画像が混ざる**                               | 送信前       | `PortersConfigError`（単件の `create` / `update` を案内）     |
-| **alias が XML の名前として不正**                            | 送信前       | `PortersConfigError`（選択肢 alias・項目 alias）              |
-| **スロットルの上限が範囲外**                                 | 構築時       | `PortersConfigError`（`createThrottle` の値。範囲は下記の表） |
+| 何を                                                                       | いつ         | どうなる                                                                  |
+| -------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------- |
+| 綴り間違い・未宣言の項目                                                   | コンパイル時 | 型エラー                                                                  |
+| **新規必須の項目の欠落**                                                   | コンパイル時 | 型エラー（`create` の入力型が要求する。**標準項目のみ**）                 |
+| Data Type に合わない値                                                     | コンパイル時 | 型エラー                                                                  |
+| リクエスト長 **約 15000 文字**超                                           | 送信前       | `PortersConfigError`（URL ＋ body の合算）                                |
+| 一括書き込みの **200 件**超                                                | 送信前       | 200 件ずつに自動分割（[書き込み][bulk]）                                  |
+| `count` の範囲外（1–200）                                                  | 送信前       | `PortersConfigError`                                                      |
+| **画像が 2MB 超**                                                          | 送信前       | `PortersConfigError`（Base64 長から算出）                                 |
+| **画像のファイル名が 255 バイト超**                                        | 送信前       | `PortersConfigError`（文字数ではなくバイト数）                            |
+| **画像の ContentType が 4 種（jpeg / gif / png / bmp）以外**               | 送信前       | `PortersConfigError`                                                      |
+| **一括書き込みに画像が混ざる**                                             | 送信前       | `PortersConfigError`（単件の `create` / `update` を案内）                 |
+| **添付ファイルの本文が約 10MB 超**                                         | 送信前       | `PortersConfigError`（Base64 の文字数で数える）                           |
+| **添付ファイルの `resourceId`・`contentType`・`fileName`・`content` の形** | 送信前       | `PortersConfigError`（正の整数・空でない文字列・Base64 として成り立つ形） |
+| **alias が XML の名前として不正**                                          | 送信前       | `PortersConfigError`（選択肢 alias・項目 alias）                          |
+| **スロットルの上限が範囲外**                                               | 構築時       | `PortersConfigError`（`createThrottle` の値。範囲は下記の表）             |
 
 <!-- 根拠:
 - 「綴り間違い・未宣言の項目」の行: ADR-0059

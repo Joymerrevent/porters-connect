@@ -45,6 +45,10 @@ export type TokenProvider = {
 /**
  * Pluggable token persistence (default: in-memory). Async so it can back onto
  * redis / DB / file for multi-instance server use. Used with every token provider.
+ * Writes (`set` / `clear`) are made one at a time, in call order: the next one starts after the
+ * previous one settles, so a later call is never overtaken by an earlier one. Make each call settle
+ * (give it a timeout): one that never settles holds up every later write, including the save after a
+ * token renewal, and the requests waiting for that renewal.
  */
 export type TokenStore = {
   get(): Promise<StoredTokens | undefined>;

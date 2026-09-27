@@ -63,7 +63,8 @@ const FIELDS = {
 
 // Required on create per docs/usage/reference (resources/candidate.md「新規必須」列): P_Owner。
 // （System[Id] の P_Id も新規必須だが lib が -1 を供給するため型からは除外。LV-5 は reference で確定。）
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const CANDIDATE_REQUIRED_ON_CREATE = [
   "P_Owner",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
 
@@ -97,7 +98,10 @@ export type CandidateSearchQuery<C extends FieldCatalog = EmptyCatalog> =
 export type CandidateCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof CANDIDATE_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -214,7 +218,11 @@ export const createCandidateResource = <C extends FieldCatalog = EmptyCatalog>(
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...CANDIDATE_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    {
+      ...CANDIDATE_DESCRIPTOR,
+      fields,
+      requiredOnCreate: CANDIDATE_REQUIRED_ON_CREATE,
+    },
     deps,
   ) as CandidateResource<C>;
 };

@@ -1036,3 +1036,109 @@ describe("tenant(id) checks the partition id", () => {
     expect(() => porters.tenant(Number.MAX_SAFE_INTEGER)).not.toThrow();
   });
 });
+
+// 宣言は自分のプロパティだけを読む。prototype の上にだけある宣言は、検査も読みもしない（RV-138）。
+it("does not read a declaration that sits only on the prototype", async () => {
+  const declared = defineFields({
+    candidate: (f) => ({ U_score: f.number() }),
+  });
+  const body =
+    '<?xml version="1.0"?><Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>' +
+    "<Person.P_Id>1</Person.P_Id><Person.U_score>7</Person.U_score></Item></Candidate>";
+  const own = await mockClient(body)
+    .tenant(1, { fields: declared })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(own?.U_score).toBe(7);
+  const inherited = await mockClient(body)
+    .tenant(1, { fields: Object.create(declared) as typeof declared })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(inherited).not.toHaveProperty("U_score", 7);
+});
+
+// 列挙できない宣言も、検査と同じく読まない（RV-138 の再レビュー）。
+it("does not read a declaration that is not enumerable", async () => {
+  const declared = defineFields({
+    candidate: (f) => ({ U_score: f.number() }),
+  });
+  const hidden = {} as typeof declared;
+  Object.defineProperty(hidden, "candidate", {
+    value: declared.candidate,
+    enumerable: false,
+  });
+  const body =
+    '<?xml version="1.0"?><Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>' +
+    "<Person.P_Id>1</Person.P_Id><Person.U_score>7</Person.U_score></Item></Candidate>";
+  const read = await mockClient(body)
+    .tenant(1, { fields: hidden })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(read).not.toHaveProperty("U_score", 7);
+});
+
+// 宣言は 1 回だけ読む。読むたびに値が変わる getter でも、検査した値と使う値が食い違わない（2 巡目の再レビュー）。
+it("checks and uses the same reading of a declaration", async () => {
+  const declared = defineFields({
+    candidate: (f) => ({ U_score: f.number() }),
+  });
+  let reads = 0;
+  const shifty = {} as typeof declared;
+  Object.defineProperty(shifty, "candidate", {
+    enumerable: true,
+    get: () => {
+      reads += 1;
+      return reads === 1 ? declared.candidate : { U_score: "Bogus" };
+    },
+  });
+  const body =
+    '<?xml version="1.0"?><Candidate Total="1" Count="1" Start="0"><Code>0</Code><Item>' +
+    "<Person.P_Id>1</Person.P_Id><Person.U_score>7</Person.U_score></Item></Candidate>";
+  const read = await mockClient(body)
+    .tenant(1, { fields: shifty })
+    .candidate.get(1, { field: ["U_score"] as never });
+  expect(reads).toBe(1);
+  expect(read?.U_score).toBe(7);
+});
+
+it.each(["x", null, 0])(
+  "rejects the declaration %j before reading it",
+  (fields) => {
+    expect(() => mockClient().tenant(1, { fields: fields as never })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        message: expect.stringMatching(
+          /^tenant: fields must be the result of defineFields/,
+        ) as unknown,
+      }),
+    );
+  },
+);
+
+// hostname の未設定や BigInt の id でも、PortersError ではない TypeError にしない（RV-141）。
+describe("values that used to escape as a TypeError", () => {
+  it.each([
+    [undefined, "undefined"],
+    [null, "null"],
+    [123, "number"],
+  ])("rejects hostname %j at construction", (hostname, got) => {
+    expect(
+      () =>
+        new PortersClient({
+          hostname: hostname as never,
+          tokenProvider: {
+            acquire: () => Promise.resolve({ accessToken: { token: "T" } }),
+          },
+        }),
+    ).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        message: `PortersClient: hostname must be a string, got ${got}`,
+        hint: "Pass the server name issued with your contract, e.g. from process.env.PORTERS_HOST. Check that the variable is set.",
+      }),
+    );
+  });
+
+  it("names a BigInt partition id in the message", () => {
+    expect(() => mockClient().tenant(2n as never)).toThrow(
+      "tenant: partition id must be a positive integer, got 2",
+    );
+  });
+});

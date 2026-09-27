@@ -125,14 +125,14 @@
 | [RV-108][rv108] | 🟢     | セキュリティ                    | fixed   | DOCTYPE の実体を展開する                                                                             |
 | [RV-109][rv109] | 🟢     | ドキュメント / DX               | fixed   | 時分型のメッセージの範囲が実装と違う                                                                 |
 | [RV-110][rv110] | 🟢     | エラーモデル                    | fixed   | base64ToBytes が DOMException を投げる                                                               |
-| [RV-111][rv111] | 🟢     | API 忠実性                      | open    | 添付ファイルの上限の値と出典                                                                         |
-| [RV-112][rv112] | 🟢     | 設定検証                        | open    | カスタム項目の alias の文字を確かめない                                                              |
+| [RV-111][rv111] | 🟢     | API 忠実性                      | fixed   | 添付ファイルの上限の値と出典                                                                         |
+| [RV-112][rv112] | 🟢     | 設定検証                        | fixed   | カスタム項目の alias の文字を確かめない                                                              |
 | [RV-113][rv113] | 🟢     | 設定検証                        | fixed   | tenant の id と of の名前を確かめない                                                                |
 | [RV-114][rv114] | 🟢     | エラーモデル                    | fixed   | コード 5 と 113 が表に無い                                                                           |
-| [RV-115][rv115] | 🟢     | API 忠実性                      | open    | readCustomCatalog が接頭辞を突き合わせない                                                           |
-| [RV-116][rv116] | 🟢     | ドキュメント / DX               | open    | Option の count の上限と hint                                                                        |
-| [RV-117][rv117] | 🟢     | 型安全 / DX                     | open    | 制約の型を export していない                                                                         |
-| [RV-118][rv118] | 🟢     | テスト厳密性                    | open    | 新規必須の突き合わせにテストが無い                                                                   |
+| [RV-115][rv115] | 🟢     | API 忠実性                      | fixed   | readCustomCatalog が接頭辞を突き合わせない                                                           |
+| [RV-116][rv116] | 🟢     | ドキュメント / DX               | fixed   | Option の count の上限と hint                                                                        |
+| [RV-117][rv117] | 🟢     | 型安全 / DX                     | fixed   | 制約の型を export していない                                                                         |
+| [RV-118][rv118] | 🟢     | テスト厳密性                    | fixed   | 新規必須の突き合わせにテストが無い                                                                   |
 | [RV-119][rv119] | 🟢     | ドキュメント                    | fixed   | 実装と合わないコメント 4 か所                                                                        |
 | [RV-120][rv120] | 🟢     | エラーモデル / DX               | fixed   | 3xx のエラーの hint が一般的                                                                         |
 | [RV-121][rv121] | 🟢     | 認証                            | fixed   | 読み込み中の cache() が上書きされる                                                                  |
@@ -144,26 +144,33 @@
 | [RV-127][rv127] | 🟢     | ドキュメント                    | fixed   | 文字列の id の拒否が changeset に無い                                                                |
 | [RV-128][rv128] | 🟢     | ドキュメント                    | fixed   | 一括書き込みの文書の言い方が実装と違う                                                               |
 | [RV-129][rv129] | 🟢     | エラーモデル / DX               | fixed   | updateMany の再送の案内が紛らわしい                                                                  |
-| [RV-130][rv130] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの resourceId を検査しない                                                               |
+| [RV-130][rv130] | 🟢     | フェイルセーフ                  | fixed   | 添付ファイルの resourceId を検査しない                                                               |
 | [RV-131][rv131] | 🟢     | エラーモデル                    | fixed   | 送る前の失敗を「書き込まれた可能性」と書く                                                           |
 | [RV-132][rv132] | 🟢     | API 忠実性                      | fixed   | 空白だけの空の入れ子要素がエラーになる                                                               |
 | [RV-133][rv133] | 🟢     | API 忠実性                      | fixed   | 空白付きの日時・属性・トークン                                                                       |
 | [RV-134][rv134] | 🟢     | エラーモデル                    | fixed   | 0001〜0099 年の日付の弾き方                                                                          |
-| [RV-135][rv135] | 🟢     | フェイルセーフ                  | open    | 残っている数の検査の抜け                                                                             |
-| [RV-136][rv136] | 🟢     | フェイルセーフ                  | open    | 添付ファイルの空の update                                                                            |
-| [RV-137][rv137] | 🟢     | フェイルセーフ                  | open    | constName の予約語                                                                                   |
-| [RV-138][rv138] | 🟢     | フェイルセーフ                  | open    | prototype 経由の宣言                                                                                 |
-| [RV-139][rv139] | 🟢     | ドキュメント                    | open    | 添付ファイルの検査の文書                                                                             |
-| [RV-140][rv140] | 🟢     | エラーモデル                    | open    | 入力の渡し忘れが TypeError                                                                           |
-| [RV-141][rv141] | 🟢     | エラーモデル                    | open    | hostname 未設定・BigInt で TypeError                                                                 |
-| [RV-142][rv142] | 🟢     | 認証                            | open    | 保存中の clear() でトークンが戻る                                                                    |
-| [RV-143][rv143] | 🟢     | フェイルセーフ                  | open    | 使い回したエラーに印が漏れる                                                                         |
-| [RV-144][rv144] | 🟢     | フェイルセーフ                  | open    | Code 5 を書き込まれていないとみる前提                                                                |
-| [RV-145][rv145] | 🟢     | 一貫性                          | open    | 3xx の案内が単発と一括で逆                                                                           |
-| [RV-146][rv146] | 🟢     | ドキュメント                    | open    | 結果の分からない create の文書の範囲                                                                 |
-| [RV-147][rv147] | 🟢     | API 忠実性                      | open    | 大きな小数の丸め                                                                                     |
-| [RV-148][rv148] | 🟢     | 一貫性                          | open    | 0000 年の読み書きの非対称                                                                            |
-| [RV-149][rv149] | 🟢     | API 忠実性                      | open    | 値の中の <!DOCTYPE で拒否                                                                            |
+| [RV-135][rv135] | 🟢     | フェイルセーフ                  | fixed   | 残っている数の検査の抜け                                                                             |
+| [RV-136][rv136] | 🟢     | フェイルセーフ                  | fixed   | 添付ファイルの空の update                                                                            |
+| [RV-137][rv137] | 🟢     | フェイルセーフ                  | fixed   | constName の予約語                                                                                   |
+| [RV-138][rv138] | 🟢     | フェイルセーフ                  | fixed   | prototype 経由の宣言                                                                                 |
+| [RV-139][rv139] | 🟢     | ドキュメント                    | fixed   | 添付ファイルの検査の文書                                                                             |
+| [RV-140][rv140] | 🟢     | エラーモデル                    | fixed   | 入力の渡し忘れが TypeError                                                                           |
+| [RV-141][rv141] | 🟢     | エラーモデル                    | fixed   | hostname 未設定・BigInt で TypeError                                                                 |
+| [RV-142][rv142] | 🟢     | 認証                            | fixed   | 保存中の clear() でトークンが戻る                                                                    |
+| [RV-143][rv143] | 🟢     | フェイルセーフ                  | fixed   | 使い回したエラーに印が漏れる                                                                         |
+| [RV-144][rv144] | 🟢     | フェイルセーフ                  | wontfix | Code 5 を書き込まれていないとみる前提                                                                |
+| [RV-145][rv145] | 🟢     | 一貫性                          | fixed   | 3xx の案内が単発と一括で逆                                                                           |
+| [RV-146][rv146] | 🟢     | ドキュメント                    | fixed   | 結果の分からない create の文書の範囲                                                                 |
+| [RV-147][rv147] | 🟢     | API 忠実性                      | fixed   | 大きな小数の丸め                                                                                     |
+| [RV-148][rv148] | 🟢     | 一貫性                          | fixed   | 0000 年の読み書きの非対称                                                                            |
+| [RV-149][rv149] | 🟢     | API 忠実性                      | wontfix | 値の中の <!DOCTYPE で拒否                                                                            |
+| [RV-150][rv150] | 🟢     | API 忠実性                      | fixed   | 小さな小数の条件が拒否される                                                                         |
+| [RV-151][rv151] | 🟢     | API 忠実性                      | wontfix | Field Read の接頭辞の前提                                                                            |
+| [RV-152][rv152] | 🟢     | テスト                          | fixed   | 予約語のテストが一覧の写し                                                                           |
+| [RV-153][rv153] | 🟢     | 認証                            | fixed   | 保存先の合わせ直しの失敗                                                                             |
+| [RV-154][rv154] | 🟢     | フェイルセーフ                  | fixed   | 成功の本文が載った 3xx                                                                               |
+| [RV-155][rv155] | 🟢     | エラーモデル / DX               | fixed   | 成功の本文の hint が書き込み向け                                                                     |
+| [RV-156][rv156] | 🟢     | フェイルセーフ                  | wontfix | 2xx 以外の項目ごとの結果を捨てる                                                                     |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 
@@ -321,3 +328,10 @@
 [rv147]: rv/0147-large-decimal-number-rounded.md
 [rv148]: rv/0148-year-0000-read-but-not-written.md
 [rv149]: rv/0149-doctype-text-in-values-rejected.md
+[rv150]: rv/0150-condition-tiny-decimal-exponent.md
+[rv151]: rv/0151-field-read-prefix-check-assumption.md
+[rv152]: rv/0152-reserved-word-test-copies-list.md
+[rv153]: rv/0153-token-store-reconcile-failure.md
+[rv154]: rv/0154-bulk-3xx-with-success-body.md
+[rv155]: rv/0155-success-body-hint-on-non-write.md
+[rv156]: rv/0156-bulk-non-2xx-item-results-dropped.md

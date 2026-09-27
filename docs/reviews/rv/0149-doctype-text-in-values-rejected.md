@@ -1,7 +1,7 @@
 # RV-149 🟢 値の中（CDATA・コメント）に "<!DOCTYPE" という文字列がある応答も、読めない応答にする
 
 - 重要度: 🟢 ／ 観点: API 忠実性
-- 状態: open
+- 状態: wontfix
 
 ## 概要
 
@@ -26,4 +26,8 @@ DOCTYPE の検出は、応答の文書全体から `<!DOCTYPE` を探す。CDATA
 
 ## 処置
 
-—
+**対応しない（2026-09-27・fix/review-followup-low。今の検出は #457 で develop に入った）。** 文書全体から `<!DOCTYPE` を探す今の形を残す。先頭だけを見る書き方は、処理命令を挟むと見逃し、コメントを並べた応答で処理時間が指数的に増えると分かった（RV-108 の再レビュー）。値の中に同じ文字列がある応答はエラーで止まる側に倒れ、PORTERS が CDATA を返す例は reference に無い。
+
+## 検証
+
+`src/xml/parse-xml.test.ts` の「refuses a DOCTYPE anywhere, quickly, even after processing instructions」。

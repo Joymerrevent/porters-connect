@@ -86,6 +86,28 @@ export const httpStatusError = (
 };
 
 /**
+ * Build the error for a non-2xx response whose body is nevertheless a successful PORTERS envelope.
+ * The two channels disagree, so neither is trusted on its own: `code` is the envelope's 0 (the API
+ * did answer), the category is `unknown`, and a write that got this far may have been applied.
+ */
+export const successBodyStatusError = (status: number): PortersError => {
+  const category = httpStatusCategory(status);
+  return new PortersError(
+    `HTTP ${status} with a successful PORTERS response body`,
+    {
+      category: "unknown",
+      code: 0,
+      // 読み取りはステータスどおりに再試行してよい。送った書き込みは、再試行せず結果が分からないとして返る。
+      retryable: RETRYABLE_HTTP_CATEGORIES.has(category),
+      // 読み取りや認証の経路にも付くので、書き込みの案内は書かない。送った書き込みには、requester の
+      // asUnknownOutcome と一括書き込みの案内が、結果が分からないことの案内を足す（RV-155）。
+      hint: "The HTTP status and the PORTERS response body disagree, so the outcome is unclear. Check any intermediary (proxy / load balancer / gateway) in front of the API.",
+      httpStatus: status,
+    },
+  );
+};
+
+/**
  * Stamp the HTTP status onto an error raised while parsing that same response (ADR-0044).
  * The parsers know the PORTERS `<Code>` but not the status; the requester knows the status but
  * not the code — this is the one seam where both are in hand. Called before the error leaves the

@@ -1,7 +1,7 @@
 # RV-118 🟢 新規必須の項目を reference と突き合わせるテストが無い
 
 - 重要度: 🟢 ／ 観点: テスト厳密性
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8faa9a1`）。** 各リソースの必須の一覧を `*_REQUIRED_ON_CREATE` として export し（公開 API ではない）、reference の「新規必須」（●）と 12 種を突き合わせるテストを足した。ID の項目と、Phase の `Resource`（ライブラリが入れる）は数えない。
+
+## 検証
+
+`test/integration/reference-catalog.test.ts` の「reference ↔ 新規必須」（12 種とも一致）。

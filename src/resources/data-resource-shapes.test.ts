@@ -67,7 +67,7 @@ import {
 // 共通の約束を変えて 1 か所直し忘れると、そのリソースの行が落ちる。
 // 実行時には何もしない（`tsc --noEmit` の型チェックが検査する）。
 
-// 新規で必須の項目を create の入力の型から取り出す（REQUIRED_ON_CREATE は各ファイルの外へ出していない）。
+// 新規で必須の項目を create の入力の型から取り出す（型の上で取り出す。値の一覧は各ファイルの *_REQUIRED_ON_CREATE）。
 type RequiredKeys<T> = {
   [K in keyof T]-?: Record<never, never> extends Pick<T, K> ? never : K;
 }[keyof T];

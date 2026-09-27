@@ -97,7 +97,8 @@ const REFUSED_CATEGORIES: ReadonlySet<string> = new Set([
 ]);
 
 // 送った create が、書き込まれていないと分かっている失敗か。断られたことがはっきりしている分類、
-// 未処理が確定する Code 9（再送し尽くした場合）、封筒の無い 4xx（408 以外。レート超過の 429 もここ）。
+// 未処理が確定する Code 9（再送し尽くした場合）、封筒の無い 3xx / 4xx（408 以外。レート超過の 429 もここ）。
+// 3xx は API の手前でリダイレクトされたとみる（単発の create と同じ境界。ADR-0106・RV-145）。
 // Code 1000（処理失敗）や表に無いコードは、途中まで処理されたかが分からないので含めない（RV-69 の再レビュー）。
 // それ以外（200 で読めない応答、送った後の生の Error など）は、書き込まれた可能性がある（RV-69 の再レビュー）。
 const knownNotWritten = (cause: unknown): boolean => {
@@ -115,7 +116,7 @@ const knownNotWritten = (cause: unknown): boolean => {
   // `status !== undefined` は型のため。undefined との比較は偽なので、外しても同じ動きになる（等価なミュータント）。
   return (
     // Stryker disable next-line ConditionalExpression: equivalent — undefined >= 400 is false
-    status !== undefined && status >= 400 && status < 500 && status !== 408
+    status !== undefined && status >= 300 && status < 500 && status !== 408
   );
 };
 

@@ -65,7 +65,8 @@ export const portersDateTimeToIso = (value: string): string => {
     number,
     number,
   ];
-  if (wallClock(utcTime(y, mo, d, h, mi, sec)) !== iso) {
+  // 0000 年は書き込みで受けないので、読み込みでも受けない（読んだ値を書き戻せなくなる。RV-148）。
+  if (wallClock(utcTime(y, mo, d, h, mi, sec)) !== iso || y < 1) {
     throw new RangeError(`invalid PORTERS DateTime: "${value}"`);
   }
   return `${iso}Z`;
@@ -116,8 +117,9 @@ export const portersDateToIso = (value: string): string => {
   const m = DATE_RE.exec(value);
   if (!m) throw new RangeError(`invalid PORTERS Date: "${value}"`);
   const iso = `${m[1]}-${m[2]}-${m[3]}`;
-  // 暦に無い日付（2/30・13 月）は読まない（RV-101）。
+  // 暦に無い日付（2/30・13 月）と、書き込みで受けない 0000 年は読まない（RV-101・RV-148）。
   if (
+    m[1] === "0000" ||
     wallClock(utcTime(Number(m[1]), Number(m[2]), Number(m[3]))).slice(
       0,
       10,

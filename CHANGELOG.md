@@ -5,6 +5,50 @@
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-09-27
+
+**0.26.0 の後のレビューで見つけた細かな不具合を直した版**です。破壊的変更はありません。
+
+### Changed
+
+- **`tokenStore` の `set` / `clear` を、呼んだ順に 1 つずつ呼ぶようになりました**。前の呼び出しが終わってから次を呼ぶので、
+  先に呼んだ書き込みが、後の書き込みや `porters.auth.clearTokens()` の消去を上書きしません。これまでは、消したトークンや
+  古いトークンが保存先に残り、次の読み込みで使われることがありました。
+  - `clearTokens()` は、保存先の `clear` が失敗したら、そのエラーで失敗します。これまでは成功で返り、保存先にトークンが
+    残ることがありました。
+  - `set` と `clear` は、成功か失敗で必ず終わるようにしてください（DB の呼び出しにタイムアウトを付けるなど）。終わらない
+    呼び出しが 1 つあると、後の書き込みと、トークンを取り直したときの保存も待ち続けます。
+
+- **200 以外の status で PORTERS の成功の応答（`<Code>` が 0）が届いたら、`code: 0`・`category: "unknown"` のエラーにします**。
+  status と応答の内容が食い違うので、結果が分からないものとして扱います。これまでは `code: null` にしていたので、
+  `createMany` は 3xx / 4xx のバッチを「書き込まれていない」と案内していました。今は「書き込まれた可能性がある」と案内し、
+  送った `create` は自動で再送しません。
+
+### Fixed
+
+- **`hostname` が文字列でないとき（`PORTERS_HOST` の未設定など）は、構築時に `PortersConfigError` になります**。これまでは
+  `TypeError` でした。`tenant(id)` と `of(name)` に BigInt を渡したときも、`PortersConfigError` になります。
+- **添付ファイルは、次の場合に送る前に `PortersConfigError` で止まります**。
+  - `create` / `update` に入力そのものを渡し忘れたとき、`content: null` のとき（これまでは `TypeError`）。
+  - 変える項目が 1 つも無い `update`。
+  - `search` / `searchAll` の `resourceId` が正の整数でないとき。
+- **添付ファイルの応答の `Id` などが空なら `null` を返します**。数でない値は、読めない応答としてエラーにします
+  （これまでは空を `0` と読んでいました）。
+- **数の項目（`Number` / `P_Id`）の検索の条件は、10 進の表記だけを送ります**。とても小さい・大きい数も 10 進の表記で送ります
+  （`1e-7` は `0.0000001`）。`NaN`・`Infinity` と、負の数や小数の id は、送る前に `PortersConfigError` になります。
+- **数の読み込みで、数にすると整数の部分が変わる小数（`9007199254740993.0` など）をエラーにします**。
+  0000 年の日付と日時も、読み込みでエラーにします（書き込みと同じく 0001〜9999 年）。
+- **`createMany` は、PORTERS の本文が無い HTTP 3xx で失敗したバッチを、単発の `create` と同じく「書き込まれていない」と
+  案内します**。
+- **カスタム項目の宣言で、名前が空の alias（`U_` だけ）や、`,` `:` `=` `.` `(` `)` 空白を含む alias を受け付けなくなりました**。
+  これまでは、別の項目を要求する書き方になっていました。
+- **`readCustomCatalog` / `generateFieldDecls` は、Field Read の行が頼んだリソースと別の接頭辞を持っていたら、エラーにします**。
+  `verifyFields` では、そのリソースを突き合わせられなかったものとして報告します。
+- **`generateFieldDecls` の `constName` に予約語（`class` など）を渡すと、`PortersConfigError` になります**。
+- **`tenant(id, { fields })` は、宣言の列挙できる自分のプロパティだけを、1 回だけ読みます**。
+- **Option の `count` が上限を超えたときのエラーの `hint` を、Option に合う案内（`count` を省けば全件）にしました**。
+- 送信前に弾くものの一覧（上限の文書）に、添付ファイルの検査を足しました。
+
 ## [0.26.0] - 2026-09-27
 
 **読み取りの型を要求した項目で絞り、複数の ID でまとめて読めるようにし、`src` 全体のレビューで見つけた不具合をまとめて直した版**です。
@@ -1676,7 +1720,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.0...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.1...HEAD
+[0.26.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.23.0...v0.24.0

@@ -8,7 +8,7 @@
 
 > **RecruiterUpdateInput**\<`C`\> = `UpdateInput`\<*typeof* `FIELDS` & `C`\>
 
-Defined in: [src/resources/recruiter.ts:118](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L118)
+Defined in: [src/resources/recruiter.ts:122](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/recruiter.ts#L122)
 
 Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
 declared custom-field catalog merged on.

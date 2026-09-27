@@ -71,7 +71,8 @@ const FIELDS = {
 // Required on create per docs/usage/reference (resources/activity.md「新規必須」列): P_Owner /
 // P_Title（P_Id は System[Id]＝lib 供給のため除外）。P_Resource / P_ResourceId は必須では
 // ないと公表されている＝どこにも紐づかない Activity も登録できる。手前で厳しくしない。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const ACTIVITY_REQUIRED_ON_CREATE = [
   "P_Owner",
   "P_Title",
 ] as const satisfies readonly (keyof typeof FIELDS)[];
@@ -106,7 +107,10 @@ export type ActivitySearchQuery<C extends FieldCatalog = EmptyCatalog> =
 export type ActivityCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof ACTIVITY_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -223,7 +227,11 @@ export const createActivityResource = <C extends FieldCatalog = EmptyCatalog>(
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...ACTIVITY_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    {
+      ...ACTIVITY_DESCRIPTOR,
+      fields,
+      requiredOnCreate: ACTIVITY_REQUIRED_ON_CREATE,
+    },
     deps,
   ) as ActivityResource<C>;
 };

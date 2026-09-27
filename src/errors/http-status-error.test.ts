@@ -10,6 +10,7 @@ import {
 import {
   httpStatusCategory,
   httpStatusError,
+  successBodyStatusError,
   withHttpStatus,
 } from "./http-status-error";
 import { resourceError } from "./resource-error";
@@ -105,5 +106,34 @@ describe("HTTP status classification (ADR-0044)", () => {
     expect(e.httpStatus).toBe(200);
     expect(e.code).toBe(403);
     expect(e.category).toBe("permission");
+  });
+});
+
+// ステータスと本文が食い違う応答（2xx でないのに本文は成功）。本文の Code 0 を残し、分類は unknown（RV-154）。
+describe("successBodyStatusError", () => {
+  it("keeps the envelope's code 0 and claims no origin", () => {
+    for (const status of [302, 404, 503]) {
+      const e = successBodyStatusError(status);
+      expect(e.constructor, `${status}`).toBe(PortersError);
+      expect(e).toMatchObject({
+        category: "unknown",
+        code: 0,
+        httpStatus: status,
+      });
+      expect(e.message).toBe(
+        `HTTP ${status} with a successful PORTERS response body`,
+      );
+      expect(e.hint).toContain("disagree");
+      // 読み取りや認証の経路にも付くので、書き込みの案内を含めない（RV-155）。
+      expect(e.hint).not.toMatch(/write|resend|record/i);
+    }
+  });
+
+  it("follows the status for whether a retry is worth it", () => {
+    expect(successBodyStatusError(503).retryable).toBe(true);
+    expect(successBodyStatusError(429).retryable).toBe(true);
+    expect(successBodyStatusError(408).retryable).toBe(true);
+    expect(successBodyStatusError(302).retryable).toBe(false);
+    expect(successBodyStatusError(404).retryable).toBe(false);
   });
 });

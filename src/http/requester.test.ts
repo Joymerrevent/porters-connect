@@ -20,6 +20,13 @@ import type { Transport, TransportRequest } from "./types";
 
 const noThrottle: Throttle = { take: () => Promise.resolve() };
 const noBackoff = (): number => 0;
+// 本物のパーサと同じく、空の本文は PORTERS の応答として読めない（読めたら本文は成功とみなされる。RV-154）。
+const envelope = (b: string): string => {
+  if (b === "") {
+    throw new PortersResourceError("unparseable", { category: "unknown" });
+  }
+  return b;
+};
 
 const mockAuth = (calls: { force: boolean }[]): AccessTokenSource => ({
   getAccessToken: (o) => {
@@ -194,6 +201,59 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     expect(n).toBe(1);
   });
 
+  // 2xx でないのに本文が成功の応答は、送った create を送り直さず、結果が分からないとして返す（RV-154）。
+  // 書き込みの案内は、ここで足される（エラー自体の hint は、読み取りや認証の経路にも合う文面。RV-155）。
+  it.each([503, 302])(
+    "does not resend a create whose non-2xx (%i) response carries a successful body",
+    async (status) => {
+      let n = 0;
+      const transport: Transport = {
+        send: () => {
+          n += 1;
+          return Promise.resolve({ status, body: "ok" });
+        },
+      };
+      const r = createRequester({
+        transport,
+        auth: mockAuth([]),
+        throttle: noThrottle,
+        backoff: noBackoff,
+      });
+      const error = await r
+        .request({ method: "POST", url: "u", headers: {} }, () => "parsed", {
+          write: true,
+          idempotent: false,
+        })
+        .catch((e: unknown) => e);
+      expect(error).toMatchObject({
+        code: 0,
+        httpStatus: status,
+        category: "unknown",
+        retryable: false,
+      });
+      expect((error as PortersError).hint).toMatch(/may have been applied/);
+      expect(n).toBe(1);
+    },
+  );
+
+  // 読み取りのエラーには、書き込みの案内を付けない（RV-155）。
+  it("gives a read with a successful body on a non-2xx no write guidance", async () => {
+    const transport: Transport = {
+      send: () => Promise.resolve({ status: 302, body: "ok" }),
+    };
+    const r = createRequester({
+      transport,
+      auth: mockAuth([]),
+      throttle: noThrottle,
+      backoff: noBackoff,
+    });
+    const error = await r
+      .request(base, () => "parsed")
+      .catch((e: unknown) => e);
+    expect(error).toMatchObject({ code: 0, httpStatus: 302 });
+    expect((error as PortersError).hint).not.toMatch(/write|resend|record/i);
+  });
+
   // ADR-0063: the guard asks "may this write have applied?", not "is this a network error?".
   // A token fetch that fails never put the request on the wire, so a replay cannot duplicate.
   it("retries create after a token fetch failure (the request never left)", async () => {
@@ -247,7 +307,7 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     });
 
     expect(
-      await r.request(post, (b) => b, { write: true, idempotent: false }),
+      await r.request(post, envelope, { write: true, idempotent: false }),
     ).toBe("ok");
     expect(sends).toBe(2); // 429 -> バックオフして再送 -> 成功
   });
@@ -749,7 +809,7 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
       maxRetries: 2,
     });
 
-    await expect(r.request(base, (b) => b)).rejects.toMatchObject({
+    await expect(r.request(base, envelope)).rejects.toMatchObject({
       category: "server",
       httpStatus: 503,
     });
@@ -772,7 +832,7 @@ describe("createRequester (ADR-0009/0010/0012)", () => {
     });
 
     await expect(
-      r.request(post, (b) => b, { write: true, idempotent: false }),
+      r.request(post, envelope, { write: true, idempotent: false }),
     ).rejects.toBeInstanceOf(PortersNetworkError);
     expect(n).toBe(1); // the idempotency guard covers HTTP-level uncertainty too
   });
@@ -1083,6 +1143,25 @@ describe("neverSent", () => {
       .catch((x: unknown) => x);
     expect(e).toBe(down);
     expect(neverSent(e)).toBe(false);
+  });
+
+  // 同じエラーの実体を送る前にも後にも投げる Transport では、送った後の失敗を「送らずに失敗した」としない（RV-143）。
+  it("does not treat a reused error as never sent once it was seen after sending", async () => {
+    const reused = new PortersResourceError("gateway", { category: "server" });
+    const tokenFails = build(
+      () => Promise.reject(reused),
+      () => Promise.reject(new Error("never called")),
+    );
+    await tokenFails.request(req, (b) => b).catch(() => undefined);
+    expect(neverSent(reused)).toBe(true);
+    const sendFails = build(
+      () => Promise.resolve("T"),
+      () => Promise.reject(reused),
+    );
+    await sendFails
+      .request(req, (b) => b, { write: true, idempotent: true })
+      .catch(() => undefined);
+    expect(neverSent(reused)).toBe(false);
   });
 
   it("does not mark a thrown non-PortersError, and reads other values as not marked", async () => {

@@ -66,6 +66,59 @@ export type GenerateFieldDeclsOptions = {
 // 前提なので、改行でコメントを抜けたり、識別子でない alias がキーを壊したりしないようにする（RV-82）。
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 
+// const の名前にできない語（予約語と、strict モードで宣言できない名前）。形は識別子でも、生成したファイルが
+// 構文エラーになる（RV-137）。オブジェクトのキーとしては書けるので、alias の側には使わない。
+const RESERVED = new Set([
+  "arguments",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "eval",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "let",
+  "new",
+  "null",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+]);
+
 // 識別子でなければ文字列のキーにする（"U_foo-bar": …）。
 const keyOf = (alias: string): string =>
   IDENTIFIER.test(alias) ? alias : JSON.stringify(alias);
@@ -158,12 +211,12 @@ export const generateFieldDecls = async (
   const active = options.active ?? 1;
   const includeNames = options.includeNames ?? false;
   const constName = options.constName ?? "myFields";
-  if (!IDENTIFIER.test(constName)) {
+  if (!IDENTIFIER.test(constName) || RESERVED.has(constName)) {
     throw new PortersConfigError(
       `generateFieldDecls: constName ${JSON.stringify(constName)} is not a valid identifier`,
       {
         category: "config",
-        hint: "Use letters, digits, _ and $, not starting with a digit (e.g. myFields).",
+        hint: "Use letters, digits, _ and $, not starting with a digit and not a reserved word (e.g. myFields).",
       },
     );
   }

@@ -70,6 +70,44 @@ const delimiterError = (
   );
 
 // One scalar condition value by the field's Data Type: dates ISO -> PORTERS, everything else stringified.
+// 数の型の条件の値は、10 進の表記だけを送る。NaN / Infinity / 指数表記は、String() のまま "NaN" などとして
+// 送られていた（RV-135）。id は 0 以上の整数（`ge: 0` は「すべて」を表す正しい範囲の条件）。
+const assertConditionNumber = (
+  alias: string,
+  type: DataType | null | undefined,
+  text: string,
+): void => {
+  const ok =
+    type === "System[Id]"
+      ? /^\d+$/.test(text)
+      : type !== "Number" || /^-?\d+(\.\d+)?$/.test(text);
+  if (ok) return;
+  throw new PortersConfigError(
+    `condition ${alias}: ${JSON.stringify(text)} is not ${type === "System[Id]" ? "a record id" : "a decimal number"}`,
+    {
+      category: "config",
+      hint:
+        type === "System[Id]"
+          ? "Pass a record id, a whole number of 0 or more."
+          : "Pass a plain decimal number (NaN, Infinity and exponent notation cannot be searched).",
+      context: { operation: "read" },
+    },
+  );
+};
+
+// 数は 10 進の表記で書く。String() はとても小さい・大きい数を指数表記（1e-7）にし、それが拒否されていた
+// （RV-150）。10 進に直すと値が変わる数（5e-324 が 0 になるなど）は、指数表記のまま残して拒否に任せる。
+const conditionText = (value: unknown): string => {
+  if (typeof value !== "number") return String(value);
+  // -0 は "-0" ではなく "0" と書く（Math.round(-0.4) などで生まれ、id の条件で拒否されていた）。
+  if (Object.is(value, -0)) return "0";
+  const plain = value.toLocaleString("en-US", {
+    useGrouping: false,
+    maximumFractionDigits: 100,
+  });
+  return Number(plain) === value ? plain : String(value);
+};
+
 const serializeScalar = (
   type: DataType | null | undefined,
   value: unknown,
@@ -85,7 +123,9 @@ const serializeScalar = (
       isoToPortersDate(String(value)),
     );
   }
-  return String(value);
+  const text = conditionText(value);
+  assertConditionNumber(alias, type, text);
+  return text;
 };
 
 /**
@@ -113,9 +153,10 @@ const serializeConditionValue = (
     }
     return value
       .map((v) => {
-        const s = String(v);
+        const s = conditionText(v);
         if (s.includes(",") || s.includes(":"))
           throw delimiterError(`condition ${alias}`, s, "a comma or a colon");
+        assertConditionNumber(alias, type, s);
         return s;
       })
       .join(":");

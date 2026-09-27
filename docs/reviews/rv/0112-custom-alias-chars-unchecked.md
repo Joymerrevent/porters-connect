@@ -1,7 +1,7 @@
 # RV-112 🟢 カスタム項目の alias の文字を確かめていない
 
 - 重要度: 🟢 ／ 観点: 設定検証
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`1bf6ae3`）。** 宣言の alias は、名前が空、または `,` `:` `=` `.` `(` `)` 空白を含むものを拒否する（`CUSTOM_ALIAS_PATTERN`）。`[Name]` に使える文字は reference が決めていないので、英数字と `_` に限る推奨は採らず、書き方を壊す文字だけにした。Field Read の行から見分けるのは接頭辞だけ（`CUSTOM_ALIAS_PREFIX`）にし、変わった文字の alias を黙って読み飛ばさない。
+
+## 検証
+
+`src/porters/custom-field.test.ts` と `src/fields/assert-declared-catalogs.test.ts` の「assertCustomAlias refuses …」。

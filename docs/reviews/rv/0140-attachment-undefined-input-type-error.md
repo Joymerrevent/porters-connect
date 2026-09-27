@@ -1,7 +1,7 @@
 # RV-140 🟢 添付ファイルの create / update に入力そのものを渡し忘れると TypeError になる
 
 - 重要度: 🟢 ／ 観点: エラーモデル
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -26,4 +26,8 @@
 
 ## 処置
 
-—
+**実施（2026-09-27・fix/fields-attachment-low-review・`8179ef3`）。** 入力がオブジェクトでなければ `PortersConfigError` にする。大きさの検査は文字列のときだけ長さを見るので、`content: null` も Base64 の検査が `PortersConfigError` で止める。
+
+## 検証
+
+`src/resources/attachment.test.ts` の「… refuses the input …」「refuses content: null …」。

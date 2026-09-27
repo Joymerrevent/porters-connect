@@ -80,7 +80,8 @@ const FIELDS = {
 
 // Required on create per docs/usage/reference (resources/job.md「新規必須」列): P_Owner / P_Client /
 // P_Recruiter（P_Id は System[Id]＝lib 供給のため除外）。LV-5 は reference で確定。
-const REQUIRED_ON_CREATE = [
+// reference の「新規必須」（●）と突き合わせるテストが読むので export する（RV-118。公開 API ではない）。
+export const JOB_REQUIRED_ON_CREATE = [
   "P_Owner",
   "P_Client",
   "P_Recruiter",
@@ -125,7 +126,10 @@ export type JobSearchQuery<C extends FieldCatalog = EmptyCatalog> = SearchQuery<
 export type JobCreateInput<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+> = CreateInput<
+  typeof FIELDS & C,
+  (typeof JOB_REQUIRED_ON_CREATE)[number] | CR
+>;
 /**
  * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
  * declared custom-field catalog merged on.
@@ -243,7 +247,7 @@ export const createJobResource = <C extends FieldCatalog = EmptyCatalog>(
   // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
   return createDataResource(
-    { ...JOB_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
+    { ...JOB_DESCRIPTOR, fields, requiredOnCreate: JOB_REQUIRED_ON_CREATE },
     deps,
   ) as JobResource<C>;
 };
