@@ -40,6 +40,16 @@ description: >-
    承認されなかったら、リリース PR を作るところで止まり、残りはユーザーに渡す（従来の形）。
    承認の後は、下の各段の「止まる条件」に当たらない限り、途中で聞き直さない。
 
+   **このスキルが作る PR には、すべてラベル `claude-code` と担当者 `@me` を付ける**
+   （`gh pr create … --label claude-code --assignee @me`）。GitHub の担当者には Claude Code を設定できない
+   （アカウントが無く、ユーザーの `gh` の認証で動く）ので、ラベルで「Claude Code が作ってマージした PR」を見分け、
+   担当者で責任の所在（ユーザー）を示す。ラベルが無ければ、最初の PR を作る前に作る:
+
+   ```sh
+   gh label list --search claude-code --json name -q '.[].name' | grep -qx claude-code \
+     || gh label create claude-code --color 5319E7 --description "Claude Code が作成・マージした PR"
+   ```
+
 2. **ベースを明示して切る** — 取り違えが実際に起きているので、**切った先の SHA を出してから**進む:
 
    ```sh
@@ -57,7 +67,7 @@ description: >-
    **赤があれば直してから再実行**する。赤を抱えたまま PR にしない。
    準備中に見つけた欠陥・手順の穴は**このリリース PR に含める**（後回しにしない・runbook §1 の判断軸）。
 
-5. **リリース PR を作り、緑を確かめてマージする** — `release/X.Y.Z` → `main`。
+5. **リリース PR を作り、緑を確かめてマージする** — `release/X.Y.Z` → `main`（`--label claude-code --assignee @me`）。
    PR 本文には**実行したゲートの出力**（要約ではなく結果そのもの）と、マージ方式（**merge commit**）を書く。
    - `main` への PR なので `stryker` は必ず全体を走らせる（約 11 分）。**すべてのチェックが緑になるまで待つ**。
    - マージの直前に、**PR の head が、ゲートを通したコミットのままか**を確かめる
@@ -72,13 +82,13 @@ description: >-
    - Release ワークフロー green → `npm view @joymerrevent/porters-connect version` で反映を確認。
      **publish 直後の `npm view` は前版を返すことがある**（伝播待ち・0.16.0 の実績）。
      ワークフローのログで publish 成功を確認してから待つ。慌てて再実行しない。
-   - back-merge: `gh pr create --base develop --head main --title "chore: X.Y.Z を develop へ back-merge する"`
+   - back-merge: `gh pr create --base develop --head main --title "chore: X.Y.Z を develop へ back-merge する" --label claude-code --assignee @me`
      → チェックが緑になるのを待って `gh pr merge N --merge`（**squash しない**）。
 
 7. **公開を記録する（後追い PR・develop へ）** — runbook §5。
    **落としやすいのは「利用者向けの変更が無い版」**（0.13.0 / 0.15.1 で実際に落ちた）ので、
    patch でも必ず行う。入れてよいのは**公開が成功して初めて真になる事実**だけ。
-   チェックが緑になるのを待って `gh pr merge N --squash --delete-branch`。
+   PR は `--label claude-code --assignee @me` を付けて作り、チェックが緑になるのを待って `gh pr merge N --squash --delete-branch`。
    最後に、develop を最新にし、使い終わったローカルのブランチを消して報告する。
 
 ### 止まる条件（承認の後でも止めて、ユーザーに聞く）
