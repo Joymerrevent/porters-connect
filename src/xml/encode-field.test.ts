@@ -353,3 +353,70 @@ describe("encodeField — numbers PORTERS can read (RV-85)", () => {
     );
   });
 });
+
+// XML 1.0 で書けない文字は、送る前に拒否する（RV-106）。
+describe("characters XML cannot carry", () => {
+  it.each([
+    ["\u0000", "0000"],
+    ["a\u0001b", "0001"],
+    ["\u000B", "000B"],
+    ["\u001F", "001F"],
+    ["\uFFFE", "FFFE"],
+    ["x\uD800", "D800"],
+    ["\uDC00y", "DC00"],
+  ])("refuses %j", (value, code) => {
+    expect(() => encodeField("SinglelineText", value, "P_Name")).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "validation",
+        message: `P_Name: the value contains U+${code}, which XML cannot carry`,
+        hint: "Remove control characters (other than tab and line breaks) and broken surrogate pairs from the value before writing it.",
+        context: { operation: "encode" },
+      }),
+    );
+  });
+
+  it("writes tabs, line breaks and paired surrogates as they are", () => {
+    expect(encodeField("MultilineText", "a\tb\nc\rd 😀", "P_Memo")).toBe(
+      "a\tb\nc\rd 😀",
+    );
+  });
+
+  it("checks an image's sub-elements and an untyped value too", () => {
+    expect(() =>
+      encodeField(
+        "Image",
+        { FileName: "a\u0000.png", ContentType: "image/png", Content: "" },
+        "U_photo",
+      ),
+    ).toThrow(/U\+0000/);
+    expect(() => encodeField(undefined, "\u0007", "U_x")).toThrow(/U\+0007/);
+  });
+});
+
+// 文字列でない画像の子要素は書かない（RV-103）。文字列でない選択肢は拒否する（RV-104）。
+describe("values that only arrive through a cast", () => {
+  it("leaves out an image sub-element that is not a string", () => {
+    expect(
+      encodeField(
+        "Image",
+        { FileName: "a.png", ContentType: "image/png", Content: null } as never,
+        "U_photo",
+      ),
+    ).toBe("<FileName>a.png</FileName><ContentType>image/png</ContentType>");
+  });
+
+  it.each([[[null]], [[undefined]], [[1]]])(
+    "refuses the option selection %j",
+    (value) => {
+      expect(() => encodeField("Option", value as never, "P_Phase")).toThrow(
+        expect.objectContaining({
+          name: "PortersConfigError",
+          category: "validation",
+          message: `P_Phase: option alias ${String(value[0])} is not a string`,
+          context: { operation: "encode" },
+        }),
+      );
+    },
+  );
+});

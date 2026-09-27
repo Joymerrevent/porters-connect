@@ -42,3 +42,35 @@ describe("encodeWriteItem", () => {
     );
   });
 });
+
+// 自分の接頭辞が付いた alias は外してから書き、ほかの接頭辞は拒否する（RV-105）。
+describe("a prefixed alias", () => {
+  it("writes its own prefix once, and looks the type up by the bare alias", () => {
+    expect(encodeWriteItem("Person", FIELDS, { "Person.P_Name": "x" })).toBe(
+      "<Item><Person.P_Name>x</Person.P_Name></Item>",
+    );
+    expect(() =>
+      encodeWriteItem("Person", FIELDS, { "Person.P_Id": 1.5 }),
+    ).toThrow(PortersConfigError);
+  });
+
+  it.each(["Job.P_Name", "X.Y"])("refuses %s", (alias) => {
+    expect(() => encodeWriteItem("Person", FIELDS, { [alias]: "x" })).toThrow(
+      expect.objectContaining({
+        name: "PortersConfigError",
+        category: "validation",
+        message: `${alias}: a field alias to write must be bare (like "P_Name"), without another resource's prefix`,
+        hint: "Write each field under its bare alias; the library adds the resource's own prefix.",
+      }),
+    );
+  });
+
+  it("does not strip anything when the resource has no prefix", () => {
+    expect(() => encodeWriteItem("", FIELDS, { ".P_Name": "x" })).toThrow(
+      PortersConfigError,
+    );
+    expect(encodeWriteItem("", FIELDS, { P_Name: "x" })).toBe(
+      "<Item><P_Name>x</P_Name></Item>",
+    );
+  });
+});
