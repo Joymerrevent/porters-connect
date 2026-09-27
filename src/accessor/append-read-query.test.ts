@@ -39,7 +39,6 @@ describe("appendReadQuery — numbers in a condition", () => {
     [{ P_Num: { eq: Number.NaN } }, "P_Num", "NaN", "a decimal number"],
     [{ P_Num: { ge: Infinity } }, "P_Num", "Infinity", "a decimal number"],
     [{ P_Num: { le: 1e21 } }, "P_Num", "1e+21", "a decimal number"],
-    [{ P_Id: { eq: 0 } }, "P_Id", "0", "a record id"],
     [{ P_Id: { eq: 1.5 } }, "P_Id", "1.5", "a record id"],
     [{ P_Id: { or: [1, Number.NaN] } }, "P_Id", "NaN", "a record id"],
   ])("refuses %j", (condition, alias, shown, what) => {
@@ -57,17 +56,23 @@ describe("appendReadQuery — numbers in a condition", () => {
     expect((err as PortersConfigError).context).toEqual({ operation: "read" });
     expect((err as PortersConfigError).hint).toBe(
       what === "a record id"
-        ? "Pass the record id, a whole number of 1 or more."
+        ? "Pass a record id, a whole number of 0 or more."
         : "Pass a plain decimal number (NaN, Infinity and exponent notation cannot be searched).",
+    );
+  });
+
+  it("accepts P_Id ge 0, a range that means every record", () => {
+    expect(encode({ condition: { P_Id: { ge: 0 } } }).get("condition")).toBe(
+      "W.P_Id:ge=0",
     );
   });
 
   it("sends decimal numbers and record ids as they are", () => {
     expect(
-      encode({ condition: { P_Num: { ge: -1.5 }, P_Id: { or: [1, 20] } } }).get(
-        "condition",
-      ),
-    ).toBe("W.P_Num:ge=-1.5,W.P_Id:or=1:20");
+      encode({
+        condition: { P_Num: { ge: -1.25 }, P_Id: { or: [1, 20] } },
+      }).get("condition"),
+    ).toBe("W.P_Num:ge=-1.25,W.P_Id:or=1:20");
   });
 });
 

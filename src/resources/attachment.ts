@@ -184,7 +184,8 @@ const buildAttachmentReadUrl = (
 const numOrNull = (field: string, v: unknown): number | null => {
   const s = asString(v)?.trim();
   if (s === undefined || s === "") return null;
-  if (/^\d+$/.test(s)) return Number(s);
+  // 安全な整数を超える id は、Number で丸まって別の id になるので読まない。
+  if (/^\d+$/.test(s) && Number.isSafeInteger(Number(s))) return Number(s);
   throw new PortersResourceError(
     `attachment response ${field} is not a number (got ${JSON.stringify(s)})`,
     { category: "unknown", context: { resource: ATTACHMENT_RESOURCE } },
@@ -296,8 +297,10 @@ export const createAttachmentAccessor = (
     const search = async (
       query: AttachmentSearchQuery & Paging = {},
     ): Promise<AttachmentPage> => {
-      if (query.resourceId !== undefined) assertResourceId(query.resourceId);
-      return read({ ...query, requestType: WITHOUT_CONTENT, resource });
+      // JS から null が来ても、空のクエリとして読む（以前の { ...null } と同じ）。
+      const q = query ?? {};
+      if (q.resourceId !== undefined) assertResourceId(q.resourceId);
+      return read({ ...q, requestType: WITHOUT_CONTENT, resource });
     };
 
     // Offset walk over the same Read. The query is read once, before the first page, so mutating
@@ -306,7 +309,7 @@ export const createAttachmentAccessor = (
       query: AttachmentSearchQuery = {},
     ): AsyncIterable<Attachment> =>
       paginateOnce(() => {
-        const resourceId = query.resourceId;
+        const resourceId = (query ?? {}).resourceId;
         if (resourceId !== undefined) assertResourceId(resourceId);
         return (count, start) =>
           read({

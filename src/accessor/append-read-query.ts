@@ -71,7 +71,7 @@ const delimiterError = (
 
 // One scalar condition value by the field's Data Type: dates ISO -> PORTERS, everything else stringified.
 // 数の型の条件の値は、10 進の表記だけを送る。NaN / Infinity / 指数表記は、String() のまま "NaN" などとして
-// 送られていた（RV-135）。id は 1 以上の整数。
+// 送られていた（RV-135）。id は 0 以上の整数（`ge: 0` は「すべて」を表す正しい範囲の条件）。
 const assertConditionNumber = (
   alias: string,
   type: DataType | null | undefined,
@@ -79,7 +79,7 @@ const assertConditionNumber = (
 ): void => {
   const ok =
     type === "System[Id]"
-      ? /^[1-9]\d*$/.test(text)
+      ? /^\d+$/.test(text)
       : type !== "Number" || /^-?\d+(\.\d+)?$/.test(text);
   if (ok) return;
   throw new PortersConfigError(
@@ -88,7 +88,7 @@ const assertConditionNumber = (
       category: "config",
       hint:
         type === "System[Id]"
-          ? "Pass the record id, a whole number of 1 or more."
+          ? "Pass a record id, a whole number of 0 or more."
           : "Pass a plain decimal number (NaN, Infinity and exponent notation cannot be searched).",
       context: { operation: "read" },
     },

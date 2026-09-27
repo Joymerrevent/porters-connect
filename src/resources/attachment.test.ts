@@ -560,6 +560,7 @@ describe("createAttachmentAccessor — the rest of the checks", () => {
       ).rejects.toThrow(
         expect.objectContaining({
           name: "PortersConfigError",
+          category: "config",
           message:
             "attachment update: give at least one of contentType, fileName, content",
           hint: "Pass the fields to change. Resource and resourceId cannot be changed.",
@@ -608,5 +609,33 @@ describe("createAttachmentAccessor — the rest of the checks", () => {
     await expect(files(calls, page("-1")).search()).rejects.toThrow(
       PortersResourceError,
     );
+    await expect(files(calls, page("1e3")).search()).rejects.toThrow(
+      'attachment response Id is not a number (got "1e3")',
+    );
+    await expect(files(calls, page("12abc")).search()).rejects.toThrow(
+      expect.objectContaining({
+        message: 'attachment response Id is not a number (got "12abc")',
+        context: { resource: "Attachment" },
+      }),
+    );
+    const other = (tag: string) =>
+      `<?xml version="1.0"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>1</Id><${tag}>x</${tag}></Item></Attachment>`;
+    await expect(files(calls, other("Resource")).search()).rejects.toThrow(
+      'attachment response Resource is not a number (got "x")',
+    );
+    await expect(files(calls, other("ResourceId")).search()).rejects.toThrow(
+      'attachment response ResourceId is not a number (got "x")',
+    );
   });
+});
+
+// 再レビューの指摘。null のクエリは空のクエリとして読み、安全な整数を超える id は読まない。
+it("reads search(null) as an empty query, and refuses an id too large to keep exactly", async () => {
+  const calls: Call[] = [];
+  await files(calls, READ_OK).search(null as never);
+  expect(calls).toHaveLength(1);
+  const big = `<?xml version="1.0"?><Attachment Total="1" Count="1" Start="0"><Code>0</Code><Item><Id>9007199254740993</Id></Item></Attachment>`;
+  await expect(files(calls, big).search()).rejects.toThrow(
+    'attachment response Id is not a number (got "9007199254740993")',
+  );
 });
