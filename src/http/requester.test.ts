@@ -1085,6 +1085,25 @@ describe("neverSent", () => {
     expect(neverSent(e)).toBe(false);
   });
 
+  // 同じエラーの実体を送る前にも後にも投げる Transport では、送った後の失敗を「送らずに失敗した」としない（RV-143）。
+  it("does not treat a reused error as never sent once it was seen after sending", async () => {
+    const reused = new PortersResourceError("gateway", { category: "server" });
+    const tokenFails = build(
+      () => Promise.reject(reused),
+      () => Promise.reject(new Error("never called")),
+    );
+    await tokenFails.request(req, (b) => b).catch(() => undefined);
+    expect(neverSent(reused)).toBe(true);
+    const sendFails = build(
+      () => Promise.resolve("T"),
+      () => Promise.reject(reused),
+    );
+    await sendFails
+      .request(req, (b) => b, { write: true, idempotent: true })
+      .catch(() => undefined);
+    expect(neverSent(reused)).toBe(false);
+  });
+
   it("does not mark a thrown non-PortersError, and reads other values as not marked", async () => {
     const odd = new TypeError("provider bug");
     const e = await build(

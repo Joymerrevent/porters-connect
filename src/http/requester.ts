@@ -182,11 +182,14 @@ export const asUnknownOutcome = (e: PortersError): PortersError => {
 // 一度も送らずに失敗したエラー（トークンの取得の失敗など）。一括書き込みが「書き込まれていない」と
 // 判断するのに使う（RV-131）。エラーそのものは変えず、ライブラリの中だけで見える印として持つ。
 const NEVER_SENT = new WeakSet<object>();
+// 送った後に捕まえたエラー。自作の Transport が同じエラーの実体を使い回すと、送らずに失敗した印が、送った後の
+// 失敗にも付いたままになる。送った後にも見たことのある実体は「送らずに失敗した」とみなさない（RV-143）。
+const SEEN_AFTER_SEND = new WeakSet<object>();
 
 /** Whether `error` was thrown before the request it belongs to was ever put on the wire. */
 export const neverSent = (error: unknown): boolean =>
   // WeakSet.has はオブジェクトでない値に false を返す（例外にならない）ので、型で分けなくてよい。
-  NEVER_SENT.has(error as object);
+  NEVER_SENT.has(error as object) && !SEEN_AFTER_SEND.has(error as object);
 
 export const createRequester = (o: RequesterOptions): Requester => {
   const maxRetries = o.maxRetries ?? 3;
@@ -230,7 +233,8 @@ export const createRequester = (o: RequesterOptions): Requester => {
       } catch (e) {
         if (!(e instanceof PortersError)) throw e;
         // 印は、一括書き込みが見る PortersError にだけ付ける。
-        if (!everSent) NEVER_SENT.add(e);
+        if (everSent) SEEN_AFTER_SEND.add(e);
+        else NEVER_SENT.add(e);
         const next = recoveryFor(e, {
           sent,
           authRetried,
