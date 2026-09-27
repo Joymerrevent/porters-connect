@@ -193,7 +193,20 @@ it("refuses a response with a DOCTYPE", () => {
   for (const xml of [
     '<!DOCTYPE r [<!ENTITY x "injected">]><r><v>&x;</v></r>',
     "<!doctype html><html></html>",
+    '\uFEFF<?xml version="1.0"?>\n<!-- c --><!DOCTYPE r><r/>',
   ]) {
     expect(() => parseXml(xml, unparseable)).toThrow("unparseable");
   }
+});
+
+// 値の中（CDATA・コメント）の "<!DOCTYPE" という文字列では、応答を拒否しない。
+it("reads a value that merely contains the text <!DOCTYPE", () => {
+  const unparseable = (): PortersError =>
+    new PortersResourceError("unparseable", { category: "unknown" });
+  expect(
+    parseXml(
+      '<?xml version="1.0"?><r><!-- <!DOCTYPE x --><v><![CDATA[<!DOCTYPE html>]]></v></r>',
+      unparseable,
+    ),
+  ).toEqual({ r: { v: "<!DOCTYPE html>" } });
 });
