@@ -70,6 +70,31 @@ const delimiterError = (
   );
 
 // One scalar condition value by the field's Data Type: dates ISO -> PORTERS, everything else stringified.
+// 数の型の条件の値は、10 進の表記だけを送る。NaN / Infinity / 指数表記は、String() のまま "NaN" などとして
+// 送られていた（RV-135）。id は 1 以上の整数。
+const assertConditionNumber = (
+  alias: string,
+  type: DataType | null | undefined,
+  text: string,
+): void => {
+  const ok =
+    type === "System[Id]"
+      ? /^[1-9]\d*$/.test(text)
+      : type !== "Number" || /^-?\d+(\.\d+)?$/.test(text);
+  if (ok) return;
+  throw new PortersConfigError(
+    `condition ${alias}: ${JSON.stringify(text)} is not ${type === "System[Id]" ? "a record id" : "a decimal number"}`,
+    {
+      category: "config",
+      hint:
+        type === "System[Id]"
+          ? "Pass the record id, a whole number of 1 or more."
+          : "Pass a plain decimal number (NaN, Infinity and exponent notation cannot be searched).",
+      context: { operation: "read" },
+    },
+  );
+};
+
 const serializeScalar = (
   type: DataType | null | undefined,
   value: unknown,
@@ -85,7 +110,9 @@ const serializeScalar = (
       isoToPortersDate(String(value)),
     );
   }
-  return String(value);
+  const text = String(value);
+  assertConditionNumber(alias, type, text);
+  return text;
 };
 
 /**
@@ -116,6 +143,7 @@ const serializeConditionValue = (
         const s = String(v);
         if (s.includes(",") || s.includes(":"))
           throw delimiterError(`condition ${alias}`, s, "a comma or a colon");
+        assertConditionNumber(alias, type, s);
         return s;
       })
       .join(":");
