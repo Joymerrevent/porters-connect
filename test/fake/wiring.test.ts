@@ -10,9 +10,10 @@ import { describe, expect, it } from "vitest";
 
 import { CANDIDATE_DESCRIPTOR } from "../../src/resources/candidate";
 import { ATTACHMENT_FIELD_NAMES } from "../../src/resources/attachment";
-import { decoderFor } from "../../src/resources/read-core";
-import { buildWriteXml } from "../../src/xml/encode";
-import { parseResourcePage, parseWriteResult } from "../../src/xml/parser";
+import { createDecoder } from "../../src/accessor/decoder";
+import { buildWriteXml } from "../../src/xml/build-write-xml";
+import { parseResourcePage } from "../../src/xml/parse-resource-page";
+import { parseWriteResult } from "../../src/xml/parse-write-result";
 import { ATTACHMENT_DESCRIPTOR, FAKE_RESOURCES } from "./resources";
 
 const fixture = (path: string): string =>
@@ -88,14 +89,17 @@ describe("fake server wiring", () => {
     );
     expect(page.total).toBe(2);
 
-    const decode = decoderFor(CANDIDATE_DESCRIPTOR.fields);
+    const decode = createDecoder(CANDIDATE_DESCRIPTOR.fields);
     const first = decode(page.items[0]);
     expect(first.P_Id).toBe(10001);
     expect(first.P_Name).toBe("山田 太郎");
     expect(first.P_UpdateDate).toBe("2026-01-02T03:04:05Z");
     expect(first.P_Phase).toEqual(["Option.P_PersonPhase_Applied"]);
 
-    const written = parseWriteResult(fixture("candidate/write-result.xml"));
+    const written = parseWriteResult(
+      fixture("candidate/write-result.xml"),
+      "Candidate",
+    );
     expect(written).toEqual([{ id: 10001, code: 0 }]);
   });
 

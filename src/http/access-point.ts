@@ -1,12 +1,16 @@
-// The one place a PORTERS URL is assembled (ADR-0047). Before this, `https://${host}/v1/...`
-// was spelled out at 10 call sites and grew by one with every resource added — so the scheme
-// could not be configured at all, and a local (http) fake or a VPN gateway was unreachable
-// without swapping the whole Transport. Everything that talks to the API builds its URL here.
-// Knowing what an access point *is* also lives here, so validation sits next to assembly
-// (ADR-0048) — `apiUrl` stays pure concatenation and the check runs once, at construction.
+// What an access point is (ADR-0047) and the check it passes once, at construction (ADR-0048):
+// the scheme / hostname / port every PORTERS URL is built from. The URL itself is assembled in
+// `api-url.ts`, which stays pure concatenation because the check already ran here.
 
 import { PortersConfigError } from "../errors/index";
-import type { Scheme } from "../types/index";
+
+// http を明示 opt-in にし、警告の抑止を別にする決定は ADR-0047。
+/**
+ * URL scheme of the API access point. `https` is the default; `http` is opt-in,
+ * meant for a local fake server or a trusted tunnel, and always warns (see
+ * `PortersClientOptions.scheme`).
+ */
+export type Scheme = "https" | "http";
 
 /**
  * Where the API lives: scheme + hostname + port (ADR-0078).
@@ -43,6 +47,71 @@ const configError = (message: string, hint: string): PortersConfigError =>
 // this file; nothing is sent anywhere with it.
 const PROBE_SCHEME = "porters-check";
 
+// The type says `"https" | "http"`, but JS callers and `as` casts get past it — and a silently
+// assembled `ftp://host/v1/...` is exactly the ambiguity ADR-0047 refused to keep.
+const assertScheme = (scheme: Scheme | undefined): void => {
+  if (scheme !== undefined && scheme !== "https" && scheme !== "http") {
+    throw configError(
+      `scheme ${JSON.stringify(scheme)} is not supported`,
+      'Use "https" (default) or "http" (local fake server / trusted tunnel only).',
+    );
+  }
+};
+
+const assertPort = (port: number | undefined): void => {
+  if (
+    port !== undefined &&
+    (!Number.isInteger(port) || port < MIN_PORT || port > MAX_PORT)
+  ) {
+    throw configError(
+      `port ${JSON.stringify(port)} is not a valid port number`,
+      `Pass an integer between ${MIN_PORT} and ${MAX_PORT}, or omit it to use the scheme's own port.`,
+    );
+  }
+};
+
+const assertHostname = (hostname: string): void => {
+  const rejected = (): PortersConfigError =>
+    configError(
+      `hostname ${JSON.stringify(hostname)} is not a bare server name`,
+      HOSTNAME_HINT,
+    );
+  // `%` は往復の比較を通るが、https の URL では復号されて別の名前になる（`a%41.test` → `aa.test`）か、
+  // 組み立てられずに通信エラー（再試行できる扱い）として届く。サーバー名に `%` は現れない（RV-92）。
+  if (hostname.includes("%")) throw rejected();
+  let url: URL;
+  try {
+    url = new URL(`${PROBE_SCHEME}://${hostname}`);
+    // 送るときの scheme でも組み立てられること。未知の scheme は名前を検査しないので、https で組み立てられない
+    // 名前は、ここで確かめないと最初のリクエストまで分からない（RV-92）。punycode として成り立たない `xn--` などを
+    // 組み立てられるかは Node の版で違う（22 と 24.3 は失敗し、それより新しい版は組み立てる）。どちらでも、
+    // 送るときに組み立てられない名前はここで止まる。
+    // 空の名前もここで止まる。未知の scheme は空の authority を許し、`porters-check://` の hostname が
+    // `""` になって空の入力と「一致」してしまう。`!` で押し通した未設定の `PORTERS_HOST` は、この検査が
+    // 止めるべき誤りそのもの（RV-17）。
+    new URL(`https://${hostname}`);
+  } catch {
+    throw rejected();
+  }
+  // An unknown scheme leaves the name's case alone (a special scheme lowercases it), so compare
+  // case-insensitively — an upper-case name is valid.
+  //
+  // `url.port` / `url.pathname` を並べるのは、「名前と、その後ろに何も無いこと」を契約として読めるように
+  // するため（ADR-0078 / ADR-0048）。`a.test:4010` は `hostname` が `a.test` として parse できてしまい、
+  // 見逃すとポートが黙って落ちる。ただ、ポートやパスが混ざれば `url.hostname` は入力と一致しなく
+  // なるので、先頭の比較がすでに弾いている。後ろ 2 つは等価なミュータントになる（実測 2026-09-16）ため、
+  // ミューテーションから外す。IPv6 は `[::1]` と括弧で囲むので、ポートとは見なされない。
+  // Stryker disable ConditionalExpression: equivalent — a port or a path implies a hostname mismatch
+  if (
+    url.hostname.toLowerCase() !== hostname.toLowerCase() ||
+    url.port !== "" ||
+    url.pathname !== ""
+  ) {
+    throw rejected();
+  }
+  // Stryker restore ConditionalExpression
+};
+
 /**
  * Reject an access point the library cannot honour — **before** a single request is built
  * (ADR-0048). `hostname` means the server name and nothing else (ADR-0078): a value carrying a
@@ -65,73 +134,15 @@ const PROBE_SCHEME = "porters-check";
  * names). The hint says so.
  */
 export const validateAccessPoint = (accessPoint: AccessPoint): void => {
-  const { hostname, port, scheme } = accessPoint;
-  // The type says `"https" | "http"`, but JS callers and `as` casts get past it — and a silently
-  // assembled `ftp://host/v1/...` is exactly the ambiguity ADR-0047 refused to keep.
-  if (scheme !== undefined && scheme !== "https" && scheme !== "http") {
-    throw configError(
-      `scheme ${JSON.stringify(scheme)} is not supported`,
-      'Use "https" (default) or "http" (local fake server / trusted tunnel only).',
-    );
-  }
-
-  if (
-    port !== undefined &&
-    (!Number.isInteger(port) || port < MIN_PORT || port > MAX_PORT)
-  ) {
-    throw configError(
-      `port ${JSON.stringify(port)} is not a valid port number`,
-      `Pass an integer between ${MIN_PORT} and ${MAX_PORT}, or omit it to use the scheme's own port.`,
-    );
-  }
-
-  const rejected = (): PortersConfigError =>
-    configError(
-      `hostname ${JSON.stringify(hostname)} is not a bare server name`,
-      HOSTNAME_HINT,
-    );
-  // The one case the round-trip cannot catch: an unknown scheme allows an empty authority, so
-  // `porters-check://` parses and `url.hostname` is `""` — which "matches" an empty input. An unset
-  // `PORTERS_HOST` forced through with `!` is precisely the mistake this guard exists for (RV-17),
-  // so it is spelled out rather than inferred.
-  if (hostname === "") throw rejected();
-  let url: URL;
-  try {
-    url = new URL(`${PROBE_SCHEME}://${hostname}`);
-  } catch {
-    throw rejected();
-  }
-  // An unknown scheme leaves the name's case alone (a special scheme lowercases it), so compare
-  // case-insensitively — an upper-case name is valid.
-  //
-  // `url.port` catches the shape this split exists to remove: `a.test:4010` parses fine and its
-  // `hostname` is `a.test`, so without this check the port would be silently dropped — the caller
-  // would think they configured one and the library would send to the default port instead
-  // (ADR-0078). An IPv6 address still works because it is bracketed: `[::1]` has no port.
-  //
-  // The `pathname` half is belt-and-suspenders, as it was under `https://` (ADR-0048): a path can
-  // only follow a delimiter that also ends the authority, so any input carrying one already fails
-  // the name comparison. It stays because "the name, and nothing after it" is the contract being
-  // read, not because a test can tell the difference.
-  // 後ろ 2 つは**どちらも等価なミュータント**になる（実測 2026-09-16）。ポートが混ざれば
-  // `url.hostname` は入力より短くなり、パスが付けば同じく一致しなくなるので、**先頭の比較が
-  // すでに弾いている**。それでも書いてあるのは、読む人に「名前と、その後ろに何も無いこと」を
-  // 契約として見せるため。テストで差が出ないので、ミューテーションからは外す。
-  // Stryker disable ConditionalExpression: equivalent — a port or a path implies a hostname mismatch
-  if (
-    url.hostname.toLowerCase() !== hostname.toLowerCase() ||
-    url.port !== "" ||
-    url.pathname !== ""
-  ) {
-    throw rejected();
-  }
-  // Stryker restore ConditionalExpression
+  assertScheme(accessPoint.scheme);
+  assertPort(accessPoint.port);
+  assertHostname(accessPoint.hostname);
 };
 
 /**
  * The authority this access point addresses: `hostname` plus `:port` when one is configured.
- * Assembled in one place because three things read it — the URL, the throttle bucket key
- * (ADR-0073) and the insecure-http warning (ADR-0047) — and they must agree on what "the same
+ * Assembled in one place because the URL and the insecure-http warning (ADR-0047) read it, and the
+ * throttle bucket key (ADR-0073) is derived from it — they must agree on what "the same
  * destination" means. Two access points that differ only by port are different destinations.
  */
 export const authorityOf = (accessPoint: AccessPoint): string =>
@@ -139,14 +150,16 @@ export const authorityOf = (accessPoint: AccessPoint): string =>
     ? accessPoint.hostname
     : `${accessPoint.hostname}:${accessPoint.port}`;
 
-/** Build an API URL: `{scheme}://{authority}/v1/{path}` plus `?{params}` when any are given. */
-export const apiUrl = (
-  accessPoint: AccessPoint,
-  path: string,
-  params?: URLSearchParams,
-): string => {
-  const query = params?.toString();
-  const scheme = accessPoint.scheme ?? "https";
-  const base = `${scheme}://${authorityOf(accessPoint)}/v1/${path}`;
-  return query ? `${base}?${query}` : base;
+/**
+ * The key that decides which access points share a throttle bucket (ADR-0073): the authority as
+ * the request goes out — lower-cased, without the scheme's default port and without a trailing
+ * `.`. `a.test`, `A.test:443` and `a.test.` reach the same server, so they must count against the
+ * same limit (RV-92). Expects an access point that passed {@link validateAccessPoint}.
+ */
+export const throttleKeyOf = (accessPoint: AccessPoint): string => {
+  const url = new URL(
+    `${accessPoint.scheme ?? "https"}://${authorityOf(accessPoint)}`,
+  );
+  const hostname = url.hostname.replace(/\.$/, "");
+  return url.port === "" ? hostname : `${hostname}:${url.port}`;
 };

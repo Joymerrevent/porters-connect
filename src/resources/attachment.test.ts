@@ -331,3 +331,180 @@ describe("createAttachmentAccessor — 10MB guard", () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+describe("attachment — search はページ送りを受け、searchAll は受けない（ADR-0099）", () => {
+  it("search takes paging next to the query; searchAll takes the query only", () => {
+    const typeOnly = (f: ReturnType<typeof files>) => {
+      void f.search({ resourceId: 1, count: 5, start: 0 });
+      void f.searchAll({ resourceId: 1 });
+      // @ts-expect-error — searchAll decides count / start itself
+      void f.searchAll({ resourceId: 1, count: 5 });
+    };
+    expect(typeOnly).toBeTypeOf("function");
+  });
+});
+
+// RV-67 / RV-74。添付ファイルでも、書き込みの Id -1 は新規作成を意味する。get と update の id は送る前に確かめる。
+describe("createAttachmentAccessor — the id get / update receive", () => {
+  it("update(-1) rejects before sending anything", async () => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).update(-1, { fileName: "x.txt" }),
+    ).rejects.toThrow(
+      "Attachment.update: id must be a positive integer, got -1",
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it("get(0) rejects before sending anything", async () => {
+    const calls: Call[] = [];
+    await expect(files(calls, READ_OK).get(0)).rejects.toThrow(
+      "Attachment.get: id must be a positive integer, got 0",
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
+
+// RV-73。添付ファイルの get も、返ってきた添付が頼んだ id のものかを確かめる（id の指定が効くかは LV-24）。
+describe("createAttachmentAccessor — get checks the attachment it got back", () => {
+  it("rejects an attachment with another id, rather than handing over its body", async () => {
+    const calls: Call[] = [];
+    await expect(files(calls, READ_OK).get(900)).rejects.toThrow(
+      "Attachment: get received a record that was not requested",
+    );
+  });
+});
+
+// RV-81。書き込む値を送る前に確かめる（JS から渡し忘れると "undefined" の文字列が送られていた）。
+describe("createAttachmentAccessor — the values create / update send", () => {
+  const good = {
+    resourceId: 10001,
+    contentType: "text/plain",
+    fileName: "a.txt",
+    content: "aGk=",
+  };
+
+  it.each([
+    [
+      { resourceId: undefined },
+      "attachment resourceId must be a positive integer, got undefined",
+    ],
+    [
+      { resourceId: Number.NaN },
+      "attachment resourceId must be a positive integer, got NaN",
+    ],
+    [
+      { resourceId: 0 },
+      "attachment resourceId must be a positive integer, got 0",
+    ],
+    [
+      { resourceId: 1.5 },
+      "attachment resourceId must be a positive integer, got 1.5",
+    ],
+    [
+      { contentType: undefined },
+      "attachment contentType must be a non-empty string, got undefined",
+    ],
+    [
+      { contentType: "  " },
+      'attachment contentType must be a non-empty string, got "  "',
+    ],
+    [
+      { fileName: undefined },
+      "attachment fileName must be a non-empty string, got undefined",
+    ],
+    [
+      { content: undefined },
+      "attachment content must be Base64 text, got undefined",
+    ],
+    [
+      { content: "hello world!" },
+      'attachment content must be Base64 text, got "hello world!"',
+    ],
+  ])("create refuses %j before sending anything", async (override, message) => {
+    const calls: Call[] = [];
+    let err: unknown;
+    try {
+      await files(calls, WRITE_OK).create({ ...good, ...override } as never);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(PortersConfigError);
+    expect((err as PortersConfigError).message).toBe(message);
+    expect((err as PortersConfigError).category).toBe("config");
+    expect((err as PortersConfigError).hint).toContain("bytesToBase64");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("create accepts Base64 with line breaks, and an empty file", async () => {
+    const calls: Call[] = [];
+    await files(calls, WRITE_OK).create({ ...good, content: "aGVs\r\nbG8=" });
+    await files(calls, WRITE_OK).create({ ...good, content: "" });
+    expect(calls).toHaveLength(2);
+  });
+
+  it.each(["QUJD", "QQ==", "QUI=", "ab+/", "Zm9v\tYmFy", "Zm9v YmFy"])(
+    "create accepts the Base64 %j",
+    async (content) => {
+      const calls: Call[] = [];
+      await files(calls, WRITE_OK).create({ ...good, content });
+      expect(calls).toHaveLength(1);
+    },
+  );
+
+  // 文字の種類は Base64 でも、形が成り立たない値（生のテキストの渡し間違いなど）は送らない。
+  it.each([
+    "a",
+    "=",
+    "==",
+    "ab=",
+    "abcde",
+    "hello",
+    "QQ=A",
+    "Q===",
+    "!QQ==",
+    "QQ==!",
+    "aGk=\u3000",
+    "aGk=\u00a0",
+  ])("create refuses the malformed Base64 %j", async (content) => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).create({ ...good, content }),
+    ).rejects.toThrow("attachment content must be Base64 text");
+    expect(calls).toHaveLength(0);
+  });
+
+  it("shows only the start of a long value", async () => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).create({ ...good, content: "!".repeat(100) }),
+    ).rejects.toThrow(`got ${JSON.stringify("!".repeat(40))}`);
+  });
+
+  it("update checks only the fields it was given", async () => {
+    const calls: Call[] = [];
+    await expect(
+      files(calls, WRITE_OK).update(22222, { fileName: "" }),
+    ).rejects.toThrow("attachment fileName must be a non-empty string");
+    await expect(
+      files(calls, WRITE_OK).update(22222, { contentType: "" }),
+    ).rejects.toThrow("attachment contentType must be a non-empty string");
+    await expect(
+      files(calls, WRITE_OK).update(22222, { content: "%%%" }),
+    ).rejects.toThrow("attachment content must be Base64 text");
+    expect(calls).toHaveLength(0);
+    await files(calls, WRITE_OK).update(22222, { fileName: "b.txt" });
+    expect(calls).toHaveLength(1);
+  });
+});
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createAttachmentAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createAttachmentAccessor({
+      requester: stub("", []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('attachment.of: unknown resource "user"');
+});

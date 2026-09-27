@@ -7,18 +7,20 @@
 // surfaced at runtime (RV-36 covers that half); this is the half that finds it *before* it runs.
 
 import { PortersConfigError } from "../errors";
-import type { DataType } from "../xml/decode";
-import {
-  declaredRequired,
-  type CustomDataType,
-  type CustomFieldResource,
-  type DeclaredCatalogs,
-} from "./define-fields";
+import type { DataType } from "../porters/data-type";
+import { declaredRequired } from "./define-fields";
+import type { CustomDataType } from "./custom-data-types";
+import type {
+  CustomFieldResource,
+  DeclaredCatalogs,
+} from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,
+  type TenantCustomCatalog,
   type UndeclarableField,
-} from "./tenant-catalog";
+  type UndeclarableReason,
+} from "./read-custom-catalog";
 
 /** Declared, but the tenant has no such field. The read/write request would still ask for it. */
 export type MissingField = {
@@ -80,12 +82,33 @@ export type UndeclarableTenantField = UndeclarableField & {
   readonly resource: CustomFieldResource;
 };
 
+// 宣言している項目が、テナントでは宣言できない型だった（ADR-0104）。
+/**
+ * Declared, but the tenant's field is one no declaration can express. `reason` says why:
+ * `no-data-type` (the field carries no value of its own, such as Reference) and `not-declarable`
+ * (a system-managed field) mean the declaration can never read correctly — every read is `null` —
+ * so they clear {@link FieldVerification.ok}. `unknown-field-type` is a type this version of the
+ * library does not know; the declaration may well be right, so it is reported without clearing `ok`.
+ */
+export type DeclaredUndeclarableField = {
+  readonly resource: CustomFieldResource;
+  readonly alias: string;
+  /** The Data Type the declaration gave it. */
+  readonly declared: DataType;
+  /** `Field.P_Type` exactly as PORTERS returned it; `null` when the field carried none. */
+  readonly fieldType: number | null;
+  /** PORTERS' own Field Type label, when the value is one it publishes. */
+  readonly label?: string;
+  readonly reason: UndeclarableReason;
+};
+
 /** What {@link verifyFields} found. */
 export type FieldVerification = {
   /**
    * `true` when every declared resource was read and nothing needs attention — no
-   * {@link FieldVerification.missing}, {@link FieldVerification.typeMismatch} or
-   * {@link FieldVerification.unverifiable}.
+   * {@link FieldVerification.missing}, {@link FieldVerification.typeMismatch},
+   * {@link FieldVerification.unverifiable}, and no {@link FieldVerification.declaredUndeclarable}
+   * whose reason is `no-data-type` or `not-declarable`.
    *
    * `undeclared`, `undeclarable` and `requiredMismatch` do **not** clear this flag: none of them
    * breaks anything, they are there to be read.
@@ -97,6 +120,7 @@ export type FieldVerification = {
   readonly unverifiable: readonly UnverifiableResource[];
   readonly undeclarable: readonly UndeclarableTenantField[];
   readonly requiredMismatch: readonly RequiredMismatch[];
+  readonly declaredUndeclarable: readonly DeclaredUndeclarableField[];
 };
 
 /** Options for {@link verifyFields}. */
@@ -117,6 +141,95 @@ const declaredResources = (
 ): readonly CustomFieldResource[] =>
   Object.keys(fields) as CustomFieldResource[];
 
+// 宣言できない項目の宣言のうち、ok を倒さないのは「このライブラリが型を知らない」ものだけ（ADR-0104）。
+const knownOnlyToBeUnknown = (d: DeclaredUndeclarableField): boolean =>
+  d.reason === "unknown-field-type";
+
+// 見つけたものを種類ごとに積む入れ物。`verifyFields` がこれに `ok` を足して返す。
+type Findings = {
+  missing: MissingField[];
+  typeMismatch: FieldTypeMismatch[];
+  undeclared: UndeclaredField[];
+  unverifiable: UnverifiableResource[];
+  undeclarable: UndeclarableTenantField[];
+  requiredMismatch: RequiredMismatch[];
+  declaredUndeclarable: DeclaredUndeclarableField[];
+};
+
+// 宣言した 1 項目を、テナントの項目と突き合わせる。
+const compareDeclared = (
+  resource: CustomFieldResource,
+  alias: string,
+  declaredType: DataType,
+  declaredReq: boolean,
+  actual: TenantCustomCatalog,
+  found: Findings,
+): void => {
+  const actualType = actual.fields[alias];
+  if (actualType === undefined) {
+    // Not in `actual.fields` — but it may be one of the fields that exists and simply cannot
+    // be declared, and calling that "missing" would be wrong. Declaring one of those is its own
+    // finding (ADR-0104): it reads as `null` forever, unless the type is merely unknown to us.
+    const undeclarable = actual.undeclarable.find((u) => u.alias === alias);
+    if (undeclarable === undefined) {
+      found.missing.push({ resource, alias, declared: declaredType });
+      return;
+    }
+    found.declaredUndeclarable.push({
+      ...undeclarable,
+      resource,
+      declared: declaredType,
+    });
+    return;
+  }
+  if (actualType !== declaredType) {
+    found.typeMismatch.push({
+      resource,
+      alias,
+      declared: declaredType,
+      actual: actualType,
+    });
+  }
+  const tenantReq = actual.required[alias] === true;
+  if (declaredReq !== tenantReq) {
+    found.requiredMismatch.push({
+      resource,
+      alias,
+      declared: declaredReq,
+      tenant: tenantReq,
+    });
+  }
+};
+
+// 1 リソース分の宣言を、読んだテナントのカタログと突き合わせる。
+const compareResource = (
+  resource: CustomFieldResource,
+  fields: DeclaredCatalogs,
+  actual: TenantCustomCatalog,
+  found: Findings,
+): void => {
+  const declared = fields[resource] ?? {};
+  const declaredAsRequired = declaredRequired(fields, resource);
+  for (const entry of actual.undeclarable) {
+    found.undeclarable.push({ ...entry, resource });
+  }
+  for (const [alias, declaredType] of Object.entries(declared)) {
+    compareDeclared(
+      resource,
+      alias,
+      declaredType,
+      declaredAsRequired.has(alias),
+      actual,
+      found,
+    );
+  }
+  for (const [alias, actualType] of Object.entries(actual.fields)) {
+    if (declared[alias] === undefined) {
+      found.undeclared.push({ resource, alias, actual: actualType });
+    }
+  }
+};
+
 /**
  * Read each declared resource's real catalog and compare it with the declaration.
  *
@@ -136,78 +249,36 @@ export const verifyFields = async (
   fields: DeclaredCatalogs,
   options: VerifyFieldsOptions = {},
 ): Promise<FieldVerification> => {
-  const missing: MissingField[] = [];
-  const typeMismatch: FieldTypeMismatch[] = [];
-  const undeclared: UndeclaredField[] = [];
-  const unverifiable: UnverifiableResource[] = [];
-  const undeclarable: UndeclarableTenantField[] = [];
-  const requiredMismatch: RequiredMismatch[] = [];
+  const found: Findings = {
+    missing: [],
+    typeMismatch: [],
+    undeclared: [],
+    unverifiable: [],
+    undeclarable: [],
+    requiredMismatch: [],
+    declaredUndeclarable: [],
+  };
 
   for (const resource of declaredResources(fields)) {
-    const declared = fields[resource] ?? {};
-    const declaredAsRequired = declaredRequired(fields, resource);
-    let actual;
+    let actual: TenantCustomCatalog;
     try {
       actual = await readCustomCatalog(source, resource, {
         active: options.active ?? -1,
       });
     } catch (cause) {
-      unverifiable.push({ resource, cause });
+      found.unverifiable.push({ resource, cause });
       continue;
     }
-    for (const entry of actual.undeclarable) {
-      undeclarable.push({ ...entry, resource });
-    }
-    for (const [alias, declaredType] of Object.entries(declared)) {
-      const actualType = actual.fields[alias];
-      if (actualType === undefined) {
-        // Not in `actual.fields` — but it may be one of the fields that exists and simply cannot
-        // be declared, and calling that "missing" would be wrong.
-        const undeclarableHere = actual.undeclarable.some(
-          (u) => u.alias === alias,
-        );
-        if (!undeclarableHere) {
-          missing.push({ resource, alias, declared: declaredType });
-        }
-        continue;
-      }
-      if (actualType !== declaredType) {
-        typeMismatch.push({
-          resource,
-          alias,
-          declared: declaredType,
-          actual: actualType,
-        });
-      }
-      const declaredReq = declaredAsRequired.has(alias);
-      const tenantReq = actual.required[alias] === true;
-      if (declaredReq !== tenantReq) {
-        requiredMismatch.push({
-          resource,
-          alias,
-          declared: declaredReq,
-          tenant: tenantReq,
-        });
-      }
-    }
-    for (const [alias, actualType] of Object.entries(actual.fields)) {
-      if (declared[alias] === undefined) {
-        undeclared.push({ resource, alias, actual: actualType });
-      }
-    }
+    compareResource(resource, fields, actual, found);
   }
 
   return {
     ok:
-      missing.length === 0 &&
-      typeMismatch.length === 0 &&
-      unverifiable.length === 0,
-    missing,
-    typeMismatch,
-    undeclared,
-    unverifiable,
-    undeclarable,
-    requiredMismatch,
+      found.missing.length === 0 &&
+      found.typeMismatch.length === 0 &&
+      found.unverifiable.length === 0 &&
+      found.declaredUndeclarable.every(knownOnlyToBeUnknown),
+    ...found,
   };
 };
 
@@ -225,14 +296,20 @@ const lines = (report: FieldVerification): readonly string[] => [
     (u) =>
       `${u.resource}: could not read the field catalog (${String(u.cause)})`,
   ),
+  ...report.declaredUndeclarable
+    .filter((d) => !knownOnlyToBeUnknown(d))
+    .map(
+      (d) =>
+        `${d.resource}.${d.alias}: declared ${d.declared}, but the tenant's field cannot be declared (${d.reason})`,
+    ),
 ];
 
 /**
  * Throw unless {@link verifyFields} came back clean — for callers who would rather fail at startup
  * than read a `null` in production.
  *
- * Throws {@link PortersConfigError} (`category: "config"`) for a mismatch, a missing field, **or a
- * resource that could not be read**. That last one is deliberate: "we could not check" is not
+ * Throws {@link PortersConfigError} (`category: "config"`) for a mismatch, a missing field, a declared
+ * field the tenant's type cannot express, **or a resource that could not be read**. That last one is deliberate: "we could not check" is not
  * "everything is fine", and passing it silently would defeat the point of asking.
  *
  * `undeclared` / `undeclarable` / `requiredMismatch` never throw — nothing is broken by any of them.

@@ -42,11 +42,11 @@ PORTERS Connect API（旧 HRBC）を TypeScript から型安全・簡単に扱�
    - スコープはリソース別 R/W（例 `candidate_r` / `candidate_w`）。
 3. **UTC 前提**。ライブラリは日時を **ISO 8601（UTC, `...Z`）に正規化**して入出力し、**JST 等の業務タイムゾーン変換はしない**（利用側の責務）。`util/datetime.ts`（PORTERS 形式 ⇄ ISO）に集約。
 4. **削除 API は存在しない**。`delete()` メソッドを生やさない（型レベルで非対応を明示）。
-5. **リクエストが長すぎると 400 エラー**。正典は**約 15000 文字**（`docs/usage/reference` 準拠。旧 SPEC_v1 の「32KB」は陳腐化。将来 16KB 上限を検討中・未確定 → 追従）。送信前に検知し弾く（`http/requester.ts` の `MAX_REQUEST_LENGTH`）。200 件超は 200 件ずつに分割。
+5. **リクエストが長すぎると 400 エラー**。正典は**約 15000 文字**（`docs/usage/reference` 準拠。旧 SPEC_v1 の「32KB」は陳腐化。将来 16KB 上限を検討中・未確定 → 追従）。送信前に検知し弾く（値は `porters/request.ts` の `MAX_REQUEST_LENGTH`、検査は `http/requester.ts`）。200 件超は 200 件ずつに分割。
 6. **レート制限**：1 分あたり Read 2000 / Write 500 は**内蔵スロットリング＋リトライで自制**（`http/throttle.ts` は分バケットのみ）。
    **月 15 万アクセスは契約条件**であり、プロセス横断の累積管理はライブラリの責務にしない（利用側の運用責務）。
 7. **ホスト名は非公開**：契約時に通知される値を環境変数（`PORTERS_HOST`）で受け取る。ハードコード禁止。
-   **URL 組立は 1 箇所**（`http/access-point.ts` の `apiUrl`）に集約。scheme は既定 `https`・`http` は明示時のみで
+   **URL 組立は 1 箇所**（`http/api-url.ts` の `apiUrl`）に集約。scheme は既定 `https`・`http` は明示時のみで
    毎プロセス 1 回警告し、抑止は専用 env（`PORTERS_SUPPRESS_INSECURE_HTTP_WARNING`）だけ＝**許可と沈黙は分ける**（ADR-0047）。
 
 ---
@@ -77,6 +77,7 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 - 1ファイル1責務。XML パース・OAuth・HTTP・リソースを混ぜない。
 - **スタイル規約（`docs/adr/0013-coding-conventions-class-vs-function.md`）**：クラスは `Error` 派生と `PortersClient` のみ／状態を持つ内部協調子は **factory 関数**で契約型を返す／**関数は全 arrow（const）**／**型定義は全 `type`（`interface` 不使用）**。eslint で強制（`func-style:expression`・`no-use-before-define`・`consistent-type-definitions:type`）。
 - **ファイル構成**：各モジュールの `index.ts` は**バレル（`export *` / `export type *` の再 export のみ）**＝モジュール内の公開可否は**実ファイルの `export` 有無**で制御。クラス/関数/型の宣言は named ファイルに置く。**ただしパッケージ公開 API `src/index.ts` は明示 export でキュレーション**（cross-module で見えるが npm 非公開にしたい記号があるため）。ファイル名は **kebab-case**（大文字小文字を区別しない FS での import 事故を避ける）。
+- **ファイルを移す・名前を変えるとき**：名前の変更は、中身の変更と**別のコミット**にする（git が名前の変更として追え、`git log --follow` で履歴をたどれるように。ADR-0097）。移した・名前を変えたファイルへのリンクは直す（`check:links` が検査する）。ADR の本文に書いたパスは書き換えず、そのパスを書いている ADR の末尾の「パスの注記」に今の場所を足す（決定の本文は書き換えないため）。
 - テストを伴わない新リソース追加はしない。
 - **公開サーフェス（型名・メソッド名・public API の JSDoc）は英語**。**内部実装コメントは日本語可**
   （保守者が読めること＝フェイルセーフ優先。海外コントリビュータは契約ゲートで実質入れない）。実行時 i18n はしない。
@@ -103,18 +104,21 @@ ADR-0033 を supersede）。進め方は **リソース 1 種＝1 PR**（実装�
 ## ディレクトリ構成
 
 モジュール構成（ディレクトリ＝責務境界）とテスト配置は `docs/design/basic-design.md` §2 が正。
+**モジュールの層**（porters → errors → util → xml → http → auth → accessor → resources → fields → 直下）は ADR-0097 / ADR-0098 / ADR-0101 で決め、
+下の層から上の層を import すると eslint が止める。
 ファイル単位の分割は詳細設計／実装で確定する。下記は要点のみ（雛形・非確定）：
 
 ```text
 src/
   index.ts        # public export
-  client.ts       # PortersClient
+  porters-client.ts # PortersClient
   auth/oauth.ts
   http/{request,headers}.ts
-  xml/parser.ts
+  xml/parse-resource-page.ts
+  accessor/                 # アクセサを組み立てる共通の仕組み（ADR-0101）
   resources/{candidate,job,client,process,...}.ts
+  porters/                  # PORTERS が決めた値と定義表（上限・Data Type・Resource List 等。ADR-0098）
   fields/define-fields.ts   # カスタム項目宣言 DSL（ADR-0023）
-  types/
   util/datetime.ts
 ```
 

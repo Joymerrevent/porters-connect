@@ -141,6 +141,14 @@ await files.create({ resourceId: 10006, contentType, fileName, content });
   マトリクスの表 B / C / D、`docs/usage/howto/attachments.md`、[ADR-0018][adr18] への改訂注記、
   CHANGELOG（**Breaking**）
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/usage/howto/attachments.md` → `docs/usage/resources/attachment.md`（2026-09-23・ADR-0088）
+
 [adr18]: 0018-attachment-design.md
 [adr75]: 0075-attachment-search-all.md
 [adr76]: 0076-phase-read-query-surface.md

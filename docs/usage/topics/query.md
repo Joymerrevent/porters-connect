@@ -12,6 +12,7 @@
 - **1 ページは最大 200 件**です。全件が要るときは `searchAll` が 200 件刻みで辿ります。
 - **削除済みのレコードは既定では返りません**。含めるかどうかは `itemstate` で選びます
   （[削除と削除済みデータ][deleted]）。
+- **ID が分かっているなら `get` / `getMany` で読みます**（ページの後半）。
 - **マスタ 5 種は指定できるものが違います**（`condition` と `get(id)` が無い）。このページの終わりにまとめてあります。
 
 ## 全体像
@@ -79,8 +80,30 @@ await t.candidate.search({ field: ["U_memo"] }); // ✗ 型エラー（宣言し
 綴りまで検査されます<!-- 根拠: ADR-0074 -->。宣言せずに使う必要があるときの方法は
 [カスタム項目][custom-fields]にあります。
 
-> 取得しなかった項目は**キーごと存在しません**（`undefined`）。値が空なら `null` です。
-> 型が `値 | null | undefined` になっているのはこのためです。
+<!-- 根拠: ADR-0096 -->
+
+**戻り値の型は、要求した項目だけを持ちます**。要求した項目とは、`field` に書いた項目と、`expand` / `image` で
+選んだ項目です（`get` / `getMany` では ID も）。読んでいない項目に触ると型エラーになるので、`field` に足し忘れた
+項目にコンパイル時に気づけます。
+
+```ts
+const page = await t.candidate.search({ field: ["P_Name"] });
+const name = page.items[0]?.P_Name; // string | null | undefined
+```
+
+<!-- doccheck: expect-error -->
+
+```ts
+const page = await t.candidate.search({ field: ["P_Name"] });
+page.items[0]?.P_Mail; // ✗ 型エラー（読んでいない項目）
+```
+
+- `field` を省略したとき、または中身をコンパイラが読めない配列（`string[]` の変数など）を渡したときは、知っている
+  項目すべてを持つ型になります。
+- `search` / `searchAll` に `field: []` を渡すと、項目を 1 つも持たない型になります（件数だけを見るとき）。このとき `expand` / `image` も送られません（足す先の `field` が無いため）。
+- 読んだ項目も、値が空なら `null`、PORTERS が返さなければキーごと無い（`undefined`）ので、型は
+  `値 | null | undefined` です。
+- 型に無い項目を読む必要があるときは [`rawValue`][f-rawValue] を使います。
 
 ## `expand` — 参照先の項目も読む
 
@@ -106,7 +129,7 @@ plain.items[0]?.P_Client; // number | null
 - **参照先の接頭辞は書きません**。`condition` / `order` / `field` と同じく接頭辞なしの alias で指定し、
   ライブラリが `field=Job.P_Client(Client.P_Id,Client.P_Name)` を組み立てます。
   Candidate を参照するときの `Person.` もライブラリが付けます。
-- `search` / `searchAll` / `get` で使えます（`get` は `get(id, { expand })`）。
+- `search` / `searchAll` / `get` / `getMany` で使えます（`get` は `get(id, { expand })`、`getMany` は `getMany(ids, { expand })`）。
 - 1 回の呼び出しで済みます。参照先を別途 `client.get(id)` で引く必要はありません。
 
 ```ts
@@ -233,6 +256,20 @@ await t.candidate.search({
 **日時は ISO 8601（UTC `…Z`）で渡してください。** PORTERS 形式（`yyyy/mm/dd HH:MM:SS`）への変換は
 ライブラリが行います。JST などの業務タイムゾーン変換は**利用側の責務**です<!-- 根拠: PRD R-10 -->。
 
+### カンマを含む値では検索できません
+
+<!-- 根拠: ADR-0105 -->
+
+PORTERS は条件どうしをカンマで、`or` / `and` の値どうしをコロンで区切り、値の中にそれらを書く方法を用意していません。
+そのため次の値は、送る前に `PortersConfigError` になります（そのまま送ると、値の途中から別の条件として読まれるためです）。
+
+- 条件の値に**カンマ**が入っているもの（例 `P_Name: { part: "株式会社A,B" }`）
+- `or` / `and` の値の 1 つに**カンマかコロン**が入っているもの
+- `or` / `and` に**空の配列**を渡したもの
+
+カンマを含む値で探したいときは、カンマを含まない部分で検索し、結果を手元で絞ってください。
+テキストや日時の値の**コロン**は、ライブラリは拒否しません（`P_Name: { part: "12:00" }` など）。
+
 ### 上位リソースの絞り込み
 
 親にあたるリソース（Resume なら Candidate）の項目を直接 condition に使うことはできませんが、**紐づく ID の項目**でなら絞れます。
@@ -281,6 +318,8 @@ await t.candidate.search({ keywords: ["東京", "営業"] });
 ```
 
 - **カンマ込みで 100 文字まで**。超えると送信前に `PortersConfigError` になります。
+- **キーワードの 1 つにカンマを入れることはできません**（キーワードどうしの区切りとして読まれるため）。送る前に
+  `PortersConfigError` になります。
 - 電話番号はハイフンを除いた数字で照合されます。
 
 ## `itemstate` — 削除済みを含めるか
@@ -298,7 +337,7 @@ await t.candidate.search({
 
 ## `count` / `start` — ページング
 
-オフセット方式（何件目から何件取るか）です。`count` は **1〜200（既定 10）**、`start` は 0 始まり。
+オフセット方式（何件目から何件取るか）です。`count` は **1〜200（既定 10）**、`start` は **0 以上の整数**（0 始まり）。
 
 ```ts
 const page = await t.candidate.search({ count: 200, start: 0 });
@@ -308,7 +347,107 @@ page.start; // 今回の開始インデックス
 ```
 
 全件が必要なら `searchAll` を使ってください（200 件刻みで自動的に辿り、
-`total` に達するか空ページで停止します）。
+`total` に達するか空ページで停止します）。応答が頼んだページと合わないとき（応答の `start` が頼んだ位置と違うときなど）は、
+同じレコードを繰り返し返したり抜かしたりせずに、`PortersResourceError`（`category` は `"unknown"`）で止まります。
+
+`searchAll` は「何件目から」でページを辿るので、辿っている途中で条件に合うレコードが減ると（削除・更新で条件から外れるなど）、
+その件数だけ後ろのレコードが前のページへずれ、**取りこぼします**。途中で増えたときは、同じレコードを 2 回受け取ることがあります。
+取りこぼしは、後から件数を比べても見つけられません（減った後の `total` と、受け取った件数が一致するため）。
+
+辿っている間にレコードが減りうるときは、`searchAll` の代わりに、`P_Id` の昇順で「前のページの最後の `P_Id` より大きいもの」を
+読み続けてください。何件目かではなく `P_Id` で続きを指すので、途中で減っても、残っているレコードは取りこぼしません。
+`field` を指定するときは、`P_Id` を必ず含めてください（含めないと、1 ページ目の後で続きが分からずに止まります）。
+
+```ts
+let lastId = 0;
+for (;;) {
+  const page = await t.candidate.search({
+    condition: { P_Id: { gt: lastId } },
+    order: [{ P_Id: "asc" }],
+    count: 200,
+  });
+  for (const c of page.items) console.log(c.P_Id);
+  const last = page.items.at(-1)?.P_Id;
+  if (last === undefined || last === null) break;
+  lastId = last;
+}
+```
+
+<!-- 根拠: ADR-0099 -->
+
+`count` / `start` は、何を探すかを表す型（`CandidateSearchQuery` など）とは別の型
+[`Paging`][t-Paging] です。`search` はクエリと一緒に `Paging` を受け取り、`searchAll` はページを自分で辿るので
+受け取りません。そのため、同じクエリを `search` と `searchAll` の両方に渡せます。
+
+```ts
+import type { CandidateSearchQuery } from "@joymerrevent/porters-connect";
+
+const query: CandidateSearchQuery = { condition: { P_Name: { part: "山田" } } };
+
+const first = await t.candidate.search({ ...query, count: 50 }); // 最初の 50 件
+for await (const c of t.candidate.searchAll(query)) {
+  console.log(c.P_Id); // 条件に合うすべて
+}
+```
+
+クエリの変数に `count` / `start` も入れておきたいときは、型を `CandidateSearchQuery & Paging` にします。
+
+宣言したカスタム項目も `condition` や `order` に書くときは、`CandidateSearchQuery` の型引数に、宣言から取り出した
+その 1 リソース分の項目を渡します。取り出すには [`CustomFor`][t-CustomFor] を使います。
+
+```ts
+import { defineFields } from "@joymerrevent/porters-connect";
+import type {
+  CandidateSearchQuery,
+  CustomFor,
+} from "@joymerrevent/porters-connect";
+
+const fields = defineFields({
+  candidate: (f) => ({ U_score: f.number() }),
+});
+type CandidateCustom = CustomFor<typeof fields, "candidate">;
+
+const highScore: CandidateSearchQuery<CandidateCustom> = {
+  condition: { U_score: { ge: 80 } },
+  order: [{ U_score: "desc" }],
+};
+
+const scope = porters.tenant(123, { fields });
+for await (const c of scope.candidate.searchAll(highScore)) {
+  console.log(c.P_Id);
+}
+```
+
+## `get` / `getMany` — ID で読む
+
+ID が分かっているレコードは、`get`（1 件）か `getMany`（複数）で読みます。どちらも `field` / `expand` / `image` を
+`search` と同じ書き方で指定できます。
+
+```ts
+const one = await t.candidate.get(1234); // 見つからなければ undefined
+const named = await t.candidate.get(1234, { field: ["P_Name"] }); // P_Id と P_Name だけ
+
+const many = await t.candidate.getMany([1234, 5678, 9999], {
+  field: ["P_Name"],
+});
+// → [レコード, レコード, undefined]（渡した順。見つからない ID の位置は undefined）
+```
+
+<!-- 根拠: ADR-0095 -->
+
+- **ID の項目は必ず読みます**。`field` に `P_Id` を入れなくても、返るレコードには `P_Id` が入ります。
+- **`getMany` の戻り値は、渡した ID と同じ長さ・同じ順の配列です**。同じ ID を 2 回渡すと、両方の位置に同じレコードが
+  入ります。空の配列を渡すと、リクエストを送らずに `[]` を返します。
+- **`getMany` は ID をまとめて送ります**。1 回のリクエストは最大 200 件で、リクエストの長さの上限に収まるように
+  ライブラリが分けて順に送ります。`field` で項目を絞ると、1 回に送れる ID が増えます。
+- **ID は 1 以上の整数です**。`0`・負の数・小数・`NaN` を渡すと、送る前に `PortersConfigError` になります。
+- **返ってきたレコードは、渡した ID と突き合わせます**。渡していない ID のレコードが返ってきたとき、同じレコードが
+  2 件返ってきたとき、返ってきた件数が応答の総件数と合わないときは、何も返さずに `PortersResourceError`（`category` は
+  `"unknown"`）になります。PORTERS が ID の条件どおりに絞らなかったか、応答が途中で切れたことを表すので、
+  `getMany` のときは `get` で 1 件ずつ読んでください。`get` も同じように突き合わせ、別の ID のレコードは返しません。
+  途中のリクエストが失敗したときも、それまでの結果は返さずにエラーになります。
+- **`getMany` は Attachment にはありません**。ファイルの本体は `get` で 1 件ずつ取ります。マスタ 5 種には `get` も
+  `getMany` もありません。
 
 ## マスタは指定できるものが違う
 
@@ -342,7 +481,8 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 ```
 
 - `t.option.search()` に `searchAll` はありません（PORTERS の Option Read に `start` が無いため）。階層は
-  `P_ParentId` / `P_Order` で復元します。
+  `P_ParentId` / `P_Order` で復元します。受け取るページ送りは件数の上限 `count` だけで、型は
+  [`Limit`][t-Limit] です（省略すると全件）。
 - `porters.partition.current()` は**提供していません**。`request_type=0` は既定の `code_direct`
   認証では 403 になるためです（[Partition とテナントスコープ][partition]）。
 
@@ -354,6 +494,10 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 - `itemstate` が `deleted` / `all` で許されない項目を condition に指定
 - リクエスト全体が約 15000 文字超（**URL + body**）
 - `count` が 1〜200 の外（整数でない場合も）
+- `start` が 0 以上の整数でない
+- 条件の値にカンマ、`or` / `and` の値にカンマかコロン、キーワードにカンマ（上の「カンマを含む値では検索できません」）
+- `or` / `and` が空の配列
+- `get` / `getMany` の ID が 1 以上の整数でない
 
 ## 関連
 
@@ -381,3 +525,7 @@ const options = await t.option.search({ alias: "Option.P_Gender" });
 [write]: write.md
 [resources]: ../resources/README.md
 [sync-batch]: ../recipes/sync-batch.md
+[t-Paging]: ../api/type-aliases/Paging.md
+[t-CustomFor]: ../api/type-aliases/CustomFor.md
+[t-Limit]: ../api/type-aliases/Limit.md
+[f-rawValue]: ../api/functions/rawValue.md

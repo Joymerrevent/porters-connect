@@ -6,9 +6,9 @@
 
 # Function: resourceNameOf()
 
-> **resourceNameOf**(`value`): `number` \| `"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+> **resourceNameOf**(`value`): `number` \| `"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
-Defined in: [src/resources/resource-list.ts:81](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/resource-list.ts#L81)
+Defined in: [src/porters/resource-list.ts:71](https://github.com/Joymerrevent/porters-connect/blob/main/src/porters/resource-list.ts#L71)
 
 The name for a resource number — the other direction of [resourceValueOf](resourceValueOf.md).
 Use it to read a value PORTERS returned: `Activity.P_Resource`, `Field.P_ResourceType`, or a
@@ -26,7 +26,7 @@ value this library does not know is data, not a fault.
 
 ## Returns
 
-`number` \| `"candidate"` \| `"client"` \| `"recruiter"` \| `"job"` \| `"contact"` \| `"opportunity"` \| `"activity"` \| `"contract"` \| `"resume"` \| `"sales"` \| `"process"`
+`number` \| `"candidate"` \| `"job"` \| `"client"` \| `"process"` \| `"recruiter"` \| `"sales"` \| `"contract"` \| `"resume"` \| `"activity"` \| `"opportunity"` \| `"contact"`
 
 ## Example
 

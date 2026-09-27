@@ -1,13 +1,14 @@
-// Token-bucket throttle (ADR-0010): per-minute Read/Write limits at ~90% safety.
-// Bursts are allowed up to capacity; the average stays under the limit.
+// Sliding-window throttle (ADR-0010 / ADR-0102): per-minute Read/Write limits at ~90% safety.
+// It remembers when each of the last minute's requests went out, so **any 60 seconds** carry at
+// most the capacity — whether PORTERS counts a fixed clock minute or the last 60 seconds. A burst
+// up to the capacity still goes out at once.
 //
-// **One bucket per host, not per client** (ADR-0073). PORTERS counts what its host receives,
+// **One throttle per host, not per client** (ADR-0073). PORTERS counts what its host receives,
 // so a process that builds several clients for the same host must still add up to one limit.
-// Building a client per tenant is something the guides actively recommend (separate tokens,
-// differing custom catalogs), and before this the buckets multiplied with them — silently
-// (RV-43). The registry below is the process-wide seam that keeps the sum honest.
+// The per-host sharing is `shared-throttle.ts`; this file is one throttle.
 
 import { PortersConfigError } from "../errors/index";
+import { READS_PER_MINUTE, WRITES_PER_MINUTE } from "../porters/request";
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,7 +20,7 @@ export type Throttle = {
 export type ThrottleOptions = {
   /**
    * Reads allowed per minute before headroom. Default 2000 (PORTERS' own cap). A positive
-   * integer, and **`readPerMin * safety` must still leave at least one token** — see
+   * integer, and **`readPerMin * safety` must still let at least one request through** — see
    * {@link ThrottleOptions.safety}.
    */
   readPerMin?: number;
@@ -29,17 +30,21 @@ export type ThrottleOptions = {
   /**
    * Fraction of the limit to actually use (headroom). Default 0.9. Greater than 0, at most 1.
    *
-   * The bucket holds `floor(limit * safety)` tokens, so a small limit and a small `safety`
-   * multiply into **zero capacity** — `{ readPerMin: 1 }` at the default 0.9 already does.
-   * A bucket that can never hold a token would make every call wait forever, so the
-   * combination is rejected at construction rather than hanging.
+   * At most `floor(limit * safety)` requests go out in any 60 seconds, so a small limit and a
+   * small `safety` multiply into **zero capacity** — `{ readPerMin: 1 }` at the default 0.9
+   * already does. A throttle that can never let a request through would make every call wait
+   * forever, so the combination is rejected at construction rather than hanging.
    */
   safety?: number;
+  /**
+   * The clock, in milliseconds. Default `performance.now()`, which never goes backwards — a wall
+   * clock set back an hour would otherwise make every call wait that hour.
+   */
   now?: () => number;
 };
 
 /**
- * Turn one limit into the bucket's capacity, refusing a combination that cannot work.
+ * Turn one limit into the throttle's capacity, refusing a combination that cannot work.
  *
  * Checked here rather than per call: this is a configuration mistake, and the same mistake on
  * every request (the line `createFetchTransport` draws for `timeoutMs` — ADR-0077).
@@ -77,23 +82,37 @@ const capacityOf = (
   return capacity;
 };
 
-const makeBucket = (
+const WINDOW_MS = 60_000;
+
+// 直近 60 秒に通した時刻を古い順に持ち、その数が容量に達したら、いちばん古い時刻から 60 秒たつまで待つ。
+// どの 60 秒を切り取っても容量を超えない（ADR-0102。token-bucket は満杯から始めて毎分補充するので、
+// 起動直後の 60 秒で容量の約 2 倍を通していた。RV-66）。
+const makeWindow = (
   capacity: number,
   now: () => number,
 ): (() => Promise<void>) => {
-  const ratePerMs = capacity / 60_000;
-  let tokens = capacity;
-  let last = now();
+  // 送った時刻を、容量の長さの輪として持つ（head がいちばん古い時刻、count が窓の中の件数）。
+  // 配列の先頭を shift で取り除くと、容量に比例して遅くなる（RV-124）。
+  // 初めの中身は結果に効かない（count の外の場所は、読む前に必ず書く）。
+  // Stryker disable next-line ArrayDeclaration: equivalent — slots outside count are written before read
+  const sent: number[] = [];
+  let head = 0;
+  let count = 0;
   return async () => {
     for (;;) {
       const t = now();
-      tokens = Math.min(capacity, tokens + (t - last) * ratePerMs);
-      last = t;
-      if (tokens >= 1) {
-        tokens -= 1;
+      // 窓から出た時刻を古い順に捨てる。輪の場所は使い回すので、空かどうかは count で見る。
+      while (count > 0 && sent[head] <= t - WINDOW_MS) {
+        head = (head + 1) % capacity;
+        count -= 1;
+      }
+      if (count < capacity) {
+        sent[(head + count) % capacity] = t;
+        count += 1;
         return;
       }
-      await sleep(Math.ceil((1 - tokens) / ratePerMs));
+      // 容量に達しているので sent[head] はある。いちばん古い時刻が窓から出るまで待つ。
+      await sleep(sent[head] + WINDOW_MS - t);
     }
   };
 };
@@ -112,65 +131,14 @@ export const createThrottle = (opts: ThrottleOptions = {}): Throttle => {
       },
     );
   }
-  const now = opts.now ?? (() => Date.now());
-  const read = makeBucket(
-    capacityOf(opts.readPerMin ?? 2000, safety, "readPerMin"),
+  const now = opts.now ?? (() => performance.now());
+  const read = makeWindow(
+    capacityOf(opts.readPerMin ?? READS_PER_MINUTE, safety, "readPerMin"),
     now,
   );
-  const write = makeBucket(
-    capacityOf(opts.writePerMin ?? 500, safety, "writePerMin"),
+  const write = makeWindow(
+    capacityOf(opts.writePerMin ?? WRITES_PER_MINUTE, safety, "writePerMin"),
     now,
   );
   return { take: (isWrite) => (isWrite ? write() : read()) };
 };
-
-/**
- * Hands out one {@link Throttle} per **destination** (ADR-0073). The key is the access point's
- * authority — hostname, plus `:port` when one is configured (ADR-0078) — lower-cased, since a host
- * name is case-insensitive. Every client aimed at the same PORTERS shares a bucket, while a local
- * fake on another name **or another port** keeps its own.
- *
- * State lives in a factory (ADR-0013); the process-wide instance is built from it below.
- */
-export type ThrottleRegistry = {
-  /** The bucket for `authority`, created on first use and reused afterwards. */
-  forAuthority(authority: string): Throttle;
-  /** Drop every bucket (test seam). */
-  reset(): void;
-};
-
-export const createThrottleRegistry = (
-  make: () => Throttle = () => createThrottle(),
-): ThrottleRegistry => {
-  const buckets = new Map<string, Throttle>();
-  return {
-    forAuthority: (authority) => {
-      // 大小を畳むのが目的で、どちらへ畳むかは結果に効かない（`toUpperCase` でも同じ）。
-      // Stryker disable next-line MethodExpression: equivalent — どちらの case fold でも同じキーになる
-      const key = authority.toLowerCase();
-      const known = buckets.get(key);
-      if (known !== undefined) return known;
-      const created = make();
-      buckets.set(key, created);
-      return created;
-    },
-    reset: () => buckets.clear(),
-  };
-};
-
-// "One limit per destination" is exactly one registry for the whole program.
-const processRegistry = createThrottleRegistry();
-
-/**
- * The process-wide bucket for `authority` (`hostname` or `hostname:port` — ADR-0078). A client uses
- * this unless the caller injected its own {@link Throttle} — see `PortersClientOptions.throttle`.
- */
-// VERIFY(live): the reference states the per-minute caps but never says **what they are counted
-// per** — App, contract, or host. Host is assumed because a host is issued per contract, so
-// "host ≒ contract" — docs/live-verification.md (LV-23). The assumption fails safe (sharing more
-// widely means calling less), so if it turns out to be per-App the key gains the App id.
-export const sharedThrottleFor = (authority: string): Throttle =>
-  processRegistry.forAuthority(authority);
-
-/** Test seam: drop every shared bucket. Not part of the published API. */
-export const resetSharedThrottles = (): void => processRegistry.reset();

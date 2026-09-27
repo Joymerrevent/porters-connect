@@ -45,6 +45,10 @@ grep -rn "VERIFY(live)" src test
 | LV-30 | Department Read で 6 項目すべてを `field` に並べられるか | 未確認 |
 | LV-31 | 時分型の Read が秒 `00` 以外を返すことがあるか           | 未確認 |
 | LV-32 | Write API は `P_Required=1` の項目の欠落を弾くか         | 未確認 |
+| LV-33 | データ系の `P_Id` に `or` の条件が効くか                 | 未確認 |
+| LV-34 | Read の応答の `Start` は、要求した `start` と同じか      | 未確認 |
+| LV-35 | 条件の値の中のコロンは、値の一部として読まれるか         | 未確認 |
+| LV-36 | `keywords` の 100 文字は、何の単位で数えるか             | 未確認 |
 
 ---
 
@@ -52,7 +56,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: `Option.` 付き（例 `Option.P_PersonPhase_Applied`）を verbatim 返却
 - **不確実な理由**: ライブ Read 例は `Option.P_Tokyo`、旧 fixture は接頭辞なしだった
-- **コード箇所**: `src/xml/decode.ts`（`decodeOption`）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeOption`）
 - **確認方法**: 実 Read レスポンスの `OptionRoot` 子タグ名
 - **状態**: 未確認
 - **確認結果**: —
@@ -61,7 +65,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: あっても無くても動くよう**両対応**
 - **不確実な理由**: ライブのテンプレは Root あり・サンプルは Root なし（ADR-0011 で保留）
-- **コード箇所**: `src/xml/decode.ts`（`decodeOption`）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeOption`）
 - **確認方法**: 実 Read に `OptionRoot` が出るか
 - **状態**: 未確認
 - **確認結果**: —
@@ -116,7 +120,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: Partition Read は `partition` パラメータを送らない（`request_type` のみ）。doc の Method/Sample に `partition` が無いため（[ADR-0022][a22]）
 - **不確実な理由**: 実機で `partition` 無しのまま 200 で通るか未確認（他リソースは必須のため）
-- **コード箇所**: `src/resources/partition.ts`（`buildUrl`）
+- **コード箇所**: `src/resources/partition.ts`（`buildParams`）
 - **確認方法**: 実 `partition?request_type=1`（partition 未指定）
 - **状態**: 未確認
 - **確認結果**: —
@@ -131,7 +135,7 @@ grep -rn "VERIFY(live)" src test
   月次クォータは API ドキュメントではなく**契約条件**として示されているため、超過時の挙動・集計単位も不明
 - **コード箇所**: `test/fake/fake-transport.ts`（サイズガードの 400）／`test/fake/rate-limit.ts`（分・月の窓）／
   ライブラリ側は `src/http/requester.ts`（送信前ガードで到達させない・応答 status の分岐）・
-  `src/errors/classify.ts`（`httpStatusCategory` ＝ status→category の写像）・`src/http/throttle.ts`（上限の 90% で自制）
+  `src/errors/http-status-error.ts`（`httpStatusCategory` ＝ status→category の写像）・`src/http/throttle.ts`（上限の 90% で自制）
 - **確認方法**: 15000 文字超のリクエストを実機に投げてステータス・ボディを記録／1 分あたり上限超のバーストで切断挙動を観測／
   月次クォータ超過時の応答と、カウントのリセット時期を確認
 - **状態**: 未確認
@@ -144,7 +148,7 @@ grep -rn "VERIFY(live)" src test
 
 - **現在の対応 / 仮定**: 参照先レコードは `<Field><Reference><P_Id>id</P_Id></Reference></Field>` 相当の**中立なタグ**で表現（`decodeReference` は最初の record 型の子から `P_Id` を読むため通る）
 - **不確実な理由**: 実際のタグは**参照先リソース名**（例 `<Candidate>`）のはずだが、Data Type カタログは参照先リソースを持たないため、フェイク側で正しい名前を決められない
-- **コード箇所**: `test/fake/wire.ts`（`referenceInner`）／`src/xml/decode.ts`（`decodeReference`）
+- **コード箇所**: `test/fake/wire.ts`（`referenceInner`）／`src/xml/decode-field.ts`（`decodeReference`）
 - **確認方法**: `Resume.P_Candidate` 等の実 Read レスポンスで入れ子タグ名と内側の alias（`Candidate.P_Id` か `P_Id` か）を確認
 - **状態**: 未確認
 - **確認結果**: —
@@ -154,7 +158,7 @@ grep -rn "VERIFY(live)" src test
 - **現在の対応 / 仮定**: 更新対象 ID が存在しない → **per-item `<Code>7`**（Resource が存在しない）。1 リクエスト 200 件超 → **ルート `<Code>102`**（パラメータが多すぎ）
 - **不確実な理由**: reference は「200 件ずつ分割」とだけ書き、**超過時のコード**も、Write エラーが per-item か**ルート `<Code>`** かも明示していない（成功時の Write 応答にルート `<Code>` は無い）
 - **コード箇所**: `test/fake/fake-transport.ts`（`writeItem` / `handleWrite`）／
-  ライブラリ側は `src/xml/parser.ts`（`parseWriteResult` がルート `<Code>` を先読み）
+  ライブラリ側は `src/xml/parse-write-result.ts`（`parseWriteResult` がルート `<Code>` を先読み）
 - **確認方法**: 存在しない ID への update・201 件の一括 Write を実機に投げ、応答 XML の形（ルート `<Code>` の有無）とコードを記録
 - **状態**: 未確認
 - **確認結果**: —
@@ -173,8 +177,8 @@ grep -rn "VERIFY(live)" src test
   いま `P_Alias` の表記は **利用者に見せる生成物（`generateFieldDecls`）と突合結果（`verifyFields`）の
   正しさ**に効く。**外れても壊れない設計にはしてある**（接頭辞つき・bare の両対応）が、
   確認の価値は上がった。System 系の Value は**宣言できない型**なので、外れても生成・突合は変わらない
-- **コード箇所**: `src/resources/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
-  `src/fields/tenant-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
+- **コード箇所**: `src/porters/field-type.ts`（`FIELD_TYPES`＝Value ↔ Data Type の正典）／
+  `src/fields/read-custom-catalog.ts`（`readCustomCatalog`＝`P_Alias` を接頭辞つき・bare の両対応で読む）／
   `test/fake/master-read.ts`（`readField`）
 - **確認方法**: 実 `field?resource=1` レスポンスの `Field.P_Alias` と、登録日・参照項目の `Field.P_Type`
 - **状態**: 未確認
@@ -187,7 +191,7 @@ grep -rn "VERIFY(live)" src test
 - **不確実な理由**: App 登録が App 単位である点は確定だが、**発行されたトークンのアクセス範囲が partition を跨ぐか**は未確認。
   [ADR-0008][a8] は両対応（跨げないなら案3＝テナントごとに専用 client を構築）なので**設計はブロックされない**が、
   `tenant(id)` の使い勝手は結論に左右される
-- **コード箇所**: `src/client.ts`（`tenant` / `buildScope`）／`src/resources/resource.ts`（`partition` をクエリに載せる）
+- **コード箇所**: `src/porters-client.ts`（`tenant` / `buildScope`）／`src/accessor/build-read-params.ts`（`buildReadParams` が `partition` をクエリに載せる）
 - **確認方法**: アクセス権を付与した 2 つの partition に対し、**同一の Access Token** で Read を投げて両方 200 ＋ `<Code>0`
   が返るか。片方が 403/404 なら案3（テナントごとに client）を推奨経路に格上げする
 - **状態**: 未確認
@@ -204,7 +208,7 @@ grep -rn "VERIFY(live)" src test
   「Read の field でのみ指定可・Write 不可」だけを書き、**応答 XML の実例を載せていない**。
   Field Type / Data Type 欄がともに「ー」＝ネストの有無を決める型情報が無いので、
   平文である保証は取れていない
-- **コード箇所**: `src/xml/decode.ts`（`decodeField` の `type === null` 分岐）／
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeField` の `type === null` 分岐）／
   各カタログの `P_Deleted: null`（`src/resources/{candidate,job,client,process,resume}.ts`）
 - **確認方法**: 実機で 3 点。
   1. `field` に `{Prefix}.P_Deleted` を含めた Read の応答 XML — 平文スカラーか、何かにネストするか
@@ -225,7 +229,7 @@ grep -rn "VERIFY(live)" src test
   「既定を説明しているだけで、送るのは `deleted` / `all` のみ」という読み方も文面上は否定できない。
   外れたときの形が重く、**`existing` を明示指定した Read が全部 Result Code 133
   （itemstate 値が無効）で落ちる**
-- **コード箇所**: `src/resources/query.ts`（`appendReadQuery` の itemstate 分岐）
+- **コード箇所**: `src/accessor/append-read-query.ts`（`appendReadQuery` の itemstate 分岐）
 - **確認方法**: `itemstate=existing` を付けた Read を実機に投げ、**HTTP 200 ＋ ルート `<Code>0`** が返り、
   かつ**結果が `itemstate` 無しの Read と一致する**ことを確認する。133 が返るなら案A を撤回して
   [ADR-0038][a38] SD-4 の省略へ戻す（新しい ADR で [ADR-0057][a57] を supersede する）
@@ -245,7 +249,7 @@ grep -rn "VERIFY(live)" src test
   リソース名と食い違う唯一の例。Field Type 記事が Write について
   「`Person.P_Id` の値のみを指定することができます」と書くので **Read の `()` も `Person.` と推定**しているが、
   Read 側の明示例は無い
-- **コード箇所**: `src/resources/expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
+- **コード箇所**: `src/accessor/apply-expand.ts`（`expandEntry` — `VERIFY(live)` 済み）・
   `src/resources/candidate.ts`（`prefix: "Person"`）・参照先の登録は各リソースの `REFERENCES`
 - **確認方法**: Process Read に `field=Process.P_Candidate(Person.P_Id,Person.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
@@ -264,7 +268,7 @@ grep -rn "VERIFY(live)" src test
 UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を並べており、
   この resource について `()` 付きの例が無い。応答の形（`<Owner><User><User.P_Id>…`）は
   どちらの要求でも同じなので、**要求が受け付けられるかだけが未確認**
-- **コード箇所**: `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）・
+- **コード箇所**: `src/accessor/field-param.ts`（`readFieldEntry` — `User` 型に `()` を付ける）・
   `src/resources/phase.ts`（`VERIFY(live)` 済み）
 - **確認方法**: Phase Read に `resource=5&field=Owner(User.P_Id,User.P_Name)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と入れ子の値が返ることを確認する。エラーになるなら
@@ -285,7 +289,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   （あちらは Phase・こちらは User Read）。なお 13 項目は「Resource API での Read 時に**参照取得**できない」
   とされるもので、これは `Job.P_Owner(User.P_Telephone)` のような**参照経由**の話＝ User Read 自体の制約ではない
 - **コード箇所**: `src/resources/user.ts`（`DEFAULT_FIELDS` ＝ カタログ全項目）・
-  `src/resources/read-core.ts`（`readFieldEntry` — `User` 型に `()` を付ける）
+  `src/accessor/field-param.ts`（`readFieldEntry` — `User` 型に `()` を付ける）
 - **確認方法**: `GET /v1/user?partition=…&request_type=1&field=<17 項目>` を投げ、**HTTP 200 ＋ ルート
   `<Code>0`** と各項目の値が返ることを確認する。特定の項目で落ちるなら、その項目だけカタログから外すのではなく
   **`DEFAULT_FIELDS` から外して `field` 明示時のみ送る**か、reference の記述を疑って出典を当たり直す
@@ -302,7 +306,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は Link の値を「Contact の ID、またはユーザー型 / 部署型」とだけ書き、
   **User / Department 形の応答 XML を示していない**。`User` 型・`System[Department]` 型の入れ子形は
   それぞれ確定しているので同じ形だと見ているが、Link 経由でも同じかは未確認
-- **コード箇所**: `src/xml/decode.ts`（`decodeLink` — `VERIFY(live)` 済み）
+- **コード箇所**: `src/xml/decode-field.ts`（`decodeLink` — `VERIFY(live)` 済み）
 - **確認方法**: ユーザー型 / 部署型に設定した Link 項目を持つテナントで Read し、応答 XML を確認する。
   外れていたら `decodeLink` の判別（`"User" in outer` / `"Department" in outer`）を実形に合わせる。
   **判別できない形が来たら `null`** になるので、黙って別の型の値が入ることはない
@@ -318,7 +322,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は「既定は FileName のみ」「`ContentType` / `Content` は明示」と**散文で**書き、
   Write 形式の側にサブ要素名（`FileName` / `ContentType` / `Content`）があるだけで、
   **Read の `field` にどう書くかのサンプルが無い**。`User` 型の `()` 記法から類推している
-- **コード箇所**: `src/resources/image.ts`（`applyImage` — `VERIFY(live)` 済み）
+- **コード箇所**: `src/accessor/apply-image.ts`（`applyImage` — `VERIFY(live)` 済み）
 - **確認方法**: Image 項目を持つテナントで `field=<alias>(FileName,ContentType,Content)` を投げ、
   **HTTP 200 ＋ ルート `<Code>0`** と 3 つのサブタグが返ることを確認する。外れていたら
   `applyImage` の組み立てだけを直す（decode は**返ってきたサブタグを読む**実装なので影響しない）
@@ -335,7 +339,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は **Image については condition 不可と明記**するが、**Link には記載が無い**。
   一方 Read 概要の演算子表には「Link（ユーザー型/部署型）: `or` / `and`（値は ID のみ）」という行があり、
   **使える可能性がある**。「不可」ではなく「不明」なので、**狭い側に倒してある**
-- **コード箇所**: `src/resources/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
+- **コード箇所**: `src/accessor/query.ts`（`ConditionOf` の `Link: never` — `VERIFY(live)` 済み。
   order 側の `OrderableKeys` は列挙なので Link を載せていないだけ）
 - **確認方法**: Link 項目に `condition` を付けた Read を投げ、受け付けられるか確認する。
   使えると分かったら `ConditionOf` の `Link` を実際の演算子オブジェクトに差し替える＝**緩めるだけなので後方互換**
@@ -350,7 +354,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference の Write 形式は `<FieldAlias><FileName/><ContentType/><Content/></FieldAlias>` を
   示すだけで、**空要素を送ると消えるのか・エラーになるのか**を書いていない。推測で「消す」形を用意すると、
   外れたときに**消えたと思って消えていない**（またはその逆）になるので、用意しないほうが安全側
-- **コード箇所**: `src/xml/encode.ts`（`ImageWriteValue` — 3 つとも必須）
+- **コード箇所**: `src/xml/write-value.ts`（`ImageWriteValue` — 3 つとも必須）
 - **確認方法**: 空の `<FileName/><ContentType/><Content/>` を書き込み、値が消えるか確認する。
   消えると分かったら「消す」表現（例: `null` とは別の明示的な値）を足す
 - **状態**: 未確認
@@ -364,7 +368,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: reference は「1 分あたり Read 2000 / Write 500・超過すると強制切断され得る」と
   書くだけで、**それが App ごとなのか・契約ごとなのか・ホストごとなのか**を書いていない。
   ホストは契約ごとに払い出されるので「ホスト ≒ 契約」と仮定している
-- **コード箇所**: `src/http/throttle.ts`（`createThrottleRegistry` / `sharedThrottleFor`）
+- **コード箇所**: `src/http/shared-throttle.ts`（`createThrottleRegistry` / `sharedThrottle`）
 - **確認方法**: 同じホストに対して 2 つの App ID で並行に叩き、切断が**合算で**起きるか、
   App ごとに独立して起きるかを見る
 - **状態**: 未確認
@@ -421,7 +425,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   **スカラのテキスト**として読まれるので、同じ保証が効かない。
   出典は alias の書式をどこにも定義していない（[LV-1][lv1] は接頭辞すら未確定）ため、
   **テナントが作った選択肢の alias が `Name` から外れうるか**が分からない
-- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/encode.ts`（`assertTagName`）／
+- **コード箇所**: `src/util/xml-name.ts`（判定）／`src/xml/assert-tag-name.ts`（`assertTagName`）／
   `src/resources/option.ts`（`P_Alias` を `SinglelineText` として読む側）
 - **確認方法**: 実テナントの Option マスタを `t.option.search()` で全件読み、
   `P_Alias` が 1 件残らず `isXmlName` を通るかを確かめる。**記号や空白を含む alias を
@@ -437,12 +441,12 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 
 - **現在の対応 / 仮定**: **先頭 1 人だけ読む**。`Activity.P_EventParticipants`（参加者）は `User` 型だが、
   UI では複数人を入れられる。decoder は他の `User` 型項目と同じく入れ子の `<User>` を 1 つ読む
-  （`src/xml/decode.ts` の `decodeUser`）
+  （`src/xml/decode-field.ts` の `decodeUser`）
 - **不確実な理由**: 出典は `User` 型の応答形を「`User.P_Id` / `P_Type` / `P_Name` / `P_Mail` の 4 つ」と
   書くだけで、**複数人のときに `<User>` が繰り返されるのか、別の包みが付くのかを書いていない**。
   繰り返すなら現在の実装は**2 人目以降を黙って捨てる**ことになり、
   「値が欠けている」ことが呼び出し側から見えない
-- **コード箇所**: `src/resources/activity.ts`（`P_EventParticipants`）／`src/xml/decode.ts`（`decodeUser`）
+- **コード箇所**: `src/resources/activity.ts`（`P_EventParticipants`）／`src/xml/decode-field.ts`（`decodeUser`）
 - **確認方法**: 参加者を **2 人以上**入れた Activity を作り、`field=Activity.P_EventParticipants(User.P_Id,…)`
   で読んで応答 XML の生の形を見る。繰り返すなら読み取り値を配列に変えるのが筋
   （`Option` が `string[]` なのと同じ形＝[ADR-0017][a17] の前例がある）
@@ -477,7 +481,7 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
   **書けるのか・書けるとしてどの形（`Department.P_Id`？ `User` と同じ ID のみ？）かを公表していない**。
   推測した形を送るより書けないことにしておくほうが安全側だが、**書けるのに塞いでいる**なら
   機能の欠落になる
-- **コード箇所**: `src/xml/encode.ts`（`WritableDataType` の `Exclude`）
+- **コード箇所**: `src/xml/write-value.ts`（`WritableDataType` の `Exclude`）
 - **確認方法**: `System[Department]` 型の項目（Phase の `OwnerDepartment` 等）に対して、
   `<OwnerDepartment>123</OwnerDepartment>` と `<OwnerDepartment><Department.P_Id>123</Department.P_Id></OwnerDepartment>`
   の両方を cast 経由で送り、Result Code を比べる
@@ -528,13 +532,72 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 - **不確実な理由**: 出典（[Field の項目][ref-field]）は `P_Required` を「項目の必須設定状態」とだけ書き、
   **Write API がその設定を強制するか**（欠けていたら Result Code で弾くのか、空のまま登録するのか）は
   書かれていない。画面の入力必須と API の検査が同じとは限らない
-- **コード箇所**: `src/fields/tenant-catalog.ts`（`required` を読むところ）
+- **コード箇所**: `src/fields/read-custom-catalog.ts`（`required` を読むところ）
 - **確認方法**: カスタム項目を入力必須にした環境で、その項目を渡さずに `create` を送り、Result Code で
   弾かれるか・空のまま登録されるかを確かめる。標準項目の「新規必須」列の `●` と同じ扱いかも見る
 - **状態**: 未確認
 - **確認結果**: —
 - **関連**: どちらに転んでも型の振る舞いは変えない（弾くなら「PORTERS より手前で止める」、弾かないなら
   「PORTERS が止めない欠落を止める」）。変わるのはガイド「カスタム項目」の説明だけ
+
+## LV-33 データ系の `P_Id` に `or` の条件が効くか
+
+- **現在の対応 / 仮定**: **効くと仮定し、効かなければエラーで止める**。`getMany` は ID を `{idAlias}:or=<id>:<id>:…` で
+  束ねて読み、返ってきたレコードの ID と応答の `Total` を頼んだ ID と突き合わせる。頼んでいないレコードが混じったら、
+  何も返さずに `PortersResourceError` で止める（[ADR-0095][a95]）。`search` の `condition` でも `P_Id: { or }` を書ける
+- **不確実な理由**: 出典の記述が割れている。Read - Condition の記事（[Read パラメータ][ref-read]）の `or` の行は
+  「Phase API の Id および Resource Id にしか使用できません」と書き、同じ行の例は `Job.P_Id:or=10003:43405`。
+  Job Read と Opportunity Read の記事の例も `P_Id:or=1234:1235` で、Job Read の応答例は 2 件とも返している。
+  Phase の `Id` は Phase Read の記事が明記している
+- **コード箇所**: `src/accessor/read-many.ts`（`recordsById` の突き合わせ）
+- **確認方法**: データ系（Candidate など）で `condition=Person.P_Id:or=<存在する ID>:<存在する ID>` を送り、2 件だけが
+  返るか（`Total` も 2 か）を確かめる。条件がエラーで返るか、条件を無視して先頭から返るかも見分ける
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 効かないと分かったら、`getMany` の送り方を「ID ごとに `get` と同じリクエストを送る」に替える
+  （ADR-0095 案1b。公開 API の形は変わらない）。それまでは突き合わせで、誤ったレコードを返さずにエラーになる
+
+## LV-34 Read の応答の `Start` は、要求した `start` と同じか
+
+- **現在の対応 / 仮定**: **同じと仮定し、違えば止める**。`searchAll` はページごとに、応答の `Start` が要求した `start` と
+  同じかを確かめ、違えば `PortersResourceError`（`category: "unknown"`）で止める。同じレコードを繰り返し返したり、
+  抜かしたりしないため
+- **不確実な理由**: reference（[Read パラメータ][ref-read]）は `start` を「取得開始インデックス（0 始まり）」、応答の `Start` を
+  「今回の開始インデックス」と書いている。原典の Read 記事のサンプルのうち Candidate / Contract / Activity / Sales の 4 つは、
+  要求の URL に `start` が無いのに応答が `Total="12" Count="2" Start="10"` になっている。12 件中 10 件目からの 2 件として数は
+  合うので、要求の URL が `start=10` を書き落としたと読んでいるが、確かめてはいない
+- **コード箇所**: `src/accessor/paginate.ts`（`paginate`）
+- **確認方法**: 201 件以上あるリソースで `count=200&start=200` を送り、応答の `Start` が `200` かを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 違う値（1 始まりなど）を返すと分かったら、突き合わせる値をそれに合わせる。それまでは、違えば止まる（黙って
+  重複や抜けを返さない）
+
+## LV-35 条件の値の中のコロンは、値の一部として読まれるか
+
+- **現在の対応 / 仮定**: **読まれると仮定し、拒否しない**。条件の値のカンマと、`or` / `and` の値の中のコロンは送る前に拒否する
+  （区切りとして読まれるため）。テキストと日時の値の中のコロンは拒否せず、そのまま送る
+- **不確実な理由**: reference（[Read パラメータ][ref-read]）は `condition=[Alias]:[suffix]=[value]` と書くだけで、値の中のコロンの
+  扱いを書いていない。日時の値は `yyyy/mm/dd HH:MM:SS` でコロンを含み、送らないわけにいかないので、PORTERS は最初の `:` で
+  区切っているとみている
+- **コード箇所**: `src/accessor/append-read-query.ts`（`serializeConditionValue`）
+- **確認方法**: テキスト項目に `12:00` を含む値のレコードを用意し、`Person.P_Name:part=12:00` で見つかるかを確かめる。日時の条件
+  （`P_UpdateDate:ge=2026/09/26 00:00:00`）が効くかも確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 値の一部として読まれないと分かったら、テキストの値のコロンも送る前に拒否する
+
+## LV-36 `keywords` の 100 文字は、何の単位で数えるか
+
+- **現在の対応 / 仮定**: **UTF-16 の単位で数える**。絵文字など UTF-16 で 2 単位の文字は 2 と数えるので、PORTERS が文字の数で
+  数えるなら短い値を拒否することがある（安全側）。PORTERS がバイトで数えるなら、日本語のキーワードは長さの上限を超えて送られうる
+- **不確実な理由**: reference（[Read パラメータ][ref-read]）は「カンマを含めて 100 文字」と書くだけで、何を 1 文字と数えるかを
+  書いていない
+- **コード箇所**: `src/accessor/append-read-query.ts`（`appendReadQuery` の `keywords`）
+- **確認方法**: 絵文字 51 字（UTF-16 で 102 単位）と、日本語 34 字（UTF-8 で 102 バイト）のキーワードを送り、それぞれ受け付けられるかを確かめる
+- **状態**: 未確認
+- **確認結果**: —
+- **関連**: 文字の数で数えると分かったら、ライブラリも文字の数で数える。バイトで数えると分かったら、バイトで数えて拒否する
 
 ## 状態の意味
 
@@ -607,3 +670,5 @@ UpdatedBy,UpdateDate,Memo,Owner,OwnerDepartment`** と**素の alias だけ**を
 [src-tod]: https://hrbcapi.porters.jp/hc/ja/articles/60022630729497
 [a89]: adr/0089-custom-field-required-on-create.md
 [ref-field]: usage/reference/resource-api/resources/field.md
+[a95]: adr/0095-get-many-by-ids.md
+[ref-read]: usage/reference/resource-api/README.md

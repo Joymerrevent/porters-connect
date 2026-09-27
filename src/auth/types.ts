@@ -52,10 +52,5 @@ export type TokenStore = {
   clear(): Promise<void>;
 };
 
-/**
- * Internal: what the request pipeline asks for a token. `forceRefresh` is set after an
- * expired-token response (401/402). Not part of the published API.
- */
-export type AccessTokenSource = {
-  getAccessToken(opts?: { forceRefresh?: boolean }): Promise<string>;
-};
+/** OAuth scope string: `<resource>_r` (read) or `<resource>_w` (write). */
+export type Scope = `${string}_r` | `${string}_w`;

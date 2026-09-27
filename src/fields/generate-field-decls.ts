@@ -1,21 +1,23 @@
 // Printing a `defineFields` declaration from a tenant's real catalog (ADR-0069 論点1 / 案1b).
 //
-// Replaces the manual step the guide used to describe: walk Field Read, read `P_Type` off each row,
-// look the number up in the Field Type table by hand, and write the matching `f.x()`. The library
-// already holds that table, so the translation belongs here.
+// Without it, a caller would walk Field Read, read `P_Type` off each row, look the number up in the
+// Field Type table by hand, and write the matching `f.x()`. The library already holds that table,
+// so the translation belongs here.
 //
 // It returns **source text** and writes no files (ADR-0069 論点2 / Decision Drivers: 薄さ). The
 // output goes through `defineFields`, so the declaration it produces is statically typed like any
 // hand-written one — which a runtime catalog object could not be (ADR-0004).
 
-import type { FieldBuilder } from "./define-fields";
-import { type CustomDataType, type CustomFieldResource } from "./define-fields";
+import { PortersConfigError } from "../errors";
+import type { FieldBuilder } from "./declared-catalogs";
+import type { CustomDataType } from "./custom-data-types";
+import type { CustomFieldResource } from "./declared-catalogs";
 import {
   readCustomCatalog,
   type FieldCatalogSource,
   type TenantCustomCatalog,
   type UndeclarableField,
-} from "./tenant-catalog";
+} from "./read-custom-catalog";
 
 /**
  * Which builder method declares each Data Type.
@@ -60,6 +62,18 @@ export type GenerateFieldDeclsOptions = {
   readonly constName?: string;
 };
 
+// テナントから来た値（alias・項目名）を生成するソースコードに入れるときの逃がし方。生成物はコミットされる
+// 前提なので、改行でコメントを抜けたり、識別子でない alias がキーを壊したりしないようにする（RV-82）。
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+
+// 識別子でなければ文字列のキーにする（"U_foo-bar": …）。
+const keyOf = (alias: string): string =>
+  IDENTIFIER.test(alias) ? alias : JSON.stringify(alias);
+
+// `//` のコメントは行の終わりまでなので、行の終わりになる文字を空白に置き換える。
+const commentText = (text: string): string =>
+  text.replace(/[\r\n\u2028\u2029]+/g, " ");
+
 /** Why a field appears as a comment instead of a declaration, in words. */
 const undeclarableNote = (entry: UndeclarableField): string => {
   const type =
@@ -97,15 +111,19 @@ const resourceBlock = (
       ...(name === undefined ? [] : [name]),
       ...(dataType === "DateTime" ? [TIME_OF_DAY_NOTE] : []),
     ];
-    const comment = notes.length === 0 ? "" : ` // ${notes.join(" — ")}`;
+    const comment =
+      notes.length === 0 ? "" : ` // ${commentText(notes.join(" — "))}`;
     // テナントの入力必須（P_Required）を写す（ADR-0089 案3a）。厳しすぎれば生成物から消せる。
     const args = catalog.required[alias] === true ? "{ required: true }" : "";
-    return `    ${alias}: f.${BUILDER_METHOD[dataType]}(${args}),${comment}`;
+    return `    ${keyOf(alias)}: f.${BUILDER_METHOD[dataType]}(${args}),${comment}`;
   });
   // Stryker disable EqualityOperator: equivalent — one alias appears once per resource, so the tie branch cannot occur
   const notes = [...catalog.undeclarable]
     .sort((a, b) => (a.alias < b.alias ? -1 : 1))
-    .map((entry) => `    // ${entry.alias}: ${undeclarableNote(entry)}`);
+    .map(
+      (entry) =>
+        `    // ${commentText(`${entry.alias}: ${undeclarableNote(entry)}`)}`,
+    );
   // Stryker restore EqualityOperator
   const body = [...declarations, ...notes];
   // No declarable fields means the builder argument would be unused, which trips a lint rule in
@@ -140,9 +158,19 @@ export const generateFieldDecls = async (
   const active = options.active ?? 1;
   const includeNames = options.includeNames ?? false;
   const constName = options.constName ?? "myFields";
+  if (!IDENTIFIER.test(constName)) {
+    throw new PortersConfigError(
+      `generateFieldDecls: constName ${JSON.stringify(constName)} is not a valid identifier`,
+      {
+        category: "config",
+        hint: "Use letters, digits, _ and $, not starting with a digit (e.g. myFields).",
+      },
+    );
+  }
 
   const blocks: string[] = [];
-  for (const resource of resources) {
+  // 同じリソースを 2 回渡されても、宣言は 1 回だけ出す（同じキーが 2 つあるオブジェクトは誤りのもと）。
+  for (const resource of new Set(resources)) {
     // One read per resource: the catalog already carries `P_Name` for each field, so asking for
     // names costs no extra round trip.
     const catalog = await readCustomCatalog(source, resource, { active });

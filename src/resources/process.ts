@@ -1,8 +1,7 @@
-// Process accessor (ADR-0004/0005/0011/0019): Read (search / searchAll / get) + Write
-// (create / update) over the generic resource factory. Process is the relational
-// resource linking a Candidate to a Job; P_Client / P_Recruiter / P_Job / P_Candidate /
-// P_Resume are System[Reference] (Write = the related record's id; P_Candidate is the
-// Person id).
+// Process accessor (ADR-0004/0005/0011/0019): built on the data resources' factory
+// (`createDataResource`), which gives every data resource the same methods. Process is the
+// relational resource linking a Candidate to a Job; P_Client / P_Recruiter / P_Job / P_Candidate /
+// P_Resume are System[Reference] (Write = the related record's id; P_Candidate is the Person id).
 //
 // Display-only Reference fields (P_JobOwner, P_Job*Reference, P_ResumeOwner,
 // P_Resume*Reference — they mirror a Job/Recruiter/Person value and are not writable) are
@@ -11,24 +10,37 @@
 // selected alias as `string[]` (ADR-0017). The static Process / input types derive from the catalog (ADR-0019).
 
 import {
-  createResource,
-  type CreateInput,
-  type EmptyCatalog,
-  type FieldCatalog,
-  type ReadRecord,
-  type ReferenceMap,
-  type Resource,
-  type ResourceDeps,
-  type ResourceDescriptor,
-  type ResourcePage,
-  type SearchQuery,
-  type UpdateInput,
-} from "./resource";
+  createDataResource,
+  type catalogMark,
+} from "../accessor/data-resource";
+import type {
+  EmptyImages,
+  GetOptions,
+  GetRecord,
+  ReadSelection,
+  SearchRecord,
+} from "../accessor/read-record";
+import type { CreateInput, UpdateInput } from "../accessor/write-record";
+import type {
+  EmptyCatalog,
+  FieldCatalog,
+  ReadFieldAlias,
+  ReadRecord,
+} from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { PartitionBoundConnectionDeps } from "../accessor/deps";
+import type { ResourcePage, ResourcePageOf } from "../accessor/resource-page";
+import type { EmptyReferences, Expand, ReferenceMap } from "../accessor/expand";
+import type { ImageOption } from "../accessor/image";
+import type { BulkWriteResult } from "../accessor/write-many";
+import type { SearchQuery } from "../accessor/query";
+import type { ResourceDescriptor } from "../accessor/descriptor";
 import { CANDIDATE_DESCRIPTOR } from "./candidate";
 import { CLIENT_DESCRIPTOR } from "./client";
 import { JOB_DESCRIPTOR } from "./job";
 import { RECRUITER_DESCRIPTOR } from "./recruiter";
 import { RESUME_DESCRIPTOR } from "./resume";
+import type { ResourceName } from "../porters/resource-list";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -83,7 +95,7 @@ const REFERENCES = {
  */
 export const PROCESS_DESCRIPTOR = {
   name: "Process",
-  path: "process",
+  path: "process" satisfies ResourceName,
   prefix: "Process",
   fields: FIELDS,
   references: REFERENCES,
@@ -93,34 +105,139 @@ export const PROCESS_DESCRIPTOR = {
  *  requested field `value | null`. */
 export type Process = ReadRecord<typeof FIELDS>;
 export type ProcessPage = ResourcePage<typeof FIELDS>;
-export type ProcessSearchQuery = SearchQuery<typeof FIELDS, typeof REFERENCES>;
+/**
+ * The Process Read query. `C` is the declared custom-field catalog merged on, so a condition or an
+ * order can name a custom field too.
+ */
+export type ProcessSearchQuery<C extends FieldCatalog = EmptyCatalog> =
+  SearchQuery<typeof FIELDS & C, typeof REFERENCES>;
 
-/** Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. */
-export type ProcessCreateInput = CreateInput<
-  typeof FIELDS,
-  (typeof REQUIRED_ON_CREATE)[number]
->;
-/** Fields for `update`: all optional (`null` omits, `""` clears a text field). */
-export type ProcessUpdateInput = UpdateInput<typeof FIELDS>;
-/** The Process accessor; `C` is the declared custom-field catalog merged on. */
+/**
+ * Fields for `create`: `P_Owner` required; `P_Id` / system timestamps are not settable. `C` is
+ * the declared custom-field catalog merged on; `CR` names the custom fields that are required on
+ * `create`.
+ */
+export type ProcessCreateInput<
+  C extends FieldCatalog = EmptyCatalog,
+  CR extends keyof C = never,
+> = CreateInput<typeof FIELDS & C, (typeof REQUIRED_ON_CREATE)[number] | CR>;
+/**
+ * Fields for `update`: all optional (`null` omits, `""` clears a text field). `C` is the
+ * declared custom-field catalog merged on.
+ */
+export type ProcessUpdateInput<C extends FieldCatalog = EmptyCatalog> =
+  UpdateInput<typeof FIELDS & C>;
+
+// 公開の型の書き出しで繰り返す、利用者が宣言した項目を足した一覧。
+type Fields<C extends FieldCatalog> = typeof FIELDS & C;
+
+// メソッドはこのファイルで書き出す（ADR-0100）。データ系で揃っていることは
+// data-resource-shapes.test.ts が確かめる。
+/**
+ * The Process accessor. `C` is the declared custom-field catalog merged on; `CR` names the
+ * custom fields that are required on `create`.
+ */
 export type ProcessResource<
   C extends FieldCatalog = EmptyCatalog,
   CR extends keyof C = never,
-> = Resource<
-  typeof FIELDS & C,
-  (typeof REQUIRED_ON_CREATE)[number] | CR,
-  typeof REFERENCES
->;
+> = {
+  /** @internal Type-level mark of the field catalog; never present at runtime. */
+  [catalogMark]?(field: ReadFieldAlias<Fields<C>>): void;
+  /**
+   * Search Process records: resolves to one page of the records matching `query`. `field` picks
+   * the fields to read (omit it to read every known field), `expand` reads referenced records
+   * too, `image` picks an Image field's sub-fields, and `count` / `start` choose the page.
+   */
+  search<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: ProcessSearchQuery<C> & Paging & ReadSelection<FL, E, I>,
+  ): Promise<
+    ResourcePageOf<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>
+  >;
+  /**
+   * Search every Process record matching `query`, page after page (200 records per request).
+   * Takes the same `field` / `expand` / `image` as `search`.
+   */
+  searchAll<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    query?: ProcessSearchQuery<C> & ReadSelection<FL, E, I>,
+  ): AsyncIterable<SearchRecord<Fields<C>, typeof REFERENCES, E, I, FL>>;
+  /**
+   * Read one Process record by id; `undefined` when there is none. `field` picks the fields to
+   * read, the same way it does for `search` (omit it to read every known field); the record's id
+   * is always read, even when `field` leaves it out. `expand` reads referenced records too;
+   * `image` picks an Image field's sub-fields — `get` is where asking for a `Content` belongs,
+   * since it fetches one record rather than a page.
+   */
+  get<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    id: number,
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined>;
+  // 設計は ADR-0095（ID の突き合わせ・組分け・戻り値の形）。
+  /**
+   * Read many Process records by id. Resolves to an array in the order of `ids`, holding
+   * `undefined` where no record has that id — the same answer `get` gives for one id. A repeated
+   * id gets the same record at each of its positions; an empty `ids` sends no request.
+   *
+   * The ids are sent together (up to 200 per request, and as many as fit under the request size
+   * limit), so this makes far fewer requests than calling `get` for each id. Takes the same
+   * options as `get`; narrowing `field` shortens each request, so more ids fit in one.
+   *
+   * Every record that comes back is checked against the ids that were asked for. If PORTERS
+   * returns one that was not requested, the call rejects instead of returning it.
+   */
+  getMany<
+    const E extends Expand<typeof REFERENCES> = EmptyReferences,
+    const I extends ImageOption<Fields<C>> = EmptyImages,
+    const FL extends readonly ReadFieldAlias<Fields<C>>[] | undefined =
+      undefined,
+  >(
+    ids: readonly number[],
+    options?: GetOptions<Fields<C>, FL, E, I>,
+  ): Promise<(GetRecord<Fields<C>, typeof REFERENCES, E, I, FL> | undefined)[]>;
+  /** Create one Process record; resolves to the newly assigned id. */
+  create(input: ProcessCreateInput<C, CR>): Promise<number>;
+  /** Update one Process record by id; resolves to that id. */
+  update(id: number, input: ProcessUpdateInput<C>): Promise<number>;
+  // 一括書き込みの設計は ADR-0041 / F-4。
+  /**
+   * Create many Process records in one call. Auto-batched to ≤200 records and under the request
+   * size cap. **Not atomic** — inspect the `BulkWriteResult`: per-record failures are returned
+   * (`failed` / `hasFailures`), not thrown. Only a whole-request failure throws (with the
+   * already-written count). Batching is non-idempotent: a full retry after a mid-run failure may
+   * duplicate creates. Empty input sends no request.
+   */
+  createMany(inputs: ProcessCreateInput<C, CR>[]): Promise<BulkWriteResult>;
+  /**
+   * Update many Process records by id in one call. Auto-batched like `createMany`; per-record
+   * failures are returned in the `BulkWriteResult`, not thrown.
+   */
+  updateMany(
+    items: { id: number; fields: ProcessUpdateInput<C> }[],
+  ): Promise<BulkWriteResult>;
+};
 
 export const createProcessResource = <C extends FieldCatalog = EmptyCatalog>(
-  deps: ResourceDeps,
+  deps: PartitionBoundConnectionDeps,
   custom?: C,
 ): ProcessResource<C> => {
-  // Custom U_/A_ aliases never collide with P_, so the merge is exactly `typeof FIELDS & C`;
-  // the cast just names that intersection (defineFields already validated aliases — ADR-0023 D7).
+  // 2 つの cast の理由は、data-resource.ts の createDataResource の上に書いてある。
   const fields = { ...FIELDS, ...custom } as typeof FIELDS & C;
-  return createResource(
+  return createDataResource(
     { ...PROCESS_DESCRIPTOR, fields, requiredOnCreate: REQUIRED_ON_CREATE },
     deps,
-  );
+  ) as ProcessResource<C>;
 };

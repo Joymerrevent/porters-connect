@@ -5,7 +5,7 @@
 // where PORTERS' own semantics are business logic (relevance, collation): text `part` is a plain
 // substring match, ordering a plain value comparison. That is the "業務面は浅い" half of ADR-0043.
 
-import type { DataType } from "../../src/xml/decode";
+import type { DataType } from "../../src/porters/data-type";
 import { DELETED } from "./records";
 import type { FieldSelection } from "./wire";
 import type { FakeRecord, FakeValue } from "./types";

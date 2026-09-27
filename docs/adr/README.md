@@ -33,11 +33,9 @@
     `**訂正（実装時 2026-08-12）**` を注記し、決定は据え置いた）。
   - 判断に迷ったら **「その注記を読んで、決定が変わったと思う人がいるか」** で切り分ける。
     いるなら方針変更＝新 ADR、いないなら訂正注記でよい。
-- **移設前のパス表記**: 2026-09-12 より前の ADR 本文にある `docs/reference/…` / `docs/howto/…` /
-  `docs/start/…` / `docs/api/` は、いずれも現在の `docs/usage/…` を指す（[ADR-0071][0071]）。
-  リンクは移設時に直してあるが、**決定の文面は書き換えない**運用なので散文の表記は当時のまま残る。
-  同じく 2026-09-22 より前の `docs/usage/howto/…` / `docs/usage/concepts/…` は `docs/usage/topics/…`
-  （添付は `resources/attachment.md`、同期と複数テナントは `recipes/…`）を指す（[ADR-0088][0088]）。
+- **移設前のパス表記**: ADR の本文に書いたパスは、決定したときのまま残す（決定の本文は書き換えない）。あとでファイルを
+  移したり名前を変えたりしたら、そのパスを本文に書いている ADR の末尾の「パスの注記」に、今の場所を 1 行足す。
+  リンク（参照スタイルの定義）は移したときに直す（`check:links` が検査する）。
 - 雛形は [`0000-template.md`][0000-template-md]（MADR フル）をコピーして使う。
 - セクション構成：Context and Problem Statement → Decision Drivers → Considered Options →
   Decision Outcome（+ Consequences）→ 信じている入力 → Pros and Cons of the Options → More Information。
@@ -174,5 +172,3 @@
 [0082]: 0082-module-format-and-node-baseline.md
 [0049]: 0049-host-port-roundtrip.md
 [0053]: 0053-adr-index-split.md
-[0071]: 0071-usage-docs-single-root.md
-[0088]: 0088-usage-docs-five-chapters.md

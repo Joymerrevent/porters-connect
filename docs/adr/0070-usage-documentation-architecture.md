@@ -348,6 +348,17 @@ README に残すのは**リソース名の一覧表と「操作は共通」の 1
   （テストの書き方に使える）／`docs/reference/`（PORTERS API の事実）。
 - follow-up（本 ADR スコープ外）: 説明サイトの構築（generator の選定・配備）／英語版。
 
+## パスの注記
+
+<!-- 決定の本文は書き換えない。本文に書いたパスが移ったり名前が変わったりしたら、ここに今の場所を足す。 -->
+
+本文に書いたパスのうち、あとで移したもの・名前を変えたものの今の場所（本文は決定したときのまま）:
+
+- `docs/guide` → ガイドは 2026-09-11 に `docs/howto/` / `docs/concepts/` へ分け（ADR-0070）、いまは主に `docs/usage/topics/` にある（ADR-0071 / ADR-0088）
+- `docs/api` → `docs/usage/api/`（2026-09-12・ADR-0071）
+- `docs/reference` → `docs/usage/reference/`（2026-09-12・ADR-0071）
+- `docs/index.md` → `docs/usage/index.md`（2026-09-12・ADR-0071）
+
 [0035]: 0035-usage-documentation-structure.md
 [0068]: 0068-api-reference-tooling.md
 [0072]: 0072-start-contract-first.md

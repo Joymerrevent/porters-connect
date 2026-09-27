@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { parseAuthentication } from "../../src/xml/parser";
+import { parseAuthentication } from "../../src/xml/parse-authentication";
 import { createFakeAuth } from "./oauth";
 
 const oauthUrl = (query = "app_id=app&response_type=code_direct"): URL =>

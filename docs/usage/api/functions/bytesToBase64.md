@@ -8,7 +8,7 @@
 
 > **bytesToBase64**(`bytes`): `string`
 
-Defined in: [src/util/base64.ts:6](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/base64.ts#L6)
+Defined in: [src/util/base64.ts:8](https://github.com/Joymerrevent/porters-connect/blob/main/src/util/base64.ts#L8)
 
 Encode raw bytes to a Base64 string.
 

@@ -7,6 +7,12 @@
 > 方針は [ADR-0006][0006] / [requirements][prd] R-7 で確定（retryable は限定・自前スロットリングで上限内）。
 > 本 ADR は**実装方式**（バックオフ／スロットルのアルゴリズムと PoC 範囲）の詳細設計。`accepted`（2026-06-14）：
 > スロットル＝token-bucket、リトライ＝**メソッド/操作別の冪等性ガード付き**（`create` はネット不確定で再試行しない）。
+>
+> **Amended by [ADR-0102][0102]（2026-09-26）**: スロットルの方式（容量＝上限 × 安全率・毎分同じ量を補充）では
+> 「1 分窓で上限内」が成り立たないと分かり（[RV-66][rv66]）、直近 60 秒に通した時刻を覚える方式に改めた。リトライの部分は不変。
+>
+> **関連 [ADR-0103][0103]（2026-09-26）**: `create` の `302` を再送しない決定（本 ADR）と実装の食い違いを確かめ直し、
+> 本 ADR の決定どおりに実装を直すと決めた。本 ADR の決定は変わらない。
 
 ## Context and Problem Statement
 
@@ -96,3 +102,6 @@ PORTERS は[gotchas][gotchas] / [result-codes][rc] の通り:
 [0012]: 0012-token-cache-refresh.md
 [0063]: 0063-idempotency-guard-scope.md
 [0073]: 0073-throttle-sharing.md
+[0102]: 0102-throttle-any-minute-window.md
+[0103]: 0103-create-code-302-not-retried.md
+[rv66]: ../reviews/rv/0066-throttle-exceeds-minute-limit.md

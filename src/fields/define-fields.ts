@@ -1,210 +1,29 @@
 // Custom field declaration DSL (ADR-0023, grounding ADR-0004 案H / ADR-0005 SD-2).
 // `defineFields` is the single validation boundary: a typed builder declares each
 // tenant custom field's Data Type per data resource, validation runs synchronously,
-// and the result is branded so `tenant(id, { fields })` trusts it without re-validating. Standard
+// and the result is branded. The brand is only a type, so `tenant(id, { fields })` checks the
+// declaration it is handed again (RV-79: a plain object or a JS caller gets past the brand). Standard
 // `P_` fields come from the static catalogs (ADR-0019); this only covers custom U_/A_.
 
+import {
+  assertCustomAlias,
+  assertCustomDataType,
+  assertKnownResource,
+} from "./assert-declared-catalogs";
 import { PortersConfigError } from "../errors";
-import type { EmptyCatalog } from "../resources/read-core";
-import type { DataType } from "../xml/decode";
-
-// ADR-0023 D2。必須（required）は ADR-0089。
-/**
- * One custom field's declaration — the builder's return value: its Data Type and whether
- * `create` requires it.
- */
-export type FieldDef<D extends DataType, R extends boolean = false> = {
-  readonly dataType: D;
-  /** `true` makes the field required in `create` / `createMany` input. Type-only: no runtime check. */
-  readonly required: R;
-};
-
-// 必須は宣言で明示したときだけ（opt-in・ADR-0089 案1a / 案2a）。
-/**
- * Options every builder method takes. `required: true` makes the field required in the
- * `create` / `createMany` input type; leave it out (or `false`) and the field stays optional,
- * as it always was. `update` input never requires it.
- *
- * @example
- * defineFields({ candidate: (f) => ({ U_score: f.number({ required: true }) }) });
- */
-export type FieldOptions<R extends boolean = boolean> = {
-  readonly required?: R;
-};
-
-// Data Types a custom U_/A_ field may declare (ADR-0023 D3): the value-shaped types. The
-// System family (System[Id]/[DateTime]/[Reference]) is system-managed = standard territory,
-// so it is not offered. Image / Link are here (ADR-0064 案5a) and **only** here: no standard
-// field carries either type, so declaring one is the only way a tenant's image / link field
-// can be read or written at all.
-export const CUSTOM_DATA_TYPES = [
-  "Number",
-  "SinglelineText",
-  "MultilineText",
-  "Mail",
-  "Telephone",
-  "URL",
-  "Date",
-  "DateTime",
-  "Age",
-  "Option",
-  "User",
-  "Image",
-  "Link",
-] as const satisfies readonly DataType[];
-
-export type CustomDataType = (typeof CUSTOM_DATA_TYPES)[number];
-
-/** Builder passed to each resource declaration: one method per declarable Data Type. */
-export type FieldBuilder = {
-  number<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Number", NoInfer<R>>;
-  singlelineText<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"SinglelineText", NoInfer<R>>;
-  multilineText<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"MultilineText", NoInfer<R>>;
-  mail<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Mail", NoInfer<R>>;
-  telephone<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Telephone", NoInfer<R>>;
-  url<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"URL", NoInfer<R>>;
-  date<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Date", NoInfer<R>>;
-  dateTime<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"DateTime", NoInfer<R>>;
-  age<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Age", NoInfer<R>>;
-  option<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Option", NoInfer<R>>;
-  user<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"User", NoInfer<R>>;
-  /**
-   * An Image field (FT-18). Reads back `FileName` alone unless the query's `image` option asks
-   * for `ContentType` / `Content`; writes the three sub-elements, checked before send.
-   */
-  image<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Image", NoInfer<R>>;
-  /**
-   * A Link field (FT-20). Reads back a Contact id, a `UserRef`, or a `DepartmentRef` — whichever
-   * the tenant configured, told apart by shape; writes the referenced id.
-   */
-  link<R extends boolean = false>(
-    options?: FieldOptions<R>,
-  ): FieldDef<"Link", NoInfer<R>>;
-};
-
-// ADR-0023 D6。
-/** Data resources that accept custom fields. Master / Attachment are excluded. */
-export type CustomFieldResource =
-  | "candidate"
-  | "job"
-  | "client"
-  | "recruiter"
-  | "contact"
-  | "opportunity"
-  | "activity"
-  | "contract"
-  | "sales"
-  | "process"
-  | "resume";
-
-/** One resource's custom field declarations: alias -> {@link FieldDef}. */
-export type ResourceDecl = Record<string, FieldDef<DataType, boolean>>;
-
-/** Declaration input: per (data) resource, a builder fn returning its custom fields. */
-export type FieldDecls = {
-  [R in CustomFieldResource]?: (f: FieldBuilder) => ResourceDecl;
-};
-
-/** A per-resource custom catalog (bare alias -> Data Type), as produced by {@link defineFields}. */
-export type CustomCatalog = Record<string, DataType>;
-
-/** Map of (data) resource -> its custom catalog; the client merges these into the static catalogs. */
-export type DeclaredCatalogs = {
-  [R in CustomFieldResource]?: CustomCatalog;
-};
-
-// Extract the catalog (alias -> Data Type literal) from a resource's FieldDef map.
-type CatalogOf<R extends ResourceDecl> = {
-  [K in keyof R]: R[K]["dataType"];
-};
-
-/** The validated, branded result of {@link defineFields}, keyed by the declared resources. */
-export type DeclaredCatalogsOf<D extends FieldDecls> = {
-  [R in keyof D]: D[R] extends (f: FieldBuilder) => infer Out
-    ? Out extends ResourceDecl
-      ? CatalogOf<Out>
-      : never
-    : never;
-};
-
-// The aliases of one resource's FieldDef map declared with `required: true`.
-type RequiredAliasesOf<R extends ResourceDecl> = {
-  [K in keyof R]: R[K]["required"] extends true ? K : never;
-}[keyof R];
-
-// 型だけの印（実行時には存在しない）。宣言の必須を tenant(id, { fields }) の型まで運ぶ（ADR-0089）。
-// 項目表（alias -> Data Type）の形を変えずに載せるため、リソース名でなくシンボルのキーに置く。
-declare const requiredOnCreateBrand: unique symbol;
-
-/** Per declared resource, the aliases declared `required: true` — carried on the type only. */
-export type DeclaredRequiredOf<D extends FieldDecls> = {
-  readonly [requiredOnCreateBrand]: {
-    [R in keyof D]: D[R] extends (f: FieldBuilder) => infer Out
-      ? Out extends ResourceDecl
-        ? RequiredAliasesOf<Out>
-        : never
-      : never;
-  };
-};
-
-// Phantom brand: marks a catalog set as already validated by defineFields (ADR-0023 D4).
-// It never exists at runtime — the value is a plain frozen object.
-declare const definedFieldsBrand: unique symbol;
-
-/** A validated set of custom field catalogs (branded — the client does not re-validate). */
-export type DefinedFields<C extends DeclaredCatalogs = DeclaredCatalogs> = C & {
-  readonly [definedFieldsBrand]: true;
-};
-
-// ADR-0023 D1。
-/** The custom catalog declared for resource `K` (or `{}` if none) — types each accessor. */
-export type CustomFor<
-  C extends DeclaredCatalogs,
-  K extends CustomFieldResource,
-> = K extends keyof C
-  ? C[K] extends CustomCatalog
-    ? C[K]
-    : EmptyCatalog
-  : EmptyCatalog;
-
-// ADR-0023 D1 / ADR-0089。
-/**
- * The aliases of resource `K` that `create` requires because the declaration said
- * `required: true` (or `never`). Read off the phantom that {@link defineFields} puts on its
- * result type, so a scope typed `TenantScope<typeof fields>` picks it up with no extra type argument.
- */
-export type RequiredFor<
-  C extends DeclaredCatalogs,
-  K extends CustomFieldResource,
-> = C extends { readonly [requiredOnCreateBrand]: infer Rq }
-  ? K extends keyof Rq
-    ? Extract<Rq[K], keyof CustomFor<C, K>>
-    : never
-  : never;
+import type {
+  CustomCatalog,
+  CustomFieldResource,
+  DeclaredCatalogs,
+  DeclaredCatalogsOf,
+  DeclaredRequiredOf,
+  DefinedFields,
+  FieldBuilder,
+  FieldDecls,
+  FieldDef,
+  FieldOptions,
+} from "./declared-catalogs";
+import type { CustomDataType } from "./custom-data-types";
 
 // 全 arrow（ADR-0013）＝巻き上げ無しのため、ヘルパー → builder → defineFields の順で定義する。
 // Only a literal `true` makes a field required; anything else (absent, `false`) leaves it optional —
@@ -215,7 +34,7 @@ const def =
   <R extends boolean = false>(options?: FieldOptions<R>): FieldDef<D, R> =>
     ({ dataType, required: options?.required === true }) as FieldDef<D, R>;
 
-const builder: FieldBuilder = {
+export const builder: FieldBuilder = {
   number: def("Number"),
   singlelineText: def("SinglelineText"),
   multilineText: def("MultilineText"),
@@ -253,28 +72,27 @@ export const declaredRequired = (
   return new Set(marker?.[resource] ?? []);
 };
 
-// Custom field aliases are `U_[Name]` (user-created) or `A_[Name]` (app-created) — ADR-0004.
-const ALIAS_PATTERN = /^[UA]_/;
+// JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
+const isRequired = (
+  fieldDef: { readonly required?: unknown },
+  alias: string,
+  resource: string,
+): boolean => {
+  const flag = fieldDef.required;
+  if (flag !== undefined && typeof flag !== "boolean") {
+    throw new PortersConfigError(
+      `defineFields: "required" for "${alias}" on "${resource}" must be true or false`,
+      { category: "config" },
+    );
+  }
+  return flag === true;
+};
 
-const KNOWN_RESOURCES: readonly CustomFieldResource[] = [
-  "candidate",
-  "job",
-  "client",
-  "recruiter",
-  "contact",
-  "opportunity",
-  "activity",
-  "contract",
-  "sales",
-  "process",
-  "resume",
-];
-
-// 宣言 DSL は ADR-0023、渡し先が tenant(id, { fields }) なのは ADR-0087。
 /**
  * Declare tenant-specific custom fields per data resource. This is the validation
- * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key or an
- * alias that is not `U_`/`A_`-prefixed. The branded result is passed to the partition it describes,
+ * boundary: it throws {@link PortersConfigError} synchronously for an unknown resource key, an
+ * alias that is not `U_`/`A_`-prefixed, a Data Type a custom field cannot have, or a `required` flag
+ * that is not a boolean. The branded result is passed to the partition it describes,
  * `porters.tenant(id, { fields })`, which merges each catalog into the resource so the
  * custom fields decode/encode by their declared Data Type and appear typed on reads / writes.
  *
@@ -291,30 +109,20 @@ export const defineFields = <D extends FieldDecls>(
   const required: Record<string, string[]> = {};
   for (const [resource, declare] of Object.entries(decls)) {
     if (declare === undefined) continue;
-    if (!KNOWN_RESOURCES.includes(resource as CustomFieldResource)) {
-      throw new PortersConfigError(
-        `defineFields: unknown resource "${resource}" (expected one of ${KNOWN_RESOURCES.join(", ")})`,
-        { category: "config" },
-      );
-    }
+    assertKnownResource("defineFields", resource);
     const catalog: CustomCatalog = {};
     for (const [alias, fieldDef] of Object.entries(declare(builder))) {
-      if (!ALIAS_PATTERN.test(alias)) {
-        throw new PortersConfigError(
-          `defineFields: custom field alias "${alias}" on "${resource}" must start with "U_" or "A_" (standard P_ fields are built in)`,
-          { category: "config" },
-        );
-      }
+      assertCustomAlias("defineFields", alias, resource);
+      // 型を迂回した宣言（JS から、または cast で）も、Data Type を確かめてから受ける（RV-79）。
+      assertCustomDataType(
+        "defineFields",
+        (fieldDef as { dataType?: unknown } | null)?.dataType,
+        alias,
+        resource,
+      );
       catalog[alias] = fieldDef.dataType;
-      // JS から呼ばれたときの取り違え（"true" など）を黙って任意にしない。
-      const flag: unknown = (fieldDef as { required?: unknown }).required;
-      if (flag !== undefined && typeof flag !== "boolean") {
-        throw new PortersConfigError(
-          `defineFields: "required" for "${alias}" on "${resource}" must be true or false`,
-          { category: "config" },
-        );
-      }
-      if (flag === true) (required[resource] ??= []).push(alias);
+      if (isRequired(fieldDef, alias, resource))
+        (required[resource] ??= []).push(alias);
     }
     catalogs[resource] = catalog;
   }

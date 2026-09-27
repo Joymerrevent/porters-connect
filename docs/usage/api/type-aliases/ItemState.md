@@ -8,7 +8,7 @@
 
 > **ItemState** = `"existing"` \| `"deleted"` \| `"all"`
 
-Defined in: [src/resources/query.ts:156](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/query.ts#L156)
+Defined in: [src/accessor/query.ts:147](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/query.ts#L147)
 
 Which delete state to read. `existing` reads live data, `deleted`/`all` read deleted records —
 the only way to read deleted data, since there is no delete API. When `deleted`/`all`, condition

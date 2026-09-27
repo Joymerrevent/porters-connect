@@ -8,7 +8,7 @@
 
 > **ResourcePageOf**\<`T`\> = `object`
 
-Defined in: [src/resources/read-core.ts:98](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L98)
+Defined in: [src/accessor/resource-page.ts:11](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/resource-page.ts#L11)
 
 A page of decoded records: the standard Read envelope (Total / Count / Start) around whatever
 the item decoder produced. Parametrised by the *record* rather than the catalog because a read
@@ -26,7 +26,7 @@ that expands references returns a wider record than the catalog alone describes.
 
 > **count**: `number`
 
-Defined in: [src/resources/read-core.ts:101](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L101)
+Defined in: [src/accessor/resource-page.ts:14](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/resource-page.ts#L14)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [src/resources/read-core.ts:101](https://github.com/Joymerrevent/por
 
 > **items**: `T`[]
 
-Defined in: [src/resources/read-core.ts:99](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L99)
+Defined in: [src/accessor/resource-page.ts:12](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/resource-page.ts#L12)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [src/resources/read-core.ts:99](https://github.com/Joymerrevent/port
 
 > **start**: `number`
 
-Defined in: [src/resources/read-core.ts:102](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L102)
+Defined in: [src/accessor/resource-page.ts:15](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/resource-page.ts#L15)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [src/resources/read-core.ts:102](https://github.com/Joymerrevent/por
 
 > **total**: `number`
 
-Defined in: [src/resources/read-core.ts:100](https://github.com/Joymerrevent/porters-connect/blob/main/src/resources/read-core.ts#L100)
+Defined in: [src/accessor/resource-page.ts:13](https://github.com/Joymerrevent/porters-connect/blob/main/src/accessor/resource-page.ts#L13)

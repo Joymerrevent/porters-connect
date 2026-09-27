@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PortersConfigError } from "../errors";
 import type { Requester, RequestSpec } from "../http/requester";
 import type { TransportRequest } from "../http/types";
-import type { DepartmentRef, FieldValue, UserRef } from "../xml/decode";
+import type { DepartmentRef, FieldValue, UserRef } from "../xml/field-value";
 import { PHASE_DESCRIPTOR, createPhaseAccessor } from "./phase";
 
-// The generic Read/Write flow is unit-tested in resource.test.ts; here we pin what makes Phase
+// The generic Read/Write flow is unit-tested in accessor/data-reader.test.ts and
+// accessor/data-writer.test.ts; here we pin what makes Phase
 // different (ADR-0061): bare aliases, `Id` as the primary key, the bound `resource`, and
 // System[Department].
 const USER_FIELDS = [
@@ -259,4 +260,15 @@ describe("createPhaseAccessor — write", () => {
     // 出典が挙げる `resource` は変わらず載る（ADR-0061）。
     expect(url.searchParams.get("resource")).toBe("5");
   });
+});
+
+// JS から渡された、表に無い名前は送る前に止める（RV-113）。
+it("createPhaseAccessor().of refuses a name missing from the Resource List", () => {
+  expect(() =>
+    createPhaseAccessor({
+      requester: stub("", []),
+      accessPoint: { hostname: "h.test" },
+      partition: 12,
+    }).of("user" as never),
+  ).toThrow('phase.of: unknown resource "user"');
 });

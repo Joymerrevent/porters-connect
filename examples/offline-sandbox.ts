@@ -32,8 +32,7 @@ const porters = new PortersClient({
         // 採番された Id を返す（新規 Write）
         return `<Candidate><Item><Id>10003</Id><Code>0</Code></Item></Candidate>`;
       }
-      return (
-        `<Candidate Total="2" Count="2" Start="0"><Code>0</Code>` +
+      const taro =
         `<Item>` +
         `<Person.P_Id>10001</Person.P_Id>` +
         `<Person.P_Name>山田 太郎</Person.P_Name>` +
@@ -44,10 +43,14 @@ const porters = new PortersClient({
         // R-16: 宣言したカスタム項目も型付きで返る（U_score=Number, U_tags=Option）
         `<Person.U_score>87</Person.U_score>` +
         `<Person.U_tags><OptionRoot><Option.U_Tag_VIP/></OptionRoot></Person.U_tags>` +
-        `</Item>` +
-        `<Item><Person.P_Id>10002</Person.P_Id><Person.P_Name>鈴木 一郎</Person.P_Name></Item>` +
-        `</Candidate>`
-      );
+        `</Item>`;
+      const ichiro = `<Item><Person.P_Id>10002</Person.P_Id><Person.P_Name>鈴木 一郎</Person.P_Name></Item>`;
+      // get(10001) は `Person.P_Id:eq=10001` の条件で読む。本物の PORTERS と同じく、条件に合う 1 件だけを返す
+      // （ライブラリは返ってきたレコードが頼んだ id のものかを確かめる）。
+      if (decodeURIComponent(req.url).includes("Person.P_Id:eq=10001")) {
+        return `<Candidate Total="1" Count="1" Start="0"><Code>0</Code>${taro}</Candidate>`;
+      }
+      return `<Candidate Total="2" Count="2" Start="0"><Code>0</Code>${taro}${ichiro}</Candidate>`;
     }
     if (req.url.includes("/v1/attachment")) {
       return `<Attachment><Item><Id>900</Id><Code>0</Code></Item></Attachment>`;

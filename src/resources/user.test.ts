@@ -15,8 +15,8 @@ const ME =
   `<?xml version="1.0"?><User Total="1" Count="1" Start="0"><Code>0</Code>` +
   `<Item><User.P_Type>1</User.P_Type><User.P_Id>9</User.P_Id><User.P_Name>App User</User.P_Name><User.P_Mail>app@xxx.co.jp</User.P_Mail></Item></User>`;
 
-const page = (total: number, ids: number[]): string =>
-  `<User Total="${total}" Count="${ids.length}" Start="0"><Code>0</Code>` +
+const page = (total: number, ids: number[], start = 0): string =>
+  `<User Total="${total}" Count="${ids.length}" Start="${start}"><Code>0</Code>` +
   ids.map((id) => `<Item><User.P_Id>${id}</User.P_Id></Item>`).join("") +
   `</User>`;
 
@@ -78,7 +78,7 @@ describe("createUserResource", () => {
         "User.P_StartDate",
         "User.P_EndDate",
         "User.P_RegistrationDate",
-        // User 型の項目だけ 4 サブ項目付きで要求する（read-core の USER_SUBFIELDS）。
+        // User 型の項目だけ 4 サブ項目付きで要求する（porters/read-rules の USER_SUBFIELDS）。
         "User.P_RegisteredBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
         "User.P_UpdateDate",
         "User.P_UpdatedBy(User.P_Id,User.P_Type,User.P_Name,User.P_Mail)",
@@ -145,7 +145,7 @@ describe("createUserResource", () => {
   it("searchAll() pages by 200 until total is reached", async () => {
     const calls: Call[] = [];
     const r = createUserResource({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
@@ -158,11 +158,11 @@ describe("createUserResource", () => {
   it("walks the query as handed over: mutating it mid-iteration cannot change a later page (RV-32)", async () => {
     const calls: Call[] = [];
     const r = createUserResource({
-      requester: stub([page(3, [1, 2]), page(3, [3])], calls),
+      requester: stub([page(3, [1, 2]), page(3, [3], 2)], calls),
       accessPoint: { hostname: "h.test" },
       partition: 12,
     });
-    const query: Omit<UserSearchQuery, "count" | "start"> = {
+    const query: UserSearchQuery = {
       userType: 1,
       field: ["P_Name", "P_Type"],
     };

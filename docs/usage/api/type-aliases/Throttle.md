@@ -8,7 +8,7 @@
 
 > **Throttle** = `object`
 
-Defined in: [src/http/throttle.ts:15](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L15)
+Defined in: [src/http/throttle.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L16)
 
 ## Methods
 
@@ -16,7 +16,7 @@ Defined in: [src/http/throttle.ts:15](https://github.com/Joymerrevent/porters-co
 
 > **take**(`write`): `Promise`\<`void`\>
 
-Defined in: [src/http/throttle.ts:16](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L16)
+Defined in: [src/http/throttle.ts:17](https://github.com/Joymerrevent/porters-connect/blob/main/src/http/throttle.ts#L17)
 
 #### Parameters
 

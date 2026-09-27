@@ -15,7 +15,7 @@ import {
   PortersConfigError,
   PortersNetworkError,
 } from "../../src/errors/index";
-import { MAX_REQUEST_LENGTH } from "../../src/http/requester";
+import { MAX_REQUEST_LENGTH } from "../../src/porters/request";
 import type { TransportRequest, TransportResponse } from "../../src/http/types";
 import { createFakeMasters } from "./masters";
 import { createFakeAuth } from "./oauth";

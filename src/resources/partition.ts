@@ -5,16 +5,12 @@
 // Partition has no `current()`; ADR-0022 D3b). `requestType: 0` stays on the query for a caller
 // whose token came from the browser grant. No `get(id)`: the API has no id/condition filter.
 
-import type { ResourceDeps, ResourceDescriptor } from "./resource";
-import {
-  decoderFor,
-  paginateOnce,
-  readUrlOf,
-  runRead,
-  type FieldCatalog,
-  type ReadRecord,
-  type ResourcePage,
-} from "./read-core";
+import type { ConnectionDeps } from "../accessor/deps";
+import type { ResourceDescriptor } from "../accessor/descriptor";
+import type { FieldCatalog, ReadRecord } from "../accessor/catalog";
+import type { Paging } from "../accessor/paging";
+import type { ResourcePage } from "../accessor/resource-page";
+import { createMasterResource } from "../accessor/master-resource";
 
 const FIELDS = {
   P_Id: "System[Id]",
@@ -43,54 +39,24 @@ export type PartitionPage = ResourcePage<typeof FIELDS>;
 export type PartitionSearchQuery = {
   /** 1 = accessible partitions (default). 0 = login partition (browser `code` grant only). */
   requestType?: 0 | 1;
-  count?: number;
-  start?: number;
 };
 
 export type PartitionResource = {
-  search(query?: PartitionSearchQuery): Promise<PartitionPage>;
+  search(query?: PartitionSearchQuery & Paging): Promise<PartitionPage>;
   /** Auto-paginating search: yields every accessible partition. */
-  searchAll(
-    query?: Omit<PartitionSearchQuery, "count" | "start">,
-  ): AsyncIterable<Partition>;
+  searchAll(query?: PartitionSearchQuery): AsyncIterable<Partition>;
 };
 
 // VERIFY(live): Partition Read taking no `partition` param is doc-only (every other read
 // requires it). See docs/live-verification.md (LV-8).
-// Paging is left out on purpose — see `field.ts` / RV-32.
-const buildParams = (
-  q: Omit<PartitionSearchQuery, "count" | "start">,
-): URLSearchParams => {
+// The parameters Partition Read takes; paging and sending are the shared `createMasterResource`.
+const buildParams = (q: PartitionSearchQuery): URLSearchParams => {
   const p = new URLSearchParams();
   p.set("request_type", String(q.requestType ?? 1));
   return p;
 };
 
 export const createPartitionResource = (
-  deps: Omit<ResourceDeps, "partition">,
-): PartitionResource => {
-  const decode = decoderFor(FIELDS);
-  // `async` for the exception contract: a Promise-returning public method never throws
-  // synchronously, whatever URL building does (ADR-0046).
-  const readUrl = (q: PartitionSearchQuery): string =>
-    readUrlOf(deps.accessPoint, "partition", buildParams(q), q.count, q.start);
-  const search = async (
-    query: PartitionSearchQuery = {},
-  ): Promise<PartitionPage> =>
-    runRead(deps.requester, PARTITION_DESCRIPTOR.name, readUrl(query), decode);
-  // The query is read once, at the first page (RV-32).
-  const searchAll = (
-    query: Omit<PartitionSearchQuery, "count" | "start"> = {},
-  ): AsyncIterable<Partition> =>
-    paginateOnce(() => {
-      const base = buildParams(query);
-      return (count, start) =>
-        runRead(
-          deps.requester,
-          PARTITION_DESCRIPTOR.name,
-          readUrlOf(deps.accessPoint, "partition", base, count, start),
-          decode,
-        );
-    });
-  return { search, searchAll };
-};
+  deps: ConnectionDeps,
+): PartitionResource =>
+  createMasterResource({ ...PARTITION_DESCRIPTOR, params: buildParams }, deps);

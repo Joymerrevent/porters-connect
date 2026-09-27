@@ -146,29 +146,34 @@ B は **ライブラリが送るもの**（実際に組み立てた URL）。**2
 持つので、そちらで絞る — 表 C）。`searchAll` はオフセット式ページングの自動化なので、
 `start` を取らないエンドポイントには置けない。
 
-| エンドポイント    | search | searchAll            | get  |
-| ----------------- | ------ | -------------------- | ---- |
-| `/v1/partition`   | あり   | あり                 | なし |
-| `/v1/user`        | あり   | あり                 | なし |
-| `/v1/field`       | あり   | あり                 | なし |
-| `/v1/option`      | あり   | なし（`start` 無し） | なし |
-| `/v1/department`  | あり   | あり                 | なし |
-| `/v1/candidate`   | あり   | あり                 | あり |
-| `/v1/job`         | あり   | あり                 | あり |
-| `/v1/client`      | あり   | あり                 | あり |
-| `/v1/recruiter`   | あり   | あり                 | あり |
-| `/v1/contact`     | あり   | あり                 | あり |
-| `/v1/resume`      | あり   | あり                 | あり |
-| `/v1/process`     | あり   | あり                 | あり |
-| `/v1/activity`    | あり   | あり                 | あり |
-| `/v1/contract`    | あり   | あり                 | あり |
-| `/v1/sales`       | あり   | あり                 | あり |
-| `/v1/opportunity` | あり   | あり                 | あり |
-| `/v1/phase`       | あり   | あり                 | あり |
-| `/v1/attachment`  | あり   | あり                 | あり |
+| エンドポイント    | search | searchAll            | get  | getMany |
+| ----------------- | ------ | -------------------- | ---- | ------- |
+| `/v1/partition`   | あり   | あり                 | なし | なし    |
+| `/v1/user`        | あり   | あり                 | なし | なし    |
+| `/v1/field`       | あり   | あり                 | なし | なし    |
+| `/v1/option`      | あり   | なし（`start` 無し） | なし | なし    |
+| `/v1/department`  | あり   | あり                 | なし | なし    |
+| `/v1/candidate`   | あり   | あり                 | あり | あり    |
+| `/v1/job`         | あり   | あり                 | あり | あり    |
+| `/v1/client`      | あり   | あり                 | あり | あり    |
+| `/v1/recruiter`   | あり   | あり                 | あり | あり    |
+| `/v1/contact`     | あり   | あり                 | あり | あり    |
+| `/v1/resume`      | あり   | あり                 | あり | あり    |
+| `/v1/process`     | あり   | あり                 | あり | あり    |
+| `/v1/activity`    | あり   | あり                 | あり | あり    |
+| `/v1/contract`    | あり   | あり                 | あり | あり    |
+| `/v1/sales`       | あり   | あり                 | あり | あり    |
+| `/v1/opportunity` | あり   | あり                 | あり | あり    |
+| `/v1/phase`       | あり   | あり                 | あり | あり    |
+| `/v1/attachment`  | あり   | あり                 | あり | なし    |
 
 - **マスタ 5 種に `get` が無い**のは [ADR-0022][adr22] の決定（主キー検索の語彙を持たないので、
   `condition` で 1 件に絞る形が作れない）。`t.user.current()` は自己同定で、`get` の代わりではない。
+- **`getMany`** は「主キーの集合で読む」の意味で、`get` と同じく専用のエンドポイントは無い。
+  `{idAlias}:or=` の `condition` で束ね、200 件ずつ・URL の上限に収まる組に分けて読む（[ADR-0095][adr95]）。
+  マスタ 5 種は `get` と同じ理由で無い。**`/v1/attachment` に無い**のは、ID の指定が `condition` ではなく
+  1 つしか受けない `id` パラメータで（表 C）、ファイル本体を運ぶのを `get` だけにしているため。
+  データ系の `P_Id` に `or` が効くかは出典の記述が割れている（[LV-33][lv33]）。
 - **`/v1/option` の `searchAll`** は PORTERS 側に `start` が無いので置けない（表 A）。
   ページングの無い Read なので `search` が全件返す。
 - **`/v1/attachment` の `searchAll`** は [ADR-0075][adr75] で足した（[RV-45][rv45] は fixed）。
@@ -266,3 +271,5 @@ Write が URL で取るのは `partition` だけで、値は本文の XML に載
 [no-delete]: ../usage/topics/deleted.md
 [bulk-write]: ../usage/topics/write.md
 [lv]: ../live-verification.md
+[adr95]: ../adr/0095-get-many-by-ids.md
+[lv33]: ../live-verification.md
