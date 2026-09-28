@@ -1,7 +1,7 @@
 # RV-158 🟡 Number の書き込みで小数第 3 位以下が切り捨てられることを、使い方の文書が書いていない
 
 - 重要度: 🟡 ／ 観点: API 忠実性 / ドキュメント
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -52,4 +52,19 @@ Number の桁数だけが、正典に書いてあるのに利用者の目に届�
 
 ## 処置
 
-—
+推奨 (a) を採った（2026-09-29・ADR 不要・挙動は変えない）。送る前に弾く (b) は採っていない。
+
+- `docs/usage/topics/write.md` の「書くときはかたちが変わる」に、Number（Currency を含む）の値は小数 2 桁までで、
+  小数第 3 位以下は PORTERS が切り捨てて保存すること、エラーにならず読み戻して初めて気づくこと、書く前に 2 桁へ丸めることを書いた。
+- `docs/usage/topics/fields.md` の Data Type の表と、`docs/usage/topics/custom-fields.md` の `f.number()` の行の「書き込み値」に、
+  「小数 2 桁まで。3 桁目以下は PORTERS が切り捨てる」を足した。
+- 丸め方のコード例は載せていない。`Math.trunc(x * 100) / 100` のような書き方は、浮動小数点の誤差で 1 つ小さい値になることがあり
+  （`1.13 * 100` は `112.99999…`）、誤った書き方を広めうるため。
+
+(b) を採るかは、PORTERS が本当に切り捨てるのか（四捨五入ではないか）、桁数の上限が項目の設定で変わらないかを実機で確かめてから決める。
+
+## 検証
+
+- `docs/usage/` のうち `reference/` と `api/` を除いた範囲で、Number の小数の桁数が 3 か所（`topics/write.md:79`・`topics/fields.md:75`・
+  `topics/custom-fields.md:217`）に書かれていることを grep で確かめた。
+- `pnpm check`（文書のコード例の型検査を含む）・`lint:md`・`format:check`・`check:links`・`check:usage` は緑。
