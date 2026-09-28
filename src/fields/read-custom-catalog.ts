@@ -111,15 +111,6 @@ const DECLARABLE: ReadonlySet<DataType> = new Set<DataType>(CUSTOM_DATA_TYPES);
 const isDeclarable = (dataType: DataType): dataType is CustomDataType =>
   DECLARABLE.has(dataType);
 
-// Field Read's `P_Alias` may arrive qualified (`Person.U_score`) or bare (`U_score`) — which one
-// is unconfirmed (ADR-0069 論点7 / 案7a). `bareAlias` (util/alias) already handles both, and it also
-// absorbs Candidate's prefix being `Person` rather than the resource name, so it is reused rather
-// than reimplemented.
-//
-// VERIFY(live): the qualified-vs-bare question is docs/live-verification.md (LV-12). Handling both
-// is the fail-safe side: expecting a bare alias and receiving `Person.U_score` would match nothing
-// and report the tenant as having **no** custom fields — indistinguishable from "could not read it".
-
 // 各リソースの alias の接頭辞（Candidate は Person）。記述子が正本。
 const PREFIX_OF: Readonly<Record<CustomFieldResource, string>> = {
   candidate: CANDIDATE_DESCRIPTOR.prefix,
@@ -150,44 +141,29 @@ const assertOwnPrefix = (
 };
 
 // One Field Read row -> either a declarable (alias, Data Type) pair or a reason it is not one.
-const classify = (
-  alias: string,
-  fieldType: number | null,
-):
+type Classified =
   | { readonly kind: "declarable"; readonly dataType: CustomDataType }
-  | { readonly kind: "undeclarable"; readonly entry: UndeclarableField } => {
+  | { readonly kind: "undeclarable"; readonly entry: UndeclarableField };
+
+const undeclarable = (entry: UndeclarableField): Classified => ({
+  // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
+  kind: "undeclarable",
+  entry,
+});
+
+const classify = (alias: string, fieldType: number | null): Classified => {
   // A row with no Field Type at all: PORTERS gave us nothing to map, so we invent nothing.
-  // Stryker disable next-line ConditionalExpression,BlockStatement: equivalent — falling through builds the same entry via `dataType === undefined`
-  if (fieldType === null) {
-    return {
-      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
-      kind: "undeclarable",
-      entry: { alias, fieldType, reason: "unknown-field-type" },
-    };
-  }
-  const label = fieldTypeLabel(fieldType);
+  // Stryker disable next-line ConditionalExpression: equivalent — falling through builds the same entry via `dataType === undefined`
+  if (fieldType === null)
+    return undeclarable({ alias, fieldType, reason: "unknown-field-type" });
   const dataType = dataTypeOfFieldType(fieldType);
-  if (dataType === undefined) {
-    return {
-      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
-      kind: "undeclarable",
-      entry: { alias, fieldType, reason: "unknown-field-type" },
-    };
-  }
-  if (dataType === null) {
-    return {
-      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
-      kind: "undeclarable",
-      entry: { alias, fieldType, label, reason: "no-data-type" },
-    };
-  }
-  if (!isDeclarable(dataType)) {
-    return {
-      // Stryker disable next-line StringLiteral: equivalent — the caller only tests for "declarable", so any other tag routes the same way
-      kind: "undeclarable",
-      entry: { alias, fieldType, label, reason: "not-declarable" },
-    };
-  }
+  if (dataType === undefined)
+    return undeclarable({ alias, fieldType, reason: "unknown-field-type" });
+  const label = fieldTypeLabel(fieldType);
+  if (dataType === null)
+    return undeclarable({ alias, fieldType, label, reason: "no-data-type" });
+  if (!isDeclarable(dataType))
+    return undeclarable({ alias, fieldType, label, reason: "not-declarable" });
   return { kind: "declarable", dataType };
 };
 
@@ -219,6 +195,14 @@ export const readCustomCatalog = async (
     // anything — there is nothing to report about it either, so it is the one case that is
     // simply not a custom field.
     if (row.P_Alias === null || row.P_Alias === undefined) continue;
+    // Field Read's `P_Alias` may arrive qualified (`Person.U_score`) or bare (`U_score`) — which one
+    // is unconfirmed (ADR-0069 論点7 / 案7a). `bareAlias` (util/alias) already handles both, and it
+    // also absorbs Candidate's prefix being `Person` rather than the resource name, so it is reused
+    // rather than reimplemented.
+    // VERIFY(live): the qualified-vs-bare question is docs/live-verification.md (LV-12). Handling
+    // both is the fail-safe side: expecting a bare alias and receiving `Person.U_score` would match
+    // nothing and report the tenant as having **no** custom fields — indistinguishable from "could
+    // not read it".
     assertOwnPrefix(row.P_Alias, resource);
     const alias = bareAlias(row.P_Alias);
     if (!CUSTOM_ALIAS_PREFIX.test(alias)) continue;
