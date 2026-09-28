@@ -1,7 +1,7 @@
 # RV-159 🟢 Code 9 が再試行のあとも続くときの原因（x-forwarded-for・GAS・Workers）が、エラーにも対処の文書にも出ない
 
 - 重要度: 🟢 ／ 観点: エラーモデル / ドキュメント
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -42,4 +42,18 @@ ADR 不要（挙動は変えない）。
 
 ## 処置
 
-—
+推奨のとおり、`hint` と文書の両方に原因の候補を足した（2026-09-29・ADR 不要）。`category`（`transient`）と再試行する挙動は変えていない。
+
+- `src/errors/resource-error.ts` の `resourceHint` に Code 9 の `hint` を足した。再試行しても 9 が続くなら、`x-forwarded-for` ヘッダを付ける
+  プロキシや、Google Apps Script / Cloudflare Workers からの呼び出しを確かめるよう案内する。
+- `docs/usage/reference/troubleshooting.md` の症状の表に「再試行しても一時利用不可が続く」（リソース `9`・`transient`）の行を足し、
+  `gotchas.md` を指した。
+- `docs/usage/topics/errors.md` の自動リトライの説明に、9 が続くときの原因の候補と、`hint` にも同じ案内が入ることを書いた。
+- 利用者に見える変更なので、changeset（patch）を足した。
+
+## 検証
+
+- `src/errors/resource-error.test.ts` が、Code 9 の `hint` に `x-forwarded-for` と `Cloudflare Workers` が含まれることと、
+  302 には `hint` が付かないこと（条件を `code === 9` に絞っていること）を pin している。
+- テスト 2448 件すべて通過。`pnpm check`・`typecheck`・`lint:ts`・`format:check`・`check:api`・`check:usage` は緑。
+- `src` 全体のミューテーションテストは 100.00（4129 件・survived 0）。`resource-error.ts` は 81 件をすべて検出した。

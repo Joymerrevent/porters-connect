@@ -212,21 +212,21 @@ await t.candidate.update(10001, { U_hiredOn: "2026-09-10" }); // ← 型エラ�
 
 ビルダー `f` のメソッドが、そのまま Data Type に対応します。
 
-| メソッド             | Data Type                                     | 読み取り値                                                      | 書き込み値                                           |
-| -------------------- | --------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
-| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        | `number`                                             |
-| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        | `string`                                             |
-| `f.multilineText()`  | `MultilineText`                               | `string`                                                        | `string`                                             |
-| `f.mail()`           | `Mail`                                        | `string`                                                        | `string`                                             |
-| `f.telephone()`      | `Telephone`                                   | `string`                                                        | `string`                                             |
-| `f.url()`            | `URL`                                         | `string`                                                        | `string`                                             |
-| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            | `string`（ISO 8601）                                 |
-| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  | `string`（ISO 8601・UTC `…Z`）                       |
-| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            | `string`（ISO 8601 の生年月日）                      |
-| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  | `string[]`（選択する alias）                         |
-| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            | `number`（ユーザーの ID だけ）                       |
-| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） | `{ FileName, ContentType, Content }`（3 つとも必須） |
-| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        | `number`（参照先の ID だけ）                         |
+| メソッド             | Data Type                                     | 読み取り値                                                      | 書き込み値                                                   |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------ |
+| `f.number()`         | `Number`（Currency 含む）                     | `number`                                                        | `number`（小数 2 桁まで。3 桁目以下は PORTERS が切り捨てる） |
+| `f.singlelineText()` | `SinglelineText`                              | `string`                                                        | `string`                                                     |
+| `f.multilineText()`  | `MultilineText`                               | `string`                                                        | `string`                                                     |
+| `f.mail()`           | `Mail`                                        | `string`                                                        | `string`                                                     |
+| `f.telephone()`      | `Telephone`                                   | `string`                                                        | `string`                                                     |
+| `f.url()`            | `URL`                                         | `string`                                                        | `string`                                                     |
+| `f.date()`           | `Date`                                        | `string`（ISO 8601）                                            | `string`（ISO 8601）                                         |
+| `f.dateTime()`       | `DateTime`                                    | `string`（ISO 8601・UTC `…Z`）                                  | `string`（ISO 8601・UTC `…Z`）                               |
+| `f.age()`            | `Age`                                         | `string`（ISO 8601）                                            | `string`（ISO 8601 の生年月日）                              |
+| `f.option()`         | `Option`（Checkbox / Radiobutton / Dropdown） | `string[]`（選択された alias）                                  | `string[]`（選択する alias）                                 |
+| `f.user()`           | `User`                                        | `UserRef`（`P_Id` / `P_Type` / `P_Name` / `P_Mail`）            | `number`（ユーザーの ID だけ）                               |
+| `f.image()`          | `Image`                                       | `{ FileName }`（`image` で選べば `ContentType` / `Content` も） | `{ FileName, ContentType, Content }`（3 つとも必須）         |
+| `f.link()`           | `Link`                                        | `number`（Contact の ID）／ `UserRef` ／ `DepartmentRef`        | `number`（参照先の ID だけ）                                 |
 
 **`User` / `Link` / `Image` は読み書きが対称ではありません**。読み取りは入れ子で返りますが、
 書き込みは `User` / `Link` が ID ひとつだけ、`Image` は 3 要素そろって必要です

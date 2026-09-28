@@ -59,7 +59,10 @@ describe("resource error classification (ADR-0006)", () => {
     // hint *content* (an empty string is still a string, so assert substrings)
     expect(resourceError(403, "x").hint).toContain("permission");
     expect(resourceError(404, "x").hint).toContain("Partition");
-    expect(resourceError(9, "x").hint).toBeUndefined(); // resourceHint default
+    // 9 は呼び出し側の環境が原因でも出る（result-codes.md）。その原因を案内する。
+    expect(resourceError(9, "x").hint).toContain("x-forwarded-for");
+    expect(resourceError(9, "x").hint).toContain("Cloudflare Workers");
+    expect(resourceError(302, "x").hint).toBeUndefined(); // resourceHint default
   });
 });
 
