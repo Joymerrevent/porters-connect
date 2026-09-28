@@ -149,6 +149,29 @@ const converted = (
   }
 };
 
+// Option: the selected aliases as empty child elements. Canonical input is an
+// array (ADR-0017, symmetric with read); a lone string is wrapped as a 1-element
+// selection (fail-safe).
+const encodeOption = (alias: string, value: NonNullable<WriteValue>): string =>
+  (Array.isArray(value) ? value : [text(value)])
+    .map((selected: unknown) => {
+      // 文字列でない選択肢（[null] など。cast 経由）は <null/> のような要素にしない（RV-104）。
+      if (typeof selected !== "string") {
+        throw new PortersConfigError(
+          `${alias}: option alias ${String(selected)} is not a string`,
+          {
+            category: "validation",
+            hint: 'Pass the selected option aliases as strings, e.g. ["Option.P_Tokyo"].',
+            context: { operation: "encode" },
+          },
+        );
+      }
+      // 選択肢 alias は**要素名になる**（write-format.md）。ここが ADR-0085 の主目的。
+      assertTagName(selected, "option alias", alias);
+      return `<${selected}/>`;
+    })
+    .join("");
+
 // Aliases without a Data Type are written as Text — symmetric with decode's raw-string passthrough
 // (fail-safe). Two ways to get there: a custom U_/A_ alias with no catalog entry (`undefined`), or a
 // catalogued field PORTERS gives no Data Type (`null` — ADR-0056). The latter only arrives via a
@@ -163,28 +186,8 @@ export const encodeField = (
   if (typeof value === "number") assertWritableNumber(alias, type, value);
   if (type === undefined || type === null) return scalar(alias, value);
   switch (type) {
-    // Option: the selected aliases as empty child elements. Canonical input is an
-    // array (ADR-0017, symmetric with read); a lone string is wrapped as a 1-element
-    // selection (fail-safe).
     case "Option":
-      return (Array.isArray(value) ? value : [text(value)])
-        .map((selected: unknown) => {
-          // 文字列でない選択肢（[null] など。cast 経由）は <null/> のような要素にしない（RV-104）。
-          if (typeof selected !== "string") {
-            throw new PortersConfigError(
-              `${alias}: option alias ${String(selected)} is not a string`,
-              {
-                category: "validation",
-                hint: 'Pass the selected option aliases as strings, e.g. ["Option.P_Tokyo"].',
-                context: { operation: "encode" },
-              },
-            );
-          }
-          // 選択肢 alias は**要素名になる**（write-format.md）。ここが ADR-0085 の主目的。
-          assertTagName(selected, "option alias", alias);
-          return `<${selected}/>`;
-        })
-        .join("");
+      return encodeOption(alias, value);
     // System[DateTime] (registration/update) is Write-restricted by PORTERS; we still
     // serialize it identically — rejecting the write is the input type's job (SD-3).
     case "DateTime":

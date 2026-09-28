@@ -174,46 +174,56 @@ const serializeConditionValue = (
 // condition -> `Prefix.alias:suffix=value,...`. Throws if itemstate=deleted/all names a field
 // outside P_Id/P_UpdateDate/P_UpdatedBy (PORTERS would 400 — fail fast before send). Typed over the
 // loose catalog: `Condition<F>` is assignable in, and the encoding is purely structural.
+// 項目名と演算子（キー）も文字列として条件に入る。区切り文字を含むキーや知らない演算子は、値と同じく
+// 別の条件として読まれうる（削除済みを読むときの項目の制限も越えられた。RV-68 の再レビュー）。
+const assertConditionField = (
+  alias: string,
+  itemstate: ItemState | undefined,
+): void => {
+  if (/[,:=]/.test(alias)) {
+    throw delimiterError(
+      "condition",
+      alias,
+      "a comma, a colon or an equals sign",
+    );
+  }
+  const restricted = itemstate === "deleted" || itemstate === "all";
+  if (restricted && !DELETED_CONDITION_FIELDS.has(alias)) {
+    throw new PortersConfigError(
+      `condition field "${alias}" is not allowed when itemstate is "${itemstate}"`,
+      {
+        category: "config",
+        hint: "Deleted reads (itemstate deleted/all) accept only P_Id, P_UpdateDate, P_UpdatedBy in condition.",
+      },
+    );
+  }
+};
+
+const assertKnownOperator = (alias: string, suffix: string): void => {
+  if (CONDITION_SUFFIXES.has(suffix)) return;
+  throw new PortersConfigError(
+    `condition ${alias}: unknown operator ${JSON.stringify(suffix)}`,
+    {
+      category: "config",
+      hint: `Use one of ${[...CONDITION_SUFFIXES].join(", ")}; which ones a field takes depends on its Data Type.`,
+      context: { operation: "read" },
+    },
+  );
+};
+
 const encodeCondition = (
   condition: Condition<FieldCatalog>,
   itemstate: ItemState | undefined,
   ctx: QueryContext,
 ): string => {
-  const restricted = itemstate === "deleted" || itemstate === "all";
   const parts: string[] = [];
   for (const [alias, ops] of Object.entries(condition)) {
     if (ops === undefined) continue;
-    // 項目名と演算子（キー）も文字列として条件に入る。区切り文字を含むキーや知らない演算子は、値と同じく
-    // 別の条件として読まれうる（削除済みを読むときの項目の制限も越えられた。RV-68 の再レビュー）。
-    if (/[,:=]/.test(alias)) {
-      throw delimiterError(
-        "condition",
-        alias,
-        "a comma, a colon or an equals sign",
-      );
-    }
-    if (restricted && !DELETED_CONDITION_FIELDS.has(alias)) {
-      throw new PortersConfigError(
-        `condition field "${alias}" is not allowed when itemstate is "${itemstate}"`,
-        {
-          category: "config",
-          hint: "Deleted reads (itemstate deleted/all) accept only P_Id, P_UpdateDate, P_UpdatedBy in condition.",
-        },
-      );
-    }
+    assertConditionField(alias, itemstate);
     const type = ctx.fields.get(alias);
     for (const [suffix, value] of Object.entries(ops)) {
       if (value === undefined) continue;
-      if (!CONDITION_SUFFIXES.has(suffix)) {
-        throw new PortersConfigError(
-          `condition ${alias}: unknown operator ${JSON.stringify(suffix)}`,
-          {
-            category: "config",
-            hint: `Use one of ${[...CONDITION_SUFFIXES].join(", ")}; which ones a field takes depends on its Data Type.`,
-            context: { operation: "read" },
-          },
-        );
-      }
+      assertKnownOperator(alias, suffix);
       parts.push(
         `${qualify(ctx.prefix, alias)}:${suffix}=${serializeConditionValue(type, value, alias)}`,
       );
@@ -236,6 +246,41 @@ const encodeOrder = (order: Order<FieldCatalog>, ctx: QueryContext): string => {
   return parts.join(",");
 };
 
+// keywords -> `a,b,...`. 空のキーワード・区切りのカンマを含むキーワード・長すぎる全体を送る前に弾く。
+const encodeKeywords = (keywords: readonly string[]): string => {
+  for (const k of keywords) {
+    // キーワードどうしもカンマで区切るので、要素の中のカンマはキーワードを 1 つ増やす（ADR-0105）。
+    if (k.includes(",")) throw delimiterError("keywords", k, "a comma");
+    // 空の要素は ",a," のような空のキーワードとして送られ、何に一致するか分からない（RV-97）。
+    if (k.trim() === "") {
+      throw new PortersConfigError(
+        `keywords has an empty keyword ${JSON.stringify(k)}`,
+        {
+          category: "config",
+          hint: "Remove the empty keyword, or leave keywords out to search without one.",
+          context: { operation: "read" },
+        },
+      );
+    }
+  }
+  const kw = keywords.join(",");
+  // 長さは UTF-16 の単位で数える。PORTERS が文字または UTF-16 で数えるなら、短く見積もって上限を超えたまま
+  // 送ることは無い（絵文字などは 2 と数えるので、長く見積もる側）。バイトで数えるなら、日本語は上限を超えたまま
+  // 送られうる（その場合は PORTERS が 400 で断る）。
+  // VERIFY(live): PORTERS が 100 文字を何の単位で数えるか（文字・UTF-16・バイト）は未確認 —
+  // docs/live-verification.md (LV-36)。
+  if (kw.length > KEYWORDS_MAX_CHARS) {
+    throw new PortersConfigError(
+      `keywords is ${kw.length} characters, over the ${KEYWORDS_MAX_CHARS}-character limit`,
+      {
+        category: "config",
+        hint: "Shorten keywords: PORTERS caps the keyword search at 100 characters including commas.",
+      },
+    );
+  }
+  return kw;
+};
+
 /**
  * Set the typed Read query params (condition / order / keywords / itemstate) on `p`. Universal
  * params (partition / field / count / start) stay in `buildReadUrl`. Throws `PortersConfigError`
@@ -254,39 +299,8 @@ export const appendReadQuery = <F extends FieldCatalog>(
     const order = encodeOrder(q.order, ctx);
     if (order.length > 0) p.set("order", order);
   }
-  if (q.keywords && q.keywords.length > 0) {
-    for (const k of q.keywords) {
-      // キーワードどうしもカンマで区切るので、要素の中のカンマはキーワードを 1 つ増やす（ADR-0105）。
-      if (k.includes(",")) throw delimiterError("keywords", k, "a comma");
-      // 空の要素は ",a," のような空のキーワードとして送られ、何に一致するか分からない（RV-97）。
-      if (k.trim() === "") {
-        throw new PortersConfigError(
-          `keywords has an empty keyword ${JSON.stringify(k)}`,
-          {
-            category: "config",
-            hint: "Remove the empty keyword, or leave keywords out to search without one.",
-            context: { operation: "read" },
-          },
-        );
-      }
-    }
-    const kw = q.keywords.join(",");
-    // 長さは UTF-16 の単位で数える。PORTERS が文字または UTF-16 で数えるなら、短く見積もって上限を超えたまま
-    // 送ることは無い（絵文字などは 2 と数えるので、長く見積もる側）。バイトで数えるなら、日本語は上限を超えたまま
-    // 送られうる（その場合は PORTERS が 400 で断る）。
-    // VERIFY(live): PORTERS が 100 文字を何の単位で数えるか（文字・UTF-16・バイト）は未確認 —
-    // docs/live-verification.md (LV-36)。
-    if (kw.length > KEYWORDS_MAX_CHARS) {
-      throw new PortersConfigError(
-        `keywords is ${kw.length} characters, over the ${KEYWORDS_MAX_CHARS}-character limit`,
-        {
-          category: "config",
-          hint: "Shorten keywords: PORTERS caps the keyword search at 100 characters including commas.",
-        },
-      );
-    }
-    p.set("keywords", kw);
-  }
+  if (q.keywords && q.keywords.length > 0)
+    p.set("keywords", encodeKeywords(q.keywords));
   // An explicit itemstate is sent as given — including `existing` (ADR-0057). Only omission defers
   // to the API default, because omitting and asking for `existing` are different things to say: if
   // PORTERS ever changed that default, a caller who wrote `existing` would otherwise start receiving
