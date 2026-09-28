@@ -8,7 +8,7 @@
 
 > **readCustomCatalog**(`source`, `resource`, `options?`): `Promise`\<[`TenantCustomCatalog`](../type-aliases/TenantCustomCatalog.md)\>
 
-Defined in: [src/fields/read-custom-catalog.ts:206](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L206)
+Defined in: [src/fields/read-custom-catalog.ts:182](https://github.com/Joymerrevent/porters-connect/blob/main/src/fields/read-custom-catalog.ts#L182)
 
 Read one resource's tenant custom fields (`U_` / `A_`) from Field Read.
 
