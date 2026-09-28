@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+## [0.26.2] - 2026-09-28
+
+**内部の実装を読みやすく整理した版**です。公開 API・型・挙動に変更はありません（既存のコードはそのまま動きます）。
+
+### Changed
+
+- **内部の実装を整理しました**。値の読み書き・検索の条件の組み立て・一括書き込みのエラーの案内・時分型の変換・
+  テナントの項目の読み込みで、入れ子になった条件式を分け、検査を関数に出しました。返す値・送るリクエスト・
+  エラーの内容は変わりません。
+
 ## [0.26.1] - 2026-09-27
 
 **0.26.0 の後のレビューで見つけた細かな不具合を直した版**です。破壊的変更はありません。
@@ -1720,7 +1730,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.1...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.2...HEAD
+[0.26.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.24.0...v0.25.0
