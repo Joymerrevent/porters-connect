@@ -50,6 +50,10 @@ export const resourceCategory = (code: number): ErrorCategory => {
 };
 
 const resourceHint = (code: number): string | undefined => {
+  // 9 は一時的な不調のほか、呼び出し側の環境（x-forwarded-for ヘッダ・GAS・Cloudflare Workers）でも出る
+  // （result-codes.md）。後者は再試行しても直らないので、再試行が尽きたときに原因へたどり着けるよう案内する（RV-159）。
+  if (code === 9)
+    return "PORTERS is temporarily unavailable; the library retries this code with backoff. If it keeps coming back, check the calling side: a proxy that adds an x-forwarded-for header (remove it before the request reaches PORTERS), or running on Google Apps Script or Cloudflare Workers, where PORTERS may not respond as expected.";
   if (code === 403)
     return "No data permission. Run the initial browser `code` grant for this Company DB, or check scopes.";
   if (code === 404)
