@@ -171,11 +171,9 @@ const serializeConditionValue = (
   return out;
 };
 
-// condition -> `Prefix.alias:suffix=value,...`. Throws if itemstate=deleted/all names a field
-// outside P_Id/P_UpdateDate/P_UpdatedBy (PORTERS would 400 — fail fast before send). Typed over the
-// loose catalog: `Condition<F>` is assignable in, and the encoding is purely structural.
 // 項目名と演算子（キー）も文字列として条件に入る。区切り文字を含むキーや知らない演算子は、値と同じく
 // 別の条件として読まれうる（削除済みを読むときの項目の制限も越えられた。RV-68 の再レビュー）。
+// 項目名の検査: 区切り文字と、削除済みを読むときに条件に使える項目。
 const assertConditionField = (
   alias: string,
   itemstate: ItemState | undefined,
@@ -199,6 +197,7 @@ const assertConditionField = (
   }
 };
 
+// 演算子の検査: 知らない演算子（`eq=1,P_Id:gt` のような区切り文字入りも含む）は送らない（RV-68 の再レビュー）。
 const assertKnownOperator = (alias: string, suffix: string): void => {
   if (CONDITION_SUFFIXES.has(suffix)) return;
   throw new PortersConfigError(
@@ -211,6 +210,9 @@ const assertKnownOperator = (alias: string, suffix: string): void => {
   );
 };
 
+// condition -> `Prefix.alias:suffix=value,...`. Throws if itemstate=deleted/all names a field
+// outside P_Id/P_UpdateDate/P_UpdatedBy (PORTERS would 400 — fail fast before send). Typed over the
+// loose catalog: `Condition<F>` is assignable in, and the encoding is purely structural.
 const encodeCondition = (
   condition: Condition<FieldCatalog>,
   itemstate: ItemState | undefined,

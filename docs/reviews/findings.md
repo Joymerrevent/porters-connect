@@ -171,7 +171,7 @@
 | [RV-154][rv154] | 🟢     | フェイルセーフ                  | fixed   | 成功の本文が載った 3xx                                                                               |
 | [RV-155][rv155] | 🟢     | エラーモデル / DX               | fixed   | 成功の本文の hint が書き込み向け                                                                     |
 | [RV-156][rv156] | 🟢     | フェイルセーフ                  | wontfix | 2xx 以外の項目ごとの結果を捨てる                                                                     |
-| [RV-157][rv157] | 🟢     | ドキュメント                    | open    | 条件の組み立て（encodeCondition）の説明コメントが、別の関数の上に残っている                          |
+| [RV-157][rv157] | 🟢     | ドキュメント                    | fixed   | 条件の組み立て（encodeCondition）の説明コメントが、別の関数の上に残っている                          |
 
 > RV-10〜12 は横断監査（[2026-06-22-03][run3]）で検出したドリフト群。受け入れ済み ADR が定めた v1 公開 API の**未実装サーフェス**（OAuth `porters.auth.*` / Read クエリ `order`・`keywords`・`itemstate` / `tenant(id)`＋per-call `partition` / 200 件一括書き込み）は finding 化せず [ADR-0033][adr33] 案F（先行フェーズ）で扱う。
 

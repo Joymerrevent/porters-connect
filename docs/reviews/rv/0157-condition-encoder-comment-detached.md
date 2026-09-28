@@ -1,7 +1,7 @@
 # RV-157 🟢 条件の組み立て（encodeCondition）の説明コメントが、別の関数の上に残っている
 
 - 重要度: 🟢 ／ 観点: ドキュメント
-- 状態: open
+- 状態: fixed
 
 ## 概要
 
@@ -46,6 +46,16 @@
 
 ## 処置
 
-—
+推奨のとおりコメントを分けた（2026-09-28・コメントだけの変更）。
+
+- `encodeCondition` の説明（出力の形・削除済みを読むときの制限・型の付け方）を、`encodeCondition` の直前へ戻した。
+- RV-68 の再レビューの注記は `assertConditionField` の直前に残し、「項目名の検査」と 1 行足した。
+- `assertKnownOperator` の直前に「演算子の検査」の 1 行を足した（知らない演算子は送らない理由）。
+
+## 検証
+
+- 3 つの関数の直前のコメントが、それぞれの関数の中身と合っていることを読んで確かめた。
+- コメントだけの変更なので、挙動は変わらない。`pnpm check`・`typecheck`・`lint:ts`・`format:check` は緑、テストは 2448 件すべて通った。
+- `encodeCondition` と 2 つの検査の関数は非公開なので、API リファレンスの生成物は変わらない（`check:api` は緑）。
 
 [pr471]: https://github.com/Joymerrevent/porters-connect/pull/471
