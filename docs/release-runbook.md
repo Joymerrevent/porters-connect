@@ -104,7 +104,19 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.26.1**（npm latest・`v0.26.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.26.2**（npm latest・`v0.26.2` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1414.6 kB**・2026-09-28）。**累計 36 版**（うち **0.2.0 以降の 34 版**がこの半自動フロー）。
+  changeset **1 枚**（patch 1）を消費した patch リリースで、内部の実装を読みやすく整理した版（#470〜#472）。
+  公開 API・型・挙動は変わらない。
+  - **unpacked は 1412.9 → 1414.6 kB（+1.7 kB）**。同梱ファイル数は 10 のまま。
+  - #470〜#472 は changeset を入れていなかった（動作を変えないリファクタリング）。`dist` のコードは変わるので版を上げると決め、
+    リリース PR [#473][pr473] に changeset を 1 枚足してから `pnpm changeset:version` を実行した（§1 の「記録漏れ」の扱い）。
+  - リリース PR のチェックがすべて green になり、head がゲートを通したコミットのままかを確かめてから merge commit でマージした。
+    `main` への PR の `stryker` は **21 分**かかった（§2 の目安の約 11 分より長い）。Tag ワークフロー green → `main` の
+    Test / CI / Mutation が green になるのを待ってから `gh release create`（notes は CHANGELOG の該当節・参照スタイルのリンクは無し）
+    → Release ワークフロー green。publish の直後の `npm view` は 0.26.1 を返し、back-merge のチェックを待つ間に 0.26.2 になった
+    （伝播待ち）。back-merge は [#474][pr474]（PR 経由・merge commit）。
+- ✅ ひとつ前の **0.26.1**（npm latest・`v0.26.1` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **10 files / 1412.9 kB**・2026-09-27）。**累計 35 版**（うち **0.2.0 以降の 33 版**がこの半自動フロー）。
   changeset **3 枚**（patch 3）を消費した patch リリースで、0.26.0 の後のレビューで見つけた細かな不具合の修正
   （#462〜#464・#466）。破壊的変更はない。
@@ -418,6 +430,8 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr461]: https://github.com/Joymerrevent/porters-connect/pull/461
 [pr467]: https://github.com/Joymerrevent/porters-connect/pull/467
 [pr468]: https://github.com/Joymerrevent/porters-connect/pull/468
+[pr473]: https://github.com/Joymerrevent/porters-connect/pull/473
+[pr474]: https://github.com/Joymerrevent/porters-connect/pull/474
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
 [adr91]: adr/0091-token-provider-and-store.md

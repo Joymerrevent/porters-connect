@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [0.26.3] - 2026-09-29
+
+**一時利用不可（Result Code 9）のエラーに、原因の案内を付けた版**です。破壊的変更はありません。
+
+### Changed
+
+- **Result Code 9（一時利用不可）のエラーに `hint` を付けました**。再試行しても 9 が続くときに確かめる、呼び出し側の原因
+  （プロキシが付ける `x-forwarded-for` ヘッダ、Google Apps Script や Cloudflare Workers からの呼び出し）を案内します。
+  これまでは `hint` が無く、PORTERS の一時的な不調と見分けがつきませんでした。エラーの `category`（`transient`）と、
+  再試行する挙動は変わりません。
+- 使い方のドキュメントに、Number（Currency を含む）の値は小数 2 桁までで、3 桁目以下は PORTERS が切り捨てて
+  保存することを書きました。あわせて、書き込みの前にライブラリが弾く値の説明を実装に合わせました。
+
 ## [0.26.2] - 2026-09-28
 
 **内部の実装を読みやすく整理した版**です。公開 API・型・挙動に変更はありません（既存のコードはそのまま動きます）。
@@ -1730,7 +1743,8 @@ Attachment）あるのに、受け口の形が 3 つとも違っていました�
 [ref]: docs/usage/reference/README.md
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/
-[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.2...HEAD
+[unreleased]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.3...HEAD
+[0.26.3]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.2...v0.26.3
 [0.26.2]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.1...v0.26.2
 [0.26.1]: https://github.com/Joymerrevent/porters-connect/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/Joymerrevent/porters-connect/compare/v0.25.0...v0.26.0

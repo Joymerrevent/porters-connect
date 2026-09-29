@@ -29,6 +29,10 @@ description: >-
    - **普及シグナルを控える**（[ADR-0084][adr84]）— `gh api repos/Joymerrevent/porters-connect/traffic/popular/referrers`
      と `.../traffic/views` を取り、スナップショットに貼る。**GitHub は直近 14 日ぶんしか残さない**ので、
      ここで控えないと「ブログ経由の流入が出た」という**発火に後から気づけない**（PRD §7 の遅行指標）。
+     - **返った期間の最終日を確かめる**（RV-160）。合計だけを見ると、GitHub の集計が止まっていても気づけない。
+       日別の最後の日付は `gh api repos/Joymerrevent/porters-connect/traffic/views --jq '.views[-1].timestamp'` で出る。
+       それが今日（UTC）より 2 日以上前なら、スナップショットに「集計が止まっている（最終日 YYYY-MM-DD）」と書き、
+       表の値が最終日までのものだと分かるようにする。止まっている間の分は、集計が戻ってから 14 日以内の run で取り直す。
    - **前回の台帳 `docs/reviews/findings.md`（索引）を必ず読む**（無ければ初回）。
      **状態が `open` の行の本体 `docs/reviews/rv/NNNN-*.md` を開いて再評価する**のが今回の仕事の半分
      （`fixed` の分まで全部読む必要はない＝1 件 1 ファイルにした理由）。
