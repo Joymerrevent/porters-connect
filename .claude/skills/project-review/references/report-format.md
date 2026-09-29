@@ -138,11 +138,12 @@ PRD §7 の遅行指標の控え（ADR-0084）。**GitHub の traffic は 14 日
 
 | 指標           | 実測                                                    |
 | -------------- | --------------------------------------------------------- |
-| traffic views  | <count> / uniques <n>（直近 14 日）                     |
+| traffic views  | <count> / uniques <n>（日別の期間 YYYY-MM-DD〜YYYY-MM-DD） |
 | 流入元         | <referrer=count/uniques を列挙>                         |
 | 外部 Issue/PR  | <件数・Dependabot を除く>                               |
 
 発火（外部ドメインからの流入・外部からの Issue/PR）があれば、それ自体を所見に書く。
+期間の最終日が今日（UTC）より 2 日以上前なら、GitHub の集計が止まっているので、表の下にそう書く（SKILL.md の「下調べ」）。
 
 ## 今回の指摘（サマリ）
 
