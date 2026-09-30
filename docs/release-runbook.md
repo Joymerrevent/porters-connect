@@ -104,7 +104,19 @@
 
 ## 現在の状況
 
-- ✅ 最新公開: **0.26.2**（npm latest・`v0.26.2` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+- ✅ 最新公開: **0.26.3**（npm latest・`v0.26.3` タグ・OIDC Trusted Publishing で publish・provenance 付き・
+  **10 files / 1417.0 kB**・2026-09-30）。**累計 37 版**（うち **0.2.0 以降の 35 版**がこの半自動フロー）。
+  changeset **1 枚**（patch 1）を消費した patch リリースで、一時利用不可（Result Code 9）のエラーに原因の案内（`hint`）を付けた版
+  （[#480][pr480]）。破壊的変更はない。
+  - **unpacked は 1414.6 → 1417.0 kB（+2.4 kB）**。同梱ファイル数は 10 のまま。
+  - リリース PR [#482][pr482]（merge commit）のチェックがすべて green になり、head がゲートを通したコミットのままかを確かめてから
+    マージした。`main` への PR の `stryker` は **17 分 47 秒**。Tag ワークフロー green → `main` の Test / CI / Mutation が green になるのを
+    待ってから `gh release create`（notes は CHANGELOG の該当節・参照スタイルのリンクは無し）→ Release ワークフロー green。
+    publish の直後の `npm view` は 0.26.2 を返し、back-merge のチェックを待つ間に 0.26.3 になった（伝播待ち）。
+    back-merge は [#483][pr483]（PR 経由・merge commit）。
+  - `main` への push の後、Dependabot のセキュリティ更新（`fast-uri`）の実行が失敗した。`fast-uri` は開発用の依存
+    （commitlint・Stryker の下）にだけあり、公開するパッケージの依存には入らないので、リリースは止めずに進めた。
+- ✅ ひとつ前の **0.26.2**（npm latest・`v0.26.2` タグ・OIDC Trusted Publishing で publish・provenance 付き・
   **10 files / 1414.6 kB**・2026-09-28）。**累計 36 版**（うち **0.2.0 以降の 34 版**がこの半自動フロー）。
   changeset **1 枚**（patch 1）を消費した patch リリースで、内部の実装を読みやすく整理した版（#470〜#472）。
   公開 API・型・挙動は変わらない。
@@ -432,6 +444,9 @@ override が先、changesets の導入が翌日という順序だったため、
 [pr468]: https://github.com/Joymerrevent/porters-connect/pull/468
 [pr473]: https://github.com/Joymerrevent/porters-connect/pull/473
 [pr474]: https://github.com/Joymerrevent/porters-connect/pull/474
+[pr480]: https://github.com/Joymerrevent/porters-connect/pull/480
+[pr482]: https://github.com/Joymerrevent/porters-connect/pull/482
+[pr483]: https://github.com/Joymerrevent/porters-connect/pull/483
 [adr89]: adr/0089-custom-field-required-on-create.md
 [adr90]: adr/0090-typescript-floor.md
 [adr91]: adr/0091-token-provider-and-store.md
